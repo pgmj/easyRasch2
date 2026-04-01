@@ -7,6 +7,16 @@
 #' @param data A data.frame or matrix of item responses. Items must be scored
 #'   starting at 0 (non-negative integers). Missing values (`NA`) are allowed,
 #'   but at least one complete case (row with no `NA`) must be present.
+#' @param cutoff Optional. Default `NULL` (no cutoff applied, behaviour is
+#'   identical to the current version). Can be:
+#'   * The return value of [RMinfitcutoff()] (a list with `$item_cutoffs`):
+#'     the data.frame is extracted automatically and the number of simulation
+#'     iterations is included in the kable caption.
+#'   * The `$item_cutoffs` data.frame from [RMinfitcutoff()] directly: must
+#'     have columns `Item`, `infit_low`, and `infit_high`.
+#'   When provided, adds columns `Infit_low`, `Infit_high`, and `Flagged`
+#'   (logical; `TRUE` when `Infit_MSQ` falls outside the credible range) to
+#'   the result.
 #' @param output Character string controlling the return value. Either
 #'   `"kable"` (default) for a formatted `knitr::kable()` table, or
 #'   `"dataframe"` for the underlying data.frame.
@@ -16,9 +26,13 @@
 #' @return
 #' * If `output = "kable"`: a `knitr_kable` object (plain text table via
 #'   `format = "simple"`) with columns "Item", "Infit MSQ", and "Relative
-#'   location", and a caption showing the number of complete cases.
+#'   location", and a caption showing the number of complete cases. When
+#'   `cutoff` is provided, columns "Infit low", "Infit high", and "Flagged"
+#'   are also included, and the caption notes the simulation-based cutoffs.
 #' * If `output = "dataframe"`: a data.frame with columns `Item`,
-#'   `Infit_MSQ`, and `Relative_location`.
+#'   `Infit_MSQ`, and `Relative_location`. When `cutoff` is provided, columns
+#'   `Infit_low`, `Infit_high`, and `Flagged` are also included (inserted
+#'   after `Infit_MSQ`, before `Relative_location`).
 #'
 #' @details
 #' Infit MSQ is a weighted fit statistic that emphasises deviations near the
@@ -52,6 +66,8 @@
 #' them? *Journal of Statistical Distributions and Applications*, 7(5).
 #' \doi{10.1186/s40488-020-00108-7}
 #'
+#' @seealso [RMinfitcutoff()]
+#'
 #' @export
 #'
 #' @examples
@@ -71,8 +87,14 @@
 #'
 #' # Return as data.frame for further processing
 #' df <- RMiteminfit(sim_data, output = "dataframe")
+#'
+#' # With simulation-based cutoffs from RMinfitcutoff()
+#' cutoff_res <- RMinfitcutoff(sim_data, iterations = 100, parallel = FALSE,
+#'                             seed = 42)
+#' RMiteminfit(sim_data, cutoff = cutoff_res)
+#' RMiteminfit(sim_data, cutoff = cutoff_res, output = "dataframe")
 #' }
-RMiteminfit <- function(data, output = "kable", sort) {
+RMiteminfit <- function(data, cutoff = NULL, output = "kable", sort) {
 
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
@@ -83,6 +105,25 @@ RMiteminfit <- function(data, output = "kable", sort) {
   }
 
   output <- match.arg(output, c("kable", "dataframe"))
+
+  # --- Validate and normalise cutoff ------------------------------------------
+  cutoff_n_iter <- NULL
+  if (!is.null(cutoff)) {
+    if (is.list(cutoff) && !is.data.frame(cutoff) && !is.null(cutoff$item_cutoffs)) {
+      cutoff_n_iter <- cutoff$actual_iterations
+      cutoff <- cutoff$item_cutoffs
+    }
+    if (!is.data.frame(cutoff)) {
+      stop("`cutoff` must be NULL, the return value of RMinfitcutoff(), or its ",
+           "$item_cutoffs data.frame.", call. = FALSE)
+    }
+    required_cols <- c("Item", "infit_low", "infit_high")
+    missing_cols <- setdiff(required_cols, names(cutoff))
+    if (length(missing_cols) > 0L) {
+      stop("`cutoff` data.frame is missing required columns: ",
+           paste(missing_cols, collapse = ", "), ".", call. = FALSE)
+    }
+  }
 
   validate_response_data(data)
 
@@ -136,6 +177,35 @@ RMiteminfit <- function(data, output = "kable", sort) {
     row.names         = NULL
   )
 
+  # --- Apply cutoff if provided ------------------------------------------------
+  if (!is.null(cutoff)) {
+    data_items   <- item_fit_table$Item
+    cutoff_items <- cutoff$Item
+    if (!setequal(data_items, cutoff_items)) {
+      stop(
+        "Item names in `cutoff` do not match item names in `data`.\n",
+        "  data items  : ", paste(data_items,   collapse = ", "), "\n",
+        "  cutoff items: ", paste(cutoff_items, collapse = ", "),
+        call. = FALSE
+      )
+    }
+    cutoff_sub <- cutoff[, c("Item", "infit_low", "infit_high")]
+    item_fit_table <- merge(item_fit_table, cutoff_sub, by = "Item", sort = FALSE)
+    # Restore original row order (merge may reorder)
+    item_fit_table <- item_fit_table[match(data_items, item_fit_table$Item), ]
+    rownames(item_fit_table) <- NULL
+    item_fit_table$Infit_low  <- round(item_fit_table$infit_low,  3)
+    item_fit_table$Infit_high <- round(item_fit_table$infit_high, 3)
+    item_fit_table$infit_low  <- NULL
+    item_fit_table$infit_high <- NULL
+    item_fit_table$Flagged <- item_fit_table$Infit_MSQ < item_fit_table$Infit_low |
+                              item_fit_table$Infit_MSQ > item_fit_table$Infit_high
+    # Reorder columns: Item, Infit_MSQ, Infit_low, Infit_high, Flagged, Relative_location
+    item_fit_table <- item_fit_table[, c("Item", "Infit_MSQ", "Infit_low",
+                                         "Infit_high", "Flagged",
+                                         "Relative_location")]
+  }
+
   # --- Sort if requested ------------------------------------------------------
   if (!missing(sort) && identical(sort, "infit")) {
     item_fit_table <- item_fit_table[order(item_fit_table$Infit_MSQ, decreasing = TRUE), ]
@@ -150,11 +220,31 @@ RMiteminfit <- function(data, output = "kable", sort) {
   knitr::kable(
     item_fit_table,
     format    = "simple",
-    col.names = c("Item", "Infit MSQ", "Relative location"),
-    caption   = paste0(
-      "MSQ values based on conditional estimation (n = ",
-      n_complete,
-      " complete cases)."
-    )
+    col.names = if (is.null(cutoff)) {
+      c("Item", "Infit MSQ", "Relative location")
+    } else {
+      c("Item", "Infit MSQ", "Infit low", "Infit high", "Flagged", "Relative location")
+    },
+    caption   = if (is.null(cutoff)) {
+      paste0(
+        "MSQ values based on conditional estimation (n = ",
+        n_complete,
+        " complete cases)."
+      )
+    } else if (!is.null(cutoff_n_iter)) {
+      paste0(
+        "MSQ values based on conditional estimation (n = ",
+        n_complete,
+        " complete cases). Cutoff values based on ",
+        cutoff_n_iter,
+        " simulation iterations."
+      )
+    } else {
+      paste0(
+        "MSQ values based on conditional estimation (n = ",
+        n_complete,
+        " complete cases). Simulation-based cutoff values applied."
+      )
+    }
   )
 }
