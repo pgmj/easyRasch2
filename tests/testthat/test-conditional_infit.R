@@ -82,3 +82,180 @@ test_that("RMiteminfit sort = 'infit' sorts by Infit_MSQ descending", {
   )
   expect_setequal(result_sorted$Item, result_unsorted$Item)
 })
+
+# ---------------------------------------------------------------------------
+# cutoff parameter tests
+# ---------------------------------------------------------------------------
+
+test_that("RMiteminfit cutoff = NULL (default) behaves as before", {
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("eRm")
+  set.seed(42)
+  df <- as.data.frame(
+    matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5)
+  )
+  colnames(df) <- paste0("Item", 1:5)
+
+  result <- RMiteminfit(df, cutoff = NULL, output = "dataframe")
+  expect_equal(names(result), c("Item", "Infit_MSQ", "Relative_location"))
+})
+
+test_that("RMiteminfit with mock cutoff data.frame adds expected columns", {
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("eRm")
+  set.seed(42)
+  df <- as.data.frame(
+    matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5)
+  )
+  colnames(df) <- paste0("Item", 1:5)
+
+  mock_cutoff <- data.frame(
+    Item        = paste0("Item", 1:5),
+    infit_low   = rep(0.7, 5),
+    infit_high  = rep(1.3, 5),
+    outfit_low  = rep(0.7, 5),
+    outfit_high = rep(1.3, 5),
+    stringsAsFactors = FALSE
+  )
+
+  result <- RMiteminfit(df, cutoff = mock_cutoff, output = "dataframe")
+  expect_s3_class(result, "data.frame")
+  expect_equal(nrow(result), 5L)
+  expect_equal(
+    names(result),
+    c("Item", "Infit_MSQ", "Infit_low", "Infit_high", "Flagged", "Relative_location")
+  )
+  expect_type(result$Flagged, "logical")
+  expect_true(all(result$Infit_low  == 0.7))
+  expect_true(all(result$Infit_high == 1.3))
+})
+
+test_that("RMiteminfit with cutoff list (from RMinfitcutoff shape) extracts item_cutoffs", {
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("eRm")
+  set.seed(42)
+  df <- as.data.frame(
+    matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5)
+  )
+  colnames(df) <- paste0("Item", 1:5)
+
+  mock_cutoff_list <- list(
+    item_cutoffs = data.frame(
+      Item        = paste0("Item", 1:5),
+      infit_low   = rep(0.7, 5),
+      infit_high  = rep(1.3, 5),
+      outfit_low  = rep(0.7, 5),
+      outfit_high = rep(1.3, 5),
+      stringsAsFactors = FALSE
+    ),
+    actual_iterations = 100L
+  )
+
+  result_df <- RMiteminfit(df, cutoff = mock_cutoff_list, output = "dataframe")
+  expect_equal(
+    names(result_df),
+    c("Item", "Infit_MSQ", "Infit_low", "Infit_high", "Flagged", "Relative_location")
+  )
+
+  result_kable <- RMiteminfit(df, cutoff = mock_cutoff_list, output = "kable")
+  expect_s3_class(result_kable, "knitr_kable")
+  cap <- attr(result_kable, "caption")
+  expect_true(grepl("100 simulation iterations", cap))
+})
+
+test_that("RMiteminfit with cutoff data.frame (no actual_iterations) uses generic caption", {
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("eRm")
+  set.seed(42)
+  df <- as.data.frame(
+    matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5)
+  )
+  colnames(df) <- paste0("Item", 1:5)
+
+  mock_cutoff <- data.frame(
+    Item        = paste0("Item", 1:5),
+    infit_low   = rep(0.7, 5),
+    infit_high  = rep(1.3, 5),
+    stringsAsFactors = FALSE
+  )
+
+  result_kable <- RMiteminfit(df, cutoff = mock_cutoff, output = "kable")
+  expect_s3_class(result_kable, "knitr_kable")
+  cap <- attr(result_kable, "caption")
+  expect_true(grepl("Simulation-based cutoff values applied", cap))
+})
+
+test_that("RMiteminfit errors when cutoff item names do not match data", {
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("eRm")
+  set.seed(42)
+  df <- as.data.frame(
+    matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5)
+  )
+  colnames(df) <- paste0("Item", 1:5)
+
+  bad_cutoff <- data.frame(
+    Item        = paste0("X", 1:5),
+    infit_low   = rep(0.7, 5),
+    infit_high  = rep(1.3, 5),
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    RMiteminfit(df, cutoff = bad_cutoff),
+    regexp = "Item names in `cutoff` do not match"
+  )
+})
+
+test_that("RMiteminfit errors when cutoff data.frame has missing required columns", {
+  set.seed(42)
+  df <- as.data.frame(
+    matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5)
+  )
+  colnames(df) <- paste0("Item", 1:5)
+
+  bad_cutoff <- data.frame(
+    Item      = paste0("Item", 1:5),
+    infit_low = rep(0.7, 5),
+    stringsAsFactors = FALSE
+  )
+
+  expect_error(
+    RMiteminfit(df, cutoff = bad_cutoff),
+    regexp = "missing required columns"
+  )
+})
+
+test_that("RMiteminfit Flagged column correctly identifies values outside cutoff range", {
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("eRm")
+  set.seed(42)
+  df <- as.data.frame(
+    matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5)
+  )
+  colnames(df) <- paste0("Item", 1:5)
+
+  # Compute actual infit values to build tight vs. loose cutoffs
+  base_result <- RMiteminfit(df, output = "dataframe")
+  infit_vals  <- base_result$Infit_MSQ
+
+  # Tight cutoff: all items should be flagged (narrow window around each)
+  tight_cutoff <- data.frame(
+    Item        = paste0("Item", 1:5),
+    infit_low   = infit_vals + 0.1,
+    infit_high  = infit_vals + 0.2,
+    stringsAsFactors = FALSE
+  )
+  tight_result <- RMiteminfit(df, cutoff = tight_cutoff, output = "dataframe")
+  expect_true(all(tight_result$Flagged))
+
+  # Loose cutoff: no items should be flagged (window encompasses all values)
+  loose_cutoff <- data.frame(
+    Item        = paste0("Item", 1:5),
+    infit_low   = rep(0.0, 5),
+    infit_high  = rep(10.0, 5),
+    stringsAsFactors = FALSE
+  )
+  loose_result <- RMiteminfit(df, cutoff = loose_cutoff, output = "dataframe")
+  expect_false(any(loose_result$Flagged))
+})

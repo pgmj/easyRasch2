@@ -1,5 +1,12 @@
 # easyRasch2 0.4.0
 
+* **`RMiteminfit()` gains optional `cutoff` parameter**: Accepts the return
+  value of `RMinfitcutoff()` (or its `$item_cutoffs` data.frame directly).
+  When provided, per-item cutoff boundaries (`Infit_low`, `Infit_high`) and a
+  logical `Flagged` column are added to both `"dataframe"` and `"kable"`
+  output. The kable caption includes the number of simulation iterations when
+  available.
+
 * **New `RMinfitcutoff()`**: Simulation-based (parametric bootstrap) cutoff
   determination for [RMiteminfit()]. Supports both dichotomous and polytomous
   data. Optional parallel processing via `mirai` (falls back to sequential if
