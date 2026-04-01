@@ -1,3 +1,15 @@
+# easyRasch2 0.3.0
+
+* **New `RMitemrestscore()`**: Computes observed and model-expected
+  item-restscore correlations via `iarm::item_restscore()`, enriched with
+  absolute differences between observed and expected values, item average
+  locations, and item locations relative to the sample mean person location.
+  Supports both dichotomous (Rasch model via `eRm::RM()`) and polytomous
+  (Partial Credit Model via `eRm::PCM()`) data. Requires the `iarm` package
+  (Suggests). Output options: `"kable"` (default, plain-text `knitr::kable()`)
+  or `"dataframe"`. Optional `sort = "diff"` sorts by absolute difference
+  descending.
+
 # easyRasch2 0.1.0
 
 * Initial package structure.
