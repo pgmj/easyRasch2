@@ -1,5 +1,14 @@
 # easyRasch2 0.3.0
 
+* **New `RMiteminfit()`**: Computes conditional infit MSQ statistics for each
+  item via `iarm::out_infit()`, enriched with item locations relative to the
+  sample mean person location. Supports both dichotomous (Rasch model via
+  `eRm::RM()`) and polytomous (Partial Credit Model via `eRm::PCM()`) data.
+  Requires the `iarm` package (Suggests). Output options: `"kable"` (default,
+  plain-text `knitr::kable()`) or `"dataframe"`. Optional `sort = "infit"`
+  sorts by infit MSQ descending. Only complete cases are used for conditional
+  fit calculation.
+
 * **New `RMitemrestscore()`**: Computes observed and model-expected
   item-restscore correlations via `iarm::item_restscore()`, enriched with
   absolute differences between observed and expected values, item average
