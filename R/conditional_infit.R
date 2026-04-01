@@ -109,7 +109,7 @@ RMiteminfit <- function(data, cutoff = NULL, output = "kable", sort) {
   # --- Validate and normalise cutoff ------------------------------------------
   cutoff_n_iter <- NULL
   if (!is.null(cutoff)) {
-    if (is.list(cutoff) && !is.data.frame(cutoff) && !is.null(cutoff$item_cutoffs)) {
+    if (is.list(cutoff) && !is.data.frame(cutoff) && "item_cutoffs" %in% names(cutoff)) {
       cutoff_n_iter <- cutoff$actual_iterations
       cutoff <- cutoff$item_cutoffs
     }
