@@ -1,0 +1,36 @@
+Package: easyRasch2
+Title: Rasch Measurement Theory Analysis for R
+Version: 0.1.0
+Authors@R: 
+    person("Magnus", "Johansson", , "pgmj@pm.me", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-1669-592X"))
+Description: Provides functions to simplify Rasch measurement theory analysis
+    workflows, from local dependence assessment to item fit, person fit,
+    differential item functioning, targeting, and reliability. Uses
+    Conditional Maximum Likelihood (CML) estimation via 'eRm' and 'psychotools'
+    for item parameters and Weighted Likelihood Estimation (WLE) for person
+    parameters, with 'mirt' for residual correlation analysis. Designed for
+    easy integration with 'Quarto' documents using 'knitr::kable()' table
+    output and 'ggplot2' figures.
+License: GPL (>= 3)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+URL: https://github.com/pgmj/easyRasch2, https://pgmj.github.io/easyRasch2/
+BugReports: https://github.com/pgmj/easyRasch2/issues
+Depends:
+    R (>= 4.1.0)
+Imports:
+    mirt,
+    dplyr,
+    knitr,
+    rlang (>= 1.0.0),
+    stats
+Suggests:
+    eRm,
+    psychotools,
+    iarm,
+    ggplot2 (>= 3.4.0),
+    testthat (>= 3.0.0),
+    rmarkdown
+Config/testthat/edition: 3
