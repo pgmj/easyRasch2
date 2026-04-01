@@ -19,10 +19,6 @@
   or `"dataframe"`. Optional `sort = "diff"` sorts by absolute difference
   descending.
 
-# easyRasch2 0.1.0
-
-* Initial package structure.
-* Added `RMlocdepQ3()` for Yen's Q3 residual correlation analysis of local dependence.
 
 # easyRasch2 0.2.0
 
@@ -40,3 +36,9 @@
   `sim_partial_score()`, and `extract_item_thresholds()`.
 * **Dependencies**: `eRm`, `psychotools (>= 0.7-3)`, `parallel`, and `utils`
   moved/added to Imports. `mirai` added to Suggests.
+
+
+# easyRasch2 0.1.0
+
+* Initial package structure.
+* Added `RMlocdepQ3()` for Yen's Q3 residual correlation analysis of local dependence.
