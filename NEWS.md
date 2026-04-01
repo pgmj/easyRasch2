@@ -1,3 +1,13 @@
+# easyRasch2 0.4.0
+
+* **New `RMinfitcutoff()`**: Simulation-based (parametric bootstrap) cutoff
+  determination for [RMiteminfit()]. Supports both dichotomous and polytomous
+  data. Optional parallel processing via `mirai` (falls back to sequential if
+  not installed). Returns per-item 2.5th and 97.5th percentiles of simulated
+  infit and outfit MSQ distributions (`$item_cutoffs`), together with the full
+  iteration-level results (`$results`). Requires the `iarm` package (Suggests).
+
+
 # easyRasch2 0.3.0
 
 * **New `RMiteminfit()`**: Computes conditional infit MSQ statistics for each
