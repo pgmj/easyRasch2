@@ -1,6 +1,31 @@
-test_that("RMlocdepQ3 errors when cutoff is missing", {
-  df <- as.data.frame(matrix(sample(0:1, 100, replace = TRUE), nrow = 20, ncol = 5))
-  expect_error(RMlocdepQ3(df), regexp = "cutoff")
+test_that("RMlocdepQ3 no longer errors when cutoff is missing", {
+  skip_if_not_installed("mirt")
+  set.seed(1)
+  df <- as.data.frame(matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5))
+  # NULL cutoff should return a knitr_kable, not an error
+  expect_s3_class(RMlocdepQ3(df), "knitr_kable")
+})
+
+test_that("RMlocdepQ3 with cutoff = NULL returns raw Q3 kable", {
+  skip_if_not_installed("mirt")
+  set.seed(1)
+  df <- as.data.frame(matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5))
+  result <- RMlocdepQ3(df, cutoff = NULL)
+  expect_s3_class(result, "knitr_kable")
+  # Caption should mention "Raw Q3"
+  cap <- attr(result, "caption")
+  expect_true(grepl("Raw Q3", cap))
+})
+
+test_that("RMlocdepQ3 with cutoff = NULL returns raw Q3 dataframe", {
+  skip_if_not_installed("mirt")
+  set.seed(1)
+  df <- as.data.frame(matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5))
+  result <- RMlocdepQ3(df, cutoff = NULL, output = "dataframe")
+  expect_s3_class(result, "data.frame")
+  expect_true(all(is.na(diag(as.matrix(result)))))
+  expect_true(all(is.na(result[upper.tri(result)])))
+  expect_false(all(is.na(result[lower.tri(result)])))
 })
 
 test_that("RMlocdepQ3 errors when data has non-zero minimum", {
@@ -30,4 +55,7 @@ test_that("RMlocdepQ3 returns a knitr_kable object when output = 'kable'", {
   df <- as.data.frame(matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5))
   result <- RMlocdepQ3(df, cutoff = 0.2, output = "kable")
   expect_s3_class(result, "knitr_kable")
+  # Caption should mention dynamic cut-off
+  cap <- attr(result, "caption")
+  expect_true(grepl("Dynamic cut-off", cap))
 })

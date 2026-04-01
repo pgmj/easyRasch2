@@ -21,15 +21,18 @@ BugReports: https://github.com/pgmj/easyRasch2/issues
 Depends:
     R (>= 4.1.0)
 Imports:
-    mirt,
-    dplyr,
-    knitr,
-    rlang (>= 1.0.0),
-    stats
-Suggests:
     eRm,
-    psychotools,
+    knitr,
+    mirt,
+    parallel,
+    psychotools (>= 0.7-3),
+    rlang (>= 1.0.0),
+    stats,
+    utils
+Suggests:
+    dplyr,
     iarm,
+    mirai,
     ggplot2 (>= 3.4.0),
     testthat (>= 3.0.0),
     rmarkdown
