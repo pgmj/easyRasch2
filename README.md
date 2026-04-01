@@ -39,11 +39,19 @@ sim_data <- as.data.frame(
 )
 colnames(sim_data) <- paste0("Item", 1:10)
 
-# Q3 residual correlations (dynamic cut-off = mean Q3 + 0.2)
-RMlocdepQ3(sim_data, cutoff = 0.2)
+# Step 1: Determine a simulation-based cutoff (recommended workflow)
+# options(mc.cores = 4)  # optional: use 4 cores
+cutoff_res <- RMlocdepQ3cutoff(sim_data, iterations = 500, seed = 123)
+cutoff_res$suggested_cutoff  # 99th percentile of max-mean Q3 difference
 
-# Return the underlying data.frame instead
-q3_df <- RMlocdepQ3(sim_data, cutoff = 0.2, output = "dataframe")
+# Step 2: Display Q3 table with the simulation-based cutoff
+RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
+
+# Display Q3 table without any cutoff (raw matrix)
+RMlocdepQ3(sim_data)
+
+# Return the underlying data.frame
+q3_df <- RMlocdepQ3(sim_data, output = "dataframe")
 ```
 
 ## License
