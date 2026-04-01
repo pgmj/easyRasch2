@@ -19,10 +19,13 @@
 #' @return
 #' * If `output = "kable"`: a `knitr_kable` object showing the lower triangle
 #'   of the Q3 correlation matrix. When `cutoff` is provided, a footnote
-#'   describing the dynamic cut-off is included.
+#'   describing the dynamic cut-off is included and an extra `above_cutoff`
+#'   column marks rows containing at least one value above the threshold.
 #' * If `output = "dataframe"`: a data.frame (rounded to 2 decimal places) with
 #'   the lower triangle of the Q3 correlation matrix; the upper triangle and
-#'   diagonal are set to `NA`.
+#'   diagonal are set to `NA`. When `cutoff` is provided, an additional logical
+#'   column `above_cutoff` indicates whether the row contains any value
+#'   exceeding the dynamic cut-off.
 #'
 #' @details
 #' The Q3 statistic (Yen, 1984) is the correlation between residuals of pairs
@@ -104,6 +107,16 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
   resid_df[upper.tri(resid_df)] <- NA
   diag(resid_df) <- NA
 
+  # --- Add above_cutoff column when cutoff is provided ------------------------
+  if (!is.null(cutoff)) {
+    dyn_cutoff <- mean_resid + cutoff
+    # Check each row for any value exceeding the dynamic cut-off
+    resid_df$above_cutoff <- apply(
+      resid_df, 1,
+      function(row) any(row > dyn_cutoff, na.rm = TRUE)
+    )
+  }
+
   # --- Return -----------------------------------------------------------------
   if (output == "dataframe") {
     return(resid_df)
@@ -111,7 +124,6 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
 
   # Build caption
   if (!is.null(cutoff)) {
-    dyn_cutoff <- mean_resid + cutoff
     caption_text <- paste0(
       "Dynamic cut-off: ", round(dyn_cutoff, 3),
       " (mean Q3 = ", round(mean_resid, 3),
@@ -123,13 +135,20 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
   }
 
   # Replace NA with "" for display (knitr::kable doesn't render NA nicely)
+  # Determine which columns are the item columns (all except above_cutoff)
+  item_cols <- setdiff(names(resid_df), "above_cutoff")
   resid_display <- as.data.frame(
-    lapply(resid_df, function(x) {
+    lapply(resid_df[item_cols], function(x) {
       ifelse(is.na(x), "", as.character(x))
     }),
     stringsAsFactors = FALSE
   )
   rownames(resid_display) <- rownames(resid_df)
+
+  # Add above_cutoff column for kable display
+  if (!is.null(cutoff)) {
+    resid_display$above_cutoff <- ifelse(resid_df$above_cutoff, "*", "")
+  }
 
   knitr::kable(
     resid_display,
@@ -152,7 +171,8 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
 #'   (default `TRUE`).
 #' @param n_cores Integer or `NULL`. Number of parallel workers. When `NULL`,
 #'   `getOption("mc.cores")` is checked first. If neither is set and
-#'   `parallel = TRUE`, an error is raised.
+#'   `parallel = TRUE`, a warning is issued and execution falls back to
+#'   sequential (single core) processing.
 #' @param verbose Logical. Show a progress bar (default `FALSE`).
 #' @param seed Integer or `NULL`. Random seed for reproducibility.
 #'
@@ -220,15 +240,18 @@ RMlocdepQ3cutoff <- function(data, iterations = 500, parallel = TRUE,
       n_cores <- getOption("mc.cores")
     }
     if (is.null(n_cores)) {
-      stop(
+      warning(
         paste0(
           "For parallel processing, specify n_cores or set options(mc.cores = N).\n",
-          "Your computer appears to have ", parallel::detectCores(), " cores available."
+          "Your computer appears to have ", parallel::detectCores(), " cores available.\n",
+          "Falling back to sequential (single core) processing."
         ),
         call. = FALSE
       )
+      use_parallel <- FALSE
+    } else {
+      n_cores <- min(n_cores, iterations)
     }
-    n_cores <- min(n_cores, iterations)
   }
 
   if (!is.null(seed)) {
