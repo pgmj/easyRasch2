@@ -22,13 +22,15 @@ Depends:
     R (>= 4.1.0)
 Imports:
     mirt,
-    dplyr,
     knitr,
     rlang (>= 1.0.0),
-    stats
-Suggests:
+    stats,
     eRm,
-    psychotools,
+    psychotools (>= 0.7-3),
+    foreach,
+    doParallel,
+    doRNG
+Suggests:
     iarm,
     ggplot2 (>= 3.4.0),
     testthat (>= 3.0.0),
