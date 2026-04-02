@@ -1,3 +1,19 @@
+# easyRasch2 0.5.0
+
+* **`RMinfitcutoff()` gains `cutoff_method` and `hdi_width` parameters**:
+  By default (`cutoff_method = "hdi"`, `hdi_width = 0.999`), per-item cutoff
+  intervals are now computed using the Highest Density Interval via
+  `ggdist::hdi()` (99.9% HDI). Set `cutoff_method = "quantile"` to restore the
+  previous behaviour (2.5th/97.5th percentiles). The `ggdist` package is only
+  required when `cutoff_method = "hdi"` (added to Suggests). The returned list
+  now also includes `cutoff_method` and `hdi_width` fields.
+
+* **`RMiteminfit()` caption updated**: When `cutoff` is the return value of
+  `RMinfitcutoff()`, the kable caption now states the cutoff method, e.g.
+  `"Cutoff values based on 250 simulation iterations (99.9% HDI)."` or
+  `"Cutoff values based on 250 simulation iterations (2.5th/97.5th percentile)."`.
+
+
 # easyRasch2 0.4.0
 
 * **`RMiteminfit()` gains optional `cutoff` parameter**: Accepts the return

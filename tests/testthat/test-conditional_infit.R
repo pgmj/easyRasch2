@@ -163,6 +163,122 @@ test_that("RMiteminfit with cutoff list (from RMinfitcutoff shape) extracts item
   expect_true(grepl("100 simulation iterations", cap))
 })
 
+test_that("RMiteminfit caption includes HDI info when cutoff_method = 'hdi'", {
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("eRm")
+  set.seed(42)
+  df <- as.data.frame(
+    matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5)
+  )
+  colnames(df) <- paste0("Item", 1:5)
+
+  mock_cutoff_hdi <- list(
+    item_cutoffs = data.frame(
+      Item        = paste0("Item", 1:5),
+      infit_low   = rep(0.7, 5),
+      infit_high  = rep(1.3, 5),
+      outfit_low  = rep(0.7, 5),
+      outfit_high = rep(1.3, 5),
+      stringsAsFactors = FALSE
+    ),
+    actual_iterations = 200L,
+    cutoff_method     = "hdi",
+    hdi_width         = 0.999
+  )
+
+  result_kable <- RMiteminfit(df, cutoff = mock_cutoff_hdi, output = "kable")
+  cap <- attr(result_kable, "caption")
+  expect_true(grepl("200 simulation iterations", cap))
+  expect_true(grepl("HDI", cap))
+  expect_true(grepl("99.9", cap))
+})
+
+test_that("RMiteminfit caption includes quantile info when cutoff_method = 'quantile'", {
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("eRm")
+  set.seed(42)
+  df <- as.data.frame(
+    matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5)
+  )
+  colnames(df) <- paste0("Item", 1:5)
+
+  mock_cutoff_quantile <- list(
+    item_cutoffs = data.frame(
+      Item        = paste0("Item", 1:5),
+      infit_low   = rep(0.7, 5),
+      infit_high  = rep(1.3, 5),
+      outfit_low  = rep(0.7, 5),
+      outfit_high = rep(1.3, 5),
+      stringsAsFactors = FALSE
+    ),
+    actual_iterations = 150L,
+    cutoff_method     = "quantile",
+    hdi_width         = 0.999
+  )
+
+  result_kable <- RMiteminfit(df, cutoff = mock_cutoff_quantile, output = "kable")
+  cap <- attr(result_kable, "caption")
+  expect_true(grepl("150 simulation iterations", cap))
+  expect_true(grepl("percentile", cap))
+})
+
+test_that("RMinfitcutoff errors when cutoff_method = 'hdi' but ggdist is not installed", {
+  skip_if(
+    requireNamespace("ggdist", quietly = TRUE),
+    "ggdist is installed; skipping missing-package error path test"
+  )
+  set.seed(42)
+  df <- as.data.frame(matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5))
+  colnames(df) <- paste0("Item", 1:5)
+  expect_error(
+    RMinfitcutoff(df, iterations = 5, parallel = FALSE, seed = 42,
+                  cutoff_method = "hdi"),
+    regexp = "ggdist"
+  )
+})
+
+test_that("RMinfitcutoff cutoff_method = 'quantile' returns valid cutoffs", {
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("eRm")
+  set.seed(42)
+  df <- as.data.frame(
+    matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5)
+  )
+  colnames(df) <- paste0("Item", 1:5)
+
+  res <- RMinfitcutoff(df, iterations = 20, parallel = FALSE, seed = 42,
+                       cutoff_method = "quantile")
+
+  expect_equal(res$cutoff_method, "quantile")
+  # hdi_width is always stored regardless of method; verify it keeps its default
+  expect_equal(res$hdi_width, 0.999)
+  expect_s3_class(res$item_cutoffs, "data.frame")
+  expect_equal(nrow(res$item_cutoffs), 5L)
+  expect_true(all(res$item_cutoffs$infit_low < res$item_cutoffs$infit_high))
+  expect_true(all(res$item_cutoffs$outfit_low < res$item_cutoffs$outfit_high))
+})
+
+test_that("RMinfitcutoff cutoff_method = 'hdi' returns valid cutoffs", {
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("eRm")
+  skip_if_not_installed("ggdist")
+  set.seed(42)
+  df <- as.data.frame(
+    matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5)
+  )
+  colnames(df) <- paste0("Item", 1:5)
+
+  res <- RMinfitcutoff(df, iterations = 20, parallel = FALSE, seed = 42,
+                       cutoff_method = "hdi", hdi_width = 0.999)
+
+  expect_equal(res$cutoff_method, "hdi")
+  expect_equal(res$hdi_width, 0.999)
+  expect_s3_class(res$item_cutoffs, "data.frame")
+  expect_equal(nrow(res$item_cutoffs), 5L)
+  expect_true(all(res$item_cutoffs$infit_low < res$item_cutoffs$infit_high))
+  expect_true(all(res$item_cutoffs$outfit_low < res$item_cutoffs$outfit_high))
+})
+
 test_that("RMiteminfit with cutoff data.frame (no actual_iterations) uses generic caption", {
   skip_if_not_installed("iarm")
   skip_if_not_installed("eRm")

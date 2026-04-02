@@ -3,7 +3,7 @@
 #' Uses parametric bootstrap simulation to determine appropriate cutoff values
 #' for [RMiteminfit()]. Under a correctly fitting Rasch model, infit MSQ
 #' statistics have a known distribution; this function simulates that
-#' distribution and returns per-item empirical percentiles.
+#' distribution and returns per-item empirical cutoffs.
 #'
 #' @param data A data.frame or matrix of item responses. Items must be scored
 #'   starting at 0 (non-negative integers). Only complete cases (rows without
@@ -17,18 +17,28 @@
 #'   sequential (single core) processing.
 #' @param verbose Logical. Show a progress bar (default `FALSE`).
 #' @param seed Integer or `NULL`. Random seed for reproducibility.
+#' @param cutoff_method Character string specifying how cutoff intervals are
+#'   computed. Either `"hdi"` (default) for the Highest Density Interval via
+#'   `ggdist::hdi()`, or `"quantile"` for the 2.5th/97.5th percentiles via
+#'   `stats::quantile()`.
+#' @param hdi_width Numeric. Width of the HDI when `cutoff_method = "hdi"`.
+#'   Default is `0.999` (99.9% HDI). Ignored when `cutoff_method = "quantile"`.
 #'
 #' @return A list with components:
 #' \describe{
 #'   \item{`results`}{data.frame with columns `iteration`, `Item`,
 #'     `InfitMSQ`, `OutfitMSQ` (one row per item per successful iteration).}
 #'   \item{`item_cutoffs`}{data.frame with per-item cutoff summaries: `Item`,
-#'     `infit_low` (2.5th percentile), `infit_high` (97.5th percentile),
-#'     `outfit_low` (2.5th percentile), `outfit_high` (97.5th percentile).}
+#'     `infit_low`, `infit_high`, `outfit_low`, `outfit_high`. Bounds are
+#'     computed using the method specified by `cutoff_method`.}
 #'   \item{`actual_iterations`}{Number of successful iterations.}
 #'   \item{`sample_n`}{Number of complete cases used.}
 #'   \item{`sample_summary`}{Summary statistics of estimated person parameters.}
 #'   \item{`item_names`}{Character vector of item names from data.}
+#'   \item{`cutoff_method`}{The method used to compute cutoffs (`"hdi"` or
+#'     `"quantile"`).}
+#'   \item{`hdi_width`}{The HDI width used (only meaningful when
+#'     `cutoff_method = "hdi"`).}
 #' }
 #'
 #' @details
@@ -70,7 +80,19 @@
 #' RMiteminfit(sim_data)
 #' }
 RMinfitcutoff <- function(data, iterations = 250, parallel = TRUE,
-                           n_cores = NULL, verbose = FALSE, seed = NULL) {
+                           n_cores = NULL, verbose = FALSE, seed = NULL,
+                           cutoff_method = "hdi", hdi_width = 0.999) {
+
+  cutoff_method <- match.arg(cutoff_method, c("hdi", "quantile"))
+
+  if (cutoff_method == "hdi" && !requireNamespace("ggdist", quietly = TRUE)) {
+    stop(
+      "Package 'ggdist' is required when cutoff_method = \"hdi\" but is not installed.\n",
+      "Install it with: install.packages(\"ggdist\")\n",
+      "Alternatively, use cutoff_method = \"quantile\" to avoid this dependency.",
+      call. = FALSE
+    )
+  }
 
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
@@ -189,19 +211,39 @@ RMinfitcutoff <- function(data, iterations = 250, parallel = TRUE,
   results_df <- do.call(rbind, iter_dfs)
   rownames(results_df) <- NULL
 
-  # Compute per-item cutoffs (2.5th and 97.5th percentiles)
+  # Compute per-item cutoffs
   item_names <- unique(results_df$Item)
   item_cutoffs <- do.call(rbind, lapply(item_names, function(item) {
     sub <- results_df[results_df$Item == item, ]
-    data.frame(
-      Item        = item,
-      infit_low   = stats::quantile(sub$InfitMSQ,  0.025, na.rm = TRUE),
-      infit_high  = stats::quantile(sub$InfitMSQ,  0.975, na.rm = TRUE),
-      outfit_low  = stats::quantile(sub$OutfitMSQ, 0.025, na.rm = TRUE),
-      outfit_high = stats::quantile(sub$OutfitMSQ, 0.975, na.rm = TRUE),
-      stringsAsFactors = FALSE,
-      row.names = NULL
-    )
+    if (cutoff_method == "hdi") {
+      # ggdist::hdi() returns a matrix with ncol = 2: column 1 is the lower
+      # bound, column 2 is the upper bound. Row 1 contains the widest/only
+      # interval. For multimodal distributions `ggdist::hdi()` may return
+      # multiple rows (disjoint intervals); we take only row 1 (the first
+      # interval). In practice, infit/outfit MSQ distributions from parametric
+      # bootstrap are unimodal, so a single interval is expected.
+      infit_interval  <- ggdist::hdi(sub$InfitMSQ,  .width = hdi_width)
+      outfit_interval <- ggdist::hdi(sub$OutfitMSQ, .width = hdi_width)
+      data.frame(
+        Item        = item,
+        infit_low   = infit_interval[1L, 1L],
+        infit_high  = infit_interval[1L, 2L],
+        outfit_low  = outfit_interval[1L, 1L],
+        outfit_high = outfit_interval[1L, 2L],
+        stringsAsFactors = FALSE,
+        row.names = NULL
+      )
+    } else {
+      data.frame(
+        Item        = item,
+        infit_low   = stats::quantile(sub$InfitMSQ,  0.025, na.rm = TRUE),
+        infit_high  = stats::quantile(sub$InfitMSQ,  0.975, na.rm = TRUE),
+        outfit_low  = stats::quantile(sub$OutfitMSQ, 0.025, na.rm = TRUE),
+        outfit_high = stats::quantile(sub$OutfitMSQ, 0.975, na.rm = TRUE),
+        stringsAsFactors = FALSE,
+        row.names = NULL
+      )
+    }
   }))
   rownames(item_cutoffs) <- NULL
 
@@ -211,7 +253,9 @@ RMinfitcutoff <- function(data, iterations = 250, parallel = TRUE,
     actual_iterations = actual_iterations,
     sample_n          = sample_n,
     sample_summary    = summary(thetas),
-    item_names        = item_names_vec
+    item_names        = item_names_vec,
+    cutoff_method     = cutoff_method,
+    hdi_width         = hdi_width
   )
 }
 
