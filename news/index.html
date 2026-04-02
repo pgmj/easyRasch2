@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,9 +33,13 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.1" id="easyrasch2-051">easyRasch2 0.5.1<a class="anchor" aria-label="anchor" href="#easyrasch2-051"></a></h2>
+<ul><li>New function <strong><code><a href="../reference/RMinfitcutoffPlot.html">RMinfitcutoffPlot()</a></code></strong> to illustrate distribution of simulated conditional item infit MSQ values together with the observed value.</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.0" id="easyrasch2-050">easyRasch2 0.5.0<a class="anchor" aria-label="anchor" href="#easyrasch2-050"></a></h2>
-<ul><li><p><strong><code><a href="../reference/RMinfitcutoff.html">RMinfitcutoff()</a></code> gains <code>cutoff_method</code> and <code>hdi_width</code> parameters</strong>: By default (<code>cutoff_method = "hdi"</code>, <code>hdi_width = 0.999</code>), per-item cutoff intervals are now computed using the Highest Density Interval via <code><a href="https://mjskay.github.io/ggdist/reference/point_interval.html" class="external-link">ggdist::hdi()</a></code> (99.9% HDI). Set <code>cutoff_method = "quantile"</code> to restore the previous behaviour (2.5th/97.5th percentiles). The <code>ggdist</code> package is only required when <code>cutoff_method = "hdi"</code> (added to Suggests). The returned list now also includes <code>cutoff_method</code> and <code>hdi_width</code> fields.</p></li>
-<li><p><strong><code><a href="../reference/RMiteminfit.html">RMiteminfit()</a></code> caption updated</strong>: When <code>cutoff</code> is the return value of <code><a href="../reference/RMinfitcutoff.html">RMinfitcutoff()</a></code>, the kable caption now states the cutoff method, e.g. <code>"Cutoff values based on 250 simulation iterations (99.9% HDI)."</code> or <code>"Cutoff values based on 250 simulation iterations (2.5th/97.5th percentile)."</code>.</p></li>
+<ul><li><p><strong><code><a href="../reference/RMinfitcutoff.html">RMinfitcutoff()</a></code> gains <code>cutoff_method</code> and <code>hdci_width</code> parameters</strong>: By default (<code>cutoff_method = "hdci"</code>, <code>hdci_width = 0.999</code>), per-item cutoff intervals are now computed using the Highest Density Interval via <code><a href="https://mjskay.github.io/ggdist/reference/point_interval.html" class="external-link">ggdist::hdci()</a></code> (99.9% HDCI). Set <code>cutoff_method = "quantile"</code> to restore the previous behaviour (2.5th/97.5th percentiles). The <code>ggdist</code> package is only required when <code>cutoff_method = "hdci"</code> (added to Suggests). The returned list now also includes <code>cutoff_method</code> and <code>hdci_width</code> fields.</p></li>
+<li><p><strong><code><a href="../reference/RMiteminfit.html">RMiteminfit()</a></code> caption updated</strong>: When <code>cutoff</code> is the return value of <code><a href="../reference/RMinfitcutoff.html">RMinfitcutoff()</a></code>, the kable caption now states the cutoff method, e.g. <code>"Cutoff values based on 250 simulation iterations (99.9% HDCI)."</code> or <code>"Cutoff values based on 250 simulation iterations (2.5th/97.5th percentile)."</code>.</p></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.0" id="easyrasch2-040">easyRasch2 0.4.0<a class="anchor" aria-label="anchor" href="#easyrasch2-040"></a></h2>

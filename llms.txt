@@ -59,6 +59,9 @@ simfit <- RMinfitcutoff(d, n_cores = 4)
 # Infit table with dynamic cut-off
 RMiteminfit(d, simfit)
 
+# Infit plot with distribution of simulated MSQ values together with observed values
+RMinfitcutoffPlot(simfit, d)
+
 # Item-restscore using Goodman-Kruskal's gamma
 RMitemrestscore(d)
 ```
@@ -110,6 +113,8 @@ Conditional item fit statistics and simulation-based cutoffs
   : Conditional Item Infit MSQ
 - [`RMinfitcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff.md)
   : Simulation-Based Infit MSQ Cutoff Determination
+- [`RMinfitcutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoffPlot.md)
+  : Plot Distribution of Simulated Infit and Outfit MSQ Values
 
 ## Item Restscore
 

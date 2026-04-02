@@ -59,6 +59,9 @@ simfit <- RMinfitcutoff(d, n_cores = 4)
 # Infit table with dynamic cut-off
 RMiteminfit(d, simfit)
 
+# Infit plot with distribution of simulated MSQ values together with observed values
+RMinfitcutoffPlot(simfit, d)
+
 # Item-restscore using Goodman-Kruskal's gamma
 RMitemrestscore(d)
 ```
