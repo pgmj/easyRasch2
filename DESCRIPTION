@@ -26,7 +26,6 @@ Imports:
     mirt,
     parallel,
     psychotools (>= 0.7-3),
-    rlang (>= 1.0.0),
     stats,
     utils
 Suggests:

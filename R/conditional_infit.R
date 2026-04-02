@@ -143,7 +143,7 @@ RMiteminfit <- function(data, cutoff = NULL, output = "kable", sort) {
   if (max(data_mat, na.rm = TRUE) == 1L) {
     # Dichotomous: Rasch model
     erm_out <- eRm::RM(data)
-    item_avg_locations <- coef(erm_out, "beta") * -1
+    item_avg_locations <- stats::coef(erm_out, "beta") * -1
     pp <- eRm::person.parameter(erm_out)
     person_avg_location <- mean(pp$theta.table[["Person Parameter"]], na.rm = TRUE)
   } else {
