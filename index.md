@@ -1,0 +1,101 @@
+# easyRasch2
+
+`easyRasch2` is a CRAN-targeted R package that provides functions for
+Rasch measurement theory analysis workflows. It is the successor to
+[easyRasch](https://github.com/pgmj/easyRasch), offering a lightweight,
+CRAN-ready structure with proper namespacing and minimal dependencies.
+
+Key functions implemented produce simulation-based critical values
+(cutoffs) for conditional item infit MSQ and Yen’s Q3 residuals to
+evaluate local dependencies.
+
+For more materials on Rasch analysis, see the
+[vignette](https://pgmj.github.io/raschrvignette/RaschRvign.html) for my
+the package [`easyRasch`](https://pgmj.github.io/easyRasch/).
+
+## Key design principles
+
+- **Estimation**: Conditional Maximum Likelihood (CML) via `eRm`,
+  `psychotools`, and `iarm` for item parameters; Weighted Likelihood
+  Estimation (WLE) for person parameters; `mirt` (MML) only where CML
+  alternatives do not exist (e.g., Q3 residual correlations).
+- **Output**:
+  [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html) for
+  tables (Quarto-friendly) and `ggplot2` for figures, with `"dataframe"`
+  output options for further processing.
+- **Naming**: Functions use the `RM` prefix (e.g.,
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md)).
+
+## Installation
+
+Install the development version from GitHub:
+
+``` r
+# install.packages("remotes")
+remotes::install_github("pgmj/easyRasch2")
+```
+
+## Example
+
+``` r
+library(easyRasch2)
+
+# Simulate binary item response data
+set.seed(42)
+d <- as.data.frame(
+  matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+)
+colnames(d) <- paste0("Item", 1:10)
+
+# Derive a simulation-based Q3 cutoff (500 iterations by default)
+cutoff_res <- RMlocdepQ3cutoff(d, iterations = 100, parallel = FALSE, seed = 42)
+
+# Q3 table with simulation-based dynamic cut-off
+RMlocdepQ3(d, cutoff = cutoff_res$suggested_cutoff)
+
+# Derive a simulation-based conditional item MSQ infit cutoff
+simfit <- RMinfitcutoff(d, n_cores = 4)
+
+# Infit table with dynamic cut-off
+RMiteminfit(d, simfit)
+
+# Item-restscore using Goodman-Kruskal's gamma
+RMitemrestscore(d)
+```
+
+## References
+
+- Christensen, K. B., Makransky, G., & Horton, M. (2017). Critical
+  Values for Yen’s Q3: Identification of Local Dependence in the Rasch
+  Model Using Residual Correlations. *Applied Psychological Measurement,
+  41*(3), 178–194. <https://doi.org/10.1177/0146621616677520>
+- Johansson, M. (2025). Detecting Item Misfit in Rasch Models.
+  *Educational Methods & Psychometrics, 3*(18).
+  <https://doi.org/10.61186/emp.2025.5>
+- Kreiner, S. (2011). A Note on Item–Restscore Association in Rasch
+  Models. *Applied Psychological Measurement, 35*(7), 557–561.
+  <https://doi.org/10.1177/0146621611410227>
+- Müller, M. (2020). Item fit statistics for Rasch analysis: Can we
+  trust them? *Journal of Statistical Distributions and Applications,
+  7*(1), 5. <https://doi.org/10.1186/s40488-020-00108-7>
+
+## Credits
+
+As stated, this is based on my `easyRasch` package, and I am using
+Claude Opus 4.6 to “transfer” functions to this more properly formatted
+package. While it uses my earlier code, most of the code in this package
+is produced by the LLM and bug fixed by me.
+
+[Magnus Johansson](https://ki.se/en/people/magnus-johansson-3) is a
+licensed psychologist with a PhD in behavior analysis. He works as a
+research specialist at [Karolinska
+Institutet](https://ki.se/en/cns/research/centre-for-psychiatry-research),
+Department of Clinical Neuroscience, Center for Psychiatry Research.
+
+- ORCID: [0000-0003-1669-592X](https://orcid.org/0000-0003-1669-592X)
+- Bluesky:
+  [@pgmj.bsky.social](https://bsky.app/profile/pgmj.bsky.social)
+
+## License
+
+GPL (\>= 3)
