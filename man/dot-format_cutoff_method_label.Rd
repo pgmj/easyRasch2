@@ -4,12 +4,12 @@
 \alias{.format_cutoff_method_label}
 \title{Format a human-readable label for the cutoff method}
 \usage{
-.format_cutoff_method_label(cutoff_method, hdi_width)
+.format_cutoff_method_label(cutoff_method, hdci_width)
 }
 \arguments{
-\item{cutoff_method}{Character. \code{"hdi"}, \code{"quantile"}, or \code{NULL}.}
+\item{cutoff_method}{Character. \code{"hdci"}, \code{"quantile"}, or \code{NULL}.}
 
-\item{hdi_width}{Numeric or \code{NULL}. HDI width (e.g., \code{0.999}).}
+\item{hdci_width}{Numeric or \code{NULL}. HDCI width (e.g., \code{0.999}).}
 }
 \value{
 A character label, or \code{NULL} if the method is unknown/unset.

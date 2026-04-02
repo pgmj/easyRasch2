@@ -1,0 +1,40 @@
+url: https://pgmj.github.io/easyRasch2/
+
+development:
+  mode: auto
+
+template:
+  bootstrap: 5
+  bootswatch: lumen
+
+navbar:
+  structure:
+    left:  [intro, reference, news]
+    right: [search, github, lightswitch]
+  components:
+    reference:
+      text: Reference
+      href: reference/index.html
+    news:
+      text: Changelog
+      href: news/index.html
+    github:
+      icon: fab fa-github
+      href: https://github.com/pgmj/easyRasch2/
+      aria-label: GitHub
+
+reference:
+  - title: "Item Fit"
+    desc: "Conditional item fit statistics and simulation-based cutoffs"
+    contents:
+      - RMiteminfit
+      - RMinfitcutoff
+  - title: "Item Restscore"
+    desc: "Item-restscore correlation analysis"
+    contents:
+      - RMitemrestscore
+  - title: "Local Dependence"
+    desc: "Q3 residual correlations and simulation-based cutoffs"
+    contents:
+      - RMlocdepQ3
+      - RMlocdepQ3cutoff

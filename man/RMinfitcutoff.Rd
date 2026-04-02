@@ -11,8 +11,8 @@ RMinfitcutoff(
   n_cores = NULL,
   verbose = FALSE,
   seed = NULL,
-  cutoff_method = "hdi",
-  hdi_width = 0.999
+  cutoff_method = "hdci",
+  hdci_width = 0.999
 )
 }
 \arguments{
@@ -35,12 +35,12 @@ sequential (single core) processing.}
 \item{seed}{Integer or \code{NULL}. Random seed for reproducibility.}
 
 \item{cutoff_method}{Character string specifying how cutoff intervals are
-computed. Either \code{"hdi"} (default) for the Highest Density Interval via
-\code{ggdist::hdi()}, or \code{"quantile"} for the 2.5th/97.5th percentiles via
+computed. Either \code{"hdci"} (default) for the Highest Density Interval via
+\code{ggdist::hdci()}, or \code{"quantile"} for the 2.5th/97.5th percentiles via
 \code{stats::quantile()}.}
 
-\item{hdi_width}{Numeric. Width of the HDI when \code{cutoff_method = "hdi"}.
-Default is \code{0.999} (99.9\% HDI). Ignored when \code{cutoff_method = "quantile"}.}
+\item{hdci_width}{Numeric. Width of the HDCI when \code{cutoff_method = "hdci"}.
+Default is \code{0.999} (99.9\% HDCI). Ignored when \code{cutoff_method = "quantile"}.}
 }
 \value{
 A list with components:
@@ -54,15 +54,15 @@ computed using the method specified by \code{cutoff_method}.}
 \item{\code{sample_n}}{Number of complete cases used.}
 \item{\code{sample_summary}}{Summary statistics of estimated person parameters.}
 \item{\code{item_names}}{Character vector of item names from data.}
-\item{\code{cutoff_method}}{The method used to compute cutoffs (\code{"hdi"} or
+\item{\code{cutoff_method}}{The method used to compute cutoffs (\code{"hdci"} or
 \code{"quantile"}).}
-\item{\code{hdi_width}}{The HDI width used (only meaningful when
-\code{cutoff_method = "hdi"}).}
+\item{\code{hdci_width}}{The HDCI width used (only meaningful when
+\code{cutoff_method = "hdci"}).}
 }
 }
 \description{
 Uses parametric bootstrap simulation to determine appropriate cutoff values
-for \code{\link[=RMiteminfit]{RMiteminfit()}}. This function simulates data from a correctly fitting
+for \code{\link{RMiteminfit}}. This function simulates data from a correctly fitting
 Rasch model that mimics your data and returns per-item empirical cutoffs.
 }
 \details{
@@ -101,5 +101,5 @@ RMiteminfit(sim_data)
 }
 }
 \seealso{
-\code{\link[=RMiteminfit]{RMiteminfit()}}
+\code{\link{RMiteminfit}}
 }

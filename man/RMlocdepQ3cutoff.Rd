@@ -42,12 +42,12 @@ per successful iteration).}
 \item{\code{max_diff}, \code{sd_diff}}{Max and SD of the \code{diff} distribution.}
 \item{\code{p95}, \code{p99}, \code{p995}, \code{p999}}{Empirical percentiles of \code{diff}.}
 \item{\code{suggested_cutoff}}{The 99th percentile (\code{p99}) — recommended cutoff
-for \code{\link[=RMlocdepQ3]{RMlocdepQ3()}}.}
+for \code{\link{RMlocdepQ3}}.}
 }
 }
 \description{
 Uses parametric bootstrap simulation to determine an appropriate cutoff
-value for \code{\link[=RMlocdepQ3]{RMlocdepQ3()}}. Under a correctly fitting Rasch model, Q3
+value for \code{\link{RMlocdepQ3}}. Under a correctly fitting Rasch model, Q3
 residuals have an unknown distribution; this function simulates that
 distribution and returns empirical percentiles.
 }
@@ -84,5 +84,5 @@ RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
 }
 }
 \seealso{
-\code{\link[=RMlocdepQ3]{RMlocdepQ3()}}
+\code{\link{RMlocdepQ3}}
 }

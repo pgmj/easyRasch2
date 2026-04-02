@@ -1,7 +1,7 @@
 #' Simulation-Based Infit MSQ Cutoff Determination
 #'
 #' Uses parametric bootstrap simulation to determine appropriate cutoff values
-#' for [RMiteminfit()]. This function simulates data from a correctly fitting 
+#' for \code{\link{RMiteminfit}}. This function simulates data from a correctly fitting 
 #' Rasch model that mimics your data and returns per-item empirical cutoffs.
 #'
 #' @param data A data.frame or matrix of item responses. Items must be scored
@@ -17,11 +17,11 @@
 #' @param verbose Logical. Show a progress bar (default `FALSE`).
 #' @param seed Integer or `NULL`. Random seed for reproducibility.
 #' @param cutoff_method Character string specifying how cutoff intervals are
-#'   computed. Either `"hdi"` (default) for the Highest Density Interval via
-#'   `ggdist::hdi()`, or `"quantile"` for the 2.5th/97.5th percentiles via
+#'   computed. Either `"hdci"` (default) for the Highest Density Interval via
+#'   `ggdist::hdci()`, or `"quantile"` for the 2.5th/97.5th percentiles via
 #'   `stats::quantile()`.
-#' @param hdi_width Numeric. Width of the HDI when `cutoff_method = "hdi"`.
-#'   Default is `0.999` (99.9% HDI). Ignored when `cutoff_method = "quantile"`.
+#' @param hdci_width Numeric. Width of the HDCI when `cutoff_method = "hdci"`.
+#'   Default is `0.999` (99.9% HDCI). Ignored when `cutoff_method = "quantile"`.
 #'
 #' @return A list with components:
 #' \describe{
@@ -34,10 +34,10 @@
 #'   \item{`sample_n`}{Number of complete cases used.}
 #'   \item{`sample_summary`}{Summary statistics of estimated person parameters.}
 #'   \item{`item_names`}{Character vector of item names from data.}
-#'   \item{`cutoff_method`}{The method used to compute cutoffs (`"hdi"` or
+#'   \item{`cutoff_method`}{The method used to compute cutoffs (`"hdci"` or
 #'     `"quantile"`).}
-#'   \item{`hdi_width`}{The HDI width used (only meaningful when
-#'     `cutoff_method = "hdi"`).}
+#'   \item{`hdci_width`}{The HDCI width used (only meaningful when
+#'     `cutoff_method = "hdci"`).}
 #' }
 #'
 #' @details
@@ -58,7 +58,7 @@
 #'
 #' The `iarm` package must be installed (it is in Suggests, not Imports).
 #'
-#' @seealso [RMiteminfit()]
+#' @seealso \code{\link{RMiteminfit}}
 #'
 #' @export
 #'
@@ -80,13 +80,13 @@
 #' }
 RMinfitcutoff <- function(data, iterations = 250, parallel = TRUE,
                            n_cores = NULL, verbose = FALSE, seed = NULL,
-                           cutoff_method = "hdi", hdi_width = 0.999) {
+                           cutoff_method = "hdci", hdci_width = 0.999) {
 
-  cutoff_method <- match.arg(cutoff_method, c("hdi", "quantile"))
+  cutoff_method <- match.arg(cutoff_method, c("hdci", "quantile"))
 
-  if (cutoff_method == "hdi" && !requireNamespace("ggdist", quietly = TRUE)) {
+  if (cutoff_method == "hdci" && !requireNamespace("ggdist", quietly = TRUE)) {
     stop(
-      "Package 'ggdist' is required when cutoff_method = \"hdi\" but is not installed.\n",
+      "Package 'ggdist' is required when cutoff_method = \"hdci\" but is not installed.\n",
       "Install it with: install.packages(\"ggdist\")\n",
       "Alternatively, use cutoff_method = \"quantile\" to avoid this dependency.",
       call. = FALSE
@@ -218,15 +218,12 @@ RMinfitcutoff <- function(data, iterations = 250, parallel = TRUE,
   item_names <- unique(results_df$Item)
   item_cutoffs <- do.call(rbind, lapply(item_names, function(item) {
     sub <- results_df[results_df$Item == item, ]
-    if (cutoff_method == "hdi") {
-      # ggdist::hdi() returns a matrix with ncol = 2: column 1 is the lower
-      # bound, column 2 is the upper bound. Row 1 contains the widest/only
-      # interval. For multimodal distributions `ggdist::hdi()` may return
-      # multiple rows (disjoint intervals); we take only row 1 (the first
-      # interval). In practice, infit/outfit MSQ distributions from parametric
-      # bootstrap are unimodal, so a single interval is expected.
-      infit_interval  <- ggdist::hdi(sub$InfitMSQ,  .width = hdi_width)
-      outfit_interval <- ggdist::hdi(sub$OutfitMSQ, .width = hdi_width)
+    if (cutoff_method == "hdci") {
+      # ggdist::hdci() returns a matrix with ncol = 2: column 1 is the lower
+      # bound, column 2 is the upper bound. Row 1 contains the continuous
+      # interval.
+      infit_interval  <- ggdist::hdci(sub$InfitMSQ,  .width = hdci_width)
+      outfit_interval <- ggdist::hdci(sub$OutfitMSQ, .width = hdci_width)
       data.frame(
         Item        = item,
         infit_low   = infit_interval[1L, 1L],
@@ -258,7 +255,7 @@ RMinfitcutoff <- function(data, iterations = 250, parallel = TRUE,
     sample_summary    = summary(thetas),
     item_names        = item_names_vec,
     cutoff_method     = cutoff_method,
-    hdi_width         = hdi_width
+    hdci_width         = hdci_width
   )
 }
 

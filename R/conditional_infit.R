@@ -9,11 +9,11 @@
 #'   but at least one complete case (row with no `NA`) must be present.
 #' @param cutoff Optional. Default `NULL` (no cutoff applied, behaviour is
 #'   identical to the current version). Can be:
-#'   * The return value of [RMinfitcutoff()] (a list with `$item_cutoffs`):
+#'   * The return value of \code{\link{RMinfitcutoff}} (a list with `$item_cutoffs`):
 #'     the data.frame is extracted automatically and the number of simulation
-#'     iterations, `cutoff_method`, and `hdi_width` are included in the kable
+#'     iterations, `cutoff_method`, and `hdci_width` are included in the kable
 #'     caption.
-#'   * The `$item_cutoffs` data.frame from [RMinfitcutoff()] directly: must
+#'   * The `$item_cutoffs` data.frame from \code{\link{RMinfitcutoff}} directly: must
 #'     have columns `Item`, `infit_low`, and `infit_high`.
 #'   When provided, adds columns `Infit_low`, `Infit_high`, and `Flagged`
 #'   (logical; `TRUE` when `Infit_MSQ` falls outside the credible range) to
@@ -41,7 +41,7 @@
 #' above 1.0 suggest underfit (unexpected responses), while values substantially
 #' below 1.0 suggest overfit (overly predictable responses). The definition of
 #' "substantially" depends on several factors such as sample size, and needs to
-#' be determined by simulation using [RMinfitcutoff()]. There is no general
+#' be determined by simulation using \code{\link{RMinfitcutoff}}. There is no general
 #' rule-of-thumb value that is correct.
 #'
 #' Conditional infit MSQ statistics are computed via `iarm::out_infit()`, which
@@ -70,7 +70,7 @@
 #' them? *Journal of Statistical Distributions and Applications*, 7(5).
 #' \doi{10.1186/s40488-020-00108-7}
 #'
-#' @seealso [RMinfitcutoff()]
+#' @seealso \code{\link{RMinfitcutoff}}
 #'
 #' @export
 #'
@@ -113,12 +113,12 @@ RMiteminfit <- function(data, cutoff = NULL, output = "kable", sort) {
   # --- Validate and normalise cutoff ------------------------------------------
   cutoff_n_iter  <- NULL
   cutoff_method  <- NULL
-  cutoff_hdi_width <- NULL
+  cutoff_hdci_width <- NULL
   if (!is.null(cutoff)) {
     if (is.list(cutoff) && !is.data.frame(cutoff) && "item_cutoffs" %in% names(cutoff)) {
       cutoff_n_iter    <- cutoff$actual_iterations
       cutoff_method    <- cutoff$cutoff_method
-      cutoff_hdi_width <- cutoff$hdi_width
+      cutoff_hdci_width <- cutoff$hdci_width
       cutoff <- cutoff$item_cutoffs
     }
     if (!is.data.frame(cutoff)) {
@@ -240,7 +240,7 @@ RMiteminfit <- function(data, cutoff = NULL, output = "kable", sort) {
         " complete cases)."
       )
     } else if (!is.null(cutoff_n_iter)) {
-      method_label <- .format_cutoff_method_label(cutoff_method, cutoff_hdi_width)
+      method_label <- .format_cutoff_method_label(cutoff_method, cutoff_hdci_width)
       iter_part <- paste0(cutoff_n_iter, " simulation iterations")
       paste0(
         "MSQ values based on conditional estimation (n = ",
@@ -268,17 +268,17 @@ RMiteminfit <- function(data, cutoff = NULL, output = "kable", sort) {
 
 #' Format a human-readable label for the cutoff method
 #'
-#' @param cutoff_method Character. `"hdi"`, `"quantile"`, or `NULL`.
-#' @param hdi_width Numeric or `NULL`. HDI width (e.g., `0.999`).
+#' @param cutoff_method Character. `"hdci"`, `"quantile"`, or `NULL`.
+#' @param hdci_width Numeric or `NULL`. HDCI width (e.g., `0.999`).
 #' @return A character label, or `NULL` if the method is unknown/unset.
 #' @keywords internal
-.format_cutoff_method_label <- function(cutoff_method, hdi_width) {
+.format_cutoff_method_label <- function(cutoff_method, hdci_width) {
   if (is.null(cutoff_method)) {
     return(NULL)
   }
   switch(cutoff_method,
     quantile = "2.5th/97.5th percentile",
-    hdi      = if (!is.null(hdi_width)) paste0(hdi_width * 100, "% HDI") else "HDI",
+    hdci      = if (!is.null(hdci_width)) paste0(hdci_width * 100, "% HDCI") else "HDCI",
     NULL
   )
 }

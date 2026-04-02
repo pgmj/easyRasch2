@@ -1,9 +1,14 @@
 Package: easyRasch2
 Title: Rasch Measurement Theory Analysis for R
-Version: 0.4.0
-Authors@R: 
-    person("Magnus", "Johansson", , "pgmj@pm.me", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0003-1669-592X"))
+Version: 0.5.0
+Authors@R: c(
+    person("Magnus", "Johansson", 
+           role = c("aut", "cre"),
+           email = "pgmj@pm.me", 
+           comment = c(ORCID = "0000-0003-1669-592X")),
+    person("Nicklas", "Korsell",
+           role = "ctb",
+           comment = "PCM simulation code"))
 Description: Provides functions to simplify Rasch measurement theory analysis
     workflows, from local dependence assessment to item fit, person fit,
     differential item functioning, targeting, and reliability. Uses

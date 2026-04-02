@@ -13,7 +13,7 @@ starting at 0 (non-negative integers). Missing values (\code{NA}) are allowed.}
 \item{cutoff}{Optional single numeric value added to the mean off-diagonal Q3
 correlation to produce the dynamic cut-off threshold. When \code{NULL}
 (default), the raw Q3 residual correlation matrix is returned without any
-dynamic cut-off applied. Use \code{\link[=RMlocdepQ3cutoff]{RMlocdepQ3cutoff()}} to derive a
+dynamic cut-off applied. Use \code{\link{RMlocdepQ3cutoff}} to derive a
 simulation-based cutoff value.}
 
 \item{output}{Character string controlling the return value. Either
@@ -37,7 +37,8 @@ exceeding the dynamic cut-off.
 Computes Yen's Q3 residual correlations between item pairs using a Rasch
 model fitted via Marginal Maximum Likelihood (MML) in \code{mirt}. High
 correlations (above the dynamic cut-off) indicate potential local dependence
-between items.
+between items. See \code{\link{RMlocdepQ3cutoff}} for how to determine
+the appropriate dynamic cut-off for your data.
 }
 \details{
 The Q3 statistic (Yen, 1984) is the correlation between residuals of pairs
@@ -45,7 +46,7 @@ of items after accounting for the latent trait. Under local independence,
 Q3 values are expected to be around \eqn{-1/(k-1)} where \eqn{k} is the
 number of items. When \code{cutoff} is supplied, the dynamic cut-off is the mean
 of all off-diagonal Q3 values plus \code{cutoff}, following the approach of
-Christensen et al. (2017). Use \code{\link[=RMlocdepQ3cutoff]{RMlocdepQ3cutoff()}} to obtain a
+Christensen et al. (2017). Use \code{\link{RMlocdepQ3cutoff}} to obtain a
 simulation-based cutoff recommendation.
 
 \code{mirt} is used for model fitting here because Q3 requires model-based

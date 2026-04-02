@@ -14,11 +14,11 @@ but at least one complete case (row with no \code{NA}) must be present.}
 \item{cutoff}{Optional. Default \code{NULL} (no cutoff applied, behaviour is
 identical to the current version). Can be:
 \itemize{
-\item The return value of \code{\link[=RMinfitcutoff]{RMinfitcutoff()}} (a list with \verb{$item_cutoffs}):
+\item The return value of \code{\link{RMinfitcutoff}} (a list with \verb{$item_cutoffs}):
 the data.frame is extracted automatically and the number of simulation
-iterations, \code{cutoff_method}, and \code{hdi_width} are included in the kable
+iterations, \code{cutoff_method}, and \code{hdci_width} are included in the kable
 caption.
-\item The \verb{$item_cutoffs} data.frame from \code{\link[=RMinfitcutoff]{RMinfitcutoff()}} directly: must
+\item The \verb{$item_cutoffs} data.frame from \code{\link{RMinfitcutoff}} directly: must
 have columns \code{Item}, \code{infit_low}, and \code{infit_high}.
 When provided, adds columns \code{Infit_low}, \code{Infit_high}, and \code{Flagged}
 (logical; \code{TRUE} when \code{Infit_MSQ} falls outside the credible range) to
@@ -56,7 +56,7 @@ item location. Values close to 1.0 indicate good fit. Values substantially
 above 1.0 suggest underfit (unexpected responses), while values substantially
 below 1.0 suggest overfit (overly predictable responses). The definition of
 "substantially" depends on several factors such as sample size, and needs to
-be determined by simulation using \code{\link[=RMinfitcutoff]{RMinfitcutoff()}}. There is no general
+be determined by simulation using \code{\link{RMinfitcutoff}}. There is no general
 rule-of-thumb value that is correct.
 
 Conditional infit MSQ statistics are computed via \code{iarm::out_infit()}, which
@@ -111,5 +111,5 @@ them? \emph{Journal of Statistical Distributions and Applications}, 7(5).
 \doi{10.1186/s40488-020-00108-7}
 }
 \seealso{
-\code{\link[=RMinfitcutoff]{RMinfitcutoff()}}
+\code{\link{RMinfitcutoff}}
 }

@@ -1,12 +1,20 @@
 # easyRasch2
 
 <!-- badges: start -->
+<a href="https://buymeacoffee.com/pgmj" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
 <!-- badges: end -->
 
 `easyRasch2` is a CRAN-targeted R package that provides functions for Rasch
 measurement theory analysis workflows. It is the successor to
 [easyRasch](https://github.com/pgmj/easyRasch), offering a lightweight,
 CRAN-ready structure with proper namespacing and minimal dependencies.
+
+Key functions implemented produce simulation-based critical values (cutoffs) for
+conditional item infit MSQ and Yen's Q3 residuals to evaluate local dependencies.
+
+For more materials on Rasch analysis, see the 
+[vignette](https://pgmj.github.io/raschrvignette/RaschRvign.html) for my 
+the package [`easyRasch`](https://pgmj.github.io/easyRasch/).
 
 ## Key design principles
 
@@ -34,24 +42,51 @@ library(easyRasch2)
 
 # Simulate binary item response data
 set.seed(42)
-sim_data <- as.data.frame(
+d <- as.data.frame(
   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
 )
-colnames(sim_data) <- paste0("Item", 1:10)
+colnames(d) <- paste0("Item", 1:10)
 
-# Raw Q3 residual correlations (no cutoff)
-RMlocdepQ3(sim_data)
-
-# Derive a simulation-based cutoff (500 iterations by default)
-cutoff_res <- RMlocdepQ3cutoff(sim_data, iterations = 100, parallel = FALSE, seed = 42)
-cutoff_res$suggested_cutoff  # 99th percentile
+# Derive a simulation-based Q3 cutoff (500 iterations by default)
+cutoff_res <- RMlocdepQ3cutoff(d, iterations = 100, parallel = FALSE, seed = 42)
 
 # Q3 table with simulation-based dynamic cut-off
-RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
+RMlocdepQ3(d, cutoff = cutoff_res$suggested_cutoff)
 
-# Return the underlying data.frame instead
-q3_df <- RMlocdepQ3(sim_data, output = "dataframe")
+# Derive a simulation-based conditional item MSQ infit cutoff
+simfit <- RMinfitcutoff(d, n_cores = 4)
+
+# Infit table with dynamic cut-off
+RMiteminfit(d, simfit)
+
+# Item-restscore using Goodman-Kruskal's gamma
+RMitemrestscore(d)
 ```
+
+## References
+
+- Christensen, K. B., Makransky, G., & Horton, M. (2017). Critical Values for Yen’s Q3: 
+Identification of Local Dependence in the Rasch Model Using Residual Correlations. 
+*Applied Psychological Measurement, 41*(3), 178–194. <https://doi.org/10.1177/0146621616677520>
+- Johansson, M. (2025). Detecting Item Misfit in Rasch Models. 
+*Educational Methods & Psychometrics, 3*(18). <https://doi.org/10.61186/emp.2025.5>
+- Kreiner, S. (2011). A Note on Item–Restscore Association in Rasch Models. 
+*Applied Psychological Measurement, 35*(7), 557–561. <https://doi.org/10.1177/0146621611410227>
+- Müller, M. (2020). Item fit statistics for Rasch analysis: Can we trust them? 
+*Journal of Statistical Distributions and Applications, 7*(1), 5. 
+<https://doi.org/10.1186/s40488-020-00108-7>
+
+
+## Credits
+
+As stated, this is based on my `easyRasch` package, and I am using Claude Opus 4.6 
+to "transfer" functions to this more properly formatted package. While it uses my
+earlier code, most of the code in this package is produced by the LLM and bug fixed by me.
+
+[Magnus Johansson](https://ki.se/en/people/magnus-johansson-3) is a licensed psychologist with a PhD in behavior analysis. He works as a research specialist at [Karolinska Institutet](https://ki.se/en/cns/research/centre-for-psychiatry-research), Department of Clinical Neuroscience, Center for Psychiatry Research.
+
+- ORCID: [0000-0003-1669-592X](https://orcid.org/0000-0003-1669-592X)
+- Bluesky: [@pgmj.bsky.social](https://bsky.app/profile/pgmj.bsky.social) 
 
 ## License
 

@@ -161,12 +161,12 @@ RMitemrestscore <- function(data, output = "kable", sort, p.adj = "BH") {
     col.names = c(
       "Item",
       "Observed value",
-      "Model expected value",
-      "Absolute difference",
-      paste0("Adjusted p-value (", p.adj, ")"),
-      "Statistical significance level",
+      "Expected value",
+      "Abs. difference",
+      paste0("Adj. p-value (", p.adj, ")"),
+      "p-value sign.",
       "Location",
-      "Relative location"
+      "Rel. location"
     )
   )
 }

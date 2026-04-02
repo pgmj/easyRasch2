@@ -3,14 +3,15 @@
 #' Computes Yen's Q3 residual correlations between item pairs using a Rasch
 #' model fitted via Marginal Maximum Likelihood (MML) in `mirt`. High
 #' correlations (above the dynamic cut-off) indicate potential local dependence
-#' between items.
+#' between items. See \code{\link{RMlocdepQ3cutoff}} for how to determine
+#' the appropriate dynamic cut-off for your data.
 #'
 #' @param data A data.frame or matrix of item responses. Items must be scored
 #'   starting at 0 (non-negative integers). Missing values (`NA`) are allowed.
 #' @param cutoff Optional single numeric value added to the mean off-diagonal Q3
 #'   correlation to produce the dynamic cut-off threshold. When `NULL`
 #'   (default), the raw Q3 residual correlation matrix is returned without any
-#'   dynamic cut-off applied. Use [RMlocdepQ3cutoff()] to derive a
+#'   dynamic cut-off applied. Use \code{\link{RMlocdepQ3cutoff}} to derive a
 #'   simulation-based cutoff value.
 #' @param output Character string controlling the return value. Either
 #'   `"kable"` (default) for a formatted `knitr::kable()` table, or
@@ -33,7 +34,7 @@
 #' Q3 values are expected to be around \eqn{-1/(k-1)} where \eqn{k} is the
 #' number of items. When `cutoff` is supplied, the dynamic cut-off is the mean
 #' of all off-diagonal Q3 values plus `cutoff`, following the approach of
-#' Christensen et al. (2017). Use [RMlocdepQ3cutoff()] to obtain a
+#' Christensen et al. (2017). Use \code{\link{RMlocdepQ3cutoff}} to obtain a
 #' simulation-based cutoff recommendation.
 #'
 #' `mirt` is used for model fitting here because Q3 requires model-based
@@ -160,7 +161,7 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
 #' Simulation-Based Q3 Cutoff Determination
 #'
 #' Uses parametric bootstrap simulation to determine an appropriate cutoff
-#' value for [RMlocdepQ3()]. Under a correctly fitting Rasch model, Q3
+#' value for \code{\link{RMlocdepQ3}}. Under a correctly fitting Rasch model, Q3
 #' residuals have an unknown distribution; this function simulates that
 #' distribution and returns empirical percentiles.
 #'
@@ -186,7 +187,7 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
 #'   \item{`max_diff`, `sd_diff`}{Max and SD of the `diff` distribution.}
 #'   \item{`p95`, `p99`, `p995`, `p999`}{Empirical percentiles of `diff`.}
 #'   \item{`suggested_cutoff`}{The 99th percentile (`p99`) — recommended cutoff
-#'     for [RMlocdepQ3()].}
+#'     for \code{\link{RMlocdepQ3}}.}
 #' }
 #'
 #' @details
@@ -204,7 +205,7 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
 #' Parallel processing is provided by the `mirai` package (optional). Install
 #' it with `install.packages("mirai")` to enable parallelisation.
 #'
-#' @seealso [RMlocdepQ3()]
+#' @seealso \code{\link{RMlocdepQ3}}
 #'
 #' @export
 #'
