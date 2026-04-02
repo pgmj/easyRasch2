@@ -26,7 +26,7 @@
 #'
 #' @return
 #' * If `output = "kable"`: a `knitr_kable` object (plain text table via
-#'   `format = "simple"`) with columns "Item", "Infit MSQ", and "Relative
+#'   `format = "pipe"`) with columns "Item", "Infit MSQ", and "Relative
 #'   location", and a caption showing the number of complete cases. When
 #'   `cutoff` is provided, columns "Infit low", "Infit high", and "Flagged"
 #'   are also included, and the caption notes the simulation-based cutoffs.
@@ -224,7 +224,7 @@ RMiteminfit <- function(data, cutoff = NULL, output = "kable", sort) {
 
   knitr::kable(
     item_fit_table,
-    format    = "simple",
+    format    = "pipe",
     col.names = if (is.null(cutoff)) {
       c("Item", "Infit MSQ", "Relative location")
     } else {
