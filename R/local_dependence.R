@@ -363,8 +363,8 @@ run_single_q3_sim <- function(seed, data_list) {
         theta = thetas_res,
         beta = data_list$item_params
       )
-      sim_df <- as.data.frame(sim_mat)
-
+      sim_df <- as.data.frame(sim_mat$data)
+      
       # Validate: every item must have at least 8 positive responses.
       # Fewer than 8 positives can cause numerical instability in mirt fitting.
       pos_counts <- colSums(sim_df, na.rm = TRUE)

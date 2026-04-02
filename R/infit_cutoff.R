@@ -285,7 +285,7 @@ run_single_infit_sim <- function(seed, data_list) {
         theta = thetas_res,
         beta = data_list$item_params
       )
-      sim_df <- as.data.frame(sim_mat)
+      sim_df <- as.data.frame(sim_mat$data)
       colnames(sim_df) <- data_list$item_names
 
       pos_counts <- colSums(sim_df, na.rm = TRUE)
