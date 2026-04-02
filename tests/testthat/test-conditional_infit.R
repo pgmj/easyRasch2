@@ -61,6 +61,7 @@ test_that("RMiteminfit output = 'kable' returns knitr_kable with complete-cases 
   result <- RMiteminfit(df, output = "kable")
   expect_s3_class(result, "knitr_kable")
   cap <- attr(result, "caption")
+  if (is.null(cap)) cap <- paste(as.character(result), collapse = "\n")
   expect_true(grepl("complete cases", cap))
 })
 
@@ -160,6 +161,7 @@ test_that("RMiteminfit with cutoff list (from RMinfitcutoff shape) extracts item
   result_kable <- RMiteminfit(df, cutoff = mock_cutoff_list, output = "kable")
   expect_s3_class(result_kable, "knitr_kable")
   cap <- attr(result_kable, "caption")
+  if (is.null(cap)) cap <- paste(as.character(result_kable), collapse = "\n")
   expect_true(grepl("100 simulation iterations", cap))
 })
 
@@ -188,6 +190,7 @@ test_that("RMiteminfit caption includes HDI info when cutoff_method = 'hdi'", {
 
   result_kable <- RMiteminfit(df, cutoff = mock_cutoff_hdi, output = "kable")
   cap <- attr(result_kable, "caption")
+  if (is.null(cap)) cap <- paste(as.character(result_kable), collapse = "\n")
   expect_true(grepl("200 simulation iterations", cap))
   expect_true(grepl("HDI", cap))
   expect_true(grepl("99.9", cap))
@@ -218,6 +221,7 @@ test_that("RMiteminfit caption includes quantile info when cutoff_method = 'quan
 
   result_kable <- RMiteminfit(df, cutoff = mock_cutoff_quantile, output = "kable")
   cap <- attr(result_kable, "caption")
+  if (is.null(cap)) cap <- paste(as.character(result_kable), collapse = "\n")
   expect_true(grepl("150 simulation iterations", cap))
   expect_true(grepl("percentile", cap))
 })
@@ -298,6 +302,7 @@ test_that("RMiteminfit with cutoff data.frame (no actual_iterations) uses generi
   result_kable <- RMiteminfit(df, cutoff = mock_cutoff, output = "kable")
   expect_s3_class(result_kable, "knitr_kable")
   cap <- attr(result_kable, "caption")
+  if (is.null(cap)) cap <- paste(as.character(result_kable), collapse = "\n")
   expect_true(grepl("Simulation-based cutoff values applied", cap))
 })
 

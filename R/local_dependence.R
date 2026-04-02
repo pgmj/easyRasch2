@@ -153,7 +153,7 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
   knitr::kable(
     resid_display,
     caption = caption_text,
-    format = "simple"
+    format = "pipe"
   )
 }
 

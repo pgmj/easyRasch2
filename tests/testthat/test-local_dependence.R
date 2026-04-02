@@ -14,6 +14,7 @@ test_that("RMlocdepQ3 with cutoff = NULL returns raw Q3 kable", {
   expect_s3_class(result, "knitr_kable")
   # Caption should mention "Raw Q3"
   cap <- attr(result, "caption")
+  if (is.null(cap)) cap <- paste(as.character(result), collapse = "\n")
   expect_true(grepl("Raw Q3", cap))
 })
 
@@ -57,5 +58,6 @@ test_that("RMlocdepQ3 returns a knitr_kable object when output = 'kable'", {
   expect_s3_class(result, "knitr_kable")
   # Caption should mention dynamic cut-off
   cap <- attr(result, "caption")
+  if (is.null(cap)) cap <- paste(as.character(result), collapse = "\n")
   expect_true(grepl("Dynamic cut-off", cap))
 })

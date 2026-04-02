@@ -19,7 +19,7 @@
 #'
 #' @return
 #' * If `output = "kable"`: a `knitr_kable` object (plain text table via
-#'   `format = "simple"`) with columns for item name, observed and expected
+#'   `format = "pipe"`) with columns for item name, observed and expected
 #'   restscore correlations, absolute difference, adjusted p-value,
 #'   significance level, item location, and item location relative to the
 #'   sample mean person location.
@@ -158,7 +158,7 @@ RMitemrestscore <- function(data, output = "kable", sort, p.adj = "BH") {
 
   knitr::kable(
     i2,
-    format   = "simple",
+    format   = "pipe",
     col.names = c(
       "Item",
       "Observed value",
