@@ -250,7 +250,8 @@ test_that("RMinfitcutoff cutoff_method = 'quantile' returns valid cutoffs", {
                        cutoff_method = "quantile")
 
   expect_equal(res$cutoff_method, "quantile")
-  expect_true(is.numeric(res$hdi_width))
+  # hdi_width is always stored regardless of method; verify it keeps its default
+  expect_equal(res$hdi_width, 0.999)
   expect_s3_class(res$item_cutoffs, "data.frame")
   expect_equal(nrow(res$item_cutoffs), 5L)
   expect_true(all(res$item_cutoffs$infit_low < res$item_cutoffs$infit_high))

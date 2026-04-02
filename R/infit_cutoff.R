@@ -217,8 +217,11 @@ RMinfitcutoff <- function(data, iterations = 250, parallel = TRUE,
     sub <- results_df[results_df$Item == item, ]
     if (cutoff_method == "hdi") {
       # ggdist::hdi() returns a matrix with ncol = 2: column 1 is the lower
-      # bound, column 2 is the upper bound. Row 1 is used (single HDI interval
-      # is expected for well-behaved unimodal distributions at high .width).
+      # bound, column 2 is the upper bound. Row 1 contains the widest/only
+      # interval. For multimodal distributions `ggdist::hdi()` may return
+      # multiple rows (disjoint intervals); we take only row 1 (the first
+      # interval). In practice, infit/outfit MSQ distributions from parametric
+      # bootstrap are unimodal, so a single interval is expected.
       infit_interval  <- ggdist::hdi(sub$InfitMSQ,  .width = hdi_width)
       outfit_interval <- ggdist::hdi(sub$OutfitMSQ, .width = hdi_width)
       data.frame(
