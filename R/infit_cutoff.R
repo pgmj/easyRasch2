@@ -216,6 +216,9 @@ RMinfitcutoff <- function(data, iterations = 250, parallel = TRUE,
   item_cutoffs <- do.call(rbind, lapply(item_names, function(item) {
     sub <- results_df[results_df$Item == item, ]
     if (cutoff_method == "hdi") {
+      # ggdist::hdi() returns a matrix with ncol = 2: column 1 is the lower
+      # bound, column 2 is the upper bound. Row 1 is used (single HDI interval
+      # is expected for well-behaved unimodal distributions at high .width).
       infit_interval  <- ggdist::hdi(sub$InfitMSQ,  .width = hdi_width)
       outfit_interval <- ggdist::hdi(sub$OutfitMSQ, .width = hdi_width)
       data.frame(

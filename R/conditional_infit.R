@@ -237,36 +237,18 @@ RMiteminfit <- function(data, cutoff = NULL, output = "kable", sort) {
         " complete cases)."
       )
     } else if (!is.null(cutoff_n_iter)) {
-      method_label <- if (!is.null(cutoff_method) && cutoff_method == "quantile") {
-        "2.5th/97.5th percentile"
-      } else if (!is.null(cutoff_method) && cutoff_method == "hdi") {
-        if (!is.null(cutoff_hdi_width)) {
-          paste0(cutoff_hdi_width * 100, "% HDI")
+      method_label <- .format_cutoff_method_label(cutoff_method, cutoff_hdi_width)
+      iter_part <- paste0(cutoff_n_iter, " simulation iterations")
+      paste0(
+        "MSQ values based on conditional estimation (n = ",
+        n_complete,
+        " complete cases). Cutoff values based on ",
+        if (!is.null(method_label)) {
+          paste0(iter_part, " (", method_label, ").")
         } else {
-          "HDI"
+          paste0(iter_part, ".")
         }
-      } else {
-        NULL
-      }
-      if (!is.null(method_label)) {
-        paste0(
-          "MSQ values based on conditional estimation (n = ",
-          n_complete,
-          " complete cases). Cutoff values based on ",
-          cutoff_n_iter,
-          " simulation iterations (",
-          method_label,
-          ")."
-        )
-      } else {
-        paste0(
-          "MSQ values based on conditional estimation (n = ",
-          n_complete,
-          " complete cases). Cutoff values based on ",
-          cutoff_n_iter,
-          " simulation iterations."
-        )
-      }
+      )
     } else {
       paste0(
         "MSQ values based on conditional estimation (n = ",
@@ -274,5 +256,26 @@ RMiteminfit <- function(data, cutoff = NULL, output = "kable", sort) {
         " complete cases). Simulation-based cutoff values applied."
       )
     }
+  )
+}
+
+# ---------------------------------------------------------------------------
+# Internal helper
+# ---------------------------------------------------------------------------
+
+#' Format a human-readable label for the cutoff method
+#'
+#' @param cutoff_method Character. `"hdi"`, `"quantile"`, or `NULL`.
+#' @param hdi_width Numeric or `NULL`. HDI width (e.g., `0.999`).
+#' @return A character label, or `NULL` if the method is unknown/unset.
+#' @keywords internal
+.format_cutoff_method_label <- function(cutoff_method, hdi_width) {
+  if (is.null(cutoff_method)) {
+    return(NULL)
+  }
+  switch(cutoff_method,
+    quantile = "2.5th/97.5th percentile",
+    hdi      = if (!is.null(hdi_width)) paste0(hdi_width * 100, "% HDI") else "HDI",
+    NULL
   )
 }
