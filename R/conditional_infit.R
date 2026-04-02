@@ -237,11 +237,14 @@ RMiteminfit <- function(data, cutoff = NULL, output = "kable", sort) {
         " complete cases)."
       )
     } else if (!is.null(cutoff_n_iter)) {
-      hdi_w <- if (!is.null(cutoff_hdi_width)) cutoff_hdi_width else 0.999
       method_label <- if (!is.null(cutoff_method) && cutoff_method == "quantile") {
         "2.5th/97.5th percentile"
       } else if (!is.null(cutoff_method) && cutoff_method == "hdi") {
-        paste0(hdi_w * 100, "% HDI")
+        if (!is.null(cutoff_hdi_width)) {
+          paste0(cutoff_hdi_width * 100, "% HDI")
+        } else {
+          "HDI"
+        }
       } else {
         NULL
       }
