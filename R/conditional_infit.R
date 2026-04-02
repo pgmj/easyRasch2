@@ -11,7 +11,8 @@
 #'   identical to the current version). Can be:
 #'   * The return value of [RMinfitcutoff()] (a list with `$item_cutoffs`):
 #'     the data.frame is extracted automatically and the number of simulation
-#'     iterations is included in the kable caption.
+#'     iterations, `cutoff_method`, and `hdi_width` are included in the kable
+#'     caption.
 #'   * The `$item_cutoffs` data.frame from [RMinfitcutoff()] directly: must
 #'     have columns `Item`, `infit_low`, and `infit_high`.
 #'   When provided, adds columns `Infit_low`, `Infit_high`, and `Flagged`
@@ -107,10 +108,14 @@ RMiteminfit <- function(data, cutoff = NULL, output = "kable", sort) {
   output <- match.arg(output, c("kable", "dataframe"))
 
   # --- Validate and normalise cutoff ------------------------------------------
-  cutoff_n_iter <- NULL
+  cutoff_n_iter  <- NULL
+  cutoff_method  <- NULL
+  cutoff_hdi_width <- NULL
   if (!is.null(cutoff)) {
     if (is.list(cutoff) && !is.data.frame(cutoff) && "item_cutoffs" %in% names(cutoff)) {
-      cutoff_n_iter <- cutoff$actual_iterations
+      cutoff_n_iter    <- cutoff$actual_iterations
+      cutoff_method    <- cutoff$cutoff_method
+      cutoff_hdi_width <- cutoff$hdi_width
       cutoff <- cutoff$item_cutoffs
     }
     if (!is.data.frame(cutoff)) {
@@ -232,13 +237,33 @@ RMiteminfit <- function(data, cutoff = NULL, output = "kable", sort) {
         " complete cases)."
       )
     } else if (!is.null(cutoff_n_iter)) {
-      paste0(
-        "MSQ values based on conditional estimation (n = ",
-        n_complete,
-        " complete cases). Cutoff values based on ",
-        cutoff_n_iter,
-        " simulation iterations."
-      )
+      hdi_w <- if (!is.null(cutoff_hdi_width)) cutoff_hdi_width else 0.999
+      method_label <- if (!is.null(cutoff_method) && cutoff_method == "quantile") {
+        "2.5th/97.5th percentile"
+      } else if (!is.null(cutoff_method) && cutoff_method == "hdi") {
+        paste0(hdi_w * 100, "% HDI")
+      } else {
+        NULL
+      }
+      if (!is.null(method_label)) {
+        paste0(
+          "MSQ values based on conditional estimation (n = ",
+          n_complete,
+          " complete cases). Cutoff values based on ",
+          cutoff_n_iter,
+          " simulation iterations (",
+          method_label,
+          ")."
+        )
+      } else {
+        paste0(
+          "MSQ values based on conditional estimation (n = ",
+          n_complete,
+          " complete cases). Cutoff values based on ",
+          cutoff_n_iter,
+          " simulation iterations."
+        )
+      }
     } else {
       paste0(
         "MSQ values based on conditional estimation (n = ",
