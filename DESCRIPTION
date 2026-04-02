@@ -1,6 +1,6 @@
 Package: easyRasch2
 Title: Rasch Measurement Theory Analysis for R
-Version: 0.5.0
+Version: 0.5.1
 Authors@R: c(
     person("Magnus", "Johansson", 
            role = c("aut", "cre"),
@@ -32,7 +32,8 @@ Imports:
     parallel,
     psychotools (>= 0.7-3),
     stats,
-    utils
+    utils,
+    rlang
 Suggests:
     dplyr,
     ggdist,
@@ -40,5 +41,7 @@ Suggests:
     mirai,
     ggplot2 (>= 3.4.0),
     testthat (>= 3.0.0),
-    rmarkdown
+    rmarkdown,
+    patchwork,
+    scales
 Config/testthat/edition: 3
