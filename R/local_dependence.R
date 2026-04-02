@@ -361,7 +361,7 @@ run_single_q3_sim <- function(seed, data_list) {
       # Simulate dichotomous data via psychotools::rrm()
       sim_mat <- psychotools::rrm(
         theta = thetas_res,
-        delta = data_list$item_params
+        beta = data_list$item_params
       )
       sim_df <- as.data.frame(sim_mat)
 

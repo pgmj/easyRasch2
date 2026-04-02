@@ -25,7 +25,7 @@ See \code{\link[stats:p.adjust]{stats::p.adjust()}} for available methods.}
 \value{
 \itemize{
 \item If \code{output = "kable"}: a \code{knitr_kable} object (plain text table via
-\code{format = "simple"}) with columns for item name, observed and expected
+\code{format = "pipe"}) with columns for item name, observed and expected
 restscore correlations, absolute difference, adjusted p-value,
 significance level, item location, and item location relative to the
 sample mean person location.

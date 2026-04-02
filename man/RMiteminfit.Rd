@@ -35,7 +35,7 @@ sorted by \code{Infit_MSQ} in descending order before output.}
 \value{
 \itemize{
 \item If \code{output = "kable"}: a \code{knitr_kable} object (plain text table via
-\code{format = "simple"}) with columns "Item", "Infit MSQ", and "Relative
+\code{format = "pipe"}) with columns "Item", "Infit MSQ", and "Relative
 location", and a caption showing the number of complete cases. When
 \code{cutoff} is provided, columns "Infit low", "Infit high", and "Flagged"
 are also included, and the caption notes the simulation-based cutoffs.

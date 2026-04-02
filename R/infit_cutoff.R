@@ -283,7 +283,7 @@ run_single_infit_sim <- function(seed, data_list) {
     if (data_list$type == "dichotomous") {
       sim_mat <- psychotools::rrm(
         theta = thetas_res,
-        delta = data_list$item_params
+        beta = data_list$item_params
       )
       sim_df <- as.data.frame(sim_mat)
       colnames(sim_df) <- data_list$item_names
