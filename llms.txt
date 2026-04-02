@@ -10,7 +10,7 @@ Key functions implemented produce simulation-based critical values
 evaluate local dependencies.
 
 For more materials on Rasch analysis, see the
-[vignette](https://pgmj.github.io/raschrvignette/RaschRvign.html) for my
+[vignette](https://pgmj.github.io/raschrvignette/RaschRvign.html) for
 the package [`easyRasch`](https://pgmj.github.io/easyRasch/).
 
 ## Key design principles
