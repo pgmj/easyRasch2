@@ -28,11 +28,10 @@
 #'   `Location`, and `Relative_location`.
 #'
 #' @details
-#' Item-restscore correlations (Verhelst, Glas, & van der Sluis, 1984) measure
+#' Item-restscore correlations using Goodman-Kruskal's gamma (Kreiner, 2011) measure
 #' the association between a person's score on a single item and their total
 #' score on the remaining items (the "restscore"). Under a correctly fitting
 #' Rasch model, observed and model-expected correlations should agree closely.
-#' Large absolute differences may indicate item misfit.
 #'
 #' For **dichotomous** data (maximum score = 1), a Rasch model is fitted via
 #' `eRm::RM()`. Item locations are the negative beta parameters. Person
@@ -49,9 +48,9 @@
 #' The `iarm` package must be installed (it is in Suggests, not Imports).
 #'
 #' @references
-#' Verhelst, N. D., Glas, C. A. W., & van der Sluis, A. (1984).
-#' Estimation problems in the Rasch model: The basic symmetric functions.
-#' *Computational Statistics Quarterly*, 1(3), 245–262.
+#' Kreiner, S. (2011). A Note on Item–Restscore Association in Rasch Models. 
+#' *Applied Psychological Measurement, 35*(7), 557–561. 
+#' <https://doi.org/10.1177/0146621611410227>
 #'
 #' @export
 #'

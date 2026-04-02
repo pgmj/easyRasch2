@@ -62,13 +62,12 @@ computed using the method specified by \code{cutoff_method}.}
 }
 \description{
 Uses parametric bootstrap simulation to determine appropriate cutoff values
-for \code{\link[=RMiteminfit]{RMiteminfit()}}. Under a correctly fitting Rasch model, infit MSQ
-statistics have a known distribution; this function simulates that
-distribution and returns per-item empirical cutoffs.
+for \code{\link[=RMiteminfit]{RMiteminfit()}}. This function simulates data from a correctly fitting
+Rasch model that mimics your data and returns per-item empirical cutoffs.
 }
 \details{
 For each simulation iteration, person parameters (thetas) are resampled
-with replacement from CML estimates, response data are simulated under the
+with replacement from ML estimates, response data are simulated under the
 Rasch model, the model is refitted, and conditional infit and outfit MSQ
 statistics are computed via \code{iarm::out_infit()}. The distribution of these
 statistics across iterations provides empirical critical values per item.

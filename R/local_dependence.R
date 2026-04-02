@@ -161,7 +161,7 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
 #'
 #' Uses parametric bootstrap simulation to determine an appropriate cutoff
 #' value for [RMlocdepQ3()]. Under a correctly fitting Rasch model, Q3
-#' residuals have a known distribution; this function simulates that
+#' residuals have an unknown distribution; this function simulates that
 #' distribution and returns empirical percentiles.
 #'
 #' @param data A data.frame or matrix of item responses. Items must be scored
@@ -191,7 +191,7 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
 #'
 #' @details
 #' For each simulation iteration, person parameters (thetas) are resampled
-#' with replacement from CML estimates, response data are simulated under the
+#' with replacement from ML estimates, response data are simulated under the
 #' Rasch model, a `mirt` Rasch model is fitted to the simulated data, and Q3
 #' residuals are extracted. The distribution of `max(Q3) - mean(Q3)` across
 #' iterations provides empirical critical values. Failed iterations (e.g., due

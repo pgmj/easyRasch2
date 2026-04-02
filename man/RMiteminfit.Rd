@@ -54,7 +54,10 @@ mean person location.
 Infit MSQ is a weighted fit statistic that emphasises deviations near the
 item location. Values close to 1.0 indicate good fit. Values substantially
 above 1.0 suggest underfit (unexpected responses), while values substantially
-below 1.0 suggest overfit (overly predictable responses).
+below 1.0 suggest overfit (overly predictable responses). The definition of
+"substantially" depends on several factors such as sample size, and needs to
+be determined by simulation using \code{\link[=RMinfitcutoff]{RMinfitcutoff()}}. There is no general
+rule-of-thumb value that is correct.
 
 Conditional infit MSQ statistics are computed via \code{iarm::out_infit()}, which
 uses the conditional distribution of the sufficient statistics (Müller, 2020).

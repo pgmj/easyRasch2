@@ -41,11 +41,10 @@ difference between observed and expected values, item average locations, and
 item locations relative to the sample mean person location.
 }
 \details{
-Item-restscore correlations (Verhelst, Glas, & van der Sluis, 1984) measure
+Item-restscore correlations using Goodman-Kruskal's gamma (Kreiner, 2011) measure
 the association between a person's score on a single item and their total
 score on the remaining items (the "restscore"). Under a correctly fitting
 Rasch model, observed and model-expected correlations should agree closely.
-Large absolute differences may indicate item misfit.
 
 For \strong{dichotomous} data (maximum score = 1), a Rasch model is fitted via
 \code{eRm::RM()}. Item locations are the negative beta parameters. Person
@@ -81,7 +80,7 @@ df <- RMitemrestscore(sim_data, output = "dataframe")
 }
 }
 \references{
-Verhelst, N. D., Glas, C. A. W., & van der Sluis, A. (1984).
-Estimation problems in the Rasch model: The basic symmetric functions.
-\emph{Computational Statistics Quarterly}, 1(3), 245–262.
+Kreiner, S. (2011). A Note on Item–Restscore Association in Rasch Models.
+\emph{Applied Psychological Measurement, 35}(7), 557–561.
+\url{https://doi.org/10.1177/0146621611410227}
 }
