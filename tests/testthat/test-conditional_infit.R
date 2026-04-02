@@ -246,7 +246,7 @@ test_that("RMinfitcutoff cutoff_method = 'quantile' returns valid cutoffs", {
   skip_if_not_installed("eRm")
   set.seed(42)
   df <- as.data.frame(
-    matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5)
+    matrix(sample(0:1, 1000, replace = TRUE), nrow = 200, ncol = 5)
   )
   colnames(df) <- paste0("Item", 1:5)
 
@@ -268,7 +268,7 @@ test_that("RMinfitcutoff cutoff_method = 'hdi' returns valid cutoffs", {
   skip_if_not_installed("ggdist")
   set.seed(42)
   df <- as.data.frame(
-    matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5)
+    matrix(sample(0:1, 1000, replace = TRUE), nrow = 200, ncol = 5)
   )
   colnames(df) <- paste0("Item", 1:5)
 

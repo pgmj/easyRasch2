@@ -45,8 +45,9 @@ test_that("RMlocdepQ3 returns a data.frame when output = 'dataframe'", {
   result <- RMlocdepQ3(df, cutoff = 0.2, output = "dataframe")
   expect_s3_class(result, "data.frame")
   # Lower triangle: off-diagonal lower should be numeric, upper + diag should be NA
-  expect_true(all(is.na(diag(as.matrix(result)))))
-  expect_true(all(is.na(result[upper.tri(result)])))
+  item_cols <- setdiff(names(result), "above_cutoff")
+  expect_true(all(is.na(diag(as.matrix(result[item_cols])))))
+  expect_true(all(is.na(result[item_cols][upper.tri(result[item_cols])])))
   expect_false(all(is.na(result[lower.tri(result)])))
 })
 
