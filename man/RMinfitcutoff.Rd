@@ -10,7 +10,9 @@ RMinfitcutoff(
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,
-  seed = NULL
+  seed = NULL,
+  cutoff_method = "hdi",
+  hdi_width = 0.999
 )
 }
 \arguments{
@@ -31,6 +33,14 @@ sequential (single core) processing.}
 \item{verbose}{Logical. Show a progress bar (default \code{FALSE}).}
 
 \item{seed}{Integer or \code{NULL}. Random seed for reproducibility.}
+
+\item{cutoff_method}{Character string specifying how cutoff intervals are
+computed. Either \code{"hdi"} (default) for the Highest Density Interval via
+\code{ggdist::hdi()}, or \code{"quantile"} for the 2.5th/97.5th percentiles via
+\code{stats::quantile()}.}
+
+\item{hdi_width}{Numeric. Width of the HDI when \code{cutoff_method = "hdi"}.
+Default is \code{0.999} (99.9\% HDI). Ignored when \code{cutoff_method = "quantile"}.}
 }
 \value{
 A list with components:
@@ -38,19 +48,23 @@ A list with components:
 \item{\code{results}}{data.frame with columns \code{iteration}, \code{Item},
 \code{InfitMSQ}, \code{OutfitMSQ} (one row per item per successful iteration).}
 \item{\code{item_cutoffs}}{data.frame with per-item cutoff summaries: \code{Item},
-\code{infit_low} (2.5th percentile), \code{infit_high} (97.5th percentile),
-\code{outfit_low} (2.5th percentile), \code{outfit_high} (97.5th percentile).}
+\code{infit_low}, \code{infit_high}, \code{outfit_low}, \code{outfit_high}. Bounds are
+computed using the method specified by \code{cutoff_method}.}
 \item{\code{actual_iterations}}{Number of successful iterations.}
 \item{\code{sample_n}}{Number of complete cases used.}
 \item{\code{sample_summary}}{Summary statistics of estimated person parameters.}
 \item{\code{item_names}}{Character vector of item names from data.}
+\item{\code{cutoff_method}}{The method used to compute cutoffs (\code{"hdi"} or
+\code{"quantile"}).}
+\item{\code{hdi_width}}{The HDI width used (only meaningful when
+\code{cutoff_method = "hdi"}).}
 }
 }
 \description{
 Uses parametric bootstrap simulation to determine appropriate cutoff values
 for \code{\link[=RMiteminfit]{RMiteminfit()}}. Under a correctly fitting Rasch model, infit MSQ
 statistics have a known distribution; this function simulates that
-distribution and returns per-item empirical percentiles.
+distribution and returns per-item empirical cutoffs.
 }
 \details{
 For each simulation iteration, person parameters (thetas) are resampled

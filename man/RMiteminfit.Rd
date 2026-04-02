@@ -16,7 +16,8 @@ identical to the current version). Can be:
 \itemize{
 \item The return value of \code{\link[=RMinfitcutoff]{RMinfitcutoff()}} (a list with \verb{$item_cutoffs}):
 the data.frame is extracted automatically and the number of simulation
-iterations is included in the kable caption.
+iterations, \code{cutoff_method}, and \code{hdi_width} are included in the kable
+caption.
 \item The \verb{$item_cutoffs} data.frame from \code{\link[=RMinfitcutoff]{RMinfitcutoff()}} directly: must
 have columns \code{Item}, \code{infit_low}, and \code{infit_high}.
 When provided, adds columns \code{Infit_low}, \code{Infit_high}, and \code{Flagged}
