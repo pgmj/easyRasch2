@@ -158,7 +158,9 @@ RMinfitcutoff <- function(data, iterations = 250, parallel = TRUE,
   if (is_polytomous) {
     pcm_fit <- eRm::PCM(data_mat)
     pp <- eRm::person.parameter(pcm_fit)
-    thetas <- as.numeric(stats::na.omit(unlist(pp$thetapar)))
+    theta_table <- pp$theta.table[["Person Parameter"]]
+    raw_scores <- rowSums(data_mat, na.rm = TRUE)
+    thetas <- as.numeric(stats::na.omit(theta_table[raw_scores]))
     thresh_mat <- extract_item_thresholds(data_mat)
     deltaslist <- lapply(seq_len(nrow(thresh_mat)), function(i) {
       as.numeric(thresh_mat[i, !is.na(thresh_mat[i, ])])
@@ -174,7 +176,9 @@ RMinfitcutoff <- function(data, iterations = 250, parallel = TRUE,
   } else {
     rm_fit <- eRm::RM(data_mat)
     pp <- eRm::person.parameter(rm_fit)
-    thetas <- as.numeric(stats::na.omit(unlist(pp$thetapar)))
+    theta_table <- pp$theta.table[["Person Parameter"]]
+    raw_scores <- rowSums(data_mat, na.rm = TRUE)
+    thetas <- as.numeric(stats::na.omit(theta_table[raw_scores]))
     item_params <- -rm_fit$betapar
     sim_data_list <- list(
       type = "dichotomous",
