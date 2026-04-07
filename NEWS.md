@@ -1,3 +1,7 @@
+# easyRasch2 0.5.2
+
+* New functions `RMpartgamDIF()` and `RMpgDIFcutoff()` for evaluating DIF of categorical external variables.
+
 # easyRasch2 0.5.1
 
 * New function **`RMinfitcutoffPlot()`** to illustrate distribution of simulated
