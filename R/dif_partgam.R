@@ -754,3 +754,310 @@ run_partgam_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 
   results
 }
+
+
+#' Plot Distribution of Simulated Partial Gamma DIF Values
+#'
+#' Visualises the distribution of simulation-based partial gamma DIF values
+#' from \code{\link{RMpgDIFcutoff}}, optionally overlaying observed partial
+#' gamma values computed from real data via \code{\link[iarm]{partgam_DIF}}.
+#'
+#' Uses `ggdist::stat_dotsinterval()` (when `data` is not supplied) or
+#' `ggdist::stat_dots()` (when `data` is supplied) with
+#' `point_interval = "median_hdci"` and `.width = c(0.66, 0.95, 0.99)`.
+#'
+#' @param simfit The return value of \code{\link{RMpgDIFcutoff}} (a list with
+#'   components `results`, `item_cutoffs`, `actual_iterations`, `sample_n`, and
+#'   `item_names`).
+#' @param data Optional. A data.frame or matrix of item responses for computing
+#'   and overlaying observed partial gamma values. Items must be scored starting
+#'   at 0 (non-negative integers). When provided, the plot includes orange
+#'   diamond markers for the observed partial gamma alongside the simulated
+#'   distribution, plus segment summaries from the cutoff intervals.
+#' @param dif_var Required when `data` is supplied. A vector (factor, character,
+#'   or integer) defining group membership for the DIF analysis. Must have the
+#'   same length as `nrow(data)`.
+#'
+#' @return A `ggplot` object.
+#'
+#' @details
+#' When `data` is **not** supplied, the function plots the simulated partial
+#' gamma distributions as dot-interval plots using
+#' `ggdist::stat_dotsinterval()` with median and Highest Density Continuous
+#' Interval (HDCI) summaries.
+#'
+#' When `data` **is** supplied (along with `dif_var`), the function:
+#' \enumerate{
+#'   \item Computes observed partial gamma values via
+#'     `iarm::partgam_DIF()`.
+#'   \item Overlays observed gamma values as orange diamond markers on the
+#'     simulated distributions.
+#'   \item Shows per-item cutoff intervals (from `simfit$item_cutoffs`) as
+#'     black line segments, with thicker segments for the 66\% interval and
+#'     black dots for the median.
+#' }
+#'
+#' The `ggplot2`, `ggdist`, and optionally `iarm` packages must be installed
+#' (they are in Suggests, not Imports).
+#'
+#' @seealso \code{\link{RMpgDIFcutoff}}, \code{\link{RMpartgamDIF}}
+#'
+#' @importFrom rlang .data
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' set.seed(42)
+#' sim_data <- as.data.frame(
+#'   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+#' )
+#' colnames(sim_data) <- paste0("Item", 1:10)
+#' dif_group <- factor(sample(c("A", "B"), 200, replace = TRUE))
+#'
+#' # Run simulation
+#' cutoff_res <- RMpgDIFcutoff(sim_data, dif_var = dif_group,
+#'                              iterations = 100, parallel = FALSE, seed = 42)
+#'
+#' # Simulated distribution only
+#' RMpgDIFplot(cutoff_res)
+#'
+#' # With observed partial gamma overlaid
+#' RMpgDIFplot(cutoff_res, data = sim_data, dif_var = dif_group)
+#' }
+RMpgDIFplot <- function(simfit, data, dif_var) {
+
+  # --- Check required packages ------------------------------------------------
+  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    stop(
+      "Package 'ggplot2' is required for RMpgDIFplot() but is not installed.\n",
+      "Install it with: install.packages(\"ggplot2\")",
+      call. = FALSE
+    )
+  }
+  if (!requireNamespace("ggdist", quietly = TRUE)) {
+    stop(
+      "Package 'ggdist' is required for RMpgDIFplot() but is not installed.\n",
+      "Install it with: install.packages(\"ggdist\")",
+      call. = FALSE
+    )
+  }
+
+  # --- Validate simfit --------------------------------------------------------
+  required_names <- c("results", "item_cutoffs", "actual_iterations",
+                      "sample_n", "item_names")
+  missing_names <- setdiff(required_names, names(simfit))
+  if (length(missing_names) > 0L) {
+    stop(
+      "`simfit` is missing required components: ",
+      paste(missing_names, collapse = ", "),
+      ".\nExpected the return value of RMpgDIFcutoff().",
+      call. = FALSE
+    )
+  }
+
+  results_df        <- simfit$results
+  item_cutoffs      <- simfit$item_cutoffs
+  actual_iterations <- simfit$actual_iterations
+  sample_n          <- simfit$sample_n
+  item_names        <- simfit$item_names
+
+  # Item factor levels (reversed for plotting top-to-bottom)
+  item_levels <- rev(item_names)
+
+  # --- Compute per-item summary intervals for segment overlays ----------------
+  lo_hi <- do.call(rbind, lapply(item_names, function(item) {
+    sub <- results_df[results_df$Item == item, ]
+    data.frame(
+      Item            = item,
+      min_gamma       = stats::quantile(sub$gamma, 0.005, na.rm = TRUE),
+      max_gamma       = stats::quantile(sub$gamma, 0.995, na.rm = TRUE),
+      p66lo_gamma     = stats::quantile(sub$gamma, 0.167, na.rm = TRUE),
+      p66hi_gamma     = stats::quantile(sub$gamma, 0.833, na.rm = TRUE),
+      median_gamma    = stats::median(sub$gamma, na.rm = TRUE),
+      stringsAsFactors = FALSE,
+      row.names       = NULL
+    )
+  }))
+  rownames(lo_hi) <- NULL
+
+  # --- Case 1: no observed data, show simulation distribution only ------------
+  if (missing(data)) {
+
+    results_plot <- data.frame(
+      Item  = results_df$Item,
+      Value = results_df$gamma,
+      stringsAsFactors = FALSE
+    )
+    results_plot$Item <- factor(results_plot$Item, levels = item_levels)
+
+    p <- ggplot2::ggplot(
+      results_plot,
+      ggplot2::aes(
+        x = .data$Value,
+        y = .data$Item
+      )
+    ) +
+      ggdist::stat_dotsinterval(
+        ggplot2::aes(slab_fill = ggplot2::after_stat(.data$level)),
+        quantiles = actual_iterations,
+        point_interval = "median_hdci",
+        layout = "weave",
+        slab_color = NA,
+        .width = c(0.66, 0.95, 0.99)
+      ) +
+      ggplot2::geom_vline(
+        xintercept = 0,
+        linetype = "dashed",
+        color = "grey50",
+        linewidth = 0.4
+      ) +
+      ggplot2::labs(
+        x = "Partial gamma",
+        y = "Item",
+        caption = paste0(
+          "Note: Results from ", actual_iterations,
+          " simulated datasets with ", sample_n, " respondents (no true DIF)."
+        )
+      ) +
+      ggplot2::scale_color_manual(
+        values = scales::brewer_pal()(3)[-1],
+        aesthetics = "slab_fill",
+        guide = "none"
+      ) +
+      ggplot2::theme_minimal() +
+      ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm"))
+
+    return(p)
+  }
+
+  # --- Case 2: observed data supplied -----------------------------------------
+  if (!requireNamespace("iarm", quietly = TRUE)) {
+    stop(
+      "Package 'iarm' is required to compute observed partial gamma but is not installed.\n",
+      "Install it with: install.packages(\"iarm\")",
+      call. = FALSE
+    )
+  }
+
+  if (missing(dif_var)) {
+    stop(
+      "`dif_var` must be supplied when `data` is provided.",
+      call. = FALSE
+    )
+  }
+
+  validate_response_data(data)
+
+  if (length(dif_var) != nrow(data)) {
+    stop(
+      "`dif_var` must have the same length as `nrow(data)` (",
+      nrow(data), "), but has length ", length(dif_var), ".",
+      call. = FALSE
+    )
+  }
+
+  # rgl workaround
+  old_rgl <- getOption("rgl.useNULL")
+  options(rgl.useNULL = TRUE)
+  on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
+
+  sink(nullfile())
+  pgam_raw <- iarm::partgam_DIF(as.data.frame(data), dif_var)
+  sink()
+
+  observed_df <- data.frame(
+    Item           = as.character(pgam_raw$Item),
+    observed_gamma = as.numeric(pgam_raw$gamma),
+    stringsAsFactors = FALSE
+  )
+
+  # --- Build plot data --------------------------------------------------------
+  gamma_sim <- data.frame(
+    Item  = results_df$Item,
+    Value = results_df$gamma,
+    stringsAsFactors = FALSE
+  )
+  gamma_sim <- merge(gamma_sim, observed_df, by = "Item", sort = FALSE)
+  gamma_sim$Item <- factor(gamma_sim$Item, levels = item_levels)
+
+  lo_hi$Item_f <- factor(lo_hi$Item, levels = item_levels)
+
+  caption_text <- paste0(
+    "Note: Results from ", actual_iterations,
+    " simulated datasets with ", sample_n, " respondents.\n",
+    "Orange diamonds indicate observed partial gamma DIF. ",
+    "Black dots indicate median gamma from simulations."
+  )
+
+  p <- ggplot2::ggplot(
+    gamma_sim,
+    ggplot2::aes(
+      x = .data$Value,
+      y = .data$Item
+    )
+  ) +
+    ggdist::stat_dots(
+      ggplot2::aes(slab_fill = ggplot2::after_stat(.data$level)),
+      quantiles = actual_iterations,
+      layout = "weave",
+      slab_color = NA,
+      .width = c(0.66, 0.95, 0.99)
+    ) +
+    ggplot2::geom_segment(
+      data = lo_hi,
+      ggplot2::aes(
+        x    = .data$min_gamma,
+        xend = .data$max_gamma,
+        y    = .data$Item_f,
+        yend = .data$Item_f
+      ),
+      color = "black",
+      linewidth = 0.7
+    ) +
+    ggplot2::geom_segment(
+      data = lo_hi,
+      ggplot2::aes(
+        x    = .data$p66lo_gamma,
+        xend = .data$p66hi_gamma,
+        y    = .data$Item_f,
+        yend = .data$Item_f
+      ),
+      color = "black",
+      linewidth = 1.2
+    ) +
+    ggplot2::geom_point(
+      data = lo_hi,
+      ggplot2::aes(
+        x = .data$median_gamma,
+        y = .data$Item_f
+      ),
+      size = 3.6
+    ) +
+    ggplot2::geom_point(
+      ggplot2::aes(x = .data$observed_gamma),
+      color = "sienna2",
+      shape = 18,
+      position = ggplot2::position_nudge(y = -0.1),
+      size = 4
+    ) +
+    ggplot2::geom_vline(
+      xintercept = 0,
+      linetype = "dashed",
+      color = "grey50",
+      linewidth = 0.4
+    ) +
+    ggplot2::labs(
+      x = "Partial gamma",
+      y = "Item",
+      caption = caption_text
+    ) +
+    ggplot2::scale_color_manual(
+      values = scales::brewer_pal()(3)[-1],
+      aesthetics = "slab_fill",
+      guide = "none"
+    ) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm"))
+
+  p
+}
