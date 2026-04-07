@@ -1,5 +1,13 @@
 # Changelog
 
+## easyRasch2 0.5.2
+
+- New functions
+  [`RMpartgamDIF()`](https://pgmj.github.io/easyRasch2/reference/RMpartgamDIF.md)
+  and
+  [`RMpgDIFcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFcutoff.md)
+  for evaluating DIF of categorical external variables.
+
 ## easyRasch2 0.5.1
 
 - New function

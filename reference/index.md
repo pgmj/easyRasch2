@@ -2,7 +2,7 @@
 
 ## Item Fit
 
-Conditional item fit statistics and simulation-based cutoffs
+Conditional item fit statistics with simulation-based cutoffs
 
 - [`RMiteminfit()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md)
   : Conditional Item Infit MSQ
@@ -20,9 +20,18 @@ Item-restscore correlation analysis
 
 ## Local Dependence
 
-Q3 residual correlations and simulation-based cutoffs
+Q3 residual correlations with simulation-based cutoffs
 
 - [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md)
   : Q3 Residual Correlations for Local Dependence Assessment
 - [`RMlocdepQ3cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
   : Simulation-Based Q3 Cutoff Determination
+
+## Differential Item Functioning (DIF)
+
+Partial gamma based DIF with simulation-based cutoffs
+
+- [`RMpartgamDIF()`](https://pgmj.github.io/easyRasch2/reference/RMpartgamDIF.md)
+  : Partial Gamma DIF Analysis
+- [`RMpgDIFcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFcutoff.md)
+  : Simulation-Based Partial Gamma DIF Cutoff Determination
