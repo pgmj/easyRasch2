@@ -9,7 +9,7 @@
 \arguments{
 \item{cutoff_method}{Character. \code{"hdci"}, \code{"quantile"}, or \code{NULL}.}
 
-\item{hdci_width}{Numeric or \code{NULL}. HDCI width (e.g., \code{0.999}).}
+\item{hdci_width}{Numeric or \code{NULL}. HDCI width (e.g., \code{0.99}).}
 }
 \value{
 A character label, or \code{NULL} if the method is unknown/unset.

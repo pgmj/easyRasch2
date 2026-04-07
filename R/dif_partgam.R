@@ -78,7 +78,7 @@
 #' RMpartgamDIF(sim_data, dif_group, cutoff = cutoff_res)
 #' }
 RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
-  
+
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
       "Package 'iarm' is required for RMpartgamDIF() but is not installed.\n",
@@ -86,11 +86,11 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
       call. = FALSE
     )
   }
-  
+
   output <- match.arg(output, c("kable", "dataframe"))
-  
+
   validate_response_data(data)
-  
+
   # --- Validate dif_var -------------------------------------------------------
   if (length(dif_var) != nrow(data)) {
     stop(
@@ -99,7 +99,7 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
       call. = FALSE
     )
   }
-  
+
   # Require at least 2 levels
   dif_levels <- length(unique(stats::na.omit(dif_var)))
   if (dif_levels < 2L) {
@@ -108,7 +108,7 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
       call. = FALSE
     )
   }
-  
+
   # --- Validate and normalise cutoff ------------------------------------------
   cutoff_n_iter     <- NULL
   cutoff_method     <- NULL
@@ -137,18 +137,18 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
       )
     }
   }
-  
+
   # --- rgl workaround ---------------------------------------------------------
   old_rgl <- getOption("rgl.useNULL")
   options(rgl.useNULL = TRUE)
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
-  
+
   # --- Compute partial gamma DIF via iarm -------------------------------------
   sink(nullfile())
   #on.exit(sink(), add = TRUE)
   pgam_raw <- iarm::partgam_DIF(as.data.frame(data), dif_var)
   sink()
-  
+
   # pgam_raw is a data.frame with character columns that need numeric conversion
   pgam_df <- data.frame(
     Item    = as.character(pgam_raw$Item),
@@ -161,7 +161,7 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
     upper   = as.numeric(pgam_raw$upper),
     stringsAsFactors = FALSE
   )
-  
+
   # Round numeric columns
   pgam_df$gamma   <- round(pgam_df$gamma, 3)
   pgam_df$se      <- round(pgam_df$se, 3)
@@ -169,10 +169,10 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
   pgam_df$padj_bh <- round(pgam_df$padj_bh, 3)
   pgam_df$lower   <- round(pgam_df$lower, 3)
   pgam_df$upper   <- round(pgam_df$upper, 3)
-  
+
   # Keep output columns
   result_df <- pgam_df[, c("Item", "gamma", "se", "lower", "upper", "padj_bh")]
-  
+
   # --- Apply cutoff if provided -----------------------------------------------
   if (!is.null(cutoff)) {
     data_items   <- result_df$Item
@@ -198,12 +198,12 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
     result_df <- result_df[, c("Item", "gamma", "se", "lower", "upper",
                                "padj_bh", "gamma_low", "gamma_high", "flagged")]
   }
-  
+
   # --- Return -----------------------------------------------------------------
   if (output == "dataframe") {
     return(result_df)
   }
-  
+
   # Build caption
   n_complete <- sum(stats::complete.cases(cbind(as.data.frame(data), dif_var = dif_var)))
   if (is.null(cutoff)) {
@@ -228,7 +228,7 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
       " complete cases). Simulation-based cutoff values applied."
     )
   }
-  
+
   knitr::kable(
     result_df,
     format    = "pipe",
@@ -249,7 +249,7 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
 #' Format a human-readable label for the gamma cutoff method
 #'
 #' @param cutoff_method Character. `"hdci"`, `"quantile"`, or `NULL`.
-#' @param hdci_width Numeric or `NULL`. HDCI width (e.g., `0.999`).
+#' @param hdci_width Numeric or `NULL`. HDCI width (e.g., `0.99`).
 #' @return A character label, or `NULL` if the method is unknown/unset.
 #' @keywords internal
 .format_gamma_cutoff_method_label <- function(cutoff_method, hdci_width) {
@@ -296,7 +296,7 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
 #'   `ggdist::hdci()`, or `"quantile"` for the 2.5th/97.5th percentiles via
 #'   `stats::quantile()`.
 #' @param hdci_width Numeric. Width of the HDCI when `cutoff_method = "hdci"`.
-#'   Default is `0.999` (99.9\% HDCI). Ignored when
+#'   Default is `0.99` (99\% HDCI). Ignored when
 #'   `cutoff_method = "quantile"`.
 #'
 #' @return A list with components:
@@ -382,10 +382,10 @@ RMpgDIFcutoff <- function(data, dif_var, iterations = 250,
                                parallel = TRUE, n_cores = NULL,
                                verbose = FALSE, seed = NULL,
                                cutoff_method = "hdci",
-                               hdci_width = 0.999) {
-  
+                               hdci_width = 0.99) {
+
   cutoff_method <- match.arg(cutoff_method, c("hdci", "quantile"))
-  
+
   if (cutoff_method == "hdci" && !requireNamespace("ggdist", quietly = TRUE)) {
     stop(
       "Package 'ggdist' is required when cutoff_method = \"hdci\" but is not installed.\n",
@@ -394,7 +394,7 @@ RMpgDIFcutoff <- function(data, dif_var, iterations = 250,
       call. = FALSE
     )
   }
-  
+
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
       "Package 'iarm' is required for RMpgDIFcutoff() but is not installed.\n",
@@ -402,9 +402,9 @@ RMpgDIFcutoff <- function(data, dif_var, iterations = 250,
       call. = FALSE
     )
   }
-  
+
   validate_response_data(data)
-  
+
   # --- Validate dif_var -------------------------------------------------------
   if (missing(dif_var) || is.null(dif_var)) {
     stop("`dif_var` must be provided.", call. = FALSE)
@@ -416,41 +416,41 @@ RMpgDIFcutoff <- function(data, dif_var, iterations = 250,
       call. = FALSE
     )
   }
-  
+
   # rgl workaround (iarm depends on vcdExtra -> rgl)
   old_rgl <- getOption("rgl.useNULL")
   options(rgl.useNULL = TRUE)
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
-  
+
   # Only complete cases (both data and dif_var)
   complete_idx <- stats::complete.cases(data) & !is.na(dif_var)
   data <- data[complete_idx, , drop = FALSE]
   dif_var <- dif_var[complete_idx]
-  
+
   if (nrow(data) == 0L) {
     stop("No complete cases in data after removing rows with NA in data or dif_var.",
          call. = FALSE)
   }
-  
+
   # Determine DIF group structure (labels and proportions)
   dif_table <- table(dif_var)
   dif_levels <- names(dif_table)
   dif_proportions <- as.numeric(dif_table) / sum(dif_table)
   n_dif_groups <- length(dif_levels)
-  
+
   if (n_dif_groups < 2L) {
     stop("`dif_var` must have at least 2 distinct groups, but has ",
          n_dif_groups, ".", call. = FALSE)
   }
-  
+
   # --- Parallel setup ---------------------------------------------------------
   use_parallel <- parallel && requireNamespace("mirai", quietly = TRUE)
-  
+
   if (parallel && !use_parallel) {
     message("Install 'mirai' package for parallel processing: install.packages(\"mirai\")")
     message("Running sequentially...")
   }
-  
+
   if (use_parallel) {
     if (is.null(n_cores)) {
       n_cores <- getOption("mc.cores")
@@ -469,20 +469,20 @@ RMpgDIFcutoff <- function(data, dif_var, iterations = 250,
       n_cores <- min(n_cores, iterations)
     }
   }
-  
+
   if (!is.null(seed)) {
     set.seed(seed)
   }
-  
+
   # Generate per-iteration seeds
   sim_seeds <- sample.int(.Machine$integer.max, iterations)
-  
+
   data_mat <- as.matrix(data)
   sample_n <- nrow(data_mat)
   is_polytomous <- max(data_mat, na.rm = TRUE) > 1L
-  
+
   item_names_vec <- colnames(data_mat)
-  
+
   if (is_polytomous) {
     pcm_fit <- eRm::PCM(data_mat)
     pp <- eRm::person.parameter(pcm_fit)
@@ -521,7 +521,7 @@ RMpgDIFcutoff <- function(data, dif_var, iterations = 250,
       dif_proportions = dif_proportions
     )
   }
-  
+
   if (use_parallel) {
     results_raw <- run_partgam_sim_parallel(iterations, sim_seeds,
                                             sim_data_list, n_cores, verbose)
@@ -529,17 +529,17 @@ RMpgDIFcutoff <- function(data, dif_var, iterations = 250,
     results_raw <- run_partgam_sim_sequential(iterations, sim_seeds,
                                               sim_data_list, verbose)
   }
-  
+
   # Filter out failures (character strings indicate errors)
   ok <- vapply(results_raw, is.data.frame, logical(1L))
   successful <- results_raw[ok]
-  
+
   if (length(successful) == 0L) {
     stop("All simulation iterations failed. Check your data.", call. = FALSE)
   }
-  
+
   actual_iterations <- length(successful)
-  
+
   # Combine per-iteration data.frames
   iter_dfs <- lapply(seq_along(successful), function(i) {
     df <- successful[[i]]
@@ -548,7 +548,7 @@ RMpgDIFcutoff <- function(data, dif_var, iterations = 250,
   })
   results_df <- do.call(rbind, iter_dfs)
   rownames(results_df) <- NULL
-  
+
   # Compute per-item cutoffs
   item_names <- unique(results_df$Item)
   item_cutoffs <- do.call(rbind, lapply(item_names, function(item) {
@@ -573,7 +573,7 @@ RMpgDIFcutoff <- function(data, dif_var, iterations = 250,
     }
   }))
   rownames(item_cutoffs) <- NULL
-  
+
   list(
     results           = results_df,
     item_cutoffs      = item_cutoffs,
@@ -600,10 +600,10 @@ RMpgDIFcutoff <- function(data, dif_var, iterations = 250,
 #' @keywords internal
 run_single_partgam_sim <- function(seed, data_list) {
   set.seed(seed)
-  
+
   thetas_res <- sample(data_list$thetas, size = data_list$sample_n,
                        replace = TRUE)
-  
+
   tryCatch({
     if (data_list$type == "dichotomous") {
       sim_mat <- psychotools::rrm(
@@ -612,7 +612,7 @@ run_single_partgam_sim <- function(seed, data_list) {
       )
       sim_df <- as.data.frame(sim_mat$data)
       colnames(sim_df) <- data_list$item_names
-      
+
       pos_counts <- colSums(sim_df, na.rm = TRUE)
       if (any(pos_counts < 8L)) {
         return("validation_failed: fewer than 8 positive responses in at least one item")
@@ -621,7 +621,7 @@ run_single_partgam_sim <- function(seed, data_list) {
       sim_mat <- sim_partial_score(data_list$deltaslist, thetas_res)
       sim_df <- as.data.frame(sim_mat)
       colnames(sim_df) <- data_list$item_names
-      
+
       n_cats <- vapply(data_list$deltaslist, function(d) length(d) + 1L,
                        integer(1L))
       for (j in seq_len(ncol(sim_df))) {
@@ -631,7 +631,7 @@ run_single_partgam_sim <- function(seed, data_list) {
         }
       }
     }
-    
+
     # Create a random DIF variable with the same group proportions
     # but no actual relationship to item responses (no true DIF)
     random_dif <- sample(
@@ -640,15 +640,15 @@ run_single_partgam_sim <- function(seed, data_list) {
       replace = TRUE,
       prob = data_list$dif_proportions
     )
-    
+
     # Compute partial gamma DIF via iarm
     # iarm::partgam_DIF expects a data.frame and a DIF variable vector
     pgam <- iarm::partgam_DIF(sim_df, random_dif)
-    
+
     # pgam is a data.frame with columns including "item" and "gamma"
     # (column names may vary slightly; use positional or clean names)
     pgam_df <- as.data.frame(pgam)
-    
+
     data.frame(
       Item  = data_list$item_names,
       gamma = as.numeric(pgam_df[seq_along(data_list$item_names), "gamma"]),
@@ -677,13 +677,13 @@ run_partgam_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
                                      n_cores, verbose = FALSE) {
   mirai::daemons(n_cores)
   on.exit(mirai::daemons(0), add = TRUE)
-  
+
   if (verbose) {
     message(sprintf("Starting %d daemons...", n_cores))
     pb <- utils::txtProgressBar(min = 0, max = iterations, style = 3)
     completed <- 0L
   }
-  
+
   # Submit all tasks
   tasks <- lapply(seq_len(iterations), function(sim) {
     mirai::mirai(
@@ -697,7 +697,7 @@ run_partgam_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
       sim_poly_item = sim_poly_item
     )
   })
-  
+
   # Collect results
   results <- vector("list", iterations)
   for (sim in seq_len(iterations)) {
@@ -712,12 +712,12 @@ run_partgam_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
       utils::setTxtProgressBar(pb, completed)
     }
   }
-  
+
   if (verbose) {
     close(pb)
     message("")
   }
-  
+
   results
 }
 
@@ -738,7 +738,7 @@ run_partgam_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
   if (verbose) {
     pb <- utils::txtProgressBar(min = 0, max = iterations, style = 3)
   }
-  
+
   results <- vector("list", iterations)
   for (sim in seq_len(iterations)) {
     results[[sim]] <- run_single_partgam_sim(sim_seeds[sim], sim_data_list)
@@ -746,11 +746,11 @@ run_partgam_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
       utils::setTxtProgressBar(pb, sim)
     }
   }
-  
+
   if (verbose) {
     close(pb)
     message("")
   }
-  
+
   results
 }

@@ -25,7 +25,7 @@ navbar:
 
 reference:
   - title: "Item Fit"
-    desc: "Conditional item fit statistics and simulation-based cutoffs"
+    desc: "Conditional item fit statistics with simulation-based cutoffs"
     contents:
       - RMiteminfit
       - RMinfitcutoff
@@ -35,7 +35,12 @@ reference:
     contents:
       - RMitemrestscore
   - title: "Local Dependence"
-    desc: "Q3 residual correlations and simulation-based cutoffs"
+    desc: "Q3 residual correlations with simulation-based cutoffs"
     contents:
       - RMlocdepQ3
       - RMlocdepQ3cutoff
+  - title: "Differential Item Functioning (DIF)"
+    desc: "Partial gamma based DIF with simulation-based cutoffs"
+    contents:
+      - RMpartgamDIF
+      - RMpgDIFcutoff

@@ -13,7 +13,7 @@ RMpgDIFcutoff(
   verbose = FALSE,
   seed = NULL,
   cutoff_method = "hdci",
-  hdci_width = 0.999
+  hdci_width = 0.99
 )
 }
 \arguments{
@@ -48,7 +48,7 @@ computed. Either \code{"hdci"} (default) for the Highest Density Interval via
 \code{stats::quantile()}.}
 
 \item{hdci_width}{Numeric. Width of the HDCI when \code{cutoff_method = "hdci"}.
-Default is \code{0.999} (99.9\\% HDCI). Ignored when
+Default is \code{0.99} (99\\% HDCI). Ignored when
 \code{cutoff_method = "quantile"}.}
 }
 \value{
