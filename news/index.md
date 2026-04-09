@@ -1,12 +1,34 @@
 # Changelog
 
+## easyRasch2 0.5.3
+
+- New functions
+  **[`RMpartgamLD()`](https://pgmj.github.io/easyRasch2/reference/RMpartgamLD.md)**
+  and
+  **[`RMpgLDcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgLDcutoff.md)**
+  for evaluating local dependency of item pairs in both directions.
+  - Plot function
+    **[`RMpgLDplot()`](https://pgmj.github.io/easyRasch2/reference/RMpgLDplot.md)**,
+    similar to
+    **[`RMpgDIFplot()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFplot.md)**
+  - NOTE: The simulation-based cutoffs have not yet been evaluated in a
+    systematic way. Default choices may not be sensible, please try
+    different numbers of iterations and hdci_width.
+
 ## easyRasch2 0.5.2
 
 - New functions
-  [`RMpartgamDIF()`](https://pgmj.github.io/easyRasch2/reference/RMpartgamDIF.md)
+  **[`RMpartgamDIF()`](https://pgmj.github.io/easyRasch2/reference/RMpartgamDIF.md)**
   and
-  [`RMpgDIFcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFcutoff.md)
+  **[`RMpgDIFcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFcutoff.md)**
   for evaluating DIF of categorical external variables.
+  - Also with plot function
+    **[`RMpgDIFplot()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFplot.md)**,
+    similar to
+    [`RMinfitcutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoffPlot.md)
+  - NOTE: The simulation-based cutoffs have not yet been evaluated in a
+    systematic way. Default choices may not be sensible, please try
+    different numbers of iterations and hdci_width.
 
 ## easyRasch2 0.5.1
 
