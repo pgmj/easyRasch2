@@ -34,11 +34,14 @@ reference:
     desc: "Item-restscore correlation analysis"
     contents:
       - RMitemrestscore
-  - title: "Local Dependence"
-    desc: "Q3 residual correlations with simulation-based cutoffs"
+  - title: "Local Dependence (LD)"
+    desc: "Q3 residual correlations & partial gammal LD with simulation-based cutoffs"
     contents:
       - RMlocdepQ3
       - RMlocdepQ3cutoff
+      - RMpartgamLD
+      - RMpgLDcutoff
+      - RMpgLDplot
   - title: "Differential Item Functioning (DIF)"
     desc: "Partial gamma based DIF with simulation-based cutoffs"
     contents:

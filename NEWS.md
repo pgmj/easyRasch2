@@ -1,3 +1,10 @@
+# easyRasch2 0.5.3
+
+* New functions **`RMpartgamLD()`** and **`RMpgLDcutoff()`** for evaluating local dependency of item pairs in both directions.
+  * Plot function **`RMpgLDplot()`**, similar to **`RMpgDIFplot()`**
+  * NOTE: The simulation-based cutoffs have not yet been evaluated in a systematic way.
+  Default choices may not be sensible, please try different numbers of iterations and hdci_width.
+
 # easyRasch2 0.5.2
 
 * New functions **`RMpartgamDIF()`** and **`RMpgDIFcutoff()`** for evaluating DIF of categorical external variables.
