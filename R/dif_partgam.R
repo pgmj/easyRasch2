@@ -905,18 +905,12 @@ RMpgDIFplot <- function(simfit, data, dif_var) {
         slab_color = NA,
         .width = c(0.66, 0.95, 0.99)
       ) +
-      ggplot2::geom_vline(
-        xintercept = 0,
-        linetype = "dashed",
-        color = "grey50",
-        linewidth = 0.4
-      ) +
       ggplot2::labs(
         x = "Partial gamma",
         y = "Item",
         caption = paste0(
           "Note: Results from ", actual_iterations,
-          " simulated datasets with ", sample_n, " respondents (no true DIF)."
+          " simulated datasets with ", sample_n, " respondents."
         )
       ) +
       ggplot2::scale_color_manual(

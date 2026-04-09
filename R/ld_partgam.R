@@ -1005,12 +1005,6 @@ RMpgLDplot <- function(simfit, data, items = NULL) {
       position = ggplot2::position_nudge(y = -0.1),
       size = 4
     ) +
-    ggplot2::geom_vline(
-      xintercept = 0,
-      linetype = "dashed",
-      color = "grey50",
-      linewidth = 0.4
-    ) +
     ggplot2::labs(
       x = "Partial gamma",
       y = "Item pair",
