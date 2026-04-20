@@ -67,7 +67,7 @@ with confidence intervals based on threshold standard errors.</p></li>
 <span>  <span class="va">data</span>,</span>
 <span>  robust <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  sort_items <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"data"</span>, <span class="st">"location"</span><span class="op">)</span>,</span>
-<span>  bins <span class="op">=</span> <span class="fl">30</span>,</span>
+<span>  <span class="va">bins</span>,</span>
 <span>  xlim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">4</span>, <span class="fl">4</span><span class="op">)</span>,</span>
 <span>  ci_level <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  person_fill <span class="op">=</span> <span class="st">"#0072B2"</span>,</span>
@@ -99,7 +99,8 @@ threshold location (easiest at top, hardest at bottom).</p></dd>
 
 
 <dt id="arg-bins">bins<a class="anchor" aria-label="anchor" href="#arg-bins"></a></dt>
-<dd><p>Integer. Number of bins for both histograms. Default is 30.</p></dd>
+<dd><p>Integer. Number of bins for both histograms. Default is number of
+unique scores plus one, but no less than 15.</p></dd>
 
 
 <dt id="arg-xlim">xlim<a class="anchor" aria-label="anchor" href="#arg-xlim"></a></dt>

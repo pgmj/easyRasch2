@@ -18,7 +18,7 @@ RMtargeting(
   data,
   robust = FALSE,
   sort_items = c("data", "location"),
-  bins = 30,
+  bins,
   xlim = c(-4, 4),
   ci_level = 0.95,
   person_fill = "#0072B2",
@@ -50,7 +50,8 @@ RMtargeting(
 
 - bins:
 
-  Integer. Number of bins for both histograms. Default is 30.
+  Integer. Number of bins for both histograms. Default is number of
+  unique scores plus one, but no less than 15.
 
 - xlim:
 
