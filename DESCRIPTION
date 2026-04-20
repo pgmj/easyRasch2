@@ -43,5 +43,6 @@ Suggests:
     testthat (>= 3.0.0),
     rmarkdown,
     patchwork,
-    scales
+    scales,
+    mice
 Config/testthat/edition: 3
