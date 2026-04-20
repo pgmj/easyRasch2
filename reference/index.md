@@ -49,3 +49,10 @@ Partial gamma based DIF with simulation-based cutoffs
   : Simulation-Based Partial Gamma DIF Cutoff Determination
 - [`RMpgDIFplot()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFplot.md)
   : Plot Distribution of Simulated Partial Gamma DIF Values
+
+## Descriptive functions
+
+Targeting and other plots
+
+- [`RMtargeting()`](https://pgmj.github.io/easyRasch2/reference/RMtargeting.md)
+  : Person-Item Targeting Plot (Wright Map)

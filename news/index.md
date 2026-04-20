@@ -2,18 +2,24 @@
 
 ## easyRasch2 0.5.4
 
+- **[`RMtargeting()`](https://pgmj.github.io/easyRasch2/reference/RMtargeting.md)**
+  for Wright map style plots.
 - New functions for handling missing data with conditional item infit
   MSQ by multiple imputation using package `mice`.
   - **[`RMinfitcutoff_mi()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff_mi.md)**
     uses the `mids` object containing multiple imputated datasets
     (output by
     [`mice::mice()`](https://amices.org/mice/reference/mice.html)) to
-    run simulations on each datasets and combines the results
+    run simulations on each datasets and combines the results. Splits
+    iterations across imputations (e.g. 250 total / 5 imputations = 50
+    each).
   - **[`RMiteminfit_mi()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit_mi.md)**
     calculates and pools conditional infit from the imputated datasets
     and optionally uses the
     [`RMinfitcutoff_mi()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff_mi.md)
     output for cutoff values.
+  - Works with existing
+    **[`RMinfitcutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoffPlot.md)**
 
 ## easyRasch2 0.5.3
 
