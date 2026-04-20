@@ -50,3 +50,7 @@ reference:
       - RMpartgamDIF
       - RMpgDIFcutoff
       - RMpgDIFplot
+  - title: "Descriptive functions"
+    desc: "Targeting and other plots"
+    contents:
+      - RMtargeting
