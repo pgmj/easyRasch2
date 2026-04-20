@@ -30,6 +30,8 @@ reference:
       - RMiteminfit
       - RMinfitcutoff
       - RMinfitcutoffPlot
+      - RMiteminfit_mi
+      - RMinfitcutoff_mi
   - title: "Item Restscore"
     desc: "Item-restscore correlation analysis"
     contents:

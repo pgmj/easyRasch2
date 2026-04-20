@@ -2,7 +2,9 @@
 
 export(RMinfitcutoff)
 export(RMinfitcutoffPlot)
+export(RMinfitcutoff_mi)
 export(RMiteminfit)
+export(RMiteminfit_mi)
 export(RMitemrestscore)
 export(RMlocdepQ3)
 export(RMlocdepQ3cutoff)
