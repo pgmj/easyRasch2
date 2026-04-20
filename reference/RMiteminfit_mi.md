@@ -17,9 +17,10 @@ RMiteminfit_mi(mids_object, cutoff = NULL, output = "kable", sort)
 - mids_object:
 
   A `mids` object (multiply imputed dataset) as returned by
-  `mice::mice()`. Each completed dataset must contain only the item
-  response columns to be analysed (i.e., no ID or grouping variables).
-  Items must be scored starting at 0 (non-negative integers).
+  [`mice::mice()`](https://amices.org/mice/reference/mice.html). Each
+  completed dataset must contain only the item response columns to be
+  analysed (i.e., no ID or grouping variables). Items must be scored
+  starting at 0 (non-negative integers).
 
 - cutoff:
 

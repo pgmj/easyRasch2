@@ -6,8 +6,9 @@
   MSQ by multiple imputation using package `mice`.
   - **[`RMinfitcutoff_mi()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff_mi.md)**
     uses the `mids` object containing multiple imputated datasets
-    (output by `mice::mice()`) to run simulations on each datasets and
-    combines the results
+    (output by
+    [`mice::mice()`](https://amices.org/mice/reference/mice.html)) to
+    run simulations on each datasets and combines the results
   - **[`RMiteminfit_mi()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit_mi.md)**
     calculates and pools conditional infit from the imputated datasets
     and optionally uses the

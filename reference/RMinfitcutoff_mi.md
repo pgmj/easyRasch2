@@ -27,9 +27,10 @@ RMinfitcutoff_mi(
 - mids_object:
 
   A `mids` object (multiply imputed dataset) as returned by
-  `mice::mice()`. Each completed dataset must contain only the item
-  response columns to be analysed (i.e., no ID or grouping variables).
-  Items must be scored starting at 0 (non-negative integers).
+  [`mice::mice()`](https://amices.org/mice/reference/mice.html). Each
+  completed dataset must contain only the item response columns to be
+  analysed (i.e., no ID or grouping variables). Items must be scored
+  starting at 0 (non-negative integers).
 
 - iterations:
 
@@ -133,7 +134,8 @@ and
 ## Details
 
 The function completes each of the `m` imputed datasets via
-`mice::complete()`, then calls
+[`mice::complete()`](https://tidyr.tidyverse.org/reference/complete.html),
+then calls
 [`RMinfitcutoff`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff.md)
 on each one. The total number of iterations is split approximately
 evenly across imputations (i.e., each imputed dataset receives
