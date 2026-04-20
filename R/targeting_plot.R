@@ -22,7 +22,8 @@
 #'   of the bottom panel. `"data"` (the default) preserves the column order in
 #'   `data` (first item at top). `"location"` sorts items by their average
 #'   threshold location (easiest at top, hardest at bottom).
-#' @param bins Integer. Number of bins for both histograms. Default is 30.
+#' @param bins Integer. Number of bins for both histograms. Default is number of
+#'   unique scores plus one, but no less than 15.
 #' @param xlim Numeric vector of length 2. Initial lower and upper limits for
 #'   the shared x-axis. Automatically expanded if any person or item threshold
 #'   values fall outside these limits.
@@ -108,7 +109,7 @@
 #' }
 RMtargeting <- function(data, robust = FALSE,
                         sort_items = c("data", "location"),
-                        bins = 30, xlim = c(-4, 4),
+                        bins, xlim = c(-4, 4),
                         ci_level = 0.95,
                         person_fill = "#0072B2",
                         threshold_fill = "#D55E00",
@@ -129,6 +130,15 @@ RMtargeting <- function(data, robust = FALSE,
       "Install it with: install.packages(\"patchwork\")",
       call. = FALSE
     )
+  }
+
+  # if no manual value was selected for number of bins, use the number of
+  # unique scores plus one, but no less than 15
+  if (missing(bins)) {
+    bins <- max(rowSums(data, na.rm = TRUE)) + 1
+    if (bins < 15) {
+      bins <- 15
+    }
   }
 
   sort_items <- match.arg(sort_items)
@@ -297,6 +307,7 @@ RMtargeting <- function(data, robust = FALSE,
     ggplot2::theme(
       axis.text.x  = ggplot2::element_blank(),
       axis.ticks.x = ggplot2::element_blank(),
+      axis.ticks.y = ggplot2::element_blank(),
       plot.margin  = ggplot2::margin(0, 5, 0, 5)
     )
 
