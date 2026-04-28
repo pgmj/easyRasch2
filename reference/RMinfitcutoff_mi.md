@@ -12,7 +12,7 @@ reflect both sampling variability and imputation uncertainty.
 ``` r
 RMinfitcutoff_mi(
   mids_object,
-  iterations = 250,
+  iterations = 500,
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,
@@ -36,7 +36,7 @@ RMinfitcutoff_mi(
 
   Integer. Total number of simulation iterations to run across all
   imputations. These are distributed approximately evenly across the `m`
-  imputed datasets (default 250).
+  imputed datasets (default 500).
 
 - parallel:
 

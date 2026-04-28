@@ -22,6 +22,8 @@ Item-restscore correlation analysis
 
 - [`RMitemrestscore()`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md)
   : Item Restscore Analysis
+- [`RMbootRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMbootRestscore.md)
+  : Bootstrap Item-Restscore Misfit Detection
 
 ## Local Dependence (LD)
 

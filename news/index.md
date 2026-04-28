@@ -1,5 +1,12 @@
 # Changelog
 
+## easyRasch2 0.5.5
+
+- Added
+  **[`RMbootRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMbootRestscore.md)**
+  for use with large sample sizes. See
+  <https://pgmj.github.io/rasch_itemfit/> for more details.
+
 ## easyRasch2 0.5.4
 
 - **[`RMtargeting()`](https://pgmj.github.io/easyRasch2/reference/RMtargeting.md)**
