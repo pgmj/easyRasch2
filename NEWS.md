@@ -1,3 +1,7 @@
+# easyRasch2 0.5.5
+
+- Added **`RMbootRestscore()`** for use with large sample sizes. See <https://pgmj.github.io/rasch_itemfit/> for more details.
+
 # easyRasch2 0.5.4
 
 - **`RMtargeting()`** for Wright map style plots. 

@@ -36,6 +36,7 @@ reference:
     desc: "Item-restscore correlation analysis"
     contents:
       - RMitemrestscore
+      - RMbootRestscore
   - title: "Local Dependence (LD)"
     desc: "Q3 residual correlations & partial gammal LD with simulation-based cutoffs"
     contents:

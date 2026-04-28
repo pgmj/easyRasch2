@@ -6,7 +6,7 @@
 \usage{
 RMinfitcutoff_mi(
   mids_object,
-  iterations = 250,
+  iterations = 500,
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,
@@ -23,7 +23,7 @@ scored starting at 0 (non-negative integers).}
 
 \item{iterations}{Integer. Total number of simulation iterations to run
 across all imputations. These are distributed approximately evenly across
-the \code{m} imputed datasets (default 250).}
+the \code{m} imputed datasets (default 500).}
 
 \item{parallel}{Logical. Use parallel processing via \code{mirai} within each
 imputed dataset (default \code{TRUE}). Passed to \code{\link{RMinfitcutoff}}.}

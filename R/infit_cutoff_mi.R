@@ -12,7 +12,7 @@
 #'   scored starting at 0 (non-negative integers).
 #' @param iterations Integer. Total number of simulation iterations to run
 #'   across all imputations. These are distributed approximately evenly across
-#'   the `m` imputed datasets (default 250).
+#'   the `m` imputed datasets (default 500).
 #' @param parallel Logical. Use parallel processing via `mirai` within each
 #'   imputed dataset (default `TRUE`). Passed to \code{\link{RMinfitcutoff}}.
 #' @param n_cores Integer or `NULL`. Number of parallel workers. Passed to
@@ -96,7 +96,7 @@
 #' # Use with RMiteminfit_mi()
 #' RMiteminfit_mi(imp, cutoff = cutoff_mi)
 #' }
-RMinfitcutoff_mi <- function(mids_object, iterations = 250, parallel = TRUE,
+RMinfitcutoff_mi <- function(mids_object, iterations = 500, parallel = TRUE,
                              n_cores = NULL, verbose = FALSE, seed = NULL,
                              cutoff_method = "hdci", hdci_width = 0.999) {
 

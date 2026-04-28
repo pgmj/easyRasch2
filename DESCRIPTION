@@ -1,6 +1,6 @@
 Package: easyRasch2
 Title: Rasch Measurement Theory Analysis for R
-Version: 0.5.4
+Version: 0.5.5
 Authors@R: c(
     person("Magnus", "Johansson", 
            role = c("aut", "cre"),
