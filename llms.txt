@@ -165,4 +165,8 @@ Targeting and other plots/tables
   : Person-Item Targeting Plot (Wright Map)
 - [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/reference/RMscoreSE.md)
   : Raw-Score to Logit Score Transformation Table
+- [`RMreliability()`](https://pgmj.github.io/easyRasch2/reference/RMreliability.md)
+  : Reliability metrics for a Rasch model
+- [`RMUreliability()`](https://pgmj.github.io/easyRasch2/reference/RMUreliability.md)
+  : Relative Measurement Uncertainty (RMU)
 
