@@ -1,6 +1,9 @@
 # easyRasch2 0.5.5
 
 - Added **`RMbootRestscore()`** for use with large sample sizes. See <https://pgmj.github.io/rasch_itemfit/> for more details.
+- Added **`RMscoreSE()`** that produces a transformation table (or figure) from ordinal sum
+  scores to WLE (Weighted Likelihood Estimation) interval scores.
+- Modified `RMlocdepQ3cutoff()` to improve speed.
 
 # easyRasch2 0.5.4
 
