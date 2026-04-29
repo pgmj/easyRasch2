@@ -52,6 +52,7 @@ reference:
       - RMpgDIFcutoff
       - RMpgDIFplot
   - title: "Descriptive functions"
-    desc: "Targeting and other plots"
+    desc: "Targeting and other plots/tables"
     contents:
       - RMtargeting
+      - RMscoreSE
