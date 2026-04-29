@@ -159,8 +159,10 @@ Partial gamma based DIF with simulation-based cutoffs
 
 ## Descriptive functions
 
-Targeting and other plots
+Targeting and other plots/tables
 
 - [`RMtargeting()`](https://pgmj.github.io/easyRasch2/reference/RMtargeting.md)
   : Person-Item Targeting Plot (Wright Map)
+- [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/reference/RMscoreSE.md)
+  : Raw-Score to Logit Score Transformation Table
 
