@@ -51,6 +51,11 @@ reference:
       - RMpartgamDIF
       - RMpgDIFcutoff
       - RMpgDIFplot
+  - title: "Global tests of model fit"
+    desc: "PCA of residuals, and more to come"
+    contents:
+      - RMresidualPCA
+      - RMpcaCutoff
   - title: "Descriptive functions"
     desc: "Targeting and other plots/tables"
     contents:
