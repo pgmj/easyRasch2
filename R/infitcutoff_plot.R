@@ -46,7 +46,7 @@
 #' installed (they are in Suggests, not Imports).
 #'
 #' @seealso \code{\link{RMinfitcutoff}}, \code{\link{RMiteminfit}}
-#' 
+#'
 #' @importFrom rlang .data
 #' @export
 #'
@@ -72,7 +72,7 @@
 #' RMinfitcutoffPlot(cutoff_res, data = sim_data, output = "both")
 #' }
 RMinfitcutoffPlot <- function(simfit, data, output = "infit") {
-  
+
   # --- Check required packages ------------------------------------------------
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop(
@@ -88,9 +88,9 @@ RMinfitcutoffPlot <- function(simfit, data, output = "infit") {
       call. = FALSE
     )
   }
-  
+
   output <- match.arg(output, c("infit", "outfit", "both"))
-  
+
   # --- Validate simfit --------------------------------------------------------
   required_names <- c("results", "item_cutoffs", "actual_iterations",
                       "sample_n", "item_names")
@@ -103,16 +103,16 @@ RMinfitcutoffPlot <- function(simfit, data, output = "infit") {
       call. = FALSE
     )
   }
-  
+
   results_df       <- simfit$results
   item_cutoffs     <- simfit$item_cutoffs
   actual_iterations <- simfit$actual_iterations
   sample_n         <- simfit$sample_n
   item_names       <- simfit$item_names
-  
+
   # Item factor levels (reversed for plotting top-to-bottom)
   item_levels <- rev(item_names)
-  
+
   # --- Compute per-item summary intervals for segment overlays ----------------
   lo_hi <- do.call(rbind, lapply(item_names, function(item) {
     sub <- results_df[results_df$Item == item, ]
@@ -133,10 +133,10 @@ RMinfitcutoffPlot <- function(simfit, data, output = "infit") {
     )
   }))
   rownames(lo_hi) <- NULL
-  
+
   # --- Case 1: no observed data, show simulation distribution only ------------
   if (missing(data)) {
-    
+
     # Pivot results to long format
     infit_long <- data.frame(
       Item      = results_df$Item,
@@ -152,7 +152,7 @@ RMinfitcutoffPlot <- function(simfit, data, output = "infit") {
     )
     results_long <- rbind(infit_long, outfit_long)
     results_long$Item <- factor(results_long$Item, levels = item_levels)
-    
+
     p <- ggplot2::ggplot(
       results_long,
       ggplot2::aes(
@@ -187,11 +187,13 @@ RMinfitcutoffPlot <- function(simfit, data, output = "infit") {
         minor_breaks = NULL
       ) +
       ggplot2::theme_minimal() +
-      ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm"))
-    
+      ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm"),
+                     axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 12)),
+                     axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 12)))
+
     return(p)
   }
-  
+
   # --- Case 2: observed data supplied -----------------------------------------
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
@@ -200,31 +202,31 @@ RMinfitcutoffPlot <- function(simfit, data, output = "infit") {
       call. = FALSE
     )
   }
-  
+
   validate_response_data(data)
-  
+
   data_mat <- as.matrix(data)
-  
+
   if (max(data_mat, na.rm = TRUE) == 1L) {
     erm_out <- eRm::RM(data)
   } else {
     erm_out <- eRm::PCM(data)
   }
-  
+
   # rgl workaround
   old_rgl <- getOption("rgl.useNULL")
   options(rgl.useNULL = TRUE)
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
-  
+
   cfit <- iarm::out_infit(erm_out)
-  
+
   observed_df <- data.frame(
     Item      = names(data),
     observed_infit  = cfit$Infit,
     observed_outfit = cfit$Outfit,
     stringsAsFactors = FALSE
   )
-  
+
   # --- Build infit data -------------------------------------------------------
   infit_sim <- data.frame(
     Item      = results_df$Item,
@@ -234,16 +236,16 @@ RMinfitcutoffPlot <- function(simfit, data, output = "infit") {
   infit_sim <- merge(infit_sim, observed_df[, c("Item", "observed_infit")],
                      by = "Item", sort = FALSE)
   infit_sim$Item <- factor(infit_sim$Item, levels = item_levels)
-  
+
   lo_hi$Item_f <- factor(lo_hi$Item, levels = item_levels)
-  
+
   caption_text <- paste0(
     "Note: Results from ", actual_iterations,
     " simulated datasets with ", sample_n, " respondents.\n",
     "Orange dots indicate observed conditional item fit. ",
     "Black dots indicate median fit from simulations."
   )
-  
+
   infit_p <- ggplot2::ggplot(
     infit_sim,
     ggplot2::aes(
@@ -310,7 +312,7 @@ RMinfitcutoffPlot <- function(simfit, data, output = "infit") {
     ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm"))
-  
+
   # --- Build outfit data ------------------------------------------------------
   outfit_sim <- data.frame(
     Item      = results_df$Item,
@@ -320,7 +322,7 @@ RMinfitcutoffPlot <- function(simfit, data, output = "infit") {
   outfit_sim <- merge(outfit_sim, observed_df[, c("Item", "observed_outfit")],
                       by = "Item", sort = FALSE)
   outfit_sim$Item <- factor(outfit_sim$Item, levels = item_levels)
-  
+
   outfit_p <- ggplot2::ggplot(
     outfit_sim,
     ggplot2::aes(
@@ -388,7 +390,7 @@ RMinfitcutoffPlot <- function(simfit, data, output = "infit") {
     ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm"))
-  
+
   # --- Return the requested panel(s) ------------------------------------------
   if (output == "both") {
     if (!requireNamespace("patchwork", quietly = TRUE)) {
