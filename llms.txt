@@ -31,6 +31,7 @@ the package [`easyRasch`](https://pgmj.github.io/easyRasch/).
 Install the development version from GitHub:
 
 ``` r
+
 # install.packages("remotes")
 remotes::install_github("pgmj/easyRasch2")
 ```
@@ -38,6 +39,7 @@ remotes::install_github("pgmj/easyRasch2")
 ## Example
 
 ``` r
+
 library(easyRasch2)
 
 # Simulate binary item response data
@@ -156,6 +158,15 @@ Partial gamma based DIF with simulation-based cutoffs
   : Simulation-Based Partial Gamma DIF Cutoff Determination
 - [`RMpgDIFplot()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFplot.md)
   : Plot Distribution of Simulated Partial Gamma DIF Values
+
+## Global tests of model fit
+
+PCA of residuals, and more to come
+
+- [`RMresidualPCA()`](https://pgmj.github.io/easyRasch2/reference/RMresidualPCA.md)
+  : PCA of Standardized Rasch Residuals
+- [`RMpcaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpcaCutoff.md)
+  : Simulation-based Cutoff for First-Contrast Eigenvalue
 
 ## Descriptive functions
 

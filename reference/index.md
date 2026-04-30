@@ -52,6 +52,15 @@ Partial gamma based DIF with simulation-based cutoffs
 - [`RMpgDIFplot()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFplot.md)
   : Plot Distribution of Simulated Partial Gamma DIF Values
 
+## Global tests of model fit
+
+PCA of residuals, and more to come
+
+- [`RMresidualPCA()`](https://pgmj.github.io/easyRasch2/reference/RMresidualPCA.md)
+  : PCA of Standardized Rasch Residuals
+- [`RMpcaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpcaCutoff.md)
+  : Simulation-based Cutoff for First-Contrast Eigenvalue
+
 ## Descriptive functions
 
 Targeting and other plots/tables

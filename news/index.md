@@ -1,5 +1,18 @@
 # Changelog
 
+## easyRasch2 0.5.6
+
+- Added
+  **[`RMresidualPCA()`](https://pgmj.github.io/easyRasch2/reference/RMresidualPCA.md)**
+  for evaluating patterns in the standardized residuals from the RM/PCM.
+  Outputs either a table with eigenvalues and explained variance or a
+  figure with standardized loadings on the first residual contrast and
+  item locations.
+- Added
+  **[`RMpcaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpcaCutoff.md)**
+  to determine a simulation-based critical value for the largest
+  eigenvalue.
+
 ## easyRasch2 0.5.5
 
 - Added

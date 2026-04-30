@@ -31,6 +31,7 @@ the package [`easyRasch`](https://pgmj.github.io/easyRasch/).
 Install the development version from GitHub:
 
 ``` r
+
 # install.packages("remotes")
 remotes::install_github("pgmj/easyRasch2")
 ```
@@ -38,6 +39,7 @@ remotes::install_github("pgmj/easyRasch2")
 ## Example
 
 ``` r
+
 library(easyRasch2)
 
 # Simulate binary item response data
