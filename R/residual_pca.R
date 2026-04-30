@@ -262,7 +262,8 @@ RMresidualPCA <- function(data,
     ) +
       ggplot2::geom_vline(xintercept = 0, linetype = 2, colour = "grey40") +
       ggplot2::geom_hline(yintercept = 0, linetype = 2, colour = "grey40") +
-      ggplot2::geom_point(size = 2.5)
+      ggplot2::geom_point(size = 2.5) +
+      ggplot2::scale_x_continuous(limits = c(-1, 1))
 
     if (requireNamespace("ggrepel", quietly = TRUE)) {
       p <- p + ggrepel::geom_text_repel(size = 3.5, max.overlaps = Inf)
@@ -276,7 +277,7 @@ RMresidualPCA <- function(data,
         y       = "Item location (logit scale)",
         caption = partition_text
       ) +
-      ggplot2::theme_minimal(base_size = 13) +
+      ggplot2::theme_bw(base_size = 13) +
       ggplot2::theme(plot.caption = ggplot2::element_text(size = 10),
                      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 12)),
                      axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 12)))
