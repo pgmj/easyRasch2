@@ -53,16 +53,21 @@ RMresidualPCA(data, cutoff = NULL, n_components = 5L, output = "kable")
 
 - If `output = "kable"`: a `knitr_kable` object with columns Component,
   Eigenvalue, Proportion of variance (and `Flagged` when `cutoff` is
-  provided), plus a caption noting the model fitted, sample size, and
-  cutoff metadata if applicable.
+  provided). The caption gives the variance partition (% of total
+  observed variance explained by measures vs. unexplained), the model
+  fitted, sample size, and cutoff metadata if applicable.
 
 - If `output = "dataframe"`: a data.frame with columns `Component`,
   `Eigenvalue`, `Proportion_of_variance` (and `Flagged` when `cutoff` is
-  provided).
+  provided). The variance partition is attached as the
+  `"variance_partition"` attribute — a list with elements `total`,
+  `explained`, `unexplained`, `pct_explained`, `pct_unexplained`,
+  `n_persons`. Access via `attr(result, "variance_partition")`.
 
 - If `output = "loadings"`: a ggplot showing each item's PC1 loading on
   the x-axis and Rasch item location on the y-axis, with dashed
-  reference lines at zero. Item names are labelled via
+  reference lines at zero, and the variance partition in the figure
+  caption. Item names are labelled via
   [`ggrepel::geom_text_repel()`](https://ggrepel.slowkow.com/reference/geom_text_repel.html)
   when `ggrepel` is installed; otherwise plain `geom_text()`.
 
@@ -88,6 +93,19 @@ concerned with.
 Item locations on the loadings plot are computed as the per-item mean of
 Andrich thresholds for polytomous data (PCM) or as `-beta` for
 dichotomous data (RM).
+
+The variance partition follows Linacre's CML/MLE convention: per-item
+observed variance is compared to per-item *expected* variance under the
+fitted model, summed across items. Expected scores are computed from MLE
+person locations (via
+[`eRm::person.parameter()`](https://rdrr.io/pkg/eRm/man/person.parameter.html))
+and the CML item parameters from
+[`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html) /
+[`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html). Persons with
+extreme raw scores (no finite MLE theta) are excluded from the
+partition, matching the sample used by
+[`eRm::SepRel()`](https://rdrr.io/pkg/eRm/man/SepRel.html) and the PCA
+itself.
 
 ## References
 
