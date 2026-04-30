@@ -36,15 +36,21 @@
 #' @return
 #' * If `output = "kable"`: a `knitr_kable` object with columns Component,
 #'   Eigenvalue, Proportion of variance (and `Flagged` when `cutoff` is
-#'   provided), plus a caption noting the model fitted, sample size, and
-#'   cutoff metadata if applicable.
+#'   provided). The caption gives the variance partition (% of total observed
+#'   variance explained by measures vs. unexplained), the model fitted,
+#'   sample size, and cutoff metadata if applicable.
 #' * If `output = "dataframe"`: a data.frame with columns `Component`,
 #'   `Eigenvalue`, `Proportion_of_variance` (and `Flagged` when `cutoff` is
-#'   provided).
+#'   provided). The variance partition is attached as the
+#'   `"variance_partition"` attribute — a list with elements `total`,
+#'   `explained`, `unexplained`, `pct_explained`, `pct_unexplained`,
+#'   `n_persons`. Access via
+#'   `attr(result, "variance_partition")`.
 #' * If `output = "loadings"`: a ggplot showing each item's PC1 loading on
 #'   the x-axis and Rasch item location on the y-axis, with dashed reference
-#'   lines at zero. Item names are labelled via `ggrepel::geom_text_repel()`
-#'   when `ggrepel` is installed; otherwise plain `geom_text()`.
+#'   lines at zero, and the variance partition in the figure caption. Item
+#'   names are labelled via `ggrepel::geom_text_repel()` when `ggrepel` is
+#'   installed; otherwise plain `geom_text()`.
 #'
 #' @details
 #' The PCA is performed on the standardized residuals returned by
@@ -57,6 +63,14 @@
 #' Item locations on the loadings plot are computed as the per-item mean of
 #' Andrich thresholds for polytomous data (PCM) or as `-beta` for dichotomous
 #' data (RM).
+#'
+#' The variance partition follows Linacre's CML/MLE convention: per-item
+#' observed variance is compared to per-item *expected* variance under the
+#' fitted model, summed across items. Expected scores are computed from
+#' MLE person locations (via `eRm::person.parameter()`) and the CML item
+#' parameters from `eRm::RM()` / `eRm::PCM()`. Persons with extreme raw
+#' scores (no finite MLE theta) are excluded from the partition, matching
+#' the sample used by `eRm::SepRel()` and the PCA itself.
 #'
 #' @references
 #' Chou, Y.-T., & Wang, W.-C. (2010). Checking dimensionality in item
@@ -152,6 +166,55 @@ RMresidualPCA <- function(data,
     st_resids <- st_resids[keep_rows, , drop = FALSE]
   }
 
+  # --- Variance partition (Linacre-style; CML item params, MLE thetas) -------
+  # Compares Var(observed) to Var(model-expected) per item, summed across
+  # items. Persons with extreme raw scores have no finite MLE theta and are
+  # dropped from the partition (consistent with eRm::SepRel and the residual
+  # rows the PCA is run on).
+  thetas_all    <- pp$theta.table[["Person Parameter"]]
+  finite_thetas <- is.finite(thetas_all)
+
+  if (sum(finite_thetas) >= 2L) {
+    if (is_polytomous) {
+      thresh_only <- if ("Location" %in% colnames(thresh_table)) {
+        thresh_table[, colnames(thresh_table) != "Location", drop = FALSE]
+      } else {
+        thresh_table
+      }
+      expected_mat <- .pcm_expected_scores(thetas_all[finite_thetas],
+                                           as.matrix(thresh_only))
+    } else {
+      expected_mat <- outer(thetas_all[finite_thetas],
+                            as.numeric(item_locations),
+                            function(t, b) stats::plogis(t - b))
+    }
+    data_finite     <- as.matrix(data)[finite_thetas, , drop = FALSE]
+    var_total       <- sum(apply(data_finite,  2L, stats::var, na.rm = TRUE))
+    var_explained   <- sum(apply(expected_mat, 2L, stats::var, na.rm = TRUE))
+    var_unexplained <- max(var_total - var_explained, 0)
+    pct_explained   <- if (var_total > 0) var_explained / var_total else NA_real_
+    pct_unexplained <- if (var_total > 0) var_unexplained / var_total else NA_real_
+    n_partition     <- sum(finite_thetas)
+    partition_avail <- TRUE
+  } else {
+    var_total <- var_explained <- var_unexplained <- NA_real_
+    pct_explained <- pct_unexplained <- NA_real_
+    n_partition <- 0L
+    partition_avail <- FALSE
+  }
+
+  partition_text <- if (partition_avail) {
+    paste0(
+      "Total observed variance: ",
+      round(pct_explained * 100, 1), "% explained by measures, ",
+      round(pct_unexplained * 100, 1),
+      "% unexplained (basis for PCA; n = ", n_partition,
+      " non-extreme cases)."
+    )
+  } else {
+    "Variance partition unavailable (too few persons with finite theta MLEs)."
+  }
+
   # --- Run unrotated PCA -----------------------------------------------------
   pca_fit  <- stats::prcomp(st_resids)
   eigvals  <- pca_fit$sdev^2
@@ -172,6 +235,17 @@ RMresidualPCA <- function(data,
     result_df$Flagged <- result_df$Eigenvalue > cutoff_value
   }
 
+  # Variance partition is metadata on the dataframe rather than a separate
+  # list element. Access via attr(result, "variance_partition").
+  attr(result_df, "variance_partition") <- list(
+    total           = var_total,
+    explained       = var_explained,
+    unexplained     = var_unexplained,
+    pct_explained   = pct_explained,
+    pct_unexplained = pct_unexplained,
+    n_persons       = n_partition
+  )
+
   # --- Loadings plot ---------------------------------------------------------
   if (output == "loadings") {
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
@@ -188,8 +262,7 @@ RMresidualPCA <- function(data,
     ) +
       ggplot2::geom_vline(xintercept = 0, linetype = 2, colour = "grey40") +
       ggplot2::geom_hline(yintercept = 0, linetype = 2, colour = "grey40") +
-      ggplot2::geom_point(size = 2.5) +
-      ggplot2::scale_x_continuous(limits = c(-1,1))
+      ggplot2::geom_point(size = 2.5)
 
     if (requireNamespace("ggrepel", quietly = TRUE)) {
       p <- p + ggrepel::geom_text_repel(size = 3.5, max.overlaps = Inf)
@@ -199,11 +272,13 @@ RMresidualPCA <- function(data,
 
     p <- p +
       ggplot2::labs(
-        x = "Loading on first residual contrast (PC1)",
-        y = "Item location (logit scale)"
+        x       = "Loading on first residual contrast (PC1)",
+        y       = "Item location (logit scale)",
+        caption = partition_text
       ) +
-      ggplot2::theme_bw(base_size = 13) +
-      ggplot2::theme(axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 12)),
+      ggplot2::theme_minimal(base_size = 13) +
+      ggplot2::theme(plot.caption = ggplot2::element_text(size = 10),
+                     axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 12)),
                      axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 12)))
 
     return(p)
@@ -218,7 +293,8 @@ RMresidualPCA <- function(data,
     paste0(
       if (is_polytomous) "Partial Credit Model" else "Rasch model",
       " (", nrow(data), " complete cases, ", ncol(data), " items)."
-    )
+    ),
+    partition_text
   )
   if (!is.null(cutoff_value)) {
     iter_part <- if (!is.null(cutoff_n_iter)) {
@@ -570,6 +646,47 @@ run_pca_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
 
 # ===========================================================================
 # Internal: sequential runner
+# ===========================================================================
+
+# ===========================================================================
+# Internal: PCM expected-score matrix (for the variance partition)
+# ===========================================================================
+
+#' Expected scores per (person, item) under a Partial Credit Model
+#'
+#' Computes \deqn{E[X_ij | theta_i, tau_j]} under the PCM:
+#' \deqn{P(X = x | theta, tau) = exp(x*theta - sum_{l=1}^x tau_l) /
+#'                              sum_{m=0}^M exp(m*theta - sum_{l=1}^m tau_l)}
+#' Loops over items but is vectorised across persons within an item.
+#'
+#' @param thetas Numeric vector of person locations (length n).
+#' @param thresh_mat Numeric matrix of thresholds (n_items rows; columns are
+#'   threshold positions, NA-padded for items with fewer thresholds).
+#'
+#' @return Numeric matrix (n persons x n_items) of expected scores.
+#'
+#' @keywords internal
+#' @noRd
+.pcm_expected_scores <- function(thetas, thresh_mat) {
+  n       <- length(thetas)
+  n_items <- nrow(thresh_mat)
+  expected <- matrix(NA_real_, nrow = n, ncol = n_items)
+
+  for (j in seq_len(n_items)) {
+    taus <- thresh_mat[j, !is.na(thresh_mat[j, ])]
+    K_j  <- length(taus)
+    cumsum_taus <- c(0, cumsum(taus))      # length K_j + 1
+    log_num <- outer(thetas, 0:K_j) -
+      matrix(cumsum_taus, nrow = n, ncol = K_j + 1L, byrow = TRUE)
+    # Numerical-stability shift before exponentiating
+    log_num <- log_num - apply(log_num, 1L, max)
+    probs <- exp(log_num)
+    probs <- probs / rowSums(probs)
+    expected[, j] <- as.numeric(probs %*% (0:K_j))
+  }
+  expected
+}
+
 # ===========================================================================
 
 #' @keywords internal

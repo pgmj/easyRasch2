@@ -30,15 +30,21 @@ number of items. Default \code{5}.}
 \itemize{
 \item If \code{output = "kable"}: a \code{knitr_kable} object with columns Component,
 Eigenvalue, Proportion of variance (and \code{Flagged} when \code{cutoff} is
-provided), plus a caption noting the model fitted, sample size, and
-cutoff metadata if applicable.
+provided). The caption gives the variance partition (\% of total observed
+variance explained by measures vs. unexplained), the model fitted,
+sample size, and cutoff metadata if applicable.
 \item If \code{output = "dataframe"}: a data.frame with columns \code{Component},
 \code{Eigenvalue}, \code{Proportion_of_variance} (and \code{Flagged} when \code{cutoff} is
-provided).
+provided). The variance partition is attached as the
+\code{"variance_partition"} attribute — a list with elements \code{total},
+\code{explained}, \code{unexplained}, \code{pct_explained}, \code{pct_unexplained},
+\code{n_persons}. Access via
+\code{attr(result, "variance_partition")}.
 \item If \code{output = "loadings"}: a ggplot showing each item's PC1 loading on
 the x-axis and Rasch item location on the y-axis, with dashed reference
-lines at zero. Item names are labelled via \code{ggrepel::geom_text_repel()}
-when \code{ggrepel} is installed; otherwise plain \code{geom_text()}.
+lines at zero, and the variance partition in the figure caption. Item
+names are labelled via \code{ggrepel::geom_text_repel()} when \code{ggrepel} is
+installed; otherwise plain \code{geom_text()}.
 }
 }
 \description{
@@ -70,6 +76,14 @@ with.
 Item locations on the loadings plot are computed as the per-item mean of
 Andrich thresholds for polytomous data (PCM) or as \code{-beta} for dichotomous
 data (RM).
+
+The variance partition follows Linacre's CML/MLE convention: per-item
+observed variance is compared to per-item \emph{expected} variance under the
+fitted model, summed across items. Expected scores are computed from
+MLE person locations (via \code{eRm::person.parameter()}) and the CML item
+parameters from \code{eRm::RM()} / \code{eRm::PCM()}. Persons with extreme raw
+scores (no finite MLE theta) are excluded from the partition, matching
+the sample used by \code{eRm::SepRel()} and the PCA itself.
 }
 \examples{
 \dontrun{
