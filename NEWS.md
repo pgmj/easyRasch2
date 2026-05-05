@@ -1,6 +1,6 @@
 # easyRasch2 0.5.7
 
-- Added test of dimensionality **`RMmartinLof()`** based on Christensen & Kreiner 
+- Added Martin-Löf test of dimensionality **`RMmartinLof()`** based on Christensen & Kreiner 
   (2007, doi: 10.1177/0146621605286204), for both dichotomous and polytomous (PCM) items.
   - Also added post-processing function **`RMmartinLofresiduals()`**.
 
