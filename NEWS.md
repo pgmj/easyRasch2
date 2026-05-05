@@ -1,3 +1,9 @@
+# easyRasch2 0.5.7
+
+- Added test of dimensionality **`RMmartinLof()`** based on Christensen & Kreiner 
+  (2007, doi: 10.1177/0146621605286204), for both dichotomous and polytomous (PCM) items.
+  - Also added post-processing function **`RMmartinLofresiduals()`**.
+
 # easyRasch2 0.5.6
 
 - Added **`RMresidualPCA()`** for evaluating patterns in the standardized residuals 

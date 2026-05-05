@@ -208,7 +208,7 @@ RMresidualPCA <- function(data,
       "Total observed variance: ",
       round(pct_explained * 100, 1), "% explained by measures, ",
       round(pct_unexplained * 100, 1),
-      "% unexplained (basis for PCA; n = ", n_partition,
+      "% unexplained\n(basis for PCA; n = ", n_partition,
       " non-extreme cases)."
     )
   } else {
