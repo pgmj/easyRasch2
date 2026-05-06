@@ -61,6 +61,7 @@ reference:
   - title: "Descriptive functions"
     desc: "Targeting and other plots/tables"
     contents:
+      - RMtileplot
       - RMtargeting
       - RMscoreSE
       - RMreliability
