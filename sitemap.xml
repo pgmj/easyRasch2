@@ -14,6 +14,8 @@
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.html</loc></url>
+<url><loc>https://pgmj.github.io/easyRasch2/reference/RMmartinLof.html</loc></url>
+<url><loc>https://pgmj.github.io/easyRasch2/reference/RMmartinLofResiduals.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMpartgamDIF.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMpartgamLD.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMpcaCutoff.html</loc></url>
@@ -25,6 +27,7 @@
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMresidualPCA.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMscoreSE.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMtargeting.html</loc></url>
+<url><loc>https://pgmj.github.io/easyRasch2/reference/RMtileplot.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/dot-format_cutoff_method_label.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/dot-format_gamma_cutoff_method_label.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/easyRasch2-package.html</loc></url>
