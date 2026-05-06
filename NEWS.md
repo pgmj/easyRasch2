@@ -1,5 +1,7 @@
 # easyRasch2 0.5.7
 
+- New **`RMdifLR()`** for testing DIF of categorical variables using Andersens's
+  Likelihood Ratio test as implemented in package `eRm`
 - Visualization of response data using a tile plot with **`RMtileplot()`**.
   - Optional `group` faceting, which is useful for DIF-analyses.
 - Added Martin-Löf test of dimensionality **`RMmartinLof()`** based on Christensen & Kreiner 
