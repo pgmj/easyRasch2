@@ -1,5 +1,7 @@
 # easyRasch2 0.5.7
 
+- Visualization of response data using a tile plot with **`RMtileplot()`**.
+  - Optional `group` faceting, which is useful for DIF-analyses.
 - Added Martin-Löf test of dimensionality **`RMmartinLof()`** based on Christensen & Kreiner 
   (2007, doi: 10.1177/0146621605286204), for both dichotomous and polytomous (PCM) items.
   - Also added post-processing function **`RMmartinLofresiduals()`**.
