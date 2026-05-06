@@ -2,6 +2,10 @@
 
 ## easyRasch2 0.5.7
 
+- New
+  **[`RMdifLR()`](https://pgmj.github.io/easyRasch2/reference/RMdifLR.md)**
+  for testing DIF of categorical variables using Andersens’s Likelihood
+  Ratio test as implemented in package `eRm`
 - Visualization of response data using a tile plot with
   **[`RMtileplot()`](https://pgmj.github.io/easyRasch2/reference/RMtileplot.md)**.
   - Optional `group` faceting, which is useful for DIF-analyses.

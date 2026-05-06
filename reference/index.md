@@ -45,6 +45,8 @@ cutoffs
 
 Partial gamma based DIF with simulation-based cutoffs
 
+- [`RMdifLR()`](https://pgmj.github.io/easyRasch2/reference/RMdifLR.md)
+  : DIF analysis via Andersen's likelihood-ratio test
 - [`RMpartgamDIF()`](https://pgmj.github.io/easyRasch2/reference/RMpartgamDIF.md)
   : Partial Gamma DIF Analysis
 - [`RMpgDIFcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFcutoff.md)
