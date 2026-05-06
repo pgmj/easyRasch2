@@ -23,6 +23,8 @@ Useful links:
 Other contributors:
 \itemize{
   \item Nicklas Korsell (PCM simulation code) [contributor]
+  \item Mirka Henninger (MH / partial-gamma effect-size and ETS-classification algorithms in dif_tree.R, adapted under MIT licence from the raschtreeMH and effecttree packages) [contributor]
+  \item Jan Radek (partial-gamma effect-size and ETS-classification algorithms in dif_tree.R, adapted under MIT licence from the effecttree package) [contributor]
 }
 
 }

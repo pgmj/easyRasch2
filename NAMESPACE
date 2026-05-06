@@ -3,6 +3,7 @@
 export(RMUreliability)
 export(RMbootRestscore)
 export(RMdifLR)
+export(RMdifTree)
 export(RMinfitcutoff)
 export(RMinfitcutoffPlot)
 export(RMinfitcutoff_mi)
