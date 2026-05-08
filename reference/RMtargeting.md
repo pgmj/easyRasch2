@@ -145,7 +145,7 @@ Wright, B. D. & Stone, M. H. (1979). *Best Test Design*. MESA Press.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 # Polytomous example
 set.seed(42)
 sim_data <- as.data.frame(
@@ -156,12 +156,15 @@ colnames(sim_data) <- paste0("Item", 1:8)
 # Default: mean/SD, data order, 95% CI
 RMtargeting(sim_data)
 
+
 # Robust (median/MAD), sorted by location, 84% CI
 RMtargeting(sim_data, robust = TRUE, sort_items = "location", ci_level = 0.84)
+
 
 # Get list of sub-plots for customisation
 plots <- RMtargeting(sim_data, output = "list")
 plots$p1 + ggplot2::ggtitle("My custom title")
+
 
 # Dichotomous example
 sim_bin <- as.data.frame(
@@ -169,5 +172,6 @@ sim_bin <- as.data.frame(
 )
 colnames(sim_bin) <- paste0("Item", 1:10)
 RMtargeting(sim_bin)
-} # }
+
+# }
 ```

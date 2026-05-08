@@ -5,7 +5,7 @@ across all items and response categories. Each cell displays the count
 (or percentage) of responses, with optional conditional highlighting for
 cells with low counts. Optional faceting by a grouping variable is
 provided for inspecting subgroup response distributions before DIF
-analyses — particularly useful for spotting empty categories or
+analyses – particularly useful for spotting empty categories or
 under-represented subgroups before fitting Rasch models per group.
 
 ## Usage
@@ -34,7 +34,7 @@ RMtileplot(
   Each column is one item, each row is one person. All columns must be
   numeric (integer-valued). Response categories may be coded starting
   from 0 or 1. Do not include person IDs, grouping variables, or other
-  non-item columns — supply the grouping variable separately via
+  non-item columns – supply the grouping variable separately via
   `group`.
 
 - group:
@@ -91,7 +91,7 @@ RMtileplot(
 - output:
 
   Character. `"ggplot"` (default) returns the plot; `"dataframe"`
-  returns the underlying per-cell counts (one row per item × category,
+  returns the underlying per-cell counts (one row per item x category,
   plus group when supplied).
 
 ## Value
@@ -107,7 +107,7 @@ Items are placed on the y-axis (in the same order as the columns of
 `data`, top to bottom) and response categories on the x-axis. Cell
 shading represents the count of responses (darker = more responses).
 Categories with zero responses are explicitly shown (`n = 0`), which
-helps identify gaps in the response distribution — one of the primary
+helps identify gaps in the response distribution – one of the primary
 purposes of the plot, especially before DIF analyses where
 under-represented categories within a subgroup can break model fitting
 on that subgroup.
@@ -119,19 +119,22 @@ contains the count for group A only.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-library(eRm)
+# \donttest{
+data("pcmdat2", package = "eRm")
 
 # Basic tile plot
 RMtileplot(pcmdat2)
 
+
 # With percentages
 RMtileplot(pcmdat2, percent = TRUE)
+
 
 # Faceted by an external grouping variable
 set.seed(1)
 grp <- sample(c("A", "B"), nrow(pcmdat2), replace = TRUE)
 RMtileplot(pcmdat2, group = grp)
+
 
 # With custom labels and tighter cutoff
 RMtileplot(pcmdat2,
@@ -140,7 +143,33 @@ RMtileplot(pcmdat2,
            cutoff = 5,
            facet_ncol = 2)
 
+
 # Underlying counts as a data.frame
 RMtileplot(pcmdat2, group = grp, output = "dataframe")
-} # }
+#>    group item item_label category  n percentage
+#> 1      A   I1         I1        0 44       30.1
+#> 2      A   I1         I1        1 64       43.8
+#> 3      A   I1         I1        2 38       26.0
+#> 4      A   I2         I2        0 55       37.7
+#> 5      A   I2         I2        1 57       39.0
+#> 6      A   I2         I2        2 34       23.3
+#> 7      A   I3         I3        0  8        5.5
+#> 8      A   I3         I3        1 59       40.4
+#> 9      A   I3         I3        2 79       54.1
+#> 10     A   I4         I4        0 17       11.6
+#> 11     A   I4         I4        1 63       43.2
+#> 12     A   I4         I4        2 66       45.2
+#> 13     B   I1         I1        0 32       20.8
+#> 14     B   I1         I1        1 80       51.9
+#> 15     B   I1         I1        2 42       27.3
+#> 16     B   I2         I2        0 53       34.4
+#> 17     B   I2         I2        1 55       35.7
+#> 18     B   I2         I2        2 46       29.9
+#> 19     B   I3         I3        0  6        3.9
+#> 20     B   I3         I3        1 55       35.7
+#> 21     B   I3         I3        2 93       60.4
+#> 22     B   I4         I4        0 17       11.0
+#> 23     B   I4         I4        1 55       35.7
+#> 24     B   I4         I4        2 82       53.2
+# }
 ```

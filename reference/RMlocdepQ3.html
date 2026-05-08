@@ -15,7 +15,7 @@ the appropriate dynamic cut-off for your data."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -114,7 +114,7 @@ for Yen's Q3: Identification of local dependence in the Rasch model.
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="co"># Simulate binary item response data (10 items, 200 persons)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">sim_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span></span></span>
@@ -124,11 +124,28 @@ for Yen's Q3: Identification of local dependence in the Rasch model.
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Raw Q3 matrix (no cutoff)</span></span></span>
 <span class="r-in"><span><span class="fu">RMlocdepQ3</span><span class="op">(</span><span class="va">sim_data</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Raw Q3 residual correlations (lower triangle). Use RMlocdepQ3cutoff() to derive a cutoff.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |       |Item1 |Item2 |Item3 |Item4 |Item5 |Item6 |Item7 |Item8 |Item9 |Item10 |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |:------|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:------|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item1  |      |      |      |      |      |      |      |      |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2  |0.08  |      |      |      |      |      |      |      |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3  |-0.07 |-0.09 |      |      |      |      |      |      |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4  |-0.07 |-0.12 |-0.03 |      |      |      |      |      |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5  |-0.09 |0.02  |0.08  |-0.04 |      |      |      |      |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item6  |-0.03 |-0.02 |-0.07 |0.09  |-0.1  |      |      |      |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item7  |-0.05 |-0.03 |0.04  |0.13  |0.08  |0     |      |      |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item8  |0.07  |0.05  |0     |-0.19 |0.05  |-0.06 |-0.05 |      |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item9  |0.08  |0.05  |-0.02 |-0.07 |-0.09 |0.07  |0.04  |0.12  |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item10 |-0.07 |-0.05 |0.08  |-0.04 |-0.02 |-0.12 |-0.04 |-0.03 |0     |       |</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Get the underlying data.frame</span></span></span>
 <span class="r-in"><span><span class="va">q3_df</span> <span class="op">&lt;-</span> <span class="fu">RMlocdepQ3</span><span class="op">(</span><span class="va">sim_data</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># With a simulation-based cutoff</span></span></span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span><span class="co"># Simulation-based cutoff (slow): 100+ Monte-Carlo iterations</span></span></span>
 <span class="r-in"><span><span class="va">cutoff_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="RMlocdepQ3cutoff.html">RMlocdepQ3cutoff</a></span><span class="op">(</span><span class="va">sim_data</span>, iterations <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">RMlocdepQ3</span><span class="op">(</span><span class="va">sim_data</span>, cutoff <span class="op">=</span> <span class="va">cutoff_res</span><span class="op">$</span><span class="va">suggested_cutoff</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>

@@ -4,15 +4,15 @@ eRm::LRtest() and reports per-group item locations (or per-group
 threshold locations) together with their standard errors. A single
 function replaces the four legacy helpers (RIdifTableLR,
 RIdifThreshTblLR, RIdifFigureLR, RIdifThreshFigLR) by exposing the
-two underlying axes — level (item or threshold) and output
-(data.frame, kable, or ggplot) — as arguments. The same data
+two underlying axes – level (item or threshold) and output
+(data.frame, kable, or ggplot) – as arguments. The same data
 preparation pipeline feeds all six combinations."><meta property="og:description" content="Splits a Rasch model by an external grouping variable using
 eRm::LRtest() and reports per-group item locations (or per-group
 threshold locations) together with their standard errors. A single
 function replaces the four legacy helpers (RIdifTableLR,
 RIdifThreshTblLR, RIdifFigureLR, RIdifThreshFigLR) by exposing the
-two underlying axes — level (item or threshold) and output
-(data.frame, kable, or ggplot) — as arguments. The same data
+two underlying axes – level (item or threshold) and output
+(data.frame, kable, or ggplot) – as arguments. The same data
 preparation pipeline feeds all six combinations."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -21,7 +21,7 @@ preparation pipeline feeds all six combinations."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,8 +53,8 @@ preparation pipeline feeds all six combinations."></head><body>
 threshold locations) together with their standard errors. A single
 function replaces the four legacy helpers (<code>RIdifTableLR</code>,
 <code>RIdifThreshTblLR</code>, <code>RIdifFigureLR</code>, <code>RIdifThreshFigLR</code>) by exposing the
-two underlying axes — <code>level</code> (item or threshold) and <code>output</code>
-(data.frame, kable, or ggplot) — as arguments. The same data
+two underlying axes – <code>level</code> (item or threshold) and <code>output</code>
+(data.frame, kable, or ggplot) – as arguments. The same data
 preparation pipeline feeds all six combinations.</p>
     </div>
 
@@ -79,7 +79,7 @@ preparation pipeline feeds all six combinations.</p>
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
 <dd><p>A data.frame or matrix of item responses (non-negative
 integers, 0-based). One column per item, one row per person. Person
-IDs and grouping variables must not be included — pass the grouping
+IDs and grouping variables must not be included – pass the grouping
 variable separately via <code>dif_var</code>.</p></dd>
 
 
@@ -137,7 +137,7 @@ error bars. Default <code>0.95</code>.</p></dd>
     <p>A data.frame, a <code>knitr_kable</code> object, or a <code>ggplot</code>
 object, depending on <code>output</code>.</p>
 <p>The data.frame has one row per item (<code>level = "item"</code>) or per
-item × threshold (<code>level = "threshold"</code>), with columns
+item x threshold (<code>level = "threshold"</code>), with columns
 <code>Item</code> (and <code>Threshold</code> at threshold level), one numeric
 column per group level, an <code>All</code> column for the unsplit fit,
 <code>MaxDiff</code>, <code>Flagged</code> (when <code>cutoff</code> is non-<code>NULL</code>),
@@ -157,7 +157,7 @@ Per-group fits come from <code>eRm::LRtest(..., splitcr = dif_var)</code>;
 the unsplit fit (<code>All</code> column) is the model fitted to the full
 dataset. The Andersen LR statistic, df, and p-value reported as the
 <code>lr_test</code> attribute / caption come directly from
-<code><a href="https://rdrr.io/pkg/eRm/man/LRtest.html" class="external-link">LRtest()</a></code>'s return value.</p>
+<code>LRtest()</code>'s return value.</p>
 <p><code>cell_spec()</code>-style HTML cell colouring used in the legacy
 easyRasch package has been dropped in favour of a logical
 <code>Flagged</code> column (and bold rendering in the kable output), so the
@@ -166,23 +166,64 @@ kable renders correctly in HTML, LaTeX, and pipe/markdown.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">eRm</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"pcmdat2"</span>, package <span class="op">=</span> <span class="st">"eRm"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">grp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">pcmdat2</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Default: ggplot panel of item locations with 95% CIs</span></span></span>
 <span class="r-in"><span><span class="fu">RMdifLR</span><span class="op">(</span><span class="va">pcmdat2</span>, dif_var <span class="op">=</span> <span class="va">grp</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="RMdifLR-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Threshold-level kable, sorted by MaxDiff</span></span></span>
 <span class="r-in"><span><span class="fu">RMdifLR</span><span class="op">(</span><span class="va">pcmdat2</span>, dif_var <span class="op">=</span> <span class="va">grp</span>,</span></span>
 <span class="r-in"><span>        level <span class="op">=</span> <span class="st">"threshold"</span>, output <span class="op">=</span> <span class="st">"kable"</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Partial Credit Model split by DIF variable (2 groups). Andersen LR chi^2 = 4.064, df = 7, p = 0.772. n = 300 complete cases, 4 items. **Bold** = MaxDiff &gt; 0.5 logits.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item |Threshold |      A|      B|    All| MaxDiff|Flagged |  SE_A|  SE_B| SE_All|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |:----|:---------|------:|------:|------:|-------:|:-------|-----:|-----:|------:|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |I1   |c1        |  0.130| -0.346| -0.104|   0.476|no      | 0.214| 0.219|  0.152|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |I1   |c2        |  1.965|  2.367|  2.180|   0.402|no      | 0.288| 0.282|  0.201|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |I4   |c1        | -1.096| -0.865| -0.983|   0.231|no      | 0.294| 0.282|  0.203|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |I4   |c2        |  0.996|  0.789|  0.889|   0.206|no      | 0.234| 0.235|  0.165|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |I3   |c1        | -2.409| -2.228| -2.315|   0.182|no      | 0.506| 0.452|  0.336|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |I2   |c2        |  2.086|  1.922|  1.996|   0.164|no      | 0.309| 0.291|  0.211|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |I3   |c2        |  0.657|  0.543|  0.597|   0.114|no      | 0.225| 0.224|  0.158|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |I2   |c1        |  0.524|  0.629|  0.571|   0.104|no      | 0.210| 0.211|  0.148|</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Tidy data.frame for downstream / Jamovi use</span></span></span>
+<span class="r-in"><span><span class="co"># Tidy data.frame for downstream use</span></span></span>
 <span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">RMdifLR</span><span class="op">(</span><span class="va">pcmdat2</span>, dif_var <span class="op">=</span> <span class="va">grp</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"lr_test"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $LR</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 4.063775</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $df</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $p_value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.7724031</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $n_groups</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $groups</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "A" "B"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $model</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "PCM"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $n_persons</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 300</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $n_items</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="va">df</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">Flagged</span>, <span class="op">]</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] Item    A       B       All     MaxDiff Flagged SE_A    SE_B    SE_All </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;0 rows&gt; (or 0-length row.names)</span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

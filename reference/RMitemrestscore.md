@@ -88,7 +88,7 @@ Models. *Applied Psychological Measurement, 35*(7), 557–561.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 # Simulate binary item response data (8 items, 200 persons)
 set.seed(42)
 sim_data <- as.data.frame(
@@ -98,11 +98,38 @@ colnames(sim_data) <- paste0("Item", 1:8)
 
 # Default kable output
 RMitemrestscore(sim_data)
+#> 
+#> 
+#> 
+#> |Item  | Observed value| Expected value| Abs. difference| Adj. p-value (BH)|p-value sign. | Location| Rel. location|
+#> |:-----|--------------:|--------------:|---------------:|-----------------:|:-------------|--------:|-------------:|
+#> |Item1 |           0.00|           0.01|            0.01|             0.955|              |    -0.20|         -0.23|
+#> |Item2 |           0.00|           0.01|            0.01|             0.955|              |     0.16|          0.13|
+#> |Item3 |          -0.01|           0.01|            0.02|             0.955|              |     0.02|         -0.01|
+#> |Item4 |          -0.05|           0.01|            0.06|             0.955|              |    -0.02|         -0.05|
+#> |Item5 |           0.07|           0.01|            0.06|             0.955|              |     0.12|          0.09|
+#> |Item6 |          -0.04|           0.01|            0.05|             0.955|              |    -0.06|         -0.09|
+#> |Item7 |           0.15|           0.01|            0.14|             0.955|              |    -0.02|         -0.05|
+#> |Item8 |          -0.01|           0.01|            0.02|             0.955|              |     0.00|         -0.03|
 
 # Sorted by absolute difference
 RMitemrestscore(sim_data, sort = "diff")
+#> 
+#> 
+#> 
+#> |Item  | Observed value| Expected value| Abs. difference| Adj. p-value (BH)|p-value sign. | Location| Rel. location|
+#> |:-----|--------------:|--------------:|---------------:|-----------------:|:-------------|--------:|-------------:|
+#> |Item7 |           0.15|           0.01|            0.14|             0.955|              |    -0.02|         -0.05|
+#> |Item4 |          -0.05|           0.01|            0.06|             0.955|              |    -0.02|         -0.05|
+#> |Item5 |           0.07|           0.01|            0.06|             0.955|              |     0.12|          0.09|
+#> |Item6 |          -0.04|           0.01|            0.05|             0.955|              |    -0.06|         -0.09|
+#> |Item3 |          -0.01|           0.01|            0.02|             0.955|              |     0.02|         -0.01|
+#> |Item8 |          -0.01|           0.01|            0.02|             0.955|              |     0.00|         -0.03|
+#> |Item1 |           0.00|           0.01|            0.01|             0.955|              |    -0.20|         -0.23|
+#> |Item2 |           0.00|           0.01|            0.01|             0.955|              |     0.16|          0.13|
 
 # Return as data.frame for further processing
 df <- RMitemrestscore(sim_data, output = "dataframe")
-} # }
+#> 
+# }
 ```

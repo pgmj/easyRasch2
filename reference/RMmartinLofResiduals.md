@@ -53,8 +53,8 @@ RMmartinLofResiduals(
 - color_by:
 
   Character. For `output = "ggplot"`, what the tile fill colour encodes.
-  `"residual"` (default) — diverging red-white-blue scale centred at 0,
-  the most directly diagnostic. `"n"` — sequential blue scale on the
+  `"residual"` (default) – diverging red-white-blue scale centred at 0,
+  the most directly diagnostic. `"n"` – sequential blue scale on the
   observed cell count, useful for spotting whether large-magnitude
   residuals are driven by sparse cells. Either way, the numeric residual
   is printed inside each cell.
@@ -108,7 +108,7 @@ residuals at the corners of each antidiagonal (high `t1` + low `t2`, low
 centre (matched subscores). Negatively correlated dimensions show
 positive residuals at the table corners (high/low and low/high) and
 negative residuals at high/high and low/low. See Christensen et al.
-(2002, §7) for a worked example.
+(2002, section7) for a worked example.
 
 Cells where the total score has no observed cases (`n_t = 0`) are
 uninformative and are dropped from the output.

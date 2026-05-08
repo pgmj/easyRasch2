@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,6 +32,23 @@
       <small>Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.8" id="easyrasch2-058">easyRasch2 0.5.8<a class="anchor" aria-label="anchor" href="#easyrasch2-058"></a></h2>
+<ul><li>New <strong><code><a href="../reference/RMdifTree.html">RMdifTree()</a></code></strong> for testing DIF with continuous variables, such as age in years, as well as combinations of DIF variables (DIF interactions).
+<ul><li>Also implements use of <code>stablelearner</code>, as recommended by Henninger et al.
+<ol start="2025" style="list-style-type: decimal"><li>to assess stability of tree-based results.</li>
+</ol></li>
+<li>Borrows from
+<ul><li>raschtreeMH (<a href="https://github.com/mirka-henninger/raschtreeMH" class="external-link uri">https://github.com/mirka-henninger/raschtreeMH</a>)</li>
+<li>effecttree (<a href="https://github.com/mirka-henninger/effecttree" class="external-link uri">https://github.com/mirka-henninger/effecttree</a>)</li>
+</ul></li>
+<li>See these two papers (and <code><a href="../reference/RMdifTree.html">?RMdifTree</a></code>) for more details:
+<ul><li>Henninger, M., Debelak, R., &amp; Strobl, C. (2023). A new stopping criterion for Rasch trees based on the Mantel-Haenszel effect size measure for DIF. Educational Psychological Measurement, 83, 181-212. <a href="doi:10.1177/00131644221077135" class="uri">doi:10.1177/00131644221077135</a>
+</li>
+<li>Henninger, M., Radek, J., Debelak, R., &amp; Strobl, C. (2025). Partial credit trees meet the partial gamma coefficient for quantifying DIF and DSF in polytomous items. Behaviormetrika, 52, 221-257.</li>
+</ul></li>
+</ul></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.7" id="easyrasch2-057">easyRasch2 0.5.7<a class="anchor" aria-label="anchor" href="#easyrasch2-057"></a></h2>
 <ul><li>New <strong><code><a href="../reference/RMdifLR.html">RMdifLR()</a></code></strong> for testing DIF of categorical variables using Andersens’s Likelihood Ratio test as implemented in package <code>eRm</code>

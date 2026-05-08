@@ -1,4 +1,4 @@
-# Martin-Löf Test of Unidimensionality
+# Martin-Lof Test of Unidimensionality
 
 Likelihood-ratio test of unidimensionality against an *a priori*
 specified multidimensional alternative, generalised to polytomous Rasch
@@ -6,7 +6,7 @@ specified multidimensional alternative, generalised to polytomous Rasch
 2002). The p-value is obtained by parametric-bootstrap (Monte Carlo)
 sampling under the unidimensional null, following Christensen & Kreiner
 (2007), because the asymptotic chi-square approximation is biased toward
-conservatism for realistic sample sizes — especially with polytomous
+conservatism for realistic sample sizes – especially with polytomous
 items, where the degrees of freedom can be very large.
 
 ## Usage
@@ -93,7 +93,7 @@ A list with components:
 
 - `T_obs`:
 
-  Observed Martin-Löf likelihood-ratio statistic.
+  Observed Martin-Lof likelihood-ratio statistic.
 
 - `p_value`:
 
@@ -156,7 +156,7 @@ A list with components:
   [`stats::cor.test`](https://rdrr.io/r/stats/cor.test.html)),
   `p_value`, and `n` (number of persons with finite WLEs on both
   subscales). One row per pair; for D = 2, a single row. Useful as an
-  effect-size companion to `p_value` — a rejected test with `r` near 1
+  effect-size companion to `p_value` – a rejected test with `r` near 1
   indicates a small effect; `r` clearly below 1 indicates substantive
   multidimensionality.
 

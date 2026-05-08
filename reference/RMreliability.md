@@ -168,11 +168,22 @@ Adams, R. J. (2005). Reliability as a measurement design effect.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 set.seed(1)
 RMreliability(eRm::raschdat1[, 1:20], draws = 1000)
-
-# With bootstrap CI for PSI and Empirical (slower)
+#> 
+#> 
+#> Table: Reliability for 20 items, n = 100. PSI excludes min/max scoring respondents.
+#> 
+#> |Metric           | Estimate| Lower (95% HDCI)| Upper (95% HDCI)|Notes                       |
+#> |:----------------|--------:|----------------:|----------------:|:---------------------------|
+#> |Cronbach's alpha |    0.754|               NA|               NA|no bootstrap                |
+#> |PSI              |    0.747|               NA|               NA|no bootstrap                |
+#> |Empirical (WLE)  |    0.791|               NA|               NA|no bootstrap                |
+#> |RMU (WLE)        |    0.752|            0.684|            0.818|1000 PVs, 50 RMU iterations |
+# }
+if (FALSE) { # \dontrun{
+# Bootstrap CI for PSI and Empirical (slow: 200 bootstrap iterations)
 RMreliability(eRm::raschdat1[, 1:20], draws = 1000,
               boot = TRUE, boot_iter = 200, parallel = FALSE, seed = 42)
 } # }

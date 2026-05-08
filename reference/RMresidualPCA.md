@@ -121,7 +121,7 @@ residuals. *Educational and Psychological Measurement, 70*(5), 717-731.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 set.seed(1)
 dat <- as.data.frame(
   matrix(sample(0:1, 200 * 12, replace = TRUE), nrow = 200, ncol = 12)
@@ -130,12 +130,26 @@ colnames(dat) <- paste0("I", 1:12)
 
 # Default kable output
 RMresidualPCA(dat)
-
-# With simulation-based cutoff (slow)
-bound <- RMpcaCutoff(dat, iterations = 250, parallel = FALSE, seed = 1)
-RMresidualPCA(dat, cutoff = bound)
+#> 
+#> 
+#> Table: Rasch model (200 complete cases, 12 items). Total observed variance: 9.7% explained by measures, 90.3% unexplained
+#> (basis for PCA; n = 200 non-extreme cases).
+#> 
+#> |Component | Eigenvalue| Proportion of variance|
+#> |:---------|----------:|----------------------:|
+#> |PC1       |      1.464|                  0.121|
+#> |PC2       |      1.425|                  0.118|
+#> |PC3       |      1.281|                  0.106|
+#> |PC4       |      1.155|                  0.096|
+#> |PC5       |      1.125|                  0.093|
 
 # PC1 loadings vs item location plot
 RMresidualPCA(dat, output = "loadings")
+
+# }
+if (FALSE) { # \dontrun{
+# Simulation-based cutoff (slow): 250 Monte-Carlo iterations
+bound <- RMpcaCutoff(dat, iterations = 250, parallel = FALSE, seed = 1)
+RMresidualPCA(dat, cutoff = bound)
 } # }
 ```

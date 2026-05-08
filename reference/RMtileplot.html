@@ -4,13 +4,13 @@ across all items and response categories. Each cell displays the count
 (or percentage) of responses, with optional conditional highlighting
 for cells with low counts. Optional faceting by a grouping variable
 is provided for inspecting subgroup response distributions before DIF
-analyses — particularly useful for spotting empty categories or
+analyses – particularly useful for spotting empty categories or
 under-represented subgroups before fitting Rasch models per group."><meta property="og:description" content="Creates a tile (heat map) plot showing the distribution of responses
 across all items and response categories. Each cell displays the count
 (or percentage) of responses, with optional conditional highlighting
 for cells with low counts. Optional faceting by a grouping variable
 is provided for inspecting subgroup response distributions before DIF
-analyses — particularly useful for spotting empty categories or
+analyses – particularly useful for spotting empty categories or
 under-represented subgroups before fitting Rasch models per group."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -19,7 +19,7 @@ under-represented subgroups before fitting Rasch models per group."></head><body
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,7 +51,7 @@ across all items and response categories. Each cell displays the count
 (or percentage) of responses, with optional conditional highlighting
 for cells with low counts. Optional faceting by a grouping variable
 is provided for inspecting subgroup response distributions before DIF
-analyses — particularly useful for spotting empty categories or
+analyses – particularly useful for spotting empty categories or
 under-represented subgroups before fitting Rasch models per group.</p>
     </div>
 
@@ -81,7 +81,7 @@ under-represented subgroups before fitting Rasch models per group.</p>
 response columns. Each column is one item, each row is one person.
 All columns must be numeric (integer-valued). Response categories
 may be coded starting from 0 or 1. Do not include person IDs,
-grouping variables, or other non-item columns — supply the grouping
+grouping variables, or other non-item columns – supply the grouping
 variable separately via <code>group</code>.</p></dd>
 
 
@@ -142,7 +142,7 @@ grid when <code>group</code> is supplied. Default <code>NULL</code> (ggplot2 cho
 <dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
 <dd><p>Character. <code>"ggplot"</code> (default) returns the plot;
 <code>"dataframe"</code> returns the underlying per-cell counts (one row per
-item × category, plus group when supplied).</p></dd>
+item x category, plus group when supplied).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -158,7 +158,7 @@ item × category, plus group when supplied).</p></dd>
 <code>data</code>, top to bottom) and response categories on the x-axis. Cell
 shading represents the count of responses (darker = more responses).
 Categories with zero responses are explicitly shown (<code>n = 0</code>), which
-helps identify gaps in the response distribution — one of the primary
+helps identify gaps in the response distribution – one of the primary
 purposes of the plot, especially before DIF analyses where
 under-represented categories within a subgroup can break model
 fitting on that subgroup.</p>
@@ -169,19 +169,22 @@ facet contains the count for group A only.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">eRm</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"pcmdat2"</span>, package <span class="op">=</span> <span class="st">"eRm"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Basic tile plot</span></span></span>
 <span class="r-in"><span><span class="fu">RMtileplot</span><span class="op">(</span><span class="va">pcmdat2</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="RMtileplot-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># With percentages</span></span></span>
 <span class="r-in"><span><span class="fu">RMtileplot</span><span class="op">(</span><span class="va">pcmdat2</span>, percent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="RMtileplot-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Faceted by an external grouping variable</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">grp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">pcmdat2</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">RMtileplot</span><span class="op">(</span><span class="va">pcmdat2</span>, group <span class="op">=</span> <span class="va">grp</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="RMtileplot-3.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># With custom labels and tighter cutoff</span></span></span>
 <span class="r-in"><span><span class="fu">RMtileplot</span><span class="op">(</span><span class="va">pcmdat2</span>,</span></span>
@@ -189,10 +192,36 @@ facet contains the count for group A only.</p>
 <span class="r-in"><span>           group_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Female"</span>, <span class="st">"Male"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>           cutoff <span class="op">=</span> <span class="fl">5</span>,</span></span>
 <span class="r-in"><span>           facet_ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-plt img"><img src="RMtileplot-4.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Underlying counts as a data.frame</span></span></span>
 <span class="r-in"><span><span class="fu">RMtileplot</span><span class="op">(</span><span class="va">pcmdat2</span>, group <span class="op">=</span> <span class="va">grp</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    group item item_label category  n percentage</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1      A   I1         I1        0 44       30.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2      A   I1         I1        1 64       43.8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3      A   I1         I1        2 38       26.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4      A   I2         I2        0 55       37.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5      A   I2         I2        1 57       39.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6      A   I2         I2        2 34       23.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7      A   I3         I3        0  8        5.5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8      A   I3         I3        1 59       40.4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9      A   I3         I3        2 79       54.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10     A   I4         I4        0 17       11.6</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11     A   I4         I4        1 63       43.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12     A   I4         I4        2 66       45.2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13     B   I1         I1        0 32       20.8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14     B   I1         I1        1 80       51.9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15     B   I1         I1        2 42       27.3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16     B   I2         I2        0 53       34.4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17     B   I2         I2        1 55       35.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18     B   I2         I2        2 46       29.9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19     B   I3         I3        0  6        3.9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20     B   I3         I3        1 55       35.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21     B   I3         I3        2 93       60.4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22     B   I4         I4        0 17       11.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23     B   I4         I4        1 55       35.7</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24     B   I4         I4        2 82       53.2</span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

@@ -6,8 +6,8 @@ sample on one or more covariates using
 (dichotomous data) or
 [`psychotree::pctree()`](https://rdrr.io/pkg/psychotree/man/pctree.html)
 (polytomous data), then computes per-split effect-size measures for
-every item — the Mantel-Haenszel odds-ratio (in the ETS Delta scale) for
-dichotomous data, or the partial gamma coefficient for polytomous data —
+every item – the Mantel-Haenszel odds-ratio (in the ETS Delta scale) for
+dichotomous data, or the partial gamma coefficient for polytomous data –
 and classifies them into ETS A/B/C categories. Optionally, an iterative
 purification step (Holland & Thayer, 1988; Bjorner et al., 1998) is
 applied, and tree stability across resamples can be assessed via
@@ -41,7 +41,7 @@ RMdifTree(
 - data:
 
   A data.frame or matrix of item responses (non-negative integers,
-  0-based). One column per item. Items only — pass covariates separately
+  0-based). One column per item. Items only – pass covariates separately
   via `covariates`.
 
 - covariates:
@@ -128,9 +128,14 @@ RMdifTree(
   [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html);
   `"dataframe"` returns the underlying tidy data.frame; `"tree"` returns
   the augmented partykit tree object; `"plot"` returns the partykit tree
-  plot. When `stability = TRUE`, the stability summary is attached as
-  `attr(result, "stability")` (a small data.frame) and
-  `attr(result, "stability_kable")` (pre-rendered kable).
+  plot with item names on the terminal-node x-axis
+  (`tp_args = list(names = TRUE)`). For full control over the plot, use
+  `output = "tree"` and call
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) on the result
+  with your own `tp_args`. When `stability = TRUE`, the stability
+  summary is attached as `attr(result, "stability")` (a small
+  data.frame) and `attr(result, "stability_kable")` (pre-rendered
+  kable).
 
 - ...:
 
@@ -148,14 +153,14 @@ Depending on `output`:
 
 - `"kable"`:
 
-  A `knitr_kable` object with one row per (split node × item), grouped
+  A `knitr_kable` object with one row per (split node x item), grouped
   by node via `pack_rows`-style section headers. The caption summarises
   model, effect-size measure, purification, and (if requested)
   stability.
 
 - `"dataframe"`:
 
-  A data.frame with one row per (split node × item): columns `NodeID`,
+  A data.frame with one row per (split node x item): columns `NodeID`,
   `Split` (human-readable description of the split), `Variable`,
   `Direction`, `Item`, `EffectSize`, `SE`, `Class` (A/B/C), `Flagged`
   (TRUE for B or C), `n_left`, `n_right`.
@@ -216,13 +221,13 @@ call is replayed on `stability_B` resamples of the data. The returned
 `stabletree` object reports, per covariate, the proportion of resamples
 in which it was selected at any split, and (for continuous covariates)
 the empirical distribution of cutpoints. Stability is independent of
-effect-size classification — a stable split with a negligible effect is
+effect-size classification – a stable split with a negligible effect is
 still negligible, and a large effect on an unstable split should be
 interpreted with care. Cost is roughly `stability_B` times the original
 fitting time.
 
-**Acknowledgement.** The effect-size machinery — MH and partial gamma
-per node, iterative purification, ETS A/B/C classification — follows the
+**Acknowledgement.** The effect-size machinery – MH and partial gamma
+per node, iterative purification, ETS A/B/C classification – follows the
 implementations by Henninger & Radek in the GitHub packages
 *raschtreeMH* and *effecttree*. The relevant code has been adapted here
 under the MIT licence (see file header).
@@ -255,25 +260,30 @@ Computational and Graphical Statistics, 27*, 685-700.
 ## Examples
 
 ``` r
+# \donttest{
+if (requireNamespace("psychotree", quietly = TRUE) &&
+    requireNamespace("partykit", quietly = TRUE) &&
+    requireNamespace("iarm", quietly = TRUE)) {
+  data("DIFSimPC", package = "psychotree")
+
+  items <- as.data.frame(as.matrix(DIFSimPC$resp))
+  covs  <- DIFSimPC[, c("age", "gender", "motivation")]
+
+  # Default: kable of per-split effect sizes
+  RMdifTree(items, covariates = covs)
+
+  # Tidy data.frame -- one row per (split node x item)
+  df <- RMdifTree(items, covariates = covs, output = "dataframe")
+  df[df$Flagged, ]
+
+  # Tree object (for plotting via partykit::plot)
+  tree <- RMdifTree(items, covariates = covs, output = "tree")
+  plot(tree)
+}
+
+# }
 if (FALSE) { # \dontrun{
-library(psychotree)
-data("DIFSimPC", package = "psychotree")
-
-items <- as.data.frame(as.matrix(DIFSimPC$resp))
-covs  <- DIFSimPC[, c("age", "gender", "motivation")]
-
-# Default: kable of per-split effect sizes
-RMdifTree(items, covariates = covs)
-
-# Tidy data.frame — one row per (split node × item)
-df <- RMdifTree(items, covariates = covs, output = "dataframe")
-df[df$Flagged, ]
-
-# Tree object (for plotting via partykit::plot)
-tree <- RMdifTree(items, covariates = covs, output = "tree")
-plot(tree)
-
-# With iterative purification + FDR + stability assessment
+# Stability assessment refits the tree on B resamples -- slow.
 kbl <- RMdifTree(items, covariates = covs,
                  purification = "iterative", p_adj = "fdr",
                  stability = TRUE, stability_B = 100)

@@ -15,7 +15,7 @@ rather than just whether it does (which RMmartinLof() answers)."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,8 +93,8 @@ column of the dataframe. Default <code>2</code>.</p></dd>
 
 <dt id="arg-color-by">color_by<a class="anchor" aria-label="anchor" href="#arg-color-by"></a></dt>
 <dd><p>Character. For <code>output = "ggplot"</code>, what the tile fill
-colour encodes. <code>"residual"</code> (default) — diverging red-white-blue scale
-centred at 0, the most directly diagnostic. <code>"n"</code> — sequential blue
+colour encodes. <code>"residual"</code> (default) – diverging red-white-blue scale
+centred at 0, the most directly diagnostic. <code>"n"</code> – sequential blue
 scale on the observed cell count, useful for spotting whether
 large-magnitude residuals are driven by sparse cells. Either way, the
 numeric residual is printed inside each cell.</p></dd>
@@ -146,7 +146,7 @@ low <code>t1</code> + high <code>t2</code>) and <strong>negative</strong> residu
 centre (matched subscores). Negatively correlated dimensions show
 positive residuals at the table corners (high/low and low/high) and
 negative residuals at high/high and low/low. See Christensen et al.
-(2002, §7) for a worked example.</p>
+(2002, section7) for a worked example.</p>
 <p>Cells where the total score has no observed cases (<code>n_t = 0</code>) are
 uninformative and are dropped from the output.</p>
     </div>

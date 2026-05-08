@@ -113,7 +113,7 @@ them? *Journal of Statistical Distributions and Applications*, 7(5).
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 # Simulate binary item response data (5 items, 40 persons)
 set.seed(42)
 sim_data <- as.data.frame(
@@ -123,14 +123,37 @@ colnames(sim_data) <- paste0("Item", 1:5)
 
 # Default kable output
 RMiteminfit(sim_data)
+#> 
+#> 
+#> Table: MSQ values based on conditional estimation (n = 40 complete cases).
+#> 
+#> |Item  | Infit MSQ| Relative location|
+#> |:-----|---------:|-----------------:|
+#> |Item1 |     1.049|             -0.03|
+#> |Item2 |     0.929|             -0.54|
+#> |Item3 |     0.828|             -0.23|
+#> |Item4 |     1.216|              0.26|
+#> |Item5 |     0.931|             -0.76|
 
 # Sorted by infit MSQ descending
 RMiteminfit(sim_data, sort = "infit")
+#> 
+#> 
+#> Table: MSQ values based on conditional estimation (n = 40 complete cases).
+#> 
+#> |Item  | Infit MSQ| Relative location|
+#> |:-----|---------:|-----------------:|
+#> |Item4 |     1.216|              0.26|
+#> |Item1 |     1.049|             -0.03|
+#> |Item5 |     0.931|             -0.76|
+#> |Item2 |     0.929|             -0.54|
+#> |Item3 |     0.828|             -0.23|
 
 # Return as data.frame for further processing
 df <- RMiteminfit(sim_data, output = "dataframe")
-
-# With simulation-based cutoffs from RMinfitcutoff()
+# }
+if (FALSE) { # \dontrun{
+# Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
 cutoff_res <- RMinfitcutoff(sim_data, iterations = 100, parallel = FALSE,
                             seed = 42)
 RMiteminfit(sim_data, cutoff = cutoff_res)

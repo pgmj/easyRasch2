@@ -5,9 +5,13 @@ Rasch measurement theory analysis workflows. It is the successor to
 [easyRasch](https://github.com/pgmj/easyRasch), offering a lightweight,
 CRAN-ready structure with proper namespacing and minimal dependencies.
 
-Key functions implemented produce simulation-based critical values
-(cutoffs) for conditional item infit MSQ and Yen’s Q3 residuals to
-evaluate local dependencies.
+Some of the key functions implemented produce simulation-based critical
+values (cutoffs) for conditional item infit MSQ and Yen’s Q3 residuals
+to evaluate local dependencies.
+
+See the References tab on this website for a complete list of functions
+and their documentation. A package vignette is forthcoming, hopefully
+during spring/summer of 2026.
 
 For more materials on Rasch analysis, see the
 [vignette](https://pgmj.github.io/raschrvignette/RaschRvign.html) for
@@ -87,9 +91,11 @@ RMitemrestscore(d)
 ## Credits
 
 As stated, this is based on my `easyRasch` package, and I am using
-Claude Opus 4.6 to “transfer” functions to this more properly formatted
-package. While it uses my earlier code, most of the code in this package
-is produced by the LLM and bug fixed by me.
+Claude Opus to “transfer” functions to this more properly formatted
+package. While Claude uses my earlier code as a starting point, most of
+the code in this package is produced by the LLM and bug fixed by me. Any
+new functions are more or less entirely created by the LLM, based on
+code or papers and instructions.
 
 [Magnus Johansson](https://ki.se/en/people/magnus-johansson-3) is a
 licensed psychologist with a PhD in behavior analysis. He works as a
@@ -150,7 +156,7 @@ cutoffs
 
 ## Differential Item Functioning (DIF)
 
-Partial gamma based DIF with simulation-based cutoffs
+DIF assessment functions
 
 - [`RMdifLR()`](https://pgmj.github.io/easyRasch2/reference/RMdifLR.md)
   : DIF analysis via Andersen's likelihood-ratio test
@@ -172,7 +178,7 @@ PCA of residuals, and more to come
 - [`RMpcaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpcaCutoff.md)
   : Simulation-based Cutoff for First-Contrast Eigenvalue
 - [`RMmartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMmartinLof.md)
-  : Martin-Löf Test of Unidimensionality
+  : Martin-Lof Test of Unidimensionality
 - [`RMmartinLofResiduals()`](https://pgmj.github.io/easyRasch2/reference/RMmartinLofResiduals.md)
   : Standardised Residuals from the Joint Subscore Distribution
 

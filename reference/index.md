@@ -43,7 +43,7 @@ cutoffs
 
 ## Differential Item Functioning (DIF)
 
-Partial gamma based DIF with simulation-based cutoffs
+DIF assessment functions
 
 - [`RMdifLR()`](https://pgmj.github.io/easyRasch2/reference/RMdifLR.md)
   : DIF analysis via Andersen's likelihood-ratio test
@@ -65,7 +65,7 @@ PCA of residuals, and more to come
 - [`RMpcaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpcaCutoff.md)
   : Simulation-based Cutoff for First-Contrast Eigenvalue
 - [`RMmartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMmartinLof.md)
-  : Martin-Löf Test of Unidimensionality
+  : Martin-Lof Test of Unidimensionality
 - [`RMmartinLofResiduals()`](https://pgmj.github.io/easyRasch2/reference/RMmartinLofResiduals.md)
   : Standardised Residuals from the Joint Subscore Distribution
 
