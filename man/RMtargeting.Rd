@@ -104,7 +104,7 @@ The \code{ggplot2} and \code{patchwork} packages must be installed (they are in
 Suggests, not Imports).
 }
 \examples{
-\dontrun{
+\donttest{
 # Polytomous example
 set.seed(42)
 sim_data <- as.data.frame(

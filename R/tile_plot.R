@@ -5,7 +5,7 @@
 #' (or percentage) of responses, with optional conditional highlighting
 #' for cells with low counts. Optional faceting by a grouping variable
 #' is provided for inspecting subgroup response distributions before DIF
-#' analyses — particularly useful for spotting empty categories or
+#' analyses -- particularly useful for spotting empty categories or
 #' under-represented subgroups before fitting Rasch models per group.
 #'
 #' Adapted from `easyRaschBayes::plot_tile()` and extended with the
@@ -15,7 +15,7 @@
 #'   response columns. Each column is one item, each row is one person.
 #'   All columns must be numeric (integer-valued). Response categories
 #'   may be coded starting from 0 or 1. Do not include person IDs,
-#'   grouping variables, or other non-item columns — supply the grouping
+#'   grouping variables, or other non-item columns -- supply the grouping
 #'   variable separately via `group`.
 #' @param group Optional vector of length `nrow(data)` (factor, character,
 #'   or numeric) defining a grouping variable. When provided, the plot is
@@ -46,7 +46,7 @@
 #'   grid when `group` is supplied. Default `NULL` (ggplot2 chooses).
 #' @param output Character. `"ggplot"` (default) returns the plot;
 #'   `"dataframe"` returns the underlying per-cell counts (one row per
-#'   item × category, plus group when supplied).
+#'   item x category, plus group when supplied).
 #'
 #' @return Either a `ggplot` object or a data.frame, depending on
 #'   `output`.
@@ -56,7 +56,7 @@
 #' `data`, top to bottom) and response categories on the x-axis. Cell
 #' shading represents the count of responses (darker = more responses).
 #' Categories with zero responses are explicitly shown (`n = 0`), which
-#' helps identify gaps in the response distribution — one of the primary
+#' helps identify gaps in the response distribution -- one of the primary
 #' purposes of the plot, especially before DIF analyses where
 #' under-represented categories within a subgroup can break model
 #' fitting on that subgroup.
@@ -66,8 +66,8 @@
 #' facet contains the count for group A only.
 #'
 #' @examples
-#' \dontrun{
-#' library(eRm)
+#' \donttest{
+#' data("pcmdat2", package = "eRm")
 #'
 #' # Basic tile plot
 #' RMtileplot(pcmdat2)
@@ -135,7 +135,7 @@ RMtileplot <- function(
     stop("All columns must be numeric. Non-numeric column(s): ",
          paste(non_numeric, collapse = ", "),
          ". Remove non-item columns (e.g., person IDs, grouping ",
-         "variables) before passing to RMtileplot() — pass groups via ",
+         "variables) before passing to RMtileplot() -- pass groups via ",
          "the `group` argument instead.", call. = FALSE)
   }
 
@@ -200,7 +200,7 @@ RMtileplot <- function(
     stats::setNames(item_names, item_names)
   }
 
-  # Per-item × category counts; optionally per group too
+  # Per-item x category counts; optionally per group too
   build_counts <- function(sub_data, group_label = NULL) {
     rows <- lapply(item_names, function(item) {
       vals <- sub_data[[item]]
@@ -234,7 +234,7 @@ RMtileplot <- function(
     agg_keys <- c("item", "group")
   }
 
-  # Per-(item [× group]) totals → percentages
+  # Per-(item [x group]) totals -> percentages
   totals <- stats::aggregate(
     count_df$n,
     by  = count_df[, agg_keys, drop = FALSE],

@@ -18,7 +18,7 @@ RMdifLR(
 \arguments{
 \item{data}{A data.frame or matrix of item responses (non-negative
 integers, 0-based). One column per item, one row per person. Person
-IDs and grouping variables must not be included — pass the grouping
+IDs and grouping variables must not be included -- pass the grouping
 variable separately via \code{dif_var}.}
 
 \item{dif_var}{Vector of length \code{nrow(data)} (factor, character,
@@ -61,7 +61,7 @@ A data.frame, a \code{knitr_kable} object, or a \code{ggplot}
 object, depending on \code{output}.
 
 The data.frame has one row per item (\code{level = "item"}) or per
-item × threshold (\code{level = "threshold"}), with columns
+item x threshold (\code{level = "threshold"}), with columns
 \code{Item} (and \code{Threshold} at threshold level), one numeric
 column per group level, an \code{All} column for the unsplit fit,
 \code{MaxDiff}, \code{Flagged} (when \code{cutoff} is non-\code{NULL}),
@@ -77,8 +77,8 @@ Splits a Rasch model by an external grouping variable using
 threshold locations) together with their standard errors. A single
 function replaces the four legacy helpers (\code{RIdifTableLR},
 \code{RIdifThreshTblLR}, \code{RIdifFigureLR}, \code{RIdifThreshFigLR}) by exposing the
-two underlying axes — \code{level} (item or threshold) and \code{output}
-(data.frame, kable, or ggplot) — as arguments. The same data
+two underlying axes -- \code{level} (item or threshold) and \code{output}
+(data.frame, kable, or ggplot) -- as arguments. The same data
 preparation pipeline feeds all six combinations.
 }
 \details{
@@ -100,9 +100,9 @@ easyRasch package has been dropped in favour of a logical
 kable renders correctly in HTML, LaTeX, and pipe/markdown.
 }
 \examples{
-\dontrun{
-library(eRm)
+\donttest{
 set.seed(1)
+data("pcmdat2", package = "eRm")
 grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
 
 # Default: ggplot panel of item locations with 95\% CIs
@@ -112,7 +112,7 @@ RMdifLR(pcmdat2, dif_var = grp)
 RMdifLR(pcmdat2, dif_var = grp,
         level = "threshold", output = "kable", sort = TRUE)
 
-# Tidy data.frame for downstream / Jamovi use
+# Tidy data.frame for downstream use
 df <- RMdifLR(pcmdat2, dif_var = grp, output = "dataframe")
 attr(df, "lr_test")
 df[df$Flagged, ]

@@ -83,7 +83,7 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(1)
 #' dat <- as.data.frame(
 #'   matrix(sample(0:1, 200 * 12, replace = TRUE), nrow = 200, ncol = 12)
@@ -93,12 +93,13 @@
 #' # Default kable output
 #' RMresidualPCA(dat)
 #'
-#' # With simulation-based cutoff (slow)
-#' bound <- RMpcaCutoff(dat, iterations = 250, parallel = FALSE, seed = 1)
-#' RMresidualPCA(dat, cutoff = bound)
-#'
 #' # PC1 loadings vs item location plot
 #' RMresidualPCA(dat, output = "loadings")
+#' }
+#' \dontrun{
+#' # Simulation-based cutoff (slow): 250 Monte-Carlo iterations
+#' bound <- RMpcaCutoff(dat, iterations = 250, parallel = FALSE, seed = 1)
+#' RMresidualPCA(dat, cutoff = bound)
 #' }
 RMresidualPCA <- function(data,
                           cutoff       = NULL,
@@ -150,9 +151,17 @@ RMresidualPCA <- function(data,
     } else {
       item_locations <- rowMeans(thresh_table, na.rm = TRUE)
     }
+    # PCM rownames are already plain item names; strip a "beta " prefix
+    # defensively so the loadings-plot lookup `item_locations[loadings$Item]`
+    # is robust across eRm versions.
+    names(item_locations) <- sub("^beta\\s+", "", names(item_locations))
   } else {
     erm_fit <- eRm::RM(data)
     item_locations <- stats::coef(erm_fit, "beta") * -1
+    # `coef(fit, "beta")` names items as "beta I1", "beta I2", ..., which
+    # breaks `item_locations[loadings$Item]` (yields all-NA locations on
+    # the loadings plot). Strip the prefix.
+    names(item_locations) <- sub("^beta\\s+", "", names(item_locations))
   }
 
   pp        <- eRm::person.parameter(erm_fit)
@@ -162,7 +171,7 @@ RMresidualPCA <- function(data,
   if (anyNA(st_resids)) {
     # Should be rare after na.omit on data, but possible if itemfit returns
     # NA for an unestimable cell.
-    keep_rows <- complete.cases(st_resids)
+    keep_rows <- stats::complete.cases(st_resids)
     st_resids <- st_resids[keep_rows, , drop = FALSE]
   }
 
@@ -591,7 +600,7 @@ run_single_pca_sim <- function(seed, data_list) {
     st_resids <- ifit$st.res
 
     if (anyNA(st_resids)) {
-      keep <- complete.cases(st_resids)
+      keep <- stats::complete.cases(st_resids)
       st_resids <- st_resids[keep, , drop = FALSE]
     }
     if (nrow(st_resids) < ncol(st_resids)) {

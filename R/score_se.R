@@ -70,7 +70,7 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(42)
 #' sim_data <- as.data.frame(
 #'   matrix(sample(0:3, 200 * 6, replace = TRUE), nrow = 200, ncol = 6)

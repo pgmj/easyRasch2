@@ -82,7 +82,7 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Polytomous example
 #' set.seed(42)
 #' sim_data <- as.data.frame(

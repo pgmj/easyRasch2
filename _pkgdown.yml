@@ -46,7 +46,7 @@ reference:
       - RMpgLDcutoff
       - RMpgLDplot
   - title: "Differential Item Functioning (DIF)"
-    desc: "Partial gamma based DIF with simulation-based cutoffs"
+    desc: "DIF assessment functions"
     contents:
       - RMdifLR
       - RMdifTree

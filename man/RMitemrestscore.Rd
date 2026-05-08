@@ -61,7 +61,7 @@ sample mean person location, providing a measure of item targeting.
 The \code{iarm} package must be installed (it is in Suggests, not Imports).
 }
 \examples{
-\dontrun{
+\donttest{
 # Simulate binary item response data (8 items, 200 persons)
 set.seed(42)
 sim_data <- as.data.frame(

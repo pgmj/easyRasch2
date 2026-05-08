@@ -75,7 +75,7 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Simulate binary item response data (5 items, 40 persons)
 #' set.seed(42)
 #' sim_data <- as.data.frame(
@@ -91,8 +91,9 @@
 #'
 #' # Return as data.frame for further processing
 #' df <- RMiteminfit(sim_data, output = "dataframe")
-#'
-#' # With simulation-based cutoffs from RMinfitcutoff()
+#' }
+#' \dontrun{
+#' # Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
 #' cutoff_res <- RMinfitcutoff(sim_data, iterations = 100, parallel = FALSE,
 #'                             seed = 42)
 #' RMiteminfit(sim_data, cutoff = cutoff_res)

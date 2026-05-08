@@ -57,7 +57,7 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(42)
 #' sim_data <- as.data.frame(
 #'   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
@@ -70,8 +70,9 @@
 #'
 #' # Return as data.frame
 #' RMpartgamDIF(sim_data, dif_group, output = "dataframe")
-#'
-#' # With simulation-based cutoffs
+#' }
+#' \dontrun{
+#' # Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
 #' cutoff_res <- RMpgDIFcutoff(sim_data, dif_var = dif_group,
 #'                                   iterations = 100, parallel = FALSE,
 #'                                   seed = 42)

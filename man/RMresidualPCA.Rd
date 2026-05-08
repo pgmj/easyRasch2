@@ -86,7 +86,7 @@ scores (no finite MLE theta) are excluded from the partition, matching
 the sample used by \code{eRm::SepRel()} and the PCA itself.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(1)
 dat <- as.data.frame(
   matrix(sample(0:1, 200 * 12, replace = TRUE), nrow = 200, ncol = 12)
@@ -96,12 +96,13 @@ colnames(dat) <- paste0("I", 1:12)
 # Default kable output
 RMresidualPCA(dat)
 
-# With simulation-based cutoff (slow)
-bound <- RMpcaCutoff(dat, iterations = 250, parallel = FALSE, seed = 1)
-RMresidualPCA(dat, cutoff = bound)
-
 # PC1 loadings vs item location plot
 RMresidualPCA(dat, output = "loadings")
+}
+\dontrun{
+# Simulation-based cutoff (slow): 250 Monte-Carlo iterations
+bound <- RMpcaCutoff(dat, iterations = 250, parallel = FALSE, seed = 1)
+RMresidualPCA(dat, cutoff = bound)
 }
 }
 \references{

@@ -1,3 +1,21 @@
+# easyRasch2 0.5.8
+
+- New **`RMdifTree()`** for testing DIF with continuous variables, such as age
+  in years, as well as combinations of DIF variables (DIF interactions).
+  - Also implements use of `stablelearner`, as recommended by Henninger et al.
+    (2025) to assess stability of tree-based results.
+  - Borrows from
+    * raschtreeMH (https://github.com/mirka-henninger/raschtreeMH)
+    * effecttree  (https://github.com/mirka-henninger/effecttree)
+  - See these two papers (and `?RMdifTree`) for more details:
+    * Henninger, M., Debelak, R., & Strobl, C. (2023). A new stopping
+      criterion for Rasch trees based on the Mantel-Haenszel effect size
+      measure for DIF. Educational Psychological Measurement, 83, 181-212.
+      doi:10.1177/00131644221077135
+    * Henninger, M., Radek, J., Debelak, R., & Strobl, C. (2025). Partial
+      credit trees meet the partial gamma coefficient for quantifying DIF
+      and DSF in polytomous items. Behaviormetrika, 52, 221-257.
+  
 # easyRasch2 0.5.7
 
 - New **`RMdifLR()`** for testing DIF of categorical variables using Andersens's

@@ -105,11 +105,12 @@ Bootstrap iterations that fail to converge in either mirt or eRm are
 silently dropped.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(1)
 RMreliability(eRm::raschdat1[, 1:20], draws = 1000)
-
-# With bootstrap CI for PSI and Empirical (slower)
+}
+\dontrun{
+# Bootstrap CI for PSI and Empirical (slow: 200 bootstrap iterations)
 RMreliability(eRm::raschdat1[, 1:20], draws = 1000,
               boot = TRUE, boot_iter = 200, parallel = FALSE, seed = 42)
 }

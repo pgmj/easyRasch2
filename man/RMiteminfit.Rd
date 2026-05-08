@@ -81,7 +81,7 @@ sample mean person location, providing a measure of item targeting.
 The \code{iarm} package must be installed (it is in Suggests, not Imports).
 }
 \examples{
-\dontrun{
+\donttest{
 # Simulate binary item response data (5 items, 40 persons)
 set.seed(42)
 sim_data <- as.data.frame(
@@ -97,8 +97,9 @@ RMiteminfit(sim_data, sort = "infit")
 
 # Return as data.frame for further processing
 df <- RMiteminfit(sim_data, output = "dataframe")
-
-# With simulation-based cutoffs from RMinfitcutoff()
+}
+\dontrun{
+# Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
 cutoff_res <- RMinfitcutoff(sim_data, iterations = 100, parallel = FALSE,
                             seed = 42)
 RMiteminfit(sim_data, cutoff = cutoff_res)

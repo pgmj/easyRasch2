@@ -33,8 +33,8 @@ are flagged: marked as \verb{**bold**} in the kable, shown in the \code{flagged}
 column of the dataframe. Default \code{2}.}
 
 \item{color_by}{Character. For \code{output = "ggplot"}, what the tile fill
-colour encodes. \code{"residual"} (default) — diverging red-white-blue scale
-centred at 0, the most directly diagnostic. \code{"n"} — sequential blue
+colour encodes. \code{"residual"} (default) -- diverging red-white-blue scale
+centred at 0, the most directly diagnostic. \code{"n"} -- sequential blue
 scale on the observed cell count, useful for spotting whether
 large-magnitude residuals are driven by sparse cells. Either way, the
 numeric residual is printed inside each cell.}
@@ -88,7 +88,7 @@ low \code{t1} + high \code{t2}) and \strong{negative} residuals near the antidia
 centre (matched subscores). Negatively correlated dimensions show
 positive residuals at the table corners (high/low and low/high) and
 negative residuals at high/high and low/low. See Christensen et al.
-(2002, §7) for a worked example.
+(2002, section7) for a worked example.
 
 Cells where the total score has no observed cases (\code{n_t = 0}) are
 uninformative and are dropped from the output.

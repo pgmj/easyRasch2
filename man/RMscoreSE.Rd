@@ -81,7 +81,7 @@ prior on theta. Item parameters from MML differ slightly from the CML
 values used by the WLE path; for well-behaved data the difference is small.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(42)
 sim_data <- as.data.frame(
   matrix(sample(0:3, 200 * 6, replace = TRUE), nrow = 200, ncol = 6)

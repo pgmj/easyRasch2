@@ -55,9 +55,9 @@
 #' Detects Differential Item Functioning (DIF) by recursively splitting
 #' the sample on one or more covariates using \code{psychotree::raschtree()}
 #' (dichotomous data) or \code{psychotree::pctree()} (polytomous data),
-#' then computes per-split effect-size measures for every item — the
+#' then computes per-split effect-size measures for every item -- the
 #' Mantel-Haenszel odds-ratio (in the ETS Delta scale) for dichotomous
-#' data, or the partial gamma coefficient for polytomous data — and
+#' data, or the partial gamma coefficient for polytomous data -- and
 #' classifies them into ETS A/B/C categories. Optionally, an iterative
 #' purification step (Holland & Thayer, 1988; Bjorner et al., 1998) is
 #' applied, and tree stability across resamples can be assessed via
@@ -68,7 +68,7 @@
 #' recursive-partitioning machinery of \code{partykit} / \code{psychotree}.
 #'
 #' @param data A data.frame or matrix of item responses (non-negative
-#'   integers, 0-based). One column per item. Items only — pass
+#'   integers, 0-based). One column per item. Items only -- pass
 #'   covariates separately via \code{covariates}.
 #' @param covariates A data.frame with \code{nrow(data)} rows giving the
 #'   DIF covariates. Columns may be numeric (continuous), factor, ordered
@@ -122,7 +122,11 @@
 #'   per-split per-item effect-size table as a \code{knitr::kable()};
 #'   \code{"dataframe"} returns the underlying tidy data.frame;
 #'   \code{"tree"} returns the augmented partykit tree object;
-#'   \code{"plot"} returns the partykit tree plot. When
+#'   \code{"plot"} returns the partykit tree plot with item names on
+#'   the terminal-node x-axis (\code{tp_args = list(names = TRUE)}).
+#'   For full control over the plot, use \code{output = "tree"} and
+#'   call \code{plot()} on the result with your own \code{tp_args}.
+#'   When
 #'   \code{stability = TRUE}, the stability summary is attached as
 #'   \code{attr(result, "stability")} (a small data.frame) and
 #'   \code{attr(result, "stability_kable")} (pre-rendered kable).
@@ -136,11 +140,11 @@
 #' @return Depending on \code{output}:
 #' \describe{
 #'   \item{\code{"kable"}}{A \code{knitr_kable} object with one row per
-#'     (split node × item), grouped by node via \code{pack_rows}-style
+#'     (split node x item), grouped by node via \code{pack_rows}-style
 #'     section headers. The caption summarises model, effect-size
 #'     measure, purification, and (if requested) stability.}
 #'   \item{\code{"dataframe"}}{A data.frame with one row per (split node
-#'     × item): columns \code{NodeID}, \code{Split} (human-readable
+#'     x item): columns \code{NodeID}, \code{Split} (human-readable
 #'     description of the split), \code{Variable}, \code{Direction},
 #'     \code{Item}, \code{EffectSize}, \code{SE}, \code{Class} (A/B/C),
 #'     \code{Flagged} (TRUE for B or C), \code{n_left}, \code{n_right}.}
@@ -189,13 +193,13 @@
 #' data. The returned \code{stabletree} object reports, per covariate,
 #' the proportion of resamples in which it was selected at any split,
 #' and (for continuous covariates) the empirical distribution of
-#' cutpoints. Stability is independent of effect-size classification —
+#' cutpoints. Stability is independent of effect-size classification --
 #' a stable split with a negligible effect is still negligible, and a
 #' large effect on an unstable split should be interpreted with care.
 #' Cost is roughly \code{stability_B} times the original fitting time.
 #'
-#' \strong{Acknowledgement.} The effect-size machinery — MH and partial
-#' gamma per node, iterative purification, ETS A/B/C classification —
+#' \strong{Acknowledgement.} The effect-size machinery -- MH and partial
+#' gamma per node, iterative purification, ETS A/B/C classification --
 #' follows the implementations by Henninger & Radek in the GitHub
 #' packages \emph{raschtreeMH} and \emph{effecttree}. The relevant code
 #' has been adapted here under the MIT licence (see file header).
@@ -223,25 +227,29 @@
 #' @seealso \code{\link{RMdifLR}}, \code{\link{RMpartgamDIF}}
 #'
 #' @examples
+#' \donttest{
+#' if (requireNamespace("psychotree", quietly = TRUE) &&
+#'     requireNamespace("partykit", quietly = TRUE) &&
+#'     requireNamespace("iarm", quietly = TRUE)) {
+#'   data("DIFSimPC", package = "psychotree")
+#'
+#'   items <- as.data.frame(as.matrix(DIFSimPC$resp))
+#'   covs  <- DIFSimPC[, c("age", "gender", "motivation")]
+#'
+#'   # Default: kable of per-split effect sizes
+#'   RMdifTree(items, covariates = covs)
+#'
+#'   # Tidy data.frame -- one row per (split node x item)
+#'   df <- RMdifTree(items, covariates = covs, output = "dataframe")
+#'   df[df$Flagged, ]
+#'
+#'   # Tree object (for plotting via partykit::plot)
+#'   tree <- RMdifTree(items, covariates = covs, output = "tree")
+#'   plot(tree)
+#' }
+#' }
 #' \dontrun{
-#' library(psychotree)
-#' data("DIFSimPC", package = "psychotree")
-#'
-#' items <- as.data.frame(as.matrix(DIFSimPC$resp))
-#' covs  <- DIFSimPC[, c("age", "gender", "motivation")]
-#'
-#' # Default: kable of per-split effect sizes
-#' RMdifTree(items, covariates = covs)
-#'
-#' # Tidy data.frame — one row per (split node × item)
-#' df <- RMdifTree(items, covariates = covs, output = "dataframe")
-#' df[df$Flagged, ]
-#'
-#' # Tree object (for plotting via partykit::plot)
-#' tree <- RMdifTree(items, covariates = covs, output = "tree")
-#' plot(tree)
-#'
-#' # With iterative purification + FDR + stability assessment
+#' # Stability assessment refits the tree on B resamples -- slow.
 #' kbl <- RMdifTree(items, covariates = covs,
 #'                  purification = "iterative", p_adj = "fdr",
 #'                  stability = TRUE, stability_B = 100)
@@ -267,6 +275,11 @@ RMdifTree <- function(data,
                       on_rescale        = c("message", "warning", "stop"),
                       output            = c("kable", "dataframe", "tree", "plot"),
                       ...) {
+
+  # Capture the unevaluated `covariates` expression so we can recover a
+  # readable column name when the user passes a single vector like
+  # RMdifTree(d, dif$age) instead of a data.frame.
+  covariates_expr <- substitute(covariates)
 
   model             <- match.arg(model)
   effect_size       <- match.arg(effect_size)
@@ -318,7 +331,9 @@ RMdifTree <- function(data,
   }
   if (!is.data.frame(covariates)) {
     if (is.atomic(covariates) || is.list(covariates)) {
-      covariates <- as.data.frame(covariates, stringsAsFactors = FALSE)
+      derived_name <- derive_covariate_name(covariates_expr)
+      covariates <- data.frame(x = covariates, stringsAsFactors = FALSE)
+      names(covariates) <- derived_name
     } else {
       stop("`covariates` must be a data.frame.", call. = FALSE)
     }
@@ -425,7 +440,7 @@ RMdifTree <- function(data,
 
   # The "Minimum score is not zero" warning fires repeatedly during the
   # tree's parameter-instability search (psychotree refits pcmodel many
-  # times). Capturing it here just to muffle the noise — we inspect the
+  # times). Capturing it here just to muffle the noise -- we inspect the
   # *final* tree's terminal nodes below to detect the actual condition.
   tree <- withCallingHandlers(
     eval(tree_call, envir = list(combined = combined)),
@@ -463,7 +478,7 @@ RMdifTree <- function(data,
     prune_ids <- as.integer(names(effect_info$nodes)[to_prune])
     if (length(prune_ids) > 0L) {
       tree <- partykit::nodeprune(tree, ids = prune_ids)
-      # Recompute on the pruned tree — splits and ids may have shifted
+      # Recompute on the pruned tree -- splits and ids may have shifted
       effect_info <- compute_tree_effectsize(
         tree         = tree,
         items        = items_mat,
@@ -492,6 +507,22 @@ RMdifTree <- function(data,
   # ---------------------------------------------------------------------
   # Stability assessment
   # ---------------------------------------------------------------------
+  # Resample-level fits inside stabletree() can produce three flavours of
+  # noise that we don't want to leak to the user (each fires repeatedly
+  # during the parameter-instability search but is not separately
+  # actionable -- the user has already been told about rescaling in the
+  # *original* tree above):
+  #
+  #   1. "Minimum score is not zero ..."   -- pcmodel rescaling warning
+  #   2. "items with null categories ..."  -- interior categories empty
+  #   3. "Error in chol.default(meat) ..." -- M-fluctuation test cannot
+  #      invert a rank-deficient score covariance (printed via try()
+  #      inside partykit::mob; non-fatal, the affected split is skipped).
+  #
+  # We muffle the warnings via withCallingHandlers and capture stderr
+  # via sink() to swallow the printed try() error text. After the call
+  # returns we emit a single summary message so the user knows what
+  # happened during the resample fits.
   stability_result <- NULL
   if (stability) {
     sampler <- if (stability_sampler == "subsampling") {
@@ -499,21 +530,66 @@ RMdifTree <- function(data,
     } else {
       stablelearner::bootstrap
     }
-    # The B resample fits inside stabletree() will each trigger many
-    # "Minimum score is not zero" warnings during their own parameter-
-    # instability searches. Muffle them here — the rescaling diagnostic
-    # we emitted above pertains to the *original* fitted tree, which is
-    # what the user interprets. Resample-level rescaling is normal
-    # sampling variability and not separately actionable.
-    stability_result <- withCallingHandlers(
-      stablelearner::stabletree(tree, B = stability_B, sampler = sampler),
-      warning = function(w) {
-        if (grepl("Minimum score is not zero",
-                  conditionMessage(w), fixed = TRUE)) {
-          invokeRestart("muffleWarning")
+
+    n_min_zero  <- 0L
+    n_null_cat  <- 0L
+
+    err_file <- tempfile(fileext = ".log")
+    err_con  <- file(err_file, open = "wt")
+    sink(err_con, type = "message")
+
+    stability_result <- tryCatch(
+      withCallingHandlers(
+        stablelearner::stabletree(tree, B = stability_B, sampler = sampler),
+        warning = function(w) {
+          msg <- conditionMessage(w)
+          if (grepl("Minimum score is not zero", msg, fixed = TRUE)) {
+            n_min_zero <<- n_min_zero + 1L
+            invokeRestart("muffleWarning")
+          } else if (grepl("items with null categories", msg, fixed = TRUE)) {
+            n_null_cat <<- n_null_cat + 1L
+            invokeRestart("muffleWarning")
+          }
         }
+      ),
+      finally = {
+        sink(NULL, type = "message")
+        close(err_con)
       }
     )
+
+    err_lines <- tryCatch(readLines(err_file, warn = FALSE),
+                          error = function(e) character())
+    unlink(err_file)
+    n_resample_errors <- sum(grepl("^Error", err_lines))
+
+    # Single user-facing summary, only if anything noteworthy happened.
+    summary_parts <- character()
+    if (n_min_zero > 0L) {
+      summary_parts <- c(summary_parts,
+        paste0(n_min_zero, " 'minimum score not zero' rescaling warning(s)"))
+    }
+    if (n_null_cat > 0L) {
+      summary_parts <- c(summary_parts,
+        paste0(n_null_cat, " 'items with null categories' warning(s)"))
+    }
+    if (n_resample_errors > 0L) {
+      summary_parts <- c(summary_parts,
+        paste0(n_resample_errors,
+               " resample fit(s) errored out (rank-deficient score ",
+               "covariance in the M-fluctuation test); affected splits ",
+               "skipped"))
+    }
+    if (length(summary_parts) > 0L) {
+      message(
+        "Stability assessment notes (suppressed during fitting): ",
+        paste(summary_parts, collapse = "; "),
+        ". These reflect sparsity in some resamples and are normal ",
+        "sampling variability; selection-frequency and cutpoint summaries ",
+        "are based on resamples that completed successfully."
+      )
+    }
+
     attr(tree, "stability") <- stability_result
   }
 
@@ -556,7 +632,11 @@ RMdifTree <- function(data,
     return(tree)
   }
   if (output == "plot") {
-    return(graphics::plot(tree))
+    # Show item names (rather than 1..I numeric indices) on the
+    # terminal-node x-axis. Users wanting full control can use
+    # `output = "tree"` and call `plot()` themselves with custom
+    # `tp_args`.
+    return(graphics::plot(tree, tp_args = list(names = TRUE)))
   }
   if (output == "dataframe") {
     return(df)
@@ -589,6 +669,55 @@ RMdifTree <- function(data,
 # =====================================================================
 # Internal helpers
 # =====================================================================
+
+#' Derive a readable column name from an unevaluated `covariates` expression
+#'
+#' When the user passes a single vector -- e.g.
+#' \code{RMdifTree(d, dif$age)} -- \code{as.data.frame(covariates)} would
+#' name the column "covariates" (the parameter name). To keep the plot,
+#' kable, and dataframe outputs informative we recover the user's
+#' expression here and produce a clean column name:
+#' * a bare symbol \code{age} -> "age"
+#' * \code{dif$age} or \code{dif[["age"]]} -> "age"
+#' * \code{dif[, "age"]} -> "age"
+#' * anything else -> the deparsed expression as-is.
+#'
+#' If the resulting name would collide with R reserved syntax, a
+#' fallback "covariate" is used.
+#'
+#' @keywords internal
+#' @noRd
+derive_covariate_name <- function(expr) {
+  bad_fallback <- "covariate"
+  if (is.symbol(expr)) {
+    nm <- as.character(expr)
+    return(if (nzchar(nm)) nm else bad_fallback)
+  }
+  if (is.call(expr) && length(expr) >= 3L) {
+    op <- expr[[1L]]
+    # x$name
+    if (identical(op, as.name("$"))) {
+      return(as.character(expr[[3L]]))
+    }
+    # x[["name"]] or x[[i]]
+    if (identical(op, as.name("[["))) {
+      key <- expr[[3L]]
+      if (is.character(key)) return(key)
+      if (is.symbol(key))    return(as.character(key))
+    }
+    # x[, "name"] or x[i]
+    if (identical(op, as.name("["))) {
+      # Last index argument is the column selector
+      n <- length(expr)
+      key <- expr[[n]]
+      if (is.character(key)) return(key)
+      if (is.symbol(key))    return(as.character(key))
+    }
+  }
+  out <- tryCatch(deparse(expr, width.cutoff = 60L)[1L],
+                  error = function(e) bad_fallback)
+  if (is.null(out) || !nzchar(out)) bad_fallback else out
+}
 
 #' Validate the covariates data.frame
 #'
@@ -750,7 +879,7 @@ collect_terminal_ids <- function(node) {
   unlist(lapply(kids, collect_terminal_ids), use.names = FALSE)
 }
 
-#' Detect which (terminal node × item) cells had no responses in
+#' Detect which (terminal node x item) cells had no responses in
 #' category 0 in the final fitted tree
 #'
 #' \code{psychotree::pcmodel} silently rescales such items to start at
@@ -761,9 +890,9 @@ collect_terminal_ids <- function(node) {
 #' @return A list with three components:
 #'   * \code{per_terminal}: data.frame with columns \code{NodeID}
 #'     (terminal-node id) and \code{Item}, one row per affected cell.
-#'   * \code{per_item}: named integer vector — for each affected item,
+#'   * \code{per_item}: named integer vector -- for each affected item,
 #'     how many terminal nodes had it rescaled.
-#'   * \code{n_terminal_cells}: total count of (terminal × item)
+#'   * \code{n_terminal_cells}: total count of (terminal x item)
 #'     affected cells.
 #'
 #' @keywords internal
@@ -809,7 +938,7 @@ detect_rescaled_items <- function(tree, items_mat) {
 
   list(
     per_terminal     = per_terminal,
-    per_item         = setNames(as.integer(per_item), names(per_item)),
+    per_item         = stats::setNames(as.integer(per_item), names(per_item)),
     n_terminal_cells = nrow(per_terminal)
   )
 }
@@ -1117,7 +1246,7 @@ pgamma_classify <- function(gam, sse, p_adj, thresholds, alpha = 0.05) {
 
 #' Convert per-node effect-size results to a tidy data.frame
 #'
-#' One row per (node × item).
+#' One row per (node x item).
 #'
 #' @keywords internal
 #' @noRd
@@ -1200,7 +1329,7 @@ render_effectsize_kable <- function(df, n_persons, n_items, es_method,
   )
 
   if (nrow(df) == 0L) {
-    empty <- data.frame(Note = "No splits — model is invariant across covariates.",
+    empty <- data.frame(Note = "No splits -- model is invariant across covariates.",
                         stringsAsFactors = FALSE)
     return(knitr::kable(empty, format = "pipe", row.names = FALSE,
                         caption = caption))
@@ -1227,7 +1356,7 @@ render_effectsize_kable <- function(df, n_persons, n_items, es_method,
     raw <- df[df$NodeID == nid, , drop = FALSE]
     split_lbl <- raw$Split[1L]
     n_l <- raw$n_left[1L]; n_r <- raw$n_right[1L]
-    header <- paste0("Node ", nid, " — ", split_lbl,
+    header <- paste0("Node ", nid, " -- ", split_lbl,
                      "  (n left = ", n_l, ", n right = ", n_r, ")")
     body <- display[display$NodeID == nid, body_cols, drop = FALSE]
     list(header = header, body = body)
@@ -1282,7 +1411,7 @@ build_es_caption <- function(df, n_persons, n_items, es_method,
   flag_part  <- if (nrow(df) > 0L)
                   paste0(" Flagged (Class B or C): ",
                          sum(df$Flagged), " / ", nrow(df),
-                         " (item × split combinations).",
+                         " (item x split combinations).",
                          " **Bold** rows are flagged.")
                 else ""
   stab_part  <- if (has_stability)
@@ -1291,7 +1420,7 @@ build_es_caption <- function(df, n_persons, n_items, es_method,
   rescale_part <- if (n_rescaled_items > 0L)
                     paste0(" ", n_rescaled_items,
                            " item(s) were rescaled in at least one terminal ",
-                           "node — see `attr(result, \"rescaled_terminal_items\")`. ",
+                           "node -- see `attr(result, \"rescaled_terminal_items\")`. ",
                            "Effect sizes are unaffected.")
                   else ""
   paste0(

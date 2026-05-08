@@ -2,7 +2,7 @@
 % Please edit documentation in R/martin_lof.R
 \name{RMmartinLof}
 \alias{RMmartinLof}
-\title{Martin-Löf Test of Unidimensionality}
+\title{Martin-Lof Test of Unidimensionality}
 \usage{
 RMmartinLof(
   data,
@@ -60,7 +60,7 @@ to sequential with a warning.}
 \value{
 A list with components:
 \describe{
-\item{\code{T_obs}}{Observed Martin-Löf likelihood-ratio statistic.}
+\item{\code{T_obs}}{Observed Martin-Lof likelihood-ratio statistic.}
 \item{\code{p_value}}{Monte Carlo p-value with \code{(n_exceed + 1) / (n + 1)}
 correction.}
 \item{\code{actual_iterations}}{Number of successful MC iterations
@@ -85,7 +85,7 @@ between subscale WLEs, with columns \code{subscale_a}, \code{subscale_b}, \code{
 \code{ci_lower}, \code{ci_upper} (95\% CI from \code{stats::cor.test}), \code{p_value},
 and \code{n} (number of persons with finite WLEs on both subscales). One
 row per pair; for D = 2, a single row. Useful as an effect-size
-companion to \code{p_value} — a rejected test with \code{r} near 1 indicates a
+companion to \code{p_value} -- a rejected test with \code{r} near 1 indicates a
 small effect; \code{r} clearly below 1 indicates substantive
 multidimensionality.}
 }
@@ -97,7 +97,7 @@ credit models (Christensen, Bjorner, Kreiner, & Petersen, 2002). The
 p-value is obtained by parametric-bootstrap (Monte Carlo) sampling under
 the unidimensional null, following Christensen & Kreiner (2007), because
 the asymptotic chi-square approximation is biased toward conservatism for
-realistic sample sizes — especially with polytomous items, where the
+realistic sample sizes -- especially with polytomous items, where the
 degrees of freedom can be very large.
 }
 \details{

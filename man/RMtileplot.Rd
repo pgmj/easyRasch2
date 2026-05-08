@@ -23,7 +23,7 @@ RMtileplot(
 response columns. Each column is one item, each row is one person.
 All columns must be numeric (integer-valued). Response categories
 may be coded starting from 0 or 1. Do not include person IDs,
-grouping variables, or other non-item columns — supply the grouping
+grouping variables, or other non-item columns -- supply the grouping
 variable separately via \code{group}.}
 
 \item{group}{Optional vector of length \code{nrow(data)} (factor, character,
@@ -64,7 +64,7 @@ grid when \code{group} is supplied. Default \code{NULL} (ggplot2 chooses).}
 
 \item{output}{Character. \code{"ggplot"} (default) returns the plot;
 \code{"dataframe"} returns the underlying per-cell counts (one row per
-item × category, plus group when supplied).}
+item x category, plus group when supplied).}
 }
 \value{
 Either a \code{ggplot} object or a data.frame, depending on
@@ -76,7 +76,7 @@ across all items and response categories. Each cell displays the count
 (or percentage) of responses, with optional conditional highlighting
 for cells with low counts. Optional faceting by a grouping variable
 is provided for inspecting subgroup response distributions before DIF
-analyses — particularly useful for spotting empty categories or
+analyses -- particularly useful for spotting empty categories or
 under-represented subgroups before fitting Rasch models per group.
 }
 \details{
@@ -87,7 +87,7 @@ Items are placed on the y-axis (in the same order as the columns of
 \code{data}, top to bottom) and response categories on the x-axis. Cell
 shading represents the count of responses (darker = more responses).
 Categories with zero responses are explicitly shown (\code{n = 0}), which
-helps identify gaps in the response distribution — one of the primary
+helps identify gaps in the response distribution -- one of the primary
 purposes of the plot, especially before DIF analyses where
 under-represented categories within a subgroup can break model
 fitting on that subgroup.
@@ -97,8 +97,8 @@ applied within each group, so a cell labelled "5" in the group-A
 facet contains the count for group A only.
 }
 \examples{
-\dontrun{
-library(eRm)
+\donttest{
+data("pcmdat2", package = "eRm")
 
 # Basic tile plot
 RMtileplot(pcmdat2)

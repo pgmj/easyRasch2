@@ -53,7 +53,7 @@ simulation-based cutoff recommendation.
 expected responses, which are most readily available from MML estimation.
 }
 \examples{
-\dontrun{
+\donttest{
 # Simulate binary item response data (10 items, 200 persons)
 set.seed(42)
 sim_data <- as.data.frame(
@@ -66,8 +66,9 @@ RMlocdepQ3(sim_data)
 
 # Get the underlying data.frame
 q3_df <- RMlocdepQ3(sim_data, output = "dataframe")
-
-# With a simulation-based cutoff
+}
+\dontrun{
+# Simulation-based cutoff (slow): 100+ Monte-Carlo iterations
 cutoff_res <- RMlocdepQ3cutoff(sim_data, iterations = 100)
 RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
 }

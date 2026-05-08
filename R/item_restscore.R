@@ -55,7 +55,7 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # Simulate binary item response data (8 items, 200 persons)
 #' set.seed(42)
 #' sim_data <- as.data.frame(

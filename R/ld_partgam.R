@@ -54,7 +54,7 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(42)
 #' sim_data <- as.data.frame(
 #'   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
@@ -66,8 +66,9 @@
 #'
 #' # Return as data.frame list
 #' RMpartgamLD(sim_data, output = "dataframe")
-#'
-#' # With simulation-based cutoffs
+#' }
+#' \dontrun{
+#' # Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
 #' cutoff_res <- RMpgLDcutoff(sim_data, iterations = 100, parallel = FALSE,
 #'                            seed = 42)
 #' RMpartgamLD(sim_data, cutoff = cutoff_res)

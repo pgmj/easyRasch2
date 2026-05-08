@@ -1,4 +1,4 @@
-#' Martin-Löf Test of Unidimensionality
+#' Martin-Lof Test of Unidimensionality
 #'
 #' Likelihood-ratio test of unidimensionality against an *a priori* specified
 #' multidimensional alternative, generalised to polytomous Rasch / partial
@@ -6,7 +6,7 @@
 #' p-value is obtained by parametric-bootstrap (Monte Carlo) sampling under
 #' the unidimensional null, following Christensen & Kreiner (2007), because
 #' the asymptotic chi-square approximation is biased toward conservatism for
-#' realistic sample sizes — especially with polytomous items, where the
+#' realistic sample sizes -- especially with polytomous items, where the
 #' degrees of freedom can be very large.
 #'
 #' This is **not** a routine screening tool. The test requires an *a priori*
@@ -44,7 +44,7 @@
 #'
 #' @return A list with components:
 #' \describe{
-#'   \item{`T_obs`}{Observed Martin-Löf likelihood-ratio statistic.}
+#'   \item{`T_obs`}{Observed Martin-Lof likelihood-ratio statistic.}
 #'   \item{`p_value`}{Monte Carlo p-value with `(n_exceed + 1) / (n + 1)`
 #'     correction.}
 #'   \item{`actual_iterations`}{Number of successful MC iterations
@@ -69,7 +69,7 @@
 #'     `ci_lower`, `ci_upper` (95% CI from `stats::cor.test`), `p_value`,
 #'     and `n` (number of persons with finite WLEs on both subscales). One
 #'     row per pair; for D = 2, a single row. Useful as an effect-size
-#'     companion to `p_value` — a rejected test with `r` near 1 indicates a
+#'     companion to `p_value` -- a rejected test with `r` near 1 indicates a
 #'     small effect; `r` clearly below 1 indicates substantive
 #'     multidimensionality.}
 #' }
@@ -405,7 +405,7 @@ extract_ml_sampling_params <- function(data, is_polytomous) {
   }
 }
 
-#' Compute the Martin-Löf likelihood-ratio statistic
+#' Compute the Martin-Lof likelihood-ratio statistic
 #'
 #' @keywords internal
 #' @noRd
@@ -641,7 +641,7 @@ sample_polytomous_at_score <- function(t, params_list) {
   x
 }
 
-#' Run a single Monte Carlo iteration of the Martin-Löf test
+#' Run a single Monte Carlo iteration of the Martin-Lof test
 #'
 #' @keywords internal
 #' @noRd
@@ -754,7 +754,7 @@ run_ml_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #' centre (matched subscores). Negatively correlated dimensions show
 #' positive residuals at the table corners (high/low and low/high) and
 #' negative residuals at high/high and low/low. See Christensen et al.
-#' (2002, §7) for a worked example.
+#' (2002, section7) for a worked example.
 #'
 #' Cells where the total score has no observed cases (`n_t = 0`) are
 #' uninformative and are dropped from the output.
@@ -773,8 +773,8 @@ run_ml_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #'   are flagged: marked as `**bold**` in the kable, shown in the `flagged`
 #'   column of the dataframe. Default `2`.
 #' @param color_by Character. For `output = "ggplot"`, what the tile fill
-#'   colour encodes. `"residual"` (default) — diverging red-white-blue scale
-#'   centred at 0, the most directly diagnostic. `"n"` — sequential blue
+#'   colour encodes. `"residual"` (default) -- diverging red-white-blue scale
+#'   centred at 0, the most directly diagnostic. `"n"` -- sequential blue
 #'   scale on the observed cell count, useful for spotting whether
 #'   large-magnitude residuals are driven by sparse cells. Either way, the
 #'   numeric residual is printed inside each cell.
@@ -992,7 +992,7 @@ RMmartinLofResiduals <- function(data,
         r2 <- result_df$t2[k] + 1L
         v  <- result_df$residual[k]
         if (is.na(v)) {
-          mat[r1, r2] <- "—"
+          mat[r1, r2] <- "--"
         } else {
           formatted <- sprintf("%.2f", v)
           if (isTRUE(result_df$flagged[k])) {
@@ -1007,7 +1007,7 @@ RMmartinLofResiduals <- function(data,
         "Standardised residuals (Christensen et al. 2002, eq. 13). ",
         "Rows = subscale 1 score, columns = subscale 2 score. ",
         "**Bold** = |residual| > ", flag_threshold,
-        ". — = uncomputable. n = ", N, " complete cases."
+        ". -- = uncomputable. n = ", N, " complete cases."
       )
       return(knitr::kable(kable_df, format = "pipe",
                           row.names = FALSE, caption = caption))
@@ -1037,7 +1037,7 @@ RMmartinLofResiduals <- function(data,
 
   # Stash the chosen fill values in a dedicated column. Avoids any
   # `.data$col` / quosure / aes-evaluation surprises that can swap branches
-  # in some ggplot2 setups — the column we map onto fill is unambiguous.
+  # in some ggplot2 setups -- the column we map onto fill is unambiguous.
   plot_df[["fill_value"]] <- if (identical(color_by, "residual")) {
     plot_df[["residual"]]
   } else {
@@ -1052,7 +1052,7 @@ RMmartinLofResiduals <- function(data,
     plot_df$fill_value <- pmin(pmax(plot_df$fill_value, fill_limits[1L]),
                                fill_limits[2L])
   } else {
-    fill_limits <- color_limits  # NULL → use natural range below
+    fill_limits <- color_limits  # NULL -> use natural range below
     if (!is.null(fill_limits)) {
       plot_df$fill_value <- pmin(pmax(plot_df$fill_value, fill_limits[1L]),
                                  fill_limits[2L])
@@ -1140,8 +1140,8 @@ RMmartinLofResiduals <- function(data,
 }
 
 # ---------------------------------------------------------------------------
-# Internal: γ-function computation that handles both vector (RM) and list
-# (PCM) parameter formats and returns a numeric vector γ_0, ..., γ_M.
+# Internal: gamma-function computation that handles both vector (RM) and list
+# (PCM) parameter formats and returns a numeric vector gamma_0, ..., gamma_M.
 # ---------------------------------------------------------------------------
 
 #' @keywords internal

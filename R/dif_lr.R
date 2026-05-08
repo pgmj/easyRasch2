@@ -5,8 +5,8 @@
 #' threshold locations) together with their standard errors. A single
 #' function replaces the four legacy helpers (`RIdifTableLR`,
 #' `RIdifThreshTblLR`, `RIdifFigureLR`, `RIdifThreshFigLR`) by exposing the
-#' two underlying axes — \code{level} (item or threshold) and \code{output}
-#' (data.frame, kable, or ggplot) — as arguments. The same data
+#' two underlying axes -- \code{level} (item or threshold) and \code{output}
+#' (data.frame, kable, or ggplot) -- as arguments. The same data
 #' preparation pipeline feeds all six combinations.
 #'
 #' The Partial Credit Model (PCM) is fitted by default for polytomous data
@@ -15,7 +15,7 @@
 #'
 #' @param data A data.frame or matrix of item responses (non-negative
 #'   integers, 0-based). One column per item, one row per person. Person
-#'   IDs and grouping variables must not be included — pass the grouping
+#'   IDs and grouping variables must not be included -- pass the grouping
 #'   variable separately via \code{dif_var}.
 #' @param dif_var Vector of length \code{nrow(data)} (factor, character,
 #'   or numeric) defining the DIF grouping variable. Coerced to factor;
@@ -50,7 +50,7 @@
 #'   object, depending on \code{output}.
 #'
 #'   The data.frame has one row per item (\code{level = "item"}) or per
-#'   item × threshold (\code{level = "threshold"}), with columns
+#'   item x threshold (\code{level = "threshold"}), with columns
 #'   \code{Item} (and \code{Threshold} at threshold level), one numeric
 #'   column per group level, an \code{All} column for the unsplit fit,
 #'   \code{MaxDiff}, \code{Flagged} (when \code{cutoff} is non-\code{NULL}),
@@ -75,9 +75,9 @@
 #' kable renders correctly in HTML, LaTeX, and pipe/markdown.
 #'
 #' @examples
-#' \dontrun{
-#' library(eRm)
+#' \donttest{
 #' set.seed(1)
+#' data("pcmdat2", package = "eRm")
 #' grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
 #'
 #' # Default: ggplot panel of item locations with 95% CIs
@@ -87,7 +87,7 @@
 #' RMdifLR(pcmdat2, dif_var = grp,
 #'         level = "threshold", output = "kable", sort = TRUE)
 #'
-#' # Tidy data.frame for downstream / Jamovi use
+#' # Tidy data.frame for downstream use
 #' df <- RMdifLR(pcmdat2, dif_var = grp, output = "dataframe")
 #' attr(df, "lr_test")
 #' df[df$Flagged, ]
@@ -234,7 +234,7 @@ RMdifLR <- function(data,
   rownames(table_df) <- NULL
 
   # ---------------------------------------------------------------------
-  # Round numeric columns (3 dp) — match other easyRasch2 functions
+  # Round numeric columns (3 dp) -- match other easyRasch2 functions
   # ---------------------------------------------------------------------
   num_cols <- c(groups, "All", "MaxDiff", se_cols)
   for (cc in num_cols) {
@@ -371,7 +371,7 @@ one_fit_long <- function(fit, dif_group, item_names) {
 parse_threshold_names <- function(nm, item_names) {
   bare <- sub("^(thresh\\s+)?beta\\s+", "", nm)
 
-  # Match the longest item name as a prefix — needed because item names
+  # Match the longest item name as a prefix -- needed because item names
   # themselves may legitimately contain dots ("Q1.a").
   matched_item <- vapply(bare, function(b) {
     hits <- item_names[startsWith(b, item_names) |
@@ -398,7 +398,7 @@ parse_threshold_names <- function(nm, item_names) {
   list(Item = unname(matched_item), Threshold = unname(thr_part))
 }
 
-#' Reshape long → wide on DIFgroup, add MaxDiff, attach SE columns
+#' Reshape long -> wide on DIFgroup, add MaxDiff, attach SE columns
 #'
 #' @keywords internal
 #' @noRd
@@ -472,7 +472,7 @@ render_lr_kable <- function(table_df, lr_summary, level, cutoff, sort,
   caption <- paste0(
     if (is_polytomous) "Partial Credit Model" else "Rasch Model",
     " split by DIF variable (", lr_summary$n_groups, " groups). ",
-    "Andersen LR χ² = ", round(lr_summary$LR, 3),
+    "Andersen LR chi^2 = ", round(lr_summary$LR, 3),
     ", df = ", lr_summary$df,
     ", p = ", format.pval(lr_summary$p_value, digits = 3, eps = 1e-4),
     ". n = ", lr_summary$n_persons, " complete cases, ",
@@ -511,7 +511,7 @@ render_lr_ggplot <- function(plot_df, lr_summary, level, groups, conf,
   diamond_x <- (length(groups) + 1) / 2 + 0.15
 
   caption <- paste0(
-    "Andersen LR χ² = ", round(lr_summary$LR, 3),
+    "Andersen LR chi^2 = ", round(lr_summary$LR, 3),
     ", df = ", lr_summary$df,
     ", p = ", format.pval(lr_summary$p_value, digits = 3, eps = 1e-4),
     ". Error bars: ", round(conf * 100), "% CI. ",
