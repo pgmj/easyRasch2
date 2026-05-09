@@ -1,3 +1,10 @@
+# easyRasch2 0.6.0
+
+- New **`RMcfaCutoff()`** for testing unidimensionality against simulation-based
+  cutoff values for model fit metrics.
+  - **`RMcfaPlot()`** shows figure with distribution of simulation results and
+  observed model fit values.
+
 # easyRasch2 0.5.8
 
 - New **`RMdifTree()`** for testing DIF with continuous variables, such as age

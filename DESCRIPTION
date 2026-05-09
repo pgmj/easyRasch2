@@ -1,6 +1,6 @@
 Package: easyRasch2
 Title: Rasch Measurement Theory Analysis for R
-Version: 0.5.8
+Version: 0.6.0
 Authors@R: c(
     person("Magnus", "Johansson",
            role = c("aut", "cre"),
@@ -55,5 +55,6 @@ Suggests:
     patchwork,
     scales,
     mice,
-    ggrepel
+    ggrepel,
+    lavaan
 Config/testthat/edition: 3
