@@ -1,5 +1,15 @@
 # Changelog
 
+## easyRasch2 0.6.0
+
+- New
+  **[`RMcfaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMcfaCutoff.md)**
+  for testing unidimensionality against simulation-based cutoff values
+  for model fit metrics.
+  - **[`RMcfaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMcfaPlot.md)**
+    shows figure with distribution of simulation results and observed
+    model fit values.
+
 ## easyRasch2 0.5.8
 
 - New
