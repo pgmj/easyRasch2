@@ -333,10 +333,16 @@ RMcfaCutoff <- function(data,
 #' @noRd
 compute_cfa_cutoffs <- function(simulated_df, percentile) {
   pct <- percentile / 100
+  # Filter to finite values -- lavaan can return Inf for RMSEA when
+  # chi-square is exactly 0 (degenerate near-perfect fit on a
+  # simulated dataset), which would otherwise propagate into the cutoff.
+  cfi_v   <- simulated_df$cfi[is.finite(simulated_df$cfi)]
+  rmsea_v <- simulated_df$rmsea[is.finite(simulated_df$rmsea)]
+  srmr_v  <- simulated_df$srmr[is.finite(simulated_df$srmr)]
   c(
-    cfi   = as.numeric(stats::quantile(simulated_df$cfi,   1 - pct, na.rm = TRUE)),
-    rmsea = as.numeric(stats::quantile(simulated_df$rmsea, pct,     na.rm = TRUE)),
-    srmr  = as.numeric(stats::quantile(simulated_df$srmr,  pct,     na.rm = TRUE))
+    cfi   = as.numeric(stats::quantile(cfi_v,   1 - pct, na.rm = TRUE)),
+    rmsea = as.numeric(stats::quantile(rmsea_v, pct,     na.rm = TRUE)),
+    srmr  = as.numeric(stats::quantile(srmr_v,  pct,     na.rm = TRUE))
   )
 }
 
@@ -533,7 +539,7 @@ RMcfaPlot <- function(cutoff_res, percentile = NULL) {
     ggplot2::geom_point(
       data = obs_df,
       ggplot2::aes(x = .data$Observed, colour = .data$Color), y = 0,
-      size = 3.3, shape = 18
+      size = 4.5, shape = 18
     ) +
     ggplot2::scale_colour_identity() +
     ggplot2::facet_wrap(~ Index, scales = "free", nrow = 1) +
