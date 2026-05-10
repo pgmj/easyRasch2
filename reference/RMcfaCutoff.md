@@ -214,7 +214,7 @@ RMcfaCutoff(raschdat1[, 1:8], iterations = 50,
 #> |Index | Observed| Cutoff|Direction  |Flagged |
 #> |:-----|--------:|------:|:----------|:-------|
 #> |CFI   |   0.8811| 0.1275|< 1st pct  |        |
-#> |RMSEA |   0.0859|    Inf|> 99th pct |        |
+#> |RMSEA |   0.0859| 0.5787|> 99th pct |        |
 #> |SRMR  |   0.1158| 0.2287|> 99th pct |        |
 # }
 if (FALSE) { # \dontrun{
