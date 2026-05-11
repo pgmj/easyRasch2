@@ -51,10 +51,9 @@
 </h1></div>
 <!-- badges: start -->
 
-<p><code>easyRasch2</code> is a CRAN-targeted R package that provides functions for Rasch measurement theory analysis workflows. It is the successor to <a href="https://github.com/pgmj/easyRasch" class="external-link">easyRasch</a>, offering a lightweight, CRAN-ready structure with proper namespacing and minimal dependencies.</p>
-<p>Some of the key functions implemented produce simulation-based critical values (cutoffs) for conditional item infit MSQ and Yen’s Q3 residuals to evaluate local dependencies.</p>
-<p>See the References tab on this website for a complete list of functions and their documentation. A package vignette is forthcoming, hopefully during spring/summer of 2026.</p>
-<p>For more materials on Rasch analysis, see the <a href="https://pgmj.github.io/raschrvignette/RaschRvign.html" class="external-link">vignette</a> for the package <a href="https://pgmj.github.io/easyRasch/" class="external-link"><code>easyRasch</code></a>.</p>
+<p><code>easyRasch2</code> is a CRAN-targeted R package for Rasch measurement theory analysis workflows. It is the successor to <a href="https://github.com/pgmj/easyRasch" class="external-link">easyRasch</a>, offering a lightweight, CRAN-ready structure with proper namespacing and minimal dependencies.</p>
+<p>A central design choice is <strong>simulation-based critical values</strong> for various fit statistics. Rather than relying on rule-of-thumb cutoffs, most diagnostics are paired with a parametric-bootstrap function that generates an empirical null distribution from the fitted Rasch / PCM model and the observed sample.</p>
+<p>For broader Rasch-analysis tutorials, see the <a href="https://pgmj.github.io/raschrvignette/RaschRvign.html" class="external-link">vignette</a> for the sibling package <a href="https://pgmj.github.io/easyRasch/" class="external-link"><code>easyRasch</code></a>.</p>
 <div class="section level2">
 <h2 id="key-design-principles">Key design principles<a class="anchor" aria-label="anchor" href="#key-design-principles"></a>
 </h2>
@@ -62,10 +61,78 @@
 <li>
 <strong>Estimation</strong>: Conditional Maximum Likelihood (CML) via <code>eRm</code>, <code>psychotools</code>, and <code>iarm</code> for item parameters; Weighted Likelihood Estimation (WLE) for person parameters; <code>mirt</code> (MML) only where CML alternatives do not exist (e.g., Q3 residual correlations).</li>
 <li>
-<strong>Output</strong>: <code><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">knitr::kable()</a></code> for tables (Quarto-friendly) and <code>ggplot2</code> for figures, with <code>"dataframe"</code> output options for further processing.</li>
+<strong>Output</strong>: <code><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">knitr::kable()</a></code> for tables (Quarto-friendly), <code>ggplot2</code> for figures, and <code>"dataframe"</code> output options for downstream use.</li>
 <li>
 <strong>Naming</strong>: Functions use the <code>RM</code> prefix (e.g., <code><a href="reference/RMlocdepQ3.html">RMlocdepQ3()</a></code>).</li>
 </ul>
+</div>
+<div class="section level2">
+<h2 id="functions-by-domain">Functions by domain<a class="anchor" aria-label="anchor" href="#functions-by-domain"></a>
+</h2>
+<div class="section level3">
+<h3 id="item-fit">Item fit<a class="anchor" aria-label="anchor" href="#item-fit"></a>
+</h3>
+<ul>
+<li>
+<code><a href="reference/RMiteminfit.html">RMiteminfit()</a></code> — conditional infit MSQ</li>
+<li>
+<code><a href="reference/RMinfitcutoff.html">RMinfitcutoff()</a></code> + <code><a href="reference/RMinfitcutoffPlot.html">RMinfitcutoffPlot()</a></code> — simulation-based cutoffs and plot</li>
+<li>
+<code><a href="reference/RMiteminfit_mi.html">RMiteminfit_mi()</a></code> + <code><a href="reference/RMinfitcutoff_mi.html">RMinfitcutoff_mi()</a></code> — multiple-imputation variants</li>
+<li>
+<code><a href="reference/RMitemrestscore.html">RMitemrestscore()</a></code> — item-restscore with Goodman-Kruskal’s gamma</li>
+<li>
+<code><a href="reference/RMbootRestscore.html">RMbootRestscore()</a></code> — non-parametric bootstrap of item-restscore fit</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="local-dependence">Local dependence<a class="anchor" aria-label="anchor" href="#local-dependence"></a>
+</h3>
+<ul>
+<li>
+<code><a href="reference/RMlocdepQ3.html">RMlocdepQ3()</a></code> + <code><a href="reference/RMlocdepQ3cutoff.html">RMlocdepQ3cutoff()</a></code> — Yen’s Q3 residual correlations</li>
+<li>
+<code><a href="reference/RMpartgamLD.html">RMpartgamLD()</a></code> + <code><a href="reference/RMpgLDcutoff.html">RMpgLDcutoff()</a></code> + <code><a href="reference/RMpgLDplot.html">RMpgLDplot()</a></code> — partial-gamma local dependence</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="dimensionality--unidimensionality">Dimensionality / unidimensionality<a class="anchor" aria-label="anchor" href="#dimensionality--unidimensionality"></a>
+</h3>
+<ul>
+<li>
+<code><a href="reference/RMresidualPCA.html">RMresidualPCA()</a></code> + <code><a href="reference/RMpcaCutoff.html">RMpcaCutoff()</a></code> — PCA of standardized residuals, with simulation-based first-contrast cutoff (Chou &amp; Wang, 2010)</li>
+<li>
+<code><a href="reference/RMmartinLof.html">RMmartinLof()</a></code> + <code><a href="reference/RMmartinLofResiduals.html">RMmartinLofResiduals()</a></code> — Martin-Löf LR test (Christensen &amp; Kreiner, 2007), supports polytomous data</li>
+<li>
+<code><a href="reference/RMcfaCutoff.html">RMcfaCutoff()</a></code> + <code><a href="reference/RMcfaPlot.html">RMcfaPlot()</a></code> — posterior-predictive CFA fit-index cutoffs under PCM unidimensionality (via <code>lavaan</code> WLSMV)</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="differential-item-functioning">Differential item functioning<a class="anchor" aria-label="anchor" href="#differential-item-functioning"></a>
+</h3>
+<ul>
+<li>
+<code><a href="reference/RMdifLR.html">RMdifLR()</a></code> — Andersen’s likelihood-ratio test (<code><a href="https://rdrr.io/pkg/eRm/man/LRtest.html" class="external-link">eRm::LRtest</a></code>)</li>
+<li>
+<code><a href="reference/RMdifTree.html">RMdifTree()</a></code> — Rasch / partial-credit trees (<code>psychotree</code>) with Mantel-Haenszel or partial-gamma effect sizes per split, optional iterative purification, and <code>stablelearner</code>-based stability assessment</li>
+<li>
+<code><a href="reference/RMpartgamDIF.html">RMpartgamDIF()</a></code> + <code><a href="reference/RMpgDIFcutoff.html">RMpgDIFcutoff()</a></code> + <code><a href="reference/RMpgDIFplot.html">RMpgDIFplot()</a></code> — partial-gamma DIF</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="reliability-targeting-score-conversion">Reliability, targeting, score conversion<a class="anchor" aria-label="anchor" href="#reliability-targeting-score-conversion"></a>
+</h3>
+<ul>
+<li>
+<code><a href="reference/RMreliability.html">RMreliability()</a></code> + <code><a href="reference/RMUreliability.html">RMUreliability()</a></code> — Cronbach’s α, PSI, empirical reliability, and Bignardi-Kievit-Bürkner RMU from plausible values</li>
+<li>
+<code><a href="reference/RMtargeting.html">RMtargeting()</a></code> — Wright-map style person-item targeting plot</li>
+<li>
+<code><a href="reference/RMscoreSE.html">RMscoreSE()</a></code> — raw-score → logit transformation table (WLE / EAP)</li>
+<li>
+<code><a href="reference/RMtileplot.html">RMtileplot()</a></code> — response-distribution heatmap with optional group faceting</li>
+</ul>
+</div>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -80,50 +147,62 @@
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/pgmj/easyRasch2" class="external-link">easyRasch2</a></span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Simulate binary item response data</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"pcmdat2"</span>, package <span class="op">=</span> <span class="st">"eRm"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>mc.cores <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
-<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">1</span>, <span class="fl">200</span> <span class="op">*</span> <span class="fl">10</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">200</span>, ncol <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Conditional item infit with simulation-based cutoffs</span></span>
+<span><span class="va">simfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/RMinfitcutoff.html">RMinfitcutoff</a></span><span class="op">(</span><span class="va">pcmdat2</span>, iterations <span class="op">=</span> <span class="fl">250</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/RMiteminfit.html">RMiteminfit</a></span><span class="op">(</span><span class="va">pcmdat2</span>, cutoff <span class="op">=</span> <span class="va">simfit</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Test of unidimensionality via posterior-predictive ordinal CFA</span></span>
+<span><span class="va">cfa_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/RMcfaCutoff.html">RMcfaCutoff</a></span><span class="op">(</span><span class="va">pcmdat2</span>, iterations <span class="op">=</span> <span class="fl">250</span><span class="op">)</span></span>
+<span><span class="va">cfa_res</span>                <span class="co"># kable: observed vs simulated cutoffs</span></span>
+<span><span class="fu"><a href="reference/RMcfaPlot.html">RMcfaPlot</a></span><span class="op">(</span><span class="va">cfa_res</span><span class="op">)</span>     <span class="co"># histogram + observed diamond</span></span>
+<span></span>
+<span><span class="co"># DIF analysis via Andersen's LR test</span></span>
+<span><span class="va">grp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">pcmdat2</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/RMdifLR.html">RMdifLR</a></span><span class="op">(</span><span class="va">pcmdat2</span>, dif_var <span class="op">=</span> <span class="va">grp</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Rasch-tree DIF with effect-size classification on continuous +</span></span>
+<span><span class="co"># categorical covariates simultaneously</span></span>
+<span><span class="va">covs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  group <span class="op">=</span> <span class="va">grp</span>,</span>
+<span>  band  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"low"</span>, <span class="st">"high"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">pcmdat2</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Item"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Derive a simulation-based Q3 cutoff (500 iterations by default)</span></span>
-<span><span class="va">cutoff_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/RMlocdepQ3cutoff.html">RMlocdepQ3cutoff</a></span><span class="op">(</span><span class="va">d</span>, iterations <span class="op">=</span> <span class="fl">100</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Q3 table with simulation-based dynamic cut-off</span></span>
-<span><span class="fu"><a href="reference/RMlocdepQ3.html">RMlocdepQ3</a></span><span class="op">(</span><span class="va">d</span>, cutoff <span class="op">=</span> <span class="va">cutoff_res</span><span class="op">$</span><span class="va">suggested_cutoff</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Derive a simulation-based conditional item MSQ infit cutoff</span></span>
-<span><span class="va">simfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/RMinfitcutoff.html">RMinfitcutoff</a></span><span class="op">(</span><span class="va">d</span>, n_cores <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Infit table with dynamic cut-off</span></span>
-<span><span class="fu"><a href="reference/RMiteminfit.html">RMiteminfit</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">simfit</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Infit plot with distribution of simulated MSQ values together with observed values</span></span>
-<span><span class="fu"><a href="reference/RMinfitcutoffPlot.html">RMinfitcutoffPlot</a></span><span class="op">(</span><span class="va">simfit</span>, <span class="va">d</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Item-restscore using Goodman-Kruskal's gamma</span></span>
-<span><span class="fu"><a href="reference/RMitemrestscore.html">RMitemrestscore</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/RMdifTree.html">RMdifTree</a></span><span class="op">(</span><span class="va">pcmdat2</span>, covariates <span class="op">=</span> <span class="va">covs</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
 <ul>
-<li>Christensen, K. B., Makransky, G., &amp; Horton, M. (2017). Critical Values for Yen’s Q3: Identification of Local Dependence in the Rasch Model Using Residual Correlations. <em>Applied Psychological Measurement, 41</em>(3), 178–194. <a href="https://doi.org/10.1177/0146621616677520" class="external-link uri">https://doi.org/10.1177/0146621616677520</a>
+<li>Bjorner, J. B., Kreiner, S., Ware, J. E., Damsgaard, M. T., &amp; Bech, P. (1998). Differential item functioning in the Danish translation of the SF-36. <em>Journal of Clinical Epidemiology, 51</em>(11), 1189–1202.</li>
+<li>Chou, Y.-T., &amp; Wang, W.-C. (2010). Checking dimensionality in item-response models with principal component analysis on standardized residuals. <em>Educational and Psychological Measurement, 70</em>(5), 717–731. <a href="https://doi.org/10.1177/0013164410379322" class="external-link uri">https://doi.org/10.1177/0013164410379322</a>
 </li>
-<li>Johansson, M. (2025). Detecting Item Misfit in Rasch Models. <em>Educational Methods &amp; Psychometrics, 3</em>(18). <a href="https://doi.org/10.61186/emp.2025.5" class="external-link uri">https://doi.org/10.61186/emp.2025.5</a>
+<li>Christensen, K. B., &amp; Kreiner, S. (2007). A Monte Carlo approach to unidimensionality testing in polytomous Rasch models. <em>Applied Psychological Measurement, 31</em>(1), 20–30. <a href="https://doi.org/10.1177/0146621605286204" class="external-link uri">https://doi.org/10.1177/0146621605286204</a>
 </li>
-<li>Kreiner, S. (2011). A Note on Item–Restscore Association in Rasch Models. <em>Applied Psychological Measurement, 35</em>(7), 557–561. <a href="https://doi.org/10.1177/0146621611410227" class="external-link uri">https://doi.org/10.1177/0146621611410227</a>
+<li>Christensen, K. B., Makransky, G., &amp; Horton, M. (2017). Critical values for Yen’s Q3: Identification of local dependence in the Rasch model using residual correlations. <em>Applied Psychological Measurement, 41</em>(3), 178–194. <a href="https://doi.org/10.1177/0146621616677520" class="external-link uri">https://doi.org/10.1177/0146621616677520</a>
+</li>
+<li>Henninger, M., Debelak, R., &amp; Strobl, C. (2023). A new stopping criterion for Rasch trees based on the Mantel-Haenszel effect size measure for DIF. <em>Educational and Psychological Measurement, 83</em>, 181–212. <a href="https://doi.org/10.1177/00131644221077135" class="external-link uri">https://doi.org/10.1177/00131644221077135</a>
+</li>
+<li>Henninger, M., Radek, J., Debelak, R., &amp; Strobl, C. (2025). Partial credit trees meet the partial gamma coefficient for quantifying DIF and DSF in polytomous items. <em>Behaviormetrika, 52</em>, 221–257.</li>
+<li>Johansson, M. (2025). Detecting item misfit in Rasch models. <em>Educational Methods &amp; Psychometrics, 3</em>(18). <a href="https://doi.org/10.61186/emp.2025.5" class="external-link uri">https://doi.org/10.61186/emp.2025.5</a>
+</li>
+<li>Kreiner, S. (2011). A note on item-restscore association in Rasch models. <em>Applied Psychological Measurement, 35</em>(7), 557–561. <a href="https://doi.org/10.1177/0146621611410227" class="external-link uri">https://doi.org/10.1177/0146621611410227</a>
 </li>
 <li>Müller, M. (2020). Item fit statistics for Rasch analysis: Can we trust them? <em>Journal of Statistical Distributions and Applications, 7</em>(1), 5. <a href="https://doi.org/10.1186/s40488-020-00108-7" class="external-link uri">https://doi.org/10.1186/s40488-020-00108-7</a>
 </li>
+<li>Philipp, M., Rusch, T., Hornik, K., &amp; Strobl, C. (2018). Measuring the stability of results from supervised statistical learning. <em>Journal of Computational and Graphical Statistics, 27</em>, 685–700.</li>
+<li>Rosseel, Y. (2012). lavaan: An R package for structural equation modeling. <em>Journal of Statistical Software, 48</em>(2), 1–36. <a href="https://doi.org/10.18637/jss.v048.i02" class="external-link uri">https://doi.org/10.18637/jss.v048.i02</a>
+</li>
+<li>Strobl, C., Kopf, J., &amp; Zeileis, A. (2015). Rasch trees: A new method for detecting DIF in the Rasch model. <em>Psychometrika, 80</em>, 289–316.</li>
 </ul>
 </div>
 <div class="section level2">
 <h2 id="credits">Credits<a class="anchor" aria-label="anchor" href="#credits"></a>
 </h2>
-<p>As stated, this is based on my <code>easyRasch</code> package, and I am using Claude Opus to “transfer” functions to this more properly formatted package. While Claude uses my earlier code as a starting point, most of the code in this package is produced by the LLM and bug fixed by me. Any new functions are more or less entirely created by the LLM, based on code or papers and instructions.</p>
+<p>As stated, this is based on my <code>easyRasch</code> package, and I am using Claude to “transfer” functions to this more properly formatted package. While it uses my earlier code, most of the code in this package is produced by the LLM and bug fixed by me.</p>
+<p><code><a href="reference/RMdifTree.html">RMdifTree()</a></code> adapts MIT-licensed code from Mirka Henninger and Jan Radek’s <a href="https://github.com/mirka-henninger/raschtreeMH" class="external-link"><code>raschtreeMH</code></a> and <a href="https://github.com/mirka-henninger/effecttree" class="external-link"><code>effecttree</code></a> packages for the effect-size and ETS-classification algorithms.</p>
 <p><a href="https://ki.se/en/people/magnus-johansson-3" class="external-link">Magnus Johansson</a> is a licensed psychologist with a PhD in behavior analysis. He works as a research specialist at <a href="https://ki.se/en/cns/research/centre-for-psychiatry-research" class="external-link">Karolinska Institutet</a>, Department of Clinical Neuroscience, Center for Psychiatry Research.</p>
 <ul>
 <li>ORCID: <a href="https://orcid.org/0000-0003-1669-592X" class="external-link">0000-0003-1669-592X</a>
