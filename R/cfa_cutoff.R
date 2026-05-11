@@ -640,23 +640,26 @@ run_single_cfa_sim <- function(seed, data_list, obs_data = NULL) {
   }, error = function(e) as.character(conditionMessage(e)))
 }
 
-#' Pull (CFI, RMSEA, SRMR) from a fitted lavaan object using
-#' estimator-appropriate variants.
+#' Pull (CFI, RMSEA, SRMR) from a fitted lavaan object
+#'
+#' Detects whether the fit object carries robust/scaled fit-index
+#' variants (WLSMV / ULSMV / MLM / MLR all do; plain DWLS / WLS / ULS
+#' / ML do not) and uses the robust versions when available, otherwise
+#' falling back to the unscaled `cfi` / `rmsea`. SRMR is unaffected by
+#' the robust correction. The `estimator` argument is kept for
+#' signature compatibility but is unused -- we ask lavaan directly so
+#' the function works regardless of which estimator the user picked.
 #'
 #' @keywords internal
 #' @noRd
-extract_cfa_fit <- function(fit, estimator) {
-  # WLSMV / DWLS / ULSMV provide cfi.robust + rmsea.robust (Yuan-Bentler).
-  # SRMR is unaffected by the robust correction.
-  uses_robust <- estimator %in% c("WLSMV", "DWLS", "ULSMV", "MLM",
-                                  "MLMV", "MLR")
-  cfi_name   <- if (uses_robust) "cfi.robust"   else "cfi"
-  rmsea_name <- if (uses_robust) "rmsea.robust" else "rmsea"
-
-  fm <- lavaan::fitMeasures(fit, c(cfi_name, rmsea_name, "srmr"))
-  out <- as.numeric(fm)
-  names(out) <- NULL
-  out
+extract_cfa_fit <- function(fit, estimator = NULL) {
+  fm       <- lavaan::fitMeasures(fit)
+  names_fm <- names(fm)
+  cfi_name   <- if ("cfi.robust"   %in% names_fm) "cfi.robust"   else "cfi"
+  rmsea_name <- if ("rmsea.robust" %in% names_fm) "rmsea.robust" else "rmsea"
+  c(unname(fm[[cfi_name]]),
+    unname(fm[[rmsea_name]]),
+    unname(fm[["srmr"]]))
 }
 
 # ===========================================================================
