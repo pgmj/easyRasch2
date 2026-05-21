@@ -13,7 +13,7 @@
 #' @param data A data.frame or matrix of item responses (non-negative
 #'   integers, 0-based). One column per item, one row per person.
 #' @param class_intervals Integer. Number of class intervals used to
-#'   group respondents when `method = "cut"`. Default `4`. Each class
+#'   group respondents when `method = "cut"`. Default `5`. Each class
 #'   interval needs enough respondents to compute a stable average
 #'   observed item score; with small samples or many possible total
 #'   scores, lower this. Ignored when `method = "score"`.
@@ -61,7 +61,7 @@
 #' @examples
 #' \donttest{
 #' data("pcmdat2", package = "eRm")
-#' RMciccPlot(pcmdat2, class_intervals = 4)
+#' RMciccPlot(pcmdat2, class_intervals = 5)
 #'
 #' # With DIF grouping
 #' set.seed(1)
@@ -71,7 +71,7 @@
 #'
 #' @export
 RMciccPlot <- function(data,
-                       class_intervals = 4L,
+                       class_intervals = 5L,
                        method          = c("cut", "score"),
                        dif_var         = NULL,
                        output          = c("patchwork", "list")) {
