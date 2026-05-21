@@ -98,8 +98,8 @@ RMiteminfit(sim_data, sort = "infit")
 # Return as data.frame for further processing
 df <- RMiteminfit(sim_data, output = "dataframe")
 }
-\dontrun{
-# Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
+\donttest{
+# Simulation-based cutoffs (100 Monte-Carlo iterations)
 cutoff_res <- RMinfitcutoff(sim_data, iterations = 100, parallel = FALSE,
                             seed = 42)
 RMiteminfit(sim_data, cutoff = cutoff_res)

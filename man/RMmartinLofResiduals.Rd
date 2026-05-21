@@ -94,7 +94,7 @@ Cells where the total score has no observed cases (\code{n_t = 0}) are
 uninformative and are dropped from the output.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(1)
 dat <- as.data.frame(matrix(sample(0:1, 400 * 8, replace = TRUE),
                             nrow = 400, ncol = 8))

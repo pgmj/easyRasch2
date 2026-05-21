@@ -52,7 +52,7 @@
 #'   list has components:
 #' \describe{
 #'   \item{`observed`}{Named numeric vector of observed CFA fit indices
-#'     (`cfi.robust`, `rmsea.robust`, `srmr`).}
+#'     (`cfi.scaled`, `rmsea.scaled`, `srmr`).}
 #'   \item{`simulated`}{data.frame with one row per successful iteration
 #'     and columns `iteration`, `cfi`, `rmsea`, `srmr`.}
 #'   \item{`percentile`}{Numeric: the strictness setting used.}
@@ -78,9 +78,14 @@
 #'
 #' \strong{Estimation model.} The CFA on each simulated dataset uses a
 #' single-factor model with all items as ordinal indicators
-#' (`F1 =~ I1 + I2 + ...`), fitted with `WLSMV`. Reported fit indices
-#' are the WLSMV-appropriate variants: `cfi.robust`, `rmsea.robust`,
-#' `srmr`.
+#' (`F1 =~ I1 + I2 + ...`), fitted with `WLSMV` by default. Reported
+#' CFI / RMSEA are the Satorra-Bentler-scaled variants (`cfi.scaled`,
+#' `rmsea.scaled`) for consistency across iterations; the Yuan-Bentler
+#' mean-variance-adjusted "robust" variants are sometimes `NA` at small
+#' n and would produce holes in the simulated null distribution. SRMR
+#' is reported unchanged. For percentile-based comparison the binding
+#' requirement is that the same metric is computed for observed and
+#' simulated iterations, which both variants satisfy.
 #'
 #' \strong{Why a null distribution.} A perfectly PCM-unidimensional
 #' dataset will typically not yield CFA fit indices at their ideal
@@ -642,24 +647,43 @@ run_single_cfa_sim <- function(seed, data_list, obs_data = NULL) {
 
 #' Pull (CFI, RMSEA, SRMR) from a fitted lavaan object
 #'
-#' Detects whether the fit object carries robust/scaled fit-index
-#' variants (WLSMV / ULSMV / MLM / MLR all do; plain DWLS / WLS / ULS
-#' / ML do not) and uses the robust versions when available, otherwise
-#' falling back to the unscaled `cfi` / `rmsea`. SRMR is unaffected by
-#' the robust correction. The `estimator` argument is kept for
-#' signature compatibility but is unused -- we ask lavaan directly so
-#' the function works regardless of which estimator the user picked.
+#' Uses the Satorra-Bentler-SCALED CFI / RMSEA variants when available
+#' (`cfi.scaled`, `rmsea.scaled`), falling back to the uncorrected
+#' `cfi` / `rmsea` when not.
+#'
+#' Why scaled rather than the Yuan-Bentler "robust" variants that
+#' `WLSMV` is named after: the `.robust` (mean-variance-adjusted)
+#' variants return `NA` for a non-trivial fraction of fits at small
+#' n (when chi-square is near zero), which produces holes in the
+#' simulated null distribution. The `.scaled` (Satorra-Bentler)
+#' variants are well-defined across nearly all fits, and for a
+#' parametric-bootstrap percentile comparison the binding requirement
+#' is that the same metric is computed for observed and simulated
+#' iterations -- which version of the chi-square correction is used
+#' matters less than internal consistency. SRMR is unaffected by either
+#' correction.
+#'
+#' The `estimator` argument is kept for signature compatibility but is
+#' unused -- we ask lavaan directly so the function works for any
+#' estimator that produces these variants.
 #'
 #' @keywords internal
 #' @noRd
 extract_cfa_fit <- function(fit, estimator = NULL) {
-  fm       <- lavaan::fitMeasures(fit)
-  names_fm <- names(fm)
-  cfi_name   <- if ("cfi.robust"   %in% names_fm) "cfi.robust"   else "cfi"
-  rmsea_name <- if ("rmsea.robust" %in% names_fm) "rmsea.robust" else "rmsea"
-  c(unname(fm[[cfi_name]]),
-    unname(fm[[rmsea_name]]),
-    unname(fm[["srmr"]]))
+  fm <- lavaan::fitMeasures(fit)
+  pick_scaled <- function(name) {
+    key_s <- paste0(name, ".scaled")
+    if (key_s %in% names(fm) && is.finite(fm[[key_s]])) {
+      return(as.numeric(fm[[key_s]]))
+    }
+    if (name %in% names(fm) && is.finite(fm[[name]])) {
+      return(as.numeric(fm[[name]]))
+    }
+    NA_real_
+  }
+  c(pick_scaled("cfi"),
+    pick_scaled("rmsea"),
+    as.numeric(fm[["srmr"]]))
 }
 
 # ===========================================================================

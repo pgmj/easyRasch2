@@ -38,6 +38,7 @@ sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
 - `RMiteminfit_mi()` + `RMinfitcutoff_mi()` — multiple-imputation variants
 - `RMitemrestscore()` — item-restscore with Goodman-Kruskal's gamma
 - `RMbootRestscore()` — non-parametric bootstrap of item-restscore fit
+- `RMciccPlot()` - conditional item characteristic curves
 
 ### Local dependence
 
@@ -60,6 +61,7 @@ sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
   Mantel-Haenszel or partial-gamma effect sizes per split, optional
   iterative purification, and `stablelearner`-based stability assessment
 - `RMpartgamDIF()` + `RMpgDIFcutoff()` + `RMpgDIFplot()` — partial-gamma DIF
+- `RMciccPlot()` - evaluates DIF across class intervals
 
 ### Reliability, targeting, score conversion
 

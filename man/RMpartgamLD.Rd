@@ -73,7 +73,7 @@ RMpartgamLD(sim_data)
 # Return as data.frame list
 RMpartgamLD(sim_data, output = "dataframe")
 }
-\dontrun{
+\donttest{
 # Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
 cutoff_res <- RMpgLDcutoff(sim_data, iterations = 100, parallel = FALSE,
                            seed = 42)

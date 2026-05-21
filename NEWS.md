@@ -1,3 +1,15 @@
+# easyRasch2 0.6.1
+
+- New **`RMciccPlot()`** for conditional item characteristic curves, also 
+  includes DIF analysis for categorical DIF variables.
+- New **`RMitemHierarchy()`**, which outputs a plot illustrating the item hierarchy
+  with item thresholds and confidence intervals.
+- Modified `RMcfaCutoff()` to only use .scaled metrics for RMSEA and CFI, for stability.
+  See documentation for more details.
+- Bug fix for `RMmartinLof()` with dichotomous items.
+- Tests written for all functions, preparing for CRAN submission in the nearish
+  future.
+
 # easyRasch2 0.6.0
 
 - New **`RMcfaCutoff()`** for testing unidimensionality against simulation-based

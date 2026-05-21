@@ -67,7 +67,7 @@
 #' # Return as data.frame list
 #' RMpartgamLD(sim_data, output = "dataframe")
 #' }
-#' \dontrun{
+#' \donttest{
 #' # Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
 #' cutoff_res <- RMpgLDcutoff(sim_data, iterations = 100, parallel = FALSE,
 #'                            seed = 42)
@@ -328,7 +328,7 @@ RMpartgamLD <- function(data, cutoff = NULL, output = "kable") {
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(42)
 #' sim_data <- as.data.frame(
 #'   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
@@ -739,7 +739,7 @@ run_partgam_LD_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(42)
 #' sim_data <- as.data.frame(
 #'   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)

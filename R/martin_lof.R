@@ -401,7 +401,10 @@ extract_ml_sampling_params <- function(data, is_polytomous) {
     params_list
   } else {
     rasch_fit <- psychotools::raschmodel(data, hessian = FALSE)
-    -as.numeric(stats::coef(rasch_fit))
+    # `coef(raschmodel)` returns K-1 parameters under the sum-to-zero
+    # constraint, but the sampler needs all K item parameters. Use
+    # `itempar()` which returns the full K-vector with proper names.
+    -as.numeric(psychotools::itempar(rasch_fit))
   }
 }
 
@@ -811,7 +814,7 @@ run_ml_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(1)
 #' dat <- as.data.frame(matrix(sample(0:1, 400 * 8, replace = TRUE),
 #'                             nrow = 400, ncol = 8))

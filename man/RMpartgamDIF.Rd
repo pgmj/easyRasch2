@@ -78,8 +78,8 @@ RMpartgamDIF(sim_data, dif_group)
 # Return as data.frame
 RMpartgamDIF(sim_data, dif_group, output = "dataframe")
 }
-\dontrun{
-# Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
+\donttest{
+# Simulation-based cutoffs (100 Monte-Carlo iterations)
 cutoff_res <- RMpgDIFcutoff(sim_data, dif_var = dif_group,
                                   iterations = 100, parallel = FALSE,
                                   seed = 42)

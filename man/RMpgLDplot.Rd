@@ -58,7 +58,7 @@ The \code{ggplot2}, \code{ggdist}, and optionally \code{iarm} packages must be i
 (they are in Suggests, not Imports).
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(42)
 sim_data <- as.data.frame(
   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)

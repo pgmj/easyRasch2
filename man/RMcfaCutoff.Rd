@@ -64,7 +64,7 @@ each index against its cutoff, with the full result list as
 list has components:
 \describe{
 \item{\code{observed}}{Named numeric vector of observed CFA fit indices
-(\code{cfi.robust}, \code{rmsea.robust}, \code{srmr}).}
+(\code{cfi.scaled}, \code{rmsea.scaled}, \code{srmr}).}
 \item{\code{simulated}}{data.frame with one row per successful iteration
 and columns \code{iteration}, \code{cfi}, \code{rmsea}, \code{srmr}.}
 \item{\code{percentile}}{Numeric: the strictness setting used.}
@@ -107,9 +107,14 @@ satisfy the PCM unidimensional assumption.
 
 \strong{Estimation model.} The CFA on each simulated dataset uses a
 single-factor model with all items as ordinal indicators
-(\code{F1 =~ I1 + I2 + ...}), fitted with \code{WLSMV}. Reported fit indices
-are the WLSMV-appropriate variants: \code{cfi.robust}, \code{rmsea.robust},
-\code{srmr}.
+(\code{F1 =~ I1 + I2 + ...}), fitted with \code{WLSMV} by default. Reported
+CFI / RMSEA are the Satorra-Bentler-scaled variants (\code{cfi.scaled},
+\code{rmsea.scaled}) for consistency across iterations; the Yuan-Bentler
+mean-variance-adjusted "robust" variants are sometimes \code{NA} at small
+n and would produce holes in the simulated null distribution. SRMR
+is reported unchanged. For percentile-based comparison the binding
+requirement is that the same metric is computed for observed and
+simulated iterations, which both variants satisfy.
 
 \strong{Why a null distribution.} A perfectly PCM-unidimensional
 dataset will typically not yield CFA fit indices at their ideal

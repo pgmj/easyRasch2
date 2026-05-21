@@ -71,8 +71,8 @@
 #' # Return as data.frame
 #' RMpartgamDIF(sim_data, dif_group, output = "dataframe")
 #' }
-#' \dontrun{
-#' # Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
+#' \donttest{
+#' # Simulation-based cutoffs (100 Monte-Carlo iterations)
 #' cutoff_res <- RMpgDIFcutoff(sim_data, dif_var = dif_group,
 #'                                   iterations = 100, parallel = FALSE,
 #'                                   seed = 42)
@@ -365,7 +365,7 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(42)
 #' sim_data <- as.data.frame(
 #'   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
@@ -807,7 +807,7 @@ run_partgam_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(42)
 #' sim_data <- as.data.frame(
 #'   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)

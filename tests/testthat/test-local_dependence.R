@@ -62,3 +62,43 @@ test_that("RMlocdepQ3 returns a knitr_kable object when output = 'kable'", {
   if (is.null(cap)) cap <- paste(as.character(result), collapse = "\n")
   expect_true(grepl("Dynamic cut-off", cap))
 })
+
+# ---------------------------------------------------------------------
+# RMlocdepQ3cutoff -- small iterations
+# ---------------------------------------------------------------------
+test_that("RMlocdepQ3cutoff returns the expected list structure", {
+  skip_if_not_installed("mirt")
+  skip_if_not_installed("eRm")
+  set.seed(1)
+  df <- as.data.frame(matrix(sample(0:1, 200 * 8, replace = TRUE), 200, 8))
+  colnames(df) <- paste0("I", 1:8)
+  res <- RMlocdepQ3cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
+  expect_type(res, "list")
+  expect_true(all(c("results", "p95", "p99", "p995", "p999",
+                    "suggested_cutoff", "actual_iterations",
+                    "sample_n") %in% names(res)))
+  expect_true(res$actual_iterations >= 1L)
+  expect_true(is.finite(res$suggested_cutoff))
+})
+
+test_that("RMlocdepQ3cutoff result is consumable by RMlocdepQ3", {
+  skip_if_not_installed("mirt")
+  skip_if_not_installed("eRm")
+  set.seed(1)
+  df <- as.data.frame(matrix(sample(0:1, 200 * 8, replace = TRUE), 200, 8))
+  colnames(df) <- paste0("I", 1:8)
+  cu  <- RMlocdepQ3cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
+  out <- RMlocdepQ3(df, cutoff = cu$suggested_cutoff)
+  expect_s3_class(out, "knitr_kable")
+})
+
+test_that("RMlocdepQ3cutoff is reproducible with the same seed", {
+  skip_if_not_installed("mirt")
+  skip_if_not_installed("eRm")
+  set.seed(1)
+  df <- as.data.frame(matrix(sample(0:1, 200 * 8, replace = TRUE), 200, 8))
+  colnames(df) <- paste0("I", 1:8)
+  r1 <- RMlocdepQ3cutoff(df, iterations = 5L, parallel = FALSE, seed = 42L)
+  r2 <- RMlocdepQ3cutoff(df, iterations = 5L, parallel = FALSE, seed = 42L)
+  expect_equal(r1$results, r2$results)
+})
