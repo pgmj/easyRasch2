@@ -81,7 +81,7 @@ installed (they are in Suggests, not Imports).
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 set.seed(42)
 sim_data <- as.data.frame(
   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
@@ -95,11 +95,14 @@ cutoff_res <- RMpgLDcutoff(sim_data, iterations = 100, parallel = FALSE,
 # Simulated distribution only
 RMpgLDplot(cutoff_res)
 
+
 # With observed partial gamma overlaid
 RMpgLDplot(cutoff_res, data = sim_data)
+
 
 # Plot only a subset of items
 RMpgLDplot(cutoff_res, data = sim_data,
            items = c("Item1", "Item2", "Item3"))
-} # }
+
+# }
 ```

@@ -44,6 +44,8 @@ the sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
   — item-restscore with Goodman-Kruskal’s gamma
 - [`RMbootRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMbootRestscore.md)
   — non-parametric bootstrap of item-restscore fit
+- [`RMciccPlot()`](https://pgmj.github.io/easyRasch2/reference/RMciccPlot.md) -
+  conditional item characteristic curves
 
 ### Local dependence
 
@@ -83,6 +85,8 @@ the sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
   [`RMpgDIFcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFcutoff.md) +
   [`RMpgDIFplot()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFplot.md)
   — partial-gamma DIF
+- [`RMciccPlot()`](https://pgmj.github.io/easyRasch2/reference/RMciccPlot.md) -
+  evaluates DIF across class intervals
 
 ### Reliability, targeting, score conversion
 
@@ -224,6 +228,8 @@ Conditional item fit statistics with simulation-based cutoffs
 - [`RMinfitcutoff_mi()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff_mi.md)
   : Simulation-Based Infit MSQ Cutoff Determination for Multiply Imputed
   Data
+- [`RMciccPlot()`](https://pgmj.github.io/easyRasch2/reference/RMciccPlot.md)
+  : Conditional Item Characteristic Curves
 
 ## Item Restscore
 
@@ -292,6 +298,8 @@ Targeting and other plots/tables
   : Tile Plot of Item Response Distributions
 - [`RMtargeting()`](https://pgmj.github.io/easyRasch2/reference/RMtargeting.md)
   : Person-Item Targeting Plot (Wright Map)
+- [`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/reference/RMitemHierarchy.md)
+  : Item-Threshold Hierarchy Plot
 - [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/reference/RMscoreSE.md)
   : Raw-Score to Logit Score Transformation Table
 - [`RMreliability()`](https://pgmj.github.io/easyRasch2/reference/RMreliability.md)

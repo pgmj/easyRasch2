@@ -1,5 +1,25 @@
 # Changelog
 
+## easyRasch2 0.6.1
+
+- New
+  **[`RMciccPlot()`](https://pgmj.github.io/easyRasch2/reference/RMciccPlot.md)**
+  for conditional item characteristic curves, also includes DIF analysis
+  for categorical DIF variables.
+- New
+  **[`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/reference/RMitemHierarchy.md)**,
+  which outputs a plot illustrating the item hierarchy with item
+  thresholds and confidence intervals.
+- Modified
+  [`RMcfaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMcfaCutoff.md)
+  to only use .scaled metrics for RMSEA and CFI, for stability. See
+  documentation for more details.
+- Bug fix for
+  [`RMmartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMmartinLof.md)
+  with dichotomous items.
+- Tests written for all functions, preparing for CRAN submission in the
+  nearish future.
+
 ## easyRasch2 0.6.0
 
 - New

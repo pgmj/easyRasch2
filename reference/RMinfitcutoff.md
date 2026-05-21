@@ -135,7 +135,7 @@ The `iarm` package must be installed (it is in Suggests, not Imports).
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 set.seed(42)
 sim_data <- as.data.frame(
   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
@@ -146,8 +146,35 @@ colnames(sim_data) <- paste0("Item", 1:10)
 cutoff_res <- RMinfitcutoff(sim_data, iterations = 100, parallel = FALSE,
                             seed = 42)
 cutoff_res$item_cutoffs
+#>      Item infit_low infit_high outfit_low outfit_high
+#> 1   Item1     0.902      1.152      0.851       1.324
+#> 2   Item2     0.873      1.124      0.844       1.161
+#> 3   Item3     0.872      1.101      0.822       1.181
+#> 4   Item4     0.883      1.131      0.843       1.186
+#> 5   Item5     0.884      1.122      0.870       1.191
+#> 6   Item6     0.878      1.172      0.808       1.252
+#> 7   Item7     0.863      1.132      0.813       1.237
+#> 8   Item8     0.922      1.095      0.864       1.173
+#> 9   Item9     0.862      1.105      0.866       1.169
+#> 10 Item10     0.901      1.129      0.877       1.181
 
 # Use the cutoffs in RMiteminfit()
 RMiteminfit(sim_data)
-} # }
+#> 
+#> 
+#> Table: MSQ values based on conditional estimation (n = 200 complete cases).
+#> 
+#> |Item   | Infit MSQ| Relative location|
+#> |:------|---------:|-----------------:|
+#> |Item1  |     1.008|             -0.22|
+#> |Item2  |     0.999|              0.14|
+#> |Item3  |     0.994|              0.00|
+#> |Item4  |     1.055|             -0.04|
+#> |Item5  |     1.004|              0.10|
+#> |Item6  |     1.032|             -0.08|
+#> |Item7  |     0.943|             -0.04|
+#> |Item8  |     0.988|             -0.02|
+#> |Item9  |     0.933|              0.12|
+#> |Item10 |     1.044|              0.39|
+# }
 ```

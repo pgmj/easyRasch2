@@ -46,10 +46,8 @@ data("raschdat1", package = "eRm")
 res <- RMcfaCutoff(raschdat1[, 1:8], iterations = 50,
                    parallel = FALSE, seed = 1, output = "list")
 RMcfaPlot(res)                 # use the percentile from RMcfaCutoff()
-#> Warning: Removed 24 rows containing non-finite outside the scale range (`stat_bin()`).
 
 RMcfaPlot(res, percentile = 95) # override (no re-simulation needed)
-#> Warning: Removed 24 rows containing non-finite outside the scale range (`stat_bin()`).
 
 # }
 ```

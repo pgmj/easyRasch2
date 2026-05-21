@@ -152,11 +152,28 @@ RMiteminfit(sim_data, sort = "infit")
 # Return as data.frame for further processing
 df <- RMiteminfit(sim_data, output = "dataframe")
 # }
-if (FALSE) { # \dontrun{
-# Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
+# \donttest{
+# Simulation-based cutoffs (100 Monte-Carlo iterations)
 cutoff_res <- RMinfitcutoff(sim_data, iterations = 100, parallel = FALSE,
                             seed = 42)
 RMiteminfit(sim_data, cutoff = cutoff_res)
+#> 
+#> 
+#> Table: MSQ values based on conditional estimation (n = 40 complete cases). Cutoff values based on 99 simulation iterations (99.9% HDCI).
+#> 
+#> |Item  | Infit MSQ| Infit low| Infit high|Flagged | Relative location|
+#> |:-----|---------:|---------:|----------:|:-------|-----------------:|
+#> |Item1 |     1.049|     0.576|      1.489|FALSE   |             -0.03|
+#> |Item2 |     0.929|     0.660|      1.537|FALSE   |             -0.54|
+#> |Item3 |     0.828|     0.547|      1.374|FALSE   |             -0.23|
+#> |Item4 |     1.216|     0.699|      1.349|FALSE   |              0.26|
+#> |Item5 |     0.931|     0.689|      1.315|FALSE   |             -0.76|
 RMiteminfit(sim_data, cutoff = cutoff_res, output = "dataframe")
-} # }
+#>    Item Infit_MSQ Infit_low Infit_high Flagged Relative_location
+#> 1 Item1     1.049     0.576      1.489   FALSE             -0.03
+#> 2 Item2     0.929     0.660      1.537   FALSE             -0.54
+#> 3 Item3     0.828     0.547      1.374   FALSE             -0.23
+#> 4 Item4     1.216     0.699      1.349   FALSE              0.26
+#> 5 Item5     0.931     0.689      1.315   FALSE             -0.76
+# }
 ```

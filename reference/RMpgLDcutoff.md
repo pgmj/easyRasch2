@@ -156,7 +156,7 @@ Health*. Iste and Wiley (2013), pp. 133–135.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 set.seed(42)
 sim_data <- as.data.frame(
   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
@@ -167,5 +167,51 @@ colnames(sim_data) <- paste0("Item", 1:10)
 cutoff_res <- RMpgLDcutoff(sim_data, iterations = 100, parallel = FALSE,
                            seed = 42)
 cutoff_res$pair_cutoffs
-} # }
+#>    Item1  Item2  gamma_low gamma_high
+#> 1  Item1  Item2 -0.4306569  0.4306761
+#> 2  Item1  Item3 -0.3582424  0.3249651
+#> 3  Item1  Item4 -0.5086744  0.4304419
+#> 4  Item1  Item5 -0.3945250  0.3072829
+#> 5  Item1  Item6 -0.4643478  0.5241633
+#> 6  Item1  Item7 -0.4729345  0.4150514
+#> 7  Item1  Item8 -0.5020921  0.3392174
+#> 8  Item1  Item9 -0.5251263  0.3824885
+#> 9  Item1 Item10 -0.3755858  0.3699346
+#> 10 Item2  Item3 -0.4204398  0.3994601
+#> 11 Item2  Item4 -0.3644315  0.3534209
+#> 12 Item2  Item5 -0.4473970  0.4878331
+#> 13 Item2  Item6 -0.3730728  0.3733529
+#> 14 Item2  Item7 -0.4377953  0.4086538
+#> 15 Item2  Item8 -0.4017972  0.4588756
+#> 16 Item2  Item9 -0.3388430  0.3944811
+#> 17 Item2 Item10 -0.3537332  0.3087994
+#> 18 Item3  Item4 -0.3931570  0.4112150
+#> 19 Item3  Item5 -0.4140481  0.3298013
+#> 20 Item3  Item6 -0.3815603  0.4300039
+#> 21 Item3  Item7 -0.4352428  0.3839662
+#> 22 Item3  Item8 -0.4105651  0.3771429
+#> 23 Item3  Item9 -0.3846154  0.3843663
+#> 24 Item3 Item10 -0.3751171  0.4253835
+#> 25 Item4  Item5 -0.3895447  0.3688490
+#> 26 Item4  Item6 -0.4051667  0.4102190
+#> 27 Item4  Item7 -0.4657110  0.3573265
+#> 28 Item4  Item8 -0.4961380  0.4708393
+#> 29 Item4  Item9 -0.4414125  0.4671026
+#> 30 Item4 Item10 -0.3295775  0.2959772
+#> 31 Item5  Item6 -0.3552068  0.4885720
+#> 32 Item5  Item7 -0.4122038  0.3920705
+#> 33 Item5  Item8 -0.4357542  0.4475191
+#> 34 Item5  Item9 -0.3253012  0.3421405
+#> 35 Item5 Item10 -0.4073171  0.3440970
+#> 36 Item6  Item7 -0.3982301  0.4649695
+#> 37 Item6  Item8 -0.3762811  0.3933511
+#> 38 Item6  Item9 -0.3669915  0.4166667
+#> 39 Item6 Item10 -0.4095238  0.4507380
+#> 40 Item7  Item8 -0.3514916  0.4971444
+#> 41 Item7  Item9 -0.3357228  0.4801166
+#> 42 Item7 Item10 -0.3532645  0.3842173
+#> 43 Item8  Item9 -0.4445880  0.4311649
+#> 44 Item8 Item10 -0.3395225  0.4713264
+#> 45 Item9 Item10 -0.3807474  0.4108911
+# }
 ```

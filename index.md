@@ -44,6 +44,8 @@ the sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
   — item-restscore with Goodman-Kruskal’s gamma
 - [`RMbootRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMbootRestscore.md)
   — non-parametric bootstrap of item-restscore fit
+- [`RMciccPlot()`](https://pgmj.github.io/easyRasch2/reference/RMciccPlot.md) -
+  conditional item characteristic curves
 
 ### Local dependence
 
@@ -83,6 +85,8 @@ the sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
   [`RMpgDIFcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFcutoff.md) +
   [`RMpgDIFplot()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFplot.md)
   — partial-gamma DIF
+- [`RMciccPlot()`](https://pgmj.github.io/easyRasch2/reference/RMciccPlot.md) -
+  evaluates DIF across class intervals
 
 ### Reliability, targeting, score conversion
 

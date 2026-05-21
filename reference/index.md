@@ -15,6 +15,8 @@ Conditional item fit statistics with simulation-based cutoffs
 - [`RMinfitcutoff_mi()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff_mi.md)
   : Simulation-Based Infit MSQ Cutoff Determination for Multiply Imputed
   Data
+- [`RMciccPlot()`](https://pgmj.github.io/easyRasch2/reference/RMciccPlot.md)
+  : Conditional Item Characteristic Curves
 
 ## Item Restscore
 
@@ -83,6 +85,8 @@ Targeting and other plots/tables
   : Tile Plot of Item Response Distributions
 - [`RMtargeting()`](https://pgmj.github.io/easyRasch2/reference/RMtargeting.md)
   : Person-Item Targeting Plot (Wright Map)
+- [`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/reference/RMitemHierarchy.md)
+  : Item-Threshold Hierarchy Plot
 - [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/reference/RMscoreSE.md)
   : Raw-Score to Logit Score Transformation Table
 - [`RMreliability()`](https://pgmj.github.io/easyRasch2/reference/RMreliability.md)

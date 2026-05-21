@@ -127,7 +127,7 @@ Christensen, K. B., Bjorner, J. B., Kreiner, S., & Petersen, J. H.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 set.seed(1)
 dat <- as.data.frame(matrix(sample(0:1, 400 * 8, replace = TRUE),
                             nrow = 400, ncol = 8))
@@ -137,16 +137,31 @@ colnames(dat) <- paste0("I", 1:8)
 RMmartinLofResiduals(dat,
                      partition = list(c("I1","I2","I3","I4"),
                                       c("I5","I6","I7","I8")))
+#> 
+#> 
+#> Table: Standardised residuals (Christensen et al. 2002, eq. 13). Rows = subscale 1 score, columns = subscale 2 score. **Bold** = |residual| > 2. -- = uncomputable. n = 400 complete cases.
+#> 
+#> |t1\t2 |0     |1         |2        |3     |4     |
+#> |:-----|:-----|:---------|:--------|:-----|:-----|
+#> |0     |      |1.04      |**2.65** |-0.11 |-1.24 |
+#> |1     |-1.04 |**-2.17** |0.11     |0.67  |0.48  |
+#> |2     |-0.00 |-0.12     |-0.41    |0.36  |1.07  |
+#> |3     |0.12  |-0.13     |-0.71    |-0.66 |-1.59 |
+#> |4     |1.01  |0.21      |-0.26    |1.59  |--    |
 
 # Heatmap
 RMmartinLofResiduals(dat,
                      partition = c(1,1,1,1,2,2,2,2),
                      output = "ggplot")
 
+
 # Underlying data.frame for custom analysis
 df <- RMmartinLofResiduals(dat,
                            partition = c(1,1,1,1,2,2,2,2),
                            output = "dataframe")
 df[df$flagged, ]
-} # }
+#>   t1 t2 total observed expected residual flagged
+#> 3  0  2     2       18   10.396    2.650    TRUE
+#> 4  1  1     2       21   28.596   -2.171    TRUE
+# }
 ```

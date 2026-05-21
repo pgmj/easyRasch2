@@ -96,8 +96,8 @@ against its cutoff, with the full result list as `attr(., "result")`. If
 
 - `observed`:
 
-  Named numeric vector of observed CFA fit indices (`cfi.robust`,
-  `rmsea.robust`, `srmr`).
+  Named numeric vector of observed CFA fit indices (`cfi.scaled`,
+  `rmsea.scaled`, `srmr`).
 
 - `simulated`:
 
@@ -155,8 +155,14 @@ unidimensional assumption.
 
 **Estimation model.** The CFA on each simulated dataset uses a
 single-factor model with all items as ordinal indicators
-(`F1 =~ I1 + I2 + ...`), fitted with `WLSMV`. Reported fit indices are
-the WLSMV-appropriate variants: `cfi.robust`, `rmsea.robust`, `srmr`.
+(`F1 =~ I1 + I2 + ...`), fitted with `WLSMV` by default. Reported CFI /
+RMSEA are the Satorra-Bentler-scaled variants (`cfi.scaled`,
+`rmsea.scaled`) for consistency across iterations; the Yuan-Bentler
+mean-variance-adjusted "robust" variants are sometimes `NA` at small n
+and would produce holes in the simulated null distribution. SRMR is
+reported unchanged. For percentile-based comparison the binding
+requirement is that the same metric is computed for observed and
+simulated iterations, which both variants satisfy.
 
 **Why a null distribution.** A perfectly PCM-unidimensional dataset will
 typically not yield CFA fit indices at their ideal values (CFI = 1,
@@ -213,8 +219,8 @@ RMcfaCutoff(raschdat1[, 1:8], iterations = 50,
 #> 
 #> |Index | Observed| Cutoff|Direction  |Flagged |
 #> |:-----|--------:|------:|:----------|:-------|
-#> |CFI   |   0.8811| 0.1275|< 1st pct  |        |
-#> |RMSEA |   0.0859| 0.5787|> 99th pct |        |
+#> |CFI   |   0.9894| 0.3237|< 1st pct  |        |
+#> |RMSEA |   0.0162| 0.0832|> 99th pct |        |
 #> |SRMR  |   0.1158| 0.2287|> 99th pct |        |
 # }
 if (FALSE) { # \dontrun{
