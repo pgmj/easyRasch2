@@ -1191,10 +1191,10 @@ cutoff_res <- RMpgDIFcutoff(sim_data, dif_var = dif_group,
 
 # Simulated distribution only
 RMpgDIFplot(cutoff_res)
-#> Error in palette(...): Insufficient values in manual scale. 3 needed but only 2 provided.
+
 
 # With observed partial gamma overlaid
 RMpgDIFplot(cutoff_res, data = sim_data, dif_var = dif_group)
-#> Error in palette(...): Insufficient values in manual scale. 3 needed but only 2 provided.
+
 # }
 ```

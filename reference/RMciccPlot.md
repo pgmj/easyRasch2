@@ -107,6 +107,6 @@ RMciccPlot(pcmdat2, class_intervals = 5)
 set.seed(1)
 grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
 RMciccPlot(pcmdat2, dif_var = grp)
-#> Error: iarm::ICCplot() failed on item I1: There are not enough subjects in each total score to produce this number of class intervals. This often means `class_intervals` (4) is too large for the available total scores. Try a smaller value or use `method = "score"`.
+
 # }
 ```

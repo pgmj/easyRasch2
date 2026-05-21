@@ -180,7 +180,7 @@ RMreliability(eRm::raschdat1[, 1:20], draws = 1000)
 #> |Cronbach's alpha |    0.754|               NA|               NA|no bootstrap                |
 #> |PSI              |    0.747|               NA|               NA|no bootstrap                |
 #> |Empirical (WLE)  |    0.791|               NA|               NA|no bootstrap                |
-#> |RMU (WLE)        |    0.752|            0.683|            0.817|1000 PVs, 50 RMU iterations |
+#> |RMU (WLE)        |    0.752|            0.682|            0.817|1000 PVs, 50 RMU iterations |
 # }
 if (FALSE) { # \dontrun{
 # Bootstrap CI for PSI and Empirical (slow: 200 bootstrap iterations)
