@@ -2,6 +2,7 @@
 title: "A Rasch analysis workflow with easyRasch2"
 output: rmarkdown::html_vignette
 bibliography: references.bib
+link-citations: yes
 vignette: >
   %\VignetteIndexEntry{A Rasch analysis workflow with easyRasch2}
   %\VignetteEngine{knitr::rmarkdown}
@@ -46,9 +47,10 @@ reported alongside the four criteria above:
   latent continuum.
 * **Reliability** --- how precisely the scale separates respondents.
 
-For a more extensive treatment of Rasch analysis in R, including
-larger illustrative datasets, see
-<https://pgmj.github.io/easyRasch2/>.
+For a more extensive treatment of Rasch analysis in R, see
+<https://pgmj.github.io/raschrvignette/RaschRvign.html>. For a Bayesian sibling package, see <https://pgmj.github.io/easyRaschBayes/>
+
+> **NOTE:** all simulation-based functions use a low number of iterations to make this vignette render faster. You should use more iterations for actual analysis work. For most methods, 500-1000 will be useful, except for conditional infit, where 100-400 are optimal, depending on sample size [@johansson_detecting_2025].
 
 ## Data
 
@@ -99,17 +101,13 @@ RMbarplot(items, ncol = 2)
 ```
 
 ```{r tile-plot, fig.cap = "Response distribution tile plot"}
-RMtileplot(items)
+RMtileplot(items, category_labels = item_resp)
 ```
 
 ```{r stackedbar-plot, fig.cap = "Stacked-bar response distribution"}
 RMstackedbarplot(items, show_percent = TRUE)
 ```
 
-The plots quickly reveal the PHQ-9's expected floor: most respondents
-endorse category 0 ("Not at all") on most items. Category 3 ("Nearly
-every day") is rare for several items, foreshadowing thin information
-at the upper end of the scale.
 
 ## 1. Unidimensionality
 
@@ -130,19 +128,20 @@ highest-density intervals serve as the reference instead rule-of-thumb cutoffs
 [@johansson_detecting_2025].
 
 ```{r infit, results = "asis"}
-infit_cut <- RMinfitcutoff(items, iterations = 200, parallel = FALSE,
+infit_cut <- RMinfitcutoff(items, iterations = 100, parallel = FALSE,
                            seed = 3)
 RMiteminfit(items, cutoff = infit_cut)
 ```
+
+You can also get a plot summarizing simulated and observed item infit, using `RMinfitcutoffPlot()`. Since conditional infit needs complete data, there is a sibling function that uses multiple imputation with infit that is useful if you have partial missingness in your data - `RMiteminfit_mi()` and `RMinfitcutoff_mi()`.
+
 It is important to note that the `RIitemfit()` function uses **conditional**
 infit, which is both robust to different sample sizes and makes ZSTD unnecessary
 [@muller_item_2020]. Müller also questions the usefulness of outfit, and my
 simulation study [@johansson_detecting_2025] reached the same conclusion. Thus,
 outfit is not reported unless requested.
 
-A low item fit value (sometimes referred to as an item "overfitting" the Rasch
-model) indicates that responses may be too predictable. This is often the case
-for items that are very general/broad in scope in relation to the latent
+A low item fit value, often referred to as an item being "overfit" to the Rasch model, indicates that responses may be too predictable. This is often the case for items that are very general/broad in scope in relation to the latent
 variable, for instance asking about feeling depressed in a depression
 questionnaire. You will often find overfitting items to also have residual
 correlations (local dependencies) with other items. Overfit may be likened to
@@ -150,14 +149,11 @@ having a much stronger factor loading than other items in a confirmatory factor
 analysis or a higher level of discrimination in an Item Response Theory model
 with two or more parameters.
 
-A high item fit value (sometimes referred to as "underfitting" the Rasch model)
-can indicate several things, often multidimensionality or a question that is
-difficult to interpret and thus has noisy response data. The latter could for
-instance be caused by a question that asks about two things at the same time or
-is ambiguous for other reasons.
+A high item fit value, often referred to as being "underfit" to the Rasch model,
+can indicate several things. Often underfit is due to multidimensionality or a question that is difficult to interpret and thus has noisy response data. The latter could for instance be caused by a question that asks about two things at the same time, or is ambiguous for other reasons.
 
 Next is a visual presentation of conditional item fit across the latent
-continuum, with respondents split into groups based on their latent score.
+continuum, with respondents split into groups based on their total score.
 
 ```{r cicc-plot, fig.cap = "Conditional ICCs with five class intervals", fig.height = 5}
 RMciccPlot(items, class_intervals = 5)
@@ -227,18 +223,20 @@ person-item standardised residuals for every item pair. Pair-wise
 $Q_3$ values above the simulation-based cut-off flag LD [@christensen2017].
 
 ```{r q3, results = "asis"}
-q3_cut <- RMlocdepQ3cutoff(items, iterations = 200, parallel = FALSE,
+q3_cut <- RMlocdepQ3cutoff(items, iterations = 100, parallel = FALSE,
                            seed = 4)
 RMlocdepQ3(items, cutoff = q3_cut)
 ```
 
 A second perspective on LD is the *partial gamma* coefficient
 [@kreinerAnalysisLocalDependence2004;@kreiner_validity_2007] between observed
-item pairs, conditional on the rest-score:
+item pairs, conditional on the rest-score. Note that this function evaluates both directions of LD, thus the output is two tables.
 
 ```{r partgamld, results = "asis"}
 RMpartgamLD(items)
 ```
+
+You can also get simulation-based thresholds for partial gamma LD, using `RMpgLDcutoff()`, which can be used with `RMpartgamLD()` and also to plot the results with `RMpgLDplot()`
 
 The two approaches agree where they overlap; pairs flagged by both are
 the strongest candidates for further inspection or possible item
@@ -329,22 +327,22 @@ RMreliability(items, draws = 200, rmu_iter = 20, parallel = FALSE,
 ```
 
 For converting ordinal sum-scores to interval-scaled person-location
-estimates with associated standard errors, use `RMscoreSE()`:
+estimates with associated standard errors, use `RMscoreSE()`.
 
 ```{r scoreSE, fig.cap = "Sum-score to WLE conversion with 95% CIs", fig.height = 5}
 RMscoreSE(items, output = "figure")
 RMscoreSE(items)
 ```
 
+`RMscoreSE()` also has an option for EAP scores (expected á posteriori).
+
+
 ## Where to next
 
 * Each `RM*()` function is documented with its own `?function`
   reference page including a worked example.
 * The simulation-based cut-offs used above (`RM*cutoff()`) can be
-  parallelised via the `mirai` package; see the relevant help pages.
-* For DIF with continuous covariates or interactions, see
-  `?RMdifTree`.
-* For multiple-imputation workflows on item-fit cut-offs, see
-  `?RMinfitcutoff_mi`.
+  parallelised on multiple CPU cores via the `mirai` package; see the relevant help pages.
+
 
 ## References

@@ -45,9 +45,28 @@ test_that("RMpartgamLD output = 'kable' returns a kable-like object", {
   skip_if_not_installed("knitr")
   df  <- make_dichotomous()
   out <- RMpartgamLD(df, output = "kable")
-  # RMpartgamLD uses kableExtra::pack_rows() which converts the kable to
-  # a knit_asis string; accept either class.
+  # RMpartgamLD glues two kable tables into one knit_asis string.
   expect_true(inherits(out, "knitr_kable") || inherits(out, "knit_asis"))
+})
+
+test_that("RMpartgamLD kable output contains two clean pipe tables", {
+  # Regression test: an earlier implementation used
+  #   paste(kable1, "\n\n", kable2)
+  # which silently interleaved the two multi-line character vectors
+  # row-by-row, producing an unreadable corrupt table in vignettes.
+  # We now collapse each table first, then join with a blank line.
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("knitr")
+  df  <- make_dichotomous()
+  out <- RMpartgamLD(df, output = "kable")
+  txt <- as.character(out)
+  # Exactly two "Table:" captions (one per rest-score direction)
+  expect_equal(length(gregexpr("\nTable: ", paste0("\n", txt))[[1]]), 2L)
+  # Exactly two header rows "|Item 1 |Item 2 ..."
+  expect_equal(length(gregexpr("|Item 1 |Item 2", txt,
+                               fixed = TRUE)[[1]]), 2L)
+  # No row should contain the column header twice (interleaving symptom)
+  expect_false(any(grepl("Item 1.*Item 1", strsplit(txt, "\n")[[1]])))
 })
 
 # ---------------------------------------------------------------------

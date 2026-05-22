@@ -227,7 +227,7 @@ RMpartgamLD <- function(data, cutoff = NULL, output = "kable") {
     format    = "pipe",
     col.names = if (is.null(cutoff)) col_names_no_cutoff else col_names_cutoff,
     caption   = paste0(caption_text,
-                       "\n\nDirection 1: rest score = total - Item2")
+                       " Direction 1: rest score = total - Item2.")
   )
 
   kable2 <- knitr::kable(
@@ -235,10 +235,20 @@ RMpartgamLD <- function(data, cutoff = NULL, output = "kable") {
     format    = "pipe",
     col.names = if (is.null(cutoff)) col_names_no_cutoff else col_names_cutoff,
     caption   = paste0(caption_text,
-                       "\n\nDirection 2: rest score = total - Item1")
+                       " Direction 2: rest score = total - Item1.")
   )
 
-  knitr::asis_output(paste(kable1, "\n\n", kable2))
+  # `knitr::kable(format = "pipe")` returns a multi-line *character vector*
+  # (one element per line), so `paste(kable1, "\n\n", kable2)` would do
+  # element-wise concatenation, interleaving the two tables row-by-row.
+  # Collapse each table to a single string first, then join with a
+  # blank line between to render as two distinct kable tables.
+  combined <- paste(
+    paste(kable1, collapse = "\n"),
+    paste(kable2, collapse = "\n"),
+    sep = "\n\n"
+  )
+  knitr::asis_output(combined)
 }
 
 #' Simulation-Based Partial Gamma LD Cutoff Determination
