@@ -83,7 +83,7 @@ The `iarm` package must be installed (it is in Suggests, not Imports).
 
 Kreiner, S. (2011). A Note on Item–Restscore Association in Rasch
 Models. *Applied Psychological Measurement, 35*(7), 557–561.
-<https://doi.org/10.1177/0146621611410227>
+[doi:10.1177/0146621611410227](https://doi.org/10.1177/0146621611410227)
 
 ## Examples
 

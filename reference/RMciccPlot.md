@@ -12,7 +12,7 @@ panel becomes a visual DIF check.
 ``` r
 RMciccPlot(
   data,
-  class_intervals = 5L,
+  class_intervals = 4L,
   method = c("cut", "score"),
   dif_var = NULL,
   output = c("patchwork", "list")
@@ -29,7 +29,7 @@ RMciccPlot(
 - class_intervals:
 
   Integer. Number of class intervals used to group respondents when
-  `method = "cut"`. Default `5`. Each class interval needs enough
+  `method = "cut"`. Default `4`. Each class interval needs enough
   respondents to compute a stable average observed item score; with
   small samples or many possible total scores, lower this. Ignored when
   `method = "score"`.
@@ -100,13 +100,17 @@ Models*. R package version 0.4.3.
 ``` r
 # \donttest{
 data("pcmdat2", package = "eRm")
+# NB: with `method = "cut"` the quantile-based binning of total scores
+#     may collapse to fewer bins than requested when the score
+#     distribution is peaked. `pcmdat2` happens to accept 3 or 5 but
+#     not 4. See `?iarm::ICCplot`; `method = "score"` avoids the issue.
 RMciccPlot(pcmdat2, class_intervals = 5)
 
 
 # With DIF grouping
 set.seed(1)
 grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
-RMciccPlot(pcmdat2, dif_var = grp)
+RMciccPlot(pcmdat2, class_intervals = 5, dif_var = grp)
 
 # }
 ```

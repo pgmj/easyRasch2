@@ -1,11 +1,18 @@
 # Changelog
 
-## easyRasch2 0.6.1
+## easyRasch2 0.7.0
 
 - New
+  **[`RMbarplot()`](https://pgmj.github.io/easyRasch2/reference/RMbarplot.md)**
+  and
+  **[`RMstackedbarplot()`](https://pgmj.github.io/easyRasch2/reference/RMstackedbarplot.md)**
+  join
+  [`RMtileplot()`](https://pgmj.github.io/easyRasch2/reference/RMtileplot.md)
+  for easy visualization of item response data distributions.
+- New
   **[`RMciccPlot()`](https://pgmj.github.io/easyRasch2/reference/RMciccPlot.md)**
-  for conditional item characteristic curves, also includes DIF analysis
-  for categorical DIF variables.
+  for conditional item characteristic curves plot, also includes DIF
+  analysis for categorical DIF variables.
 - New
   **[`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/reference/RMitemHierarchy.md)**,
   which outputs a plot illustrating the item hierarchy with item
@@ -17,8 +24,12 @@
 - Bug fix for
   [`RMmartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMmartinLof.md)
   with dichotomous items.
+- Bug fix for
+  [`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/reference/RMitemHierarchy.md)
+  making option `item_labels` work as intended.
 - Tests written for all functions, preparing for CRAN submission in the
   nearish future.
+- Drafted a package intro/vignette
 
 ## easyRasch2 0.6.0
 

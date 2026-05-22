@@ -92,14 +92,20 @@ the sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
 
 - [`RMreliability()`](https://pgmj.github.io/easyRasch2/reference/RMreliability.md) +
   [`RMUreliability()`](https://pgmj.github.io/easyRasch2/reference/RMUreliability.md)
-  — Cronbach’s α, PSI, empirical reliability, and
-  Bignardi-Kievit-Bürkner RMU from plausible values
+  — Cronbach’s α, PSI, empirical reliability, and Relative Measurement
+  Uncertainty from plausible values
 - [`RMtargeting()`](https://pgmj.github.io/easyRasch2/reference/RMtargeting.md)
   — Wright-map style person-item targeting plot
 - [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/reference/RMscoreSE.md)
   — raw-score → logit transformation table (WLE / EAP)
+
+### Data visualization
+
 - [`RMtileplot()`](https://pgmj.github.io/easyRasch2/reference/RMtileplot.md)
   — response-distribution heatmap with optional group faceting
+- [`RMbarplot()`](https://pgmj.github.io/easyRasch2/reference/RMbarplot.md)
+  &
+  [`RMstackedbarplot()`](https://pgmj.github.io/easyRasch2/reference/RMstackedbarplot.md)
 
 ## Installation
 

@@ -83,6 +83,10 @@ Targeting and other plots/tables
 
 - [`RMtileplot()`](https://pgmj.github.io/easyRasch2/reference/RMtileplot.md)
   : Tile Plot of Item Response Distributions
+- [`RMstackedbarplot()`](https://pgmj.github.io/easyRasch2/reference/RMstackedbarplot.md)
+  : Stacked Bar Chart of Item Response Distributions
+- [`RMbarplot()`](https://pgmj.github.io/easyRasch2/reference/RMbarplot.md)
+  : Item Response Distribution Bar Chart
 - [`RMtargeting()`](https://pgmj.github.io/easyRasch2/reference/RMtargeting.md)
   : Person-Item Targeting Plot (Wright Map)
 - [`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/reference/RMitemHierarchy.md)
@@ -93,3 +97,10 @@ Targeting and other plots/tables
   : Reliability metrics for a Rasch model
 - [`RMUreliability()`](https://pgmj.github.io/easyRasch2/reference/RMUreliability.md)
   : Relative Measurement Uncertainty (RMU)
+
+## Datasets
+
+Package builtin data
+
+- [`phq9`](https://pgmj.github.io/easyRasch2/reference/phq9.md) : PHQ-9
+  Depression Screener (NHANES Subsample)

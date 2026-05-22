@@ -151,7 +151,7 @@ silently dropped.
 Bignardi, G., Kievit, R., & Bürkner, P. C. (2025). A general method for
 estimating reliability using Bayesian Measurement Uncertainty.
 *PsyArXiv*.
-[doi:10.31234/osf.io/h54k8](https://doi.org/10.31234/osf.io/h54k8)
+[doi:10.31234/osf.io/h54k8_v1](https://doi.org/10.31234/osf.io/h54k8_v1)
 
 Mislevy, R. J. (1991). Randomization-Based Inference about Latent
 Variables from Complex Samples. *Psychometrika, 56*(2), 177-196.
@@ -180,7 +180,7 @@ RMreliability(eRm::raschdat1[, 1:20], draws = 1000)
 #> |Cronbach's alpha |    0.754|               NA|               NA|no bootstrap                |
 #> |PSI              |    0.747|               NA|               NA|no bootstrap                |
 #> |Empirical (WLE)  |    0.791|               NA|               NA|no bootstrap                |
-#> |RMU (WLE)        |    0.752|            0.684|             0.82|1000 PVs, 50 RMU iterations |
+#> |RMU (WLE)        |    0.752|            0.684|            0.818|1000 PVs, 50 RMU iterations |
 # }
 if (FALSE) { # \dontrun{
 # Bootstrap CI for PSI and Empirical (slow: 200 bootstrap iterations)
