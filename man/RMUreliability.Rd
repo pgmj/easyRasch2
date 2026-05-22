@@ -39,7 +39,7 @@ Requires the \code{ggdist} package (Suggests).
 \references{
 Bignardi, G., Kievit, R., & Bürkner, P. C. (2025). A general method for
 estimating reliability using Bayesian Measurement Uncertainty. \emph{PsyArXiv}.
-\doi{10.31234/osf.io/h54k8}
+\doi{10.31234/osf.io/h54k8_v1}
 }
 \seealso{
 \code{\link[=RMreliability]{RMreliability()}}

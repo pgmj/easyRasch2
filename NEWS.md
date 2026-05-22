@@ -1,14 +1,18 @@
-# easyRasch2 0.6.1
+# easyRasch2 0.7.0
 
-- New **`RMciccPlot()`** for conditional item characteristic curves, also 
+- New **`RMbarplot()`** and **`RMstackedbarplot()`** join `RMtileplot()` for 
+  easy visualization of item response data distributions.
+- New **`RMciccPlot()`** for conditional item characteristic curves plot, also 
   includes DIF analysis for categorical DIF variables.
 - New **`RMitemHierarchy()`**, which outputs a plot illustrating the item hierarchy
   with item thresholds and confidence intervals.
 - Modified `RMcfaCutoff()` to only use .scaled metrics for RMSEA and CFI, for stability.
   See documentation for more details.
 - Bug fix for `RMmartinLof()` with dichotomous items.
+- Bug fix for `RMitemHierarchy()` making option `item_labels` work as intended. 
 - Tests written for all functions, preparing for CRAN submission in the nearish
   future.
+- Drafted a package intro/vignette
 
 # easyRasch2 0.6.0
 

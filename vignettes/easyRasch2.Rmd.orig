@@ -1,0 +1,350 @@
+---
+title: "A Rasch analysis workflow with easyRasch2"
+output: rmarkdown::html_vignette
+bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{A Rasch analysis workflow with easyRasch2}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse  = TRUE,
+  comment   = "#>",
+  fig.path  = "figures/rasch-",
+  fig.width = 7,
+  fig.height = 5,
+  out.width = "100%",
+  message   = FALSE,
+  warning   = FALSE
+)
+set.seed(20260521)
+```
+
+## Overview
+
+This vignette walks through a worked Rasch analysis of the
+nine-item Patient Health Questionnaire (PHQ-9; @kroenke_phq9_2001) using
+the **easyRasch2** package. The example follows the four psychometric
+criteria proposed by @christensen_psychometric_2021 for the validation
+of patient-reported outcome measures (PROMs):
+
+1. **Unidimensionality** --- the items measure a single latent
+   construct.
+2. **Local independence** --- after conditioning on the latent trait,
+   item responses are independent of each other.
+3. **Ordered response category thresholds** (monotonicity) --- moving
+   up the latent trait increases the probability of higher categories.
+4. **Invariance / no DIF** --- item parameters are the same across
+   relevant external groups (e.g. gender).
+
+We then move on to two complementary descriptors that are commonly
+reported alongside the four criteria above:
+
+* **Targeting** --- how well person and item locations overlap on the
+  latent continuum.
+* **Reliability** --- how precisely the scale separates respondents.
+
+For a more extensive treatment of Rasch analysis in R, including
+larger illustrative datasets, see
+<https://pgmj.github.io/easyRasch2/>.
+
+## Data
+
+The bundled `phq9` dataset is a 600-respondent random subsample of the
+PHQ-9 module from the U.S. National Health and Nutrition Examination
+Survey (NHANES, September 2024 release) with complete responses on all
+nine items. NHANES microdata are released to the public domain by the
+U.S. federal government.
+
+```{r libraries}
+library(easyRasch2)
+library(mirt)
+data(phq9)
+items <- phq9[, paste0("q", 1:9)]   # 9 item columns, scored 0..3
+gender <- phq9$gender               # external grouping variables
+age <- phq9$age                     #
+
+# add item information
+item_desc <- c(
+  "Little interest or pleasure in doing things",
+  "Feeling down, depressed, or hopeless",
+  "Trouble falling or staying asleep, or sleeping too much",
+  "Feeling tired or having little energy", "Poor appetite or overeating",
+  "Feeling bad about yourself - or that you are a failure or have let yourself or your family down",
+  "Trouble concentrating on things, such as reading the newspaper or watching television",
+  "Moving or speaking so slowly that other people could have noticed?",
+  "Thoughts that you would be better off dead or of hurting yourself in some way"
+)
+
+item_resp <- c("Not at all","Several days","More than \nhalf the days","Nearly every day")
+```
+
+```{r data-overview}
+str(items)
+summary(rowSums(items))
+hist(rowSums(items), col = "lightblue", main = "Histogram of ordinal sum scores")
+table(gender, useNA = "ifany")
+summary(age)
+```
+
+### Descriptive plots
+
+Before fitting any model it is worth eyeballing the response
+distributions:
+
+```{r bar-plot, fig.cap = "Faceted bar chart of response distributions", fig.height = 9}
+RMbarplot(items, ncol = 2)
+```
+
+```{r tile-plot, fig.cap = "Response distribution tile plot"}
+RMtileplot(items)
+```
+
+```{r stackedbar-plot, fig.cap = "Stacked-bar response distribution"}
+RMstackedbarplot(items, show_percent = TRUE)
+```
+
+The plots quickly reveal the PHQ-9's expected floor: most respondents
+endorse category 0 ("Not at all") on most items. Category 3 ("Nearly
+every day") is rare for several items, foreshadowing thin information
+at the upper end of the scale.
+
+## 1. Unidimensionality
+
+`easyRasch2` provides several complementary unidimensionality
+diagnostics that can be combined for a robust conclusion:
+
+- item-level conditional infit MSQ statistics [@muller_item_2020]
+- item-level item-restscore associations with Goodman-Kruskal's gamma [@kreiner_note_2011]
+- confirmatory factor analysis (CFA) with WLSMV estimator for ordinal data
+- principal components analysis (PCA) of the standardised residuals [@chou_checking_2010]
+- Martin-Löf test with Monte-Carlo p-values [@christensenMonteCarloApproach2007]
+
+### Conditional infit MSQ
+
+Conditional item infit mean-square statistics flag items whose response
+patterns deviate from the Rasch expectation. With `RMinfitcutoff()`, per-item
+highest-density intervals serve as the reference instead rule-of-thumb cutoffs
+[@johansson_detecting_2025].
+
+```{r infit, results = "asis"}
+infit_cut <- RMinfitcutoff(items, iterations = 200, parallel = FALSE,
+                           seed = 3)
+RMiteminfit(items, cutoff = infit_cut)
+```
+It is important to note that the `RIitemfit()` function uses **conditional**
+infit, which is both robust to different sample sizes and makes ZSTD unnecessary
+[@muller_item_2020]. Müller also questions the usefulness of outfit, and my
+simulation study [@johansson_detecting_2025] reached the same conclusion. Thus,
+outfit is not reported unless requested.
+
+A low item fit value (sometimes referred to as an item "overfitting" the Rasch
+model) indicates that responses may be too predictable. This is often the case
+for items that are very general/broad in scope in relation to the latent
+variable, for instance asking about feeling depressed in a depression
+questionnaire. You will often find overfitting items to also have residual
+correlations (local dependencies) with other items. Overfit may be likened to
+having a much stronger factor loading than other items in a confirmatory factor
+analysis or a higher level of discrimination in an Item Response Theory model
+with two or more parameters.
+
+A high item fit value (sometimes referred to as "underfitting" the Rasch model)
+can indicate several things, often multidimensionality or a question that is
+difficult to interpret and thus has noisy response data. The latter could for
+instance be caused by a question that asks about two things at the same time or
+is ambiguous for other reasons.
+
+Next is a visual presentation of conditional item fit across the latent
+continuum, with respondents split into groups based on their latent score.
+
+```{r cicc-plot, fig.cap = "Conditional ICCs with five class intervals", fig.height = 5}
+RMciccPlot(items, class_intervals = 5)
+```
+
+### Item-restscore
+
+Item-restscore uses Goodman-Kruskal's gamma and shows the expected
+and observed correlation between an item and a score based on the rest of the
+items [@kreiner_note_2011]. Similarly, but inverted, to item infit, a lower
+observed correlation value than expected indicates underfit, that the item may
+not belong to the dimension. A higher than expected observed value indicates an
+overfitting and possibly redundant item. Overfitting items will often also show
+issues with local dependency.
+
+Compared to infit, item-restscore more often flags overfit items (based on
+experience), and less often flags underfit items (based on a simulation study
+[@johansson_detecting_2025]).
+
+```{r itemrestscore}
+RMitemrestscore(items)
+```
+
+
+### CFA-based cutoff for CFI / RMSEA
+
+`RMcfaCutoff()` fits a unidimensional ordinal CFA both to the observed
+data and to data simulated from a unidimensional PCM, and returns
+parametric-bootstrap cut-offs for model fit indices SRMR, CFI and RMSEA.
+Model fit values that exceed the simulated cut-off values are *more extreme
+than is plausible under a unidimensional data generating process*.
+
+```{r cfa-cutoff, results = "asis"}
+cfa_cut <- RMcfaCutoff(items, iterations = 100, parallel = FALSE,
+                       seed = 2)
+cfa_cut
+```
+
+### Residual PCA
+
+After fitting the Rasch model, the residuals should contain no further
+systematic structure. The *largest eigenvalue* of the residual correlation
+matrix can be considered the headline diagnostic; values clearly above the
+simulation-based cut-off suggest a secondary dimension. However, values below
+the largest eigenvalue does not by itself support unidimensionality.
+
+```{r pca-cutoff, results = "asis"}
+pca_cut <- RMpcaCutoff(items, iterations = 100, parallel = FALSE,
+                       seed = 1)
+RMresidualPCA(items, cutoff = pca_cut)
+```
+
+Also of interest is the plot of item standardised loadings on the first residual
+contrast and item locations. This figure can be helpful to identify clusters
+in data, perhaps related to local dependency and/or multidimensionality.
+
+```{r pca-plot, fig.cap = "Standardised loadings on the first residual contrast", fig.height = 5}
+RMresidualPCA(items, output = "loadings")
+```
+
+
+## 2. Local independence
+
+Local independence (LD) can be assessed with multiple methods. Yen's $Q_3$
+statistic [@yen_scaling_1984] is the correlation between
+person-item standardised residuals for every item pair. Pair-wise
+$Q_3$ values above the simulation-based cut-off flag LD [@christensen2017].
+
+```{r q3, results = "asis"}
+q3_cut <- RMlocdepQ3cutoff(items, iterations = 200, parallel = FALSE,
+                           seed = 4)
+RMlocdepQ3(items, cutoff = q3_cut)
+```
+
+A second perspective on LD is the *partial gamma* coefficient
+[@kreinerAnalysisLocalDependence2004;@kreiner_validity_2007] between observed
+item pairs, conditional on the rest-score:
+
+```{r partgamld, results = "asis"}
+RMpartgamLD(items)
+```
+
+The two approaches agree where they overlap; pairs flagged by both are
+the strongest candidates for further inspection or possible item
+revision or deletion.
+
+## 3. Ordered response category thresholds
+
+For a polytomous item to be measuring as intended, the thresholds
+separating adjacent response categories should be ordered: the
+threshold from "Not at all" to "Several days" should sit below the one
+from "Several days" to "More than half the days", and so on.
+
+A classical method to assess item response functions is to plot probability of
+response curves for each item and response category. The `mirt` package has a
+simple way to achieve this.
+
+```{r mirt_ipf, results = "asis"}
+mirt(items, model=1, itemtype='Rasch', verbose = FALSE) |>
+  plot(type="trace", as.table = TRUE,
+       theta_lim = c(-5,5)) # changes x axis limits
+```
+
+`RMitemHierarchy()` plots each item's threshold locations on the
+latent scale, ordered by overall item difficulty. Disordered
+thresholds appear as overlapping or reversed segments and are a clear
+signal that the response categories are not being used in the intended
+order.
+
+```{r threshold-hierarchy, fig.cap = "Item-hierarchy", fig.height = 5}
+RMitemHierarchy(items, item_labels = item_desc)
+```
+
+## 4. Invariance / no DIF
+
+We use two complementary DIF assessments. The Andersen likelihood-ratio
+test [LRT, @andersen_goodness_1973] partitions the sample by an external
+variable, refits the model in each subgroup, and compares item
+locations. The partial gamma approach
+[@kreiner_validity_2007;@christensen_psychometric_2021] looks for an
+association between item responses and the external variable
+*conditional on the rest-score*. Both are run on the *gender* variable
+here (after dropping respondents with missing gender):
+
+```{r dif-subset}
+keep    <- !is.na(gender)
+items_g <- items[keep, ]
+gender_g <- droplevels(gender[keep])
+```
+
+### Andersen LR-test (eRm)
+
+```{r dif-lr, fig.cap = "Andersen LR-test DIF locations by gender", fig.height = 7}
+RMdifLR(items_g, dif_var = gender_g, level = "threshold")
+```
+
+The plot shows the item threshold locations estimated in each gender group with
+the corresponding confidence band.
+
+### Partial-gamma DIF
+
+```{r dif-partgam, results = "asis"}
+RMpartgamDIF(items_g, dif_var = gender_g)
+```
+
+For a model-based DIF analysis that can handle *continuous*
+covariates and interactions (e.g. age × gender), see
+`?RMdifTree` [@strobl_rasch_2015;@henninger_partial_2025].
+
+## Targeting
+
+A targeting plot summarises how well the item-threshold distribution matches
+the distribution of person locations on the latent scale --- a Wright-map style
+display.
+
+```{r targeting, fig.cap = "Person-item targeting", fig.height = 6}
+RMtargeting(items)
+```
+
+## Reliability
+
+`RMreliability()` reports four reliability metrics: person separation
+reliability (PSI); Relative Measurement Uncertainty (RMU)
+estimate derived from posterior person-location uncertainty using plausible values; Cronbach's alpha; and Empirical reliability (using `mirt::empirical_rxx()`. PSI, alpha and empirical can use bootstrap for confidence intervals. All reliability metrics range from 0 to 1, with higher values indicating better separation/precision.
+
+```{r reliability, results = "asis"}
+RMreliability(items, draws = 200, rmu_iter = 20, parallel = FALSE,
+              seed = 5)
+```
+
+For converting ordinal sum-scores to interval-scaled person-location
+estimates with associated standard errors, use `RMscoreSE()`:
+
+```{r scoreSE, fig.cap = "Sum-score to WLE conversion with 95% CIs", fig.height = 5}
+RMscoreSE(items, output = "figure")
+RMscoreSE(items)
+```
+
+## Where to next
+
+* Each `RM*()` function is documented with its own `?function`
+  reference page including a worked example.
+* The simulation-based cut-offs used above (`RM*cutoff()`) can be
+  parallelised via the `mirai` package; see the relevant help pages.
+* For DIF with continuous covariates or interactions, see
+  `?RMdifTree`.
+* For multiple-imputation workflows on item-fit cut-offs, see
+  `?RMinfitcutoff_mi`.
+
+## References

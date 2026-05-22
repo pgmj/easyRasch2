@@ -82,5 +82,5 @@ df <- RMitemrestscore(sim_data, output = "dataframe")
 \references{
 Kreiner, S. (2011). A Note on Item–Restscore Association in Rasch Models.
 \emph{Applied Psychological Measurement, 35}(7), 557–561.
-\url{https://doi.org/10.1177/0146621611410227}
+\doi{10.1177/0146621611410227}
 }

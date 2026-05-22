@@ -77,6 +77,26 @@ test_that("RMitemHierarchy with custom item_labels returns a ggplot", {
   expect_s3_class(p, "ggplot")
 })
 
+test_that("RMitemHierarchy actually applies item_labels to the x-axis", {
+  # Regression test: scale_x_discrete(labels = ...) does a named lookup
+  # against the factor levels, so axis_labels must be named by the
+  # column names (item_order). Otherwise the labels silently revert to
+  # the raw column names. (#item_labels-bug, 2026)
+  skip_if_not_installed("eRm")
+  skip_if_not_installed("ggplot2")
+  df <- make_polytomous()
+  custom <- paste("Label", seq_len(ncol(df)))
+  p <- RMitemHierarchy(df, item_labels = custom)
+
+  sc <- ggplot2::ggplot_build(p)$plot$scales$get_scales("x")
+  expect_true(all(names(sc$labels) %in% names(df)))
+  # Every displayed label must contain its custom suffix
+  for (i in seq_along(custom)) {
+    expect_true(any(grepl(custom[i], sc$labels, fixed = TRUE)),
+                info = paste("custom label not found:", custom[i]))
+  }
+})
+
 # ---------------------------------------------------------------------
 # Dataframe output
 # ---------------------------------------------------------------------

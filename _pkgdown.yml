@@ -67,6 +67,8 @@ reference:
     desc: "Targeting and other plots/tables"
     contents:
       - RMtileplot
+      - RMstackedbarplot
+      - RMbarplot
       - RMtargeting
       - RMitemHierarchy
       - RMscoreSE

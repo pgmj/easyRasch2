@@ -915,7 +915,7 @@ RMpgDIFplot <- function(simfit, data, dif_var) {
         )
       ) +
       ggplot2::scale_color_manual(
-        values = scales::brewer_pal()(3),
+        values = scales::brewer_pal()(4)[-1],
         aesthetics = "slab_fill",
         guide = "none"
       ) +
@@ -1047,7 +1047,7 @@ RMpgDIFplot <- function(simfit, data, dif_var) {
       caption = caption_text
     ) +
     ggplot2::scale_color_manual(
-      values = scales::brewer_pal()(3),
+      values = scales::brewer_pal()(4)[-1],
       aesthetics = "slab_fill",
       guide = "none"
     ) +

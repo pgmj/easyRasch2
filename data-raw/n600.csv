@@ -1,0 +1,601 @@
+q1,q2,q3,q4,q5,q6,q7,q8,q9,gender,age,edu
+3,3,3,3,3,3,3,1,3,Female,29,High school
+0,0,1,1,0,2,3,0,0,Female,43,University
+1,2,3,3,3,3,3,2,0,Female,22,University
+2,3,0,2,2,2,2,0,2,Male,44,University
+3,3,3,3,3,3,3,3,3,Male,48,High school
+3,3,1,3,2,2,2,3,1,Male,60,High school
+1,1,0,1,0,2,2,0,2,Male,31,University
+3,3,3,3,1,3,3,0,0,Female,48,University
+2,2,2,2,2,3,3,1,0,Male,47,University
+1,0,0,0,0,0,0,0,0,Female,25,University
+2,2,1,2,2,2,2,1,1,Female,60,University
+2,3,3,3,3,0,3,2,1,Female,26,University
+0,2,3,3,3,3,3,2,1,Female,39,High school
+1,1,3,2,2,1,0,0,0,Male,50,University
+1,0,1,2,1,0,0,0,0,Female,22,High school
+1,1,1,1,2,1,2,0,0,Female,26,High school
+1,1,0,1,2,0,1,1,0,Male,47,High school
+2,0,2,1,1,0,1,0,0,Female,34,University
+2,1,2,1,1,1,1,2,0,Male,31,University
+0,1,1,1,1,0,0,0,0,Male,34,University
+2,0,0,2,2,1,1,0,0,Female,33,University
+0,0,3,3,3,2,3,0,3,Male,27,High school
+3,3,3,3,3,3,2,0,2,Male,33,High school
+3,3,3,3,3,3,3,3,3,NA,32,Elementary School
+0,3,3,3,3,3,3,0,1,Male,51,High school
+1,1,2,1,2,0,0,0,0,Male,72,University
+3,3,3,3,3,3,3,3,3,Male,27,Elementary School
+1,1,0,2,1,1,1,0,0,Female,35,University
+2,2,3,3,2,2,2,1,3,Female,26,University
+3,3,3,3,3,2,3,3,1,Female,49,University
+3,3,3,3,3,3,3,3,3,Male,40,High school
+2,2,3,3,3,1,0,0,0,Female,29,University
+3,3,3,3,3,3,3,1,1,Female,31,High school
+1,1,1,3,2,3,3,1,1,Female,38,University
+3,3,2,3,0,3,3,3,3,Female,23,University
+3,3,3,3,3,3,3,0,1,Female,26,High school
+0,0,1,1,0,0,0,0,0,Male,51,Elementary School
+3,3,3,3,3,3,3,2,1,Female,20,University
+1,3,0,1,1,2,1,0,0,Female,35,University
+1,1,3,3,3,3,3,0,1,Female,21,University
+1,1,3,2,0,2,2,0,0,NA,29,University
+0,1,1,1,2,2,0,0,0,Female,27,University
+3,2,0,3,1,1,3,0,1,Female,31,High school
+1,2,2,3,1,2,1,0,0,Female,18,High school
+2,1,3,3,3,1,2,0,0,Male,23,University
+1,1,1,1,1,0,0,0,1,Female,20,Elementary School
+1,1,1,1,1,0,0,0,0,Female,55,University
+1,1,1,1,2,1,1,0,0,Female,27,University
+1,1,1,2,2,1,1,0,0,Female,46,University
+1,1,3,1,1,1,1,0,0,Female,27,University
+3,2,3,3,2,3,3,3,3,Male,28,High school
+2,2,1,3,2,2,2,0,0,Male,40,University
+1,1,1,2,2,2,2,0,1,Female,31,High school
+1,1,1,1,1,1,1,2,1,Female,35,High school
+1,1,3,3,2,1,2,1,0,Female,33,High school
+1,1,0,2,1,3,1,0,0,Female,18,High school
+2,2,3,3,3,3,2,0,2,Female,19,High school
+1,1,1,2,1,1,2,1,0,Female,25,University
+2,3,3,3,3,3,2,2,1,Male,28,High school
+1,3,3,3,3,3,1,0,2,Female,65,High school
+2,3,2,3,3,2,3,0,0,Female,63,High school
+0,0,1,1,1,1,1,0,0,Female,66,High school
+1,1,1,1,0,1,0,0,0,Female,56,University
+1,1,1,1,1,1,1,0,0,Female,34,University
+1,1,0,2,0,0,1,0,1,Female,29,University
+1,3,2,2,2,3,3,2,3,Male,24,High school
+3,3,3,3,3,3,3,3,1,Female,21,High school
+1,1,0,1,2,2,0,0,0,Female,28,University
+3,3,3,3,3,3,3,0,3,Female,50,High school
+1,3,2,2,2,2,1,0,3,Female,24,High school
+1,1,3,3,2,2,2,0,0,Female,42,University
+2,3,1,0,0,2,2,2,3,Male,27,University
+1,1,3,1,0,1,1,0,0,NA,37,University
+2,2,3,3,3,1,1,0,1,Female,19,High school
+0,0,1,1,0,0,0,0,0,Female,30,High school
+3,3,3,3,3,3,3,3,3,Male,42,High school
+3,3,3,3,3,3,3,1,3,Female,41,University
+2,2,2,2,2,2,2,2,2,Female,34,High school
+3,3,3,3,3,3,3,3,3,Female,59,University
+2,1,3,3,3,2,2,3,3,NA,25,University
+2,3,3,3,3,3,3,1,1,Female,48,University
+3,3,3,3,3,3,3,3,3,Female,26,University
+3,3,3,3,3,3,3,3,2,Female,20,High school
+1,1,2,0,1,2,1,0,0,Female,22,High school
+3,3,3,3,1,1,1,0,3,Male,29,University
+2,2,2,2,2,2,3,2,2,Female,50,High school
+2,2,1,2,2,2,2,1,3,Female,24,University
+2,2,3,3,3,3,3,2,1,Female,39,University
+3,3,3,3,3,3,3,3,1,Male,27,High school
+2,3,1,1,3,3,3,0,2,Female,35,University
+2,1,3,3,0,2,3,1,0,Female,40,University
+1,3,3,3,2,2,2,0,2,Female,32,High school
+1,1,1,3,2,2,2,1,1,Female,59,University
+3,3,3,3,1,3,3,1,3,Male,40,University
+3,3,3,3,3,3,3,2,3,Female,20,High school
+3,3,3,3,1,3,3,1,3,Female,19,Elementary School
+3,2,3,2,2,2,3,1,0,Male,27,High school
+1,1,2,2,1,1,1,0,0,Female,38,University
+1,1,1,2,2,0,1,0,0,Female,44,University
+1,2,2,1,1,2,1,1,1,Female,30,University
+3,3,2,2,2,1,1,0,1,Female,37,University
+2,2,3,2,1,3,2,2,2,Male,61,University
+2,2,3,3,3,3,3,3,2,Female,40,University
+3,3,3,3,3,3,3,3,2,Male,41,University
+2,3,1,3,0,2,3,0,0,Female,52,University
+2,2,2,2,1,2,1,0,1,Male,32,High school
+1,1,3,3,2,2,1,1,0,Female,29,High school
+1,0,3,1,3,1,2,2,0,Female,66,University
+0,0,0,0,0,0,1,0,0,Male,54,University
+1,1,1,1,1,1,1,0,0,Female,40,University
+2,3,2,3,1,2,3,1,2,Female,36,University
+1,0,3,0,2,0,0,0,0,Male,46,University
+3,2,3,3,2,0,2,1,0,Female,53,High school
+2,3,3,3,2,3,2,0,3,Male,48,University
+1,1,2,1,3,1,3,1,0,Female,24,High school
+2,3,3,2,3,3,1,0,1,Male,27,High school
+2,2,3,3,3,2,2,0,0,Female,42,University
+3,3,2,3,2,1,1,0,0,Male,15,High school
+3,2,0,2,0,2,2,1,0,Female,26,University
+2,2,2,2,2,3,0,1,2,NA,27,High school
+3,3,0,3,3,2,3,0,1,Female,58,University
+1,2,3,3,2,1,2,0,0,Female,21,University
+1,1,3,3,3,3,1,1,0,Female,40,University
+1,1,1,2,2,0,1,1,0,Female,45,Elementary School
+3,3,3,3,3,3,3,3,3,Female,23,High school
+0,1,1,3,1,1,1,0,0,Male,33,Elementary School
+2,3,0,3,3,2,3,0,0,Male,52,University
+1,2,0,3,2,3,1,0,0,Female,34,High school
+1,2,1,2,1,2,1,1,1,NA,51,University
+3,1,1,3,3,3,3,2,0,Female,25,University
+2,2,3,3,3,3,1,1,1,Female,27,University
+1,1,1,1,0,1,0,0,0,Female,22,High school
+0,3,3,3,3,3,3,1,1,Male,36,University
+3,3,3,3,3,3,3,3,3,Female,49,High school
+1,1,3,3,3,3,3,1,0,Female,42,High school
+0,0,1,0,2,0,0,0,0,Male,61,High school
+1,2,0,1,0,1,2,0,0,Female,69,University
+3,3,3,3,3,3,3,3,0,Female,47,University
+1,3,2,3,0,3,3,0,1,Female,26,University
+2,2,3,1,1,1,3,0,0,Female,69,University
+0,0,3,1,0,0,1,0,0,NA,28,University
+1,3,0,3,1,2,1,0,0,Male,27,University
+1,0,0,0,0,0,0,0,0,Female,73,University
+2,2,3,3,1,3,3,1,2,NA,18,High school
+2,3,3,2,2,3,2,0,2,Female,35,University
+2,2,3,3,3,2,2,1,1,Female,23,University
+3,3,3,3,0,3,3,0,2,Male,51,University
+1,1,2,1,1,2,1,0,0,Female,36,Elementary School
+1,2,2,2,1,2,2,0,2,Female,29,High school
+1,1,2,1,2,2,1,0,0,Female,30,University
+1,1,2,2,1,2,1,1,0,Female,21,University
+3,3,3,3,2,2,2,2,3,Female,81,University
+3,3,3,3,3,2,3,2,1,Female,31,High school
+3,3,3,3,3,2,3,3,0,Female,46,University
+2,2,3,3,3,3,3,2,2,Female,31,High school
+3,3,2,3,2,3,2,1,3,Female,18,High school
+1,1,3,3,0,2,0,0,0,Female,25,High school
+0,0,0,0,0,0,0,0,0,Female,34,High school
+3,3,3,3,2,3,3,1,2,Male,33,High school
+3,3,3,3,3,3,3,3,3,Female,23,University
+3,3,1,3,1,3,3,0,1,Female,24,High school
+2,3,2,2,3,3,2,2,3,Female,39,Elementary School
+0,1,3,2,0,0,0,0,1,Female,26,High school
+0,0,0,0,0,0,0,0,0,Female,41,High school
+3,3,2,3,3,3,3,1,1,Female,26,University
+0,0,2,2,2,0,1,0,0,Male,26,University
+3,3,3,3,3,3,2,1,0,Male,33,High school
+0,0,1,0,1,0,1,0,0,Female,50,High school
+1,0,2,2,2,1,1,0,0,Female,35,University
+3,3,3,3,3,3,3,3,1,Female,24,University
+2,3,3,3,3,3,3,1,1,Female,38,High school
+2,2,2,3,2,3,2,0,0,Female,23,High school
+3,3,2,2,0,3,3,1,3,Male,28,Elementary School
+1,1,1,1,1,1,1,0,0,Female,29,University
+1,1,1,3,1,3,3,1,0,Female,32,University
+1,1,1,1,1,1,2,0,0,Male,47,University
+2,3,2,2,3,3,2,1,0,Female,53,University
+1,1,2,3,3,0,3,0,0,Female,33,High school
+2,2,3,3,1,2,3,3,1,Female,47,University
+3,3,3,3,3,3,3,1,0,Female,46,High school
+1,2,2,2,2,2,0,0,1,Female,31,University
+3,3,3,3,3,3,3,2,3,Female,20,High school
+0,1,3,3,0,1,0,0,1,Female,31,University
+1,1,1,1,1,2,3,1,0,Female,44,University
+2,2,2,2,2,2,2,2,1,Female,41,University
+2,3,2,2,1,2,2,0,0,Female,25,High school
+1,0,2,0,2,1,1,2,0,Female,22,High school
+0,1,1,1,0,1,2,1,0,Male,27,University
+1,2,3,3,3,3,3,0,2,Female,21,University
+1,2,1,1,1,2,1,0,0,Female,28,University
+3,3,2,3,1,1,3,1,2,Female,22,Elementary School
+3,3,3,3,3,3,3,1,1,Female,60,High school
+1,2,2,3,3,3,3,1,0,Male,34,University
+1,1,3,3,2,0,0,0,0,Female,65,University
+1,1,2,1,2,3,0,3,3,Male,26,High school
+2,2,3,2,2,2,1,0,0,Female,57,High school
+1,0,3,2,1,1,2,2,0,Female,40,University
+3,3,3,3,3,2,3,2,2,Female,28,University
+3,3,3,2,2,2,3,1,2,Female,25,University
+3,3,3,3,3,3,2,0,3,Female,36,High school
+3,3,3,3,3,3,3,1,2,Female,63,High school
+1,1,1,1,1,3,3,2,3,Female,56,University
+1,1,0,3,1,1,1,1,0,NA,37,University
+1,0,0,1,1,0,1,0,0,Female,30,University
+1,1,1,1,1,1,1,0,0,Female,41,University
+2,3,3,3,1,2,1,0,1,Female,22,High school
+0,0,0,2,3,1,2,0,0,Female,24,University
+1,1,1,2,0,0,1,2,0,Male,25,University
+2,2,3,3,0,2,2,3,1,Female,38,High school
+2,1,2,2,0,1,2,1,0,Male,47,University
+1,2,0,1,3,3,3,1,1,Female,34,University
+3,2,3,3,3,3,2,3,1,Female,53,University
+3,3,3,3,3,3,3,0,3,Male,44,High school
+1,2,1,2,1,1,1,1,1,Female,46,University
+1,2,2,2,1,1,3,0,0,Male,38,University
+0,0,0,0,0,0,0,0,0,Female,24,University
+1,2,2,3,1,2,2,0,0,Male,42,University
+3,3,3,3,3,3,3,3,0,Female,42,High school
+1,1,2,3,0,2,0,0,0,Female,34,University
+3,3,3,3,3,3,3,2,1,Female,67,University
+2,2,1,1,0,1,1,0,0,Female,22,High school
+3,3,3,3,3,1,3,1,1,Male,56,Elementary School
+1,2,0,2,2,3,1,0,0,Female,25,High school
+2,2,3,2,3,2,1,1,1,Female,22,High school
+0,3,3,3,3,3,3,3,3,Male,44,High school
+1,1,3,2,1,3,1,0,0,Female,34,University
+2,2,2,2,2,1,3,0,1,Female,34,University
+1,1,2,2,2,2,2,1,1,Female,35,University
+0,1,1,1,0,1,0,1,0,Female,21,High school
+1,2,1,1,3,3,2,1,1,Female,36,University
+2,2,0,2,2,3,1,1,2,Female,39,High school
+1,1,0,3,3,2,2,0,0,Female,20,High school
+1,2,1,1,2,1,1,0,2,Male,40,Elementary School
+2,1,0,3,2,3,2,1,0,Male,51,High school
+2,1,1,3,3,2,2,0,0,Female,42,University
+3,3,3,3,3,0,3,3,0,Female,61,High school
+0,3,3,3,3,3,3,2,2,Male,37,High school
+1,3,2,2,1,2,2,0,0,Female,22,University
+1,2,3,3,2,3,3,1,2,Female,33,University
+1,3,3,3,3,3,3,1,3,Female,26,University
+3,3,3,3,3,3,3,3,3,NA,29,High school
+2,2,3,3,1,2,3,0,0,Female,46,University
+2,3,3,3,2,3,1,1,2,Male,36,High school
+2,3,3,3,3,1,3,0,0,Male,19,High school
+3,3,1,3,3,0,2,0,3,Female,37,High school
+1,1,1,1,1,0,1,0,0,Female,40,High school
+3,3,3,3,3,3,3,3,1,Female,18,High school
+2,3,0,2,0,2,1,0,0,Female,57,University
+1,1,1,3,0,1,1,1,0,Male,26,High school
+3,3,0,1,1,1,0,0,0,Female,22,High school
+0,3,3,3,3,2,3,0,0,Female,51,High school
+1,1,1,2,2,2,2,1,3,Female,45,Elementary School
+1,1,3,3,3,2,2,2,0,Male,33,University
+1,1,1,0,2,0,1,0,0,Male,63,High school
+0,0,0,0,0,0,0,0,0,Male,85,High school
+3,3,3,3,3,3,3,2,3,Female,21,Elementary School
+3,3,3,3,3,2,1,1,0,Female,51,High school
+1,3,3,3,3,3,3,3,3,Female,18,High school
+3,3,3,3,3,3,3,3,2,Male,35,High school
+1,2,3,2,3,1,3,3,1,Female,33,Elementary School
+1,3,2,1,2,3,1,0,3,Female,34,University
+2,2,2,2,2,1,2,2,0,Male,42,University
+2,3,1,3,3,0,2,0,2,Male,30,University
+1,1,2,2,2,1,2,2,0,Female,42,University
+0,0,0,1,1,0,0,0,0,Female,18,High school
+1,1,1,1,1,1,1,0,0,Female,26,University
+0,0,2,2,0,0,0,0,0,Female,22,High school
+1,3,0,3,2,2,2,2,1,Female,33,High school
+2,2,2,2,2,2,3,2,0,Female,56,High school
+2,2,0,1,1,3,1,1,0,Female,30,University
+1,1,2,2,2,1,3,2,1,Male,41,High school
+2,2,2,3,3,3,3,1,3,Female,32,High school
+3,3,3,3,3,3,3,1,0,Female,58,Elementary School
+1,1,3,3,3,3,2,1,1,Female,20,High school
+2,3,3,3,1,3,3,3,0,Female,41,University
+1,1,3,3,2,3,1,1,1,Female,46,University
+1,2,3,2,1,1,1,0,0,Female,58,High school
+1,3,3,3,3,3,3,3,3,Female,58,High school
+3,3,1,3,2,3,3,0,1,Female,20,Elementary School
+1,1,2,1,1,1,1,0,1,Male,28,University
+0,0,1,1,0,0,1,0,0,Male,52,University
+0,1,1,3,3,1,0,0,0,Female,24,High school
+1,2,1,2,3,3,3,3,3,Female,28,University
+1,2,1,1,2,2,0,0,0,Female,35,University
+1,1,1,1,2,1,1,0,0,Female,41,University
+3,3,2,3,2,3,2,0,0,Female,45,University
+0,0,1,1,1,0,0,0,0,Female,30,University
+1,0,1,1,1,0,0,0,0,Male,39,University
+3,2,3,2,3,3,3,0,0,Female,38,University
+3,2,3,3,3,3,3,2,2,Female,45,High school
+2,1,3,3,2,0,1,0,0,Female,24,University
+0,0,1,1,1,1,1,0,0,Female,41,High school
+2,1,2,1,1,1,0,0,0,Male,21,High school
+2,2,3,2,2,2,1,0,1,Female,34,University
+3,2,3,3,3,3,3,1,1,Male,26,High school
+3,3,3,3,3,3,3,3,3,Male,49,Elementary School
+1,2,2,2,0,1,0,0,0,Male,48,High school
+2,1,1,2,3,2,2,1,1,Female,34,University
+3,3,0,3,0,3,2,0,2,Male,40,High school
+2,1,2,3,2,1,1,0,0,Female,27,University
+3,3,3,3,3,3,3,3,0,Female,41,High school
+2,2,2,2,3,3,1,1,0,Female,28,High school
+1,2,3,2,2,3,2,1,2,Female,19,High school
+0,1,0,2,0,1,0,0,0,Male,28,University
+0,3,3,1,2,3,3,2,3,Female,18,High school
+2,2,3,3,0,0,3,0,0,Male,63,University
+2,1,2,2,2,0,1,0,0,Female,48,University
+1,1,3,3,3,3,0,1,0,Female,62,High school
+3,3,3,3,3,3,2,1,2,Female,55,University
+1,0,3,1,3,3,3,1,0,Female,20,High school
+2,2,3,3,3,2,3,0,1,Female,24,High school
+3,3,1,2,1,3,3,0,2,Female,47,University
+2,2,2,2,2,2,2,2,2,Female,38,University
+2,2,3,3,2,1,1,0,0,Female,24,University
+3,3,3,3,3,3,3,2,3,Male,45,High school
+3,3,2,2,2,2,1,2,2,Female,38,High school
+1,2,2,2,0,0,0,0,0,Male,70,University
+1,0,0,0,0,1,1,0,1,Female,54,High school
+1,1,1,0,2,0,0,0,0,Female,49,University
+3,3,3,3,3,3,3,3,3,NA,25,University
+1,1,1,2,1,0,1,2,0,Female,27,High school
+2,3,3,3,3,3,3,2,2,Female,27,University
+2,2,2,2,0,2,0,0,2,Female,49,High school
+1,3,3,3,3,3,3,3,3,Female,31,High school
+1,1,0,3,3,2,2,2,1,Female,60,University
+2,1,3,3,1,2,3,0,1,Female,54,University
+0,1,0,1,0,1,1,0,0,Female,24,University
+1,1,1,3,2,0,0,1,0,Female,25,University
+3,3,3,3,3,3,3,3,3,Female,41,University
+2,2,3,3,3,1,2,1,1,Male,40,University
+3,3,3,3,3,2,3,1,1,Female,20,University
+3,3,3,3,3,2,3,3,2,Male,51,University
+2,2,2,2,2,2,2,0,0,Female,33,University
+3,3,3,3,3,3,3,3,1,Female,60,High school
+1,3,3,3,3,3,3,3,3,Female,31,University
+3,3,3,3,3,3,3,0,1,Female,22,High school
+1,2,2,3,1,3,1,1,1,Female,18,High school
+2,1,1,3,1,2,3,1,1,NA,28,Elementary School
+2,2,3,3,3,3,3,3,3,Female,23,High school
+2,3,1,3,0,3,1,0,0,Female,43,University
+2,3,3,3,3,3,2,1,1,Female,49,High school
+1,1,1,1,1,1,1,0,0,Female,48,University
+2,3,1,3,1,3,2,0,2,Female,18,Elementary School
+3,2,3,3,3,3,3,0,1,Female,52,High school
+2,1,2,2,2,2,2,2,0,Male,25,University
+0,0,0,1,0,1,1,0,0,Female,30,University
+2,3,3,3,3,3,3,3,3,Female,43,High school
+1,1,1,1,2,1,2,1,1,Male,60,Elementary School
+3,3,1,3,2,0,1,0,2,Male,27,High school
+1,1,3,3,2,1,1,0,0,Female,43,University
+2,2,3,1,2,3,1,0,3,Female,28,University
+2,2,1,2,0,1,1,0,0,Female,34,University
+2,3,3,3,3,3,2,0,0,Female,31,High school
+0,1,0,3,1,0,3,0,0,Female,21,High school
+2,1,1,2,2,1,1,0,0,Female,36,High school
+3,3,3,3,3,3,3,0,0,Male,57,University
+1,1,1,1,0,1,0,0,1,NA,27,High school
+1,1,2,1,1,0,1,0,0,Female,20,High school
+1,2,2,2,3,3,1,0,1,Female,18,High school
+0,0,3,3,3,0,0,0,0,Female,46,High school
+3,3,3,3,3,3,3,3,3,Male,46,University
+1,1,3,0,0,0,3,1,0,Male,31,University
+1,1,3,2,1,0,2,1,0,NA,27,High school
+2,2,2,3,3,3,3,0,0,Female,43,University
+3,3,3,3,3,3,3,3,3,Female,33,High school
+3,2,2,1,0,2,0,0,1,Male,38,High school
+3,3,3,3,3,3,3,3,3,Male,33,Elementary School
+1,2,1,3,1,3,3,0,1,Female,19,Elementary School
+0,0,1,1,1,1,0,0,0,Female,59,University
+1,1,3,3,0,1,2,3,1,Female,44,University
+1,1,1,3,0,1,1,0,0,Female,34,University
+1,1,1,1,1,0,1,0,0,Male,32,University
+3,3,3,3,3,3,2,1,3,Male,36,High school
+3,3,2,3,2,3,3,3,1,Female,44,High school
+2,3,1,1,3,3,0,1,0,Female,30,University
+1,2,3,3,3,3,3,1,1,Female,32,University
+3,3,0,3,3,3,3,3,3,Female,33,High school
+1,1,1,0,0,1,1,0,0,Male,66,University
+1,2,2,2,0,2,1,0,1,NA,20,High school
+3,3,3,3,2,3,3,2,1,Female,21,University
+2,3,3,3,3,3,3,3,3,Female,52,University
+2,1,2,2,2,2,2,1,1,Female,36,University
+1,1,1,1,1,1,2,2,0,Male,55,University
+3,3,3,3,3,3,3,2,1,Female,46,University
+1,1,1,1,1,1,0,0,1,Female,44,University
+1,0,1,3,0,1,1,1,0,Female,73,University
+2,2,2,2,2,2,2,2,1,Male,36,University
+3,3,1,3,2,3,2,3,3,Female,22,High school
+2,2,3,1,1,2,1,0,1,Male,22,High school
+2,2,0,3,0,2,0,0,1,Female,29,University
+3,2,2,3,1,3,2,1,0,Female,36,University
+1,1,2,2,1,0,1,1,0,NA,21,High school
+2,3,3,3,1,3,3,2,1,Female,33,University
+1,1,1,1,1,1,1,0,0,Female,38,University
+3,3,3,3,1,2,3,0,3,Male,45,University
+3,3,1,3,3,1,3,3,3,Female,45,Elementary School
+1,3,1,2,2,3,2,0,3,NA,23,High school
+3,3,2,3,3,3,2,2,1,Female,34,High school
+0,3,2,2,0,3,0,0,1,Male,28,High school
+3,2,1,2,2,3,3,3,2,Male,36,High school
+3,3,3,3,3,3,3,0,2,Female,72,High school
+1,1,2,2,1,2,3,1,0,Female,53,University
+2,3,2,3,2,3,3,0,2,Female,18,High school
+0,0,3,3,2,1,3,0,0,Female,22,Elementary School
+3,2,3,3,3,3,3,2,2,NA,29,University
+2,2,2,2,2,2,2,2,0,Female,44,University
+3,1,3,3,3,3,3,3,3,Female,26,High school
+1,3,3,3,2,3,0,1,3,Male,27,High school
+1,1,0,1,0,0,0,0,0,NA,33,University
+3,3,2,3,2,1,2,0,2,NA,30,University
+2,1,2,1,3,2,3,1,0,Female,45,University
+2,3,1,1,1,1,3,0,3,Male,38,University
+0,2,3,0,0,3,3,0,0,Male,38,University
+1,1,3,2,3,1,1,0,1,Female,20,High school
+1,1,3,2,2,3,0,0,0,Female,28,High school
+1,1,1,1,1,1,1,1,0,Female,66,University
+0,0,0,0,1,0,0,0,0,Female,48,University
+1,3,3,3,3,1,0,0,0,Female,27,High school
+3,3,2,3,3,3,3,3,3,Female,28,High school
+3,3,3,3,3,3,1,0,2,Female,62,University
+1,0,2,1,1,1,0,0,0,Male,59,University
+1,2,2,3,1,3,2,1,1,Female,37,High school
+3,3,3,3,3,3,3,3,1,Male,18,Elementary School
+1,2,1,2,0,1,2,0,0,Male,27,University
+3,3,3,3,1,3,3,0,1,Female,30,University
+2,3,3,2,2,3,0,0,2,Male,30,High school
+3,1,1,1,1,1,1,1,3,NA,38,University
+2,3,3,3,1,2,0,0,0,Male,18,High school
+3,3,1,3,3,3,3,3,0,Female,47,Elementary School
+1,1,1,1,0,1,1,0,0,Female,38,University
+3,3,3,3,2,2,1,0,0,Male,57,High school
+3,2,3,3,2,3,3,1,0,Female,20,High school
+2,1,1,2,2,1,3,0,0,Female,20,High school
+2,1,0,1,1,1,1,0,0,Male,54,High school
+1,0,1,1,1,2,2,1,0,Female,32,High school
+3,3,3,3,3,3,3,3,3,Female,33,University
+2,2,2,3,2,2,3,2,1,Female,39,Elementary School
+3,3,3,3,0,3,3,0,0,Male,57,University
+1,2,2,2,1,2,2,1,1,Female,41,Elementary School
+1,1,2,2,2,3,3,0,3,Female,34,University
+3,3,3,3,3,3,3,2,1,Female,50,University
+3,3,3,2,3,3,2,1,3,Female,19,High school
+1,1,2,1,2,2,1,1,0,Female,48,University
+2,2,1,3,2,3,3,0,1,Male,30,High school
+0,0,0,0,0,0,0,0,0,Female,33,University
+3,3,3,3,1,3,2,1,0,Female,57,University
+1,1,1,2,0,1,0,0,0,Female,36,University
+1,1,1,1,0,0,0,0,0,Female,40,High school
+3,3,3,3,3,3,3,1,2,Female,48,High school
+3,3,3,3,3,3,3,2,2,Female,19,High school
+1,1,1,3,1,1,1,0,0,Female,43,University
+3,2,2,3,3,1,1,0,1,NA,56,University
+0,1,1,1,0,1,0,0,0,Female,30,University
+3,3,1,3,2,2,2,1,1,Female,28,University
+3,2,3,3,3,2,1,0,1,Female,45,University
+1,2,1,1,2,2,2,0,2,Female,65,High school
+2,3,1,2,2,3,3,1,3,Male,47,High school
+1,2,3,3,1,3,2,2,0,Female,29,High school
+2,2,2,3,2,3,2,0,0,Female,47,University
+3,3,2,3,3,3,3,3,2,Female,40,University
+1,0,2,3,1,2,0,0,0,Female,25,High school
+1,1,0,1,2,2,2,2,1,NA,30,University
+1,2,0,2,2,3,2,2,1,Female,28,University
+3,3,2,3,1,2,2,0,3,Female,47,University
+3,3,3,3,3,3,3,2,3,Male,27,University
+2,2,2,3,3,3,3,1,1,Female,18,Elementary School
+1,1,1,1,1,2,2,2,0,Female,33,High school
+3,3,3,3,3,3,3,2,3,Female,36,University
+1,1,1,1,2,1,2,1,2,NA,62,University
+1,0,2,2,1,0,2,1,0,Female,20,High school
+1,2,2,2,2,2,2,1,1,Female,26,University
+1,1,1,2,2,2,1,0,0,Female,40,University
+3,3,3,3,3,3,3,2,3,Female,30,University
+1,1,2,2,2,0,1,0,0,Female,45,University
+1,1,2,3,3,2,2,2,0,Female,38,University
+0,0,0,0,0,2,0,0,0,Male,67,Elementary School
+3,3,3,3,3,3,3,1,2,NA,28,High school
+2,1,3,2,2,2,3,1,2,Female,35,Elementary School
+1,1,1,2,2,2,2,0,0,Female,33,University
+2,2,2,2,2,1,1,1,1,Male,65,Elementary School
+3,3,3,3,3,3,1,1,3,Female,38,University
+0,0,0,0,0,0,2,0,0,Female,75,University
+3,3,2,3,2,3,3,3,2,Male,19,High school
+1,1,3,3,3,2,2,0,1,Female,24,High school
+3,3,2,3,3,2,3,0,1,Male,30,University
+1,3,3,3,3,3,3,0,0,Male,34,High school
+3,3,0,2,0,3,3,3,0,Male,29,University
+2,2,2,3,2,1,2,0,0,Female,41,High school
+2,2,2,1,2,2,3,0,1,Male,44,High school
+3,3,3,3,3,3,3,0,1,Female,28,Elementary School
+3,3,3,3,3,3,3,3,0,Female,28,Elementary School
+1,0,2,2,2,2,2,1,0,Female,28,High school
+0,0,0,0,0,0,0,0,0,Female,31,University
+3,3,3,3,3,3,3,0,2,Female,46,University
+3,3,3,3,3,3,2,1,3,Male,21,Elementary School
+1,1,1,1,1,0,1,0,0,NA,20,High school
+3,3,3,3,3,3,2,0,1,Female,27,University
+1,0,3,3,3,3,2,1,3,Male,39,University
+1,1,2,3,2,2,2,1,0,Female,25,University
+1,0,1,1,1,1,0,0,0,NA,36,University
+2,2,2,2,2,2,2,1,1,Female,31,University
+2,2,2,2,2,0,2,1,1,Female,49,High school
+2,1,2,2,2,3,3,0,2,Female,24,University
+3,3,3,3,3,3,3,3,1,Female,30,University
+3,3,0,2,0,2,0,0,3,Male,38,High school
+1,2,2,2,1,1,3,3,3,Female,50,University
+2,1,1,2,0,1,0,0,0,Female,31,University
+2,2,2,2,3,3,2,1,1,Female,48,High school
+2,2,3,3,2,0,0,0,1,Female,32,University
+3,3,3,3,3,3,3,0,3,Female,30,University
+1,1,1,1,1,2,0,0,1,Female,18,High school
+1,1,2,2,1,1,1,0,1,Female,22,University
+2,1,2,2,0,2,2,0,0,Female,49,High school
+3,3,3,3,3,3,2,2,3,Male,43,High school
+1,2,1,3,2,3,3,1,2,Female,27,University
+0,3,3,3,3,3,3,2,3,Female,29,High school
+1,1,0,0,1,0,1,0,0,Female,38,University
+2,1,1,2,2,1,2,2,0,Female,37,University
+1,2,3,3,2,1,1,2,1,Female,25,High school
+2,2,2,2,2,3,2,0,2,Male,38,University
+1,2,2,2,1,3,2,0,0,Female,36,University
+3,3,3,3,2,2,2,2,1,Female,33,University
+1,2,3,3,2,3,2,0,0,Female,21,High school
+1,1,2,2,2,1,2,0,0,Female,41,High school
+1,2,3,3,3,3,3,1,1,Female,18,High school
+0,0,0,0,0,0,0,0,0,Female,40,University
+3,1,3,3,3,3,1,1,0,Female,43,High school
+1,1,1,3,1,1,3,3,0,Female,28,University
+2,2,3,2,1,2,1,0,1,Male,25,University
+3,2,3,3,3,1,3,2,1,Female,23,High school
+1,1,2,1,0,1,2,0,0,Female,34,University
+3,2,3,3,3,3,3,2,1,Female,32,University
+3,3,3,3,3,3,3,3,3,Female,29,High school
+2,3,3,3,3,3,2,3,1,Male,19,High school
+2,2,2,3,3,3,3,0,0,Female,26,University
+2,2,2,3,3,3,3,0,1,Female,40,University
+2,2,2,2,2,2,2,0,1,Male,26,University
+2,3,2,3,2,3,3,1,3,NA,27,University
+3,3,3,3,3,3,3,3,2,Male,49,University
+3,3,2,3,2,3,2,1,1,Female,24,University
+0,0,1,0,0,1,1,0,0,Female,29,University
+3,3,3,3,3,3,3,1,3,Female,25,High school
+2,3,2,2,2,3,2,1,2,Female,24,University
+2,2,2,2,1,2,2,1,0,Female,51,University
+3,3,3,3,3,3,3,3,3,Male,23,High school
+1,1,3,3,3,2,2,1,0,Female,35,University
+3,3,0,3,0,1,3,0,0,Female,30,University
+1,3,1,0,0,2,0,0,2,Male,28,High school
+3,2,3,3,3,2,2,1,1,Female,28,High school
+1,1,1,3,1,2,3,0,1,Female,50,University
+0,0,1,1,1,0,0,0,0,Female,23,University
+3,2,3,3,3,1,2,2,0,Female,43,High school
+3,3,1,3,1,1,3,3,3,NA,43,High school
+3,3,2,3,2,3,2,3,3,NA,32,University
+3,3,3,3,2,3,3,2,1,Female,23,High school
+2,1,1,2,1,1,2,0,0,Female,31,Elementary School
+2,2,3,3,3,3,2,0,3,Female,29,High school
+2,2,1,2,2,2,0,0,0,Male,27,High school
+3,3,3,3,3,3,3,0,3,Female,37,University
+2,1,1,1,1,1,2,0,0,Male,25,University
+0,1,2,2,1,3,2,0,0,Female,32,University
+1,1,1,2,2,3,2,2,0,Female,29,High school
+2,2,1,2,2,0,1,0,0,Male,25,University
+1,0,0,1,0,3,1,0,1,Male,49,High school
+2,3,3,2,2,3,3,0,3,NA,40,University
+2,1,0,1,1,3,1,0,2,Female,37,University
+1,1,2,2,2,1,2,2,0,Female,31,University
+1,3,0,1,2,3,3,0,1,Female,30,High school
+0,0,1,2,1,0,1,0,0,Female,35,University
+1,2,2,2,1,2,3,1,0,Female,26,University
+1,1,0,1,1,2,2,0,0,Male,33,Elementary School
+3,2,3,3,2,3,3,2,1,Female,32,High school
+3,3,3,3,3,3,3,0,3,Female,27,University
+3,3,3,3,3,3,2,1,2,Female,30,University
+1,3,3,2,2,2,3,1,1,Female,18,High school
+3,3,3,3,3,3,3,2,3,Female,21,High school
+1,0,0,1,0,0,3,0,0,Female,37,University
+0,3,3,2,3,3,3,0,0,Female,38,Elementary School
+2,1,2,3,3,2,1,2,0,Female,30,University
+1,1,2,2,1,0,2,0,0,Male,54,University
+2,0,0,2,0,1,2,0,0,Female,45,High school
+3,3,3,3,3,3,3,3,1,Male,34,University
+0,0,0,0,0,0,0,0,0,Female,41,University
+1,1,1,2,3,2,1,0,0,Male,20,High school
+2,1,1,1,1,1,2,0,0,Female,49,University
+2,3,3,3,3,3,2,1,0,Female,45,University
+1,3,3,3,3,1,1,0,0,Female,45,High school
+2,1,3,3,3,3,2,1,0,Female,28,High school
+1,0,0,3,2,1,3,3,0,Female,48,University
+3,3,2,3,3,3,3,3,2,Female,35,High school
+1,3,3,3,3,3,1,1,1,Male,70,University
+3,3,3,3,1,2,2,1,1,Male,40,High school
+0,2,2,2,2,2,2,1,2,Female,44,University
+2,2,3,1,1,2,1,0,0,Female,22,High school
+1,1,0,2,2,2,2,0,0,Female,30,University
+1,1,3,1,2,1,1,0,1,Female,19,Elementary School
+1,2,2,2,2,2,1,0,1,Female,26,University
+3,3,3,3,3,3,1,1,1,Female,25,University
+2,3,2,2,2,2,1,1,2,Female,26,University
+3,3,3,3,3,3,3,0,1,Male,29,University

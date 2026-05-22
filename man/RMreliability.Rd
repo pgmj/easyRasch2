@@ -118,7 +118,7 @@ RMreliability(eRm::raschdat1[, 1:20], draws = 1000,
 \references{
 Bignardi, G., Kievit, R., & Bürkner, P. C. (2025). A general method for
 estimating reliability using Bayesian Measurement Uncertainty. \emph{PsyArXiv}.
-\doi{10.31234/osf.io/h54k8}
+\doi{10.31234/osf.io/h54k8_v1}
 
 Mislevy, R. J. (1991). Randomization-Based Inference about Latent Variables
 from Complex Samples. \emph{Psychometrika, 56}(2), 177-196.

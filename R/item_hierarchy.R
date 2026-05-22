@@ -183,6 +183,12 @@ RMitemHierarchy <- function(data,
     character(1L)
   )
 
+  # `scale_x_discrete(labels = ...)` does a named lookup against the
+  # factor levels (= `item_order`), so we must name the vector
+  # accordingly. If we don't, the level names slip through unchanged
+  # and the `item_labels` argument silently has no effect.
+  names(axis_labels) <- item_order
+
   caption_base <-
     "Note. Item locations are indicated by black diamond shapes"
   caption_thr <-

@@ -12,3 +12,7 @@
 ^cran-comments\.md$
 ^\.positai$
 ^\.claude$
+^Rplots\.pdf$
+^data-raw$
+^vignettes/precompile\.R$
+^vignettes/easyRasch2-workflow\.Rmd\.orig$
