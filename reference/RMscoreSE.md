@@ -47,7 +47,7 @@ RMscoreSE(
 - ci_multiplier:
 
   Numeric. Multiplier applied to the standard error to draw error bars
-  on the figure. Default `1.96` (≈95% CI under a Gaussian
+  on the figure. Default `1.96` (\\\approx\\95% CI under a Gaussian
   approximation). Ignored when `output != "ggplot"`.
 
 - point_size:

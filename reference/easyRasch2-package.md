@@ -1,13 +1,20 @@
 # easyRasch2: Rasch Measurement Theory Analysis for R
 
-Provides functions to simplify Rasch measurement theory analysis
-workflows, from local dependence assessment to item fit, person fit,
-differential item functioning, targeting, and reliability. Uses
-Conditional Maximum Likelihood (CML) estimation via 'eRm' and
-'psychotools' for item parameters and Weighted Likelihood Estimation
-(WLE) for person parameters, with 'mirt' for residual correlation
-analysis. Designed for easy integration with 'Quarto' documents using
-'knitr::kable()' table output and 'ggplot2' figures.
+Streamlines reproducible Rasch measurement theory analyses for ordinal
+item-response data, combining estimation routines from 'eRm',
+'psychotools', 'mirt', 'iarm', and 'lavaan' with consistent diagnostic,
+plotting, and reporting layers. Covers the four basic psychometric
+criteria summarised by Christensen et al. (2021)
+[doi:10.1111/sms.13908](https://doi.org/10.1111/sms.13908) –
+unidimensionality, local independence, ordered response category
+thresholds, and invariance across subgroups – together with item fit,
+targeting, reliability, category functioning, and descriptive
+item-response plots. A distinguishing feature is the use of
+simulation-based critical values to replace rule-of-thumb cutoffs for
+conditional infit mean-square, Yen's Q3 local-dependence statistic, the
+largest residual-PCA eigenvalue, and ordinal CFA fit indices. Outputs
+are 'knitr::kable()' tables and 'ggplot2' figures suitable for direct
+inclusion in 'Quarto' and 'R Markdown' reports.
 
 ## See also
 
