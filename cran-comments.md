@@ -83,5 +83,19 @@ imposes no reverse-dependency burden.
   prose ("behaviour", "centred") consistent with the underlying
   statistical literature. No misspellings are expected from
   `urlchecker::url_check()` or `devtools::spell_check()`.
+* On win-builder (R-devel), `R CMD check` flags the following words in
+  DESCRIPTION as "possibly misspelled". All are legitimate technical
+  terms or abbreviations and are spelled correctly:
+    - **CFA**  -- standard abbreviation for *confirmatory factor
+      analysis*.
+    - **Rasch** -- proper noun, the surname of Georg Rasch, after
+      whom the family of measurement models is named.
+    - **infit** -- a standard Rasch-model fit statistic (the
+      *information-weighted* mean-square residual; Smith, 1986).
+    - **unidimensionality** -- the standard psychometric term for the
+      assumption that a single latent trait underlies item responses.
+    - **et / al** -- parts of the inline citation
+      *"Christensen et al. (2021)"*.
+
 
 Thank you for your time reviewing this submission.

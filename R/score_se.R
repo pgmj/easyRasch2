@@ -17,7 +17,7 @@
 #'   underlying data.frame, or `"ggplot"` for a `ggplot2` figure showing each
 #'   raw score's logit estimate with `ci_multiplier`-scaled error bars.
 #' @param ci_multiplier Numeric. Multiplier applied to the standard error to
-#'   draw error bars on the figure. Default `1.96` (≈95% CI under a Gaussian
+#'   draw error bars on the figure. Default `1.96` (\eqn{\approx}95% CI under a Gaussian
 #'   approximation). Ignored when `output != "ggplot"`.
 #' @param point_size Numeric. Point size for the figure. Default `3`.
 #' @param error_width Numeric. Cap width for error bars on the figure.

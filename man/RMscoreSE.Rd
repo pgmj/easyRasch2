@@ -30,7 +30,7 @@ underlying data.frame, or \code{"ggplot"} for a \code{ggplot2} figure showing ea
 raw score's logit estimate with \code{ci_multiplier}-scaled error bars.}
 
 \item{ci_multiplier}{Numeric. Multiplier applied to the standard error to
-draw error bars on the figure. Default \code{1.96} (≈95\% CI under a Gaussian
+draw error bars on the figure. Default \code{1.96} (\eqn{\approx}95\% CI under a Gaussian
 approximation). Ignored when \code{output != "ggplot"}.}
 
 \item{point_size}{Numeric. Point size for the figure. Default \code{3}.}
