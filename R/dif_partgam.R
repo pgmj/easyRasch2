@@ -460,7 +460,7 @@ RMpgDIFcutoff <- function(data, dif_var, iterations = 250,
       warning(
         paste0(
           "For parallel processing, specify n_cores or set options(mc.cores = N).\n",
-          "Your computer appears to have ", parallel::detectCores(), " cores available.\n",
+          "(Use `parallel::detectCores()` to see how many cores are available.)\n",
           "Falling back to sequential (single core) processing."
         ),
         call. = FALSE

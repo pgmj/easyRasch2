@@ -130,7 +130,7 @@ RMinfitcutoff <- function(data, iterations = 250, parallel = TRUE,
       warning(
         paste0(
           "For parallel processing, specify n_cores or set options(mc.cores = N).\n",
-          "Your computer appears to have ", parallel::detectCores(), " cores available.\n",
+          "(Use `parallel::detectCores()` to see how many cores are available.)\n",
           "Falling back to sequential (single core) processing."
         ),
         call. = FALSE
