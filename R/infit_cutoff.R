@@ -1,7 +1,7 @@
 #' Simulation-Based Infit MSQ Cutoff Determination
 #'
 #' Uses parametric bootstrap simulation to determine appropriate cutoff values
-#' for \code{\link{RMiteminfit}}. This function simulates data from a correctly fitting 
+#' for \code{\link{RMitemInfit}}. This function simulates data from a correctly fitting 
 #' Rasch model that mimics your data and returns per-item empirical cutoffs.
 #'
 #' @param data A data.frame or matrix of item responses. Items must be scored
@@ -58,7 +58,7 @@
 #'
 #' The `iarm` package must be installed (it is in Suggests, not Imports).
 #'
-#' @seealso \code{\link{RMiteminfit}}
+#' @seealso \code{\link{RMitemInfit}}
 #'
 #' @export
 #'
@@ -71,14 +71,14 @@
 #' colnames(sim_data) <- paste0("Item", 1:10)
 #'
 #' # Run 100 iterations sequentially for a quick demo
-#' cutoff_res <- RMinfitcutoff(sim_data, iterations = 100, parallel = FALSE,
+#' cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100, parallel = FALSE,
 #'                             seed = 42)
 #' cutoff_res$item_cutoffs
 #'
-#' # Use the cutoffs in RMiteminfit()
-#' RMiteminfit(sim_data)
+#' # Use the cutoffs in RMitemInfit()
+#' RMitemInfit(sim_data)
 #' }
-RMinfitcutoff <- function(data, iterations = 250, parallel = TRUE,
+RMitemInfitCutoff <- function(data, iterations = 250, parallel = TRUE,
                            n_cores = NULL, verbose = FALSE, seed = NULL,
                            cutoff_method = "hdci", hdci_width = 0.999) {
 
@@ -95,7 +95,7 @@ RMinfitcutoff <- function(data, iterations = 250, parallel = TRUE,
 
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
-      "Package 'iarm' is required for RMinfitcutoff() but is not installed.\n",
+      "Package 'iarm' is required for RMitemInfitCutoff() but is not installed.\n",
       "Install it with: install.packages(\"iarm\")",
       call. = FALSE
     )
@@ -108,7 +108,7 @@ RMinfitcutoff <- function(data, iterations = 250, parallel = TRUE,
   options(rgl.useNULL = TRUE)
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
 
-  # Only complete cases (matching RMiteminfit behaviour)
+  # Only complete cases (matching RMitemInfit behaviour)
   data <- stats::na.omit(data)
   if (nrow(data) == 0L) {
     stop("No complete cases in data. All rows contain at least one NA.",
@@ -266,7 +266,7 @@ RMinfitcutoff <- function(data, iterations = 250, parallel = TRUE,
 #' Run a single infit simulation iteration
 #'
 #' @param seed Integer seed for reproducibility.
-#' @param data_list List produced inside [RMinfitcutoff()].
+#' @param data_list List produced inside [RMitemInfitCutoff()].
 #' @return A data.frame with columns `Item`, `InfitMSQ`, `OutfitMSQ`, or a
 #'   character string on failure.
 #' @keywords internal

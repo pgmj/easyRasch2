@@ -70,30 +70,30 @@
 #' data("pcmdat2", package = "eRm")
 #'
 #' # Basic tile plot
-#' RMtileplot(pcmdat2)
+#' RMplotTile(pcmdat2)
 #'
 #' # With percentages
-#' RMtileplot(pcmdat2, percent = TRUE)
+#' RMplotTile(pcmdat2, percent = TRUE)
 #'
 #' # Faceted by an external grouping variable
 #' set.seed(1)
 #' grp <- sample(c("A", "B"), nrow(pcmdat2), replace = TRUE)
-#' RMtileplot(pcmdat2, group = grp)
+#' RMplotTile(pcmdat2, group = grp)
 #'
 #' # With custom labels and tighter cutoff
-#' RMtileplot(pcmdat2,
+#' RMplotTile(pcmdat2,
 #'            group = grp,
 #'            group_labels = c("Female", "Male"),
 #'            cutoff = 5,
 #'            facet_ncol = 2)
 #'
 #' # Underlying counts as a data.frame
-#' RMtileplot(pcmdat2, group = grp, output = "dataframe")
+#' RMplotTile(pcmdat2, group = grp, output = "dataframe")
 #' }
 #'
 #' @importFrom rlang .data
 #' @export
-RMtileplot <- function(
+RMplotTile <- function(
     data,
     group           = NULL,
     cutoff          = 10,
@@ -135,7 +135,7 @@ RMtileplot <- function(
     stop("All columns must be numeric. Non-numeric column(s): ",
          paste(non_numeric, collapse = ", "),
          ". Remove non-item columns (e.g., person IDs, grouping ",
-         "variables) before passing to RMtileplot() -- pass groups via ",
+         "variables) before passing to RMplotTile() -- pass groups via ",
          "the `group` argument instead.", call. = FALSE)
   }
 

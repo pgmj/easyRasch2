@@ -9,11 +9,11 @@
 #'   but at least one complete case (row with no `NA`) must be present.
 #' @param cutoff Optional. Default `NULL` (no cutoff applied, behaviour is
 #'   identical to the current version). Can be:
-#'   * The return value of \code{\link{RMinfitcutoff}} (a list with `$item_cutoffs`):
+#'   * The return value of \code{\link{RMitemInfitCutoff}} (a list with `$item_cutoffs`):
 #'     the data.frame is extracted automatically and the number of simulation
 #'     iterations, `cutoff_method`, and `hdci_width` are included in the kable
 #'     caption.
-#'   * The `$item_cutoffs` data.frame from \code{\link{RMinfitcutoff}} directly: must
+#'   * The `$item_cutoffs` data.frame from \code{\link{RMitemInfitCutoff}} directly: must
 #'     have columns `Item`, `infit_low`, and `infit_high`.
 #'   When provided, adds columns `Infit_low`, `Infit_high`, and `Flagged`
 #'   (logical; `TRUE` when `Infit_MSQ` falls outside the credible range) to
@@ -41,7 +41,7 @@
 #' above 1.0 suggest underfit (unexpected responses), while values substantially
 #' below 1.0 suggest overfit (overly predictable responses). The definition of
 #' "substantially" depends on several factors such as sample size, and needs to
-#' be determined by simulation using \code{\link{RMinfitcutoff}}. There is no general
+#' be determined by simulation using \code{\link{RMitemInfitCutoff}}. There is no general
 #' rule-of-thumb value that is correct.
 #'
 #' Conditional infit MSQ statistics are computed via `iarm::out_infit()`, which
@@ -70,7 +70,7 @@
 #' them? *Journal of Statistical Distributions and Applications*, 7(5).
 #' \doi{10.1186/s40488-020-00108-7}
 #'
-#' @seealso \code{\link{RMinfitcutoff}}
+#' @seealso \code{\link{RMitemInfitCutoff}}
 #'
 #' @export
 #'
@@ -84,26 +84,26 @@
 #' colnames(sim_data) <- paste0("Item", 1:5)
 #'
 #' # Default kable output
-#' RMiteminfit(sim_data)
+#' RMitemInfit(sim_data)
 #'
 #' # Sorted by infit MSQ descending
-#' RMiteminfit(sim_data, sort = "infit")
+#' RMitemInfit(sim_data, sort = "infit")
 #'
 #' # Return as data.frame for further processing
-#' df <- RMiteminfit(sim_data, output = "dataframe")
+#' df <- RMitemInfit(sim_data, output = "dataframe")
 #' }
 #' \donttest{
 #' # Simulation-based cutoffs (100 Monte-Carlo iterations)
-#' cutoff_res <- RMinfitcutoff(sim_data, iterations = 100, parallel = FALSE,
+#' cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100, parallel = FALSE,
 #'                             seed = 42)
-#' RMiteminfit(sim_data, cutoff = cutoff_res)
-#' RMiteminfit(sim_data, cutoff = cutoff_res, output = "dataframe")
+#' RMitemInfit(sim_data, cutoff = cutoff_res)
+#' RMitemInfit(sim_data, cutoff = cutoff_res, output = "dataframe")
 #' }
-RMiteminfit <- function(data, cutoff = NULL, output = "kable", sort) {
+RMitemInfit <- function(data, cutoff = NULL, output = "kable", sort) {
 
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
-      "Package 'iarm' is required for RMiteminfit() but is not installed.\n",
+      "Package 'iarm' is required for RMitemInfit() but is not installed.\n",
       "Install it with: install.packages(\"iarm\")",
       call. = FALSE
     )
@@ -123,7 +123,7 @@ RMiteminfit <- function(data, cutoff = NULL, output = "kable", sort) {
       cutoff <- cutoff$item_cutoffs
     }
     if (!is.data.frame(cutoff)) {
-      stop("`cutoff` must be NULL, the return value of RMinfitcutoff(), or its ",
+      stop("`cutoff` must be NULL, the return value of RMitemInfitCutoff(), or its ",
            "$item_cutoffs data.frame.", call. = FALSE)
     }
     required_cols <- c("Item", "infit_low", "infit_high")

@@ -6,7 +6,7 @@
 #' analysis on those residuals via `stats::prcomp()`. The function reports
 #' the top `n_components` eigenvalues and their proportions of unexplained
 #' variance, and optionally compares the first-contrast eigenvalue against
-#' a simulation-based bound from \code{\link{RMpcaCutoff}}.
+#' a simulation-based bound from \code{\link{RMdimResidualPCACutoff}}.
 #'
 #' Rule-of-thumb thresholds for the first-contrast eigenvalue (e.g., the
 #' "> 2" heuristic occasionally cited from Winsteps documentation) are not
@@ -14,13 +14,13 @@
 #' under a correctly fitting unidimensional model varies systematically with
 #' sample size, test length, and item-parameter spread. Empirical (simulated)
 #' bounds tailored to the data structure should be used instead — see
-#' \code{\link{RMpcaCutoff}}, and Chou & Wang (2010) for the underlying
+#' \code{\link{RMdimResidualPCACutoff}}, and Chou & Wang (2010) for the underlying
 #' simulation argument.
 #'
 #' @param data A data.frame or matrix of item responses. Items must be scored
 #'   starting at 0 (non-negative integers). Rows with any `NA` are dropped
 #'   before PCA, since `prcomp()` does not accept missing values.
-#' @param cutoff Optional. The list returned by \code{\link{RMpcaCutoff}} (its
+#' @param cutoff Optional. The list returned by \code{\link{RMdimResidualPCACutoff}} (its
 #'   `suggested_cutoff` is used), or a single numeric value to use as the
 #'   cutoff directly. When provided, the result includes a `Flagged` column
 #'   (logical: is the eigenvalue above the simulated bound?) and the kable
@@ -78,7 +78,7 @@
 #' residuals. *Educational and Psychological Measurement, 70*(5), 717-731.
 #' \doi{10.1177/0013164410379322}
 #'
-#' @seealso \code{\link{RMpcaCutoff}}
+#' @seealso \code{\link{RMdimResidualPCACutoff}}
 #'
 #' @export
 #'
@@ -91,17 +91,17 @@
 #' colnames(dat) <- paste0("I", 1:12)
 #'
 #' # Default kable output
-#' RMresidualPCA(dat)
+#' RMdimResidualPCA(dat)
 #'
 #' # PC1 loadings vs item location plot
-#' RMresidualPCA(dat, output = "loadings")
+#' RMdimResidualPCA(dat, output = "loadings")
 #' }
 #' \dontrun{
 #' # Simulation-based cutoff (slow): 250 Monte-Carlo iterations
-#' bound <- RMpcaCutoff(dat, iterations = 250, parallel = FALSE, seed = 1)
-#' RMresidualPCA(dat, cutoff = bound)
+#' bound <- RMdimResidualPCACutoff(dat, iterations = 250, parallel = FALSE, seed = 1)
+#' RMdimResidualPCA(dat, cutoff = bound)
 #' }
-RMresidualPCA <- function(data,
+RMdimResidualPCA <- function(data,
                           cutoff       = NULL,
                           n_components = 5L,
                           output       = "kable") {
@@ -129,7 +129,7 @@ RMresidualPCA <- function(data,
     } else if (is.numeric(cutoff) && length(cutoff) == 1L) {
       cutoff_value <- as.numeric(cutoff)
     } else {
-      stop("`cutoff` must be NULL, the return value of RMpcaCutoff(), or a ",
+      stop("`cutoff` must be NULL, the return value of RMdimResidualPCACutoff(), or a ",
            "single numeric value.", call. = FALSE)
     }
   }
@@ -346,7 +346,7 @@ RMresidualPCA <- function(data,
 #' appropriate Rasch model, and extracts the first-contrast eigenvalue.
 #' Several upper-tail percentiles of the resulting distribution are returned;
 #' the 99th percentile is reported as the suggested cutoff (matching the
-#' convention used by \code{\link{RMlocdepQ3cutoff}}).
+#' convention used by \code{\link{RMlocdepQ3Cutoff}}).
 #'
 #' Rule-of-thumb cutoffs for the first-contrast eigenvalue depend strongly on
 #' sample size, test length, and item-parameter spread; simulation-based
@@ -370,7 +370,7 @@ RMresidualPCA <- function(data,
 #'     `eigenvalue`.}
 #'   \item{`max`}{The largest simulated eigenvalue.}
 #'   \item{`suggested_cutoff`}{The 99th percentile (`p99`) — pass this list
-#'     back into \code{\link{RMresidualPCA}} via `cutoff = `, or use
+#'     back into \code{\link{RMdimResidualPCA}} via `cutoff = `, or use
 #'     `suggested_cutoff` directly.}
 #'   \item{`suggested_cutoff_percentile`}{The percentile used for
 #'     `suggested_cutoff`, currently always `99`.}
@@ -398,7 +398,7 @@ RMresidualPCA <- function(data,
 #' residuals. *Educational and Psychological Measurement, 70*(5), 717-731.
 #' \doi{10.1177/0013164410379322}
 #'
-#' @seealso \code{\link{RMresidualPCA}}
+#' @seealso \code{\link{RMdimResidualPCA}}
 #'
 #' @export
 #'
@@ -410,12 +410,12 @@ RMresidualPCA <- function(data,
 #' )
 #' colnames(dat) <- paste0("I", 1:12)
 #'
-#' bound <- RMpcaCutoff(dat, iterations = 200, parallel = FALSE, seed = 1)
+#' bound <- RMdimResidualPCACutoff(dat, iterations = 200, parallel = FALSE, seed = 1)
 #' bound$suggested_cutoff
 #'
-#' RMresidualPCA(dat, cutoff = bound)
+#' RMdimResidualPCA(dat, cutoff = bound)
 #' }
-RMpcaCutoff <- function(data,
+RMdimResidualPCACutoff <- function(data,
                         iterations = 250,
                         parallel   = TRUE,
                         n_cores    = NULL,
@@ -460,7 +460,7 @@ RMpcaCutoff <- function(data,
   is_polytomous  <- max(data_mat, na.rm = TRUE) > 1L
   item_names_vec <- colnames(data_mat)
 
-  # Build sim_data_list mirroring RMinfitcutoff's structure
+  # Build sim_data_list mirroring RMitemInfitCutoff's structure
   if (is_polytomous) {
     pcm_fit <- eRm::PCM(data_mat)
     pp <- eRm::person.parameter(pcm_fit)

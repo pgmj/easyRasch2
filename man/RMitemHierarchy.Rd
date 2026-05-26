@@ -91,5 +91,5 @@ in terms of statistical significance? \emph{Journal of Insect Science,
 3}(34), 1-6. \doi{10.1093/jis/3.1.34}
 }
 \seealso{
-\code{\link[=RMtargeting]{RMtargeting()}}, \code{\link[=RMscoreSE]{RMscoreSE()}}, \code{\link[=RMciccPlot]{RMciccPlot()}}
+\code{\link[=RMtargeting]{RMtargeting()}}, \code{\link[=RMscoreSE]{RMscoreSE()}}, \code{\link[=RMitemICCPlot]{RMitemICCPlot()}}
 }

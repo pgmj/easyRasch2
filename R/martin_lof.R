@@ -11,7 +11,7 @@
 #'
 #' This is **not** a routine screening tool. The test requires an *a priori*
 #' partition of items into subscales; using it post-hoc on, e.g., the
-#' partition suggested by `RMresidualPCA()`'s PC1 sign would inflate the
+#' partition suggested by `RMdimResidualPCA()`'s PC1 sign would inflate the
 #' Type-I error rate. Both source papers state this explicitly.
 #'
 #' @param data A data.frame or matrix of item responses (0-based,
@@ -120,7 +120,7 @@
 #' Besag, J., & Clifford, P. (1991). Sequential Monte Carlo p-values.
 #' *Biometrika, 78*(2), 301-304.
 #'
-#' @seealso \code{\link{RMresidualPCA}}, \code{\link{RMpcaCutoff}}
+#' @seealso \code{\link{RMdimResidualPCA}}, \code{\link{RMdimResidualPCACutoff}}
 #'
 #' @export
 #'
@@ -140,19 +140,19 @@
 #' dat <- cbind(make_pcm(theta1, 4, NULL), make_pcm(theta2, 4, NULL))
 #' colnames(dat) <- paste0("I", 1:8)
 #'
-#' RMmartinLof(dat,
+#' RMdimMartinLof(dat,
 #'             partition = list(c("I1","I2","I3","I4"),
 #'                              c("I5","I6","I7","I8")),
 #'             iterations = 200, parallel = FALSE, seed = 1)
 #'
 #' # Sequential stopping: stop as soon as h = 50 simulated statistics exceed
 #' # the observed one (cuts compute time under H0).
-#' RMmartinLof(dat,
+#' RMdimMartinLof(dat,
 #'             partition = c(1,1,1,1,2,2,2,2),
 #'             iterations = 1000, stopping = "sequential", h = 50,
 #'             seed = 1)
 #' }
-RMmartinLof <- function(data,
+RMdimMartinLof <- function(data,
                         partition,
                         iterations = 1000L,
                         stopping   = c("none", "sequential"),
@@ -730,16 +730,16 @@ run_ml_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 }
 
 # ===========================================================================
-# RMmartinLofResiduals: standardised residuals from the joint subscore table
+# RMdimMartinLofResiduals: standardised residuals from the joint subscore table
 # ===========================================================================
 
 #' Standardised Residuals from the Joint Subscore Distribution
 #'
-#' Diagnostic accompanying \code{\link{RMmartinLof}}: per-cell standardised
+#' Diagnostic accompanying \code{\link{RMdimMartinLof}}: per-cell standardised
 #' residuals from the joint distribution of subscores under unidimensionality
 #' (Christensen, Bjorner, Kreiner, & Petersen, 2002, eq. 13). Useful for
 #' identifying *where* a partition deviates from the unidimensional null
-#' rather than just whether it does (which `RMmartinLof()` answers).
+#' rather than just whether it does (which `RMdimMartinLof()` answers).
 #'
 #' For each cell of the joint subscore table (indexed by
 #' \eqn{(t_1, \ldots, t_D)}), the conditional probability under H0 given the
@@ -764,7 +764,7 @@ run_ml_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #'
 #' @param data A data.frame or matrix of item responses (0-based,
 #'   non-negative integers). Rows with any `NA` are dropped.
-#' @param partition Same format as in \code{\link{RMmartinLof}}: a list of
+#' @param partition Same format as in \code{\link{RMdimMartinLof}}: a list of
 #'   item-name/index vectors, or a length-`ncol(data)` vector of group
 #'   labels. Each subscale must contain at least 2 items.
 #' @param output Character. `"kable"` (default) for a 2-D pipe-format
@@ -809,7 +809,7 @@ run_ml_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #' Testing unidimensionality in polytomous Rasch models. *Psychometrika,
 #' 67*(4), 563-574. \doi{10.1007/BF02295132}
 #'
-#' @seealso \code{\link{RMmartinLof}}
+#' @seealso \code{\link{RMdimMartinLof}}
 #'
 #' @export
 #'
@@ -821,22 +821,22 @@ run_ml_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #' colnames(dat) <- paste0("I", 1:8)
 #'
 #' # Wide kable table for D = 2
-#' RMmartinLofResiduals(dat,
+#' RMdimMartinLofResiduals(dat,
 #'                      partition = list(c("I1","I2","I3","I4"),
 #'                                       c("I5","I6","I7","I8")))
 #'
 #' # Heatmap
-#' RMmartinLofResiduals(dat,
+#' RMdimMartinLofResiduals(dat,
 #'                      partition = c(1,1,1,1,2,2,2,2),
 #'                      output = "ggplot")
 #'
 #' # Underlying data.frame for custom analysis
-#' df <- RMmartinLofResiduals(dat,
+#' df <- RMdimMartinLofResiduals(dat,
 #'                            partition = c(1,1,1,1,2,2,2,2),
 #'                            output = "dataframe")
 #' df[df$flagged, ]
 #' }
-RMmartinLofResiduals <- function(data,
+RMdimMartinLofResiduals <- function(data,
                                  partition,
                                  output         = c("kable", "dataframe", "ggplot"),
                                  flag_threshold = 2,

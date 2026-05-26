@@ -224,7 +224,7 @@
 #' \emph{Journal of Computational and Graphical Statistics, 27},
 #' 685-700.
 #'
-#' @seealso \code{\link{RMdifLR}}, \code{\link{RMpartgamDIF}}
+#' @seealso \code{\link{RMdifLR}}, \code{\link{RMdifGamma}}
 #'
 #' @examples
 #' \donttest{
@@ -972,7 +972,7 @@ format_rescale_message <- function(rescale_info) {
     "are NOT affected.\n",
     "Affected items:\n",
     paste(per_item_lines, collapse = "\n"),
-    "\nDiagnose with: RMtileplot(data, group = <covariate>) for each ",
+    "\nDiagnose with: RMplotTile(data, group = <covariate>) for each ",
     "covariate. To suppress, increase `minsize`. To downgrade or ",
     "escalate this notice see `?RMdifTree` argument `on_rescale`."
   )

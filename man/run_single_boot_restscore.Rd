@@ -9,7 +9,7 @@ run_single_boot_restscore(seed, data_list)
 \arguments{
 \item{seed}{Integer seed for reproducibility.}
 
-\item{data_list}{List produced inside \code{\link[=RMbootRestscore]{RMbootRestscore()}} containing \code{data},
+\item{data_list}{List produced inside \code{\link[=RMitemRestscoreBoot]{RMitemRestscoreBoot()}} containing \code{data},
 \code{samplesize}, \code{is_polytomous}, \code{item_names}.}
 }
 \value{

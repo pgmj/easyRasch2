@@ -12,7 +12,7 @@ starting at 0 (non-negative integers). Missing values (\code{NA}) are allowed.}
 
 \item{cutoff}{Optional. Either a single numeric value (added to the mean
 off-diagonal Q3 correlation to produce the dynamic cut-off threshold) or
-the full list returned by \code{\link{RMlocdepQ3cutoff}} (from which
+the full list returned by \code{\link{RMlocdepQ3Cutoff}} (from which
 \verb{$suggested_cutoff} is extracted automatically). When \code{NULL} (default),
 the raw Q3 residual correlation matrix is returned without any dynamic
 cut-off applied.}
@@ -38,7 +38,7 @@ exceeding the dynamic cut-off.
 Computes Yen's Q3 residual correlations between item pairs using a Rasch
 model fitted via Marginal Maximum Likelihood (MML) in \code{mirt}. High
 correlations (above the dynamic cut-off) indicate potential local dependence
-between items. See \code{\link{RMlocdepQ3cutoff}} for how to determine
+between items. See \code{\link{RMlocdepQ3Cutoff}} for how to determine
 the appropriate dynamic cut-off for your data.
 }
 \details{
@@ -47,7 +47,7 @@ of items after accounting for the latent trait. Under local independence,
 Q3 values are expected to be around \eqn{-1/(k-1)} where \eqn{k} is the
 number of items. When \code{cutoff} is supplied, the dynamic cut-off is the mean
 of all off-diagonal Q3 values plus \code{cutoff}, following the approach of
-Christensen et al. (2017). Use \code{\link{RMlocdepQ3cutoff}} to obtain a
+Christensen et al. (2017). Use \code{\link{RMlocdepQ3Cutoff}} to obtain a
 simulation-based cutoff recommendation.
 
 \code{mirt} is used for model fitting here because Q3 requires model-based
@@ -70,7 +70,7 @@ q3_df <- RMlocdepQ3(sim_data, output = "dataframe")
 }
 \dontrun{
 # Simulation-based cutoff (slow): 100+ Monte-Carlo iterations
-cutoff_res <- RMlocdepQ3cutoff(sim_data, iterations = 100)
+cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 100)
 RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
 }
 }

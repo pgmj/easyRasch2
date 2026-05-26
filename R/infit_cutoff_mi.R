@@ -1,6 +1,6 @@
 #' Simulation-Based Infit MSQ Cutoff Determination for Multiply Imputed Data
 #'
-#' Extends \code{\link{RMinfitcutoff}} to work with multiply imputed datasets
+#' Extends \code{\link{RMitemInfitCutoff}} to work with multiply imputed datasets
 #' produced by the `mice` package. Runs the parametric bootstrap simulation on
 #' each imputed dataset and stacks the resulting distributions, so that the
 #' final cutoff intervals reflect both sampling variability and imputation
@@ -14,9 +14,9 @@
 #'   across all imputations. These are distributed approximately evenly across
 #'   the `m` imputed datasets (default 500).
 #' @param parallel Logical. Use parallel processing via `mirai` within each
-#'   imputed dataset (default `TRUE`). Passed to \code{\link{RMinfitcutoff}}.
+#'   imputed dataset (default `TRUE`). Passed to \code{\link{RMitemInfitCutoff}}.
 #' @param n_cores Integer or `NULL`. Number of parallel workers. Passed to
-#'   \code{\link{RMinfitcutoff}}.
+#'   \code{\link{RMitemInfitCutoff}}.
 #' @param verbose Logical. Show progress messages (default `FALSE`).
 #' @param seed Integer or `NULL`. Master random seed for reproducibility. A
 #'   unique per-imputation seed is derived from this value.
@@ -28,9 +28,9 @@
 #'   Default is `0.999` (99.9% HDCI). Ignored when
 #'   `cutoff_method = "quantile"`.
 #'
-#' @return A list with the same structure as \code{\link{RMinfitcutoff}}, so
-#'   that the result can be passed directly to \code{\link{RMiteminfit}},
-#'   \code{\link{RMiteminfit_mi}}, and \code{\link{RMinfitcutoffPlot}}:
+#' @return A list with the same structure as \code{\link{RMitemInfitCutoff}}, so
+#'   that the result can be passed directly to \code{\link{RMitemInfit}},
+#'   \code{\link{RMitemInfitMI}}, and \code{\link{RMitemInfitCutoffPlot}}:
 #' \describe{
 #'   \item{`results`}{data.frame with columns `iteration`, `imputation`,
 #'     `Item`, `InfitMSQ`, `OutfitMSQ` — the stacked simulation results from
@@ -55,7 +55,7 @@
 #'
 #' @details
 #' The function completes each of the `m` imputed datasets via
-#' `mice::complete()`, then calls \code{\link{RMinfitcutoff}} on each one. The
+#' `mice::complete()`, then calls \code{\link{RMitemInfitCutoff}} on each one. The
 #' total number of iterations is split approximately evenly across imputations
 #' (i.e., each imputed dataset receives `ceiling(iterations / m)` or
 #' `floor(iterations / m)` iterations). The per-imputation simulation results
@@ -67,8 +67,8 @@
 #'
 #' The `mice` package must be installed (it is in Suggests, not Imports).
 #'
-#' @seealso \code{\link{RMinfitcutoff}}, \code{\link{RMiteminfit_mi}},
-#'   \code{\link{RMinfitcutoffPlot}}
+#' @seealso \code{\link{RMitemInfitCutoff}}, \code{\link{RMitemInfitMI}},
+#'   \code{\link{RMitemInfitCutoffPlot}}
 #'
 #' @export
 #'
@@ -89,14 +89,14 @@
 #' imp <- mice(sim_data, m = 5, method = "polr", seed = 123, printFlag = FALSE)
 #'
 #' # Compute simulation-based cutoffs across imputations
-#' cutoff_mi <- RMinfitcutoff_mi(imp, iterations = 250, parallel = FALSE,
+#' cutoff_mi <- RMitemInfitCutoffMI(imp, iterations = 250, parallel = FALSE,
 #'                               seed = 42)
 #' cutoff_mi$item_cutoffs
 #'
-#' # Use with RMiteminfit_mi()
-#' RMiteminfit_mi(imp, cutoff = cutoff_mi)
+#' # Use with RMitemInfitMI()
+#' RMitemInfitMI(imp, cutoff = cutoff_mi)
 #' }
-RMinfitcutoff_mi <- function(mids_object, iterations = 500, parallel = TRUE,
+RMitemInfitCutoffMI <- function(mids_object, iterations = 500, parallel = TRUE,
                              n_cores = NULL, verbose = FALSE, seed = NULL,
                              cutoff_method = "hdci", hdci_width = 0.999) {
 
@@ -104,7 +104,7 @@ RMinfitcutoff_mi <- function(mids_object, iterations = 500, parallel = TRUE,
 
   if (!requireNamespace("mice", quietly = TRUE)) {
     stop(
-      "Package 'mice' is required for RMinfitcutoff_mi() but is not installed.\n",
+      "Package 'mice' is required for RMitemInfitCutoffMI() but is not installed.\n",
       "Install it with: install.packages(\"mice\")",
       call. = FALSE
     )
@@ -142,7 +142,7 @@ RMinfitcutoff_mi <- function(mids_object, iterations = 500, parallel = TRUE,
   }
   imp_seeds <- sample.int(.Machine$integer.max, m)
 
-  # --- Run RMinfitcutoff on each imputed dataset ------------------------------
+  # --- Run RMitemInfitCutoff on each imputed dataset ------------------------------
   all_results   <- vector("list", m)
   actual_per_imp <- integer(m)
   sample_summary_first <- NULL
@@ -160,7 +160,7 @@ RMinfitcutoff_mi <- function(mids_object, iterations = 500, parallel = TRUE,
     }
 
     result_i <- tryCatch({
-      RMinfitcutoff(
+      RMitemInfitCutoff(
         data          = completed_data,
         iterations    = iters_per_imp[i],
         parallel      = parallel,
@@ -172,7 +172,7 @@ RMinfitcutoff_mi <- function(mids_object, iterations = 500, parallel = TRUE,
       )
     }, error = function(e) {
       warning(
-        sprintf("RMinfitcutoff() failed for imputation %d: %s", i,
+        sprintf("RMitemInfitCutoff() failed for imputation %d: %s", i,
                 conditionMessage(e)),
         call. = FALSE
       )
@@ -199,7 +199,7 @@ RMinfitcutoff_mi <- function(mids_object, iterations = 500, parallel = TRUE,
   }
 
   if (n_failed == m) {
-    stop("RMinfitcutoff() failed for all ", m, " imputed datasets. ",
+    stop("RMitemInfitCutoff() failed for all ", m, " imputed datasets. ",
          "Check your data.", call. = FALSE)
   }
 

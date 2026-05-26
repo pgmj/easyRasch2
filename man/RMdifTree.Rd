@@ -247,5 +247,5 @@ the stability of results from supervised statistical learning.
 685-700.
 }
 \seealso{
-\code{\link{RMdifLR}}, \code{\link{RMpartgamDIF}}
+\code{\link{RMdifLR}}, \code{\link{RMdifGamma}}
 }

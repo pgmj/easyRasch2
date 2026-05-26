@@ -9,7 +9,7 @@ run_single_partgam_sim(seed, data_list)
 \arguments{
 \item{seed}{Integer seed for reproducibility.}
 
-\item{data_list}{List produced inside \code{\link[=RMpgDIFcutoff]{RMpgDIFcutoff()}}.}
+\item{data_list}{List produced inside \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}}.}
 }
 \value{
 A data.frame with columns \code{Item} and \code{gamma}, or a character string

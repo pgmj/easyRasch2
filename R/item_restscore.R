@@ -72,19 +72,19 @@
 #' colnames(sim_data) <- paste0("Item", 1:8)
 #'
 #' # Default kable output
-#' RMitemrestscore(sim_data)
+#' RMitemRestscore(sim_data)
 #'
 #' # Sorted by absolute difference
-#' RMitemrestscore(sim_data, sort = "diff")
+#' RMitemRestscore(sim_data, sort = "diff")
 #'
 #' # Return as data.frame for further processing
-#' df <- RMitemrestscore(sim_data, output = "dataframe")
+#' df <- RMitemRestscore(sim_data, output = "dataframe")
 #' }
-RMitemrestscore <- function(data, output = "kable", sort, p.adj = "BH") {
+RMitemRestscore <- function(data, output = "kable", sort, p.adj = "BH") {
 
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
-      "Package 'iarm' is required for RMitemrestscore() but is not installed.\n",
+      "Package 'iarm' is required for RMitemRestscore() but is not installed.\n",
       "Install it with: install.packages(\"iarm\")",
       call. = FALSE
     )

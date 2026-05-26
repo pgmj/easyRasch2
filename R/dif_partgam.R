@@ -11,10 +11,10 @@
 #' @param dif_var A vector (factor or character) of the same length as
 #'   `nrow(data)`, representing the grouping variable for DIF analysis.
 #' @param cutoff Optional. Default `NULL` (no cutoff applied). Can be:
-#'   * The return value of \code{\link{RMpgDIFcutoff}} (a list with
+#'   * The return value of \code{\link{RMdifGammaCutoff}} (a list with
 #'     `$item_cutoffs`): the data.frame is extracted automatically and
 #'     simulation metadata is included in the kable caption.
-#'   * The `$item_cutoffs` data.frame from \code{\link{RMpgDIFcutoff}}
+#'   * The `$item_cutoffs` data.frame from \code{\link{RMdifGammaCutoff}}
 #'     directly: must have columns `Item`, `gamma_low`, `gamma_high`.
 #'   When provided, adds columns `Gamma_low`, `Gamma_high`, and `Flagged`
 #'   (logical; `TRUE` when the observed partial gamma falls outside the
@@ -54,7 +54,7 @@
 #' Differential item functioning in the Danish translation of the SF-36.
 #' *Journal of Clinical Epidemiology*, 51(11), 1998, pp. 1189-1202.
 #'
-#' @seealso \code{\link{RMpgDIFcutoff}}
+#' @seealso \code{\link{RMdifGammaCutoff}}
 #'
 #' @export
 #'
@@ -68,23 +68,23 @@
 #' dif_group <- factor(sample(c("A", "B"), 200, replace = TRUE))
 #'
 #' # Default kable output
-#' RMpartgamDIF(sim_data, dif_group)
+#' RMdifGamma(sim_data, dif_group)
 #'
 #' # Return as data.frame
-#' RMpartgamDIF(sim_data, dif_group, output = "dataframe")
+#' RMdifGamma(sim_data, dif_group, output = "dataframe")
 #' }
 #' \donttest{
 #' # Simulation-based cutoffs (100 Monte-Carlo iterations)
-#' cutoff_res <- RMpgDIFcutoff(sim_data, dif_var = dif_group,
+#' cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_group,
 #'                                   iterations = 100, parallel = FALSE,
 #'                                   seed = 42)
-#' RMpartgamDIF(sim_data, dif_group, cutoff = cutoff_res)
+#' RMdifGamma(sim_data, dif_group, cutoff = cutoff_res)
 #' }
-RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
+RMdifGamma <- function(data, dif_var, cutoff = NULL, output = "kable") {
 
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
-      "Package 'iarm' is required for RMpartgamDIF() but is not installed.\n",
+      "Package 'iarm' is required for RMdifGamma() but is not installed.\n",
       "Install it with: install.packages(\"iarm\")",
       call. = FALSE
     )
@@ -125,7 +125,7 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
     }
     if (!is.data.frame(cutoff)) {
       stop(
-        "`cutoff` must be NULL, the return value of RMpgDIFcutoff(), or its ",
+        "`cutoff` must be NULL, the return value of RMdifGammaCutoff(), or its ",
         "$item_cutoffs data.frame.",
         call. = FALSE
       )
@@ -380,12 +380,12 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
 #' dif_sex <- sample(c("male", "female"), 200, replace = TRUE)
 #'
 #' # Run 100 iterations sequentially for a quick demo
-#' cutoff_res <- RMpgDIFcutoff(sim_data, dif_var = dif_sex,
+#' cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_sex,
 #'                                   iterations = 100, parallel = FALSE,
 #'                                   seed = 42)
 #' cutoff_res$item_cutoffs
 #' }
-RMpgDIFcutoff <- function(data, dif_var, iterations = 250,
+RMdifGammaCutoff <- function(data, dif_var, iterations = 250,
                                parallel = TRUE, n_cores = NULL,
                                verbose = FALSE, seed = NULL,
                                cutoff_method = "hdci",
@@ -404,7 +404,7 @@ RMpgDIFcutoff <- function(data, dif_var, iterations = 250,
 
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
-      "Package 'iarm' is required for RMpgDIFcutoff() but is not installed.\n",
+      "Package 'iarm' is required for RMdifGammaCutoff() but is not installed.\n",
       "Install it with: install.packages(\"iarm\")",
       call. = FALSE
     )
@@ -601,7 +601,7 @@ RMpgDIFcutoff <- function(data, dif_var, iterations = 250,
 #' Run a single partial gamma DIF simulation iteration
 #'
 #' @param seed Integer seed for reproducibility.
-#' @param data_list List produced inside [RMpgDIFcutoff()].
+#' @param data_list List produced inside [RMdifGammaCutoff()].
 #' @return A data.frame with columns `Item` and `gamma`, or a character string
 #'   on failure.
 #' @keywords internal
@@ -766,14 +766,14 @@ run_partgam_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #' Plot Distribution of Simulated Partial Gamma DIF Values
 #'
 #' Visualises the distribution of simulation-based partial gamma DIF values
-#' from \code{\link{RMpgDIFcutoff}}, optionally overlaying observed partial
+#' from \code{\link{RMdifGammaCutoff}}, optionally overlaying observed partial
 #' gamma values computed from real data via \code{\link[iarm]{partgam_DIF}}.
 #'
 #' Uses `ggdist::stat_dotsinterval()` (when `data` is not supplied) or
 #' `ggdist::stat_dots()` (when `data` is supplied) with
 #' `point_interval = "median_hdci"` and `.width = c(0.66, 0.95, 0.99)`.
 #'
-#' @param simfit The return value of \code{\link{RMpgDIFcutoff}} (a list with
+#' @param simfit The return value of \code{\link{RMdifGammaCutoff}} (a list with
 #'   components `results`, `item_cutoffs`, `actual_iterations`, `sample_n`, and
 #'   `item_names`).
 #' @param data Optional. A data.frame or matrix of item responses for computing
@@ -807,7 +807,7 @@ run_partgam_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #' The `ggplot2`, `ggdist`, and optionally `iarm` packages must be installed
 #' (they are in Suggests, not Imports).
 #'
-#' @seealso \code{\link{RMpgDIFcutoff}}, \code{\link{RMpartgamDIF}}
+#' @seealso \code{\link{RMdifGammaCutoff}}, \code{\link{RMdifGamma}}
 #'
 #' @importFrom rlang .data
 #' @export
@@ -822,28 +822,28 @@ run_partgam_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #' dif_group <- factor(sample(c("A", "B"), 200, replace = TRUE))
 #'
 #' # Run simulation
-#' cutoff_res <- RMpgDIFcutoff(sim_data, dif_var = dif_group,
+#' cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_group,
 #'                              iterations = 100, parallel = FALSE, seed = 42)
 #'
 #' # Simulated distribution only
-#' RMpgDIFplot(cutoff_res)
+#' RMdifGammaPlot(cutoff_res)
 #'
 #' # With observed partial gamma overlaid
-#' RMpgDIFplot(cutoff_res, data = sim_data, dif_var = dif_group)
+#' RMdifGammaPlot(cutoff_res, data = sim_data, dif_var = dif_group)
 #' }
-RMpgDIFplot <- function(simfit, data, dif_var) {
+RMdifGammaPlot <- function(simfit, data, dif_var) {
 
   # --- Check required packages ------------------------------------------------
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop(
-      "Package 'ggplot2' is required for RMpgDIFplot() but is not installed.\n",
+      "Package 'ggplot2' is required for RMdifGammaPlot() but is not installed.\n",
       "Install it with: install.packages(\"ggplot2\")",
       call. = FALSE
     )
   }
   if (!requireNamespace("ggdist", quietly = TRUE)) {
     stop(
-      "Package 'ggdist' is required for RMpgDIFplot() but is not installed.\n",
+      "Package 'ggdist' is required for RMdifGammaPlot() but is not installed.\n",
       "Install it with: install.packages(\"ggdist\")",
       call. = FALSE
     )
@@ -857,7 +857,7 @@ RMpgDIFplot <- function(simfit, data, dif_var) {
     stop(
       "`simfit` is missing required components: ",
       paste(missing_names, collapse = ", "),
-      ".\nExpected the return value of RMpgDIFcutoff().",
+      ".\nExpected the return value of RMdifGammaCutoff().",
       call. = FALSE
     )
   }

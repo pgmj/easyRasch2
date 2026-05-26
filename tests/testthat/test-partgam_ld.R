@@ -1,4 +1,4 @@
-# Tests for RMpartgamLD(), RMpgLDcutoff(), and RMpgLDplot()
+# Tests for RMlocdepGamma(), RMlocdepGammaCutoff(), and RMlocdepGammaPlot()
 
 make_dichotomous <- function(n = 200, k = 10, seed = 42L) {
   set.seed(seed)
@@ -10,26 +10,26 @@ make_dichotomous <- function(n = 200, k = 10, seed = 42L) {
 # ---------------------------------------------------------------------
 # Input validation
 # ---------------------------------------------------------------------
-test_that("RMpartgamLD errors when iarm is not installed", {
+test_that("RMlocdepGamma errors when iarm is not installed", {
   skip_if(requireNamespace("iarm", quietly = TRUE),
           "iarm is installed; skipping missing-package error path")
   df <- make_dichotomous()
-  expect_error(RMpartgamLD(df), regexp = "iarm")
+  expect_error(RMlocdepGamma(df), regexp = "iarm")
 })
 
-test_that("RMpartgamLD errors when data has non-zero minimum", {
+test_that("RMlocdepGamma errors when data has non-zero minimum", {
   skip_if_not_installed("iarm")
   df <- make_dichotomous() + 1L
-  expect_error(RMpartgamLD(df), regexp = "scored starting at 0")
+  expect_error(RMlocdepGamma(df), regexp = "scored starting at 0")
 })
 
 # ---------------------------------------------------------------------
-# RMpartgamLD output structure
+# RMlocdepGamma output structure
 # ---------------------------------------------------------------------
-test_that("RMpartgamLD output = 'dataframe' returns a list of two long-format tables", {
+test_that("RMlocdepGamma output = 'dataframe' returns a list of two long-format tables", {
   skip_if_not_installed("iarm")
   df  <- make_dichotomous()
-  res <- RMpartgamLD(df, output = "dataframe")
+  res <- RMlocdepGamma(df, output = "dataframe")
   # Two perspectives: each item paired with every other item (both directions)
   expect_type(res, "list")
   expect_true(length(res) >= 1L)
@@ -43,26 +43,26 @@ test_that("RMpartgamLD output = 'dataframe' returns a list of two long-format ta
   expect_equal(nrow(res[[1L]]), choose(ncol(df), 2L))
 })
 
-test_that("RMpartgamLD output = 'kable' returns a custom-class list", {
+test_that("RMlocdepGamma output = 'kable' returns a custom-class list", {
   skip_if_not_installed("iarm")
   skip_if_not_installed("knitr")
   df  <- make_dichotomous()
-  out <- RMpartgamLD(df, output = "kable")
-  expect_s3_class(out, "RMpartgamLD")
+  out <- RMlocdepGamma(df, output = "kable")
+  expect_s3_class(out, "RMlocdepGamma")
   expect_true(all(c("direction1", "direction2", ".combined") %in% names(out)))
   expect_s3_class(out$direction1, "knitr_kable")
   expect_s3_class(out$direction2, "knitr_kable")
 })
 
-test_that("RMpartgamLD knit_print emits two clean pipe tables", {
+test_that("RMlocdepGamma knit_print emits two clean pipe tables", {
   # Regression test for the old asis-blob bug: an earlier implementation
   # used `paste(kable1, "\n\n", kable2)` which silently interleaved the
   # two multi-line character vectors row-by-row. The combined asis string
-  # is now stored in $.combined and surfaced via knit_print.RMpartgamLD().
+  # is now stored in $.combined and surfaced via knit_print.RMlocdepGamma().
   skip_if_not_installed("iarm")
   skip_if_not_installed("knitr")
   df  <- make_dichotomous()
-  out <- RMpartgamLD(df, output = "kable")
+  out <- RMlocdepGamma(df, output = "kable")
   asis <- knitr::knit_print(out)
   expect_s3_class(asis, "knit_asis")
   txt <- as.character(asis)
@@ -75,11 +75,11 @@ test_that("RMpartgamLD knit_print emits two clean pipe tables", {
   expect_false(any(grepl("Item 1.*Item 1", strsplit(txt, "\n")[[1]])))
 })
 
-test_that("RMpartgamLD print method emits both tables", {
+test_that("RMlocdepGamma print method emits both tables", {
   skip_if_not_installed("iarm")
   skip_if_not_installed("knitr")
   df  <- make_dichotomous()
-  out <- RMpartgamLD(df, output = "kable")
+  out <- RMlocdepGamma(df, output = "kable")
   printed <- capture.output(print(out))
   joined  <- paste(printed, collapse = "\n")
   expect_equal(length(gregexpr("\nTable: ", paste0("\n", joined))[[1]]), 2L)
@@ -88,13 +88,13 @@ test_that("RMpartgamLD print method emits both tables", {
 })
 
 # ---------------------------------------------------------------------
-# RMpgLDcutoff -- small iterations
+# RMlocdepGammaCutoff -- small iterations
 # ---------------------------------------------------------------------
-test_that("RMpgLDcutoff returns a list with pair_cutoffs + actual_iterations", {
+test_that("RMlocdepGammaCutoff returns a list with pair_cutoffs + actual_iterations", {
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df  <- make_dichotomous()
-  res <- RMpgLDcutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
+  res <- RMlocdepGammaCutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
   expect_type(res, "list")
   expect_true("pair_cutoffs" %in% names(res))
   expect_s3_class(res$pair_cutoffs, "data.frame")
@@ -104,13 +104,13 @@ test_that("RMpgLDcutoff returns a list with pair_cutoffs + actual_iterations", {
   expect_true(res$actual_iterations >= 1L)
 })
 
-test_that("RMpartgamLD n_pairs trims to top-N by |gamma| per direction", {
+test_that("RMlocdepGamma n_pairs trims to top-N by |gamma| per direction", {
   skip_if_not_installed("iarm")
   df  <- make_dichotomous()  # 10 items -> 45 unique pairs per direction
-  res_all <- RMpartgamLD(df, output = "dataframe")
+  res_all <- RMlocdepGamma(df, output = "dataframe")
   expect_equal(nrow(res_all[[1L]]), choose(ncol(df), 2L))
 
-  res_top <- RMpartgamLD(df, output = "dataframe", n_pairs = 5L)
+  res_top <- RMlocdepGamma(df, output = "dataframe", n_pairs = 5L)
   expect_equal(nrow(res_top[[1L]]), 5L)
   expect_equal(nrow(res_top[[2L]]), 5L)
 
@@ -126,61 +126,61 @@ test_that("RMpartgamLD n_pairs trims to top-N by |gamma| per direction", {
   expect_true(all(diff(abs(res_top[[1L]]$gamma)) <= 0))
 })
 
-test_that("RMpartgamLD n_pairs > total pairs silently returns all pairs", {
+test_that("RMlocdepGamma n_pairs > total pairs silently returns all pairs", {
   skip_if_not_installed("iarm")
   df  <- make_dichotomous()
-  res <- RMpartgamLD(df, output = "dataframe", n_pairs = 10000L)
+  res <- RMlocdepGamma(df, output = "dataframe", n_pairs = 10000L)
   expect_equal(nrow(res[[1L]]), choose(ncol(df), 2L))
 })
 
-test_that("RMpartgamLD validates n_pairs", {
+test_that("RMlocdepGamma validates n_pairs", {
   skip_if_not_installed("iarm")
   df  <- make_dichotomous()
-  expect_error(RMpartgamLD(df, n_pairs = 0L),    regexp = "positive integer")
-  expect_error(RMpartgamLD(df, n_pairs = -3L),   regexp = "positive integer")
-  expect_error(RMpartgamLD(df, n_pairs = 1.5),   regexp = "positive integer")
-  expect_error(RMpartgamLD(df, n_pairs = c(1, 2)), regexp = "positive integer")
+  expect_error(RMlocdepGamma(df, n_pairs = 0L),    regexp = "positive integer")
+  expect_error(RMlocdepGamma(df, n_pairs = -3L),   regexp = "positive integer")
+  expect_error(RMlocdepGamma(df, n_pairs = 1.5),   regexp = "positive integer")
+  expect_error(RMlocdepGamma(df, n_pairs = c(1, 2)), regexp = "positive integer")
 })
 
-test_that("RMpartgamLD accepts an RMpgLDcutoff result and adds flagged column", {
+test_that("RMlocdepGamma accepts an RMlocdepGammaCutoff result and adds flagged column", {
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df  <- make_dichotomous()
-  cuts <- RMpgLDcutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
-  res  <- RMpartgamLD(df, cutoff = cuts, output = "dataframe")
+  cuts <- RMlocdepGammaCutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
+  res  <- RMlocdepGamma(df, cutoff = cuts, output = "dataframe")
   expect_type(res, "list")
   expect_true("flagged" %in% names(res[[1L]]))
   expect_type(res[[1L]]$flagged, "logical")
 })
 
-test_that("RMpgLDcutoff is reproducible with the same seed", {
+test_that("RMlocdepGammaCutoff is reproducible with the same seed", {
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()
-  r1 <- RMpgLDcutoff(df, iterations = 5L, parallel = FALSE, seed = 42L)
-  r2 <- RMpgLDcutoff(df, iterations = 5L, parallel = FALSE, seed = 42L)
+  r1 <- RMlocdepGammaCutoff(df, iterations = 5L, parallel = FALSE, seed = 42L)
+  r2 <- RMlocdepGammaCutoff(df, iterations = 5L, parallel = FALSE, seed = 42L)
   expect_equal(r1$pair_cutoffs, r2$pair_cutoffs)
 })
 
 # ---------------------------------------------------------------------
-# RMpgLDplot
+# RMlocdepGammaPlot
 # ---------------------------------------------------------------------
-test_that("RMpgLDplot returns a ggplot from an RMpgLDcutoff result", {
+test_that("RMlocdepGammaPlot returns a ggplot from an RMlocdepGammaCutoff result", {
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   skip_if_not_installed("ggplot2")
   df   <- make_dichotomous()
-  cuts <- RMpgLDcutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
-  p    <- RMpgLDplot(cuts)
+  cuts <- RMlocdepGammaCutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
+  p    <- RMlocdepGammaPlot(cuts)
   expect_s3_class(p, "ggplot")
 })
 
-test_that("RMpgLDplot with observed data overlay returns a ggplot", {
+test_that("RMlocdepGammaPlot with observed data overlay returns a ggplot", {
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   skip_if_not_installed("ggplot2")
   df   <- make_dichotomous()
-  cuts <- RMpgLDcutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
-  p    <- RMpgLDplot(cuts, data = df)
+  cuts <- RMlocdepGammaCutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
+  p    <- RMlocdepGammaPlot(cuts, data = df)
   expect_s3_class(p, "ggplot")
 })

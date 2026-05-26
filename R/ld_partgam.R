@@ -9,10 +9,10 @@
 #'   starting at 0 (non-negative integers). Missing values (`NA`) are allowed,
 #'   but at least one complete case must exist.
 #' @param cutoff Optional. Default `NULL` (no cutoff applied). Can be:
-#'   * The return value of \code{\link{RMpgLDcutoff}} (a list with
+#'   * The return value of \code{\link{RMlocdepGammaCutoff}} (a list with
 #'     `$pair_cutoffs`): the data.frame is extracted automatically and
 #'     simulation metadata is included in the kable caption.
-#'   * The `$pair_cutoffs` data.frame from \code{\link{RMpgLDcutoff}}
+#'   * The `$pair_cutoffs` data.frame from \code{\link{RMlocdepGammaCutoff}}
 #'     directly: must have columns `Item1`, `Item2`, `gamma_low`, `gamma_high`.
 #'   When provided, adds columns `Gamma_low`, `Gamma_high`, and `Flagged`
 #'   (logical; `TRUE` when the observed partial gamma falls outside the
@@ -29,7 +29,7 @@
 #'   capped at that total.
 #'
 #' @return
-#' * If `output = "kable"`: an object of class `"RMpartgamLD"`. Internally
+#' * If `output = "kable"`: an object of class `"RMlocdepGamma"`. Internally
 #'   a list with two `knitr_kable` elements --- `$direction1` (rest score
 #'   = total - Item2) and `$direction2` (rest score = total - Item1) ---
 #'   each with columns "Item 1", "Item 2", "Partial gamma",
@@ -64,7 +64,7 @@
 #' Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.)
 #' \emph{Rasch Models in Health}. Iste and Wiley (2013), pp. 133--135.
 #'
-#' @seealso \code{\link{RMpgLDcutoff}}, \code{\link{RMpgLDplot}}
+#' @seealso \code{\link{RMlocdepGammaCutoff}}, \code{\link{RMlocdepGammaPlot}}
 #'
 #' @export
 #'
@@ -77,23 +77,23 @@
 #' colnames(sim_data) <- paste0("Item", 1:10)
 #'
 #' # Default kable output
-#' RMpartgamLD(sim_data)
+#' RMlocdepGamma(sim_data)
 #'
 #' # Return as data.frame list
-#' RMpartgamLD(sim_data, output = "dataframe")
+#' RMlocdepGamma(sim_data, output = "dataframe")
 #' }
 #' \donttest{
 #' # Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
-#' cutoff_res <- RMpgLDcutoff(sim_data, iterations = 100, parallel = FALSE,
+#' cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100, parallel = FALSE,
 #'                            seed = 42)
-#' RMpartgamLD(sim_data, cutoff = cutoff_res)
+#' RMlocdepGamma(sim_data, cutoff = cutoff_res)
 #' }
-RMpartgamLD <- function(data, cutoff = NULL, output = "kable",
+RMlocdepGamma <- function(data, cutoff = NULL, output = "kable",
                         n_pairs = NULL) {
 
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
-      "Package 'iarm' is required for RMpartgamLD() but is not installed.\n",
+      "Package 'iarm' is required for RMlocdepGamma() but is not installed.\n",
       "Install it with: install.packages(\"iarm\")",
       call. = FALSE
     )
@@ -127,7 +127,7 @@ RMpartgamLD <- function(data, cutoff = NULL, output = "kable",
     }
     if (!is.data.frame(cutoff)) {
       stop(
-        "`cutoff` must be NULL, the return value of RMpgLDcutoff(), or its ",
+        "`cutoff` must be NULL, the return value of RMlocdepGammaCutoff(), or its ",
         "$pair_cutoffs data.frame.",
         call. = FALSE
       )
@@ -309,49 +309,49 @@ RMpartgamLD <- function(data, cutoff = NULL, output = "kable",
   )
 
   # Return a custom-class list so the two display contexts (R console and
-  # knitr chunk) can be handled separately. See print.RMpartgamLD() and
-  # knit_print.RMpartgamLD() below.
+  # knitr chunk) can be handled separately. See print.RMlocdepGamma() and
+  # knit_print.RMlocdepGamma() below.
   out <- list(
     direction1 = kable1,
     direction2 = kable2,
     .combined  = combined
   )
-  class(out) <- c("RMpartgamLD", "list")
+  class(out) <- c("RMlocdepGamma", "list")
   out
 }
 
-#' Print method for RMpartgamLD kable output
+#' Print method for RMlocdepGamma kable output
 #'
 #' Prints the two rest-score direction tables stacked vertically with a
 #' blank line between them. Each table renders via `knitr_kable`'s own
 #' print method as a clean pipe-markdown table.
 #'
-#' @param x An object of class `"RMpartgamLD"` returned by
-#'   \code{\link{RMpartgamLD}} with `output = "kable"`.
+#' @param x An object of class `"RMlocdepGamma"` returned by
+#'   \code{\link{RMlocdepGamma}} with `output = "kable"`.
 #' @param ... Further arguments (currently unused).
 #' @return Invisibly returns `x`.
 #' @keywords internal
 #' @exportS3Method base::print
-print.RMpartgamLD <- function(x, ...) {
+print.RMlocdepGamma <- function(x, ...) {
   print(x$direction1)
   cat("\n")
   print(x$direction2)
   invisible(x)
 }
 
-#' knitr knit_print method for RMpartgamLD kable output
+#' knitr knit_print method for RMlocdepGamma kable output
 #'
 #' Inside a knitr / Quarto / R Markdown chunk, returns the pre-combined
 #' two-table asis string so pandoc renders them as two distinct pipe
 #' tables. Outside knitr, R's normal dispatch falls back to
-#' `print.RMpartgamLD()`.
+#' `print.RMlocdepGamma()`.
 #'
-#' @param x An object of class `"RMpartgamLD"`.
+#' @param x An object of class `"RMlocdepGamma"`.
 #' @param ... Further arguments passed to `knitr::asis_output()`.
 #' @return A `knit_asis` character object.
 #' @keywords internal
 #' @exportS3Method knitr::knit_print
-knit_print.RMpartgamLD <- function(x, ...) {
+knit_print.RMlocdepGamma <- function(x, ...) {
   knitr::asis_output(x$.combined)
 }
 
@@ -436,8 +436,8 @@ knit_print.RMpartgamLD <- function(x, ...) {
 #' Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.)
 #' \emph{Rasch Models in Health}. Iste and Wiley (2013), pp. 133--135.
 #'
-#' @seealso \code{\link[iarm]{partgam_LD}}, \code{\link{RMpartgamLD}},
-#'   \code{\link{RMpgLDplot}}
+#' @seealso \code{\link[iarm]{partgam_LD}}, \code{\link{RMlocdepGamma}},
+#'   \code{\link{RMlocdepGammaPlot}}
 #'
 #' @export
 #'
@@ -450,11 +450,11 @@ knit_print.RMpartgamLD <- function(x, ...) {
 #' colnames(sim_data) <- paste0("Item", 1:10)
 #'
 #' # Run 100 iterations sequentially for a quick demo
-#' cutoff_res <- RMpgLDcutoff(sim_data, iterations = 100, parallel = FALSE,
+#' cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100, parallel = FALSE,
 #'                            seed = 42)
 #' cutoff_res$pair_cutoffs
 #' }
-RMpgLDcutoff <- function(data, iterations = 250,
+RMlocdepGammaCutoff <- function(data, iterations = 250,
                          parallel = TRUE, n_cores = NULL,
                          verbose = FALSE, seed = NULL,
                          cutoff_method = "hdci",
@@ -473,7 +473,7 @@ RMpgLDcutoff <- function(data, iterations = 250,
 
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
-      "Package 'iarm' is required for RMpgLDcutoff() but is not installed.\n",
+      "Package 'iarm' is required for RMlocdepGammaCutoff() but is not installed.\n",
       "Install it with: install.packages(\"iarm\")",
       call. = FALSE
     )
@@ -644,7 +644,7 @@ RMpgLDcutoff <- function(data, iterations = 250,
 #' Run a single partial gamma LD simulation iteration
 #'
 #' @param seed Integer seed for reproducibility.
-#' @param data_list List produced inside [RMpgLDcutoff()].
+#' @param data_list List produced inside [RMlocdepGammaCutoff()].
 #' @return A data.frame with columns `Item1`, `Item2`, and `gamma`, or a
 #'   character string on failure.
 #' @keywords internal
@@ -802,14 +802,14 @@ run_partgam_LD_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #' Plot Distribution of Simulated Partial Gamma LD Values
 #'
 #' Visualises the distribution of simulation-based partial gamma LD values
-#' from \code{\link{RMpgLDcutoff}}, optionally overlaying observed partial
+#' from \code{\link{RMlocdepGammaCutoff}}, optionally overlaying observed partial
 #' gamma values computed from real data via \code{\link[iarm]{partgam_LD}}.
 #'
 #' Uses `ggdist::stat_dotsinterval()` (when `data` is not supplied) or
 #' `ggdist::stat_dots()` (when `data` is supplied) with
 #' `point_interval = "median_hdci"` and `.width = c(0.66, 0.95, 0.99)`.
 #'
-#' @param simfit The return value of \code{\link{RMpgLDcutoff}} (a list with
+#' @param simfit The return value of \code{\link{RMlocdepGammaCutoff}} (a list with
 #'   components `results`, `pair_cutoffs`, `actual_iterations`, `sample_n`, and
 #'   `item_names`).
 #' @param data Optional. A data.frame or matrix of item responses for computing
@@ -855,7 +855,7 @@ run_partgam_LD_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #' The `ggplot2`, `ggdist`, and optionally `iarm` packages must be installed
 #' (they are in Suggests, not Imports).
 #'
-#' @seealso \code{\link{RMpgLDcutoff}}, \code{\link{RMpartgamLD}}
+#' @seealso \code{\link{RMlocdepGammaCutoff}}, \code{\link{RMlocdepGamma}}
 #'
 #' @importFrom rlang .data
 #' @export
@@ -869,32 +869,32 @@ run_partgam_LD_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #' colnames(sim_data) <- paste0("Item", 1:10)
 #'
 #' # Run simulation
-#' cutoff_res <- RMpgLDcutoff(sim_data, iterations = 100, parallel = FALSE,
+#' cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100, parallel = FALSE,
 #'                            seed = 42)
 #'
 #' # Simulated distribution only
-#' RMpgLDplot(cutoff_res)
+#' RMlocdepGammaPlot(cutoff_res)
 #'
 #' # With observed partial gamma overlaid
-#' RMpgLDplot(cutoff_res, data = sim_data)
+#' RMlocdepGammaPlot(cutoff_res, data = sim_data)
 #'
 #' # Plot only a subset of items
-#' RMpgLDplot(cutoff_res, data = sim_data,
+#' RMlocdepGammaPlot(cutoff_res, data = sim_data,
 #'            items = c("Item1", "Item2", "Item3"))
 #' }
-RMpgLDplot <- function(simfit, data, items = NULL, n_pairs = NULL) {
+RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
 
   # --- Check required packages ------------------------------------------------
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop(
-      "Package 'ggplot2' is required for RMpgLDplot() but is not installed.\n",
+      "Package 'ggplot2' is required for RMlocdepGammaPlot() but is not installed.\n",
       "Install it with: install.packages(\"ggplot2\")",
       call. = FALSE
     )
   }
   if (!requireNamespace("ggdist", quietly = TRUE)) {
     stop(
-      "Package 'ggdist' is required for RMpgLDplot() but is not installed.\n",
+      "Package 'ggdist' is required for RMlocdepGammaPlot() but is not installed.\n",
       "Install it with: install.packages(\"ggdist\")",
       call. = FALSE
     )
@@ -908,7 +908,7 @@ RMpgLDplot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     stop(
       "`simfit` is missing required components: ",
       paste(missing_names, collapse = ", "),
-      ".\nExpected the return value of RMpgLDcutoff().",
+      ".\nExpected the return value of RMlocdepGammaCutoff().",
       call. = FALSE
     )
   }

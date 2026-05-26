@@ -1,4 +1,4 @@
-# Tests for RMmartinLof() and RMmartinLofResiduals()
+# Tests for RMdimMartinLof() and RMdimMartinLofResiduals()
 
 make_polytomous <- function(n = 200, k = 8, seed = 1L) {
   set.seed(seed)
@@ -17,20 +17,20 @@ make_dichotomous <- function(n = 300, k = 8, seed = 2L) {
 # ---------------------------------------------------------------------
 # Input validation
 # ---------------------------------------------------------------------
-test_that("RMmartinLof errors when partition has fewer than 2 subscales", {
+test_that("RMdimMartinLof errors when partition has fewer than 2 subscales", {
   df <- make_polytomous()
   expect_error(
-    RMmartinLof(df, partition = rep(1L, ncol(df)),
+    RMdimMartinLof(df, partition = rep(1L, ncol(df)),
                 iterations = 5L, parallel = FALSE, seed = 1L),
     regexp = ">= 2 subscales"
   )
 })
 
-test_that("RMmartinLof errors when a subscale has fewer than 2 items", {
+test_that("RMdimMartinLof errors when a subscale has fewer than 2 items", {
   df <- make_polytomous()
   partition <- c(1L, rep(2L, ncol(df) - 1L))
   expect_error(
-    RMmartinLof(df, partition = partition,
+    RMdimMartinLof(df, partition = partition,
                 iterations = 5L, parallel = FALSE, seed = 1L),
     regexp = "at least 2 items"
   )
@@ -39,10 +39,10 @@ test_that("RMmartinLof errors when a subscale has fewer than 2 items", {
 # ---------------------------------------------------------------------
 # Output structure (polytomous)
 # ---------------------------------------------------------------------
-test_that("RMmartinLof returns expected fields on polytomous data", {
+test_that("RMdimMartinLof returns expected fields on polytomous data", {
   skip_if_not_installed("psychotools")
   df <- make_polytomous()
-  res <- RMmartinLof(
+  res <- RMdimMartinLof(
     df, partition = list(c("I1","I2","I3","I4"), c("I5","I6","I7","I8")),
     iterations = 20L, parallel = FALSE, seed = 1L,
     stopping = "sequential", h = 10L
@@ -61,10 +61,10 @@ test_that("RMmartinLof returns expected fields on polytomous data", {
 # ---------------------------------------------------------------------
 # Output structure (dichotomous)
 # ---------------------------------------------------------------------
-test_that("RMmartinLof works on dichotomous data (Rasch model path)", {
+test_that("RMdimMartinLof works on dichotomous data (Rasch model path)", {
   skip_if_not_installed("psychotools")
   df <- make_dichotomous()
-  res <- RMmartinLof(
+  res <- RMdimMartinLof(
     df, partition = c(1,1,1,1,2,2,2,2),
     iterations = 20L, parallel = FALSE, seed = 1L,
     stopping = "sequential", h = 10L
@@ -74,13 +74,13 @@ test_that("RMmartinLof works on dichotomous data (Rasch model path)", {
   expect_true(is.finite(res$T_obs))
 })
 
-test_that("RMmartinLof p_value is reproducible with the same seed", {
+test_that("RMdimMartinLof p_value is reproducible with the same seed", {
   skip_if_not_installed("psychotools")
   df <- make_polytomous(n = 150)
-  r1 <- RMmartinLof(df, partition = c(1,1,1,1,2,2,2,2),
+  r1 <- RMdimMartinLof(df, partition = c(1,1,1,1,2,2,2,2),
                     iterations = 10L, parallel = FALSE, seed = 42L,
                     stopping = "sequential", h = 5L)
-  r2 <- RMmartinLof(df, partition = c(1,1,1,1,2,2,2,2),
+  r2 <- RMdimMartinLof(df, partition = c(1,1,1,1,2,2,2,2),
                     iterations = 10L, parallel = FALSE, seed = 42L,
                     stopping = "sequential", h = 5L)
   expect_equal(r1$T_obs,  r2$T_obs)
@@ -88,12 +88,12 @@ test_that("RMmartinLof p_value is reproducible with the same seed", {
 })
 
 # ---------------------------------------------------------------------
-# RMmartinLofResiduals
+# RMdimMartinLofResiduals
 # ---------------------------------------------------------------------
-test_that("RMmartinLofResiduals output = 'dataframe' returns expected columns", {
+test_that("RMdimMartinLofResiduals output = 'dataframe' returns expected columns", {
   skip_if_not_installed("psychotools")
   df <- make_polytomous()
-  res <- RMmartinLofResiduals(
+  res <- RMdimMartinLofResiduals(
     df, partition = list(c("I1","I2","I3","I4"), c("I5","I6","I7","I8")),
     output = "dataframe"
   )
@@ -103,22 +103,22 @@ test_that("RMmartinLofResiduals output = 'dataframe' returns expected columns", 
   expect_type(res$flagged, "logical")
 })
 
-test_that("RMmartinLofResiduals output = 'kable' returns a kable-like object", {
+test_that("RMdimMartinLofResiduals output = 'kable' returns a kable-like object", {
   skip_if_not_installed("psychotools")
   skip_if_not_installed("knitr")
   df  <- make_polytomous()
-  out <- RMmartinLofResiduals(
+  out <- RMdimMartinLofResiduals(
     df, partition = c(1,1,1,1,2,2,2,2),
     output = "kable"
   )
   expect_true(inherits(out, "knitr_kable") || inherits(out, "knit_asis"))
 })
 
-test_that("RMmartinLofResiduals output = 'ggplot' returns a ggplot", {
+test_that("RMdimMartinLofResiduals output = 'ggplot' returns a ggplot", {
   skip_if_not_installed("psychotools")
   skip_if_not_installed("ggplot2")
   df <- make_polytomous()
-  p  <- RMmartinLofResiduals(
+  p  <- RMdimMartinLofResiduals(
     df, partition = c(1,1,1,1,2,2,2,2),
     output = "ggplot"
   )

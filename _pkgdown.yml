@@ -27,49 +27,49 @@ reference:
   - title: "Item Fit"
     desc: "Conditional item fit statistics with simulation-based cutoffs"
     contents:
-      - RMiteminfit
-      - RMinfitcutoff
-      - RMinfitcutoffPlot
-      - RMiteminfit_mi
-      - RMinfitcutoff_mi
-      - RMciccPlot
+      - RMitemInfit
+      - RMitemInfitCutoff
+      - RMitemInfitCutoffPlot
+      - RMitemInfitMI
+      - RMitemInfitCutoffMI
+      - RMitemICCPlot
   - title: "Item Restscore"
     desc: "Item-restscore correlation analysis"
     contents:
-      - RMitemrestscore
-      - RMbootRestscore
+      - RMitemRestscore
+      - RMitemRestscoreBoot
   - title: "Local Dependence (LD)"
     desc: "Q3 residual correlations & partial gammal LD with simulation-based cutoffs"
     contents:
       - RMlocdepQ3
-      - RMlocdepQ3cutoff
-      - RMlocdepQ3plot
-      - RMpartgamLD
-      - RMpgLDcutoff
-      - RMpgLDplot
+      - RMlocdepQ3Cutoff
+      - RMlocdepQ3Plot
+      - RMlocdepGamma
+      - RMlocdepGammaCutoff
+      - RMlocdepGammaPlot
   - title: "Differential Item Functioning (DIF)"
     desc: "DIF assessment functions"
     contents:
       - RMdifLR
       - RMdifTree
-      - RMpartgamDIF
-      - RMpgDIFcutoff
-      - RMpgDIFplot
+      - RMdifGamma
+      - RMdifGammaCutoff
+      - RMdifGammaPlot
   - title: "Global tests of model fit"
     desc: "PCA of residuals, and more to come"
     contents:
-      - RMcfaCutoff
-      - RMcfaPlot
-      - RMresidualPCA
-      - RMpcaCutoff
-      - RMmartinLof
-      - RMmartinLofResiduals
+      - RMdimCFACutoff
+      - RMdimCFAPlot
+      - RMdimResidualPCA
+      - RMdimResidualPCACutoff
+      - RMdimMartinLof
+      - RMdimMartinLofResiduals
   - title: "Descriptive functions"
     desc: "Targeting and other plots/tables"
     contents:
-      - RMtileplot
-      - RMstackedbarplot
-      - RMbarplot
+      - RMplotTile
+      - RMplotStackedbar
+      - RMplotBar
       - RMtargeting
       - RMitemHierarchy
       - RMscoreSE

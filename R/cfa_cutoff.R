@@ -105,10 +105,10 @@
 #' message and dropped; `actual_iterations` reflects the number that
 #' succeeded.
 #'
-#' \strong{Companion functions.} See \code{\link{RMcfaPlot}} for a
+#' \strong{Companion functions.} See \code{\link{RMdimCFAPlot}} for a
 #' faceted visualisation of the observed value against each simulated
-#' distribution. This test complements \code{\link{RMresidualPCA}} (which
-#' identifies *which* items deviate) and \code{\link{RMmartinLof}} (which
+#' distribution. This test complements \code{\link{RMdimResidualPCA}} (which
+#' identifies *which* items deviate) and \code{\link{RMdimMartinLof}} (which
 #' tests a specific hypothesised partition).
 #'
 #' @references
@@ -120,26 +120,26 @@
 #' Modeling. \emph{Journal of Statistical Software, 48}(2), 1-36.
 #' \doi{10.18637/jss.v048.i02}
 #'
-#' @seealso \code{\link{RMcfaPlot}}, \code{\link{RMresidualPCA}},
-#'   \code{\link{RMmartinLof}}
+#' @seealso \code{\link{RMdimCFAPlot}}, \code{\link{RMdimResidualPCA}},
+#'   \code{\link{RMdimMartinLof}}
 #'
 #' @examples
 #' \donttest{
 #' data("raschdat1", package = "eRm")
-#' RMcfaCutoff(raschdat1[, 1:8], iterations = 50,
+#' RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
 #'             parallel = FALSE, seed = 1)
 #' }
 #' \dontrun{
 #' # Default 250 iterations with parallel processing
-#' result <- RMcfaCutoff(raschdat1[, 1:8], n_cores = 4, seed = 1)
+#' result <- RMdimCFACutoff(raschdat1[, 1:8], n_cores = 4, seed = 1)
 #' result$observed
 #' result$flagged
-#' RMcfaPlot(result)
+#' RMdimCFAPlot(result)
 #' }
 #'
 #' @importFrom rlang .data
 #' @export
-RMcfaCutoff <- function(data,
+RMdimCFACutoff <- function(data,
                         iterations = 250L,
                         percentile = 99,
                         output     = c("kable", "list"),
@@ -152,7 +152,7 @@ RMcfaCutoff <- function(data,
   output <- match.arg(output)
 
   if (!requireNamespace("lavaan", quietly = TRUE)) {
-    stop("Package 'lavaan' is required for RMcfaCutoff(). ",
+    stop("Package 'lavaan' is required for RMdimCFACutoff(). ",
          "Install with: install.packages(\"lavaan\")",
          call. = FALSE)
   }
@@ -186,11 +186,11 @@ RMcfaCutoff <- function(data,
     stop("No complete cases in `data`.", call. = FALSE)
   }
   if (ncol(data) < 3L) {
-    stop("RMcfaCutoff() requires at least 3 items for a one-factor CFA.",
+    stop("RMdimCFACutoff() requires at least 3 items for a one-factor CFA.",
          call. = FALSE)
   }
 
-  # Parallel setup -- mirrors RMpcaCutoff()
+  # Parallel setup -- mirrors RMdimResidualPCACutoff()
   use_parallel <- parallel && requireNamespace("mirai", quietly = TRUE)
   if (parallel && !use_parallel) {
     message("Install 'mirai' for parallel processing: install.packages(\"mirai\")")
@@ -432,34 +432,34 @@ render_cfa_kable <- function(result) {
 #' the chosen percentile of the simulation in the unfavourable direction
 #' (CFI from below; RMSEA / SRMR from above), and grey otherwise.
 #'
-#' @param cutoff_res The list returned by \code{\link{RMcfaCutoff}} with
+#' @param cutoff_res The list returned by \code{\link{RMdimCFACutoff}} with
 #'   `output = "list"`, or the kable returned with `output = "kable"`
 #'   (the underlying list is read from `attr(., "result")`).
 #' @param percentile Numeric in (50, 100) or `NULL`. When supplied, the
 #'   cutoff and the flagged status are recomputed at this percentile
 #'   from the simulated distribution stored in `cutoff_res` (no
 #'   re-simulation needed). When `NULL` (default), the percentile that
-#'   was used by the original `RMcfaCutoff()` call is reused.
+#'   was used by the original `RMdimCFACutoff()` call is reused.
 #'
 #' @return A `ggplot` object.
 #'
-#' @seealso \code{\link{RMcfaCutoff}}
+#' @seealso \code{\link{RMdimCFACutoff}}
 #'
 #' @examples
 #' \donttest{
 #' data("raschdat1", package = "eRm")
-#' res <- RMcfaCutoff(raschdat1[, 1:8], iterations = 50,
+#' res <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
 #'                    parallel = FALSE, seed = 1, output = "list")
-#' RMcfaPlot(res)                 # use the percentile from RMcfaCutoff()
-#' RMcfaPlot(res, percentile = 95) # override (no re-simulation needed)
+#' RMdimCFAPlot(res)                 # use the percentile from RMdimCFACutoff()
+#' RMdimCFAPlot(res, percentile = 95) # override (no re-simulation needed)
 #' }
 #'
 #' @importFrom rlang .data
 #' @export
-RMcfaPlot <- function(cutoff_res, percentile = NULL) {
+RMdimCFAPlot <- function(cutoff_res, percentile = NULL) {
 
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Package 'ggplot2' is required for RMcfaPlot(). ",
+    stop("Package 'ggplot2' is required for RMdimCFAPlot(). ",
          "Install with: install.packages(\"ggplot2\")",
          call. = FALSE)
   }
@@ -471,7 +471,7 @@ RMcfaPlot <- function(cutoff_res, percentile = NULL) {
   if (!is.list(cutoff_res) ||
       !all(c("observed", "simulated", "percentile", "cutoffs", "flagged") %in%
            names(cutoff_res))) {
-    stop("`cutoff_res` must be the result returned by RMcfaCutoff().",
+    stop("`cutoff_res` must be the result returned by RMdimCFACutoff().",
          call. = FALSE)
   }
 

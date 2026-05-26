@@ -1,6 +1,6 @@
 #' Conditional Item Infit MSQ for Multiply Imputed Data
 #'
-#' Extends \code{\link{RMiteminfit}} to work with multiply imputed datasets
+#' Extends \code{\link{RMitemInfit}} to work with multiply imputed datasets
 #' produced by the `mice` package. Computes conditional infit MSQ on each
 #' imputed dataset and pools the results using Rubin's rules.
 #'
@@ -9,8 +9,8 @@
 #'   columns to be analysed (i.e., no ID or grouping variables). Items must be
 #'   scored starting at 0 (non-negative integers).
 #' @param cutoff Optional. Default `NULL` (no cutoff applied). Can be:
-#'   * The return value of \code{\link{RMinfitcutoff}} or
-#'     \code{\link{RMinfitcutoff_mi}} (a list with `$item_cutoffs`): the
+#'   * The return value of \code{\link{RMitemInfitCutoff}} or
+#'     \code{\link{RMitemInfitCutoffMI}} (a list with `$item_cutoffs`): the
 #'     data.frame is extracted automatically and metadata is included in the
 #'     kable caption.
 #'   * The `$item_cutoffs` data.frame directly: must have columns `Item`,
@@ -66,7 +66,7 @@
 #' The `mice` and `iarm` packages must be installed (they are in Suggests, not
 #' Imports).
 #'
-#' @seealso \code{\link{RMiteminfit}}, \code{\link{RMinfitcutoff_mi}}
+#' @seealso \code{\link{RMitemInfit}}, \code{\link{RMitemInfitCutoffMI}}
 #'
 #' @export
 #'
@@ -86,23 +86,23 @@
 #' imp <- mice(sim_data, m = 5, method = "polr", seed = 123, printFlag = FALSE)
 #'
 #' # Pooled infit table (no cutoffs)
-#' RMiteminfit_mi(imp)
+#' RMitemInfitMI(imp)
 #'
 #' # With simulation-based cutoffs
-#' cutoff_mi <- RMinfitcutoff_mi(imp, iterations = 250, parallel = FALSE,
+#' cutoff_mi <- RMitemInfitCutoffMI(imp, iterations = 250, parallel = FALSE,
 #'                               seed = 42)
-#' RMiteminfit_mi(imp, cutoff = cutoff_mi)
+#' RMitemInfitMI(imp, cutoff = cutoff_mi)
 #'
 #' # As data.frame
-#' df <- RMiteminfit_mi(imp, cutoff = cutoff_mi, output = "dataframe")
+#' df <- RMitemInfitMI(imp, cutoff = cutoff_mi, output = "dataframe")
 #' }
-RMiteminfit_mi <- function(mids_object, cutoff = NULL, output = "kable",
+RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable",
                            sort) {
 
   # --- Check required packages ------------------------------------------------
   if (!requireNamespace("mice", quietly = TRUE)) {
     stop(
-      "Package 'mice' is required for RMiteminfit_mi() but is not installed.\n",
+      "Package 'mice' is required for RMitemInfitMI() but is not installed.\n",
       "Install it with: install.packages(\"mice\")",
       call. = FALSE
     )
@@ -110,7 +110,7 @@ RMiteminfit_mi <- function(mids_object, cutoff = NULL, output = "kable",
 
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
-      "Package 'iarm' is required for RMiteminfit_mi() but is not installed.\n",
+      "Package 'iarm' is required for RMitemInfitMI() but is not installed.\n",
       "Install it with: install.packages(\"iarm\")",
       call. = FALSE
     )
@@ -139,8 +139,8 @@ RMiteminfit_mi <- function(mids_object, cutoff = NULL, output = "kable",
     }
     if (!is.data.frame(cutoff)) {
       stop(
-        "`cutoff` must be NULL, the return value of RMinfitcutoff() / ",
-        "RMinfitcutoff_mi(), or its $item_cutoffs data.frame.",
+        "`cutoff` must be NULL, the return value of RMitemInfitCutoff() / ",
+        "RMitemInfitCutoffMI(), or its $item_cutoffs data.frame.",
         call. = FALSE
       )
     }

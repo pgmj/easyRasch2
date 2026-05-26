@@ -1,7 +1,7 @@
 #' Plot Distribution of Simulated Q3 Residual Correlations
 #'
 #' Visualises the distribution of simulation-based Yen's Q3 residual
-#' correlations per item pair from \code{\link{RMlocdepQ3cutoff}},
+#' correlations per item pair from \code{\link{RMlocdepQ3Cutoff}},
 #' optionally overlaying observed Q3 values computed from real data via
 #' \code{mirt::residuals(..., type = "Q3")}.
 #'
@@ -9,7 +9,7 @@
 #' `ggdist::stat_dots()` (when `data` is supplied) with
 #' `point_interval = "median_hdci"` and `.width = c(0.66, 0.95, 0.99)`.
 #'
-#' @param simfit The return value of \code{\link{RMlocdepQ3cutoff}} (a list
+#' @param simfit The return value of \code{\link{RMlocdepQ3Cutoff}} (a list
 #'   with components `pair_results`, `pair_cutoffs`, `actual_iterations`,
 #'   `sample_n`, and `item_names`).
 #' @param data Optional. A data.frame or matrix of item responses for
@@ -54,8 +54,8 @@
 #' The `ggplot2`, `ggdist`, `mirt`, and `scales` packages must be
 #' installed (most are in Suggests, not Imports).
 #'
-#' @seealso \code{\link{RMlocdepQ3}}, \code{\link{RMlocdepQ3cutoff}},
-#'   \code{\link{RMpgLDplot}}
+#' @seealso \code{\link{RMlocdepQ3}}, \code{\link{RMlocdepQ3Cutoff}},
+#'   \code{\link{RMlocdepGammaPlot}}
 #'
 #' @importFrom rlang .data
 #' @export
@@ -69,29 +69,29 @@
 #' colnames(sim_data) <- paste0("Item", 1:10)
 #'
 #' # Run simulation
-#' cutoff_res <- RMlocdepQ3cutoff(sim_data, iterations = 100,
+#' cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 100,
 #'                                parallel = FALSE, seed = 42)
 #'
 #' # Simulated distribution only
-#' RMlocdepQ3plot(cutoff_res)
+#' RMlocdepQ3Plot(cutoff_res)
 #'
 #' # With observed Q3 overlaid
-#' RMlocdepQ3plot(cutoff_res, data = sim_data)
+#' RMlocdepQ3Plot(cutoff_res, data = sim_data)
 #'
 #' # Top 10 pairs by departure from null
-#' RMlocdepQ3plot(cutoff_res, data = sim_data, n_pairs = 10)
+#' RMlocdepQ3Plot(cutoff_res, data = sim_data, n_pairs = 10)
 #' }
-RMlocdepQ3plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
+RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
 
   # --- Check required packages ------------------------------------------------
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Package 'ggplot2' is required for RMlocdepQ3plot().", call. = FALSE)
+    stop("Package 'ggplot2' is required for RMlocdepQ3Plot().", call. = FALSE)
   }
   if (!requireNamespace("ggdist", quietly = TRUE)) {
-    stop("Package 'ggdist' is required for RMlocdepQ3plot().", call. = FALSE)
+    stop("Package 'ggdist' is required for RMlocdepQ3Plot().", call. = FALSE)
   }
   if (!requireNamespace("scales", quietly = TRUE)) {
-    stop("Package 'scales' is required for RMlocdepQ3plot().", call. = FALSE)
+    stop("Package 'scales' is required for RMlocdepQ3Plot().", call. = FALSE)
   }
 
   # --- Validate simfit --------------------------------------------------------
@@ -102,7 +102,7 @@ RMlocdepQ3plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     stop(
       "`simfit` is missing required components: ",
       paste(missing_names, collapse = ", "),
-      ".\nExpected the return value of RMlocdepQ3cutoff() (this requires ",
+      ".\nExpected the return value of RMlocdepQ3Cutoff() (this requires ",
       "easyRasch2 >= 0.7; rerun the cutoff function if you have an older ",
       "cached result).",
       call. = FALSE

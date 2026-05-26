@@ -3,14 +3,14 @@
 #' Computes Yen's Q3 residual correlations between item pairs using a Rasch
 #' model fitted via Marginal Maximum Likelihood (MML) in `mirt`. High
 #' correlations (above the dynamic cut-off) indicate potential local dependence
-#' between items. See \code{\link{RMlocdepQ3cutoff}} for how to determine
+#' between items. See \code{\link{RMlocdepQ3Cutoff}} for how to determine
 #' the appropriate dynamic cut-off for your data.
 #'
 #' @param data A data.frame or matrix of item responses. Items must be scored
 #'   starting at 0 (non-negative integers). Missing values (`NA`) are allowed.
 #' @param cutoff Optional. Either a single numeric value (added to the mean
 #'   off-diagonal Q3 correlation to produce the dynamic cut-off threshold) or
-#'   the full list returned by \code{\link{RMlocdepQ3cutoff}} (from which
+#'   the full list returned by \code{\link{RMlocdepQ3Cutoff}} (from which
 #'   `$suggested_cutoff` is extracted automatically). When `NULL` (default),
 #'   the raw Q3 residual correlation matrix is returned without any dynamic
 #'   cut-off applied.
@@ -35,7 +35,7 @@
 #' Q3 values are expected to be around \eqn{-1/(k-1)} where \eqn{k} is the
 #' number of items. When `cutoff` is supplied, the dynamic cut-off is the mean
 #' of all off-diagonal Q3 values plus `cutoff`, following the approach of
-#' Christensen et al. (2017). Use \code{\link{RMlocdepQ3cutoff}} to obtain a
+#' Christensen et al. (2017). Use \code{\link{RMlocdepQ3Cutoff}} to obtain a
 #' simulation-based cutoff recommendation.
 #'
 #' `mirt` is used for model fitting here because Q3 requires model-based
@@ -69,20 +69,20 @@
 #' }
 #' \dontrun{
 #' # Simulation-based cutoff (slow): 100+ Monte-Carlo iterations
-#' cutoff_res <- RMlocdepQ3cutoff(sim_data, iterations = 100)
+#' cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 100)
 #' RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
 #' }
 RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
   # --- Input validation -------------------------------------------------------
   if (!is.null(cutoff)) {
-    # Accept the full RMlocdepQ3cutoff() return list as well as a bare numeric.
+    # Accept the full RMlocdepQ3Cutoff() return list as well as a bare numeric.
     if (is.list(cutoff) && !is.data.frame(cutoff) &&
         "suggested_cutoff" %in% names(cutoff)) {
       cutoff <- as.numeric(cutoff$suggested_cutoff)
     }
     if (!is.numeric(cutoff) || length(cutoff) != 1L || is.na(cutoff)) {
       stop("`cutoff` must be a single numeric value, NULL, or the list ",
-           "returned by RMlocdepQ3cutoff().", call. = FALSE)
+           "returned by RMlocdepQ3Cutoff().", call. = FALSE)
     }
   }
 
@@ -140,7 +140,7 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
       " Correlations exceeding the cut-off may indicate local dependence."
     )
   } else {
-    caption_text <- "Raw Q3 residual correlations (lower triangle). Use RMlocdepQ3cutoff() to derive a cutoff."
+    caption_text <- "Raw Q3 residual correlations (lower triangle). Use RMlocdepQ3Cutoff() to derive a cutoff."
   }
 
   # Replace NA with "" for display (knitr::kable doesn't render NA nicely)
@@ -200,7 +200,7 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
 #'     per successful iteration).}
 #'   \item{`pair_results`}{Long data.frame with columns `Item1`, `Item2`,
 #'     `Q3`, `iteration` --- one row per item pair per successful iteration.
-#'     Used by \code{\link{RMlocdepQ3plot}}.}
+#'     Used by \code{\link{RMlocdepQ3Plot}}.}
 #'   \item{`pair_cutoffs`}{data.frame with per-pair cutoff summaries:
 #'     `Item1`, `Item2`, `Q3_low`, `Q3_high`. Boundaries are computed via
 #'     the method specified by `cutoff_method`.}
@@ -246,14 +246,14 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
 #' colnames(sim_data) <- paste0("Item", 1:10)
 #'
 #' # Run 100 iterations sequentially for a quick demo
-#' cutoff_res <- RMlocdepQ3cutoff(sim_data, iterations = 100, parallel = FALSE,
+#' cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 100, parallel = FALSE,
 #'                                seed = 42)
 #' cutoff_res$suggested_cutoff  # 99th percentile
 #'
 #' # Use the cutoff in RMlocdepQ3()
 #' RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
 #' }
-RMlocdepQ3cutoff <- function(data, iterations = 500, parallel = TRUE,
+RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
                               n_cores = NULL, verbose = FALSE, seed = NULL,
                               cutoff_method = "hdci", hdci_width = 0.99) {
   validate_response_data(data)
@@ -452,7 +452,7 @@ RMlocdepQ3cutoff <- function(data, iterations = 500, parallel = TRUE,
 #' Run a single Q3 simulation iteration
 #'
 #' @param seed Integer seed for reproducibility.
-#' @param data_list List produced inside [RMlocdepQ3cutoff()].
+#' @param data_list List produced inside [RMlocdepQ3Cutoff()].
 #' @return A list with `mean` and `max` Q3, or a character string on failure.
 #' @keywords internal
 run_single_q3_sim <- function(seed, data_list) {

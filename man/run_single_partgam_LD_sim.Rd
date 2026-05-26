@@ -9,7 +9,7 @@ run_single_partgam_LD_sim(seed, data_list)
 \arguments{
 \item{seed}{Integer seed for reproducibility.}
 
-\item{data_list}{List produced inside \code{\link[=RMpgLDcutoff]{RMpgLDcutoff()}}.}
+\item{data_list}{List produced inside \code{\link[=RMlocdepGammaCutoff]{RMlocdepGammaCutoff()}}.}
 }
 \value{
 A data.frame with columns \code{Item1}, \code{Item2}, and \code{gamma}, or a

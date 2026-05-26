@@ -1,4 +1,4 @@
-# Tests for RMcfaCutoff() / RMcfaPlot()
+# Tests for RMdimCFACutoff() / RMdimCFAPlot()
 #
 # Iterations are intentionally very small (10-20) so the file runs in
 # a few seconds. Each test uses parallel = FALSE because parallel
@@ -7,48 +7,48 @@
 # ---------------------------------------------------------------------
 # Validation errors (no lavaan needed for these)
 # ---------------------------------------------------------------------
-test_that("RMcfaCutoff errors when lavaan is not installed", {
+test_that("RMdimCFACutoff errors when lavaan is not installed", {
   skip_if(requireNamespace("lavaan", quietly = TRUE),
           "lavaan is installed; skipping missing-package error path test")
   df <- as.data.frame(matrix(sample(0:1, 200, replace = TRUE),
                              nrow = 40, ncol = 5))
-  expect_error(RMcfaCutoff(df), regexp = "lavaan")
+  expect_error(RMdimCFACutoff(df), regexp = "lavaan")
 })
 
-test_that("RMcfaCutoff errors when data has non-zero minimum", {
+test_that("RMdimCFACutoff errors when data has non-zero minimum", {
   skip_if_not_installed("lavaan")
   df <- as.data.frame(matrix(sample(1:3, 200, replace = TRUE),
                              nrow = 40, ncol = 5))
-  expect_error(RMcfaCutoff(df), regexp = "scored starting at 0")
+  expect_error(RMdimCFACutoff(df), regexp = "scored starting at 0")
 })
 
-test_that("RMcfaCutoff errors when fewer than 3 items", {
+test_that("RMdimCFACutoff errors when fewer than 3 items", {
   skip_if_not_installed("lavaan")
   df <- as.data.frame(matrix(sample(0:1, 100, replace = TRUE),
                              nrow = 50, ncol = 2))
-  expect_error(RMcfaCutoff(df), regexp = "at least 3 items")
+  expect_error(RMdimCFACutoff(df), regexp = "at least 3 items")
 })
 
-test_that("RMcfaCutoff rejects ML-family estimators", {
+test_that("RMdimCFACutoff rejects ML-family estimators", {
   skip_if_not_installed("lavaan")
   df <- as.data.frame(matrix(sample(0:1, 200, replace = TRUE),
                              nrow = 40, ncol = 5))
   for (est in c("ML", "MLR", "MLM", "MLF")) {
     expect_error(
-      RMcfaCutoff(df, estimator = est, iterations = 5,
+      RMdimCFACutoff(df, estimator = est, iterations = 5,
                   parallel = FALSE),
       regexp = "not appropriate for ordinal-CFA"
     )
   }
 })
 
-test_that("RMcfaCutoff rejects out-of-range percentile", {
+test_that("RMdimCFACutoff rejects out-of-range percentile", {
   skip_if_not_installed("lavaan")
   df <- as.data.frame(matrix(sample(0:1, 200, replace = TRUE),
                              nrow = 40, ncol = 5))
   for (bad in c(0, 50, 100, 101, NA, -1)) {
     expect_error(
-      RMcfaCutoff(df, percentile = bad,
+      RMdimCFACutoff(df, percentile = bad,
                   iterations = 5, parallel = FALSE),
       regexp = "percentile"
     )
@@ -58,12 +58,12 @@ test_that("RMcfaCutoff rejects out-of-range percentile", {
 # ---------------------------------------------------------------------
 # Default output = "kable" with attr "result"
 # ---------------------------------------------------------------------
-test_that("RMcfaCutoff default output is a knitr_kable with the result list attached", {
+test_that("RMdimCFACutoff default output is a knitr_kable with the result list attached", {
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   data("raschdat1", package = "eRm")
 
-  res <- RMcfaCutoff(
+  res <- RMdimCFACutoff(
     raschdat1[, 1:8],
     iterations = 10,
     parallel   = FALSE,
@@ -79,12 +79,12 @@ test_that("RMcfaCutoff default output is a knitr_kable with the result list atta
 # ---------------------------------------------------------------------
 # Output structure (output = "list")
 # ---------------------------------------------------------------------
-test_that("RMcfaCutoff output = 'list' returns the expected structure on dichotomous data", {
+test_that("RMdimCFACutoff output = 'list' returns the expected structure on dichotomous data", {
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   data("raschdat1", package = "eRm")
 
-  res <- RMcfaCutoff(
+  res <- RMdimCFACutoff(
     raschdat1[, 1:8],
     iterations = 10,
     parallel   = FALSE,
@@ -120,10 +120,10 @@ test_that("Cutoffs change with different percentile values", {
   skip_if_not_installed("eRm")
   data("raschdat1", package = "eRm")
 
-  res99 <- RMcfaCutoff(raschdat1[, 1:8], iterations = 30,
+  res99 <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 30,
                        parallel = FALSE, seed = 1,
                        percentile = 99, output = "list")
-  res95 <- RMcfaCutoff(raschdat1[, 1:8], iterations = 30,
+  res95 <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 30,
                        parallel = FALSE, seed = 1,
                        percentile = 95, output = "list")
 
@@ -138,12 +138,12 @@ test_that("Cutoffs change with different percentile values", {
 # ---------------------------------------------------------------------
 # Output structure (PCM/polytomous on pcmdat2)
 # ---------------------------------------------------------------------
-test_that("RMcfaCutoff auto-picks PCM on polytomous data", {
+test_that("RMdimCFACutoff auto-picks PCM on polytomous data", {
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   data("pcmdat2", package = "eRm")
 
-  res <- RMcfaCutoff(
+  res <- RMdimCFACutoff(
     pcmdat2[1:100, ],
     iterations = 10,
     parallel   = FALSE,
@@ -162,9 +162,9 @@ test_that("Same seed produces identical simulated distributions", {
   skip_if_not_installed("eRm")
   data("raschdat1", package = "eRm")
 
-  res1 <- RMcfaCutoff(raschdat1[, 1:8], iterations = 5,
+  res1 <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 5,
                       parallel = FALSE, seed = 42, output = "list")
-  res2 <- RMcfaCutoff(raschdat1[, 1:8], iterations = 5,
+  res2 <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 5,
                       parallel = FALSE, seed = 42, output = "list")
   expect_equal(res1$simulated, res2$simulated)
   expect_equal(res1$observed,  res2$observed)
@@ -173,46 +173,46 @@ test_that("Same seed produces identical simulated distributions", {
 # ---------------------------------------------------------------------
 # Plot
 # ---------------------------------------------------------------------
-test_that("RMcfaPlot returns a ggplot object from a list result", {
+test_that("RMdimCFAPlot returns a ggplot object from a list result", {
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
   data("raschdat1", package = "eRm")
 
-  res <- RMcfaCutoff(raschdat1[, 1:8], iterations = 5,
+  res <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 5,
                      parallel = FALSE, seed = 1, output = "list")
-  p <- RMcfaPlot(res)
+  p <- RMdimCFAPlot(res)
   expect_s3_class(p, "ggplot")
 })
 
-test_that("RMcfaPlot accepts the kable output (reads result via attr)", {
+test_that("RMdimCFAPlot accepts the kable output (reads result via attr)", {
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
   data("raschdat1", package = "eRm")
 
-  res_kbl <- RMcfaCutoff(raschdat1[, 1:8], iterations = 5,
+  res_kbl <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 5,
                          parallel = FALSE, seed = 1)  # default kable
-  p <- RMcfaPlot(res_kbl)
+  p <- RMdimCFAPlot(res_kbl)
   expect_s3_class(p, "ggplot")
 })
 
-test_that("RMcfaPlot percentile override recomputes cutoffs without re-simulating", {
+test_that("RMdimCFAPlot percentile override recomputes cutoffs without re-simulating", {
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
   data("raschdat1", package = "eRm")
 
-  res <- RMcfaCutoff(raschdat1[, 1:8], iterations = 30,
+  res <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 30,
                      parallel = FALSE, seed = 1, output = "list")
-  expect_s3_class(RMcfaPlot(res, percentile = 95), "ggplot")
-  expect_s3_class(RMcfaPlot(res, percentile = 99.5), "ggplot")
-  expect_error(RMcfaPlot(res, percentile = 50),
+  expect_s3_class(RMdimCFAPlot(res, percentile = 95), "ggplot")
+  expect_s3_class(RMdimCFAPlot(res, percentile = 99.5), "ggplot")
+  expect_error(RMdimCFAPlot(res, percentile = 50),
                regexp = "percentile")
 })
 
-test_that("RMcfaPlot rejects non-RMcfaCutoff input", {
+test_that("RMdimCFAPlot rejects non-RMdimCFACutoff input", {
   skip_if_not_installed("ggplot2")
-  expect_error(RMcfaPlot(list(foo = 1)),
-               regexp = "must be the result returned by RMcfaCutoff")
+  expect_error(RMdimCFAPlot(list(foo = 1)),
+               regexp = "must be the result returned by RMdimCFACutoff")
 })

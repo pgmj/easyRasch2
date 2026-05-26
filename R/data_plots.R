@@ -49,7 +49,7 @@
 #'     and at least 1 row (person).
 #' }
 #'
-#' @seealso [RMstackedbarplot()], [RMtileplot()]
+#' @seealso [RMplotStackedbar()], [RMplotTile()]
 #'
 #' @examples
 #' if (requireNamespace("eRm", quietly = TRUE) &&
@@ -57,16 +57,16 @@
 #'   data(pcmdat2, package = "eRm")
 #'
 #'   # Basic response distribution plot
-#'   RMbarplot(pcmdat2)
+#'   RMplotBar(pcmdat2)
 #'
 #'   # With custom item labels
-#'   RMbarplot(
+#'   RMplotBar(
 #'     pcmdat2,
 #'     item_labels = c("Mood", "Sleep", "Appetite", "Energy")
 #'   )
 #'
 #'   # Two-column layout with wrapped labels
-#'   RMbarplot(
+#'   RMplotBar(
 #'     pcmdat2,
 #'     item_labels = c(
 #'       "General mood and emotional wellbeing",
@@ -78,7 +78,7 @@
 #'   )
 #'
 #'   # With custom category labels
-#'   RMbarplot(
+#'   RMplotBar(
 #'     pcmdat2,
 #'     category_labels = c("Never", "Sometimes", "Often")
 #'   )
@@ -86,7 +86,7 @@
 #'
 #' @importFrom rlang .data
 #' @export
-RMbarplot <- function(
+RMplotBar <- function(
     data,
     item_labels     = NULL,
     category_labels = NULL,
@@ -99,7 +99,7 @@ RMbarplot <- function(
 ) {
 
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Package 'ggplot2' is required for RMbarplot().",
+    stop("Package 'ggplot2' is required for RMplotBar().",
          call. = FALSE)
   }
 
@@ -124,7 +124,7 @@ RMbarplot <- function(
     stop("All columns must be numeric. Non-numeric column(s): ",
          paste(non_numeric, collapse = ", "),
          ". Remove non-item columns (e.g., person IDs, grouping ",
-         "variables) before passing to RMbarplot().",
+         "variables) before passing to RMplotBar().",
          call. = FALSE)
   }
 
@@ -303,7 +303,7 @@ RMbarplot <- function(
 #'     and at least 1 row (person).
 #' }
 #'
-#' @seealso [RMbarplot()], [RMtileplot()]
+#' @seealso [RMplotBar()], [RMplotTile()]
 #'
 #' @examples
 #' if (requireNamespace("eRm", quietly = TRUE) &&
@@ -311,17 +311,17 @@ RMbarplot <- function(
 #'   data(pcmdat2, package = "eRm")
 #'
 #'   # Basic stacked bar chart
-#'   RMstackedbarplot(pcmdat2)
+#'   RMplotStackedbar(pcmdat2)
 #'
 #'   # With custom item and category labels
-#'   RMstackedbarplot(
+#'   RMplotStackedbar(
 #'     pcmdat2,
 #'     item_labels     = c("Mood", "Sleep", "Appetite", "Energy"),
 #'     category_labels = c("Never", "Sometimes", "Often")
 #'   )
 #'
 #'   # Show percentages, suppress small segments
-#'   RMstackedbarplot(
+#'   RMplotStackedbar(
 #'     pcmdat2,
 #'     show_percent = TRUE,
 #'     show_n       = FALSE,
@@ -331,7 +331,7 @@ RMbarplot <- function(
 #'
 #' @importFrom rlang .data
 #' @export
-RMstackedbarplot <- function(
+RMplotStackedbar <- function(
     data,
     item_labels     = NULL,
     category_labels = NULL,
@@ -346,7 +346,7 @@ RMstackedbarplot <- function(
 ) {
 
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Package 'ggplot2' is required for RMstackedbarplot().",
+    stop("Package 'ggplot2' is required for RMplotStackedbar().",
          call. = FALSE)
   }
 
@@ -371,7 +371,7 @@ RMstackedbarplot <- function(
     stop("All columns must be numeric. Non-numeric column(s): ",
          paste(non_numeric, collapse = ", "),
          ". Remove non-item columns (e.g., person IDs, grouping ",
-         "variables) before passing to RMstackedbarplot().",
+         "variables) before passing to RMplotStackedbar().",
          call. = FALSE)
   }
 

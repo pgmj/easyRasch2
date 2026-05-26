@@ -74,9 +74,9 @@ imposes no reverse-dependency burden.
   opinionated wrappers around `eRm`, `psychotools`, `iarm`, `mirt`,
   and `lavaan` rather than duplicating their estimation routines.
 * Several diagnostics provide parametric-bootstrap cutoff alternatives
-  to rule-of-thumb thresholds (e.g. `RMinfitcutoff()`,
-  `RMpgDIFcutoff()`, `RMpgLDcutoff()`, `RMlocdepQ3cutoff()`,
-  `RMpcaCutoff()`, `RMcfaCutoff()`). These are the most computationally
+  to rule-of-thumb thresholds (e.g. `RMitemInfitCutoff()`,
+  `RMdifGammaCutoff()`, `RMlocdepGammaCutoff()`, `RMlocdepQ3Cutoff()`,
+  `RMdimResidualPCACutoff()`, `RMdimCFACutoff()`). These are the most computationally
   expensive entry points and account for the majority of `\donttest{}`
   / `\dontrun{}` examples.
 * Spelling: the package uses British spellings in some user-facing

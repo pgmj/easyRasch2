@@ -113,7 +113,7 @@ distributions:
 
 
 ``` r
-RMbarplot(items, ncol = 2)
+RMplotBar(items, ncol = 2)
 ```
 
 <div class="figure">
@@ -123,7 +123,7 @@ RMbarplot(items, ncol = 2)
 
 
 ``` r
-RMtileplot(items, category_labels = item_resp)
+RMplotTile(items, category_labels = item_resp)
 ```
 
 <div class="figure">
@@ -133,7 +133,7 @@ RMtileplot(items, category_labels = item_resp)
 
 
 ``` r
-RMstackedbarplot(items, show_percent = TRUE)
+RMplotStackedbar(items, show_percent = TRUE)
 ```
 
 <div class="figure">
@@ -156,15 +156,15 @@ diagnostics that can be combined for a robust conclusion:
 ### Conditional infit MSQ
 
 Conditional item infit mean-square statistics flag items whose response
-patterns deviate from the Rasch expectation. With `RMinfitcutoff()`, per-item
+patterns deviate from the Rasch expectation. With `RMitemInfitCutoff()`, per-item
 highest-density intervals serve as the reference instead rule-of-thumb cutoffs
 [@johansson_detecting_2025].
 
 
 ``` r
-infit_cut <- RMinfitcutoff(items, iterations = 100, parallel = FALSE,
+infit_cut <- RMitemInfitCutoff(items, iterations = 100, parallel = FALSE,
                            seed = 3)
-RMiteminfit(items, cutoff = infit_cut)
+RMitemInfit(items, cutoff = infit_cut)
 ```
 
 
@@ -185,7 +185,7 @@ Table: MSQ values based on conditional estimation (n = 600 complete cases). Cuto
 
 
 
-You can also get a plot summarizing simulated and observed item infit, using `RMinfitcutoffPlot()`. Since conditional infit needs complete data, there is a sibling function that uses multiple imputation with infit that is useful if you have partial missingness in your data - `RMiteminfit_mi()` and `RMinfitcutoff_mi()`.
+You can also get a plot summarizing simulated and observed item infit, using `RMitemInfitCutoffPlot()`. Since conditional infit needs complete data, there is a sibling function that uses multiple imputation with infit that is useful if you have partial missingness in your data - `RMitemInfitMI()` and `RMitemInfitCutoffMI()`.
 
 It is important to note that the `RIitemfit()` function uses **conditional**
 infit, which is both robust to different sample sizes and makes ZSTD unnecessary
@@ -209,7 +209,7 @@ continuum, with respondents split into groups based on their total score.
 
 
 ``` r
-RMciccPlot(items, class_intervals = 5)
+RMitemICCPlot(items, class_intervals = 5)
 ```
 
 <div class="figure">
@@ -233,7 +233,7 @@ experience), and less often flags underfit items (based on a simulation study
 
 
 ``` r
-RMitemrestscore(items)
+RMitemRestscore(items)
 ```
 
 
@@ -256,7 +256,7 @@ RMitemrestscore(items)
 
 ### CFA-based cutoff for CFI / RMSEA
 
-`RMcfaCutoff()` fits a unidimensional ordinal CFA both to the observed
+`RMdimCFACutoff()` fits a unidimensional ordinal CFA both to the observed
 data and to data simulated from a unidimensional PCM, and returns
 parametric-bootstrap cut-offs for model fit indices SRMR, CFI and RMSEA.
 Model fit values that exceed the simulated cut-off values are *more extreme
@@ -264,7 +264,7 @@ than is plausible under a unidimensional data generating process*.
 
 
 ``` r
-cfa_cut <- RMcfaCutoff(items, iterations = 100, parallel = FALSE,
+cfa_cut <- RMdimCFACutoff(items, iterations = 100, parallel = FALSE,
                        seed = 2)
 cfa_cut
 ```
@@ -291,9 +291,9 @@ the largest eigenvalue does not by itself support unidimensionality.
 
 
 ``` r
-pca_cut <- RMpcaCutoff(items, iterations = 100, parallel = FALSE,
+pca_cut <- RMdimResidualPCACutoff(items, iterations = 100, parallel = FALSE,
                        seed = 1)
-RMresidualPCA(items, cutoff = pca_cut)
+RMdimResidualPCA(items, cutoff = pca_cut)
 ```
 
 
@@ -317,7 +317,7 @@ in data, perhaps related to local dependency and/or multidimensionality.
 
 
 ``` r
-RMresidualPCA(items, output = "loadings")
+RMdimResidualPCA(items, output = "loadings")
 ```
 
 <div class="figure">
@@ -335,12 +335,28 @@ $Q_3$ values above the simulation-based cut-off flag LD [@christensen2017].
 
 
 ``` r
-q3_cut <- RMlocdepQ3cutoff(items, iterations = 100, parallel = FALSE,
+q3_cut <- RMlocdepQ3Cutoff(items, iterations = 100, parallel = FALSE,
                            seed = 4)
 RMlocdepQ3(items, cutoff = q3_cut)
-#> Error:
-#> ! `cutoff` must be a single numeric value or NULL.
 ```
+
+
+
+Table: Dynamic cut-off: 0.037 (mean Q3 = -0.114 + 0.152). Correlations exceeding the cut-off may indicate local dependence.
+
+|   |q1    |q2    |q3    |q4    |q5    |q6    |q7    |q8    |q9 |above_cutoff |
+|:--|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:--|:------------|
+|q1 |      |      |      |      |      |      |      |      |   |             |
+|q2 |0.25  |      |      |      |      |      |      |      |   |*            |
+|q3 |-0.19 |-0.2  |      |      |      |      |      |      |   |             |
+|q4 |0     |-0.04 |0.07  |      |      |      |      |      |   |*            |
+|q5 |-0.21 |-0.28 |0.07  |0     |      |      |      |      |   |*            |
+|q6 |-0.18 |0.04  |-0.2  |-0.16 |-0.13 |      |      |      |   |*            |
+|q7 |-0.13 |-0.2  |-0.22 |-0.09 |-0.14 |-0.05 |      |      |   |             |
+|q8 |-0.17 |-0.3  |-0.17 |-0.15 |-0.09 |-0.17 |0.07  |      |   |*            |
+|q9 |-0.14 |0.06  |-0.23 |-0.28 |-0.24 |0.01  |-0.18 |-0.12 |   |*            |
+
+
 
 A second perspective on LD is the *partial gamma* coefficient
 [@kreinerAnalysisLocalDependence2004;@kreiner_validity_2007] between observed
@@ -348,7 +364,7 @@ item pairs, conditional on the rest-score. Note that this function evaluates bot
 
 
 ``` r
-RMpartgamLD(items, n_pairs = 6)
+RMlocdepGamma(items, n_pairs = 6)
 ```
 
 Table: Partial gamma LD analysis (n = 600 complete cases). Positive gamma indicates positive local dependence between items. Showing top 6 of 36 pairs by |gamma|. Direction 1: rest score = total - Item2.
@@ -373,7 +389,7 @@ Table: Partial gamma LD analysis (n = 600 complete cases). Positive gamma indica
 |q5     |q3     |         0.303|             0.000|***           |
 |q9     |q2     |         0.291|             0.007|**            |
 
-You can also get simulation-based thresholds for partial gamma LD, using `RMpgLDcutoff()`, which can be used with `RMpartgamLD()` and also to plot the results with `RMpgLDplot()`
+You can also get simulation-based thresholds for partial gamma LD, using `RMlocdepGammaCutoff()`, which can be used with `RMlocdepGamma()` and also to plot the results with `RMlocdepGammaPlot()`
 
 Item pairs flagged by both $Q_3$ and partial gamma are
 the strongest candidates for further inspection or possible item
@@ -455,7 +471,7 @@ the corresponding confidence band.
 
 
 ``` r
-RMpartgamDIF(items_g, dif_var = gender_g)
+RMdifGamma(items_g, dif_var = gender_g)
 ```
 
 
@@ -517,7 +533,7 @@ Table: Reliability for 9 items, n = 600. PSI excludes min/max scoring respondent
 |Cronbach's alpha |    0.886|               NA|               NA|no bootstrap               |
 |PSI              |    0.847|               NA|               NA|no bootstrap               |
 |Empirical (WLE)  |    0.872|               NA|               NA|no bootstrap               |
-|RMU (WLE)        |    0.883|            0.867|            0.898|200 PVs, 20 RMU iterations |
+|RMU (WLE)        |    0.883|            0.868|            0.897|200 PVs, 20 RMU iterations |
 
 
 

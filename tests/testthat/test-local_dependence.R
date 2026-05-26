@@ -64,15 +64,15 @@ test_that("RMlocdepQ3 returns a knitr_kable object when output = 'kable'", {
 })
 
 # ---------------------------------------------------------------------
-# RMlocdepQ3cutoff -- small iterations
+# RMlocdepQ3Cutoff -- small iterations
 # ---------------------------------------------------------------------
-test_that("RMlocdepQ3cutoff returns the expected list structure", {
+test_that("RMlocdepQ3Cutoff returns the expected list structure", {
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   set.seed(1)
   df <- as.data.frame(matrix(sample(0:1, 200 * 8, replace = TRUE), 200, 8))
   colnames(df) <- paste0("I", 1:8)
-  res <- RMlocdepQ3cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
+  res <- RMlocdepQ3Cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
   expect_type(res, "list")
   expect_true(all(c("results", "p95", "p99", "p995", "p999",
                     "suggested_cutoff", "actual_iterations",
@@ -81,39 +81,39 @@ test_that("RMlocdepQ3cutoff returns the expected list structure", {
   expect_true(is.finite(res$suggested_cutoff))
 })
 
-test_that("RMlocdepQ3cutoff result is consumable by RMlocdepQ3", {
+test_that("RMlocdepQ3Cutoff result is consumable by RMlocdepQ3", {
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   set.seed(1)
   df <- as.data.frame(matrix(sample(0:1, 200 * 8, replace = TRUE), 200, 8))
   colnames(df) <- paste0("I", 1:8)
-  cu  <- RMlocdepQ3cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
+  cu  <- RMlocdepQ3Cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
   out <- RMlocdepQ3(df, cutoff = cu$suggested_cutoff)
   expect_s3_class(out, "knitr_kable")
 })
 
-test_that("RMlocdepQ3cutoff is reproducible with the same seed", {
+test_that("RMlocdepQ3Cutoff is reproducible with the same seed", {
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   set.seed(1)
   df <- as.data.frame(matrix(sample(0:1, 200 * 8, replace = TRUE), 200, 8))
   colnames(df) <- paste0("I", 1:8)
-  r1 <- RMlocdepQ3cutoff(df, iterations = 5L, parallel = FALSE, seed = 42L)
-  r2 <- RMlocdepQ3cutoff(df, iterations = 5L, parallel = FALSE, seed = 42L)
+  r1 <- RMlocdepQ3Cutoff(df, iterations = 5L, parallel = FALSE, seed = 42L)
+  r2 <- RMlocdepQ3Cutoff(df, iterations = 5L, parallel = FALSE, seed = 42L)
   expect_equal(r1$results, r2$results)
 })
 
 # ---------------------------------------------------------------------
 # Per-pair additions (pair_results / pair_cutoffs / item_names)
 # ---------------------------------------------------------------------
-test_that("RMlocdepQ3cutoff returns pair_results / pair_cutoffs / item_names", {
+test_that("RMlocdepQ3Cutoff returns pair_results / pair_cutoffs / item_names", {
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggdist")
   set.seed(1)
   df <- as.data.frame(matrix(sample(0:1, 200 * 8, replace = TRUE), 200, 8))
   colnames(df) <- paste0("I", 1:8)
-  res <- RMlocdepQ3cutoff(df, iterations = 5L, parallel = FALSE, seed = 42L)
+  res <- RMlocdepQ3Cutoff(df, iterations = 5L, parallel = FALSE, seed = 42L)
 
   # New top-level slots
   expect_true(all(c("pair_results", "pair_cutoffs", "item_names",
@@ -139,13 +139,13 @@ test_that("RMlocdepQ3cutoff returns pair_results / pair_cutoffs / item_names", {
   expect_equal(res$item_names, colnames(df))
 })
 
-test_that("RMlocdepQ3cutoff cutoff_method = 'quantile' works without ggdist", {
+test_that("RMlocdepQ3Cutoff cutoff_method = 'quantile' works without ggdist", {
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   set.seed(1)
   df <- as.data.frame(matrix(sample(0:1, 200 * 6, replace = TRUE), 200, 6))
   colnames(df) <- paste0("I", 1:6)
-  res <- RMlocdepQ3cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L,
+  res <- RMlocdepQ3Cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L,
                           cutoff_method = "quantile")
   expect_equal(res$cutoff_method, "quantile")
   expect_true(all(c("Q3_low", "Q3_high") %in% names(res$pair_cutoffs)))
@@ -161,7 +161,7 @@ test_that("RMlocdepQ3 extracts $suggested_cutoff when given full simfit", {
   set.seed(1)
   df <- as.data.frame(matrix(sample(0:1, 200 * 6, replace = TRUE), 200, 6))
   colnames(df) <- paste0("I", 1:6)
-  cu  <- RMlocdepQ3cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
+  cu  <- RMlocdepQ3Cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
   # Pass the FULL list — should match passing just the scalar
   a <- RMlocdepQ3(df, cutoff = cu,                  output = "dataframe")
   b <- RMlocdepQ3(df, cutoff = cu$suggested_cutoff, output = "dataframe")
@@ -169,9 +169,9 @@ test_that("RMlocdepQ3 extracts $suggested_cutoff when given full simfit", {
 })
 
 # ---------------------------------------------------------------------
-# RMlocdepQ3plot
+# RMlocdepQ3Plot
 # ---------------------------------------------------------------------
-test_that("RMlocdepQ3plot returns a ggplot in both cases", {
+test_that("RMlocdepQ3Plot returns a ggplot in both cases", {
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggdist")
@@ -180,18 +180,18 @@ test_that("RMlocdepQ3plot returns a ggplot in both cases", {
   set.seed(1)
   df <- as.data.frame(matrix(sample(0:1, 200 * 6, replace = TRUE), 200, 6))
   colnames(df) <- paste0("I", 1:6)
-  cu <- RMlocdepQ3cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
+  cu <- RMlocdepQ3Cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
 
   # Case 1: no data
-  p1 <- RMlocdepQ3plot(cu)
+  p1 <- RMlocdepQ3Plot(cu)
   expect_s3_class(p1, "ggplot")
 
   # Case 2: observed data overlay
-  p2 <- RMlocdepQ3plot(cu, data = df)
+  p2 <- RMlocdepQ3Plot(cu, data = df)
   expect_s3_class(p2, "ggplot")
 })
 
-test_that("RMlocdepQ3plot n_pairs trims and orders by deviation", {
+test_that("RMlocdepQ3Plot n_pairs trims and orders by deviation", {
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggdist")
@@ -200,32 +200,32 @@ test_that("RMlocdepQ3plot n_pairs trims and orders by deviation", {
   set.seed(1)
   df <- as.data.frame(matrix(sample(0:1, 200 * 6, replace = TRUE), 200, 6))
   colnames(df) <- paste0("I", 1:6)
-  cu <- RMlocdepQ3cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
+  cu <- RMlocdepQ3Cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
 
-  p <- RMlocdepQ3plot(cu, data = df, n_pairs = 3L)
+  p <- RMlocdepQ3Plot(cu, data = df, n_pairs = 3L)
   expect_s3_class(p, "ggplot")
   # Pair factor should have exactly 3 levels
   expect_equal(nlevels(p$data$Pair), 3L)
 })
 
-test_that("RMlocdepQ3plot validates inputs", {
+test_that("RMlocdepQ3Plot validates inputs", {
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggdist")
   set.seed(1)
   df <- as.data.frame(matrix(sample(0:1, 200 * 6, replace = TRUE), 200, 6))
   colnames(df) <- paste0("I", 1:6)
-  cu <- RMlocdepQ3cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
+  cu <- RMlocdepQ3Cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
 
   # Missing required simfit slots
-  expect_error(RMlocdepQ3plot(list(results = data.frame())),
+  expect_error(RMlocdepQ3Plot(list(results = data.frame())),
                regexp = "missing required components")
   # n_pairs validation
-  expect_error(RMlocdepQ3plot(cu, n_pairs = 0L),  regexp = "positive integer")
-  expect_error(RMlocdepQ3plot(cu, n_pairs = 1.5), regexp = "positive integer")
+  expect_error(RMlocdepQ3Plot(cu, n_pairs = 0L),  regexp = "positive integer")
+  expect_error(RMlocdepQ3Plot(cu, n_pairs = 1.5), regexp = "positive integer")
   # items validation
-  expect_error(RMlocdepQ3plot(cu, items = "no_such_item"),
+  expect_error(RMlocdepQ3Plot(cu, items = "no_such_item"),
                regexp = "Unknown item")
-  expect_error(RMlocdepQ3plot(cu, items = c("I1")),
+  expect_error(RMlocdepQ3Plot(cu, items = c("I1")),
                regexp = "at least 2 item names")
 })

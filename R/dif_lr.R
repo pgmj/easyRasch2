@@ -185,7 +185,7 @@ RMdifLR <- function(data,
     error = function(e) {
       stop("eRm::LRtest() failed: ", conditionMessage(e),
            "\nThis often indicates an empty response category in one ",
-           "subgroup. Inspect with RMtileplot(data, group = dif_var).",
+           "subgroup. Inspect with RMplotTile(data, group = dif_var).",
            call. = FALSE)
     }
   )

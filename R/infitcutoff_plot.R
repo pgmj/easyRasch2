@@ -1,14 +1,14 @@
 #' Plot Distribution of Simulated Infit and Outfit MSQ Values
 #'
 #' Visualises the distribution of simulation-based conditional item fit values
-#' from \code{\link{RMinfitcutoff}}, optionally overlaying observed item fit
+#' from \code{\link{RMitemInfitCutoff}}, optionally overlaying observed item fit
 #' from the original data.
 #'
 #' Uses `ggdist::stat_dotsinterval()` (when `data` is not supplied) or
 #' `ggdist::stat_dots()` (when `data` is supplied) with
 #' `point_interval = "median_hdci"` and `.width = c(0.66, 0.999)`.
 #'
-#' @param simfit The return value of \code{\link{RMinfitcutoff}} (a list with
+#' @param simfit The return value of \code{\link{RMitemInfitCutoff}} (a list with
 #'   components `results`, `item_cutoffs`, `actual_iterations`, `sample_n`, and
 #'   `item_names`).
 #' @param data Optional. A data.frame or matrix of item responses for computing
@@ -45,7 +45,7 @@
 #' The `ggplot2`, `ggdist`, and optionally `patchwork` packages must be
 #' installed (they are in Suggests, not Imports).
 #'
-#' @seealso \code{\link{RMinfitcutoff}}, \code{\link{RMiteminfit}}
+#' @seealso \code{\link{RMitemInfitCutoff}}, \code{\link{RMitemInfit}}
 #'
 #' @importFrom rlang .data
 #' @export
@@ -59,31 +59,31 @@
 #' colnames(sim_data) <- paste0("Item", 1:10)
 #'
 #' # Run simulation
-#' cutoff_res <- RMinfitcutoff(sim_data, iterations = 100, parallel = FALSE,
+#' cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100, parallel = FALSE,
 #'                             seed = 42)
 #'
 #' # Simulated distribution only (infit + outfit faceted)
-#' RMinfitcutoffPlot(cutoff_res)
+#' RMitemInfitCutoffPlot(cutoff_res)
 #'
 #' # With observed fit overlaid (infit only, the default)
-#' RMinfitcutoffPlot(cutoff_res, data = sim_data)
+#' RMitemInfitCutoffPlot(cutoff_res, data = sim_data)
 #'
 #' # Both infit and outfit panels side by side
-#' RMinfitcutoffPlot(cutoff_res, data = sim_data, output = "both")
+#' RMitemInfitCutoffPlot(cutoff_res, data = sim_data, output = "both")
 #' }
-RMinfitcutoffPlot <- function(simfit, data, output = "infit") {
+RMitemInfitCutoffPlot <- function(simfit, data, output = "infit") {
 
   # --- Check required packages ------------------------------------------------
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop(
-      "Package 'ggplot2' is required for RMinfitcutoffPlot() but is not installed.\n",
+      "Package 'ggplot2' is required for RMitemInfitCutoffPlot() but is not installed.\n",
       "Install it with: install.packages(\"ggplot2\")",
       call. = FALSE
     )
   }
   if (!requireNamespace("ggdist", quietly = TRUE)) {
     stop(
-      "Package 'ggdist' is required for RMinfitcutoffPlot() but is not installed.\n",
+      "Package 'ggdist' is required for RMitemInfitCutoffPlot() but is not installed.\n",
       "Install it with: install.packages(\"ggdist\")",
       call. = FALSE
     )
@@ -99,7 +99,7 @@ RMinfitcutoffPlot <- function(simfit, data, output = "infit") {
     stop(
       "`simfit` is missing required components: ",
       paste(missing_names, collapse = ", "),
-      ".\nExpected the return value of RMinfitcutoff().",
+      ".\nExpected the return value of RMitemInfitCutoff().",
       call. = FALSE
     )
   }

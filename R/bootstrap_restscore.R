@@ -9,7 +9,7 @@
 #' iterations in which each item is flagged.
 #'
 #' Useful with large samples, where the asymptotic test underlying
-#' \code{\link{RMitemrestscore}} can flag items that are not practically
+#' \code{\link{RMitemRestscore}} can flag items that are not practically
 #' misfitting; bootstrapping gives a more nuanced view of the probability of
 #' an item actually being misfit.
 #'
@@ -75,7 +75,7 @@
 #' *Applied Psychological Measurement, 35*(7), 557-561.
 #' \doi{10.1177/0146621611410227}
 #'
-#' @seealso \code{\link{RMitemrestscore}}, \code{\link{RMiteminfit}}
+#' @seealso \code{\link{RMitemRestscore}}, \code{\link{RMitemInfit}}
 #'
 #' @export
 #'
@@ -88,16 +88,16 @@
 #' colnames(sim_data) <- paste0("Item", 1:8)
 #'
 #' # Default kable output (only items flagged > cutoff%)
-#' RMbootRestscore(sim_data, iterations = 100, samplesize = 400,
+#' RMitemRestscoreBoot(sim_data, iterations = 100, samplesize = 400,
 #'                 parallel = FALSE, seed = 1)
 #'
 #' # Per-item summary data.frame (all classifications, including "no misfit")
-#' summary_df <- RMbootRestscore(sim_data, iterations = 100, samplesize = 400,
+#' summary_df <- RMitemRestscoreBoot(sim_data, iterations = 100, samplesize = 400,
 #'                               parallel = FALSE, seed = 1,
 #'                               output = "dataframe")
 #'
 #' # Per-iteration long data for custom plotting
-#' raw_df <- RMbootRestscore(sim_data, iterations = 100, samplesize = 400,
+#' raw_df <- RMitemRestscoreBoot(sim_data, iterations = 100, samplesize = 400,
 #'                           parallel = FALSE, seed = 1, output = "raw")
 #'
 #' # Distribution of (expected - observed) across iterations, per item
@@ -114,7 +114,7 @@
 #'   theme_minimal() +
 #'   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 #' }
-RMbootRestscore <- function(data,
+RMitemRestscoreBoot <- function(data,
                             iterations = 200,
                             samplesize = 600,
                             parallel   = TRUE,
@@ -126,7 +126,7 @@ RMbootRestscore <- function(data,
 
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
-      "Package 'iarm' is required for RMbootRestscore() but is not installed.\n",
+      "Package 'iarm' is required for RMitemRestscoreBoot() but is not installed.\n",
       "Install it with: install.packages(\"iarm\")",
       call. = FALSE
     )
@@ -325,7 +325,7 @@ RMbootRestscore <- function(data,
 #' Run a single item-restscore bootstrap iteration
 #'
 #' @param seed Integer seed for reproducibility.
-#' @param data_list List produced inside [RMbootRestscore()] containing `data`,
+#' @param data_list List produced inside [RMitemRestscoreBoot()] containing `data`,
 #'   `samplesize`, `is_polytomous`, `item_names`.
 #' @return A data.frame with columns `Item`, `item_restscore`, `diff`,
 #'   `diff_abs`, or a character string on failure.

@@ -9,7 +9,7 @@ run_single_infit_sim(seed, data_list)
 \arguments{
 \item{seed}{Integer seed for reproducibility.}
 
-\item{data_list}{List produced inside \code{\link[=RMinfitcutoff]{RMinfitcutoff()}}.}
+\item{data_list}{List produced inside \code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}}.}
 }
 \value{
 A data.frame with columns \code{Item}, \code{InfitMSQ}, \code{OutfitMSQ}, or a

@@ -1,3 +1,30 @@
+# easyRasch2 0.8.0
+
+## Function renaming for consistency
+
+This release renames **22 exported functions** under a consistent
+*domain-prefix → method → variant-suffix* scheme so that autocompletion
+on a prefix (`RMdif`, `RMlocdep`, `RMitem`, `RMdim`, `RMplot`) surfaces
+every related function. No semantic changes; only names.
+
+A complete mapping is on the new `?easyRasch2-renaming` help page. The
+short version:
+
+| Domain          | Prefix       | Examples |
+|-----------------|--------------|----------|
+| DIF             | `RMdif`      | `RMdifGamma()`, `RMdifGammaCutoff()`, `RMdifGammaPlot()`, `RMdifLR()`, `RMdifTree()` |
+| Local dependence| `RMlocdep`   | `RMlocdepQ3()`, `RMlocdepQ3Cutoff()`, `RMlocdepQ3Plot()`, `RMlocdepGamma()`, `RMlocdepGammaCutoff()`, `RMlocdepGammaPlot()` |
+| Item statistics | `RMitem`     | `RMitemInfit()`, `RMitemInfitCutoff()`, `RMitemInfitCutoffPlot()`, `RMitemInfitMI()`, `RMitemInfitCutoffMI()`, `RMitemRestscore()`, `RMitemRestscoreBoot()`, `RMitemICCPlot()`, `RMitemHierarchy()` |
+| Dimensionality  | `RMdim`      | `RMdimResidualPCA()`, `RMdimResidualPCACutoff()`, `RMdimCFACutoff()`, `RMdimCFAPlot()`, `RMdimMartinLof()`, `RMdimMartinLofResiduals()` |
+| Descriptive plot| `RMplot`     | `RMplotTile()`, `RMplotBar()`, `RMplotStackedbar()` |
+
+Unchanged: `RMreliability()`, `RMUreliability()`, `RMtargeting()`,
+`RMscoreSE()`.
+
+**Breaking change.** No deprecation aliases are shipped — existing
+scripts will need a search-and-replace. See `?easyRasch2-renaming` for
+the full table.
+
 # easyRasch2 0.7.1
 
 - New **`RMlocdepQ3plot()`** for visualising per-pair simulated Q3

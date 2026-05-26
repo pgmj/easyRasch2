@@ -56,7 +56,7 @@
 #' in Rasch Models}. R package version 0.4.3.
 #' \url{https://CRAN.R-project.org/package=iarm}
 #'
-#' @seealso [iarm::ICCplot()], [RMtargeting()], [RMtileplot()]
+#' @seealso [iarm::ICCplot()], [RMtargeting()], [RMplotTile()]
 #'
 #' @examples
 #' \donttest{
@@ -65,16 +65,16 @@
 #' #     may collapse to fewer bins than requested when the score
 #' #     distribution is peaked. `pcmdat2` happens to accept 3 or 5 but
 #' #     not 4. See `?iarm::ICCplot`; `method = "score"` avoids the issue.
-#' RMciccPlot(pcmdat2, class_intervals = 5)
+#' RMitemICCPlot(pcmdat2, class_intervals = 5)
 #'
 #' # With DIF grouping
 #' set.seed(1)
 #' grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
-#' RMciccPlot(pcmdat2, class_intervals = 5, dif_var = grp)
+#' RMitemICCPlot(pcmdat2, class_intervals = 5, dif_var = grp)
 #' }
 #'
 #' @export
-RMciccPlot <- function(data,
+RMitemICCPlot <- function(data,
                        class_intervals = 4L,
                        method          = c("cut", "score"),
                        dif_var         = NULL,
@@ -85,7 +85,7 @@ RMciccPlot <- function(data,
 
   # --- Package availability -------------------------------------------------
   if (!requireNamespace("iarm", quietly = TRUE)) {
-    stop("Package 'iarm' is required for RMciccPlot(). ",
+    stop("Package 'iarm' is required for RMitemICCPlot(). ",
          "Install with: install.packages(\"iarm\")",
          call. = FALSE)
   }
@@ -96,7 +96,7 @@ RMciccPlot <- function(data,
          call. = FALSE)
   }
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Package 'ggplot2' is required for RMciccPlot(). ",
+    stop("Package 'ggplot2' is required for RMitemICCPlot(). ",
          "Install with: install.packages(\"ggplot2\")",
          call. = FALSE)
   }
@@ -105,7 +105,7 @@ RMciccPlot <- function(data,
   validate_response_data(data)
   data <- as.data.frame(data)
   if (ncol(data) < 2L) {
-    stop("RMciccPlot() requires at least 2 items.", call. = FALSE)
+    stop("RMitemICCPlot() requires at least 2 items.", call. = FALSE)
   }
 
   # --- class_intervals validation ------------------------------------------

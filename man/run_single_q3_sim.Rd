@@ -9,7 +9,7 @@ run_single_q3_sim(seed, data_list)
 \arguments{
 \item{seed}{Integer seed for reproducibility.}
 
-\item{data_list}{List produced inside \code{\link[=RMlocdepQ3cutoff]{RMlocdepQ3cutoff()}}.}
+\item{data_list}{List produced inside \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}.}
 }
 \value{
 A list with \code{mean} and \code{max} Q3, or a character string on failure.

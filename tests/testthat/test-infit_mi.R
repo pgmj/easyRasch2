@@ -1,4 +1,4 @@
-# Tests for RMinfitcutoff_mi() and RMiteminfit_mi()
+# Tests for RMitemInfitCutoffMI() and RMitemInfitMI()
 
 # Build a small `mids` (multiply-imputed dataset) object once for the file.
 make_mids <- function(n = 200, k = 5, prop_na = 0.05, seed = 1L) {
@@ -12,16 +12,16 @@ make_mids <- function(n = 200, k = 5, prop_na = 0.05, seed = 1L) {
 }
 
 # ---------------------------------------------------------------------
-# RMinfitcutoff_mi
+# RMitemInfitCutoffMI
 # ---------------------------------------------------------------------
-test_that("RMinfitcutoff_mi returns the expected list structure", {
+test_that("RMitemInfitCutoffMI returns the expected list structure", {
   skip_if_not_installed("mice")
   skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
 
   imp <- make_mids()
-  res <- RMinfitcutoff_mi(imp, iterations = 5L,
+  res <- RMitemInfitCutoffMI(imp, iterations = 5L,
                           parallel = FALSE, seed = 1L)
   expect_type(res, "list")
   expect_true(all(c("results", "item_cutoffs", "actual_iterations",
@@ -34,57 +34,57 @@ test_that("RMinfitcutoff_mi returns the expected list structure", {
                   names(res$item_cutoffs)))
 })
 
-test_that("RMinfitcutoff_mi is reproducible with the same seed", {
+test_that("RMitemInfitCutoffMI is reproducible with the same seed", {
   skip_if_not_installed("mice")
   skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
 
   imp <- make_mids()
-  r1 <- RMinfitcutoff_mi(imp, iterations = 5L,
+  r1 <- RMitemInfitCutoffMI(imp, iterations = 5L,
                          parallel = FALSE, seed = 42L)
-  r2 <- RMinfitcutoff_mi(imp, iterations = 5L,
+  r2 <- RMitemInfitCutoffMI(imp, iterations = 5L,
                          parallel = FALSE, seed = 42L)
   expect_equal(r1$item_cutoffs, r2$item_cutoffs)
 })
 
 # ---------------------------------------------------------------------
-# RMiteminfit_mi
+# RMitemInfitMI
 # ---------------------------------------------------------------------
-test_that("RMiteminfit_mi output = 'dataframe' returns pooled infit per item", {
+test_that("RMitemInfitMI output = 'dataframe' returns pooled infit per item", {
   skip_if_not_installed("mice")
   skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
 
   imp <- make_mids()
-  res <- RMiteminfit_mi(imp, output = "dataframe")
+  res <- RMitemInfitMI(imp, output = "dataframe")
   expect_s3_class(res, "data.frame")
   expect_equal(nrow(res), 5L)
   expect_true(all(c("Item", "Infit_MSQ") %in% names(res)))
 })
 
-test_that("RMiteminfit_mi accepts an RMinfitcutoff_mi result and adds Flagged column", {
+test_that("RMitemInfitMI accepts an RMitemInfitCutoffMI result and adds Flagged column", {
   skip_if_not_installed("mice")
   skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
 
   imp  <- make_mids()
-  cuts <- RMinfitcutoff_mi(imp, iterations = 5L,
+  cuts <- RMitemInfitCutoffMI(imp, iterations = 5L,
                            parallel = FALSE, seed = 1L)
-  res  <- RMiteminfit_mi(imp, cutoff = cuts, output = "dataframe")
+  res  <- RMitemInfitMI(imp, cutoff = cuts, output = "dataframe")
   expect_s3_class(res, "data.frame")
   expect_true("Flagged" %in% names(res))
   expect_type(res$Flagged, "logical")
 })
 
-test_that("RMiteminfit_mi output = 'kable' returns a knitr_kable", {
+test_that("RMitemInfitMI output = 'kable' returns a knitr_kable", {
   skip_if_not_installed("mice")
   skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("knitr")
 
   imp <- make_mids()
-  out <- RMiteminfit_mi(imp, output = "kable")
+  out <- RMitemInfitMI(imp, output = "kable")
   expect_s3_class(out, "knitr_kable")
 })
