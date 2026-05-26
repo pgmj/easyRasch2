@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,17 +75,17 @@
 </h3>
 <ul>
 <li>
-<code><a href="reference/RMiteminfit.html">RMiteminfit()</a></code> — conditional infit MSQ</li>
+<code><a href="reference/RMiteminfit.html">RMitemInfit()</a></code> — conditional infit MSQ</li>
 <li>
-<code><a href="reference/RMinfitcutoff.html">RMinfitcutoff()</a></code> + <code><a href="reference/RMinfitcutoffPlot.html">RMinfitcutoffPlot()</a></code> — simulation-based cutoffs and plot</li>
+<code><a href="reference/RMitemInfitCutoff.html">RMitemInfitCutoff()</a></code> + <code><a href="reference/RMitemInfitCutoffPlot.html">RMitemInfitCutoffPlot()</a></code> — simulation-based cutoffs and plot</li>
 <li>
-<code><a href="reference/RMiteminfit_mi.html">RMiteminfit_mi()</a></code> + <code><a href="reference/RMinfitcutoff_mi.html">RMinfitcutoff_mi()</a></code> — multiple-imputation variants</li>
+<code><a href="reference/RMitemInfitMI.html">RMitemInfitMI()</a></code> + <code><a href="reference/RMitemInfitCutoffMI.html">RMitemInfitCutoffMI()</a></code> — multiple-imputation variants</li>
 <li>
-<code><a href="reference/RMitemrestscore.html">RMitemrestscore()</a></code> — item-restscore with Goodman-Kruskal’s gamma</li>
+<code><a href="reference/RMitemrestscore.html">RMitemRestscore()</a></code> — item-restscore with Goodman-Kruskal’s gamma</li>
 <li>
-<code><a href="reference/RMbootRestscore.html">RMbootRestscore()</a></code> — non-parametric bootstrap of item-restscore fit</li>
+<code><a href="reference/RMitemRestscoreBoot.html">RMitemRestscoreBoot()</a></code> — non-parametric bootstrap of item-restscore fit</li>
 <li>
-<code><a href="reference/RMciccPlot.html">RMciccPlot()</a></code> - conditional item characteristic curves</li>
+<code><a href="reference/RMitemICCPlot.html">RMitemICCPlot()</a></code> - conditional item characteristic curves</li>
 </ul>
 </div>
 <div class="section level3">
@@ -93,9 +93,9 @@
 </h3>
 <ul>
 <li>
-<code><a href="reference/RMlocdepQ3.html">RMlocdepQ3()</a></code> + <code><a href="reference/RMlocdepQ3cutoff.html">RMlocdepQ3cutoff()</a></code> — Yen’s Q3 residual correlations</li>
+<code><a href="reference/RMlocdepQ3.html">RMlocdepQ3()</a></code> + <code><a href="reference/RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code> — Yen’s Q3 residual correlations</li>
 <li>
-<code><a href="reference/RMpartgamLD.html">RMpartgamLD()</a></code> + <code><a href="reference/RMpgLDcutoff.html">RMpgLDcutoff()</a></code> + <code><a href="reference/RMpgLDplot.html">RMpgLDplot()</a></code> — partial-gamma local dependence</li>
+<code><a href="reference/RMlocdepGamma.html">RMlocdepGamma()</a></code> + <code><a href="reference/RMlocdepGammaCutoff.html">RMlocdepGammaCutoff()</a></code> + <code><a href="reference/RMlocdepGammaPlot.html">RMlocdepGammaPlot()</a></code> — partial-gamma local dependence</li>
 </ul>
 </div>
 <div class="section level3">
@@ -103,11 +103,11 @@
 </h3>
 <ul>
 <li>
-<code><a href="reference/RMresidualPCA.html">RMresidualPCA()</a></code> + <code><a href="reference/RMpcaCutoff.html">RMpcaCutoff()</a></code> — PCA of standardized residuals, with simulation-based first-contrast cutoff (Chou &amp; Wang, 2010)</li>
+<code><a href="reference/RMdimResidualPCA.html">RMdimResidualPCA()</a></code> + <code><a href="reference/RMdimResidualPCACutoff.html">RMdimResidualPCACutoff()</a></code> — PCA of standardized residuals, with simulation-based first-contrast cutoff (Chou &amp; Wang, 2010)</li>
 <li>
-<code><a href="reference/RMmartinLof.html">RMmartinLof()</a></code> + <code><a href="reference/RMmartinLofResiduals.html">RMmartinLofResiduals()</a></code> — Martin-Löf LR test (Christensen &amp; Kreiner, 2007), supports polytomous data</li>
+<code><a href="reference/RMdimMartinLof.html">RMdimMartinLof()</a></code> + <code><a href="reference/RMdimMartinLofResiduals.html">RMdimMartinLofResiduals()</a></code> — Martin-Löf LR test (Christensen &amp; Kreiner, 2007), supports polytomous data</li>
 <li>
-<code><a href="reference/RMcfaCutoff.html">RMcfaCutoff()</a></code> + <code><a href="reference/RMcfaPlot.html">RMcfaPlot()</a></code> — posterior-predictive CFA fit-index cutoffs under PCM unidimensionality (via <code>lavaan</code> WLSMV)</li>
+<code><a href="reference/RMdimCFACutoff.html">RMdimCFACutoff()</a></code> + <code><a href="reference/RMdimCFAPlot.html">RMdimCFAPlot()</a></code> — posterior-predictive CFA fit-index cutoffs under PCM unidimensionality (via <code>lavaan</code> WLSMV)</li>
 </ul>
 </div>
 <div class="section level3">
@@ -119,9 +119,9 @@
 <li>
 <code><a href="reference/RMdifTree.html">RMdifTree()</a></code> — Rasch / partial-credit trees (<code>psychotree</code>) with Mantel-Haenszel or partial-gamma effect sizes per split, optional iterative purification, and <code>stablelearner</code>-based stability assessment</li>
 <li>
-<code><a href="reference/RMpartgamDIF.html">RMpartgamDIF()</a></code> + <code><a href="reference/RMpgDIFcutoff.html">RMpgDIFcutoff()</a></code> + <code><a href="reference/RMpgDIFplot.html">RMpgDIFplot()</a></code> — partial-gamma DIF</li>
+<code><a href="reference/RMdifGamma.html">RMdifGamma()</a></code> + <code><a href="reference/RMdifGammaCutoff.html">RMdifGammaCutoff()</a></code> + <code><a href="reference/RMdifGammaPlot.html">RMdifGammaPlot()</a></code> — partial-gamma DIF</li>
 <li>
-<code><a href="reference/RMciccPlot.html">RMciccPlot()</a></code> - evaluates DIF across class intervals</li>
+<code><a href="reference/RMitemICCPlot.html">RMitemICCPlot()</a></code> - evaluates DIF across class intervals</li>
 </ul>
 </div>
 <div class="section level3">
@@ -141,9 +141,9 @@
 </h3>
 <ul>
 <li>
-<code><a href="reference/RMtileplot.html">RMtileplot()</a></code> — response-distribution heatmap with optional group faceting</li>
+<code><a href="reference/RMplotTile.html">RMplotTile()</a></code> — response-distribution heatmap with optional group faceting</li>
 <li>
-<code><a href="reference/RMbarplot.html">RMbarplot()</a></code> &amp; <code><a href="reference/RMstackedbarplot.html">RMstackedbarplot()</a></code>
+<code><a href="reference/RMplotBar.html">RMplotBar()</a></code> &amp; <code><a href="reference/RMplotStackedbar.html">RMplotStackedbar()</a></code>
 </li>
 </ul>
 </div>
@@ -166,13 +166,13 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Conditional item infit with simulation-based cutoffs</span></span>
-<span><span class="va">simfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/RMinfitcutoff.html">RMinfitcutoff</a></span><span class="op">(</span><span class="va">pcmdat2</span>, iterations <span class="op">=</span> <span class="fl">250</span><span class="op">)</span></span>
-<span><span class="fu"><a href="reference/RMiteminfit.html">RMiteminfit</a></span><span class="op">(</span><span class="va">pcmdat2</span>, cutoff <span class="op">=</span> <span class="va">simfit</span><span class="op">)</span></span>
+<span><span class="va">simfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/RMitemInfitCutoff.html">RMitemInfitCutoff</a></span><span class="op">(</span><span class="va">pcmdat2</span>, iterations <span class="op">=</span> <span class="fl">250</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/RMiteminfit.html">RMitemInfit</a></span><span class="op">(</span><span class="va">pcmdat2</span>, cutoff <span class="op">=</span> <span class="va">simfit</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Test of unidimensionality via posterior-predictive ordinal CFA</span></span>
-<span><span class="va">cfa_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/RMcfaCutoff.html">RMcfaCutoff</a></span><span class="op">(</span><span class="va">pcmdat2</span>, iterations <span class="op">=</span> <span class="fl">250</span><span class="op">)</span></span>
+<span><span class="va">cfa_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/RMdimCFACutoff.html">RMdimCFACutoff</a></span><span class="op">(</span><span class="va">pcmdat2</span>, iterations <span class="op">=</span> <span class="fl">250</span><span class="op">)</span></span>
 <span><span class="va">cfa_res</span>                <span class="co"># kable: observed vs simulated cutoffs</span></span>
-<span><span class="fu"><a href="reference/RMcfaPlot.html">RMcfaPlot</a></span><span class="op">(</span><span class="va">cfa_res</span><span class="op">)</span>     <span class="co"># histogram + observed diamond</span></span>
+<span><span class="fu"><a href="reference/RMdimCFAPlot.html">RMdimCFAPlot</a></span><span class="op">(</span><span class="va">cfa_res</span><span class="op">)</span>     <span class="co"># histogram + observed diamond</span></span>
 <span></span>
 <span><span class="co"># DIF analysis via Andersen's LR test</span></span>
 <span><span class="va">grp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">pcmdat2</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>

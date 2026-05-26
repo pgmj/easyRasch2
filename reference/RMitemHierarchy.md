@@ -95,7 +95,7 @@ terms of statistical significance? *Journal of Insect Science, 3*(34),
 
 [`RMtargeting()`](https://pgmj.github.io/easyRasch2/reference/RMtargeting.md),
 [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/reference/RMscoreSE.md),
-[`RMciccPlot()`](https://pgmj.github.io/easyRasch2/reference/RMciccPlot.md)
+[`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemICCPlot.md)
 
 ## Examples
 

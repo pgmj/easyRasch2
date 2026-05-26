@@ -4,7 +4,7 @@ Computes Yen's Q3 residual correlations between item pairs using a Rasch
 model fitted via Marginal Maximum Likelihood (MML) in `mirt`. High
 correlations (above the dynamic cut-off) indicate potential local
 dependence between items. See
-[`RMlocdepQ3cutoff`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
+[`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
 for how to determine the appropriate dynamic cut-off for your data.
 
 ## Usage
@@ -23,12 +23,13 @@ RMlocdepQ3(data, cutoff = NULL, output = "kable")
 
 - cutoff:
 
-  Optional single numeric value added to the mean off-diagonal Q3
-  correlation to produce the dynamic cut-off threshold. When `NULL`
-  (default), the raw Q3 residual correlation matrix is returned without
-  any dynamic cut-off applied. Use
-  [`RMlocdepQ3cutoff`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
-  to derive a simulation-based cutoff value.
+  Optional. Either a single numeric value (added to the mean
+  off-diagonal Q3 correlation to produce the dynamic cut-off threshold)
+  or the full list returned by
+  [`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
+  (from which `$suggested_cutoff` is extracted automatically). When
+  `NULL` (default), the raw Q3 residual correlation matrix is returned
+  without any dynamic cut-off applied.
 
 - output:
 
@@ -59,7 +60,7 @@ independence, Q3 values are expected to be around \\-1/(k-1)\\ where
 \\k\\ is the number of items. When `cutoff` is supplied, the dynamic
 cut-off is the mean of all off-diagonal Q3 values plus `cutoff`,
 following the approach of Christensen et al. (2017). Use
-[`RMlocdepQ3cutoff`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
+[`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
 to obtain a simulation-based cutoff recommendation.
 
 `mirt` is used for model fitting here because Q3 requires model-based
@@ -91,7 +92,7 @@ colnames(sim_data) <- paste0("Item", 1:10)
 RMlocdepQ3(sim_data)
 #> 
 #> 
-#> Table: Raw Q3 residual correlations (lower triangle). Use RMlocdepQ3cutoff() to derive a cutoff.
+#> Table: Raw Q3 residual correlations (lower triangle). Use RMlocdepQ3Cutoff() to derive a cutoff.
 #> 
 #> |       |Item1 |Item2 |Item3 |Item4 |Item5 |Item6 |Item7 |Item8 |Item9 |Item10 |
 #> |:------|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:------|
@@ -111,7 +112,7 @@ q3_df <- RMlocdepQ3(sim_data, output = "dataframe")
 # }
 if (FALSE) { # \dontrun{
 # Simulation-based cutoff (slow): 100+ Monte-Carlo iterations
-cutoff_res <- RMlocdepQ3cutoff(sim_data, iterations = 100)
+cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 100)
 RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
 } # }
 ```

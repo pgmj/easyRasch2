@@ -9,7 +9,7 @@ to the sample mean person location.
 ## Usage
 
 ``` r
-RMitemrestscore(data, output = "kable", sort, p.adj = "BH")
+RMitemRestscore(data, output = "kable", sort, p.adj = "BH")
 ```
 
 ## Arguments
@@ -31,7 +31,8 @@ RMitemrestscore(data, output = "kable", sort, p.adj = "BH")
 - sort:
 
   Optional character string. When `sort = "diff"`, rows are sorted by
-  `Absolute_difference` in descending order before output.
+  the absolute magnitude of `Difference` in descending order, so that
+  both over- and underfitting items appear near the top.
 
 - p.adj:
 
@@ -45,13 +46,20 @@ RMitemrestscore(data, output = "kable", sort, p.adj = "BH")
 
 - If `output = "kable"`: a `knitr_kable` object (plain text table via
   `format = "pipe"`) with columns for item name, observed and expected
-  restscore correlations, absolute difference, adjusted p-value,
-  significance level, item location, and item location relative to the
-  sample mean person location.
+  restscore correlations, the signed difference (observed minus
+  expected), adjusted p-value, significance level, item location, and
+  item location relative to the sample mean person location.
 
 - If `output = "dataframe"`: a data.frame with columns `Item`,
-  `Observed`, `Expected`, `Absolute_difference`, `p_adjusted`,
-  `Significance`, `Location`, and `Relative_location`.
+  `Observed`, `Expected`, `Difference`, `p_adjusted`, `Significance`,
+  `Location`, and `Relative_location`.
+
+The `Difference` column is signed (observed minus expected): *positive*
+values indicate that the item correlates more strongly with the
+rest-score than the Rasch model predicts (over-discrimination /
+*overfit*, often associated with local dependence), and *negative*
+values indicate weaker-than-expected association (under-discrimination /
+*underfit*, often associated with multidimensionality or noise).
 
 ## Details
 
@@ -97,39 +105,39 @@ sim_data <- as.data.frame(
 colnames(sim_data) <- paste0("Item", 1:8)
 
 # Default kable output
-RMitemrestscore(sim_data)
+RMitemRestscore(sim_data)
 #> 
 #> 
 #> 
-#> |Item  | Observed value| Expected value| Abs. difference| Adj. p-value (BH)|p-value sign. | Location| Rel. location|
-#> |:-----|--------------:|--------------:|---------------:|-----------------:|:-------------|--------:|-------------:|
-#> |Item1 |           0.00|           0.01|            0.01|             0.955|              |    -0.20|         -0.23|
-#> |Item2 |           0.00|           0.01|            0.01|             0.955|              |     0.16|          0.13|
-#> |Item3 |          -0.01|           0.01|            0.02|             0.955|              |     0.02|         -0.01|
-#> |Item4 |          -0.05|           0.01|            0.06|             0.955|              |    -0.02|         -0.05|
-#> |Item5 |           0.07|           0.01|            0.06|             0.955|              |     0.12|          0.09|
-#> |Item6 |          -0.04|           0.01|            0.05|             0.955|              |    -0.06|         -0.09|
-#> |Item7 |           0.15|           0.01|            0.14|             0.955|              |    -0.02|         -0.05|
-#> |Item8 |          -0.01|           0.01|            0.02|             0.955|              |     0.00|         -0.03|
+#> |Item  | Observed value| Expected value| Difference| Adj. p-value (BH)|p-value sign. | Location| Rel. location|
+#> |:-----|--------------:|--------------:|----------:|-----------------:|:-------------|--------:|-------------:|
+#> |Item1 |           0.00|           0.01|      -0.01|             0.955|              |    -0.20|         -0.23|
+#> |Item2 |           0.00|           0.01|      -0.01|             0.955|              |     0.16|          0.13|
+#> |Item3 |          -0.01|           0.01|      -0.02|             0.955|              |     0.02|         -0.01|
+#> |Item4 |          -0.05|           0.01|      -0.06|             0.955|              |    -0.02|         -0.05|
+#> |Item5 |           0.07|           0.01|       0.06|             0.955|              |     0.12|          0.09|
+#> |Item6 |          -0.04|           0.01|      -0.05|             0.955|              |    -0.06|         -0.09|
+#> |Item7 |           0.15|           0.01|       0.14|             0.955|              |    -0.02|         -0.05|
+#> |Item8 |          -0.01|           0.01|      -0.02|             0.955|              |     0.00|         -0.03|
 
 # Sorted by absolute difference
-RMitemrestscore(sim_data, sort = "diff")
+RMitemRestscore(sim_data, sort = "diff")
 #> 
 #> 
 #> 
-#> |Item  | Observed value| Expected value| Abs. difference| Adj. p-value (BH)|p-value sign. | Location| Rel. location|
-#> |:-----|--------------:|--------------:|---------------:|-----------------:|:-------------|--------:|-------------:|
-#> |Item7 |           0.15|           0.01|            0.14|             0.955|              |    -0.02|         -0.05|
-#> |Item4 |          -0.05|           0.01|            0.06|             0.955|              |    -0.02|         -0.05|
-#> |Item5 |           0.07|           0.01|            0.06|             0.955|              |     0.12|          0.09|
-#> |Item6 |          -0.04|           0.01|            0.05|             0.955|              |    -0.06|         -0.09|
-#> |Item3 |          -0.01|           0.01|            0.02|             0.955|              |     0.02|         -0.01|
-#> |Item8 |          -0.01|           0.01|            0.02|             0.955|              |     0.00|         -0.03|
-#> |Item1 |           0.00|           0.01|            0.01|             0.955|              |    -0.20|         -0.23|
-#> |Item2 |           0.00|           0.01|            0.01|             0.955|              |     0.16|          0.13|
+#> |Item  | Observed value| Expected value| Difference| Adj. p-value (BH)|p-value sign. | Location| Rel. location|
+#> |:-----|--------------:|--------------:|----------:|-----------------:|:-------------|--------:|-------------:|
+#> |Item7 |           0.15|           0.01|       0.14|             0.955|              |    -0.02|         -0.05|
+#> |Item4 |          -0.05|           0.01|      -0.06|             0.955|              |    -0.02|         -0.05|
+#> |Item5 |           0.07|           0.01|       0.06|             0.955|              |     0.12|          0.09|
+#> |Item6 |          -0.04|           0.01|      -0.05|             0.955|              |    -0.06|         -0.09|
+#> |Item3 |          -0.01|           0.01|      -0.02|             0.955|              |     0.02|         -0.01|
+#> |Item8 |          -0.01|           0.01|      -0.02|             0.955|              |     0.00|         -0.03|
+#> |Item1 |           0.00|           0.01|      -0.01|             0.955|              |    -0.20|         -0.23|
+#> |Item2 |           0.00|           0.01|      -0.01|             0.955|              |     0.16|          0.13|
 
 # Return as data.frame for further processing
-df <- RMitemrestscore(sim_data, output = "dataframe")
+df <- RMitemRestscore(sim_data, output = "dataframe")
 #> 
 # }
 ```

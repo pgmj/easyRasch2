@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,21 +34,71 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.8.0" id="easyrasch2-080">easyRasch2 0.8.0<a class="anchor" aria-label="anchor" href="#easyrasch2-080"></a></h2>
+<div class="section level3">
+<h3 id="function-renaming-for-consistency-0-8-0">Function renaming for consistency<a class="anchor" aria-label="anchor" href="#function-renaming-for-consistency-0-8-0"></a></h3>
+<p>This release renames <strong>22 exported functions</strong> under a consistent <em>domain-prefix → method → variant-suffix</em> scheme so that autocompletion on a prefix (<code>RMdif</code>, <code>RMlocdep</code>, <code>RMitem</code>, <code>RMdim</code>, <code>RMplot</code>) surfaces every related function. No semantic changes; only names.</p>
+<p>A complete mapping is on the new <code>?easyRasch2-renaming</code> help page. The short version:</p>
+<table class="table"><colgroup><col width="41%"><col width="34%"><col width="24%"></colgroup><thead><tr><th>Domain</th>
+<th>Prefix</th>
+<th>Examples</th>
+</tr></thead><tbody><tr><td>DIF</td>
+<td><code>RMdif</code></td>
+<td>
+<code><a href="../reference/RMdifGamma.html">RMdifGamma()</a></code>, <code><a href="../reference/RMdifGammaCutoff.html">RMdifGammaCutoff()</a></code>, <code><a href="../reference/RMdifGammaPlot.html">RMdifGammaPlot()</a></code>, <code><a href="../reference/RMdifLR.html">RMdifLR()</a></code>, <code><a href="../reference/RMdifTree.html">RMdifTree()</a></code>
+</td>
+</tr><tr><td>Local dependence</td>
+<td><code>RMlocdep</code></td>
+<td>
+<code><a href="../reference/RMlocdepQ3.html">RMlocdepQ3()</a></code>, <code><a href="../reference/RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code>, <code><a href="../reference/RMlocdepQ3plot.html">RMlocdepQ3Plot()</a></code>, <code><a href="../reference/RMlocdepGamma.html">RMlocdepGamma()</a></code>, <code><a href="../reference/RMlocdepGammaCutoff.html">RMlocdepGammaCutoff()</a></code>, <code><a href="../reference/RMlocdepGammaPlot.html">RMlocdepGammaPlot()</a></code>
+</td>
+</tr><tr><td>Item statistics</td>
+<td><code>RMitem</code></td>
+<td>
+<code><a href="../reference/RMiteminfit.html">RMitemInfit()</a></code>, <code><a href="../reference/RMitemInfitCutoff.html">RMitemInfitCutoff()</a></code>, <code><a href="../reference/RMitemInfitCutoffPlot.html">RMitemInfitCutoffPlot()</a></code>, <code><a href="../reference/RMitemInfitMI.html">RMitemInfitMI()</a></code>, <code><a href="../reference/RMitemInfitCutoffMI.html">RMitemInfitCutoffMI()</a></code>, <code><a href="../reference/RMitemrestscore.html">RMitemRestscore()</a></code>, <code><a href="../reference/RMitemRestscoreBoot.html">RMitemRestscoreBoot()</a></code>, <code><a href="../reference/RMitemICCPlot.html">RMitemICCPlot()</a></code>, <code><a href="../reference/RMitemHierarchy.html">RMitemHierarchy()</a></code>
+</td>
+</tr><tr><td>Dimensionality</td>
+<td><code>RMdim</code></td>
+<td>
+<code><a href="../reference/RMdimResidualPCA.html">RMdimResidualPCA()</a></code>, <code><a href="../reference/RMdimResidualPCACutoff.html">RMdimResidualPCACutoff()</a></code>, <code><a href="../reference/RMdimCFACutoff.html">RMdimCFACutoff()</a></code>, <code><a href="../reference/RMdimCFAPlot.html">RMdimCFAPlot()</a></code>, <code><a href="../reference/RMdimMartinLof.html">RMdimMartinLof()</a></code>, <code><a href="../reference/RMdimMartinLofResiduals.html">RMdimMartinLofResiduals()</a></code>
+</td>
+</tr><tr><td>Descriptive plot</td>
+<td><code>RMplot</code></td>
+<td>
+<code><a href="../reference/RMplotTile.html">RMplotTile()</a></code>, <code><a href="../reference/RMplotBar.html">RMplotBar()</a></code>, <code><a href="../reference/RMplotStackedbar.html">RMplotStackedbar()</a></code>
+</td>
+</tr></tbody></table><p>Unchanged: <code><a href="../reference/RMreliability.html">RMreliability()</a></code>, <code><a href="../reference/RMUreliability.html">RMUreliability()</a></code>, <code><a href="../reference/RMtargeting.html">RMtargeting()</a></code>, <code><a href="../reference/RMscoreSE.html">RMscoreSE()</a></code>.</p>
+<p><strong>Breaking change.</strong> No deprecation aliases are shipped — existing scripts will need a search-and-replace. See <code>?easyRasch2-renaming</code> for the full table.</p>
+</div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.7.1" id="easyrasch2-071">easyRasch2 0.7.1<a class="anchor" aria-label="anchor" href="#easyrasch2-071"></a></h2>
+<ul><li>New <strong><code>RMlocdepQ3plot()</code></strong> for visualising per-pair simulated Q3 distributions against observed Q3 values, mirroring the design of <code>RMpgLDplot()</code> and <code>RMpgDIFplot()</code>. Supports <code>items</code> and <code>n_pairs</code> filters; with <code>data</code> supplied, ranks <code>n_pairs</code> by <code>|observed Q3 - median(simulated Q3 per pair)|</code>.</li>
+<li>
+<code>RMlocdepQ3cutoff()</code> now retains per-pair iteration-level data: the returned list gains <code>pair_results</code>, <code>pair_cutoffs</code>, <code>item_names</code>, <code>cutoff_method</code>, and <code>hdci_width</code>. Existing scalar outputs (<code>suggested_cutoff</code> etc.) are unchanged. New arguments <code>cutoff_method</code> (<code>"hdci"</code> / <code>"quantile"</code>) and <code>hdci_width</code> (default <code>0.99</code>) control how per-pair credible intervals are computed.</li>
+<li>
+<code><a href="../reference/RMlocdepQ3.html">RMlocdepQ3()</a></code> can now be called with the full list returned by <code>RMlocdepQ3cutoff()</code> (it auto-extracts <code>$suggested_cutoff</code>), matching the partial-gamma family convention. Numeric scalar still works.</li>
+<li>
+<code>RMpartgamLD()</code> and <code>RMpgLDplot()</code> gain an <code>n_pairs</code> argument to keep only the top-N pairs by <code>|gamma|</code> (LD) or by <code>|observed - median(sim)|</code> deviation (plot).</li>
+<li>
+<code>RMpartgamLD()</code>, <code>RMpartgamDIF()</code>, and <code>RMitemrestscore()</code> now use consistent column headers: <code>Adj. p-value (BH)</code> and a new <code>p-value sign.</code> star-string column. <code>RMitemrestscore()</code>’s former <code>Absolute_difference</code> column is now a <em>signed</em> <code>Difference</code> (observed − expected), so over- and underfit are visually distinguishable at a glance.</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.7.0" id="easyrasch2-070">easyRasch2 0.7.0<a class="anchor" aria-label="anchor" href="#easyrasch2-070"></a></h2>
-<ul><li>New <strong><code><a href="../reference/RMbarplot.html">RMbarplot()</a></code></strong> and <strong><code><a href="../reference/RMstackedbarplot.html">RMstackedbarplot()</a></code></strong> join <code><a href="../reference/RMtileplot.html">RMtileplot()</a></code> for easy visualization of item response data distributions.</li>
-<li>New <strong><code><a href="../reference/RMciccPlot.html">RMciccPlot()</a></code></strong> for conditional item characteristic curves plot, also includes DIF analysis for categorical DIF variables.</li>
+<ul><li>New <strong><code>RMbarplot()</code></strong> and <strong><code>RMstackedbarplot()</code></strong> join <code>RMtileplot()</code> for easy visualization of item response data distributions.</li>
+<li>New <strong><code>RMciccPlot()</code></strong> for conditional item characteristic curves plot, also includes DIF analysis for categorical DIF variables.</li>
 <li>New <strong><code><a href="../reference/RMitemHierarchy.html">RMitemHierarchy()</a></code></strong>, which outputs a plot illustrating the item hierarchy with item thresholds and confidence intervals.</li>
-<li>Modified <code><a href="../reference/RMcfaCutoff.html">RMcfaCutoff()</a></code> to only use .scaled metrics for RMSEA and CFI, for stability. See documentation for more details.</li>
-<li>Bug fix for <code><a href="../reference/RMmartinLof.html">RMmartinLof()</a></code> with dichotomous items.</li>
+<li>Modified <code>RMcfaCutoff()</code> to only use .scaled metrics for RMSEA and CFI, for stability. See documentation for more details.</li>
+<li>Bug fix for <code>RMmartinLof()</code> with dichotomous items.</li>
 <li>Bug fix for <code><a href="../reference/RMitemHierarchy.html">RMitemHierarchy()</a></code> making option <code>item_labels</code> work as intended.</li>
 <li>Tests written for all functions, preparing for CRAN submission in the nearish future.</li>
 <li>Drafted a package intro/vignette</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.6.0" id="easyrasch2-060">easyRasch2 0.6.0<a class="anchor" aria-label="anchor" href="#easyrasch2-060"></a></h2>
-<ul><li>New <strong><code><a href="../reference/RMcfaCutoff.html">RMcfaCutoff()</a></code></strong> for testing unidimensionality against simulation-based cutoff values for model fit metrics.
+<ul><li>New <strong><code>RMcfaCutoff()</code></strong> for testing unidimensionality against simulation-based cutoff values for model fit metrics.
 <ul><li>
-<strong><code><a href="../reference/RMcfaPlot.html">RMcfaPlot()</a></code></strong> shows figure with distribution of simulation results and observed model fit values.</li>
+<strong><code>RMcfaPlot()</code></strong> shows figure with distribution of simulation results and observed model fit values.</li>
 </ul></li>
 </ul></div>
     <div class="section level2">
@@ -72,23 +122,23 @@
 <h2 class="pkg-version" data-toc-text="0.5.7" id="easyrasch2-057">easyRasch2 0.5.7<a class="anchor" aria-label="anchor" href="#easyrasch2-057"></a></h2>
 <ul><li>New <strong><code><a href="../reference/RMdifLR.html">RMdifLR()</a></code></strong> for testing DIF of categorical variables using Andersens’s Likelihood Ratio test as implemented in package <code>eRm</code>
 </li>
-<li>Visualization of response data using a tile plot with <strong><code><a href="../reference/RMtileplot.html">RMtileplot()</a></code></strong>.
+<li>Visualization of response data using a tile plot with <strong><code>RMtileplot()</code></strong>.
 <ul><li>Optional <code>group</code> faceting, which is useful for DIF-analyses.</li>
 </ul></li>
-<li>Added Martin-Löf test of dimensionality <strong><code><a href="../reference/RMmartinLof.html">RMmartinLof()</a></code></strong> based on Christensen &amp; Kreiner (2007, doi: 10.1177/0146621605286204), for both dichotomous and polytomous (PCM) items.
+<li>Added Martin-Löf test of dimensionality <strong><code>RMmartinLof()</code></strong> based on Christensen &amp; Kreiner (2007, doi: 10.1177/0146621605286204), for both dichotomous and polytomous (PCM) items.
 <ul><li>Also added post-processing function <strong><code>RMmartinLofresiduals()</code></strong>.</li>
 </ul></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.6" id="easyrasch2-056">easyRasch2 0.5.6<a class="anchor" aria-label="anchor" href="#easyrasch2-056"></a></h2>
-<ul><li>Added <strong><code><a href="../reference/RMresidualPCA.html">RMresidualPCA()</a></code></strong> for evaluating patterns in the standardized residuals from the RM/PCM. Outputs either a table with eigenvalues and explained variance or a figure with standardized loadings on the first residual contrast and item locations.</li>
-<li>Added <strong><code><a href="../reference/RMpcaCutoff.html">RMpcaCutoff()</a></code></strong> to determine a simulation-based critical value for the largest eigenvalue.</li>
+<ul><li>Added <strong><code>RMresidualPCA()</code></strong> for evaluating patterns in the standardized residuals from the RM/PCM. Outputs either a table with eigenvalues and explained variance or a figure with standardized loadings on the first residual contrast and item locations.</li>
+<li>Added <strong><code>RMpcaCutoff()</code></strong> to determine a simulation-based critical value for the largest eigenvalue.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.5" id="easyrasch2-055">easyRasch2 0.5.5<a class="anchor" aria-label="anchor" href="#easyrasch2-055"></a></h2>
-<ul><li>Added <strong><code><a href="../reference/RMbootRestscore.html">RMbootRestscore()</a></code></strong> for use with large sample sizes. See <a href="https://pgmj.github.io/rasch_itemfit/" class="external-link uri">https://pgmj.github.io/rasch_itemfit/</a> for more details.</li>
+<ul><li>Added <strong><code>RMbootRestscore()</code></strong> for use with large sample sizes. See <a href="https://pgmj.github.io/rasch_itemfit/" class="external-link uri">https://pgmj.github.io/rasch_itemfit/</a> for more details.</li>
 <li>Added <strong><code><a href="../reference/RMscoreSE.html">RMscoreSE()</a></code></strong> that produces a transformation table (or figure) from ordinal sum scores to WLE (Weighted Likelihood Estimation) interval scores.</li>
-<li>Modified <code><a href="../reference/RMlocdepQ3cutoff.html">RMlocdepQ3cutoff()</a></code> to improve speed.</li>
+<li>Modified <code>RMlocdepQ3cutoff()</code> to improve speed.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.4" id="easyrasch2-054">easyRasch2 0.5.4<a class="anchor" aria-label="anchor" href="#easyrasch2-054"></a></h2>
@@ -96,54 +146,54 @@
 <strong><code><a href="../reference/RMtargeting.html">RMtargeting()</a></code></strong> for Wright map style plots.</li>
 <li>New functions for handling missing data with conditional item infit MSQ by multiple imputation using package <code>mice</code>.
 <ul><li>
-<strong><code><a href="../reference/RMinfitcutoff_mi.html">RMinfitcutoff_mi()</a></code></strong> uses the <code>mids</code> object containing multiple imputated datasets (output by <code><a href="https://amices.org/mice/reference/mice.html" class="external-link">mice::mice()</a></code>) to run simulations on each datasets and combines the results. Splits iterations across imputations (e.g. 250 total / 5 imputations = 50 each).</li>
+<strong><code>RMinfitcutoff_mi()</code></strong> uses the <code>mids</code> object containing multiple imputated datasets (output by <code><a href="https://amices.org/mice/reference/mice.html" class="external-link">mice::mice()</a></code>) to run simulations on each datasets and combines the results. Splits iterations across imputations (e.g. 250 total / 5 imputations = 50 each).</li>
 <li>
-<strong><code><a href="../reference/RMiteminfit_mi.html">RMiteminfit_mi()</a></code></strong> calculates and pools conditional infit from the imputated datasets and optionally uses the <code><a href="../reference/RMinfitcutoff_mi.html">RMinfitcutoff_mi()</a></code> output for cutoff values.</li>
-<li>Works with existing <strong><code><a href="../reference/RMinfitcutoffPlot.html">RMinfitcutoffPlot()</a></code></strong>
+<strong><code>RMiteminfit_mi()</code></strong> calculates and pools conditional infit from the imputated datasets and optionally uses the <code>RMinfitcutoff_mi()</code> output for cutoff values.</li>
+<li>Works with existing <strong><code>RMinfitcutoffPlot()</code></strong>
 </li>
 </ul></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.3" id="easyrasch2-053">easyRasch2 0.5.3<a class="anchor" aria-label="anchor" href="#easyrasch2-053"></a></h2>
-<ul><li>New functions <strong><code><a href="../reference/RMpartgamLD.html">RMpartgamLD()</a></code></strong> and <strong><code><a href="../reference/RMpgLDcutoff.html">RMpgLDcutoff()</a></code></strong> for evaluating local dependency of item pairs in both directions.
-<ul><li>Plot function <strong><code><a href="../reference/RMpgLDplot.html">RMpgLDplot()</a></code></strong>, similar to <strong><code><a href="../reference/RMpgDIFplot.html">RMpgDIFplot()</a></code></strong>
+<ul><li>New functions <strong><code>RMpartgamLD()</code></strong> and <strong><code>RMpgLDcutoff()</code></strong> for evaluating local dependency of item pairs in both directions.
+<ul><li>Plot function <strong><code>RMpgLDplot()</code></strong>, similar to <strong><code>RMpgDIFplot()</code></strong>
 </li>
 <li>NOTE: The simulation-based cutoffs have not yet been evaluated in a systematic way. Default choices may not be sensible, please try different numbers of iterations and hdci_width.</li>
 </ul></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.2" id="easyrasch2-052">easyRasch2 0.5.2<a class="anchor" aria-label="anchor" href="#easyrasch2-052"></a></h2>
-<ul><li>New functions <strong><code><a href="../reference/RMpartgamDIF.html">RMpartgamDIF()</a></code></strong> and <strong><code><a href="../reference/RMpgDIFcutoff.html">RMpgDIFcutoff()</a></code></strong> for evaluating DIF of categorical external variables.
-<ul><li>Also with plot function <strong><code><a href="../reference/RMpgDIFplot.html">RMpgDIFplot()</a></code></strong>, similar to <code><a href="../reference/RMinfitcutoffPlot.html">RMinfitcutoffPlot()</a></code>
+<ul><li>New functions <strong><code>RMpartgamDIF()</code></strong> and <strong><code>RMpgDIFcutoff()</code></strong> for evaluating DIF of categorical external variables.
+<ul><li>Also with plot function <strong><code>RMpgDIFplot()</code></strong>, similar to <code>RMinfitcutoffPlot()</code>
 </li>
 <li>NOTE: The simulation-based cutoffs have not yet been evaluated in a systematic way. Default choices may not be sensible, please try different numbers of iterations and hdci_width.</li>
 </ul></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.1" id="easyrasch2-051">easyRasch2 0.5.1<a class="anchor" aria-label="anchor" href="#easyrasch2-051"></a></h2>
-<ul><li>New function <strong><code><a href="../reference/RMinfitcutoffPlot.html">RMinfitcutoffPlot()</a></code></strong> to illustrate distribution of simulated conditional item infit MSQ values together with the observed value.</li>
+<ul><li>New function <strong><code>RMinfitcutoffPlot()</code></strong> to illustrate distribution of simulated conditional item infit MSQ values together with the observed value.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.5.0" id="easyrasch2-050">easyRasch2 0.5.0<a class="anchor" aria-label="anchor" href="#easyrasch2-050"></a></h2>
-<ul><li><p><strong><code><a href="../reference/RMinfitcutoff.html">RMinfitcutoff()</a></code> gains <code>cutoff_method</code> and <code>hdci_width</code> parameters</strong>: By default (<code>cutoff_method = "hdci"</code>, <code>hdci_width = 0.999</code>), per-item cutoff intervals are now computed using the Highest Density Interval via <code><a href="https://mjskay.github.io/ggdist/reference/point_interval.html" class="external-link">ggdist::hdci()</a></code> (99.9% HDCI). Set <code>cutoff_method = "quantile"</code> to restore the previous behaviour (2.5th/97.5th percentiles). The <code>ggdist</code> package is only required when <code>cutoff_method = "hdci"</code> (added to Suggests). The returned list now also includes <code>cutoff_method</code> and <code>hdci_width</code> fields.</p></li>
-<li><p><strong><code><a href="../reference/RMiteminfit.html">RMiteminfit()</a></code> caption updated</strong>: When <code>cutoff</code> is the return value of <code><a href="../reference/RMinfitcutoff.html">RMinfitcutoff()</a></code>, the kable caption now states the cutoff method, e.g. <code>"Cutoff values based on 250 simulation iterations (99.9% HDCI)."</code> or <code>"Cutoff values based on 250 simulation iterations (2.5th/97.5th percentile)."</code>.</p></li>
+<ul><li><p><strong><code>RMinfitcutoff()</code> gains <code>cutoff_method</code> and <code>hdci_width</code> parameters</strong>: By default (<code>cutoff_method = "hdci"</code>, <code>hdci_width = 0.999</code>), per-item cutoff intervals are now computed using the Highest Density Interval via <code><a href="https://mjskay.github.io/ggdist/reference/point_interval.html" class="external-link">ggdist::hdci()</a></code> (99.9% HDCI). Set <code>cutoff_method = "quantile"</code> to restore the previous behaviour (2.5th/97.5th percentiles). The <code>ggdist</code> package is only required when <code>cutoff_method = "hdci"</code> (added to Suggests). The returned list now also includes <code>cutoff_method</code> and <code>hdci_width</code> fields.</p></li>
+<li><p><strong><code>RMiteminfit()</code> caption updated</strong>: When <code>cutoff</code> is the return value of <code>RMinfitcutoff()</code>, the kable caption now states the cutoff method, e.g. <code>"Cutoff values based on 250 simulation iterations (99.9% HDCI)."</code> or <code>"Cutoff values based on 250 simulation iterations (2.5th/97.5th percentile)."</code>.</p></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.0" id="easyrasch2-040">easyRasch2 0.4.0<a class="anchor" aria-label="anchor" href="#easyrasch2-040"></a></h2>
-<ul><li><p><strong><code><a href="../reference/RMiteminfit.html">RMiteminfit()</a></code> gains optional <code>cutoff</code> parameter</strong>: Accepts the return value of <code><a href="../reference/RMinfitcutoff.html">RMinfitcutoff()</a></code> (or its <code>$item_cutoffs</code> data.frame directly). When provided, per-item cutoff boundaries (<code>Infit_low</code>, <code>Infit_high</code>) and a logical <code>Flagged</code> column are added to both <code>"dataframe"</code> and <code>"kable"</code> output. The kable caption includes the number of simulation iterations when available.</p></li>
-<li><p><strong>New <code><a href="../reference/RMinfitcutoff.html">RMinfitcutoff()</a></code></strong>: Simulation-based (parametric bootstrap) cutoff determination for [RMiteminfit()]. Supports both dichotomous and polytomous data. Optional parallel processing via <code>mirai</code> (falls back to sequential if not installed). Returns per-item 2.5th and 97.5th percentiles of simulated infit and outfit MSQ distributions (<code>$item_cutoffs</code>), together with the full iteration-level results (<code>$results</code>). Requires the <code>iarm</code> package (Suggests).</p></li>
+<ul><li><p><strong><code>RMiteminfit()</code> gains optional <code>cutoff</code> parameter</strong>: Accepts the return value of <code>RMinfitcutoff()</code> (or its <code>$item_cutoffs</code> data.frame directly). When provided, per-item cutoff boundaries (<code>Infit_low</code>, <code>Infit_high</code>) and a logical <code>Flagged</code> column are added to both <code>"dataframe"</code> and <code>"kable"</code> output. The kable caption includes the number of simulation iterations when available.</p></li>
+<li><p><strong>New <code>RMinfitcutoff()</code></strong>: Simulation-based (parametric bootstrap) cutoff determination for [RMiteminfit()]. Supports both dichotomous and polytomous data. Optional parallel processing via <code>mirai</code> (falls back to sequential if not installed). Returns per-item 2.5th and 97.5th percentiles of simulated infit and outfit MSQ distributions (<code>$item_cutoffs</code>), together with the full iteration-level results (<code>$results</code>). Requires the <code>iarm</code> package (Suggests).</p></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.0" id="easyrasch2-030">easyRasch2 0.3.0<a class="anchor" aria-label="anchor" href="#easyrasch2-030"></a></h2>
-<ul><li><p><strong>New <code><a href="../reference/RMiteminfit.html">RMiteminfit()</a></code></strong>: Computes conditional infit MSQ statistics for each item via <code><a href="https://rdrr.io/pkg/iarm/man/out_infit.html" class="external-link">iarm::out_infit()</a></code>, enriched with item locations relative to the sample mean person location. Supports both dichotomous (Rasch model via <code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code>) and polytomous (Partial Credit Model via <code><a href="https://rdrr.io/pkg/eRm/man/PCM.html" class="external-link">eRm::PCM()</a></code>) data. Requires the <code>iarm</code> package (Suggests). Output options: <code>"kable"</code> (default, plain-text <code><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">knitr::kable()</a></code>) or <code>"dataframe"</code>. Optional <code>sort = "infit"</code> sorts by infit MSQ descending. Only complete cases are used for conditional fit calculation.</p></li>
-<li><p><strong>New <code><a href="../reference/RMitemrestscore.html">RMitemrestscore()</a></code></strong>: Computes observed and model-expected item-restscore correlations via <code><a href="https://rdrr.io/pkg/iarm/man/item_restscore.html" class="external-link">iarm::item_restscore()</a></code>, enriched with absolute differences between observed and expected values, item average locations, and item locations relative to the sample mean person location. Supports both dichotomous (Rasch model via <code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code>) and polytomous (Partial Credit Model via <code><a href="https://rdrr.io/pkg/eRm/man/PCM.html" class="external-link">eRm::PCM()</a></code>) data. Requires the <code>iarm</code> package (Suggests). Output options: <code>"kable"</code> (default, plain-text <code><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">knitr::kable()</a></code>) or <code>"dataframe"</code>. Optional <code>sort = "diff"</code> sorts by absolute difference descending.</p></li>
+<ul><li><p><strong>New <code>RMiteminfit()</code></strong>: Computes conditional infit MSQ statistics for each item via <code><a href="https://rdrr.io/pkg/iarm/man/out_infit.html" class="external-link">iarm::out_infit()</a></code>, enriched with item locations relative to the sample mean person location. Supports both dichotomous (Rasch model via <code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code>) and polytomous (Partial Credit Model via <code><a href="https://rdrr.io/pkg/eRm/man/PCM.html" class="external-link">eRm::PCM()</a></code>) data. Requires the <code>iarm</code> package (Suggests). Output options: <code>"kable"</code> (default, plain-text <code><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">knitr::kable()</a></code>) or <code>"dataframe"</code>. Optional <code>sort = "infit"</code> sorts by infit MSQ descending. Only complete cases are used for conditional fit calculation.</p></li>
+<li><p><strong>New <code>RMitemrestscore()</code></strong>: Computes observed and model-expected item-restscore correlations via <code><a href="https://rdrr.io/pkg/iarm/man/item_restscore.html" class="external-link">iarm::item_restscore()</a></code>, enriched with absolute differences between observed and expected values, item average locations, and item locations relative to the sample mean person location. Supports both dichotomous (Rasch model via <code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code>) and polytomous (Partial Credit Model via <code><a href="https://rdrr.io/pkg/eRm/man/PCM.html" class="external-link">eRm::PCM()</a></code>) data. Requires the <code>iarm</code> package (Suggests). Output options: <code>"kable"</code> (default, plain-text <code><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">knitr::kable()</a></code>) or <code>"dataframe"</code>. Optional <code>sort = "diff"</code> sorts by absolute difference descending.</p></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="easyrasch2-020">easyRasch2 0.2.0<a class="anchor" aria-label="anchor" href="#easyrasch2-020"></a></h2>
 <ul><li>
 <strong><code><a href="../reference/RMlocdepQ3.html">RMlocdepQ3()</a></code></strong>: <code>cutoff</code> is now optional (default <code>NULL</code>). When omitted, the raw Q3 residual correlation matrix is returned without any dynamic cut-off applied. When provided, the dynamic cut-off (mean Q3 + cutoff) is shown in the kable caption as before. Supersedes the requirement to always supply a cutoff value (PRs <a href="https://github.com/pgmj/easyRasch2/issues/2" class="external-link">#2</a> and <a href="https://github.com/pgmj/easyRasch2/issues/3" class="external-link">#3</a>).</li>
 <li>
-<strong>New <code><a href="../reference/RMlocdepQ3cutoff.html">RMlocdepQ3cutoff()</a></code></strong>: Simulation-based (parametric bootstrap) cutoff determination for <code><a href="../reference/RMlocdepQ3.html">RMlocdepQ3()</a></code>. Supports both dichotomous and polytomous data. Optional parallel processing via <code>mirai</code> (falls back to sequential if not installed). The <code>$suggested_cutoff</code> is the 99th percentile of the simulated Q3 max–mean distribution.</li>
+<strong>New <code>RMlocdepQ3cutoff()</code></strong>: Simulation-based (parametric bootstrap) cutoff determination for <code><a href="../reference/RMlocdepQ3.html">RMlocdepQ3()</a></code>. Supports both dichotomous and polytomous data. Optional parallel processing via <code>mirai</code> (falls back to sequential if not installed). The <code>$suggested_cutoff</code> is the 99th percentile of the simulated Q3 max–mean distribution.</li>
 <li>
 <strong>New internal helpers</strong> in <code>R/utils-simulation.R</code>: <code>sim_poly_item()</code>, <code>sim_partial_score()</code>, and <code>extract_item_thresholds()</code>.</li>
 <li>

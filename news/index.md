@@ -1,29 +1,75 @@
 # Changelog
 
+## easyRasch2 0.8.0
+
+### Function renaming for consistency
+
+This release renames **22 exported functions** under a consistent
+*domain-prefix → method → variant-suffix* scheme so that autocompletion
+on a prefix (`RMdif`, `RMlocdep`, `RMitem`, `RMdim`, `RMplot`) surfaces
+every related function. No semantic changes; only names.
+
+A complete mapping is on the new `?easyRasch2-renaming` help page. The
+short version:
+
+| Domain | Prefix | Examples |
+|----|----|----|
+| DIF | `RMdif` | [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/reference/RMdifGamma.md), [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdifGammaCutoff.md), [`RMdifGammaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMdifGammaPlot.md), [`RMdifLR()`](https://pgmj.github.io/easyRasch2/reference/RMdifLR.md), [`RMdifTree()`](https://pgmj.github.io/easyRasch2/reference/RMdifTree.md) |
+| Local dependence | `RMlocdep` | [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md), [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md), [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3plot.md), [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGamma.md), [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaCutoff.md), [`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaPlot.md) |
+| Item statistics | `RMitem` | [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md), [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md), [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffPlot.md), [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitMI.md), [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffMI.md), [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md), [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/reference/RMitemRestscoreBoot.md), [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemICCPlot.md), [`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/reference/RMitemHierarchy.md) |
+| Dimensionality | `RMdim` | [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/reference/RMdimResidualPCA.md), [`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdimResidualPCACutoff.md), [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFACutoff.md), [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFAPlot.md), [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLof.md), [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLofResiduals.md) |
+| Descriptive plot | `RMplot` | [`RMplotTile()`](https://pgmj.github.io/easyRasch2/reference/RMplotTile.md), [`RMplotBar()`](https://pgmj.github.io/easyRasch2/reference/RMplotBar.md), [`RMplotStackedbar()`](https://pgmj.github.io/easyRasch2/reference/RMplotStackedbar.md) |
+
+Unchanged:
+[`RMreliability()`](https://pgmj.github.io/easyRasch2/reference/RMreliability.md),
+[`RMUreliability()`](https://pgmj.github.io/easyRasch2/reference/RMUreliability.md),
+[`RMtargeting()`](https://pgmj.github.io/easyRasch2/reference/RMtargeting.md),
+[`RMscoreSE()`](https://pgmj.github.io/easyRasch2/reference/RMscoreSE.md).
+
+**Breaking change.** No deprecation aliases are shipped — existing
+scripts will need a search-and-replace. See `?easyRasch2-renaming` for
+the full table.
+
+## easyRasch2 0.7.1
+
+- New **`RMlocdepQ3plot()`** for visualising per-pair simulated Q3
+  distributions against observed Q3 values, mirroring the design of
+  `RMpgLDplot()` and `RMpgDIFplot()`. Supports `items` and `n_pairs`
+  filters; with `data` supplied, ranks `n_pairs` by
+  `|observed Q3 - median(simulated Q3 per pair)|`.
+- `RMlocdepQ3cutoff()` now retains per-pair iteration-level data: the
+  returned list gains `pair_results`, `pair_cutoffs`, `item_names`,
+  `cutoff_method`, and `hdci_width`. Existing scalar outputs
+  (`suggested_cutoff` etc.) are unchanged. New arguments `cutoff_method`
+  (`"hdci"` / `"quantile"`) and `hdci_width` (default `0.99`) control
+  how per-pair credible intervals are computed.
+- [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md)
+  can now be called with the full list returned by `RMlocdepQ3cutoff()`
+  (it auto-extracts `$suggested_cutoff`), matching the partial-gamma
+  family convention. Numeric scalar still works.
+- `RMpartgamLD()` and `RMpgLDplot()` gain an `n_pairs` argument to keep
+  only the top-N pairs by `|gamma|` (LD) or by
+  `|observed - median(sim)|` deviation (plot).
+- `RMpartgamLD()`, `RMpartgamDIF()`, and `RMitemrestscore()` now use
+  consistent column headers: `Adj. p-value (BH)` and a new
+  `p-value sign.` star-string column. `RMitemrestscore()`’s former
+  `Absolute_difference` column is now a *signed* `Difference` (observed
+  − expected), so over- and underfit are visually distinguishable at a
+  glance.
+
 ## easyRasch2 0.7.0
 
-- New
-  **[`RMbarplot()`](https://pgmj.github.io/easyRasch2/reference/RMbarplot.md)**
-  and
-  **[`RMstackedbarplot()`](https://pgmj.github.io/easyRasch2/reference/RMstackedbarplot.md)**
-  join
-  [`RMtileplot()`](https://pgmj.github.io/easyRasch2/reference/RMtileplot.md)
+- New **`RMbarplot()`** and **`RMstackedbarplot()`** join `RMtileplot()`
   for easy visualization of item response data distributions.
-- New
-  **[`RMciccPlot()`](https://pgmj.github.io/easyRasch2/reference/RMciccPlot.md)**
-  for conditional item characteristic curves plot, also includes DIF
-  analysis for categorical DIF variables.
+- New **`RMciccPlot()`** for conditional item characteristic curves
+  plot, also includes DIF analysis for categorical DIF variables.
 - New
   **[`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/reference/RMitemHierarchy.md)**,
   which outputs a plot illustrating the item hierarchy with item
   thresholds and confidence intervals.
-- Modified
-  [`RMcfaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMcfaCutoff.md)
-  to only use .scaled metrics for RMSEA and CFI, for stability. See
-  documentation for more details.
-- Bug fix for
-  [`RMmartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMmartinLof.md)
-  with dichotomous items.
+- Modified `RMcfaCutoff()` to only use .scaled metrics for RMSEA and
+  CFI, for stability. See documentation for more details.
+- Bug fix for `RMmartinLof()` with dichotomous items.
 - Bug fix for
   [`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/reference/RMitemHierarchy.md)
   making option `item_labels` work as intended.
@@ -33,13 +79,10 @@
 
 ## easyRasch2 0.6.0
 
-- New
-  **[`RMcfaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMcfaCutoff.md)**
-  for testing unidimensionality against simulation-based cutoff values
-  for model fit metrics.
-  - **[`RMcfaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMcfaPlot.md)**
-    shows figure with distribution of simulation results and observed
-    model fit values.
+- New **`RMcfaCutoff()`** for testing unidimensionality against
+  simulation-based cutoff values for model fit metrics.
+  - **`RMcfaPlot()`** shows figure with distribution of simulation
+    results and observed model fit values.
 
 ## easyRasch2 0.5.8
 
@@ -72,40 +115,31 @@
   for testing DIF of categorical variables using Andersens’s Likelihood
   Ratio test as implemented in package `eRm`
 - Visualization of response data using a tile plot with
-  **[`RMtileplot()`](https://pgmj.github.io/easyRasch2/reference/RMtileplot.md)**.
+  **`RMtileplot()`**.
   - Optional `group` faceting, which is useful for DIF-analyses.
-- Added Martin-Löf test of dimensionality
-  **[`RMmartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMmartinLof.md)**
-  based on Christensen & Kreiner (2007, doi: 10.1177/0146621605286204),
-  for both dichotomous and polytomous (PCM) items.
+- Added Martin-Löf test of dimensionality **`RMmartinLof()`** based on
+  Christensen & Kreiner (2007, doi: 10.1177/0146621605286204), for both
+  dichotomous and polytomous (PCM) items.
   - Also added post-processing function **`RMmartinLofresiduals()`**.
 
 ## easyRasch2 0.5.6
 
-- Added
-  **[`RMresidualPCA()`](https://pgmj.github.io/easyRasch2/reference/RMresidualPCA.md)**
-  for evaluating patterns in the standardized residuals from the RM/PCM.
-  Outputs either a table with eigenvalues and explained variance or a
-  figure with standardized loadings on the first residual contrast and
-  item locations.
-- Added
-  **[`RMpcaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpcaCutoff.md)**
-  to determine a simulation-based critical value for the largest
-  eigenvalue.
+- Added **`RMresidualPCA()`** for evaluating patterns in the
+  standardized residuals from the RM/PCM. Outputs either a table with
+  eigenvalues and explained variance or a figure with standardized
+  loadings on the first residual contrast and item locations.
+- Added **`RMpcaCutoff()`** to determine a simulation-based critical
+  value for the largest eigenvalue.
 
 ## easyRasch2 0.5.5
 
-- Added
-  **[`RMbootRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMbootRestscore.md)**
-  for use with large sample sizes. See
+- Added **`RMbootRestscore()`** for use with large sample sizes. See
   <https://pgmj.github.io/rasch_itemfit/> for more details.
 - Added
   **[`RMscoreSE()`](https://pgmj.github.io/easyRasch2/reference/RMscoreSE.md)**
   that produces a transformation table (or figure) from ordinal sum
   scores to WLE (Weighted Likelihood Estimation) interval scores.
-- Modified
-  [`RMlocdepQ3cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
-  to improve speed.
+- Modified `RMlocdepQ3cutoff()` to improve speed.
 
 ## easyRasch2 0.5.4
 
@@ -113,64 +147,48 @@
   for Wright map style plots.
 - New functions for handling missing data with conditional item infit
   MSQ by multiple imputation using package `mice`.
-  - **[`RMinfitcutoff_mi()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff_mi.md)**
-    uses the `mids` object containing multiple imputated datasets
-    (output by
+  - **`RMinfitcutoff_mi()`** uses the `mids` object containing multiple
+    imputated datasets (output by
     [`mice::mice()`](https://amices.org/mice/reference/mice.html)) to
     run simulations on each datasets and combines the results. Splits
     iterations across imputations (e.g. 250 total / 5 imputations = 50
     each).
-  - **[`RMiteminfit_mi()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit_mi.md)**
-    calculates and pools conditional infit from the imputated datasets
-    and optionally uses the
-    [`RMinfitcutoff_mi()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff_mi.md)
+  - **`RMiteminfit_mi()`** calculates and pools conditional infit from
+    the imputated datasets and optionally uses the `RMinfitcutoff_mi()`
     output for cutoff values.
-  - Works with existing
-    **[`RMinfitcutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoffPlot.md)**
+  - Works with existing **`RMinfitcutoffPlot()`**
 
 ## easyRasch2 0.5.3
 
-- New functions
-  **[`RMpartgamLD()`](https://pgmj.github.io/easyRasch2/reference/RMpartgamLD.md)**
-  and
-  **[`RMpgLDcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgLDcutoff.md)**
-  for evaluating local dependency of item pairs in both directions.
-  - Plot function
-    **[`RMpgLDplot()`](https://pgmj.github.io/easyRasch2/reference/RMpgLDplot.md)**,
-    similar to
-    **[`RMpgDIFplot()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFplot.md)**
+- New functions **`RMpartgamLD()`** and **`RMpgLDcutoff()`** for
+  evaluating local dependency of item pairs in both directions.
+  - Plot function **`RMpgLDplot()`**, similar to **`RMpgDIFplot()`**
   - NOTE: The simulation-based cutoffs have not yet been evaluated in a
     systematic way. Default choices may not be sensible, please try
     different numbers of iterations and hdci_width.
 
 ## easyRasch2 0.5.2
 
-- New functions
-  **[`RMpartgamDIF()`](https://pgmj.github.io/easyRasch2/reference/RMpartgamDIF.md)**
-  and
-  **[`RMpgDIFcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFcutoff.md)**
-  for evaluating DIF of categorical external variables.
-  - Also with plot function
-    **[`RMpgDIFplot()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFplot.md)**,
-    similar to
-    [`RMinfitcutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoffPlot.md)
+- New functions **`RMpartgamDIF()`** and **`RMpgDIFcutoff()`** for
+  evaluating DIF of categorical external variables.
+  - Also with plot function **`RMpgDIFplot()`**, similar to
+    `RMinfitcutoffPlot()`
   - NOTE: The simulation-based cutoffs have not yet been evaluated in a
     systematic way. Default choices may not be sensible, please try
     different numbers of iterations and hdci_width.
 
 ## easyRasch2 0.5.1
 
-- New function
-  **[`RMinfitcutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoffPlot.md)**
-  to illustrate distribution of simulated conditional item infit MSQ
-  values together with the observed value.
+- New function **`RMinfitcutoffPlot()`** to illustrate distribution of
+  simulated conditional item infit MSQ values together with the observed
+  value.
 
 ## easyRasch2 0.5.0
 
-- **[`RMinfitcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff.md)
-  gains `cutoff_method` and `hdci_width` parameters**: By default
-  (`cutoff_method = "hdci"`, `hdci_width = 0.999`), per-item cutoff
-  intervals are now computed using the Highest Density Interval via
+- **`RMinfitcutoff()` gains `cutoff_method` and `hdci_width`
+  parameters**: By default (`cutoff_method = "hdci"`,
+  `hdci_width = 0.999`), per-item cutoff intervals are now computed
+  using the Highest Density Interval via
   [`ggdist::hdci()`](https://mjskay.github.io/ggdist/reference/point_interval.html)
   (99.9% HDCI). Set `cutoff_method = "quantile"` to restore the previous
   behaviour (2.5th/97.5th percentiles). The `ggdist` package is only
@@ -178,38 +196,33 @@
   returned list now also includes `cutoff_method` and `hdci_width`
   fields.
 
-- **[`RMiteminfit()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md)
-  caption updated**: When `cutoff` is the return value of
-  [`RMinfitcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff.md),
-  the kable caption now states the cutoff method, e.g.
+- **`RMiteminfit()` caption updated**: When `cutoff` is the return value
+  of `RMinfitcutoff()`, the kable caption now states the cutoff method,
+  e.g.
   `"Cutoff values based on 250 simulation iterations (99.9% HDCI)."` or
   `"Cutoff values based on 250 simulation iterations (2.5th/97.5th percentile)."`.
 
 ## easyRasch2 0.4.0
 
-- **[`RMiteminfit()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md)
-  gains optional `cutoff` parameter**: Accepts the return value of
-  [`RMinfitcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff.md)
-  (or its `$item_cutoffs` data.frame directly). When provided, per-item
-  cutoff boundaries (`Infit_low`, `Infit_high`) and a logical `Flagged`
-  column are added to both `"dataframe"` and `"kable"` output. The kable
-  caption includes the number of simulation iterations when available.
+- **`RMiteminfit()` gains optional `cutoff` parameter**: Accepts the
+  return value of `RMinfitcutoff()` (or its `$item_cutoffs` data.frame
+  directly). When provided, per-item cutoff boundaries (`Infit_low`,
+  `Infit_high`) and a logical `Flagged` column are added to both
+  `"dataframe"` and `"kable"` output. The kable caption includes the
+  number of simulation iterations when available.
 
-- **New
-  [`RMinfitcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff.md)**:
-  Simulation-based (parametric bootstrap) cutoff determination for
-  \[RMiteminfit()\]. Supports both dichotomous and polytomous data.
-  Optional parallel processing via `mirai` (falls back to sequential if
-  not installed). Returns per-item 2.5th and 97.5th percentiles of
-  simulated infit and outfit MSQ distributions (`$item_cutoffs`),
-  together with the full iteration-level results (`$results`). Requires
-  the `iarm` package (Suggests).
+- **New `RMinfitcutoff()`**: Simulation-based (parametric bootstrap)
+  cutoff determination for \[RMiteminfit()\]. Supports both dichotomous
+  and polytomous data. Optional parallel processing via `mirai` (falls
+  back to sequential if not installed). Returns per-item 2.5th and
+  97.5th percentiles of simulated infit and outfit MSQ distributions
+  (`$item_cutoffs`), together with the full iteration-level results
+  (`$results`). Requires the `iarm` package (Suggests).
 
 ## easyRasch2 0.3.0
 
-- **New
-  [`RMiteminfit()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md)**:
-  Computes conditional infit MSQ statistics for each item via
+- **New `RMiteminfit()`**: Computes conditional infit MSQ statistics for
+  each item via
   [`iarm::out_infit()`](https://rdrr.io/pkg/iarm/man/out_infit.html),
   enriched with item locations relative to the sample mean person
   location. Supports both dichotomous (Rasch model via
@@ -223,9 +236,8 @@
   descending. Only complete cases are used for conditional fit
   calculation.
 
-- **New
-  [`RMitemrestscore()`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md)**:
-  Computes observed and model-expected item-restscore correlations via
+- **New `RMitemrestscore()`**: Computes observed and model-expected
+  item-restscore correlations via
   [`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html),
   enriched with absolute differences between observed and expected
   values, item average locations, and item locations relative to the
@@ -249,9 +261,8 @@
   always supply a cutoff value (PRs
   [\#2](https://github.com/pgmj/easyRasch2/issues/2) and
   [\#3](https://github.com/pgmj/easyRasch2/issues/3)).
-- **New
-  [`RMlocdepQ3cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)**:
-  Simulation-based (parametric bootstrap) cutoff determination for
+- **New `RMlocdepQ3cutoff()`**: Simulation-based (parametric bootstrap)
+  cutoff determination for
   [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md).
   Supports both dichotomous and polytomous data. Optional parallel
   processing via `mirai` (falls back to sequential if not installed).

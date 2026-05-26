@@ -4,27 +4,27 @@
 
 Conditional item fit statistics with simulation-based cutoffs
 
-- [`RMiteminfit()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md)
+- [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md)
   : Conditional Item Infit MSQ
-- [`RMinfitcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff.md)
+- [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md)
   : Simulation-Based Infit MSQ Cutoff Determination
-- [`RMinfitcutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoffPlot.md)
+- [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffPlot.md)
   : Plot Distribution of Simulated Infit and Outfit MSQ Values
-- [`RMiteminfit_mi()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit_mi.md)
+- [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitMI.md)
   : Conditional Item Infit MSQ for Multiply Imputed Data
-- [`RMinfitcutoff_mi()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff_mi.md)
+- [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffMI.md)
   : Simulation-Based Infit MSQ Cutoff Determination for Multiply Imputed
   Data
-- [`RMciccPlot()`](https://pgmj.github.io/easyRasch2/reference/RMciccPlot.md)
+- [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemICCPlot.md)
   : Conditional Item Characteristic Curves
 
 ## Item Restscore
 
 Item-restscore correlation analysis
 
-- [`RMitemrestscore()`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md)
+- [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md)
   : Item Restscore Analysis
-- [`RMbootRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMbootRestscore.md)
+- [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/reference/RMitemRestscoreBoot.md)
   : Bootstrap Item-Restscore Misfit Detection
 
 ## Local Dependence (LD)
@@ -34,13 +34,15 @@ cutoffs
 
 - [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md)
   : Q3 Residual Correlations for Local Dependence Assessment
-- [`RMlocdepQ3cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
+- [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
   : Simulation-Based Q3 Cutoff Determination
-- [`RMpartgamLD()`](https://pgmj.github.io/easyRasch2/reference/RMpartgamLD.md)
+- [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3plot.md)
+  : Plot Distribution of Simulated Q3 Residual Correlations
+- [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGamma.md)
   : Partial Gamma Local Dependence Analysis
-- [`RMpgLDcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgLDcutoff.md)
+- [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaCutoff.md)
   : Simulation-Based Partial Gamma LD Cutoff Determination
-- [`RMpgLDplot()`](https://pgmj.github.io/easyRasch2/reference/RMpgLDplot.md)
+- [`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaPlot.md)
   : Plot Distribution of Simulated Partial Gamma LD Values
 
 ## Differential Item Functioning (DIF)
@@ -51,41 +53,41 @@ DIF assessment functions
   : DIF analysis via Andersen's likelihood-ratio test
 - [`RMdifTree()`](https://pgmj.github.io/easyRasch2/reference/RMdifTree.md)
   : Tree-based DIF analysis with effect-size classification
-- [`RMpartgamDIF()`](https://pgmj.github.io/easyRasch2/reference/RMpartgamDIF.md)
+- [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/reference/RMdifGamma.md)
   : Partial Gamma DIF Analysis
-- [`RMpgDIFcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFcutoff.md)
+- [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdifGammaCutoff.md)
   : Simulation-Based Partial Gamma DIF Cutoff Determination
-- [`RMpgDIFplot()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFplot.md)
+- [`RMdifGammaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMdifGammaPlot.md)
   : Plot Distribution of Simulated Partial Gamma DIF Values
 
 ## Global tests of model fit
 
 PCA of residuals, and more to come
 
-- [`RMcfaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMcfaCutoff.md)
+- [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFACutoff.md)
   : Posterior-predictive CFA fit-index cutoffs under PCM
   unidimensionality
-- [`RMcfaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMcfaPlot.md)
+- [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFAPlot.md)
   : Plot observed CFA fit indices against the simulated null
   distribution
-- [`RMresidualPCA()`](https://pgmj.github.io/easyRasch2/reference/RMresidualPCA.md)
+- [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/reference/RMdimResidualPCA.md)
   : PCA of Standardized Rasch Residuals
-- [`RMpcaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpcaCutoff.md)
+- [`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdimResidualPCACutoff.md)
   : Simulation-based Cutoff for First-Contrast Eigenvalue
-- [`RMmartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMmartinLof.md)
+- [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLof.md)
   : Martin-Lof Test of Unidimensionality
-- [`RMmartinLofResiduals()`](https://pgmj.github.io/easyRasch2/reference/RMmartinLofResiduals.md)
+- [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLofResiduals.md)
   : Standardised Residuals from the Joint Subscore Distribution
 
 ## Descriptive functions
 
 Targeting and other plots/tables
 
-- [`RMtileplot()`](https://pgmj.github.io/easyRasch2/reference/RMtileplot.md)
+- [`RMplotTile()`](https://pgmj.github.io/easyRasch2/reference/RMplotTile.md)
   : Tile Plot of Item Response Distributions
-- [`RMstackedbarplot()`](https://pgmj.github.io/easyRasch2/reference/RMstackedbarplot.md)
+- [`RMplotStackedbar()`](https://pgmj.github.io/easyRasch2/reference/RMplotStackedbar.md)
   : Stacked Bar Chart of Item Response Distributions
-- [`RMbarplot()`](https://pgmj.github.io/easyRasch2/reference/RMbarplot.md)
+- [`RMplotBar()`](https://pgmj.github.io/easyRasch2/reference/RMplotBar.md)
   : Item Response Distribution Bar Chart
 - [`RMtargeting()`](https://pgmj.github.io/easyRasch2/reference/RMtargeting.md)
   : Person-Item Targeting Plot (Wright Map)

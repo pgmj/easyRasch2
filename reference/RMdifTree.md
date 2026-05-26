@@ -255,7 +255,7 @@ Computational and Graphical Statistics, 27*, 685-700.
 ## See also
 
 [`RMdifLR`](https://pgmj.github.io/easyRasch2/reference/RMdifLR.md),
-[`RMpartgamDIF`](https://pgmj.github.io/easyRasch2/reference/RMpartgamDIF.md)
+[`RMdifGamma`](https://pgmj.github.io/easyRasch2/reference/RMdifGamma.md)
 
 ## Examples
 

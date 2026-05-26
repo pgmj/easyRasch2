@@ -9,7 +9,7 @@ location.
 ## Usage
 
 ``` r
-RMiteminfit(data, cutoff = NULL, output = "kable", sort)
+RMitemInfit(data, cutoff = NULL, output = "kable", sort)
 ```
 
 ## Arguments
@@ -27,13 +27,13 @@ RMiteminfit(data, cutoff = NULL, output = "kable", sort)
   the current version). Can be:
 
   - The return value of
-    [`RMinfitcutoff`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff.md)
+    [`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md)
     (a list with `$item_cutoffs`): the data.frame is extracted
     automatically and the number of simulation iterations,
     `cutoff_method`, and `hdci_width` are included in the kable caption.
 
   - The `$item_cutoffs` data.frame from
-    [`RMinfitcutoff`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff.md)
+    [`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md)
     directly: must have columns `Item`, `infit_low`, and `infit_high`.
     When provided, adds columns `Infit_low`, `Infit_high`, and `Flagged`
     (logical; `TRUE` when `Infit_MSQ` falls outside the credible range)
@@ -72,7 +72,7 @@ substantially above 1.0 suggest underfit (unexpected responses), while
 values substantially below 1.0 suggest overfit (overly predictable
 responses). The definition of "substantially" depends on several factors
 such as sample size, and needs to be determined by simulation using
-[`RMinfitcutoff`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff.md).
+[`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md).
 There is no general rule-of-thumb value that is correct.
 
 Conditional infit MSQ statistics are computed via
@@ -108,7 +108,7 @@ them? *Journal of Statistical Distributions and Applications*, 7(5).
 
 ## See also
 
-[`RMinfitcutoff`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff.md)
+[`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md)
 
 ## Examples
 
@@ -122,7 +122,7 @@ sim_data <- as.data.frame(
 colnames(sim_data) <- paste0("Item", 1:5)
 
 # Default kable output
-RMiteminfit(sim_data)
+RMitemInfit(sim_data)
 #> 
 #> 
 #> Table: MSQ values based on conditional estimation (n = 40 complete cases).
@@ -136,7 +136,7 @@ RMiteminfit(sim_data)
 #> |Item5 |     0.931|             -0.76|
 
 # Sorted by infit MSQ descending
-RMiteminfit(sim_data, sort = "infit")
+RMitemInfit(sim_data, sort = "infit")
 #> 
 #> 
 #> Table: MSQ values based on conditional estimation (n = 40 complete cases).
@@ -150,13 +150,13 @@ RMiteminfit(sim_data, sort = "infit")
 #> |Item3 |     0.828|             -0.23|
 
 # Return as data.frame for further processing
-df <- RMiteminfit(sim_data, output = "dataframe")
+df <- RMitemInfit(sim_data, output = "dataframe")
 # }
 # \donttest{
 # Simulation-based cutoffs (100 Monte-Carlo iterations)
-cutoff_res <- RMinfitcutoff(sim_data, iterations = 100, parallel = FALSE,
+cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100, parallel = FALSE,
                             seed = 42)
-RMiteminfit(sim_data, cutoff = cutoff_res)
+RMitemInfit(sim_data, cutoff = cutoff_res)
 #> 
 #> 
 #> Table: MSQ values based on conditional estimation (n = 40 complete cases). Cutoff values based on 99 simulation iterations (99.9% HDCI).
@@ -168,7 +168,7 @@ RMiteminfit(sim_data, cutoff = cutoff_res)
 #> |Item3 |     0.828|     0.547|      1.374|FALSE   |             -0.23|
 #> |Item4 |     1.216|     0.699|      1.349|FALSE   |              0.26|
 #> |Item5 |     0.931|     0.689|      1.315|FALSE   |             -0.76|
-RMiteminfit(sim_data, cutoff = cutoff_res, output = "dataframe")
+RMitemInfit(sim_data, cutoff = cutoff_res, output = "dataframe")
 #>    Item Infit_MSQ Infit_low Infit_high Flagged Relative_location
 #> 1 Item1     1.049     0.576      1.489   FALSE             -0.03
 #> 2 Item2     0.929     0.660      1.537   FALSE             -0.54

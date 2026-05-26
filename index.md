@@ -32,43 +32,43 @@ the sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
 
 ### Item fit
 
-- [`RMiteminfit()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md)
+- [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md)
   — conditional infit MSQ
-- [`RMinfitcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff.md) +
-  [`RMinfitcutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoffPlot.md)
+- [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md) +
+  [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffPlot.md)
   — simulation-based cutoffs and plot
-- [`RMiteminfit_mi()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit_mi.md) +
-  [`RMinfitcutoff_mi()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff_mi.md)
+- [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitMI.md) +
+  [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffMI.md)
   — multiple-imputation variants
-- [`RMitemrestscore()`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md)
+- [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md)
   — item-restscore with Goodman-Kruskal’s gamma
-- [`RMbootRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMbootRestscore.md)
+- [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/reference/RMitemRestscoreBoot.md)
   — non-parametric bootstrap of item-restscore fit
-- [`RMciccPlot()`](https://pgmj.github.io/easyRasch2/reference/RMciccPlot.md) -
+- [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemICCPlot.md) -
   conditional item characteristic curves
 
 ### Local dependence
 
 - [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md) +
-  [`RMlocdepQ3cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
+  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
   — Yen’s Q3 residual correlations
-- [`RMpartgamLD()`](https://pgmj.github.io/easyRasch2/reference/RMpartgamLD.md) +
-  [`RMpgLDcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgLDcutoff.md) +
-  [`RMpgLDplot()`](https://pgmj.github.io/easyRasch2/reference/RMpgLDplot.md)
+- [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGamma.md) +
+  [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaCutoff.md) +
+  [`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaPlot.md)
   — partial-gamma local dependence
 
 ### Dimensionality / unidimensionality
 
-- [`RMresidualPCA()`](https://pgmj.github.io/easyRasch2/reference/RMresidualPCA.md) +
-  [`RMpcaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpcaCutoff.md)
+- [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/reference/RMdimResidualPCA.md) +
+  [`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdimResidualPCACutoff.md)
   — PCA of standardized residuals, with simulation-based first-contrast
   cutoff (Chou & Wang, 2010)
-- [`RMmartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMmartinLof.md) +
-  [`RMmartinLofResiduals()`](https://pgmj.github.io/easyRasch2/reference/RMmartinLofResiduals.md)
+- [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLof.md) +
+  [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLofResiduals.md)
   — Martin-Löf LR test (Christensen & Kreiner, 2007), supports
   polytomous data
-- [`RMcfaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMcfaCutoff.md) +
-  [`RMcfaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMcfaPlot.md)
+- [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFACutoff.md) +
+  [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFAPlot.md)
   — posterior-predictive CFA fit-index cutoffs under PCM
   unidimensionality (via `lavaan` WLSMV)
 
@@ -81,11 +81,11 @@ the sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
   — Rasch / partial-credit trees (`psychotree`) with Mantel-Haenszel or
   partial-gamma effect sizes per split, optional iterative purification,
   and `stablelearner`-based stability assessment
-- [`RMpartgamDIF()`](https://pgmj.github.io/easyRasch2/reference/RMpartgamDIF.md) +
-  [`RMpgDIFcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFcutoff.md) +
-  [`RMpgDIFplot()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFplot.md)
+- [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/reference/RMdifGamma.md) +
+  [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdifGammaCutoff.md) +
+  [`RMdifGammaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMdifGammaPlot.md)
   — partial-gamma DIF
-- [`RMciccPlot()`](https://pgmj.github.io/easyRasch2/reference/RMciccPlot.md) -
+- [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemICCPlot.md) -
   evaluates DIF across class intervals
 
 ### Reliability, targeting, score conversion
@@ -101,11 +101,11 @@ the sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
 
 ### Data visualization
 
-- [`RMtileplot()`](https://pgmj.github.io/easyRasch2/reference/RMtileplot.md)
+- [`RMplotTile()`](https://pgmj.github.io/easyRasch2/reference/RMplotTile.md)
   — response-distribution heatmap with optional group faceting
-- [`RMbarplot()`](https://pgmj.github.io/easyRasch2/reference/RMbarplot.md)
+- [`RMplotBar()`](https://pgmj.github.io/easyRasch2/reference/RMplotBar.md)
   &
-  [`RMstackedbarplot()`](https://pgmj.github.io/easyRasch2/reference/RMstackedbarplot.md)
+  [`RMplotStackedbar()`](https://pgmj.github.io/easyRasch2/reference/RMplotStackedbar.md)
 
 ## Installation
 
@@ -127,13 +127,13 @@ options(mc.cores = 4)
 set.seed(42)
 
 # Conditional item infit with simulation-based cutoffs
-simfit <- RMinfitcutoff(pcmdat2, iterations = 250)
-RMiteminfit(pcmdat2, cutoff = simfit)
+simfit <- RMitemInfitCutoff(pcmdat2, iterations = 250)
+RMitemInfit(pcmdat2, cutoff = simfit)
 
 # Test of unidimensionality via posterior-predictive ordinal CFA
-cfa_res <- RMcfaCutoff(pcmdat2, iterations = 250)
+cfa_res <- RMdimCFACutoff(pcmdat2, iterations = 250)
 cfa_res                # kable: observed vs simulated cutoffs
-RMcfaPlot(cfa_res)     # histogram + observed diamond
+RMdimCFAPlot(cfa_res)     # histogram + observed diamond
 
 # DIF analysis via Andersen's LR test
 grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))

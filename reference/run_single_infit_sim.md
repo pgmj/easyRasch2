@@ -17,7 +17,7 @@ run_single_infit_sim(seed, data_list)
 - data_list:
 
   List produced inside
-  [`RMinfitcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff.md).
+  [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md).
 
 ## Value
 

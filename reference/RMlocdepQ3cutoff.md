@@ -10,13 +10,15 @@ empirical percentiles.
 ## Usage
 
 ``` r
-RMlocdepQ3cutoff(
+RMlocdepQ3Cutoff(
   data,
   iterations = 500,
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,
-  seed = NULL
+  seed = NULL,
+  cutoff_method = "hdci",
+  hdci_width = 0.99
 )
 ```
 
@@ -51,6 +53,21 @@ RMlocdepQ3cutoff(
 
   Integer or `NULL`. Random seed for reproducibility.
 
+- cutoff_method:
+
+  Character. Method used to compute per-pair Q3 credible intervals in
+  `pair_cutoffs`. One of `"hdci"` (the default, Highest Density
+  Continuous Interval via
+  [`ggdist::hdci()`](https://mjskay.github.io/ggdist/reference/point_interval.html))
+  or `"quantile"` (symmetric 2.5th / 97.5th percentiles). Only affects
+  `pair_cutoffs`; the global `$suggested_cutoff` (99th percentile of
+  `max(Q3) - mean(Q3)`) is unaffected.
+
+- hdci_width:
+
+  Numeric in (0, 1). Width of the HDCI when `cutoff_method = "hdci"`.
+  Default `0.99`. Ignored when `cutoff_method = "quantile"`.
+
 ## Value
 
 A list with components:
@@ -59,6 +76,18 @@ A list with components:
 
   data.frame with columns `mean`, `max`, `diff` (one row per successful
   iteration).
+
+- `pair_results`:
+
+  Long data.frame with columns `Item1`, `Item2`, `Q3`, `iteration` — one
+  row per item pair per successful iteration. Used by
+  [`RMlocdepQ3Plot`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3plot.md).
+
+- `pair_cutoffs`:
+
+  data.frame with per-pair cutoff summaries: `Item1`, `Item2`, `Q3_low`,
+  `Q3_high`. Boundaries are computed via the method specified by
+  `cutoff_method`.
 
 - `actual_iterations`:
 
@@ -72,6 +101,10 @@ A list with components:
 
   Summary statistics of estimated person parameters.
 
+- `item_names`:
+
+  Character vector of item names from `data`.
+
 - `max_diff`, `sd_diff`:
 
   Max and SD of the `diff` distribution.
@@ -82,8 +115,16 @@ A list with components:
 
 - `suggested_cutoff`:
 
-  The 99th percentile (`p99`) — recommended cutoff for
+  The 99th percentile (`p99`) — recommended scalar cutoff for
   [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md).
+
+- `cutoff_method`:
+
+  The method used for `pair_cutoffs` (`"hdci"` or `"quantile"`).
+
+- `hdci_width`:
+
+  The HDCI width used (only meaningful when `cutoff_method = "hdci"`).
 
 ## Details
 
@@ -119,7 +160,7 @@ sim_data <- as.data.frame(
 colnames(sim_data) <- paste0("Item", 1:10)
 
 # Run 100 iterations sequentially for a quick demo
-cutoff_res <- RMlocdepQ3cutoff(sim_data, iterations = 100, parallel = FALSE,
+cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 100, parallel = FALSE,
                                seed = 42)
 cutoff_res$suggested_cutoff  # 99th percentile
 

@@ -17,7 +17,7 @@ run_single_partgam_LD_sim(seed, data_list)
 - data_list:
 
   List produced inside
-  [`RMpgLDcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgLDcutoff.md).
+  [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaCutoff.md).
 
 ## Value
 

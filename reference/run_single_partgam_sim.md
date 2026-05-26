@@ -17,7 +17,7 @@ run_single_partgam_sim(seed, data_list)
 - data_list:
 
   List produced inside
-  [`RMpgDIFcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgDIFcutoff.md).
+  [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdifGammaCutoff.md).
 
 ## Value
 

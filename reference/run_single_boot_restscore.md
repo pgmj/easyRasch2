@@ -17,7 +17,7 @@ run_single_boot_restscore(seed, data_list)
 - data_list:
 
   List produced inside
-  [`RMbootRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMbootRestscore.md)
+  [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/reference/RMitemRestscoreBoot.md)
   containing `data`, `samplesize`, `is_polytomous`, `item_names`.
 
 ## Value

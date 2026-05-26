@@ -108,7 +108,7 @@ distributions:
 
 ``` r
 
-RMbarplot(items, ncol = 2)
+RMplotBar(items, ncol = 2)
 ```
 
 ![Faceted bar chart of response
@@ -118,7 +118,7 @@ Faceted bar chart of response distributions
 
 ``` r
 
-RMtileplot(items, category_labels = item_resp)
+RMplotTile(items, category_labels = item_resp)
 ```
 
 ![Response distribution tile plot](figures/rasch-tile-plot-1.png)
@@ -127,7 +127,7 @@ Response distribution tile plot
 
 ``` r
 
-RMstackedbarplot(items, show_percent = TRUE)
+RMplotStackedbar(items, show_percent = TRUE)
 ```
 
 ![Stacked-bar response
@@ -155,15 +155,15 @@ diagnostics that can be combined for a robust conclusion:
 
 Conditional item infit mean-square statistics flag items whose response
 patterns deviate from the Rasch expectation. With
-[`RMinfitcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff.md),
+[`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md),
 per-item highest-density intervals serve as the reference instead
 rule-of-thumb cutoffs ([Johansson 2025](#ref-johansson_detecting_2025)).
 
 ``` r
 
-infit_cut <- RMinfitcutoff(items, iterations = 100, parallel = FALSE,
+infit_cut <- RMitemInfitCutoff(items, iterations = 100, parallel = FALSE,
                            seed = 3)
-RMiteminfit(items, cutoff = infit_cut)
+RMitemInfit(items, cutoff = infit_cut)
 ```
 
 | Item | Infit MSQ | Infit low | Infit high | Flagged | Relative location |
@@ -183,13 +183,13 @@ Cutoff values based on 100 simulation iterations (99.9% HDCI). {.table}
 
 You can also get a plot summarizing simulated and observed item infit,
 using
-[`RMinfitcutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoffPlot.md).
+[`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffPlot.md).
 Since conditional infit needs complete data, there is a sibling function
 that uses multiple imputation with infit that is useful if you have
 partial missingness in your data -
-[`RMiteminfit_mi()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit_mi.md)
+[`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitMI.md)
 and
-[`RMinfitcutoff_mi()`](https://pgmj.github.io/easyRasch2/reference/RMinfitcutoff_mi.md).
+[`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffMI.md).
 
 It is important to note that the `RIitemfit()` function uses
 **conditional** infit, which is both robust to different sample sizes
@@ -222,7 +222,7 @@ score.
 
 ``` r
 
-RMciccPlot(items, class_intervals = 5)
+RMitemICCPlot(items, class_intervals = 5)
 ```
 
 ![Conditional ICCs with five class
@@ -247,24 +247,24 @@ simulation study ([Johansson 2025](#ref-johansson_detecting_2025))).
 
 ``` r
 
-RMitemrestscore(items)
+RMitemRestscore(items)
 ```
 
-| Item | Observed value | Expected value | Abs. difference | Adj. p-value (BH) | p-value sign. | Location | Rel. location |
+| Item | Observed value | Expected value | Difference | Adj. p-value (BH) | p-value sign. | Location | Rel. location |
 |:---|---:|---:|---:|---:|:---|---:|---:|
 | q1 | 0.66 | 0.62 | 0.04 | 0.210 |  | 0.17 | -0.58 |
 | q2 | 0.72 | 0.62 | 0.10 | 0.000 | \*\*\* | -0.04 | -0.78 |
-| q3 | 0.57 | 0.63 | 0.06 | 0.085 | . | -0.11 | -0.85 |
+| q3 | 0.57 | 0.63 | -0.06 | 0.085 | . | -0.11 | -0.85 |
 | q4 | 0.71 | 0.62 | 0.09 | 0.000 | \*\*\* | -0.76 | -1.51 |
 | q5 | 0.62 | 0.62 | 0.00 | 0.968 |  | 0.14 | -0.60 |
 | q6 | 0.69 | 0.63 | 0.06 | 0.021 | \* | -0.04 | -0.78 |
 | q7 | 0.64 | 0.62 | 0.02 | 0.476 |  | 0.06 | -0.68 |
-| q8 | 0.55 | 0.63 | 0.08 | 0.021 | \* | 1.70 | 0.95 |
-| q9 | 0.59 | 0.64 | 0.05 | 0.151 |  | 1.51 | 0.77 |
+| q8 | 0.55 | 0.63 | -0.08 | 0.021 | \* | 1.70 | 0.95 |
+| q9 | 0.59 | 0.64 | -0.05 | 0.151 |  | 1.51 | 0.77 |
 
 ### CFA-based cutoff for CFI / RMSEA
 
-[`RMcfaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMcfaCutoff.md)
+[`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFACutoff.md)
 fits a unidimensional ordinal CFA both to the observed data and to data
 simulated from a unidimensional PCM, and returns parametric-bootstrap
 cut-offs for model fit indices SRMR, CFI and RMSEA. Model fit values
@@ -273,7 +273,7 @@ plausible under a unidimensional data generating process*.
 
 ``` r
 
-cfa_cut <- RMcfaCutoff(items, iterations = 100, parallel = FALSE,
+cfa_cut <- RMdimCFACutoff(items, iterations = 100, parallel = FALSE,
                        seed = 2)
 cfa_cut
 ```
@@ -303,9 +303,9 @@ itself support unidimensionality.
 
 ``` r
 
-pca_cut <- RMpcaCutoff(items, iterations = 100, parallel = FALSE,
+pca_cut <- RMdimResidualPCACutoff(items, iterations = 100, parallel = FALSE,
                        seed = 1)
-RMresidualPCA(items, cutoff = pca_cut)
+RMdimResidualPCA(items, cutoff = pca_cut)
 ```
 
 | Component | Eigenvalue | Proportion of variance | Flagged |
@@ -328,7 +328,7 @@ multidimensionality.
 
 ``` r
 
-RMresidualPCA(items, output = "loadings")
+RMdimResidualPCA(items, output = "loadings")
 ```
 
 ![Standardised loadings on the first residual
@@ -346,120 +346,73 @@ Pair-wise $`Q_3`$ values above the simulation-based cut-off flag LD
 
 ``` r
 
-q3_cut <- RMlocdepQ3cutoff(items, iterations = 100, parallel = FALSE,
+q3_cut <- RMlocdepQ3Cutoff(items, iterations = 100, parallel = FALSE,
                            seed = 4)
 RMlocdepQ3(items, cutoff = q3_cut)
-#> Error:
-#> ! `cutoff` must be a single numeric value or NULL.
 ```
+
+|     | q1    | q2    | q3    | q4    | q5    | q6    | q7    | q8    | q9  | above_cutoff |
+|:----|:------|:------|:------|:------|:------|:------|:------|:------|:----|:-------------|
+| q1  |       |       |       |       |       |       |       |       |     |              |
+| q2  | 0.25  |       |       |       |       |       |       |       |     | \*           |
+| q3  | -0.19 | -0.2  |       |       |       |       |       |       |     |              |
+| q4  | 0     | -0.04 | 0.07  |       |       |       |       |       |     | \*           |
+| q5  | -0.21 | -0.28 | 0.07  | 0     |       |       |       |       |     | \*           |
+| q6  | -0.18 | 0.04  | -0.2  | -0.16 | -0.13 |       |       |       |     | \*           |
+| q7  | -0.13 | -0.2  | -0.22 | -0.09 | -0.14 | -0.05 |       |       |     |              |
+| q8  | -0.17 | -0.3  | -0.17 | -0.15 | -0.09 | -0.17 | 0.07  |       |     | \*           |
+| q9  | -0.14 | 0.06  | -0.23 | -0.28 | -0.24 | 0.01  | -0.18 | -0.12 |     | \*           |
+
+Dynamic cut-off: 0.037 (mean Q3 = -0.114 + 0.152). Correlations
+exceeding the cut-off may indicate local dependence. {.table}
 
 A second perspective on LD is the *partial gamma* coefficient ([Kreiner
 and Christensen 2004](#ref-kreinerAnalysisLocalDependence2004); [Kreiner
 2007](#ref-kreiner_validity_2007)) between observed item pairs,
 conditional on the rest-score. Note that this function evaluates both
-directions of LD, thus the output is two tables.
+directions of LD, thus the output is two tables. We’ll restrict the
+output to the 6 item-pairs with largest LD deviations.
 
 ``` r
 
-RMpartgamLD(items)
+RMlocdepGamma(items, n_pairs = 6)
 ```
 
-| Item 1 | Item 2 | Partial gamma | Adjusted p-value (BH) |
-|:-------|:-------|--------------:|----------------------:|
-| q1     | q2     |         0.531 |                 0.000 |
-| q1     | q3     |        -0.088 |                 1.000 |
-| q1     | q4     |         0.150 |                 1.000 |
-| q1     | q5     |        -0.073 |                 1.000 |
-| q1     | q6     |        -0.136 |                 1.000 |
-| q1     | q7     |        -0.004 |                 1.000 |
-| q1     | q8     |        -0.075 |                 1.000 |
-| q1     | q9     |         0.008 |                 1.000 |
-| q2     | q3     |        -0.035 |                 1.000 |
-| q2     | q4     |         0.074 |                 1.000 |
-| q2     | q5     |        -0.195 |                 0.818 |
-| q2     | q6     |         0.258 |                 0.018 |
-| q2     | q7     |        -0.078 |                 1.000 |
-| q2     | q8     |        -0.323 |                 0.001 |
-| q2     | q9     |         0.332 |                 0.001 |
-| q3     | q4     |         0.270 |                 0.011 |
-| q3     | q5     |         0.269 |                 0.005 |
-| q3     | q6     |        -0.135 |                 1.000 |
-| q3     | q7     |        -0.178 |                 0.667 |
-| q3     | q8     |        -0.100 |                 1.000 |
-| q3     | q9     |        -0.197 |                 0.446 |
-| q4     | q5     |         0.232 |                 0.102 |
-| q4     | q6     |        -0.074 |                 1.000 |
-| q4     | q7     |         0.062 |                 1.000 |
-| q4     | q8     |        -0.081 |                 1.000 |
-| q4     | q9     |        -0.381 |                 0.000 |
-| q5     | q6     |        -0.021 |                 1.000 |
-| q5     | q7     |         0.022 |                 1.000 |
-| q5     | q8     |         0.083 |                 1.000 |
-| q5     | q9     |        -0.131 |                 1.000 |
-| q6     | q7     |         0.137 |                 1.000 |
-| q6     | q8     |        -0.020 |                 1.000 |
-| q6     | q9     |         0.287 |                 0.009 |
-| q7     | q8     |         0.303 |                 0.001 |
-| q7     | q9     |        -0.043 |                 1.000 |
-| q8     | q9     |         0.036 |                 1.000 |
+| Item 1 | Item 2 | Partial gamma | Adj. p-value (BH) | p-value sign. |
+|:-------|:-------|--------------:|------------------:|:--------------|
+| q1     | q2     |         0.531 |             0.000 | \*\*\*        |
+| q4     | q9     |        -0.381 |             0.000 | \*\*\*        |
+| q2     | q9     |         0.332 |             0.001 | \*\*\*        |
+| q2     | q8     |        -0.323 |             0.001 | \*\*\*        |
+| q7     | q8     |         0.303 |             0.001 | \*\*\*        |
+| q6     | q9     |         0.287 |             0.009 | \*\*          |
 
 Partial gamma LD analysis (n = 600 complete cases). Positive gamma
-indicates positive local dependence between items. Direction 1: rest
-score = total - Item2. {.table}
+indicates positive local dependence between items. Showing top 6 of 36
+pairs by \|gamma\|. Direction 1: rest score = total - Item2. {.table}
 
-| Item 1 | Item 2 | Partial gamma | Adjusted p-value (BH) |
-|:-------|:-------|--------------:|----------------------:|
-| q2     | q1     |         0.577 |                 0.000 |
-| q3     | q1     |        -0.112 |                 1.000 |
-| q3     | q2     |        -0.136 |                 1.000 |
-| q4     | q1     |         0.165 |                 1.000 |
-| q4     | q2     |         0.085 |                 1.000 |
-| q4     | q3     |         0.361 |                 0.000 |
-| q5     | q1     |        -0.146 |                 1.000 |
-| q5     | q2     |        -0.265 |                 0.015 |
-| q5     | q3     |         0.303 |                 0.000 |
-| q5     | q4     |         0.194 |                 0.684 |
-| q6     | q1     |        -0.132 |                 1.000 |
-| q6     | q2     |         0.205 |                 0.394 |
-| q6     | q3     |        -0.030 |                 1.000 |
-| q6     | q4     |        -0.053 |                 1.000 |
-| q6     | q5     |         0.046 |                 1.000 |
-| q7     | q1     |        -0.072 |                 1.000 |
-| q7     | q2     |        -0.168 |                 1.000 |
-| q7     | q3     |        -0.169 |                 1.000 |
-| q7     | q4     |         0.024 |                 1.000 |
-| q7     | q5     |        -0.008 |                 1.000 |
-| q7     | q6     |         0.094 |                 1.000 |
-| q8     | q1     |        -0.168 |                 1.000 |
-| q8     | q2     |        -0.415 |                 0.000 |
-| q8     | q3     |        -0.101 |                 1.000 |
-| q8     | q4     |        -0.221 |                 0.544 |
-| q8     | q5     |         0.026 |                 1.000 |
-| q8     | q6     |        -0.089 |                 1.000 |
-| q8     | q7     |         0.243 |                 0.025 |
-| q9     | q1     |        -0.012 |                 1.000 |
-| q9     | q2     |         0.291 |                 0.007 |
-| q9     | q3     |        -0.159 |                 1.000 |
-| q9     | q4     |        -0.453 |                 0.000 |
-| q9     | q5     |        -0.207 |                 0.257 |
-| q9     | q6     |         0.200 |                 0.585 |
-| q9     | q7     |        -0.149 |                 1.000 |
-| q9     | q8     |         0.059 |                 1.000 |
+| Item 1 | Item 2 | Partial gamma | Adj. p-value (BH) | p-value sign. |
+|:-------|:-------|--------------:|------------------:|:--------------|
+| q2     | q1     |         0.577 |             0.000 | \*\*\*        |
+| q9     | q4     |        -0.453 |             0.000 | \*\*\*        |
+| q8     | q2     |        -0.415 |             0.000 | \*\*\*        |
+| q4     | q3     |         0.361 |             0.000 | \*\*\*        |
+| q5     | q3     |         0.303 |             0.000 | \*\*\*        |
+| q9     | q2     |         0.291 |             0.007 | \*\*          |
 
 Partial gamma LD analysis (n = 600 complete cases). Positive gamma
-indicates positive local dependence between items. Direction 2: rest
-score = total - Item1. {.table}
+indicates positive local dependence between items. Showing top 6 of 36
+pairs by \|gamma\|. Direction 2: rest score = total - Item1. {.table}
 
 You can also get simulation-based thresholds for partial gamma LD, using
-[`RMpgLDcutoff()`](https://pgmj.github.io/easyRasch2/reference/RMpgLDcutoff.md),
+[`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaCutoff.md),
 which can be used with
-[`RMpartgamLD()`](https://pgmj.github.io/easyRasch2/reference/RMpartgamLD.md)
+[`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGamma.md)
 and also to plot the results with
-[`RMpgLDplot()`](https://pgmj.github.io/easyRasch2/reference/RMpgLDplot.md)
+[`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaPlot.md)
 
-The two approaches agree where they overlap; pairs flagged by both are
-the strongest candidates for further inspection or possible item
-revision or deletion.
+Item pairs flagged by both $`Q_3`$ and partial gamma are the strongest
+candidates for further inspection or possible item revision.
 
 ## 3. Ordered response category thresholds
 
@@ -535,20 +488,20 @@ group with the corresponding confidence band.
 
 ``` r
 
-RMpartgamDIF(items_g, dif_var = gender_g)
+RMdifGamma(items_g, dif_var = gender_g)
 ```
 
-| Item | Partial gamma |    SE | Lower CI | Upper CI | Adjusted p-value (BH) |
-|:-----|--------------:|------:|---------:|---------:|----------------------:|
-| q1   |         0.251 | 0.104 |    0.046 |    0.456 |                 0.148 |
-| q2   |         0.411 | 0.094 |    0.227 |    0.595 |                 0.000 |
-| q3   |         0.064 | 0.103 |   -0.138 |    0.266 |                 1.000 |
-| q4   |        -0.092 | 0.114 |   -0.315 |    0.131 |                 1.000 |
-| q5   |        -0.286 | 0.092 |   -0.467 |   -0.104 |                 0.018 |
-| q6   |        -0.155 | 0.105 |   -0.361 |    0.050 |                 1.000 |
-| q7   |        -0.075 | 0.102 |   -0.275 |    0.126 |                 1.000 |
-| q8   |        -0.112 | 0.102 |   -0.311 |    0.088 |                 1.000 |
-| q9   |         0.180 | 0.100 |   -0.015 |    0.376 |                 0.638 |
+| Item | Partial gamma |    SE | Lower CI | Upper CI | Adj. p-value (BH) | p-value sign. |
+|:-----|--------------:|------:|---------:|---------:|------------------:|:--------------|
+| q1   |         0.251 | 0.104 |    0.046 |    0.456 |             0.148 |               |
+| q2   |         0.411 | 0.094 |    0.227 |    0.595 |             0.000 | \*\*\*        |
+| q3   |         0.064 | 0.103 |   -0.138 |    0.266 |             1.000 |               |
+| q4   |        -0.092 | 0.114 |   -0.315 |    0.131 |             1.000 |               |
+| q5   |        -0.286 | 0.092 |   -0.467 |   -0.104 |             0.018 | \*            |
+| q6   |        -0.155 | 0.105 |   -0.361 |    0.050 |             1.000 |               |
+| q7   |        -0.075 | 0.102 |   -0.275 |    0.126 |             1.000 |               |
+| q8   |        -0.112 | 0.102 |   -0.311 |    0.088 |             1.000 |               |
+| q9   |         0.180 | 0.100 |   -0.015 |    0.376 |             0.638 |               |
 
 Partial gamma DIF analysis (n = 569 complete cases). Positive gamma
 indicates higher scores in higher DIF group levels. {.table}
@@ -597,7 +550,7 @@ RMreliability(items, draws = 200, rmu_iter = 20, parallel = FALSE,
 | Cronbach’s alpha | 0.886 | NA | NA | no bootstrap |
 | PSI | 0.847 | NA | NA | no bootstrap |
 | Empirical (WLE) | 0.872 | NA | NA | no bootstrap |
-| RMU (WLE) | 0.883 | 0.868 | 0.898 | 200 PVs, 20 RMU iterations |
+| RMU (WLE) | 0.883 | 0.868 | 0.897 | 200 PVs, 20 RMU iterations |
 
 Reliability for 9 items, n = 600. PSI excludes min/max scoring
 respondents. {.table}

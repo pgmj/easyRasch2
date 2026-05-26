@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.7.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -169,21 +169,21 @@ plot of chunk data-overview
 <p>Before fitting any model it is worth eyeballing the response
 distributions:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMbarplot.html">RMbarplot</a></span><span class="op">(</span><span class="va">items</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMplotBar.html">RMplotBar</a></span><span class="op">(</span><span class="va">items</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="figures/rasch-bar-plot-1.png" alt="Faceted bar chart of response distributions" width="100%"><p class="caption">
 Faceted bar chart of response distributions
 </p>
 </div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMtileplot.html">RMtileplot</a></span><span class="op">(</span><span class="va">items</span>, category_labels <span class="op">=</span> <span class="va">item_resp</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMplotTile.html">RMplotTile</a></span><span class="op">(</span><span class="va">items</span>, category_labels <span class="op">=</span> <span class="va">item_resp</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="figures/rasch-tile-plot-1.png" alt="Response distribution tile plot" width="100%"><p class="caption">
 Response distribution tile plot
 </p>
 </div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMstackedbarplot.html">RMstackedbarplot</a></span><span class="op">(</span><span class="va">items</span>, show_percent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMplotStackedbar.html">RMplotStackedbar</a></span><span class="op">(</span><span class="va">items</span>, show_percent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="figures/rasch-stackedbar-plot-1.png" alt="Stacked-bar response distribution" width="100%"><p class="caption">
 Stacked-bar response distribution
@@ -220,13 +220,13 @@ data</li>
 </h3>
 <p>Conditional item infit mean-square statistics flag items whose
 response patterns deviate from the Rasch expectation. With
-<code><a href="../reference/RMinfitcutoff.html">RMinfitcutoff()</a></code>, per-item highest-density intervals serve
-as the reference instead rule-of-thumb cutoffs <span class="citation">(<a href="#ref-johansson_detecting_2025">Johansson
+<code><a href="../reference/RMitemInfitCutoff.html">RMitemInfitCutoff()</a></code>, per-item highest-density intervals
+serve as the reference instead rule-of-thumb cutoffs <span class="citation">(<a href="#ref-johansson_detecting_2025">Johansson
 2025</a>)</span>.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">infit_cut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMinfitcutoff.html">RMinfitcutoff</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<code class="sourceCode R"><span><span class="va">infit_cut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMitemInfitCutoff.html">RMitemInfitCutoff</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>                           seed <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/RMiteminfit.html">RMiteminfit</a></span><span class="op">(</span><span class="va">items</span>, cutoff <span class="op">=</span> <span class="va">infit_cut</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/RMiteminfit.html">RMitemInfit</a></span><span class="op">(</span><span class="va">items</span>, cutoff <span class="op">=</span> <span class="va">infit_cut</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>MSQ values based on conditional estimation (n = 600 complete
 cases). Cutoff values based on 100 simulation iterations (99.9%
@@ -315,11 +315,11 @@ HDCI).</caption>
 </tbody>
 </table>
 <p>You can also get a plot summarizing simulated and observed item
-infit, using <code><a href="../reference/RMinfitcutoffPlot.html">RMinfitcutoffPlot()</a></code>. Since conditional infit
-needs complete data, there is a sibling function that uses multiple
-imputation with infit that is useful if you have partial missingness in
-your data - <code><a href="../reference/RMiteminfit_mi.html">RMiteminfit_mi()</a></code> and
-<code><a href="../reference/RMinfitcutoff_mi.html">RMinfitcutoff_mi()</a></code>.</p>
+infit, using <code><a href="../reference/RMitemInfitCutoffPlot.html">RMitemInfitCutoffPlot()</a></code>. Since conditional
+infit needs complete data, there is a sibling function that uses
+multiple imputation with infit that is useful if you have partial
+missingness in your data - <code><a href="../reference/RMitemInfitMI.html">RMitemInfitMI()</a></code> and
+<code><a href="../reference/RMitemInfitCutoffMI.html">RMitemInfitCutoffMI()</a></code>.</p>
 <p>It is important to note that the <code>RIitemfit()</code> function
 uses <strong>conditional</strong> infit, which is both robust to
 different sample sizes and makes ZSTD unnecessary <span class="citation">(<a href="#ref-muller_item_2020">Müller
@@ -346,7 +346,7 @@ for other reasons.</p>
 latent continuum, with respondents split into groups based on their
 total score.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMciccPlot.html">RMciccPlot</a></span><span class="op">(</span><span class="va">items</span>, class_intervals <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemICCPlot.html">RMitemICCPlot</a></span><span class="op">(</span><span class="va">items</span>, class_intervals <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="figures/rasch-cicc-plot-1.png" alt="Conditional ICCs with five class intervals" width="100%"><p class="caption">
 Conditional ICCs with five class intervals
@@ -368,14 +368,14 @@ also show issues with local dependency.</p>
 (based on experience), and less often flags underfit items (based on a
 simulation study <span class="citation">(<a href="#ref-johansson_detecting_2025">Johansson 2025</a>)</span>).</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemrestscore.html">RMitemrestscore</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemrestscore.html">RMitemRestscore</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
 <colgroup>
 <col width="4%">
 <col width="14%">
 <col width="14%">
-<col width="15%">
-<col width="16%">
+<col width="10%">
+<col width="17%">
 <col width="13%">
 <col width="8%">
 <col width="13%">
@@ -384,7 +384,7 @@ simulation study <span class="citation">(<a href="#ref-johansson_detecting_2025"
 <th align="left">Item</th>
 <th align="right">Observed value</th>
 <th align="right">Expected value</th>
-<th align="right">Abs. difference</th>
+<th align="right">Difference</th>
 <th align="right">Adj. p-value (BH)</th>
 <th align="left">p-value sign.</th>
 <th align="right">Location</th>
@@ -415,7 +415,7 @@ simulation study <span class="citation">(<a href="#ref-johansson_detecting_2025"
 <td align="left">q3</td>
 <td align="right">0.57</td>
 <td align="right">0.63</td>
-<td align="right">0.06</td>
+<td align="right">-0.06</td>
 <td align="right">0.085</td>
 <td align="left">.</td>
 <td align="right">-0.11</td>
@@ -465,7 +465,7 @@ simulation study <span class="citation">(<a href="#ref-johansson_detecting_2025"
 <td align="left">q8</td>
 <td align="right">0.55</td>
 <td align="right">0.63</td>
-<td align="right">0.08</td>
+<td align="right">-0.08</td>
 <td align="right">0.021</td>
 <td align="left">*</td>
 <td align="right">1.70</td>
@@ -475,7 +475,7 @@ simulation study <span class="citation">(<a href="#ref-johansson_detecting_2025"
 <td align="left">q9</td>
 <td align="right">0.59</td>
 <td align="right">0.64</td>
-<td align="right">0.05</td>
+<td align="right">-0.05</td>
 <td align="right">0.151</td>
 <td align="left"></td>
 <td align="right">1.51</td>
@@ -487,14 +487,14 @@ simulation study <span class="citation">(<a href="#ref-johansson_detecting_2025"
 <div class="section level3">
 <h3 id="cfa-based-cutoff-for-cfi-rmsea">CFA-based cutoff for CFI / RMSEA<a class="anchor" aria-label="anchor" href="#cfa-based-cutoff-for-cfi-rmsea"></a>
 </h3>
-<p><code><a href="../reference/RMcfaCutoff.html">RMcfaCutoff()</a></code> fits a unidimensional ordinal CFA both to
-the observed data and to data simulated from a unidimensional PCM, and
-returns parametric-bootstrap cut-offs for model fit indices SRMR, CFI
-and RMSEA. Model fit values that exceed the simulated cut-off values are
-<em>more extreme than is plausible under a unidimensional data
+<p><code><a href="../reference/RMdimCFACutoff.html">RMdimCFACutoff()</a></code> fits a unidimensional ordinal CFA both
+to the observed data and to data simulated from a unidimensional PCM,
+and returns parametric-bootstrap cut-offs for model fit indices SRMR,
+CFI and RMSEA. Model fit values that exceed the simulated cut-off values
+are <em>more extreme than is plausible under a unidimensional data
 generating process</em>.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cfa_cut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMcfaCutoff.html">RMcfaCutoff</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<code class="sourceCode R"><span><span class="va">cfa_cut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMdimCFACutoff.html">RMdimCFACutoff</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>                       seed <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">cfa_cut</span></span></code></pre></div>
 <table class="table">
@@ -547,9 +547,9 @@ values clearly above the simulation-based cut-off suggest a secondary
 dimension. However, values below the largest eigenvalue does not by
 itself support unidimensionality.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pca_cut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMpcaCutoff.html">RMpcaCutoff</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<code class="sourceCode R"><span><span class="va">pca_cut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMdimResidualPCACutoff.html">RMdimResidualPCACutoff</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>                       seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/RMresidualPCA.html">RMresidualPCA</a></span><span class="op">(</span><span class="va">items</span>, cutoff <span class="op">=</span> <span class="va">pca_cut</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/RMdimResidualPCA.html">RMdimResidualPCA</a></span><span class="op">(</span><span class="va">items</span>, cutoff <span class="op">=</span> <span class="va">pca_cut</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Partial Credit Model (600 complete cases, 9 items). Total
 observed variance: 54.6% explained by measures, 45.4% unexplained (basis
@@ -599,7 +599,7 @@ first residual contrast and item locations. This figure can be helpful
 to identify clusters in data, perhaps related to local dependency and/or
 multidimensionality.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMresidualPCA.html">RMresidualPCA</a></span><span class="op">(</span><span class="va">items</span>, output <span class="op">=</span> <span class="st">"loadings"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdimResidualPCA.html">RMdimResidualPCA</a></span><span class="op">(</span><span class="va">items</span>, output <span class="op">=</span> <span class="st">"loadings"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="figures/rasch-pca-plot-1.png" alt="Standardised loadings on the first residual contrast" width="100%"><p class="caption">
 Standardised loadings on the first residual contrast
@@ -619,28 +619,178 @@ residuals for every item pair. Pair-wise
 values above the simulation-based cut-off flag LD <span class="citation">(<a href="#ref-christensen2017">Christensen et al.
 2017</a>)</span>.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">q3_cut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMlocdepQ3cutoff.html">RMlocdepQ3cutoff</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<code class="sourceCode R"><span><span class="va">q3_cut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>                           seed <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/RMlocdepQ3.html">RMlocdepQ3</a></span><span class="op">(</span><span class="va">items</span>, cutoff <span class="op">=</span> <span class="va">q3_cut</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Error:</span></span>
-<span><span class="co">#&gt; ! `cutoff` must be a single numeric value or NULL.</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/RMlocdepQ3.html">RMlocdepQ3</a></span><span class="op">(</span><span class="va">items</span>, cutoff <span class="op">=</span> <span class="va">q3_cut</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<caption>Dynamic cut-off: 0.037 (mean Q3 = -0.114 + 0.152). Correlations
+exceeding the cut-off may indicate local dependence.</caption>
+<colgroup>
+<col width="4%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="4%">
+<col width="19%">
+</colgroup>
+<thead><tr class="header">
+<th align="left"></th>
+<th align="left">q1</th>
+<th align="left">q2</th>
+<th align="left">q3</th>
+<th align="left">q4</th>
+<th align="left">q5</th>
+<th align="left">q6</th>
+<th align="left">q7</th>
+<th align="left">q8</th>
+<th align="left">q9</th>
+<th align="left">above_cutoff</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">q1</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">q2</td>
+<td align="left">0.25</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">*</td>
+</tr>
+<tr class="odd">
+<td align="left">q3</td>
+<td align="left">-0.19</td>
+<td align="left">-0.2</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">q4</td>
+<td align="left">0</td>
+<td align="left">-0.04</td>
+<td align="left">0.07</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">*</td>
+</tr>
+<tr class="odd">
+<td align="left">q5</td>
+<td align="left">-0.21</td>
+<td align="left">-0.28</td>
+<td align="left">0.07</td>
+<td align="left">0</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">*</td>
+</tr>
+<tr class="even">
+<td align="left">q6</td>
+<td align="left">-0.18</td>
+<td align="left">0.04</td>
+<td align="left">-0.2</td>
+<td align="left">-0.16</td>
+<td align="left">-0.13</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">*</td>
+</tr>
+<tr class="odd">
+<td align="left">q7</td>
+<td align="left">-0.13</td>
+<td align="left">-0.2</td>
+<td align="left">-0.22</td>
+<td align="left">-0.09</td>
+<td align="left">-0.14</td>
+<td align="left">-0.05</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">q8</td>
+<td align="left">-0.17</td>
+<td align="left">-0.3</td>
+<td align="left">-0.17</td>
+<td align="left">-0.15</td>
+<td align="left">-0.09</td>
+<td align="left">-0.17</td>
+<td align="left">0.07</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">*</td>
+</tr>
+<tr class="odd">
+<td align="left">q9</td>
+<td align="left">-0.14</td>
+<td align="left">0.06</td>
+<td align="left">-0.23</td>
+<td align="left">-0.28</td>
+<td align="left">-0.24</td>
+<td align="left">0.01</td>
+<td align="left">-0.18</td>
+<td align="left">-0.12</td>
+<td align="left"></td>
+<td align="left">*</td>
+</tr>
+</tbody>
+</table>
 <p>A second perspective on LD is the <em>partial gamma</em> coefficient
 <span class="citation">(<a href="#ref-kreinerAnalysisLocalDependence2004">Kreiner and Christensen
 2004</a>; <a href="#ref-kreiner_validity_2007">Kreiner 2007</a>)</span>
 between observed item pairs, conditional on the rest-score. Note that
 this function evaluates both directions of LD, thus the output is two
-tables.</p>
+tables. We’ll restrict the output to the 6 item-pairs with largest LD
+deviations.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMpartgamLD.html">RMpartgamLD</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMlocdepGamma.html">RMlocdepGamma</a></span><span class="op">(</span><span class="va">items</span>, n_pairs <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Partial gamma LD analysis (n = 600 complete cases). Positive
-gamma indicates positive local dependence between items. Direction 1:
-rest score = total - Item2.</caption>
+gamma indicates positive local dependence between items. Showing top 6
+of 36 pairs by |gamma|. Direction 1: rest score = total -
+Item2.</caption>
 <thead><tr class="header">
 <th align="left">Item 1</th>
 <th align="left">Item 2</th>
 <th align="right">Partial gamma</th>
-<th align="right">Adjusted p-value (BH)</th>
+<th align="right">Adj. p-value (BH)</th>
+<th align="left">p-value sign.</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
@@ -648,228 +798,56 @@ rest score = total - Item2.</caption>
 <td align="left">q2</td>
 <td align="right">0.531</td>
 <td align="right">0.000</td>
-</tr>
-<tr class="even">
-<td align="left">q1</td>
-<td align="left">q3</td>
-<td align="right">-0.088</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q1</td>
-<td align="left">q4</td>
-<td align="right">0.150</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q1</td>
-<td align="left">q5</td>
-<td align="right">-0.073</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q1</td>
-<td align="left">q6</td>
-<td align="right">-0.136</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q1</td>
-<td align="left">q7</td>
-<td align="right">-0.004</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q1</td>
-<td align="left">q8</td>
-<td align="right">-0.075</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q1</td>
-<td align="left">q9</td>
-<td align="right">0.008</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q2</td>
-<td align="left">q3</td>
-<td align="right">-0.035</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q2</td>
-<td align="left">q4</td>
-<td align="right">0.074</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q2</td>
-<td align="left">q5</td>
-<td align="right">-0.195</td>
-<td align="right">0.818</td>
-</tr>
-<tr class="even">
-<td align="left">q2</td>
-<td align="left">q6</td>
-<td align="right">0.258</td>
-<td align="right">0.018</td>
-</tr>
-<tr class="odd">
-<td align="left">q2</td>
-<td align="left">q7</td>
-<td align="right">-0.078</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q2</td>
-<td align="left">q8</td>
-<td align="right">-0.323</td>
-<td align="right">0.001</td>
-</tr>
-<tr class="odd">
-<td align="left">q2</td>
-<td align="left">q9</td>
-<td align="right">0.332</td>
-<td align="right">0.001</td>
-</tr>
-<tr class="even">
-<td align="left">q3</td>
-<td align="left">q4</td>
-<td align="right">0.270</td>
-<td align="right">0.011</td>
-</tr>
-<tr class="odd">
-<td align="left">q3</td>
-<td align="left">q5</td>
-<td align="right">0.269</td>
-<td align="right">0.005</td>
-</tr>
-<tr class="even">
-<td align="left">q3</td>
-<td align="left">q6</td>
-<td align="right">-0.135</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q3</td>
-<td align="left">q7</td>
-<td align="right">-0.178</td>
-<td align="right">0.667</td>
-</tr>
-<tr class="even">
-<td align="left">q3</td>
-<td align="left">q8</td>
-<td align="right">-0.100</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q3</td>
-<td align="left">q9</td>
-<td align="right">-0.197</td>
-<td align="right">0.446</td>
-</tr>
-<tr class="even">
-<td align="left">q4</td>
-<td align="left">q5</td>
-<td align="right">0.232</td>
-<td align="right">0.102</td>
-</tr>
-<tr class="odd">
-<td align="left">q4</td>
-<td align="left">q6</td>
-<td align="right">-0.074</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q4</td>
-<td align="left">q7</td>
-<td align="right">0.062</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q4</td>
-<td align="left">q8</td>
-<td align="right">-0.081</td>
-<td align="right">1.000</td>
+<td align="left">***</td>
 </tr>
 <tr class="even">
 <td align="left">q4</td>
 <td align="left">q9</td>
 <td align="right">-0.381</td>
 <td align="right">0.000</td>
+<td align="left">***</td>
 </tr>
 <tr class="odd">
-<td align="left">q5</td>
-<td align="left">q6</td>
-<td align="right">-0.021</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q5</td>
-<td align="left">q7</td>
-<td align="right">0.022</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q5</td>
-<td align="left">q8</td>
-<td align="right">0.083</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q5</td>
+<td align="left">q2</td>
 <td align="left">q9</td>
-<td align="right">-0.131</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q6</td>
-<td align="left">q7</td>
-<td align="right">0.137</td>
-<td align="right">1.000</td>
+<td align="right">0.332</td>
+<td align="right">0.001</td>
+<td align="left">***</td>
 </tr>
 <tr class="even">
-<td align="left">q6</td>
+<td align="left">q2</td>
 <td align="left">q8</td>
-<td align="right">-0.020</td>
-<td align="right">1.000</td>
+<td align="right">-0.323</td>
+<td align="right">0.001</td>
+<td align="left">***</td>
 </tr>
 <tr class="odd">
-<td align="left">q6</td>
-<td align="left">q9</td>
-<td align="right">0.287</td>
-<td align="right">0.009</td>
-</tr>
-<tr class="even">
 <td align="left">q7</td>
 <td align="left">q8</td>
 <td align="right">0.303</td>
 <td align="right">0.001</td>
-</tr>
-<tr class="odd">
-<td align="left">q7</td>
-<td align="left">q9</td>
-<td align="right">-0.043</td>
-<td align="right">1.000</td>
+<td align="left">***</td>
 </tr>
 <tr class="even">
-<td align="left">q8</td>
+<td align="left">q6</td>
 <td align="left">q9</td>
-<td align="right">0.036</td>
-<td align="right">1.000</td>
+<td align="right">0.287</td>
+<td align="right">0.009</td>
+<td align="left">**</td>
 </tr>
 </tbody>
 </table>
 <table class="table">
 <caption>Partial gamma LD analysis (n = 600 complete cases). Positive
-gamma indicates positive local dependence between items. Direction 2:
-rest score = total - Item1.</caption>
+gamma indicates positive local dependence between items. Showing top 6
+of 36 pairs by |gamma|. Direction 2: rest score = total -
+Item1.</caption>
 <thead><tr class="header">
 <th align="left">Item 1</th>
 <th align="left">Item 2</th>
 <th align="right">Partial gamma</th>
-<th align="right">Adjusted p-value (BH)</th>
+<th align="right">Adj. p-value (BH)</th>
+<th align="left">p-value sign.</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
@@ -877,226 +855,53 @@ rest score = total - Item1.</caption>
 <td align="left">q1</td>
 <td align="right">0.577</td>
 <td align="right">0.000</td>
-</tr>
-<tr class="even">
-<td align="left">q3</td>
-<td align="left">q1</td>
-<td align="right">-0.112</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q3</td>
-<td align="left">q2</td>
-<td align="right">-0.136</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q4</td>
-<td align="left">q1</td>
-<td align="right">0.165</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q4</td>
-<td align="left">q2</td>
-<td align="right">0.085</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q4</td>
-<td align="left">q3</td>
-<td align="right">0.361</td>
-<td align="right">0.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q5</td>
-<td align="left">q1</td>
-<td align="right">-0.146</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q5</td>
-<td align="left">q2</td>
-<td align="right">-0.265</td>
-<td align="right">0.015</td>
-</tr>
-<tr class="odd">
-<td align="left">q5</td>
-<td align="left">q3</td>
-<td align="right">0.303</td>
-<td align="right">0.000</td>
-</tr>
-<tr class="even">
-<td align="left">q5</td>
-<td align="left">q4</td>
-<td align="right">0.194</td>
-<td align="right">0.684</td>
-</tr>
-<tr class="odd">
-<td align="left">q6</td>
-<td align="left">q1</td>
-<td align="right">-0.132</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q6</td>
-<td align="left">q2</td>
-<td align="right">0.205</td>
-<td align="right">0.394</td>
-</tr>
-<tr class="odd">
-<td align="left">q6</td>
-<td align="left">q3</td>
-<td align="right">-0.030</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q6</td>
-<td align="left">q4</td>
-<td align="right">-0.053</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q6</td>
-<td align="left">q5</td>
-<td align="right">0.046</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q7</td>
-<td align="left">q1</td>
-<td align="right">-0.072</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q7</td>
-<td align="left">q2</td>
-<td align="right">-0.168</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q7</td>
-<td align="left">q3</td>
-<td align="right">-0.169</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q7</td>
-<td align="left">q4</td>
-<td align="right">0.024</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q7</td>
-<td align="left">q5</td>
-<td align="right">-0.008</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q7</td>
-<td align="left">q6</td>
-<td align="right">0.094</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q8</td>
-<td align="left">q1</td>
-<td align="right">-0.168</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q8</td>
-<td align="left">q2</td>
-<td align="right">-0.415</td>
-<td align="right">0.000</td>
-</tr>
-<tr class="even">
-<td align="left">q8</td>
-<td align="left">q3</td>
-<td align="right">-0.101</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q8</td>
-<td align="left">q4</td>
-<td align="right">-0.221</td>
-<td align="right">0.544</td>
-</tr>
-<tr class="even">
-<td align="left">q8</td>
-<td align="left">q5</td>
-<td align="right">0.026</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="odd">
-<td align="left">q8</td>
-<td align="left">q6</td>
-<td align="right">-0.089</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q8</td>
-<td align="left">q7</td>
-<td align="right">0.243</td>
-<td align="right">0.025</td>
-</tr>
-<tr class="odd">
-<td align="left">q9</td>
-<td align="left">q1</td>
-<td align="right">-0.012</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q9</td>
-<td align="left">q2</td>
-<td align="right">0.291</td>
-<td align="right">0.007</td>
-</tr>
-<tr class="odd">
-<td align="left">q9</td>
-<td align="left">q3</td>
-<td align="right">-0.159</td>
-<td align="right">1.000</td>
+<td align="left">***</td>
 </tr>
 <tr class="even">
 <td align="left">q9</td>
 <td align="left">q4</td>
 <td align="right">-0.453</td>
 <td align="right">0.000</td>
+<td align="left">***</td>
 </tr>
 <tr class="odd">
-<td align="left">q9</td>
-<td align="left">q5</td>
-<td align="right">-0.207</td>
-<td align="right">0.257</td>
-</tr>
-<tr class="even">
-<td align="left">q9</td>
-<td align="left">q6</td>
-<td align="right">0.200</td>
-<td align="right">0.585</td>
-</tr>
-<tr class="odd">
-<td align="left">q9</td>
-<td align="left">q7</td>
-<td align="right">-0.149</td>
-<td align="right">1.000</td>
-</tr>
-<tr class="even">
-<td align="left">q9</td>
 <td align="left">q8</td>
-<td align="right">0.059</td>
-<td align="right">1.000</td>
+<td align="left">q2</td>
+<td align="right">-0.415</td>
+<td align="right">0.000</td>
+<td align="left">***</td>
+</tr>
+<tr class="even">
+<td align="left">q4</td>
+<td align="left">q3</td>
+<td align="right">0.361</td>
+<td align="right">0.000</td>
+<td align="left">***</td>
+</tr>
+<tr class="odd">
+<td align="left">q5</td>
+<td align="left">q3</td>
+<td align="right">0.303</td>
+<td align="right">0.000</td>
+<td align="left">***</td>
+</tr>
+<tr class="even">
+<td align="left">q9</td>
+<td align="left">q2</td>
+<td align="right">0.291</td>
+<td align="right">0.007</td>
+<td align="left">**</td>
 </tr>
 </tbody>
 </table>
 <p>You can also get simulation-based thresholds for partial gamma LD,
-using <code><a href="../reference/RMpgLDcutoff.html">RMpgLDcutoff()</a></code>, which can be used with
-<code><a href="../reference/RMpartgamLD.html">RMpartgamLD()</a></code> and also to plot the results with
-<code><a href="../reference/RMpgLDplot.html">RMpgLDplot()</a></code></p>
-<p>The two approaches agree where they overlap; pairs flagged by both
-are the strongest candidates for further inspection or possible item
-revision or deletion.</p>
+using <code><a href="../reference/RMlocdepGammaCutoff.html">RMlocdepGammaCutoff()</a></code>, which can be used with
+<code><a href="../reference/RMlocdepGamma.html">RMlocdepGamma()</a></code> and also to plot the results with
+<code><a href="../reference/RMlocdepGammaPlot.html">RMlocdepGammaPlot()</a></code></p>
+<p>Item pairs flagged by both
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Q</mi><mn>3</mn></msub><annotation encoding="application/x-tex">Q_3</annotation></semantics></math>
+and partial gamma are the strongest candidates for further inspection or
+possible item revision.</p>
 </div>
 <div class="section level2">
 <h2 id="ordered-response-category-thresholds">3. Ordered response category thresholds<a class="anchor" aria-label="anchor" href="#ordered-response-category-thresholds"></a>
@@ -1163,17 +968,27 @@ group with the corresponding confidence band.</p>
 <h3 id="partial-gamma-dif">Partial-gamma DIF<a class="anchor" aria-label="anchor" href="#partial-gamma-dif"></a>
 </h3>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMpartgamDIF.html">RMpartgamDIF</a></span><span class="op">(</span><span class="va">items_g</span>, dif_var <span class="op">=</span> <span class="va">gender_g</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdifGamma.html">RMdifGamma</a></span><span class="op">(</span><span class="va">items_g</span>, dif_var <span class="op">=</span> <span class="va">gender_g</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Partial gamma DIF analysis (n = 569 complete cases). Positive
 gamma indicates higher scores in higher DIF group levels.</caption>
+<colgroup>
+<col width="6%">
+<col width="18%">
+<col width="8%">
+<col width="12%">
+<col width="12%">
+<col width="24%">
+<col width="18%">
+</colgroup>
 <thead><tr class="header">
 <th align="left">Item</th>
 <th align="right">Partial gamma</th>
 <th align="right">SE</th>
 <th align="right">Lower CI</th>
 <th align="right">Upper CI</th>
-<th align="right">Adjusted p-value (BH)</th>
+<th align="right">Adj. p-value (BH)</th>
+<th align="left">p-value sign.</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
@@ -1183,6 +998,7 @@ gamma indicates higher scores in higher DIF group levels.</caption>
 <td align="right">0.046</td>
 <td align="right">0.456</td>
 <td align="right">0.148</td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">q2</td>
@@ -1191,6 +1007,7 @@ gamma indicates higher scores in higher DIF group levels.</caption>
 <td align="right">0.227</td>
 <td align="right">0.595</td>
 <td align="right">0.000</td>
+<td align="left">***</td>
 </tr>
 <tr class="odd">
 <td align="left">q3</td>
@@ -1199,6 +1016,7 @@ gamma indicates higher scores in higher DIF group levels.</caption>
 <td align="right">-0.138</td>
 <td align="right">0.266</td>
 <td align="right">1.000</td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">q4</td>
@@ -1207,6 +1025,7 @@ gamma indicates higher scores in higher DIF group levels.</caption>
 <td align="right">-0.315</td>
 <td align="right">0.131</td>
 <td align="right">1.000</td>
+<td align="left"></td>
 </tr>
 <tr class="odd">
 <td align="left">q5</td>
@@ -1215,6 +1034,7 @@ gamma indicates higher scores in higher DIF group levels.</caption>
 <td align="right">-0.467</td>
 <td align="right">-0.104</td>
 <td align="right">0.018</td>
+<td align="left">*</td>
 </tr>
 <tr class="even">
 <td align="left">q6</td>
@@ -1223,6 +1043,7 @@ gamma indicates higher scores in higher DIF group levels.</caption>
 <td align="right">-0.361</td>
 <td align="right">0.050</td>
 <td align="right">1.000</td>
+<td align="left"></td>
 </tr>
 <tr class="odd">
 <td align="left">q7</td>
@@ -1231,6 +1052,7 @@ gamma indicates higher scores in higher DIF group levels.</caption>
 <td align="right">-0.275</td>
 <td align="right">0.126</td>
 <td align="right">1.000</td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">q8</td>
@@ -1239,6 +1061,7 @@ gamma indicates higher scores in higher DIF group levels.</caption>
 <td align="right">-0.311</td>
 <td align="right">0.088</td>
 <td align="right">1.000</td>
+<td align="left"></td>
 </tr>
 <tr class="odd">
 <td align="left">q9</td>
@@ -1247,6 +1070,7 @@ gamma indicates higher scores in higher DIF group levels.</caption>
 <td align="right">-0.015</td>
 <td align="right">0.376</td>
 <td align="right">0.638</td>
+<td align="left"></td>
 </tr>
 </tbody>
 </table>
@@ -1326,7 +1150,7 @@ respondents.</caption>
 <td align="left">RMU (WLE)</td>
 <td align="right">0.883</td>
 <td align="right">0.868</td>
-<td align="right">0.898</td>
+<td align="right">0.897</td>
 <td align="left">200 PVs, 20 RMU iterations</td>
 </tr>
 </tbody>

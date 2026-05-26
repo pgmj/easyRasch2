@@ -17,7 +17,7 @@ run_single_q3_sim(seed, data_list)
 - data_list:
 
   List produced inside
-  [`RMlocdepQ3cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md).
+  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md).
 
 ## Value
 
