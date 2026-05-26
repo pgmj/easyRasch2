@@ -4,7 +4,7 @@
 \alias{RMpgLDplot}
 \title{Plot Distribution of Simulated Partial Gamma LD Values}
 \usage{
-RMpgLDplot(simfit, data, items = NULL)
+RMpgLDplot(simfit, data, items = NULL, n_pairs = NULL)
 }
 \arguments{
 \item{simfit}{The return value of \code{\link{RMpgLDcutoff}} (a list with
@@ -20,6 +20,15 @@ distribution, plus segment summaries from the cutoff intervals.}
 \item{items}{Optional character vector of item names to include in the plot.
 Only item pairs where \strong{both} items are in this vector will be shown. When
 \code{NULL} (default), all item pairs are plotted.}
+
+\item{n_pairs}{Optional positive integer. When supplied, only the
+\code{n_pairs} item pairs with the largest absolute partial gamma values
+are plotted, sorted by \verb{|gamma|} descending. When \code{data} is
+supplied, the ranking uses the \emph{observed} partial gammas (the
+diamonds you actually want to interpret); otherwise it falls back
+to the per-pair median of the simulated distributions. Applied
+\emph{after} the \code{items} filter when both are supplied. Values larger
+than the number of available pairs are silently capped.}
 }
 \value{
 A \code{ggplot} object.

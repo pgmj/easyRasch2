@@ -10,11 +10,12 @@ RMlocdepQ3(data, cutoff = NULL, output = "kable")
 \item{data}{A data.frame or matrix of item responses. Items must be scored
 starting at 0 (non-negative integers). Missing values (\code{NA}) are allowed.}
 
-\item{cutoff}{Optional single numeric value added to the mean off-diagonal Q3
-correlation to produce the dynamic cut-off threshold. When \code{NULL}
-(default), the raw Q3 residual correlation matrix is returned without any
-dynamic cut-off applied. Use \code{\link{RMlocdepQ3cutoff}} to derive a
-simulation-based cutoff value.}
+\item{cutoff}{Optional. Either a single numeric value (added to the mean
+off-diagonal Q3 correlation to produce the dynamic cut-off threshold) or
+the full list returned by \code{\link{RMlocdepQ3cutoff}} (from which
+\verb{$suggested_cutoff} is extracted automatically). When \code{NULL} (default),
+the raw Q3 residual correlation matrix is returned without any dynamic
+cut-off applied.}
 
 \item{output}{Character string controlling the return value. Either
 \code{"kable"} (default) for a formatted \code{knitr::kable()} table, or

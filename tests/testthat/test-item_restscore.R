@@ -41,12 +41,15 @@ test_that("RMitemrestscore output = 'dataframe' returns correct structure (dicho
   expect_s3_class(result, "data.frame")
   expect_equal(nrow(result), 5L)
   expected_cols <- c(
-    "Item", "Observed", "Expected", "Absolute_difference",
+    "Item", "Observed", "Expected", "Difference",
     "p_adjusted", "Significance", "Location", "Relative_location"
   )
   expect_equal(names(result), expected_cols)
   expect_equal(result$Item, colnames(df))
-  expect_true(all(result$Absolute_difference >= 0))
+  # Signed difference equals Observed - Expected (allowing rounding noise)
+  expect_equal(result$Difference,
+               round(result$Observed - result$Expected, 3),
+               tolerance = 1e-3)
 })
 
 test_that("RMitemrestscore output = 'kable' returns knitr_kable object", {
@@ -62,7 +65,7 @@ test_that("RMitemrestscore output = 'kable' returns knitr_kable object", {
   expect_s3_class(result, "knitr_kable")
 })
 
-test_that("RMitemrestscore sort = 'diff' sorts by absolute difference descending", {
+test_that("RMitemrestscore sort = 'diff' sorts by absolute Difference descending", {
   skip_if_not_installed("iarm")
   skip_if_not_installed("eRm")
   set.seed(42)
@@ -75,8 +78,8 @@ test_that("RMitemrestscore sort = 'diff' sorts by absolute difference descending
   result_unsorted <- RMitemrestscore(df, output = "dataframe")
 
   expect_true(
-    all(diff(result_sorted$Absolute_difference) <= 0),
-    info = "Rows should be in descending order of Absolute_difference"
+    all(diff(abs(result_sorted$Difference)) <= 0),
+    info = "Rows should be in descending order of |Difference|"
   )
   # Unsorted should contain the same rows, just in a different order
   expect_setequal(result_sorted$Item, result_unsorted$Item)

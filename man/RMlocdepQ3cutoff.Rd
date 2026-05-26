@@ -10,7 +10,9 @@ RMlocdepQ3cutoff(
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,
-  seed = NULL
+  seed = NULL,
+  cutoff_method = "hdci",
+  hdci_width = 0.99
 )
 }
 \arguments{
@@ -30,19 +32,41 @@ sequential (single core) processing.}
 \item{verbose}{Logical. Show a progress bar (default \code{FALSE}).}
 
 \item{seed}{Integer or \code{NULL}. Random seed for reproducibility.}
+
+\item{cutoff_method}{Character. Method used to compute per-pair Q3
+credible intervals in \code{pair_cutoffs}. One of \code{"hdci"} (the default,
+Highest Density Continuous Interval via \code{ggdist::hdci()}) or
+\code{"quantile"} (symmetric 2.5th / 97.5th percentiles). Only affects
+\code{pair_cutoffs}; the global \verb{$suggested_cutoff} (99th percentile of
+\code{max(Q3) - mean(Q3)}) is unaffected.}
+
+\item{hdci_width}{Numeric in (0, 1). Width of the HDCI when
+\code{cutoff_method = "hdci"}. Default \code{0.99}. Ignored when
+\code{cutoff_method = "quantile"}.}
 }
 \value{
 A list with components:
 \describe{
 \item{\code{results}}{data.frame with columns \code{mean}, \code{max}, \code{diff} (one row
 per successful iteration).}
+\item{\code{pair_results}}{Long data.frame with columns \code{Item1}, \code{Item2},
+\code{Q3}, \code{iteration} --- one row per item pair per successful iteration.
+Used by \code{\link{RMlocdepQ3plot}}.}
+\item{\code{pair_cutoffs}}{data.frame with per-pair cutoff summaries:
+\code{Item1}, \code{Item2}, \code{Q3_low}, \code{Q3_high}. Boundaries are computed via
+the method specified by \code{cutoff_method}.}
 \item{\code{actual_iterations}}{Number of successful iterations.}
 \item{\code{sample_n}}{Number of persons in the original data.}
 \item{\code{sample_summary}}{Summary statistics of estimated person parameters.}
+\item{\code{item_names}}{Character vector of item names from \code{data}.}
 \item{\code{max_diff}, \code{sd_diff}}{Max and SD of the \code{diff} distribution.}
 \item{\code{p95}, \code{p99}, \code{p995}, \code{p999}}{Empirical percentiles of \code{diff}.}
-\item{\code{suggested_cutoff}}{The 99th percentile (\code{p99}) — recommended cutoff
-for \code{\link{RMlocdepQ3}}.}
+\item{\code{suggested_cutoff}}{The 99th percentile (\code{p99}) --- recommended
+scalar cutoff for \code{\link{RMlocdepQ3}}.}
+\item{\code{cutoff_method}}{The method used for \code{pair_cutoffs}
+(\code{"hdci"} or \code{"quantile"}).}
+\item{\code{hdci_width}}{The HDCI width used (only meaningful when
+\code{cutoff_method = "hdci"}).}
 }
 }
 \description{

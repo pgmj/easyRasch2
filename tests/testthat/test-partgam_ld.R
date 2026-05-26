@@ -34,32 +34,38 @@ test_that("RMpartgamLD output = 'dataframe' returns a list of two long-format ta
   expect_type(res, "list")
   expect_true(length(res) >= 1L)
   expect_s3_class(res[[1L]], "data.frame")
-  expect_true(all(c("Item1", "Item2", "gamma", "padj_bh") %in%
+  expect_true(all(c("Item1", "Item2", "gamma", "padj_bh", "Significance") %in%
                   names(res[[1L]])))
+  # Significance is a star-string from iarm; should be one of the valid markers
+  expect_true(all(res[[1L]]$Significance %in%
+                  c("", ".", "*", "**", "***")))
   # 10 items -> 45 unique pairs
   expect_equal(nrow(res[[1L]]), choose(ncol(df), 2L))
 })
 
-test_that("RMpartgamLD output = 'kable' returns a kable-like object", {
+test_that("RMpartgamLD output = 'kable' returns a custom-class list", {
   skip_if_not_installed("iarm")
   skip_if_not_installed("knitr")
   df  <- make_dichotomous()
   out <- RMpartgamLD(df, output = "kable")
-  # RMpartgamLD glues two kable tables into one knit_asis string.
-  expect_true(inherits(out, "knitr_kable") || inherits(out, "knit_asis"))
+  expect_s3_class(out, "RMpartgamLD")
+  expect_true(all(c("direction1", "direction2", ".combined") %in% names(out)))
+  expect_s3_class(out$direction1, "knitr_kable")
+  expect_s3_class(out$direction2, "knitr_kable")
 })
 
-test_that("RMpartgamLD kable output contains two clean pipe tables", {
-  # Regression test: an earlier implementation used
-  #   paste(kable1, "\n\n", kable2)
-  # which silently interleaved the two multi-line character vectors
-  # row-by-row, producing an unreadable corrupt table in vignettes.
-  # We now collapse each table first, then join with a blank line.
+test_that("RMpartgamLD knit_print emits two clean pipe tables", {
+  # Regression test for the old asis-blob bug: an earlier implementation
+  # used `paste(kable1, "\n\n", kable2)` which silently interleaved the
+  # two multi-line character vectors row-by-row. The combined asis string
+  # is now stored in $.combined and surfaced via knit_print.RMpartgamLD().
   skip_if_not_installed("iarm")
   skip_if_not_installed("knitr")
   df  <- make_dichotomous()
   out <- RMpartgamLD(df, output = "kable")
-  txt <- as.character(out)
+  asis <- knitr::knit_print(out)
+  expect_s3_class(asis, "knit_asis")
+  txt <- as.character(asis)
   # Exactly two "Table:" captions (one per rest-score direction)
   expect_equal(length(gregexpr("\nTable: ", paste0("\n", txt))[[1]]), 2L)
   # Exactly two header rows "|Item 1 |Item 2 ..."
@@ -67,6 +73,18 @@ test_that("RMpartgamLD kable output contains two clean pipe tables", {
                                fixed = TRUE)[[1]]), 2L)
   # No row should contain the column header twice (interleaving symptom)
   expect_false(any(grepl("Item 1.*Item 1", strsplit(txt, "\n")[[1]])))
+})
+
+test_that("RMpartgamLD print method emits both tables", {
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("knitr")
+  df  <- make_dichotomous()
+  out <- RMpartgamLD(df, output = "kable")
+  printed <- capture.output(print(out))
+  joined  <- paste(printed, collapse = "\n")
+  expect_equal(length(gregexpr("\nTable: ", paste0("\n", joined))[[1]]), 2L)
+  expect_equal(length(gregexpr("|Item 1 |Item 2", joined,
+                               fixed = TRUE)[[1]]), 2L)
 })
 
 # ---------------------------------------------------------------------
@@ -84,6 +102,44 @@ test_that("RMpgLDcutoff returns a list with pair_cutoffs + actual_iterations", {
   expect_true(all(c("Item1", "Item2", "gamma_low",
                     "gamma_high") %in% names(res$pair_cutoffs)))
   expect_true(res$actual_iterations >= 1L)
+})
+
+test_that("RMpartgamLD n_pairs trims to top-N by |gamma| per direction", {
+  skip_if_not_installed("iarm")
+  df  <- make_dichotomous()  # 10 items -> 45 unique pairs per direction
+  res_all <- RMpartgamLD(df, output = "dataframe")
+  expect_equal(nrow(res_all[[1L]]), choose(ncol(df), 2L))
+
+  res_top <- RMpartgamLD(df, output = "dataframe", n_pairs = 5L)
+  expect_equal(nrow(res_top[[1L]]), 5L)
+  expect_equal(nrow(res_top[[2L]]), 5L)
+
+  # Each direction should contain exactly the 5 pairs with the largest |gamma|
+  expected_top <- res_all[[1L]][
+    order(abs(res_all[[1L]]$gamma), decreasing = TRUE)[seq_len(5L)],
+    c("Item1", "Item2"), drop = FALSE
+  ]
+  expect_setequal(paste(res_top[[1L]]$Item1, res_top[[1L]]$Item2),
+                  paste(expected_top$Item1, expected_top$Item2))
+
+  # |gamma| within the returned top should be non-increasing
+  expect_true(all(diff(abs(res_top[[1L]]$gamma)) <= 0))
+})
+
+test_that("RMpartgamLD n_pairs > total pairs silently returns all pairs", {
+  skip_if_not_installed("iarm")
+  df  <- make_dichotomous()
+  res <- RMpartgamLD(df, output = "dataframe", n_pairs = 10000L)
+  expect_equal(nrow(res[[1L]]), choose(ncol(df), 2L))
+})
+
+test_that("RMpartgamLD validates n_pairs", {
+  skip_if_not_installed("iarm")
+  df  <- make_dichotomous()
+  expect_error(RMpartgamLD(df, n_pairs = 0L),    regexp = "positive integer")
+  expect_error(RMpartgamLD(df, n_pairs = -3L),   regexp = "positive integer")
+  expect_error(RMpartgamLD(df, n_pairs = 1.5),   regexp = "positive integer")
+  expect_error(RMpartgamLD(df, n_pairs = c(1, 2)), regexp = "positive integer")
 })
 
 test_that("RMpartgamLD accepts an RMpgLDcutoff result and adds flagged column", {

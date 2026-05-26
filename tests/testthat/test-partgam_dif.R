@@ -44,7 +44,8 @@ test_that("RMpartgamDIF output = 'dataframe' returns one row per item", {
   expect_s3_class(res, "data.frame")
   expect_equal(nrow(res), ncol(df))
   expect_true(all(c("Item", "gamma", "se", "lower", "upper",
-                    "padj_bh") %in% names(res)))
+                    "padj_bh", "Significance") %in% names(res)))
+  expect_true(all(res$Significance %in% c("", ".", "*", "**", "***")))
 })
 
 test_that("RMpartgamDIF output = 'kable' returns a knitr_kable", {

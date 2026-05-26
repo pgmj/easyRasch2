@@ -239,17 +239,17 @@ RMitemrestscore(items)
 
 
 
-|Item | Observed value| Expected value| Abs. difference| Adj. p-value (BH)|p-value sign. | Location| Rel. location|
-|:----|--------------:|--------------:|---------------:|-----------------:|:-------------|--------:|-------------:|
-|q1   |           0.66|           0.62|            0.04|             0.210|              |     0.17|         -0.58|
-|q2   |           0.72|           0.62|            0.10|             0.000|***           |    -0.04|         -0.78|
-|q3   |           0.57|           0.63|            0.06|             0.085|.             |    -0.11|         -0.85|
-|q4   |           0.71|           0.62|            0.09|             0.000|***           |    -0.76|         -1.51|
-|q5   |           0.62|           0.62|            0.00|             0.968|              |     0.14|         -0.60|
-|q6   |           0.69|           0.63|            0.06|             0.021|*             |    -0.04|         -0.78|
-|q7   |           0.64|           0.62|            0.02|             0.476|              |     0.06|         -0.68|
-|q8   |           0.55|           0.63|            0.08|             0.021|*             |     1.70|          0.95|
-|q9   |           0.59|           0.64|            0.05|             0.151|              |     1.51|          0.77|
+|Item | Observed value| Expected value| Difference| Adj. p-value (BH)|p-value sign. | Location| Rel. location|
+|:----|--------------:|--------------:|----------:|-----------------:|:-------------|--------:|-------------:|
+|q1   |           0.66|           0.62|       0.04|             0.210|              |     0.17|         -0.58|
+|q2   |           0.72|           0.62|       0.10|             0.000|***           |    -0.04|         -0.78|
+|q3   |           0.57|           0.63|      -0.06|             0.085|.             |    -0.11|         -0.85|
+|q4   |           0.71|           0.62|       0.09|             0.000|***           |    -0.76|         -1.51|
+|q5   |           0.62|           0.62|       0.00|             0.968|              |     0.14|         -0.60|
+|q6   |           0.69|           0.63|       0.06|             0.021|*             |    -0.04|         -0.78|
+|q7   |           0.64|           0.62|       0.02|             0.476|              |     0.06|         -0.68|
+|q8   |           0.55|           0.63|      -0.08|             0.021|*             |     1.70|          0.95|
+|q9   |           0.59|           0.64|      -0.05|             0.151|              |     1.51|          0.77|
 
 
 
@@ -344,100 +344,40 @@ RMlocdepQ3(items, cutoff = q3_cut)
 
 A second perspective on LD is the *partial gamma* coefficient
 [@kreinerAnalysisLocalDependence2004;@kreiner_validity_2007] between observed
-item pairs, conditional on the rest-score. Note that this function evaluates both directions of LD, thus the output is two tables.
+item pairs, conditional on the rest-score. Note that this function evaluates both directions of LD, thus the output is two tables. We'll restrict the output to the 6 item-pairs with largest LD deviations.
 
 
 ``` r
-RMpartgamLD(items)
+RMpartgamLD(items, n_pairs = 6)
 ```
 
-Table: Partial gamma LD analysis (n = 600 complete cases). Positive gamma indicates positive local dependence between items. Direction 1: rest score = total - Item2.
+Table: Partial gamma LD analysis (n = 600 complete cases). Positive gamma indicates positive local dependence between items. Showing top 6 of 36 pairs by |gamma|. Direction 1: rest score = total - Item2.
 
-|Item 1 |Item 2 | Partial gamma| Adjusted p-value (BH)|
-|:------|:------|-------------:|---------------------:|
-|q1     |q2     |         0.531|                 0.000|
-|q1     |q3     |        -0.088|                 1.000|
-|q1     |q4     |         0.150|                 1.000|
-|q1     |q5     |        -0.073|                 1.000|
-|q1     |q6     |        -0.136|                 1.000|
-|q1     |q7     |        -0.004|                 1.000|
-|q1     |q8     |        -0.075|                 1.000|
-|q1     |q9     |         0.008|                 1.000|
-|q2     |q3     |        -0.035|                 1.000|
-|q2     |q4     |         0.074|                 1.000|
-|q2     |q5     |        -0.195|                 0.818|
-|q2     |q6     |         0.258|                 0.018|
-|q2     |q7     |        -0.078|                 1.000|
-|q2     |q8     |        -0.323|                 0.001|
-|q2     |q9     |         0.332|                 0.001|
-|q3     |q4     |         0.270|                 0.011|
-|q3     |q5     |         0.269|                 0.005|
-|q3     |q6     |        -0.135|                 1.000|
-|q3     |q7     |        -0.178|                 0.667|
-|q3     |q8     |        -0.100|                 1.000|
-|q3     |q9     |        -0.197|                 0.446|
-|q4     |q5     |         0.232|                 0.102|
-|q4     |q6     |        -0.074|                 1.000|
-|q4     |q7     |         0.062|                 1.000|
-|q4     |q8     |        -0.081|                 1.000|
-|q4     |q9     |        -0.381|                 0.000|
-|q5     |q6     |        -0.021|                 1.000|
-|q5     |q7     |         0.022|                 1.000|
-|q5     |q8     |         0.083|                 1.000|
-|q5     |q9     |        -0.131|                 1.000|
-|q6     |q7     |         0.137|                 1.000|
-|q6     |q8     |        -0.020|                 1.000|
-|q6     |q9     |         0.287|                 0.009|
-|q7     |q8     |         0.303|                 0.001|
-|q7     |q9     |        -0.043|                 1.000|
-|q8     |q9     |         0.036|                 1.000|
+|Item 1 |Item 2 | Partial gamma| Adj. p-value (BH)|p-value sign. |
+|:------|:------|-------------:|-----------------:|:-------------|
+|q1     |q2     |         0.531|             0.000|***           |
+|q4     |q9     |        -0.381|             0.000|***           |
+|q2     |q9     |         0.332|             0.001|***           |
+|q2     |q8     |        -0.323|             0.001|***           |
+|q7     |q8     |         0.303|             0.001|***           |
+|q6     |q9     |         0.287|             0.009|**            |
 
-Table: Partial gamma LD analysis (n = 600 complete cases). Positive gamma indicates positive local dependence between items. Direction 2: rest score = total - Item1.
+Table: Partial gamma LD analysis (n = 600 complete cases). Positive gamma indicates positive local dependence between items. Showing top 6 of 36 pairs by |gamma|. Direction 2: rest score = total - Item1.
 
-|Item 1 |Item 2 | Partial gamma| Adjusted p-value (BH)|
-|:------|:------|-------------:|---------------------:|
-|q2     |q1     |         0.577|                 0.000|
-|q3     |q1     |        -0.112|                 1.000|
-|q3     |q2     |        -0.136|                 1.000|
-|q4     |q1     |         0.165|                 1.000|
-|q4     |q2     |         0.085|                 1.000|
-|q4     |q3     |         0.361|                 0.000|
-|q5     |q1     |        -0.146|                 1.000|
-|q5     |q2     |        -0.265|                 0.015|
-|q5     |q3     |         0.303|                 0.000|
-|q5     |q4     |         0.194|                 0.684|
-|q6     |q1     |        -0.132|                 1.000|
-|q6     |q2     |         0.205|                 0.394|
-|q6     |q3     |        -0.030|                 1.000|
-|q6     |q4     |        -0.053|                 1.000|
-|q6     |q5     |         0.046|                 1.000|
-|q7     |q1     |        -0.072|                 1.000|
-|q7     |q2     |        -0.168|                 1.000|
-|q7     |q3     |        -0.169|                 1.000|
-|q7     |q4     |         0.024|                 1.000|
-|q7     |q5     |        -0.008|                 1.000|
-|q7     |q6     |         0.094|                 1.000|
-|q8     |q1     |        -0.168|                 1.000|
-|q8     |q2     |        -0.415|                 0.000|
-|q8     |q3     |        -0.101|                 1.000|
-|q8     |q4     |        -0.221|                 0.544|
-|q8     |q5     |         0.026|                 1.000|
-|q8     |q6     |        -0.089|                 1.000|
-|q8     |q7     |         0.243|                 0.025|
-|q9     |q1     |        -0.012|                 1.000|
-|q9     |q2     |         0.291|                 0.007|
-|q9     |q3     |        -0.159|                 1.000|
-|q9     |q4     |        -0.453|                 0.000|
-|q9     |q5     |        -0.207|                 0.257|
-|q9     |q6     |         0.200|                 0.585|
-|q9     |q7     |        -0.149|                 1.000|
-|q9     |q8     |         0.059|                 1.000|
+|Item 1 |Item 2 | Partial gamma| Adj. p-value (BH)|p-value sign. |
+|:------|:------|-------------:|-----------------:|:-------------|
+|q2     |q1     |         0.577|             0.000|***           |
+|q9     |q4     |        -0.453|             0.000|***           |
+|q8     |q2     |        -0.415|             0.000|***           |
+|q4     |q3     |         0.361|             0.000|***           |
+|q5     |q3     |         0.303|             0.000|***           |
+|q9     |q2     |         0.291|             0.007|**            |
 
 You can also get simulation-based thresholds for partial gamma LD, using `RMpgLDcutoff()`, which can be used with `RMpartgamLD()` and also to plot the results with `RMpgLDplot()`
 
-The two approaches agree where they overlap; pairs flagged by both are
+Item pairs flagged by both $Q_3$ and partial gamma are
 the strongest candidates for further inspection or possible item
-revision or deletion.
+revision.
 
 ## 3. Ordered response category thresholds
 
@@ -522,17 +462,17 @@ RMpartgamDIF(items_g, dif_var = gender_g)
 
 Table: Partial gamma DIF analysis (n = 569 complete cases). Positive gamma indicates higher scores in higher DIF group levels.
 
-|Item | Partial gamma|    SE| Lower CI| Upper CI| Adjusted p-value (BH)|
-|:----|-------------:|-----:|--------:|--------:|---------------------:|
-|q1   |         0.251| 0.104|    0.046|    0.456|                 0.148|
-|q2   |         0.411| 0.094|    0.227|    0.595|                 0.000|
-|q3   |         0.064| 0.103|   -0.138|    0.266|                 1.000|
-|q4   |        -0.092| 0.114|   -0.315|    0.131|                 1.000|
-|q5   |        -0.286| 0.092|   -0.467|   -0.104|                 0.018|
-|q6   |        -0.155| 0.105|   -0.361|    0.050|                 1.000|
-|q7   |        -0.075| 0.102|   -0.275|    0.126|                 1.000|
-|q8   |        -0.112| 0.102|   -0.311|    0.088|                 1.000|
-|q9   |         0.180| 0.100|   -0.015|    0.376|                 0.638|
+|Item | Partial gamma|    SE| Lower CI| Upper CI| Adj. p-value (BH)|p-value sign. |
+|:----|-------------:|-----:|--------:|--------:|-----------------:|:-------------|
+|q1   |         0.251| 0.104|    0.046|    0.456|             0.148|              |
+|q2   |         0.411| 0.094|    0.227|    0.595|             0.000|***           |
+|q3   |         0.064| 0.103|   -0.138|    0.266|             1.000|              |
+|q4   |        -0.092| 0.114|   -0.315|    0.131|             1.000|              |
+|q5   |        -0.286| 0.092|   -0.467|   -0.104|             0.018|*             |
+|q6   |        -0.155| 0.105|   -0.361|    0.050|             1.000|              |
+|q7   |        -0.075| 0.102|   -0.275|    0.126|             1.000|              |
+|q8   |        -0.112| 0.102|   -0.311|    0.088|             1.000|              |
+|q9   |         0.180| 0.100|   -0.015|    0.376|             0.638|              |
 
 
 
@@ -577,7 +517,7 @@ Table: Reliability for 9 items, n = 600. PSI excludes min/max scoring respondent
 |Cronbach's alpha |    0.886|               NA|               NA|no bootstrap               |
 |PSI              |    0.847|               NA|               NA|no bootstrap               |
 |Empirical (WLE)  |    0.872|               NA|               NA|no bootstrap               |
-|RMU (WLE)        |    0.883|            0.868|            0.898|200 PVs, 20 RMU iterations |
+|RMU (WLE)        |    0.883|            0.867|            0.898|200 PVs, 20 RMU iterations |
 
 
 

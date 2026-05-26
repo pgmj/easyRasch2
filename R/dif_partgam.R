@@ -25,12 +25,14 @@
 #'
 #' @return
 #' * If `output = "kable"`: a `knitr_kable` object with columns "Item",
-#'   "Partial gamma", "SE", "Lower CI", "Upper CI", and "Adjusted p-value
-#'   (BH)". When `cutoff` is provided, additional columns "Gamma low",
-#'   "Gamma high", and "Flagged" are included.
+#'   "Partial gamma", "SE", "Lower CI", "Upper CI", "Adj. p-value (BH)",
+#'   and "p-value sign." (a star-string indicator from
+#'   `iarm::partgam_DIF()`). When `cutoff` is provided, additional columns
+#'   "Gamma low", "Gamma high", and "Flagged" are included.
 #' * If `output = "dataframe"`: a data.frame with columns `Item`, `gamma`,
-#'   `se`, `lower`, `upper`, `padj_bh`. When `cutoff` is provided, columns
-#'   `gamma_low`, `gamma_high`, and `flagged` are also included.
+#'   `se`, `lower`, `upper`, `padj_bh`, `Significance`. When `cutoff` is
+#'   provided, columns `gamma_low`, `gamma_high`, and `flagged` are also
+#'   included.
 #'
 #' @details
 #' Partial gamma (Bjorner et al., 1998) measures the association between item
@@ -152,14 +154,14 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
 
   # pgam_raw is a data.frame with character columns that need numeric conversion
   pgam_df <- data.frame(
-    Item    = as.character(pgam_raw$Item),
-    gamma   = as.numeric(pgam_raw$gamma),
-    se      = as.numeric(pgam_raw$se),
-    pvalue  = as.numeric(pgam_raw$pvalue),
-    padj_bh = as.numeric(pgam_raw[[6]]),
-    sig     = as.character(pgam_raw$sig),
-    lower   = as.numeric(pgam_raw$lower),
-    upper   = as.numeric(pgam_raw$upper),
+    Item         = as.character(pgam_raw$Item),
+    gamma        = as.numeric(pgam_raw$gamma),
+    se           = as.numeric(pgam_raw$se),
+    pvalue       = as.numeric(pgam_raw$pvalue),
+    padj_bh      = as.numeric(pgam_raw[[6]]),
+    Significance = trimws(as.character(pgam_raw$sig)),
+    lower        = as.numeric(pgam_raw$lower),
+    upper        = as.numeric(pgam_raw$upper),
     stringsAsFactors = FALSE
   )
 
@@ -172,7 +174,8 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
   pgam_df$upper   <- round(pgam_df$upper, 3)
 
   # Keep output columns
-  result_df <- pgam_df[, c("Item", "gamma", "se", "lower", "upper", "padj_bh")]
+  result_df <- pgam_df[, c("Item", "gamma", "se", "lower", "upper",
+                           "padj_bh", "Significance")]
 
   # --- Apply cutoff if provided -----------------------------------------------
   if (!is.null(cutoff)) {
@@ -197,7 +200,8 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
       result_df$gamma > result_df$gamma_high
     # Reorder columns
     result_df <- result_df[, c("Item", "gamma", "se", "lower", "upper",
-                               "padj_bh", "gamma_low", "gamma_high", "flagged")]
+                               "padj_bh", "Significance",
+                               "gamma_low", "gamma_high", "flagged")]
   }
 
   # --- Return -----------------------------------------------------------------
@@ -234,10 +238,12 @@ RMpartgamDIF <- function(data, dif_var, cutoff = NULL, output = "kable") {
     result_df,
     format    = "pipe",
     col.names = if (is.null(cutoff)) {
-      c("Item", "Partial gamma", "SE", "Lower CI", "Upper CI", "Adjusted p-value (BH)")
+      c("Item", "Partial gamma", "SE", "Lower CI", "Upper CI",
+        "Adj. p-value (BH)", "p-value sign.")
     } else {
       c("Item", "Partial gamma", "SE", "Lower CI", "Upper CI",
-        "Adjusted p-value (BH)", "Gamma low", "Gamma high", "Flagged")
+        "Adj. p-value (BH)", "p-value sign.",
+        "Gamma low", "Gamma high", "Flagged")
     },
     caption   = caption_text
   )

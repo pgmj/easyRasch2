@@ -20,17 +20,32 @@
 #' @param output Character string controlling the return value. Either
 #'   `"kable"` (default) for a formatted `knitr::kable()` table, or
 #'   `"dataframe"` for the underlying data.frame.
+#' @param n_pairs Optional positive integer. When supplied, only the
+#'   `n_pairs` item pairs with the largest absolute partial-gamma values
+#'   (i.e., strongest residual dependence in either direction) are
+#'   retained per rest-score direction, sorted by `|gamma|` descending.
+#'   When `NULL` (default), all pairs are returned in `iarm`'s native
+#'   ordering. Values larger than the total number of pairs are silently
+#'   capped at that total.
 #'
 #' @return
-#' * If `output = "kable"`: a `knitr_kable` object with columns "Item 1",
-#'   "Item 2", "Partial gamma", and "Adjusted p-value (BH)". When `cutoff`
-#'   is provided, additional columns "Gamma low", "Gamma high", and "Flagged"
-#'   are included. Two tables are returned (one per rest-score direction),
-#'   combined into a single output.
-#' * If `output = "dataframe"`: a list of two data.frames (one per rest-score
-#'   direction) with columns `Item1`, `Item2`, `gamma`, `padj_bh`. When
-#'   `cutoff` is provided, columns `gamma_low`, `gamma_high`, and `flagged`
-#'   are also included.
+#' * If `output = "kable"`: an object of class `"RMpartgamLD"`. Internally
+#'   a list with two `knitr_kable` elements --- `$direction1` (rest score
+#'   = total - Item2) and `$direction2` (rest score = total - Item1) ---
+#'   each with columns "Item 1", "Item 2", "Partial gamma",
+#'   "Adj. p-value (BH)", and "p-value sign." (a star-string indicator
+#'   from `iarm::partgam_LD()`). When `cutoff` is provided, additional
+#'   columns "Gamma low", "Gamma high", and "Flagged" are included.
+#'
+#'   The object has custom `print()` and `knitr::knit_print()` methods:
+#'   in the R console it prints the two tables stacked vertically; in a
+#'   Quarto / R Markdown chunk it renders as two distinct pipe tables.
+#'   Access the individual tables explicitly as `result$direction1` and
+#'   `result$direction2` if needed.
+#' * If `output = "dataframe"`: a named list of two data.frames
+#'   (`$direction1`, `$direction2`) with columns `Item1`, `Item2`,
+#'   `gamma`, `padj_bh`, `Significance`. When `cutoff` is provided,
+#'   columns `gamma_low`, `gamma_high`, and `flagged` are also included.
 #'
 #' @details
 #' Partial gamma (Christensen, Kreiner & Mesbah, 2013) measures the residual
@@ -73,7 +88,8 @@
 #'                            seed = 42)
 #' RMpartgamLD(sim_data, cutoff = cutoff_res)
 #' }
-RMpartgamLD <- function(data, cutoff = NULL, output = "kable") {
+RMpartgamLD <- function(data, cutoff = NULL, output = "kable",
+                        n_pairs = NULL) {
 
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
@@ -84,6 +100,17 @@ RMpartgamLD <- function(data, cutoff = NULL, output = "kable") {
   }
 
   output <- match.arg(output, c("kable", "dataframe"))
+
+  # --- Validate n_pairs -------------------------------------------------------
+  if (!is.null(n_pairs)) {
+    if (!is.numeric(n_pairs) || length(n_pairs) != 1L ||
+        !is.finite(n_pairs) || n_pairs < 1 ||
+        n_pairs != as.integer(n_pairs)) {
+      stop("`n_pairs` must be a single positive integer or NULL.",
+           call. = FALSE)
+    }
+    n_pairs <- as.integer(n_pairs)
+  }
 
   validate_response_data(data)
 
@@ -126,21 +153,26 @@ RMpartgamLD <- function(data, cutoff = NULL, output = "kable") {
   pgam_raw <- iarm::partgam_LD(as.data.frame(data))
   sink()
 
-  # pgam_raw is a list of two data.frames (one per rest-score direction)
+  # pgam_raw is a list of two data.frames (one per rest-score direction).
+  # Columns from iarm::partgam_LD():
+  #   1 Item1, 2 Item2, 3 gamma, 4 se, 5 pvalue, 6 padj.BH, 7 sig,
+  #   8 lower, 9 upper. The `sig` column is a star string like " ***" /
+  #   " **" / " *" / "  ." / "    "; we trim whitespace for display.
   process_pgam_df <- function(raw_df) {
     df <- data.frame(
-      Item1   = as.character(raw_df$Item1),
-      Item2   = as.character(raw_df$Item2),
-      gamma   = round(as.numeric(raw_df$gamma), 3),
-      padj_bh = round(as.numeric(raw_df[[6]]), 3),
+      Item1        = as.character(raw_df$Item1),
+      Item2        = as.character(raw_df$Item2),
+      gamma        = round(as.numeric(raw_df$gamma), 3),
+      padj_bh      = round(as.numeric(raw_df[[6]]), 3),
+      Significance = trimws(as.character(raw_df[[7]])),
       stringsAsFactors = FALSE
     )
     df
   }
 
   result_list <- list(
-    process_pgam_df(pgam_raw[[1]]),
-    process_pgam_df(pgam_raw[[2]])
+    direction1 = process_pgam_df(pgam_raw[[1]]),
+    direction2 = process_pgam_df(pgam_raw[[2]])
   )
 
   # --- Apply cutoff if provided -----------------------------------------------
@@ -179,11 +211,29 @@ RMpartgamLD <- function(data, cutoff = NULL, output = "kable") {
       merged$canonical_key <- NULL
 
       merged <- merged[, c("Item1", "Item2", "gamma", "padj_bh",
-                           "gamma_low", "gamma_high", "flagged")]
+                           "Significance", "gamma_low", "gamma_high",
+                           "flagged")]
       result_list[[idx]] <- merged
     }
     # Clean up cutoff helper column
     cutoff$canonical_key <- NULL
+  }
+
+  # --- Top-N filter by |gamma| per direction ----------------------------------
+  total_pairs <- nrow(result_list[[1L]])
+  filter_applied <- FALSE
+  if (!is.null(n_pairs)) {
+    keep_n <- min(n_pairs, total_pairs)
+    if (keep_n < total_pairs) {
+      filter_applied <- TRUE
+      for (idx in seq_along(result_list)) {
+        df  <- result_list[[idx]]
+        ord <- order(abs(df$gamma), decreasing = TRUE)
+        df  <- df[ord[seq_len(keep_n)], , drop = FALSE]
+        rownames(df) <- NULL
+        result_list[[idx]] <- df
+      }
+    }
   }
 
   # --- Return -----------------------------------------------------------------
@@ -193,10 +243,17 @@ RMpartgamLD <- function(data, cutoff = NULL, output = "kable") {
 
   # Build caption
   n_complete <- sum(stats::complete.cases(as.data.frame(data)))
+  filter_suffix <- if (filter_applied) {
+    paste0(" Showing top ", n_pairs, " of ", total_pairs,
+           " pairs by |gamma|.")
+  } else {
+    ""
+  }
   if (is.null(cutoff)) {
     caption_text <- paste0(
       "Partial gamma LD analysis (n = ", n_complete, " complete cases). ",
-      "Positive gamma indicates positive local dependence between items."
+      "Positive gamma indicates positive local dependence between items.",
+      filter_suffix
     )
   } else if (!is.null(cutoff_n_iter)) {
     method_label <- .format_gamma_cutoff_method_label(cutoff_method, cutoff_hdci_width)
@@ -207,23 +264,25 @@ RMpartgamLD <- function(data, cutoff = NULL, output = "kable") {
         paste0(iter_part, " (", method_label, ").")
       } else {
         paste0(iter_part, ".")
-      }
+      },
+      filter_suffix
     )
   } else {
     caption_text <- paste0(
       "Partial gamma LD analysis (n = ", n_complete,
-      " complete cases). Simulation-based cutoff values applied."
+      " complete cases). Simulation-based cutoff values applied.",
+      filter_suffix
     )
   }
 
   col_names_no_cutoff <- c("Item 1", "Item 2", "Partial gamma",
-                           "Adjusted p-value (BH)")
+                           "Adj. p-value (BH)", "p-value sign.")
   col_names_cutoff    <- c("Item 1", "Item 2", "Partial gamma",
-                           "Adjusted p-value (BH)",
+                           "Adj. p-value (BH)", "p-value sign.",
                            "Gamma low", "Gamma high", "Flagged")
 
   kable1 <- knitr::kable(
-    result_list[[1]],
+    result_list$direction1,
     format    = "pipe",
     col.names = if (is.null(cutoff)) col_names_no_cutoff else col_names_cutoff,
     caption   = paste0(caption_text,
@@ -231,7 +290,7 @@ RMpartgamLD <- function(data, cutoff = NULL, output = "kable") {
   )
 
   kable2 <- knitr::kable(
-    result_list[[2]],
+    result_list$direction2,
     format    = "pipe",
     col.names = if (is.null(cutoff)) col_names_no_cutoff else col_names_cutoff,
     caption   = paste0(caption_text,
@@ -248,7 +307,52 @@ RMpartgamLD <- function(data, cutoff = NULL, output = "kable") {
     paste(kable2, collapse = "\n"),
     sep = "\n\n"
   )
-  knitr::asis_output(combined)
+
+  # Return a custom-class list so the two display contexts (R console and
+  # knitr chunk) can be handled separately. See print.RMpartgamLD() and
+  # knit_print.RMpartgamLD() below.
+  out <- list(
+    direction1 = kable1,
+    direction2 = kable2,
+    .combined  = combined
+  )
+  class(out) <- c("RMpartgamLD", "list")
+  out
+}
+
+#' Print method for RMpartgamLD kable output
+#'
+#' Prints the two rest-score direction tables stacked vertically with a
+#' blank line between them. Each table renders via `knitr_kable`'s own
+#' print method as a clean pipe-markdown table.
+#'
+#' @param x An object of class `"RMpartgamLD"` returned by
+#'   \code{\link{RMpartgamLD}} with `output = "kable"`.
+#' @param ... Further arguments (currently unused).
+#' @return Invisibly returns `x`.
+#' @keywords internal
+#' @exportS3Method base::print
+print.RMpartgamLD <- function(x, ...) {
+  print(x$direction1)
+  cat("\n")
+  print(x$direction2)
+  invisible(x)
+}
+
+#' knitr knit_print method for RMpartgamLD kable output
+#'
+#' Inside a knitr / Quarto / R Markdown chunk, returns the pre-combined
+#' two-table asis string so pandoc renders them as two distinct pipe
+#' tables. Outside knitr, R's normal dispatch falls back to
+#' `print.RMpartgamLD()`.
+#'
+#' @param x An object of class `"RMpartgamLD"`.
+#' @param ... Further arguments passed to `knitr::asis_output()`.
+#' @return A `knit_asis` character object.
+#' @keywords internal
+#' @exportS3Method knitr::knit_print
+knit_print.RMpartgamLD <- function(x, ...) {
+  knitr::asis_output(x$.combined)
 }
 
 #' Simulation-Based Partial Gamma LD Cutoff Determination
@@ -716,6 +820,14 @@ run_partgam_LD_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #' @param items Optional character vector of item names to include in the plot.
 #'   Only item pairs where **both** items are in this vector will be shown. When
 #'   `NULL` (default), all item pairs are plotted.
+#' @param n_pairs Optional positive integer. When supplied, only the
+#'   `n_pairs` item pairs with the largest absolute partial gamma values
+#'   are plotted, sorted by `|gamma|` descending. When `data` is
+#'   supplied, the ranking uses the *observed* partial gammas (the
+#'   diamonds you actually want to interpret); otherwise it falls back
+#'   to the per-pair median of the simulated distributions. Applied
+#'   *after* the `items` filter when both are supplied. Values larger
+#'   than the number of available pairs are silently capped.
 #'
 #' @return A `ggplot` object.
 #'
@@ -770,7 +882,7 @@ run_partgam_LD_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #' RMpgLDplot(cutoff_res, data = sim_data,
 #'            items = c("Item1", "Item2", "Item3"))
 #' }
-RMpgLDplot <- function(simfit, data, items = NULL) {
+RMpgLDplot <- function(simfit, data, items = NULL, n_pairs = NULL) {
 
   # --- Check required packages ------------------------------------------------
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
@@ -824,6 +936,17 @@ RMpgLDplot <- function(simfit, data, items = NULL) {
     }
   }
 
+  # --- Validate n_pairs parameter ---------------------------------------------
+  if (!is.null(n_pairs)) {
+    if (!is.numeric(n_pairs) || length(n_pairs) != 1L ||
+        !is.finite(n_pairs) || n_pairs < 1 ||
+        n_pairs != as.integer(n_pairs)) {
+      stop("`n_pairs` must be a single positive integer or NULL.",
+           call. = FALSE)
+    }
+    n_pairs <- as.integer(n_pairs)
+  }
+
   # Create pair labels
   results_df$Pair <- paste(results_df$Item1, "-", results_df$Item2)
   pair_cutoffs$Pair <- paste(pair_cutoffs$Item1, "-", pair_cutoffs$Item2)
@@ -840,8 +963,67 @@ RMpgLDplot <- function(simfit, data, items = NULL) {
     }
   }
 
-  # Pair factor levels (reversed for plotting top-to-bottom)
-  pair_levels <- rev(unique(results_df$Pair))
+  # --- Compute observed partial gammas up-front (when data supplied) ----------
+  # We pre-compute here so the `n_pairs` filter below can rank by observed
+  # |gamma| when data are available. The result is reused in Case 2.
+  observed_df <- NULL
+  if (!missing(data)) {
+    if (!requireNamespace("iarm", quietly = TRUE)) {
+      stop(
+        "Package 'iarm' is required to compute observed partial gamma but is not installed.\n",
+        "Install it with: install.packages(\"iarm\")",
+        call. = FALSE
+      )
+    }
+    validate_response_data(data)
+
+    old_rgl <- getOption("rgl.useNULL")
+    options(rgl.useNULL = TRUE)
+    on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
+
+    sink(nullfile())
+    pgam_raw <- iarm::partgam_LD(as.data.frame(data))
+    sink()
+
+    observed_df <- data.frame(
+      Item1          = as.character(pgam_raw[[1L]]$Item1),
+      Item2          = as.character(pgam_raw[[1L]]$Item2),
+      observed_gamma = as.numeric(pgam_raw[[1L]]$gamma),
+      stringsAsFactors = FALSE
+    )
+    observed_df$Pair <- paste(observed_df$Item1, "-", observed_df$Item2)
+
+    if (!is.null(items)) {
+      keep_obs <- observed_df$Item1 %in% items & observed_df$Item2 %in% items
+      observed_df <- observed_df[keep_obs, , drop = FALSE]
+    }
+  }
+
+  # --- Apply n_pairs top-N filter ---------------------------------------------
+  if (!is.null(n_pairs)) {
+    if (!is.null(observed_df)) {
+      # Rank by |observed gamma| — the diamonds the user wants to interpret
+      ord <- order(abs(observed_df$observed_gamma), decreasing = TRUE)
+      keep_n     <- min(n_pairs, nrow(observed_df))
+      keep_pairs <- observed_df$Pair[ord[seq_len(keep_n)]]
+      observed_df <- observed_df[observed_df$Pair %in% keep_pairs, , drop = FALSE]
+    } else {
+      # Rank by |median simulated gamma| per pair
+      pair_names_all <- unique(results_df$Pair)
+      med_g <- vapply(pair_names_all, function(pp) {
+        stats::median(results_df$gamma[results_df$Pair == pp], na.rm = TRUE)
+      }, numeric(1L))
+      ord <- order(abs(med_g), decreasing = TRUE)
+      keep_n     <- min(n_pairs, length(pair_names_all))
+      keep_pairs <- pair_names_all[ord[seq_len(keep_n)]]
+    }
+    results_df   <- results_df[results_df$Pair %in% keep_pairs, , drop = FALSE]
+    pair_cutoffs <- pair_cutoffs[pair_cutoffs$Pair %in% keep_pairs, , drop = FALSE]
+    # Use the ranked order for y-axis: largest |gamma| at the top
+    pair_levels  <- rev(keep_pairs)
+  } else {
+    pair_levels  <- rev(unique(results_df$Pair))
+  }
 
   # --- Compute per-pair summary intervals for segment overlays ----------------
   pair_names <- unique(results_df$Pair)
@@ -912,39 +1094,8 @@ RMpgLDplot <- function(simfit, data, items = NULL) {
   }
 
   # --- Case 2: observed data supplied -----------------------------------------
-  if (!requireNamespace("iarm", quietly = TRUE)) {
-    stop(
-      "Package 'iarm' is required to compute observed partial gamma but is not installed.\n",
-      "Install it with: install.packages(\"iarm\")",
-      call. = FALSE
-    )
-  }
-
-  validate_response_data(data)
-
-  # rgl workaround
-  old_rgl <- getOption("rgl.useNULL")
-  options(rgl.useNULL = TRUE)
-  on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
-
-  sink(nullfile())
-  pgam_raw <- iarm::partgam_LD(as.data.frame(data))
-  sink()
-
-  # Use direction 1 (rest score = total - Item2)
-  observed_df <- data.frame(
-    Item1          = as.character(pgam_raw[[1]]$Item1),
-    Item2          = as.character(pgam_raw[[1]]$Item2),
-    observed_gamma = as.numeric(pgam_raw[[1]]$gamma),
-    stringsAsFactors = FALSE
-  )
-  observed_df$Pair <- paste(observed_df$Item1, "-", observed_df$Item2)
-
-  # Filter observed data to selected items
-  if (!is.null(items)) {
-    keep_obs <- observed_df$Item1 %in% items & observed_df$Item2 %in% items
-    observed_df <- observed_df[keep_obs, , drop = FALSE]
-  }
+  # (`observed_df` was pre-computed above so the n_pairs filter could rank
+  # by |observed gamma|.)
 
   # --- Build plot data --------------------------------------------------------
   gamma_sim <- data.frame(

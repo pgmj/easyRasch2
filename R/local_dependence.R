@@ -8,11 +8,12 @@
 #'
 #' @param data A data.frame or matrix of item responses. Items must be scored
 #'   starting at 0 (non-negative integers). Missing values (`NA`) are allowed.
-#' @param cutoff Optional single numeric value added to the mean off-diagonal Q3
-#'   correlation to produce the dynamic cut-off threshold. When `NULL`
-#'   (default), the raw Q3 residual correlation matrix is returned without any
-#'   dynamic cut-off applied. Use \code{\link{RMlocdepQ3cutoff}} to derive a
-#'   simulation-based cutoff value.
+#' @param cutoff Optional. Either a single numeric value (added to the mean
+#'   off-diagonal Q3 correlation to produce the dynamic cut-off threshold) or
+#'   the full list returned by \code{\link{RMlocdepQ3cutoff}} (from which
+#'   `$suggested_cutoff` is extracted automatically). When `NULL` (default),
+#'   the raw Q3 residual correlation matrix is returned without any dynamic
+#'   cut-off applied.
 #' @param output Character string controlling the return value. Either
 #'   `"kable"` (default) for a formatted `knitr::kable()` table, or
 #'   `"dataframe"` for the underlying numeric data.frame.
@@ -74,8 +75,14 @@
 RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
   # --- Input validation -------------------------------------------------------
   if (!is.null(cutoff)) {
+    # Accept the full RMlocdepQ3cutoff() return list as well as a bare numeric.
+    if (is.list(cutoff) && !is.data.frame(cutoff) &&
+        "suggested_cutoff" %in% names(cutoff)) {
+      cutoff <- as.numeric(cutoff$suggested_cutoff)
+    }
     if (!is.numeric(cutoff) || length(cutoff) != 1L || is.na(cutoff)) {
-      stop("`cutoff` must be a single numeric value or NULL.", call. = FALSE)
+      stop("`cutoff` must be a single numeric value, NULL, or the list ",
+           "returned by RMlocdepQ3cutoff().", call. = FALSE)
     }
   }
 
@@ -177,18 +184,38 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
 #'   sequential (single core) processing.
 #' @param verbose Logical. Show a progress bar (default `FALSE`).
 #' @param seed Integer or `NULL`. Random seed for reproducibility.
+#' @param cutoff_method Character. Method used to compute per-pair Q3
+#'   credible intervals in `pair_cutoffs`. One of `"hdci"` (the default,
+#'   Highest Density Continuous Interval via `ggdist::hdci()`) or
+#'   `"quantile"` (symmetric 2.5th / 97.5th percentiles). Only affects
+#'   `pair_cutoffs`; the global `$suggested_cutoff` (99th percentile of
+#'   `max(Q3) - mean(Q3)`) is unaffected.
+#' @param hdci_width Numeric in (0, 1). Width of the HDCI when
+#'   `cutoff_method = "hdci"`. Default `0.99`. Ignored when
+#'   `cutoff_method = "quantile"`.
 #'
 #' @return A list with components:
 #' \describe{
 #'   \item{`results`}{data.frame with columns `mean`, `max`, `diff` (one row
 #'     per successful iteration).}
+#'   \item{`pair_results`}{Long data.frame with columns `Item1`, `Item2`,
+#'     `Q3`, `iteration` --- one row per item pair per successful iteration.
+#'     Used by \code{\link{RMlocdepQ3plot}}.}
+#'   \item{`pair_cutoffs`}{data.frame with per-pair cutoff summaries:
+#'     `Item1`, `Item2`, `Q3_low`, `Q3_high`. Boundaries are computed via
+#'     the method specified by `cutoff_method`.}
 #'   \item{`actual_iterations`}{Number of successful iterations.}
 #'   \item{`sample_n`}{Number of persons in the original data.}
 #'   \item{`sample_summary`}{Summary statistics of estimated person parameters.}
+#'   \item{`item_names`}{Character vector of item names from `data`.}
 #'   \item{`max_diff`, `sd_diff`}{Max and SD of the `diff` distribution.}
 #'   \item{`p95`, `p99`, `p995`, `p999`}{Empirical percentiles of `diff`.}
-#'   \item{`suggested_cutoff`}{The 99th percentile (`p99`) — recommended cutoff
-#'     for \code{\link{RMlocdepQ3}}.}
+#'   \item{`suggested_cutoff`}{The 99th percentile (`p99`) --- recommended
+#'     scalar cutoff for \code{\link{RMlocdepQ3}}.}
+#'   \item{`cutoff_method`}{The method used for `pair_cutoffs`
+#'     (`"hdci"` or `"quantile"`).}
+#'   \item{`hdci_width`}{The HDCI width used (only meaningful when
+#'     `cutoff_method = "hdci"`).}
 #' }
 #'
 #' @details
@@ -227,8 +254,23 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
 #' RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
 #' }
 RMlocdepQ3cutoff <- function(data, iterations = 500, parallel = TRUE,
-                              n_cores = NULL, verbose = FALSE, seed = NULL) {
+                              n_cores = NULL, verbose = FALSE, seed = NULL,
+                              cutoff_method = "hdci", hdci_width = 0.99) {
   validate_response_data(data)
+
+  cutoff_method <- match.arg(cutoff_method, c("hdci", "quantile"))
+  if (cutoff_method == "hdci" && !requireNamespace("ggdist", quietly = TRUE)) {
+    stop(
+      "Package 'ggdist' is required when cutoff_method = \"hdci\" but is not installed.\n",
+      "Install it with: install.packages(\"ggdist\")\n",
+      "Alternatively, use cutoff_method = \"quantile\" to avoid this dependency.",
+      call. = FALSE
+    )
+  }
+  if (!is.numeric(hdci_width) || length(hdci_width) != 1L ||
+      !is.finite(hdci_width) || hdci_width <= 0 || hdci_width >= 1) {
+    stop("`hdci_width` must be a single number in (0, 1).", call. = FALSE)
+  }
 
   use_parallel <- parallel && requireNamespace("mirai", quietly = TRUE)
 
@@ -267,6 +309,14 @@ RMlocdepQ3cutoff <- function(data, iterations = 500, parallel = TRUE,
   sample_n <- nrow(data_mat)
   is_polytomous <- max(data_mat, na.rm = TRUE) > 1L
 
+  # Preserve item names so the per-iteration pair_q3 frames use the user's
+  # labels (e.g., "q1", "q2") rather than psychotools / mirt's auto-generated
+  # "V1", "V2", ... .
+  item_names_sim <- colnames(data_mat)
+  if (is.null(item_names_sim)) {
+    item_names_sim <- paste0("V", seq_len(ncol(data_mat)))
+  }
+
   if (is_polytomous) {
     # Fit PCM, extract thresholds and thetas
     pcm_fit <- eRm::PCM(data_mat)
@@ -280,11 +330,12 @@ RMlocdepQ3cutoff <- function(data, iterations = 500, parallel = TRUE,
       as.numeric(thresh_mat[i, !is.na(thresh_mat[i, ])])
     })
     sim_data_list <- list(
-      type = "polytomous",
-      thetas = thetas,
+      type       = "polytomous",
+      thetas     = thetas,
       deltaslist = deltaslist,
-      n_items = ncol(data_mat),
-      sample_n = sample_n
+      n_items    = ncol(data_mat),
+      sample_n   = sample_n,
+      item_names = item_names_sim
     )
   } else {
     # Fit RM, extract thetas
@@ -295,11 +346,12 @@ RMlocdepQ3cutoff <- function(data, iterations = 500, parallel = TRUE,
     thetas <- as.numeric(stats::na.omit(theta_table[raw_scores]))
     item_params <- -rm_fit$betapar
     sim_data_list <- list(
-      type = "dichotomous",
-      thetas = thetas,
+      type        = "dichotomous",
+      thetas      = thetas,
       item_params = item_params,
-      n_items = ncol(data_mat),
-      sample_n = sample_n
+      n_items     = ncol(data_mat),
+      sample_n    = sample_n,
+      item_names  = item_names_sim
     )
   }
 
@@ -328,11 +380,59 @@ RMlocdepQ3cutoff <- function(data, iterations = 500, parallel = TRUE,
     diff = diff_q3
   )
 
+  # --- Per-pair aggregation -------------------------------------------------
+  # Stack per-iteration pair_q3 frames into one long data.frame and add an
+  # `iteration` column (matching the partial-gamma family).
+  item_names_vec <- colnames(data)
+  if (is.null(item_names_vec)) {
+    item_names_vec <- as.character(seq_len(ncol(data)))
+  }
+  pair_iter_dfs <- lapply(seq_along(successful), function(i) {
+    df <- successful[[i]]$pair_q3
+    df$iteration <- i
+    df
+  })
+  pair_results <- do.call(rbind, pair_iter_dfs)
+  rownames(pair_results) <- NULL
+
+  # Per-pair cutoff intervals
+  pair_keys <- unique(paste(pair_results$Item1, pair_results$Item2,
+                            sep = "___"))
+  pair_cutoffs <- do.call(rbind, lapply(pair_keys, function(pk) {
+    parts <- strsplit(pk, "___", fixed = TRUE)[[1L]]
+    sub   <- pair_results[pair_results$Item1 == parts[1L] &
+                            pair_results$Item2 == parts[2L], ]
+    if (cutoff_method == "hdci") {
+      q3_interval <- ggdist::hdci(sub$Q3, .width = hdci_width)
+      data.frame(
+        Item1   = parts[1L],
+        Item2   = parts[2L],
+        Q3_low  = q3_interval[1L, 1L],
+        Q3_high = q3_interval[1L, 2L],
+        stringsAsFactors = FALSE,
+        row.names = NULL
+      )
+    } else {
+      data.frame(
+        Item1   = parts[1L],
+        Item2   = parts[2L],
+        Q3_low  = stats::quantile(sub$Q3, 0.025, na.rm = TRUE),
+        Q3_high = stats::quantile(sub$Q3, 0.975, na.rm = TRUE),
+        stringsAsFactors = FALSE,
+        row.names = NULL
+      )
+    }
+  }))
+  rownames(pair_cutoffs) <- NULL
+
   out <- list()
   out$results           <- results
+  out$pair_results      <- pair_results
+  out$pair_cutoffs      <- pair_cutoffs
   out$actual_iterations <- actual_iterations
   out$sample_n          <- sample_n
   out$sample_summary    <- summary(sim_data_list$thetas)
+  out$item_names        <- item_names_vec
   out$max_diff          <- max(results$diff)
   out$sd_diff           <- stats::sd(results$diff)
   out$p95               <- stats::quantile(results$diff, 0.95)
@@ -340,6 +440,8 @@ RMlocdepQ3cutoff <- function(data, iterations = 500, parallel = TRUE,
   out$p995              <- stats::quantile(results$diff, 0.995)
   out$p999              <- stats::quantile(results$diff, 0.999)
   out$suggested_cutoff  <- out$p99
+  out$cutoff_method     <- cutoff_method
+  out$hdci_width        <- hdci_width
   out
 }
 
@@ -388,6 +490,12 @@ run_single_q3_sim <- function(seed, data_list) {
       }
     }
 
+    # Preserve the user's item labels so the Q3 matrix below uses them
+    if (!is.null(data_list$item_names) &&
+        length(data_list$item_names) == ncol(sim_df)) {
+      colnames(sim_df) <- data_list$item_names
+    }
+
     # Fit Rasch model via mirt
     mirt_fit <- mirt::mirt(
       sim_df,
@@ -405,7 +513,22 @@ run_single_q3_sim <- function(seed, data_list) {
     mean_q3 <- mean(q3_mat, na.rm = TRUE)
     max_q3  <- max(q3_mat, na.rm = TRUE)
 
-    list(mean = mean_q3, max = max_q3)
+    # Extract upper triangle as a long vector for per-pair retention.
+    # mirt::residuals returns a symmetric matrix with item names on rows/cols.
+    item_names_q3 <- colnames(q3_mat)
+    if (is.null(item_names_q3)) {
+      item_names_q3 <- as.character(seq_len(ncol(q3_mat)))
+    }
+    upper_idx <- which(upper.tri(q3_mat), arr.ind = TRUE)
+    pair_q3 <- data.frame(
+      Item1 = item_names_q3[upper_idx[, "row"]],
+      Item2 = item_names_q3[upper_idx[, "col"]],
+      Q3    = q3_mat[upper_idx],
+      stringsAsFactors = FALSE,
+      row.names = NULL
+    )
+
+    list(mean = mean_q3, max = max_q3, pair_q3 = pair_q3)
   }, error = function(e) {
     as.character(conditionMessage(e))
   })

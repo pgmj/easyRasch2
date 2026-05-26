@@ -230,17 +230,17 @@ RMlocdepQ3(items, cutoff = q3_cut)
 
 A second perspective on LD is the *partial gamma* coefficient
 [@kreinerAnalysisLocalDependence2004;@kreiner_validity_2007] between observed
-item pairs, conditional on the rest-score. Note that this function evaluates both directions of LD, thus the output is two tables.
+item pairs, conditional on the rest-score. Note that this function evaluates both directions of LD, thus the output is two tables. We'll restrict the output to the 6 item-pairs with largest LD deviations.
 
 ```{r partgamld, results = "asis"}
-RMpartgamLD(items)
+RMpartgamLD(items, n_pairs = 6)
 ```
 
 You can also get simulation-based thresholds for partial gamma LD, using `RMpgLDcutoff()`, which can be used with `RMpartgamLD()` and also to plot the results with `RMpgLDplot()`
 
-The two approaches agree where they overlap; pairs flagged by both are
+Item pairs flagged by both $Q_3$ and partial gamma are
 the strongest candidates for further inspection or possible item
-revision or deletion.
+revision.
 
 ## 3. Ordered response category thresholds
 

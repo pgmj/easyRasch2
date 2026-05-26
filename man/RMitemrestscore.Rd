@@ -16,7 +16,8 @@ but at least one complete case (row with no \code{NA}) must be present.}
 \code{"dataframe"} for the underlying data.frame.}
 
 \item{sort}{Optional character string. When \code{sort = "diff"}, rows are sorted
-by \code{Absolute_difference} in descending order before output.}
+by the absolute magnitude of \code{Difference} in descending order, so that
+both over- and underfitting items appear near the top.}
 
 \item{p.adj}{Character string specifying the p-value adjustment method
 passed to \code{iarm::item_restscore()}. Default \code{"BH"} (Benjamini-Hochberg).
@@ -26,13 +27,20 @@ See \code{\link[stats:p.adjust]{stats::p.adjust()}} for available methods.}
 \itemize{
 \item If \code{output = "kable"}: a \code{knitr_kable} object (plain text table via
 \code{format = "pipe"}) with columns for item name, observed and expected
-restscore correlations, absolute difference, adjusted p-value,
-significance level, item location, and item location relative to the
-sample mean person location.
+restscore correlations, the signed difference (observed minus
+expected), adjusted p-value, significance level, item location, and
+item location relative to the sample mean person location.
 \item If \code{output = "dataframe"}: a data.frame with columns \code{Item}, \code{Observed},
-\code{Expected}, \code{Absolute_difference}, \code{p_adjusted}, \code{Significance},
+\code{Expected}, \code{Difference}, \code{p_adjusted}, \code{Significance},
 \code{Location}, and \code{Relative_location}.
 }
+
+The \code{Difference} column is signed (observed minus expected):
+\emph{positive} values indicate that the item correlates more strongly with
+the rest-score than the Rasch model predicts (over-discrimination /
+\emph{overfit}, often associated with local dependence), and \emph{negative}
+values indicate weaker-than-expected association (under-discrimination
+/ \emph{underfit}, often associated with multidimensionality or noise).
 }
 \description{
 Computes observed and model-expected item-restscore correlations using

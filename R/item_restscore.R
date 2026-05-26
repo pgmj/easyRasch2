@@ -12,7 +12,8 @@
 #'   `"kable"` (default) for a formatted `knitr::kable()` table, or
 #'   `"dataframe"` for the underlying data.frame.
 #' @param sort Optional character string. When `sort = "diff"`, rows are sorted
-#'   by `Absolute_difference` in descending order before output.
+#'   by the absolute magnitude of `Difference` in descending order, so that
+#'   both over- and underfitting items appear near the top.
 #' @param p.adj Character string specifying the p-value adjustment method
 #'   passed to `iarm::item_restscore()`. Default `"BH"` (Benjamini-Hochberg).
 #'   See [stats::p.adjust()] for available methods.
@@ -20,12 +21,19 @@
 #' @return
 #' * If `output = "kable"`: a `knitr_kable` object (plain text table via
 #'   `format = "pipe"`) with columns for item name, observed and expected
-#'   restscore correlations, absolute difference, adjusted p-value,
-#'   significance level, item location, and item location relative to the
-#'   sample mean person location.
+#'   restscore correlations, the signed difference (observed minus
+#'   expected), adjusted p-value, significance level, item location, and
+#'   item location relative to the sample mean person location.
 #' * If `output = "dataframe"`: a data.frame with columns `Item`, `Observed`,
-#'   `Expected`, `Absolute_difference`, `p_adjusted`, `Significance`,
+#'   `Expected`, `Difference`, `p_adjusted`, `Significance`,
 #'   `Location`, and `Relative_location`.
+#'
+#' The `Difference` column is signed (observed minus expected):
+#' *positive* values indicate that the item correlates more strongly with
+#' the rest-score than the Rasch model predicts (over-discrimination /
+#' *overfit*, often associated with local dependence), and *negative*
+#' values indicate weaker-than-expected association (under-discrimination
+#' / *underfit*, often associated with multidimensionality or noise).
 #'
 #' @details
 #' Item-restscore correlations using Goodman-Kruskal's gamma (Kreiner, 2011) measure
@@ -135,7 +143,7 @@ RMitemrestscore <- function(data, output = "kable", sort, p.adj = "BH") {
     Item                = names(data),
     Observed            = observed,
     Expected            = expected,
-    Absolute_difference = round(abs(expected - observed), 3),
+    Difference          = round(observed - expected, 3),
     p_adjusted          = p_adjusted,
     Significance        = significance,
     Location            = round(item_avg_locations, 2),
@@ -146,7 +154,9 @@ RMitemrestscore <- function(data, output = "kable", sort, p.adj = "BH") {
 
   # --- Sort if requested -----------------------------------------------------
   if (!missing(sort) && identical(sort, "diff")) {
-    i2 <- i2[order(i2$Absolute_difference, decreasing = TRUE), ]
+    # Sort by absolute magnitude so both over- and underfit items rise
+    # to the top; the signed value is still what the user sees.
+    i2 <- i2[order(abs(i2$Difference), decreasing = TRUE), ]
     rownames(i2) <- NULL
   }
 
@@ -162,7 +172,7 @@ RMitemrestscore <- function(data, output = "kable", sort, p.adj = "BH") {
       "Item",
       "Observed value",
       "Expected value",
-      "Abs. difference",
+      "Difference",
       paste0("Adj. p-value (", p.adj, ")"),
       "p-value sign.",
       "Location",

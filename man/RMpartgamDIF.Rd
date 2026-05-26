@@ -34,12 +34,14 @@ credible range) to the result.
 \value{
 \itemize{
 \item If \code{output = "kable"}: a \code{knitr_kable} object with columns "Item",
-"Partial gamma", "SE", "Lower CI", "Upper CI", and "Adjusted p-value
-(BH)". When \code{cutoff} is provided, additional columns "Gamma low",
-"Gamma high", and "Flagged" are included.
+"Partial gamma", "SE", "Lower CI", "Upper CI", "Adj. p-value (BH)",
+and "p-value sign." (a star-string indicator from
+\code{iarm::partgam_DIF()}). When \code{cutoff} is provided, additional columns
+"Gamma low", "Gamma high", and "Flagged" are included.
 \item If \code{output = "dataframe"}: a data.frame with columns \code{Item}, \code{gamma},
-\code{se}, \code{lower}, \code{upper}, \code{padj_bh}. When \code{cutoff} is provided, columns
-\code{gamma_low}, \code{gamma_high}, and \code{flagged} are also included.
+\code{se}, \code{lower}, \code{upper}, \code{padj_bh}, \code{Significance}. When \code{cutoff} is
+provided, columns \code{gamma_low}, \code{gamma_high}, and \code{flagged} are also
+included.
 }
 }
 \description{

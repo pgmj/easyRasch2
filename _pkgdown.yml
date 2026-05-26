@@ -43,6 +43,7 @@ reference:
     contents:
       - RMlocdepQ3
       - RMlocdepQ3cutoff
+      - RMlocdepQ3plot
       - RMpartgamLD
       - RMpgLDcutoff
       - RMpgLDplot

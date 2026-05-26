@@ -1,3 +1,30 @@
+# easyRasch2 0.7.1
+
+- New **`RMlocdepQ3plot()`** for visualising per-pair simulated Q3
+  distributions against observed Q3 values, mirroring the design of
+  `RMpgLDplot()` and `RMpgDIFplot()`. Supports `items` and `n_pairs`
+  filters; with `data` supplied, ranks `n_pairs` by
+  `|observed Q3 - median(simulated Q3 per pair)|`.
+- `RMlocdepQ3cutoff()` now retains per-pair iteration-level data:
+  the returned list gains `pair_results`, `pair_cutoffs`, `item_names`,
+  `cutoff_method`, and `hdci_width`. Existing scalar outputs
+  (`suggested_cutoff` etc.) are unchanged. New arguments `cutoff_method`
+  (`"hdci"` / `"quantile"`) and `hdci_width` (default `0.99`) control
+  how per-pair credible intervals are computed.
+- `RMlocdepQ3()` can now be called with the full list returned by
+  `RMlocdepQ3cutoff()` (it auto-extracts `$suggested_cutoff`), matching
+  the partial-gamma family convention. Numeric scalar still works.
+- `RMpartgamLD()` and `RMpgLDplot()` gain an `n_pairs` argument
+  to keep only the top-N pairs by `|gamma|` (LD) or by
+  `|observed - median(sim)|` deviation (plot).
+- `RMpartgamLD()`, `RMpartgamDIF()`, and `RMitemrestscore()`
+  now use consistent column headers: `Adj. p-value (BH)` and a new
+  `p-value sign.` star-string column. `RMitemrestscore()`'s former
+  `Absolute_difference` column is now a *signed* `Difference`
+  (observed − expected), so over- and underfit are visually
+  distinguishable at a glance.
+
+
 # easyRasch2 0.7.0
 
 - New **`RMbarplot()`** and **`RMstackedbarplot()`** join `RMtileplot()` for 

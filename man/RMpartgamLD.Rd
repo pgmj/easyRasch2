@@ -4,7 +4,7 @@
 \alias{RMpartgamLD}
 \title{Partial Gamma Local Dependence Analysis}
 \usage{
-RMpartgamLD(data, cutoff = NULL, output = "kable")
+RMpartgamLD(data, cutoff = NULL, output = "kable", n_pairs = NULL)
 }
 \arguments{
 \item{data}{A data.frame or matrix of item responses. Items must be scored
@@ -26,18 +26,34 @@ credible range) to the result.
 \item{output}{Character string controlling the return value. Either
 \code{"kable"} (default) for a formatted \code{knitr::kable()} table, or
 \code{"dataframe"} for the underlying data.frame.}
+
+\item{n_pairs}{Optional positive integer. When supplied, only the
+\code{n_pairs} item pairs with the largest absolute partial-gamma values
+(i.e., strongest residual dependence in either direction) are
+retained per rest-score direction, sorted by \verb{|gamma|} descending.
+When \code{NULL} (default), all pairs are returned in \code{iarm}'s native
+ordering. Values larger than the total number of pairs are silently
+capped at that total.}
 }
 \value{
 \itemize{
-\item If \code{output = "kable"}: a \code{knitr_kable} object with columns "Item 1",
-"Item 2", "Partial gamma", and "Adjusted p-value (BH)". When \code{cutoff}
-is provided, additional columns "Gamma low", "Gamma high", and "Flagged"
-are included. Two tables are returned (one per rest-score direction),
-combined into a single output.
-\item If \code{output = "dataframe"}: a list of two data.frames (one per rest-score
-direction) with columns \code{Item1}, \code{Item2}, \code{gamma}, \code{padj_bh}. When
-\code{cutoff} is provided, columns \code{gamma_low}, \code{gamma_high}, and \code{flagged}
-are also included.
+\item If \code{output = "kable"}: an object of class \code{"RMpartgamLD"}. Internally
+a list with two \code{knitr_kable} elements --- \verb{$direction1} (rest score
+= total - Item2) and \verb{$direction2} (rest score = total - Item1) ---
+each with columns "Item 1", "Item 2", "Partial gamma",
+"Adj. p-value (BH)", and "p-value sign." (a star-string indicator
+from \code{iarm::partgam_LD()}). When \code{cutoff} is provided, additional
+columns "Gamma low", "Gamma high", and "Flagged" are included.
+
+The object has custom \code{print()} and \code{knitr::knit_print()} methods:
+in the R console it prints the two tables stacked vertically; in a
+Quarto / R Markdown chunk it renders as two distinct pipe tables.
+Access the individual tables explicitly as \code{result$direction1} and
+\code{result$direction2} if needed.
+\item If \code{output = "dataframe"}: a named list of two data.frames
+(\verb{$direction1}, \verb{$direction2}) with columns \code{Item1}, \code{Item2},
+\code{gamma}, \code{padj_bh}, \code{Significance}. When \code{cutoff} is provided,
+columns \code{gamma_low}, \code{gamma_high}, and \code{flagged} are also included.
 }
 }
 \description{
