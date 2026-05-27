@@ -6,6 +6,7 @@ development:
 template:
   bootstrap: 5
   bootswatch: lumen
+  math-rendering: katex
 
 navbar:
   structure:
