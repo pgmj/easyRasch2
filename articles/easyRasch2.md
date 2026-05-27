@@ -338,11 +338,11 @@ Standardised loadings on the first residual contrast
 
 ## 2. Local independence
 
-Local independence (LD) can be assessed with multiple methods. Yen’s
-$`Q_3`$ statistic ([Yen 1984](#ref-yen_scaling_1984)) is the correlation
-between person-item standardised residuals for every item pair.
-Pair-wise $`Q_3`$ values above the simulation-based cut-off flag LD
-([Christensen et al. 2017](#ref-christensen2017)).
+Local independence (LD) can be assessed with multiple methods. Yen’s Q_3
+statistic ([Yen 1984](#ref-yen_scaling_1984)) is the correlation between
+person-item standardised residuals for every item pair. Pair-wise Q_3
+values above the simulation-based cut-off flag LD ([Christensen et al.
+2017](#ref-christensen2017)).
 
 ``` r
 
@@ -411,7 +411,7 @@ which can be used with
 and also to plot the results with
 [`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaPlot.md)
 
-Item pairs flagged by both $`Q_3`$ and partial gamma are the strongest
+Item pairs flagged by both Q_3 and partial gamma are the strongest
 candidates for further inspection or possible item revision.
 
 ## 3. Ordered response category thresholds
