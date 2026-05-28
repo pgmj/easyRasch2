@@ -17,6 +17,8 @@ Conditional item fit statistics with simulation-based cutoffs
   Data
 - [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemICCPlot.md)
   : Conditional Item Characteristic Curves
+- [`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/reference/RMitemCatProb.md)
+  : Item Category Probability Curves
 
 ## Item Restscore
 

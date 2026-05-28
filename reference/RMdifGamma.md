@@ -85,9 +85,10 @@ The `iarm` package must be installed (it is in Suggests, not Imports).
 
 ## References
 
-Bjorner, J., Kreiner, S., Ware, J., Damsgaard, M. and Bech, P.
-Differential item functioning in the Danish translation of the SF-36.
-*Journal of Clinical Epidemiology*, 51(11), 1998, pp. 1189-1202.
+Bjorner, J. B., Kreiner, S., Ware, J. E., Damsgaard, M. T., & Bech, P.
+(1998). Differential item functioning in the Danish translation of the
+SF-36. *Journal of Clinical Epidemiology, 51*(11), 1189–1202.
+[doi:10.1016/S0895-4356(98)00111-5](https://doi.org/10.1016/S0895-4356%2898%2900111-5)
 
 ## See also
 

@@ -88,6 +88,14 @@ the sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
 - [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemICCPlot.md) -
   evaluates DIF across class intervals
 
+### Item category threshold ordering
+
+- [`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/reference/RMitemCatProb.md)
+  for classic item probability function trace plots.
+- [`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/reference/RMitemHierarchy.md)
+  renders a plot sorting items based on difficulty, showing item
+  threshold locations and confidence intervals.
+
 ### Reliability, targeting, score conversion
 
 - [`RMreliability()`](https://pgmj.github.io/easyRasch2/reference/RMreliability.md) +
@@ -153,6 +161,7 @@ RMdifTree(pcmdat2, covariates = covs)
 - Bjorner, J. B., Kreiner, S., Ware, J. E., Damsgaard, M. T., & Bech, P.
   (1998). Differential item functioning in the Danish translation of the
   SF-36. *Journal of Clinical Epidemiology, 51*(11), 1189–1202.
+  <https://doi.org/10.1016/S0895-4356(98)00111-5>
 - Chou, Y.-T., & Wang, W.-C. (2010). Checking dimensionality in
   item-response models with principal component analysis on standardized
   residuals. *Educational and Psychological Measurement, 70*(5),
@@ -172,6 +181,7 @@ RMdifTree(pcmdat2, covariates = covs)
 - Henninger, M., Radek, J., Debelak, R., & Strobl, C. (2025). Partial
   credit trees meet the partial gamma coefficient for quantifying DIF
   and DSF in polytomous items. *Behaviormetrika, 52*, 221–257.
+  <https://doi.org/10.1007/s41237-024-00252-3>
 - Johansson, M. (2025). Detecting item misfit in Rasch models.
   *Educational Methods & Psychometrics, 3*(18).
   <https://doi.org/10.61186/emp.2025.5>
@@ -184,18 +194,20 @@ RMdifTree(pcmdat2, covariates = covs)
 - Philipp, M., Rusch, T., Hornik, K., & Strobl, C. (2018). Measuring the
   stability of results from supervised statistical learning. *Journal of
   Computational and Graphical Statistics, 27*, 685–700.
+  <https://doi.org/10.1080/10618600.2018.1473779>
 - Rosseel, Y. (2012). lavaan: An R package for structural equation
   modeling. *Journal of Statistical Software, 48*(2), 1–36.
   <https://doi.org/10.18637/jss.v048.i02>
 - Strobl, C., Kopf, J., & Zeileis, A. (2015). Rasch trees: A new method
   for detecting DIF in the Rasch model. *Psychometrika, 80*, 289–316.
+  <https://doi.org/10.1007/s11336-013-9388-3>
 
 ## Credits
 
-As stated, this is based on my `easyRasch` package, and I am using
-Claude to “transfer” functions to this more properly formatted package.
-While it uses my earlier code, most of the code in this package is
-produced by the LLM and bug fixed by me.
+As mentioned earlier, this is based on my `easyRasch` package, and I am
+using Claude to “transfer” functions to this more properly formatted
+package. While it uses my earlier code, most of the code in this package
+is produced by the LLM and bug fixed by me.
 
 [`RMdifTree()`](https://pgmj.github.io/easyRasch2/reference/RMdifTree.md)
 adapts MIT-licensed code from Mirka Henninger and Jan Radek’s
@@ -236,6 +248,8 @@ Conditional item fit statistics with simulation-based cutoffs
   Data
 - [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemICCPlot.md)
   : Conditional Item Characteristic Curves
+- [`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/reference/RMitemCatProb.md)
+  : Item Category Probability Curves
 
 ## Item Restscore
 

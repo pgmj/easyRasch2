@@ -2,6 +2,32 @@
 
 ## easyRasch2 0.8.0
 
+### New function
+
+- **[`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/reference/RMitemCatProb.md)**
+  plots model-implied category-response probability curves per item,
+  similar to
+  [`eRm::plotICC()`](https://rdrr.io/pkg/eRm/man/plotICC.html) or `mirt`
+  trace plots but with a `ggplot2` / viridis output. Each item gets its
+  own facet panel; one curve per response category is coloured from low
+  to high using a continuous viridis palette. Polytomous items are fit
+  with [`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html); dichotomous
+  items fall back to [`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html)
+  (recovering the standard two-category logistic ICC). Optional
+  descriptive `item_labels` and `category_labels` make the output
+  report-ready.
+  - Optional **`label_curves = "path"`** mode (requires the optional
+    `geomtextpath` package, in Suggests) writes each category’s label
+    *along* its own curve in the classic IRT trace-plot style.
+    Single-item only — pass the full multi-item dataset and use the
+    `item` argument to choose which item’s curves to plot. The model is
+    still fit on all items (CML threshold estimation needs the full
+    dataset); only the rendering is filtered. Each category’s label is
+    positioned at that curve’s modal theta (the peak of its bell for
+    middle categories; the relevant edge for the monotone extreme
+    categories), clamped a small margin in from the plot edges to
+    prevent clipping.
+
 ### Function renaming for consistency
 
 This release renames **22 exported functions** under a consistent

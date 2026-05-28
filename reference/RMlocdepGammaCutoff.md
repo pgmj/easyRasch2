@@ -144,8 +144,9 @@ The `iarm` package must be installed (it is in Suggests, not Imports).
 
 ## References
 
-Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.) *Rasch Models in
-Health*. Iste and Wiley (2013), pp. 133–135.
+Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.) (2013). *Rasch
+Models in Health*, pp. 133–135. ISTE \\ Wiley.
+[doi:10.1002/9781118574454](https://doi.org/10.1002/9781118574454)
 
 ## See also
 

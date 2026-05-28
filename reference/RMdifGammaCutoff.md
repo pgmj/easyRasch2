@@ -162,12 +162,13 @@ The `iarm` package must be installed (it is in Suggests, not Imports).
 
 Bjorner, J. B., Kreiner, S., Ware, J. E., Damsgaard, M. T., & Bech, P.
 (1998). Differential item functioning in the Danish translation of the
-SF-36. *Journal of Clinical Epidemiology*, 51(11), 1189–1202.
+SF-36. *Journal of Clinical Epidemiology, 51*(11), 1189–1202.
+[doi:10.1016/S0895-4356(98)00111-5](https://doi.org/10.1016/S0895-4356%2898%2900111-5)
 
-Henninger, M., Radek, J., Sengewald, M.-A., & Strobl, C. (2024). Partial
+Henninger, M., Radek, J., Debelak, R., & Strobl, C. (2025). Partial
 credit trees meet the partial gamma coefficient for quantifying DIF and
-DSF in polytomous items. OSF Preprints.
-[doi:10.31234/osf.io/47sah](https://doi.org/10.31234/osf.io/47sah)
+DSF in polytomous items. *Behaviormetrika, 52*, 221–257.
+[doi:10.1007/s41237-024-00252-3](https://doi.org/10.1007/s41237-024-00252-3)
 
 ## See also
 

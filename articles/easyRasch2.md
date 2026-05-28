@@ -46,7 +46,6 @@ U.S. federal government.
 ``` r
 
 library(easyRasch2)
-library(mirt)
 data(phq9)
 items <- phq9[, paste0("q", 1:9)]   # 9 item columns, scored 0..3
 gender <- phq9$gender               # external grouping variables
@@ -296,9 +295,9 @@ unfavourable direction. {.table}
 
 After fitting the Rasch model, the residuals should contain no further
 systematic structure. The *largest eigenvalue* of the residual
-correlation matrix can be considered the headline diagnostic; values
+correlation matrix can be considered the headline diagnostic; a value
 clearly above the simulation-based cut-off suggest a secondary
-dimension. However, values below the largest eigenvalue does not by
+dimension. However, an eigenvalue below the largest value does not by
 itself support unidimensionality.
 
 ``` r
@@ -366,6 +365,20 @@ RMlocdepQ3(items, cutoff = q3_cut)
 Dynamic cut-off: 0.037 (mean Q3 = -0.114 + 0.152). Correlations
 exceeding the cut-off may indicate local dependence. {.table}
 
+For a more powerful Q_3 test, one can use the simulated cutoffs object
+to plot the expected range of residual correlations for each item-pair
+and compare with the observed value. We’ll limit the output to the 6
+item-pairs that deviate the most.
+
+``` r
+
+RMlocdepQ3Plot(simfit = q3_cut, data = items, n_pairs = 6)
+```
+
+![plot of chunk plot_q3](figures/rasch-plot_q3-1.png)
+
+plot of chunk plot_q3
+
 A second perspective on LD is the *partial gamma* coefficient ([Kreiner
 and Christensen 2004](#ref-kreinerAnalysisLocalDependence2004); [Kreiner
 2007](#ref-kreiner_validity_2007)) between observed item pairs,
@@ -422,19 +435,16 @@ from “Not at all” to “Several days” should sit below the one from
 “Several days” to “More than half the days”, and so on.
 
 A classical method to assess item response functions is to plot
-probability of response curves for each item and response category. The
-`mirt` package has a simple way to achieve this.
+probability of response curves for each item and response category.
 
 ``` r
 
-mirt(items, model=1, itemtype='Rasch', verbose = FALSE) |>
-  plot(type="trace", as.table = TRUE,
-       theta_lim = c(-5,5)) # changes x axis limits
+RMitemCatProb(items, category_labels = item_resp)
 ```
 
-![plot of chunk mirt_ipf](figures/rasch-mirt_ipf-1.png)
+![plot of chunk ipf_plot](figures/rasch-ipf_plot-1.png)
 
-plot of chunk mirt_ipf
+plot of chunk ipf_plot
 
 [`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/reference/RMitemHierarchy.md)
 plots each item’s threshold locations on the latent scale, ordered by
@@ -550,7 +560,7 @@ RMreliability(items, draws = 200, rmu_iter = 20, parallel = FALSE,
 | Cronbach’s alpha | 0.886 | NA | NA | no bootstrap |
 | PSI | 0.847 | NA | NA | no bootstrap |
 | Empirical (WLE) | 0.872 | NA | NA | no bootstrap |
-| RMU (WLE) | 0.883 | 0.868 | 0.897 | 200 PVs, 20 RMU iterations |
+| RMU (WLE) | 0.882 | 0.867 | 0.897 | 200 PVs, 20 RMU iterations |
 
 Reliability for 9 items, n = 600. PSI excludes min/max scoring
 respondents. {.table}

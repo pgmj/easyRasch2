@@ -116,7 +116,6 @@ complete responses on all nine items. NHANES microdata are released to
 the public domain by the U.S. federal government.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/pgmj/easyRasch2" class="external-link">easyRasch2</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://philchalmers.github.io/mirt/" class="external-link">mirt</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="va">phq9</span><span class="op">)</span></span>
 <span><span class="va">items</span> <span class="op">&lt;-</span> <span class="va">phq9</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"q"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">9</span><span class="op">)</span><span class="op">]</span>   <span class="co"># 9 item columns, scored 0..3</span></span>
 <span><span class="va">gender</span> <span class="op">&lt;-</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>               <span class="co"># external grouping variables</span></span>
@@ -543,9 +542,9 @@ unfavourable direction.</caption>
 </h3>
 <p>After fitting the Rasch model, the residuals should contain no
 further systematic structure. The <em>largest eigenvalue</em> of the
-residual correlation matrix can be considered the headline diagnostic;
-values clearly above the simulation-based cut-off suggest a secondary
-dimension. However, values below the largest eigenvalue does not by
+residual correlation matrix can be considered the headline diagnostic; a
+value clearly above the simulation-based cut-off suggest a secondary
+dimension. However, an eigenvalue below the largest value does not by
 itself support unidimensionality.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pca_cut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMdimResidualPCACutoff.html">RMdimResidualPCACutoff</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -769,6 +768,18 @@ exceeding the cut-off may indicate local dependence.</caption>
 </tr>
 </tbody>
 </table>
+<p>For a more powerful <span class="math inline">Q_3</span> test, one
+can use the simulated cutoffs object to plot the expected range of
+residual correlations for each item-pair and compare with the observed
+value. We’ll limit the output to the 6 item-pairs that deviate the
+most.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMlocdepQ3plot.html">RMlocdepQ3Plot</a></span><span class="op">(</span>simfit <span class="op">=</span> <span class="va">q3_cut</span>, data <span class="op">=</span> <span class="va">items</span>, n_pairs <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="figures/rasch-plot_q3-1.png" alt="plot of chunk plot_q3" width="100%"><p class="caption">
+plot of chunk plot_q3
+</p>
+</div>
 <p>A second perspective on LD is the <em>partial gamma</em> coefficient
 <span class="citation">(<a href="#ref-kreinerAnalysisLocalDependence2004">Kreiner and Christensen
 2004</a>; <a href="#ref-kreiner_validity_2007">Kreiner 2007</a>)</span>
@@ -776,7 +787,7 @@ between observed item pairs, conditional on the rest-score. Note that
 this function evaluates both directions of LD, thus the output is two
 tables. We’ll restrict the output to the 6 item-pairs with largest LD
 deviations.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMlocdepGamma.html">RMlocdepGamma</a></span><span class="op">(</span><span class="va">items</span>, n_pairs <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Partial gamma LD analysis (n = 600 complete cases). Positive
@@ -908,15 +919,12 @@ separating adjacent response categories should be ordered: the threshold
 from “Not at all” to “Several days” should sit below the one from
 “Several days” to “More than half the days”, and so on.</p>
 <p>A classical method to assess item response functions is to plot
-probability of response curves for each item and response category. The
-<code>mirt</code> package has a simple way to achieve this.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://philchalmers.github.io/mirt/reference/mirt.html" class="external-link">mirt</a></span><span class="op">(</span><span class="va">items</span>, model<span class="op">=</span><span class="fl">1</span>, itemtype<span class="op">=</span><span class="st">'Rasch'</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span>type<span class="op">=</span><span class="st">"trace"</span>, as.table <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>       theta_lim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">5</span>,<span class="fl">5</span><span class="op">)</span><span class="op">)</span> <span class="co"># changes x axis limits</span></span></code></pre></div>
+probability of response curves for each item and response category.</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemCatProb.html">RMitemCatProb</a></span><span class="op">(</span><span class="va">items</span>, category_labels <span class="op">=</span> <span class="va">item_resp</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-mirt_ipf-1.png" alt="plot of chunk mirt_ipf" width="100%"><p class="caption">
-plot of chunk mirt_ipf
+<img src="figures/rasch-ipf_plot-1.png" alt="plot of chunk ipf_plot" width="100%"><p class="caption">
+plot of chunk ipf_plot
 </p>
 </div>
 <p><code><a href="../reference/RMitemHierarchy.html">RMitemHierarchy()</a></code> plots each item’s threshold locations
@@ -924,7 +932,7 @@ on the latent scale, ordered by overall item difficulty. Disordered
 thresholds appear as overlapping or reversed segments and are a clear
 signal that the response categories are not being used in the intended
 order.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemHierarchy.html">RMitemHierarchy</a></span><span class="op">(</span><span class="va">items</span>, item_labels <span class="op">=</span> <span class="va">item_desc</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="figures/rasch-threshold-hierarchy-1.png" alt="Item-hierarchy" width="100%"><p class="caption">
@@ -944,14 +952,14 @@ and compares item locations. The partial gamma approach <span class="citation">(
 external variable <em>conditional on the rest-score</em>. Both are run
 on the <em>gender</em> variable here (after dropping respondents with
 missing gender):</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">keep</span>    <span class="op">&lt;-</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">gender</span><span class="op">)</span></span>
 <span><span class="va">items_g</span> <span class="op">&lt;-</span> <span class="va">items</span><span class="op">[</span><span class="va">keep</span>, <span class="op">]</span></span>
 <span><span class="va">gender_g</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/droplevels.html" class="external-link">droplevels</a></span><span class="op">(</span><span class="va">gender</span><span class="op">[</span><span class="va">keep</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="andersen-lr-test-erm">Andersen LR-test (eRm)<a class="anchor" aria-label="anchor" href="#andersen-lr-test-erm"></a>
 </h3>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdifLR.html">RMdifLR</a></span><span class="op">(</span><span class="va">items_g</span>, dif_var <span class="op">=</span> <span class="va">gender_g</span>, level <span class="op">=</span> <span class="st">"threshold"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="figures/rasch-dif-lr-1.png" alt="Andersen LR-test DIF locations by gender" width="100%"><p class="caption">
@@ -964,7 +972,7 @@ group with the corresponding confidence band.</p>
 <div class="section level3">
 <h3 id="partial-gamma-dif">Partial-gamma DIF<a class="anchor" aria-label="anchor" href="#partial-gamma-dif"></a>
 </h3>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdifGamma.html">RMdifGamma</a></span><span class="op">(</span><span class="va">items_g</span>, dif_var <span class="op">=</span> <span class="va">gender_g</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Partial gamma DIF analysis (n = 569 complete cases). Positive
@@ -1083,7 +1091,7 @@ covariates and interactions (e.g. age × gender), see
 <p>A targeting plot summarises how well the item-threshold distribution
 matches the distribution of person locations on the latent scale — a
 Wright-map style display.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMtargeting.html">RMtargeting</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="figures/rasch-targeting-1.png" alt="Person-item targeting" width="100%"><p class="caption">
@@ -1101,7 +1109,7 @@ plausible values; Cronbach’s alpha; and Empirical reliability (using
 <code><a href="https://philchalmers.github.io/mirt/reference/empirical_rxx.html" class="external-link">mirt::empirical_rxx()</a></code>. PSI, alpha and empirical can use
 bootstrap for confidence intervals. All reliability metrics range from 0
 to 1, with higher values indicating better separation/precision.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMreliability.html">RMreliability</a></span><span class="op">(</span><span class="va">items</span>, draws <span class="op">=</span> <span class="fl">200</span>, rmu_iter <span class="op">=</span> <span class="fl">20</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>              seed <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
@@ -1145,8 +1153,8 @@ respondents.</caption>
 </tr>
 <tr class="even">
 <td align="left">RMU (WLE)</td>
-<td align="right">0.883</td>
-<td align="right">0.868</td>
+<td align="right">0.882</td>
+<td align="right">0.867</td>
 <td align="right">0.897</td>
 <td align="left">200 PVs, 20 RMU iterations</td>
 </tr>
@@ -1155,7 +1163,7 @@ respondents.</caption>
 <p>For converting ordinal sum-scores to interval-scaled person-location
 estimates with associated standard errors, use
 <code><a href="../reference/RMscoreSE.html">RMscoreSE()</a></code>.</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMscoreSE.html">RMscoreSE</a></span><span class="op">(</span><span class="va">items</span>, output <span class="op">=</span> <span class="st">"figure"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Error in `match.arg()`:</span></span>
 <span><span class="co">#&gt; ! 'arg' should be one of "kable", "dataframe", "ggplot"</span></span>

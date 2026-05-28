@@ -217,6 +217,7 @@ Psychological Measurement, 31*(1), 20-30.
 
 Besag, J., & Clifford, P. (1991). Sequential Monte Carlo p-values.
 *Biometrika, 78*(2), 301-304.
+[doi:10.1093/biomet/78.2.301](https://doi.org/10.1093/biomet/78.2.301)
 
 ## See also
 
