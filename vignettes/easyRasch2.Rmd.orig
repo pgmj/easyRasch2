@@ -23,6 +23,41 @@ knitr::opts_chunk$set(
   warning   = FALSE
 )
 set.seed(20260521)
+
+# Auto-numbered, journal-style figure captions: every chunk with a
+# fig.cap = "..." gets transformed at knit time to
+# **Figure N.** *original caption text*
+# without needing any per-chunk changes. The `local()` block keeps the
+# counter scoped to this knit run and the double-wrap guard makes the
+# hook idempotent across repeated knits.
+local({
+  fig_n <- 0L
+  knitr::opts_hooks$set(fig.cap = function(options) {
+    cap <- options$fig.cap
+    if (!is.null(cap) && nzchar(cap) && !grepl("^\\*\\*Figure ", cap)) {
+      fig_n <<- fig_n + 1L
+      options$fig.cap <- sprintf("**Figure %d.** *%s*", fig_n, cap)
+    }
+    options
+  })
+})
+```
+
+```{=html}
+<style>
+/* Journal-style figure captions: subtle left rule + muted colour */
+.figure p.caption,
+div.figure > p.caption,
+figure > figcaption {
+  font-size: 0.95em;
+  padding-left: 0.75em;
+  border-left: 3px solid #ccd;
+  color: #555;
+  margin-top: 0.5em;
+  margin-bottom: 1.25em;
+  line-height: 1.4;
+}
+</style>
 ```
 
 ## Overview

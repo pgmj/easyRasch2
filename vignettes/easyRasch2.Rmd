@@ -11,6 +11,23 @@ vignette: >
 
 
 
+```{=html}
+<style>
+/* Journal-style figure captions: subtle left rule + muted colour */
+.figure p.caption,
+div.figure > p.caption,
+figure > figcaption {
+  font-size: 0.95em;
+  padding-left: 0.75em;
+  border-left: 3px solid #ccd;
+  color: #555;
+  margin-top: 0.5em;
+  margin-bottom: 1.25em;
+  line-height: 1.4;
+}
+</style>
+```
+
 ## Overview
 
 This vignette walks through a worked Rasch analysis of the
@@ -116,8 +133,8 @@ RMplotBar(items, ncol = 2)
 ```
 
 <div class="figure">
-<img src="figures/rasch-bar-plot-1.png" alt="Faceted bar chart of response distributions" width="100%" />
-<p class="caption">Faceted bar chart of response distributions</p>
+<img src="figures/rasch-bar-plot-1.png" alt="**Figure 1.** *Faceted bar chart of response distributions*" width="100%" />
+<p class="caption">**Figure 1.** *Faceted bar chart of response distributions*</p>
 </div>
 
 
@@ -126,8 +143,8 @@ RMplotTile(items, category_labels = item_resp)
 ```
 
 <div class="figure">
-<img src="figures/rasch-tile-plot-1.png" alt="Response distribution tile plot" width="100%" />
-<p class="caption">Response distribution tile plot</p>
+<img src="figures/rasch-tile-plot-1.png" alt="**Figure 2.** *Response distribution tile plot*" width="100%" />
+<p class="caption">**Figure 2.** *Response distribution tile plot*</p>
 </div>
 
 
@@ -136,8 +153,8 @@ RMplotStackedbar(items, show_percent = TRUE)
 ```
 
 <div class="figure">
-<img src="figures/rasch-stackedbar-plot-1.png" alt="Stacked-bar response distribution" width="100%" />
-<p class="caption">Stacked-bar response distribution</p>
+<img src="figures/rasch-stackedbar-plot-1.png" alt="**Figure 3.** *Stacked-bar response distribution*" width="100%" />
+<p class="caption">**Figure 3.** *Stacked-bar response distribution*</p>
 </div>
 
 
@@ -212,8 +229,8 @@ RMitemICCPlot(items, class_intervals = 5)
 ```
 
 <div class="figure">
-<img src="figures/rasch-cicc-plot-1.png" alt="Conditional ICCs with five class intervals" width="100%" />
-<p class="caption">Conditional ICCs with five class intervals</p>
+<img src="figures/rasch-cicc-plot-1.png" alt="**Figure 4.** *Conditional ICCs with five class intervals*" width="100%" />
+<p class="caption">**Figure 4.** *Conditional ICCs with five class intervals*</p>
 </div>
 
 ### Item-restscore
@@ -319,8 +336,8 @@ RMdimResidualPCA(items, output = "loadings")
 ```
 
 <div class="figure">
-<img src="figures/rasch-pca-plot-1.png" alt="Standardised loadings on the first residual contrast" width="100%" />
-<p class="caption">Standardised loadings on the first residual contrast</p>
+<img src="figures/rasch-pca-plot-1.png" alt="**Figure 5.** *Standardised loadings on the first residual contrast*" width="100%" />
+<p class="caption">**Figure 5.** *Standardised loadings on the first residual contrast*</p>
 </div>
 
 
@@ -437,8 +454,8 @@ RMitemHierarchy(items, item_labels = item_desc)
 ```
 
 <div class="figure">
-<img src="figures/rasch-threshold-hierarchy-1.png" alt="Item-hierarchy" width="100%" />
-<p class="caption">Item-hierarchy</p>
+<img src="figures/rasch-threshold-hierarchy-1.png" alt="**Figure 6.** *Item-hierarchy*" width="100%" />
+<p class="caption">**Figure 6.** *Item-hierarchy*</p>
 </div>
 
 ## 4. Invariance / no DIF
@@ -467,8 +484,8 @@ RMdifLR(items_g, dif_var = gender_g, level = "threshold")
 ```
 
 <div class="figure">
-<img src="figures/rasch-dif-lr-1.png" alt="Andersen LR-test DIF locations by gender" width="100%" />
-<p class="caption">Andersen LR-test DIF locations by gender</p>
+<img src="figures/rasch-dif-lr-1.png" alt="**Figure 7.** *Andersen LR-test DIF locations by gender*" width="100%" />
+<p class="caption">**Figure 7.** *Andersen LR-test DIF locations by gender*</p>
 </div>
 
 The plot shows the item threshold locations estimated in each gender group with
@@ -515,8 +532,8 @@ RMtargeting(items)
 ```
 
 <div class="figure">
-<img src="figures/rasch-targeting-1.png" alt="Person-item targeting" width="100%" />
-<p class="caption">Person-item targeting</p>
+<img src="figures/rasch-targeting-1.png" alt="**Figure 8.** *Person-item targeting*" width="100%" />
+<p class="caption">**Figure 8.** *Person-item targeting*</p>
 </div>
 
 ## Reliability
@@ -540,7 +557,7 @@ Table: Reliability for 9 items, n = 600. PSI excludes min/max scoring respondent
 |Cronbach's alpha |    0.886|               NA|               NA|no bootstrap               |
 |PSI              |    0.847|               NA|               NA|no bootstrap               |
 |Empirical (WLE)  |    0.872|               NA|               NA|no bootstrap               |
-|RMU (WLE)        |    0.882|            0.867|            0.897|200 PVs, 20 RMU iterations |
+|RMU (WLE)        |    0.882|            0.868|            0.897|200 PVs, 20 RMU iterations |
 
 
 
