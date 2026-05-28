@@ -115,6 +115,7 @@
 #' Yuan, K.-H., & Bentler, P. M. (2000). Three likelihood-based methods
 #' for mean and covariance structure analysis with nonnormal missing
 #' data. \emph{Sociological Methodology, 30}(1), 165-200.
+#' \doi{10.1111/0081-1750.00078}
 #'
 #' Rosseel, Y. (2012). lavaan: An R Package for Structural Equation
 #' Modeling. \emph{Journal of Statistical Software, 48}(2), 1-36.
@@ -556,10 +557,9 @@ RMdimCFAPlot <- function(cutoff_res, percentile = NULL) {
     ) +
     ggplot2::theme_bw(base_size = 13) +
     ggplot2::theme(
-      plot.caption = ggplot2::element_text(hjust = 0, face = "italic", size = 9),
-      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 12)),
-      axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 12))
-    )
+      plot.caption = ggplot2::element_text(hjust = 0, face = "italic", size = 9)
+    ) +
+    er2_axis_margins()
 }
 
 # ===========================================================================

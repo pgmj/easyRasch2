@@ -97,8 +97,9 @@ RMlocdepGamma(sim_data, cutoff = cutoff_res)
 }
 }
 \references{
-Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.)
-\emph{Rasch Models in Health}. Iste and Wiley (2013), pp. 133--135.
+Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.) (2013).
+\emph{Rasch Models in Health}, pp. 133--135. ISTE \& Wiley.
+\doi{10.1002/9781118574454}
 }
 \seealso{
 \code{\link{RMlocdepGammaCutoff}}, \code{\link{RMlocdepGammaPlot}}

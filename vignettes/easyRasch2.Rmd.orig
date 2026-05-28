@@ -14,9 +14,11 @@ knitr::opts_chunk$set(
   collapse  = TRUE,
   comment   = "#>",
   fig.path  = "figures/rasch-",
-  fig.width = 7,
-  fig.height = 5,
-  out.width = "100%",
+  fig.width  = 8,        # was 7
+  fig.height = 5.5,      # was 5
+  dpi        = 144,      # was ~96 — produces 2× pixel density
+  out.width  = "100%",
+  dev        = "ragg_png",
   message   = FALSE,
   warning   = FALSE
 )
@@ -62,7 +64,6 @@ U.S. federal government.
 
 ```{r libraries}
 library(easyRasch2)
-library(mirt)
 data(phq9)
 items <- phq9[, paste0("q", 1:9)]   # 9 item columns, scored 0..3
 gender <- phq9$gender               # external grouping variables
@@ -196,9 +197,8 @@ cfa_cut
 
 After fitting the Rasch model, the residuals should contain no further
 systematic structure. The *largest eigenvalue* of the residual correlation
-matrix can be considered the headline diagnostic; values clearly above the
-simulation-based cut-off suggest a secondary dimension. However, values below
-the largest eigenvalue does not by itself support unidimensionality.
+matrix can be considered the headline diagnostic; a value clearly above the
+simulation-based cut-off suggest a secondary dimension. However, an eigenvalue below the largest value does not by itself support unidimensionality.
 
 ```{r pca-cutoff, results = "asis"}
 pca_cut <- RMdimResidualPCACutoff(items, iterations = 100, parallel = FALSE,
@@ -228,6 +228,12 @@ q3_cut <- RMlocdepQ3Cutoff(items, iterations = 100, parallel = FALSE,
 RMlocdepQ3(items, cutoff = q3_cut)
 ```
 
+For a more powerful $Q_3$ test, one can use the simulated cutoffs object to plot the expected range of residual correlations for each item-pair and compare with the observed value. We'll limit the output to the 6 item-pairs that deviate the most.
+
+```{r plot_q3, results = "asis"}
+RMlocdepQ3Plot(simfit = q3_cut, data = items, n_pairs = 6)
+```
+
 A second perspective on LD is the *partial gamma* coefficient
 [@kreinerAnalysisLocalDependence2004;@kreiner_validity_2007] between observed
 item pairs, conditional on the rest-score. Note that this function evaluates both directions of LD, thus the output is two tables. We'll restrict the output to the 6 item-pairs with largest LD deviations.
@@ -250,13 +256,10 @@ threshold from "Not at all" to "Several days" should sit below the one
 from "Several days" to "More than half the days", and so on.
 
 A classical method to assess item response functions is to plot probability of
-response curves for each item and response category. The `mirt` package has a
-simple way to achieve this.
+response curves for each item and response category.
 
-```{r mirt_ipf, results = "asis"}
-mirt(items, model=1, itemtype='Rasch', verbose = FALSE) |>
-  plot(type="trace", as.table = TRUE,
-       theta_lim = c(-5,5)) # changes x axis limits
+```{r ipf_plot, results = "asis"}
+RMitemCatProb(items, category_labels = item_resp)
 ```
 
 `RMitemHierarchy()` plots each item's threshold locations on the

@@ -61,8 +61,9 @@
 #' The `iarm` package must be installed (it is in Suggests, not Imports).
 #'
 #' @references
-#' Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.)
-#' \emph{Rasch Models in Health}. Iste and Wiley (2013), pp. 133--135.
+#' Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.) (2013).
+#' \emph{Rasch Models in Health}, pp. 133--135. ISTE \& Wiley.
+#' \doi{10.1002/9781118574454}
 #'
 #' @seealso \code{\link{RMlocdepGammaCutoff}}, \code{\link{RMlocdepGammaPlot}}
 #'
@@ -433,8 +434,9 @@ knit_print.RMlocdepGamma <- function(x, ...) {
 #' The `iarm` package must be installed (it is in Suggests, not Imports).
 #'
 #' @references
-#' Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.)
-#' \emph{Rasch Models in Health}. Iste and Wiley (2013), pp. 133--135.
+#' Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.) (2013).
+#' \emph{Rasch Models in Health}, pp. 133--135. ISTE \& Wiley.
+#' \doi{10.1002/9781118574454}
 #'
 #' @seealso \code{\link[iarm]{partgam_LD}}, \code{\link{RMlocdepGamma}},
 #'   \code{\link{RMlocdepGammaPlot}}
@@ -1088,7 +1090,8 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
         guide = "none"
       ) +
       ggplot2::theme_minimal() +
-      ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm"))
+      ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
+      er2_axis_margins()
 
     return(p)
   }
@@ -1178,7 +1181,8 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
       guide = "none"
     ) +
     ggplot2::theme_minimal() +
-    ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm"))
+    ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
+    er2_axis_margins()
 
   p
 }

@@ -263,8 +263,7 @@ RMitemHierarchy <- function(data,
     ggplot2::theme(
       legend.position = "none",
       plot.caption    = ggplot2::element_text(hjust = 0, face = "italic",
-                                              size = 9),
-      axis.title.x    = ggplot2::element_text(margin = ggplot2::margin(t = 12)),
-      axis.title.y    = ggplot2::element_text(margin = ggplot2::margin(r = 12))
-    )
+                                              size = 9)
+    ) +
+    er2_axis_margins()
 }

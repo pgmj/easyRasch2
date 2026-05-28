@@ -89,9 +89,10 @@ RMdifGamma(sim_data, dif_group, cutoff = cutoff_res)
 }
 }
 \references{
-Bjorner, J., Kreiner, S., Ware, J., Damsgaard, M. and Bech, P.
-Differential item functioning in the Danish translation of the SF-36.
-\emph{Journal of Clinical Epidemiology}, 51(11), 1998, pp. 1189-1202.
+Bjorner, J. B., Kreiner, S., Ware, J. E., Damsgaard, M. T., &
+Bech, P. (1998). Differential item functioning in the Danish translation
+of the SF-36. \emph{Journal of Clinical Epidemiology, 51}(11), 1189--1202.
+\doi{10.1016/S0895-4356(98)00111-5}
 }
 \seealso{
 \code{\link{RMdifGammaCutoff}}

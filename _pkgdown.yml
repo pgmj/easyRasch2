@@ -34,6 +34,7 @@ reference:
       - RMitemInfitMI
       - RMitemInfitCutoffMI
       - RMitemICCPlot
+      - RMitemCatProb
   - title: "Item Restscore"
     desc: "Item-restscore correlation analysis"
     contents:

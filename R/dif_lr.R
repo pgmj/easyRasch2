@@ -551,9 +551,8 @@ render_lr_ggplot <- function(plot_df, lr_summary, level, groups, conf,
       ggplot2::theme(legend.position = "none",
                      plot.caption    = ggplot2::element_text(
                        hjust = 0, face = "italic"),
-                     axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 12)),
-                     axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 12)),
-                     panel.spacing = ggplot2::unit(0.7, "cm"))
+                     panel.spacing   = ggplot2::unit(0.7, "cm")) +
+      er2_axis_margins()
     return(p)
   }
 
@@ -597,9 +596,8 @@ render_lr_ggplot <- function(plot_df, lr_summary, level, groups, conf,
     ggplot2::theme(legend.position = "none",
                    plot.caption    = ggplot2::element_text(
                      hjust = 0, face = "italic"),
-                   axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 12)),
-                   axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 12)),
-                   panel.spacing = ggplot2::unit(0.7, "cm"))
+                   panel.spacing   = ggplot2::unit(0.7, "cm")) +
+    er2_axis_margins()
 
   p
 }

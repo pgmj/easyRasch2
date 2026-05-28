@@ -208,7 +208,7 @@
 #' Bjorner, J. B., Kreiner, S., Ware, J. E., Damsgaard, M. T., & Bech,
 #' P. (1998). Differential item functioning in the Danish translation
 #' of the SF-36. \emph{Journal of Clinical Epidemiology, 51}(11),
-#' 1189-1202.
+#' 1189-1202. \doi{10.1016/S0895-4356(98)00111-5}
 #'
 #' Henninger, M., Debelak, R., & Strobl, C. (2023). A new stopping
 #' criterion for Rasch trees based on the Mantel-Haenszel effect size
@@ -218,11 +218,12 @@
 #' Henninger, M., Radek, J., Debelak, R., & Strobl, C. (2025). Partial
 #' credit trees meet the partial gamma coefficient for quantifying DIF
 #' and DSF in polytomous items. \emph{Behaviormetrika, 52}, 221-257.
+#' \doi{10.1007/s41237-024-00252-3}
 #'
 #' Philipp, M., Rusch, T., Hornik, K., & Strobl, C. (2018). Measuring
 #' the stability of results from supervised statistical learning.
 #' \emph{Journal of Computational and Graphical Statistics, 27},
-#' 685-700.
+#' 685-700. \doi{10.1080/10618600.2018.1473779}
 #'
 #' @seealso \code{\link{RMdifLR}}, \code{\link{RMdifGamma}}
 #'

@@ -265,7 +265,8 @@ RMtargeting <- function(data, robust = FALSE,
       axis.text.x  = ggplot2::element_blank(),
       axis.ticks.x = ggplot2::element_blank(),
       plot.margin  = ggplot2::margin(5, 5, 0, 5)
-    )
+    ) +
+    er2_axis_margins()
 
   # ============================================================================
   # MIDDLE PANEL: Inverted threshold histogram
@@ -309,7 +310,8 @@ RMtargeting <- function(data, robust = FALSE,
       axis.ticks.x = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank(),
       plot.margin  = ggplot2::margin(0, 5, 0, 5)
-    )
+    ) +
+    er2_axis_margins()
 
   # ============================================================================
   # BOTTOM PANEL: Item threshold dot-whisker plot
@@ -361,7 +363,8 @@ RMtargeting <- function(data, robust = FALSE,
       ggplot2::theme(
         plot.caption = ggplot2::element_text(hjust = 0, face = "italic"),
         plot.margin  = ggplot2::margin(0, 5, 5, 5)
-      )
+      ) +
+      er2_axis_margins()
   } else {
     p3 <- ggplot2::ggplot(
       item_thresholds,
@@ -400,7 +403,8 @@ RMtargeting <- function(data, robust = FALSE,
         legend.position = "bottom",
         plot.caption    = ggplot2::element_text(hjust = 0, face = "italic"),
         plot.margin     = ggplot2::margin(0, 5, 5, 5)
-      )
+      ) +
+      er2_axis_margins()
   }
 
   # --- Return -----------------------------------------------------------------

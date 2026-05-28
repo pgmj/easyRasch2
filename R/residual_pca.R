@@ -287,9 +287,8 @@ RMdimResidualPCA <- function(data,
         caption = partition_text
       ) +
       ggplot2::theme_bw(base_size = 13) +
-      ggplot2::theme(plot.caption = ggplot2::element_text(size = 10),
-                     axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 12)),
-                     axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 12)))
+      ggplot2::theme(plot.caption = ggplot2::element_text(size = 10)) +
+      er2_axis_margins()
 
     return(p)
   }

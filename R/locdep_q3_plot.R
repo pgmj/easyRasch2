@@ -292,7 +292,8 @@ RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
         guide      = "none"
       ) +
       ggplot2::theme_minimal() +
-      ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm"))
+      ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
+      er2_axis_margins()
 
     return(p)
   }
@@ -381,7 +382,8 @@ RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
       guide      = "none"
     ) +
     ggplot2::theme_minimal() +
-    ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm"))
+    ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
+    er2_axis_margins()
 
   p
 }

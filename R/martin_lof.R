@@ -118,7 +118,7 @@
 #' \doi{10.1177/0146621605286204}
 #'
 #' Besag, J., & Clifford, P. (1991). Sequential Monte Carlo p-values.
-#' *Biometrika, 78*(2), 301-304.
+#' *Biometrika, 78*(2), 301-304. \doi{10.1093/biomet/78.2.301}
 #'
 #' @seealso \code{\link{RMdimResidualPCA}}, \code{\link{RMdimResidualPCACutoff}}
 #'
@@ -1110,7 +1110,8 @@ RMdimMartinLofResiduals <- function(data,
     ggplot2::theme(
       panel.grid   = ggplot2::element_blank(),
       plot.caption = ggplot2::element_text(size = 9, hjust = 0)
-    )
+    ) +
+    er2_axis_margins()
 
   if (D == 2L) {
     return(

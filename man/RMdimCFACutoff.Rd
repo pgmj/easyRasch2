@@ -159,6 +159,7 @@ RMdimCFAPlot(result)
 Yuan, K.-H., & Bentler, P. M. (2000). Three likelihood-based methods
 for mean and covariance structure analysis with nonnormal missing
 data. \emph{Sociological Methodology, 30}(1), 165-200.
+\doi{10.1111/0081-1750.00078}
 
 Rosseel, Y. (2012). lavaan: An R Package for Structural Equation
 Modeling. \emph{Journal of Statistical Software, 48}(2), 1-36.

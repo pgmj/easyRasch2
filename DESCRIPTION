@@ -50,6 +50,7 @@ Imports:
 Suggests:
     difR,
     dplyr,
+    geomtextpath,
     ggdist,
     iarm,
     mirai,

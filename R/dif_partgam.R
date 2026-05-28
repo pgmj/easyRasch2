@@ -50,9 +50,10 @@
 #' The `iarm` package must be installed (it is in Suggests, not Imports).
 #'
 #' @references
-#' Bjorner, J., Kreiner, S., Ware, J., Damsgaard, M. and Bech, P.
-#' Differential item functioning in the Danish translation of the SF-36.
-#' *Journal of Clinical Epidemiology*, 51(11), 1998, pp. 1189-1202.
+#' Bjorner, J. B., Kreiner, S., Ware, J. E., Damsgaard, M. T., &
+#' Bech, P. (1998). Differential item functioning in the Danish translation
+#' of the SF-36. *Journal of Clinical Epidemiology, 51*(11), 1189--1202.
+#' \doi{10.1016/S0895-4356(98)00111-5}
 #'
 #' @seealso \code{\link{RMdifGammaCutoff}}
 #'
@@ -359,12 +360,13 @@ RMdifGamma <- function(data, dif_var, cutoff = NULL, output = "kable") {
 #' @references
 #' Bjorner, J. B., Kreiner, S., Ware, J. E., Damsgaard, M. T., &
 #' Bech, P. (1998). Differential item functioning in the Danish translation
-#' of the SF-36. *Journal of Clinical Epidemiology*, 51(11), 1189--1202.
+#' of the SF-36. *Journal of Clinical Epidemiology, 51*(11), 1189--1202.
+#' \doi{10.1016/S0895-4356(98)00111-5}
 #'
-#' Henninger, M., Radek, J., Sengewald, M.-A., & Strobl, C. (2024).
+#' Henninger, M., Radek, J., Debelak, R., & Strobl, C. (2025).
 #' Partial credit trees meet the partial gamma coefficient for quantifying
-#' DIF and DSF in polytomous items. OSF Preprints.
-#' \doi{10.31234/osf.io/47sah}
+#' DIF and DSF in polytomous items. *Behaviormetrika, 52*, 221--257.
+#' \doi{10.1007/s41237-024-00252-3}
 #'
 #' @seealso \code{\link[iarm]{partgam_DIF}}
 #'
@@ -926,7 +928,8 @@ RMdifGammaPlot <- function(simfit, data, dif_var) {
         guide = "none"
       ) +
       ggplot2::theme_minimal() +
-      ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm"))
+      ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
+      er2_axis_margins()
 
     return(p)
   }
@@ -1058,7 +1061,8 @@ RMdifGammaPlot <- function(simfit, data, dif_var) {
       guide = "none"
     ) +
     ggplot2::theme_minimal() +
-    ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm"))
+    ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
+    er2_axis_margins()
 
   p
 }

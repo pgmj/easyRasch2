@@ -240,7 +240,8 @@ RMplotBar <- function(
     ggplot2::theme(
       legend.position   = "none",
       strip.text.y.left = ggplot2::element_text(angle = 0)
-    )
+    ) +
+    er2_axis_margins()
 }
 
 
@@ -502,7 +503,8 @@ RMplotStackedbar <- function(
       y     = NULL
     ) +
     ggplot2::theme_minimal() +
-    ggplot2::theme(legend.position = "right")
+    ggplot2::theme(legend.position = "right") +
+    er2_axis_margins()
 
   if (show_n || show_percent) {
     p <- p +

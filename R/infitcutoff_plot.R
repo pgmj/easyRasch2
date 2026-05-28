@@ -187,9 +187,8 @@ RMitemInfitCutoffPlot <- function(simfit, data, output = "infit") {
         minor_breaks = NULL
       ) +
       ggplot2::theme_minimal() +
-      ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm"),
-                     axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 12)),
-                     axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 12)))
+      ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
+      er2_axis_margins()
 
     return(p)
   }

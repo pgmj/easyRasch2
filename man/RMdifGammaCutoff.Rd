@@ -129,12 +129,13 @@ cutoff_res$item_cutoffs
 \references{
 Bjorner, J. B., Kreiner, S., Ware, J. E., Damsgaard, M. T., &
 Bech, P. (1998). Differential item functioning in the Danish translation
-of the SF-36. \emph{Journal of Clinical Epidemiology}, 51(11), 1189--1202.
+of the SF-36. \emph{Journal of Clinical Epidemiology, 51}(11), 1189--1202.
+\doi{10.1016/S0895-4356(98)00111-5}
 
-Henninger, M., Radek, J., Sengewald, M.-A., & Strobl, C. (2024).
+Henninger, M., Radek, J., Debelak, R., & Strobl, C. (2025).
 Partial credit trees meet the partial gamma coefficient for quantifying
-DIF and DSF in polytomous items. OSF Preprints.
-\doi{10.31234/osf.io/47sah}
+DIF and DSF in polytomous items. \emph{Behaviormetrika, 52}, 221--257.
+\doi{10.1007/s41237-024-00252-3}
 }
 \seealso{
 \code{\link[iarm]{partgam_DIF}}

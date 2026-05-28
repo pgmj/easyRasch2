@@ -178,7 +178,7 @@ Psychological Measurement, 31}(1), 20-30.
 \doi{10.1177/0146621605286204}
 
 Besag, J., & Clifford, P. (1991). Sequential Monte Carlo p-values.
-\emph{Biometrika, 78}(2), 301-304.
+\emph{Biometrika, 78}(2), 301-304. \doi{10.1093/biomet/78.2.301}
 }
 \seealso{
 \code{\link{RMdimResidualPCA}}, \code{\link{RMdimResidualPCACutoff}}

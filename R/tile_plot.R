@@ -279,12 +279,11 @@ RMplotTile <- function(
     ggplot2::labs(y = "Items") +
     ggplot2::theme_minimal() +
     ggplot2::theme(
-      axis.text.x = ggplot2::element_text(size = 8),
-      panel.grid  = ggplot2::element_blank(),
-      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 12)),
-      axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 12)),
+      axis.text.x   = ggplot2::element_text(size = 8),
+      panel.grid    = ggplot2::element_blank(),
       panel.spacing = ggplot2::unit(0.7, "cm")
-    )
+    ) +
+    er2_axis_margins()
 
   # X-axis: numeric breaks or category labels
   if (!is.null(category_labels)) {
