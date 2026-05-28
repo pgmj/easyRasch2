@@ -122,7 +122,6 @@ item_resp <- c("Not at all","Several days","More than \nhalf the days","Nearly e
 ```{r data-overview}
 str(items)
 summary(rowSums(items))
-hist(rowSums(items), col = "lightblue", main = "Histogram of ordinal sum scores")
 table(gender, useNA = "ifany")
 summary(age)
 ```
@@ -131,6 +130,10 @@ summary(age)
 
 Before fitting any model it is worth eyeballing the response
 distributions:
+
+```{r hist-plot, fig.cap = "Histogram of ordinal sum scores"}
+hist(rowSums(items), col = "lightblue", main = "")
+```
 
 ```{r bar-plot, fig.cap = "Faceted bar chart of response distributions", fig.height = 9}
 RMplotBar(items, ncol = 2)

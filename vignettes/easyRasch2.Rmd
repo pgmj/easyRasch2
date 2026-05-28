@@ -104,15 +104,6 @@ str(items)
 summary(rowSums(items))
 #>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 #>    0.00   10.00   16.00   15.41   21.00   27.00
-hist(rowSums(items), col = "lightblue", main = "Histogram of ordinal sum scores")
-```
-
-<div class="figure">
-<img src="figures/rasch-data-overview-1.png" alt="plot of chunk data-overview" width="100%" />
-<p class="caption">plot of chunk data-overview</p>
-</div>
-
-``` r
 table(gender, useNA = "ifany")
 #> gender
 #> Female   Male   <NA> 
@@ -129,12 +120,22 @@ distributions:
 
 
 ``` r
+hist(rowSums(items), col = "lightblue", main = "")
+```
+
+<div class="figure">
+<img src="figures/rasch-hist-plot-1.png" alt="**Figure 1.** *Histogram of ordinal sum scores*" width="100%" />
+<p class="caption">**Figure 1.** *Histogram of ordinal sum scores*</p>
+</div>
+
+
+``` r
 RMplotBar(items, ncol = 2)
 ```
 
 <div class="figure">
-<img src="figures/rasch-bar-plot-1.png" alt="**Figure 1.** *Faceted bar chart of response distributions*" width="100%" />
-<p class="caption">**Figure 1.** *Faceted bar chart of response distributions*</p>
+<img src="figures/rasch-bar-plot-1.png" alt="**Figure 2.** *Faceted bar chart of response distributions*" width="100%" />
+<p class="caption">**Figure 2.** *Faceted bar chart of response distributions*</p>
 </div>
 
 
@@ -143,8 +144,8 @@ RMplotTile(items, category_labels = item_resp)
 ```
 
 <div class="figure">
-<img src="figures/rasch-tile-plot-1.png" alt="**Figure 2.** *Response distribution tile plot*" width="100%" />
-<p class="caption">**Figure 2.** *Response distribution tile plot*</p>
+<img src="figures/rasch-tile-plot-1.png" alt="**Figure 3.** *Response distribution tile plot*" width="100%" />
+<p class="caption">**Figure 3.** *Response distribution tile plot*</p>
 </div>
 
 
@@ -153,8 +154,8 @@ RMplotStackedbar(items, show_percent = TRUE)
 ```
 
 <div class="figure">
-<img src="figures/rasch-stackedbar-plot-1.png" alt="**Figure 3.** *Stacked-bar response distribution*" width="100%" />
-<p class="caption">**Figure 3.** *Stacked-bar response distribution*</p>
+<img src="figures/rasch-stackedbar-plot-1.png" alt="**Figure 4.** *Stacked-bar response distribution*" width="100%" />
+<p class="caption">**Figure 4.** *Stacked-bar response distribution*</p>
 </div>
 
 
@@ -229,8 +230,8 @@ RMitemICCPlot(items, class_intervals = 5)
 ```
 
 <div class="figure">
-<img src="figures/rasch-cicc-plot-1.png" alt="**Figure 4.** *Conditional ICCs with five class intervals*" width="100%" />
-<p class="caption">**Figure 4.** *Conditional ICCs with five class intervals*</p>
+<img src="figures/rasch-cicc-plot-1.png" alt="**Figure 5.** *Conditional ICCs with five class intervals*" width="100%" />
+<p class="caption">**Figure 5.** *Conditional ICCs with five class intervals*</p>
 </div>
 
 ### Item-restscore
@@ -338,8 +339,8 @@ RMdimResidualPCA(items, output = "loadings")
 ```
 
 <div class="figure">
-<img src="figures/rasch-pca-plot-1.png" alt="**Figure 5.** *Standardised loadings on the first residual contrast*" width="100%" />
-<p class="caption">**Figure 5.** *Standardised loadings on the first residual contrast*</p>
+<img src="figures/rasch-pca-plot-1.png" alt="**Figure 6.** *Standardised loadings on the first residual contrast*" width="100%" />
+<p class="caption">**Figure 6.** *Standardised loadings on the first residual contrast*</p>
 </div>
 
 
@@ -383,8 +384,8 @@ RMlocdepQ3Plot(simfit = q3_cut, data = items, n_pairs = 6)
 ```
 
 <div class="figure">
-<img src="figures/rasch-plot_q3-1.png" alt="**Figure 6.** *Observed and expected Q3 residuals*" width="100%" />
-<p class="caption">**Figure 6.** *Observed and expected Q3 residuals*</p>
+<img src="figures/rasch-plot_q3-1.png" alt="**Figure 7.** *Observed and expected Q3 residuals*" width="100%" />
+<p class="caption">**Figure 7.** *Observed and expected Q3 residuals*</p>
 </div>
 
 A second perspective on LD is the *partial gamma* coefficient
@@ -440,8 +441,8 @@ RMitemCatProb(items, category_labels = item_resp)
 ```
 
 <div class="figure">
-<img src="figures/rasch-ipf_plot-1.png" alt="**Figure 7.** *Item Probability Function curves*" width="100%" />
-<p class="caption">**Figure 7.** *Item Probability Function curves*</p>
+<img src="figures/rasch-ipf_plot-1.png" alt="**Figure 8.** *Item Probability Function curves*" width="100%" />
+<p class="caption">**Figure 8.** *Item Probability Function curves*</p>
 </div>
 
 `RMitemHierarchy()` plots each item's threshold locations on the
@@ -456,8 +457,8 @@ RMitemHierarchy(items, item_labels = item_desc)
 ```
 
 <div class="figure">
-<img src="figures/rasch-threshold-hierarchy-1.png" alt="**Figure 8.** *Item-hierarchy*" width="100%" />
-<p class="caption">**Figure 8.** *Item-hierarchy*</p>
+<img src="figures/rasch-threshold-hierarchy-1.png" alt="**Figure 9.** *Item-hierarchy*" width="100%" />
+<p class="caption">**Figure 9.** *Item-hierarchy*</p>
 </div>
 
 ## 4. Invariance / no DIF
@@ -486,8 +487,8 @@ RMdifLR(items_g, dif_var = gender_g, level = "threshold")
 ```
 
 <div class="figure">
-<img src="figures/rasch-dif-lr-1.png" alt="**Figure 9.** *Andersen LR-test DIF locations by gender*" width="100%" />
-<p class="caption">**Figure 9.** *Andersen LR-test DIF locations by gender*</p>
+<img src="figures/rasch-dif-lr-1.png" alt="**Figure 10.** *Andersen LR-test DIF locations by gender*" width="100%" />
+<p class="caption">**Figure 10.** *Andersen LR-test DIF locations by gender*</p>
 </div>
 
 The plot shows the item threshold locations estimated in each gender group with
@@ -534,8 +535,8 @@ RMtargeting(items)
 ```
 
 <div class="figure">
-<img src="figures/rasch-targeting-1.png" alt="**Figure 10.** *Person-item targeting*" width="100%" />
-<p class="caption">**Figure 10.** *Person-item targeting*</p>
+<img src="figures/rasch-targeting-1.png" alt="**Figure 11.** *Person-item targeting*" width="100%" />
+<p class="caption">**Figure 11.** *Person-item targeting*</p>
 </div>
 
 ## Reliability
@@ -559,7 +560,7 @@ Table: Reliability for 9 items, n = 600. PSI excludes min/max scoring respondent
 |Cronbach's alpha |    0.886|               NA|               NA|no bootstrap               |
 |PSI              |    0.847|               NA|               NA|no bootstrap               |
 |Empirical (WLE)  |    0.872|               NA|               NA|no bootstrap               |
-|RMU (WLE)        |    0.882|            0.868|            0.897|200 PVs, 20 RMU iterations |
+|RMU (WLE)        |    0.882|            0.867|            0.897|200 PVs, 20 RMU iterations |
 
 
 
@@ -572,8 +573,8 @@ RMscoreSE(items, output = "ggplot")
 ```
 
 <div class="figure">
-<img src="figures/rasch-scoreSE-1.png" alt="**Figure 11.** *Sum-score to WLE conversion with 95% CIs*" width="100%" />
-<p class="caption">**Figure 11.** *Sum-score to WLE conversion with 95% CIs*</p>
+<img src="figures/rasch-scoreSE-1.png" alt="**Figure 12.** *Sum-score to WLE conversion with 95% CIs*" width="100%" />
+<p class="caption">**Figure 12.** *Sum-score to WLE conversion with 95% CIs*</p>
 </div>
 
 ``` r
