@@ -510,13 +510,13 @@ render_lr_ggplot <- function(plot_df, lr_summary, level, groups, conf,
   group_only$DIFgroup <- droplevels(group_only$DIFgroup)
   diamond_x <- (length(groups) + 1) / 2 + 0.15
 
-  caption <- paste0(
+  caption <- er2_caption(paste0(
     "Andersen LR chi^2 = ", round(lr_summary$LR, 3),
     ", df = ", lr_summary$df,
     ", p = ", format.pval(lr_summary$p_value, digits = 3, eps = 1e-4),
     ". Error bars: ", round(conf * 100), "% CI. ",
     "Black diamond = whole-sample location."
-  )
+  ))
 
   if (level == "item") {
     p <- ggplot2::ggplot(
@@ -549,10 +549,9 @@ render_lr_ggplot <- function(plot_df, lr_summary, level, groups, conf,
       ) +
       ggplot2::theme_bw() +
       ggplot2::theme(legend.position = "none",
-                     plot.caption    = ggplot2::element_text(
-                       hjust = 0, face = "italic"),
                      panel.spacing   = ggplot2::unit(0.7, "cm")) +
-      er2_axis_margins()
+      er2_axis_margins() +
+      er2_plot_caption()
     return(p)
   }
 
@@ -594,10 +593,9 @@ render_lr_ggplot <- function(plot_df, lr_summary, level, groups, conf,
     ) +
     ggplot2::theme_bw() +
     ggplot2::theme(legend.position = "none",
-                   plot.caption    = ggplot2::element_text(
-                     hjust = 0, face = "italic"),
                    panel.spacing   = ggplot2::unit(0.7, "cm")) +
-    er2_axis_margins()
+    er2_axis_margins() +
+    er2_plot_caption()
 
   p
 }

@@ -297,6 +297,8 @@ Table: Partial Credit Model posterior-predictive CFA fit-index check. Observed C
 
 
 
+Results can also be plotted using `RMdimCFAPlot(cfa_cut)`.
+
 ### Residual PCA
 
 After fitting the Rasch model, the residuals should contain no further
@@ -381,8 +383,8 @@ RMlocdepQ3Plot(simfit = q3_cut, data = items, n_pairs = 6)
 ```
 
 <div class="figure">
-<img src="figures/rasch-plot_q3-1.png" alt="plot of chunk plot_q3" width="100%" />
-<p class="caption">plot of chunk plot_q3</p>
+<img src="figures/rasch-plot_q3-1.png" alt="**Figure 6.** *Observed and expected Q3 residuals*" width="100%" />
+<p class="caption">**Figure 6.** *Observed and expected Q3 residuals*</p>
 </div>
 
 A second perspective on LD is the *partial gamma* coefficient
@@ -438,8 +440,8 @@ RMitemCatProb(items, category_labels = item_resp)
 ```
 
 <div class="figure">
-<img src="figures/rasch-ipf_plot-1.png" alt="plot of chunk ipf_plot" width="100%" />
-<p class="caption">plot of chunk ipf_plot</p>
+<img src="figures/rasch-ipf_plot-1.png" alt="**Figure 7.** *Item Probability Function curves*" width="100%" />
+<p class="caption">**Figure 7.** *Item Probability Function curves*</p>
 </div>
 
 `RMitemHierarchy()` plots each item's threshold locations on the
@@ -454,8 +456,8 @@ RMitemHierarchy(items, item_labels = item_desc)
 ```
 
 <div class="figure">
-<img src="figures/rasch-threshold-hierarchy-1.png" alt="**Figure 6.** *Item-hierarchy*" width="100%" />
-<p class="caption">**Figure 6.** *Item-hierarchy*</p>
+<img src="figures/rasch-threshold-hierarchy-1.png" alt="**Figure 8.** *Item-hierarchy*" width="100%" />
+<p class="caption">**Figure 8.** *Item-hierarchy*</p>
 </div>
 
 ## 4. Invariance / no DIF
@@ -484,8 +486,8 @@ RMdifLR(items_g, dif_var = gender_g, level = "threshold")
 ```
 
 <div class="figure">
-<img src="figures/rasch-dif-lr-1.png" alt="**Figure 7.** *Andersen LR-test DIF locations by gender*" width="100%" />
-<p class="caption">**Figure 7.** *Andersen LR-test DIF locations by gender*</p>
+<img src="figures/rasch-dif-lr-1.png" alt="**Figure 9.** *Andersen LR-test DIF locations by gender*" width="100%" />
+<p class="caption">**Figure 9.** *Andersen LR-test DIF locations by gender*</p>
 </div>
 
 The plot shows the item threshold locations estimated in each gender group with
@@ -532,8 +534,8 @@ RMtargeting(items)
 ```
 
 <div class="figure">
-<img src="figures/rasch-targeting-1.png" alt="**Figure 8.** *Person-item targeting*" width="100%" />
-<p class="caption">**Figure 8.** *Person-item targeting*</p>
+<img src="figures/rasch-targeting-1.png" alt="**Figure 10.** *Person-item targeting*" width="100%" />
+<p class="caption">**Figure 10.** *Person-item targeting*</p>
 </div>
 
 ## Reliability
@@ -566,9 +568,15 @@ estimates with associated standard errors, use `RMscoreSE()`.
 
 
 ``` r
-RMscoreSE(items, output = "figure")
-#> Error in `match.arg()`:
-#> ! 'arg' should be one of "kable", "dataframe", "ggplot"
+RMscoreSE(items, output = "ggplot")
+```
+
+<div class="figure">
+<img src="figures/rasch-scoreSE-1.png" alt="**Figure 11.** *Sum-score to WLE conversion with 95% CIs*" width="100%" />
+<p class="caption">**Figure 11.** *Sum-score to WLE conversion with 95% CIs*</p>
+</div>
+
+``` r
 RMscoreSE(items)
 ```
 
@@ -618,6 +626,7 @@ Table: Person locations via Warm's WLE (CML item parameters from eRm).
   reference page including a worked example.
 * The simulation-based cut-offs used above (`RM*cutoff()`) can be
   parallelised on multiple CPU cores via the `mirai` package; see the relevant help pages.
+  * For a progress bar on time-consuming simulations, add `verbose = TRUE` to the function call. This should not be used when rendering Quarto/Rmd files.
 
 
 ## References

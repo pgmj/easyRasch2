@@ -228,6 +228,8 @@ cfa_cut <- RMdimCFACutoff(items, iterations = 100, parallel = FALSE,
 cfa_cut
 ```
 
+Results can also be plotted using `RMdimCFAPlot(cfa_cut)`.
+
 ### Residual PCA
 
 After fitting the Rasch model, the residuals should contain no further
@@ -265,7 +267,7 @@ RMlocdepQ3(items, cutoff = q3_cut)
 
 For a more powerful $Q_3$ test, one can use the simulated cutoffs object to plot the expected range of residual correlations for each item-pair and compare with the observed value. We'll limit the output to the 6 item-pairs that deviate the most.
 
-```{r plot_q3, results = "asis"}
+```{r plot_q3, fig.cap = "Observed and expected Q3 residuals"}
 RMlocdepQ3Plot(simfit = q3_cut, data = items, n_pairs = 6)
 ```
 
@@ -293,7 +295,7 @@ from "Several days" to "More than half the days", and so on.
 A classical method to assess item response functions is to plot probability of
 response curves for each item and response category.
 
-```{r ipf_plot, results = "asis"}
+```{r ipf_plot, fig.cap = "Item Probability Function curves"}
 RMitemCatProb(items, category_labels = item_resp)
 ```
 
@@ -368,7 +370,7 @@ For converting ordinal sum-scores to interval-scaled person-location
 estimates with associated standard errors, use `RMscoreSE()`.
 
 ```{r scoreSE, fig.cap = "Sum-score to WLE conversion with 95% CIs", fig.height = 5}
-RMscoreSE(items, output = "figure")
+RMscoreSE(items, output = "ggplot")
 RMscoreSE(items)
 ```
 
@@ -381,6 +383,7 @@ RMscoreSE(items)
   reference page including a worked example.
 * The simulation-based cut-offs used above (`RM*cutoff()`) can be
   parallelised on multiple CPU cores via the `mirai` package; see the relevant help pages.
+  * For a progress bar on time-consuming simulations, add `verbose = TRUE` to the function call. This should not be used when rendering Quarto/Rmd files.
 
 
 ## References

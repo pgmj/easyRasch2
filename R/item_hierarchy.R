@@ -197,12 +197,12 @@ RMitemHierarchy <- function(data,
     "Horizontal error bars indicate +/-%.3f x SE around each threshold.",
     sem_multiplier
   )
-  caption_text <- paste(
+  caption_text <- er2_caption(paste(
     if (show_numbers) paste0(caption_base, " and black text.")
     else              paste0(caption_base, "."),
     caption_thr, caption_ci,
     sep = "\n"
-  )
+  ))
 
   p <- ggplot2::ggplot(long_df,
                        ggplot2::aes(x = .data$Item,
@@ -261,9 +261,8 @@ RMitemHierarchy <- function(data,
                   caption = caption_text) +
     ggplot2::theme_bw(base_size = 13) +
     ggplot2::theme(
-      legend.position = "none",
-      plot.caption    = ggplot2::element_text(hjust = 0, face = "italic",
-                                              size = 9)
+      legend.position = "none"
     ) +
-    er2_axis_margins()
+    er2_axis_margins() +
+    er2_plot_caption()
 }

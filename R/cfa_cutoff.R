@@ -518,7 +518,7 @@ RMdimCFAPlot <- function(cutoff_res, percentile = NULL) {
   obs_df$Color <- ifelse(obs_df$Flagged, "red", "grey30")
 
   cfi_pct_lbl <- 100 - percentile
-  caption <- paste0(
+  caption <- er2_caption(paste0(
     "Histograms: ", cutoff_res$actual_iterations,
     " parametric-bootstrap datasets simulated under ",
     if (cutoff_res$is_polytomous) "PCM" else "RM",
@@ -529,7 +529,7 @@ RMdimCFAPlot <- function(cutoff_res, percentile = NULL) {
     "th percentile in the unfavourable direction).\n",
     "Dashed line: cutoff (CFI: ", cfi_pct_lbl,
     "th pct; RMSEA / SRMR: ", percentile, "th pct)."
-  )
+  ))
 
   #caption <- paste(strwrap(caption, width = 90), collapse = "\n")
 
@@ -556,10 +556,8 @@ RMdimCFAPlot <- function(cutoff_res, percentile = NULL) {
       caption = caption
     ) +
     ggplot2::theme_bw(base_size = 13) +
-    ggplot2::theme(
-      plot.caption = ggplot2::element_text(hjust = 0, face = "italic", size = 9)
-    ) +
-    er2_axis_margins()
+    er2_axis_margins() +
+    er2_plot_caption()
 }
 
 # ===========================================================================

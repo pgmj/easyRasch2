@@ -284,11 +284,11 @@ RMdimResidualPCA <- function(data,
       ggplot2::labs(
         x       = "Loading on first residual contrast (PC1)",
         y       = "Item location (logit scale)",
-        caption = partition_text
+        caption = er2_caption(partition_text)
       ) +
       ggplot2::theme_bw(base_size = 13) +
-      ggplot2::theme(plot.caption = ggplot2::element_text(size = 10)) +
-      er2_axis_margins()
+      er2_axis_margins() +
+      er2_plot_caption()
 
     return(p)
   }

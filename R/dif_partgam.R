@@ -917,10 +917,10 @@ RMdifGammaPlot <- function(simfit, data, dif_var) {
       ggplot2::labs(
         x = "Partial gamma",
         y = "Item",
-        caption = paste0(
-          "Note: Results from ", actual_iterations,
+        caption = er2_caption(paste0(
+          "Results from ", actual_iterations,
           " simulated datasets with ", sample_n, " respondents."
-        )
+        ))
       ) +
       ggplot2::scale_color_manual(
         values = scales::brewer_pal()(4)[-1],
@@ -929,7 +929,8 @@ RMdifGammaPlot <- function(simfit, data, dif_var) {
       ) +
       ggplot2::theme_minimal() +
       ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
-      er2_axis_margins()
+      er2_axis_margins() +
+      er2_plot_caption()
 
     return(p)
   }
@@ -986,12 +987,12 @@ RMdifGammaPlot <- function(simfit, data, dif_var) {
 
   lo_hi$Item_f <- factor(lo_hi$Item, levels = item_levels)
 
-  caption_text <- paste0(
-    "Note: Results from ", actual_iterations,
+  caption_text <- er2_caption(paste0(
+    "Results from ", actual_iterations,
     " simulated datasets with ", sample_n, " respondents.\n",
     "Orange diamonds indicate observed partial gamma DIF. ",
     "Black dots indicate median gamma from simulations."
-  )
+  ))
 
   p <- ggplot2::ggplot(
     gamma_sim,
@@ -1062,7 +1063,8 @@ RMdifGammaPlot <- function(simfit, data, dif_var) {
     ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
-    er2_axis_margins()
+    er2_axis_margins() +
+    er2_plot_caption()
 
   p
 }

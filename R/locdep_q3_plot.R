@@ -280,11 +280,11 @@ RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
       ggplot2::labs(
         x       = "Q3 residual correlation",
         y       = "Item pair",
-        caption = paste0(
-          "Note: Results from ", actual_iterations,
+        caption = er2_caption(paste0(
+          "Results from ", actual_iterations,
           " simulated datasets with ", sample_n,
           " respondents (no true local dependence)."
-        )
+        ))
       ) +
       ggplot2::scale_color_manual(
         values     = scales::brewer_pal()(3),
@@ -293,7 +293,8 @@ RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
       ) +
       ggplot2::theme_minimal() +
       ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
-      er2_axis_margins()
+      er2_axis_margins() +
+      er2_plot_caption()
 
     return(p)
   }
@@ -310,12 +311,12 @@ RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
 
   lo_hi$Pair_f <- factor(lo_hi$Pair, levels = pair_levels)
 
-  caption_text <- paste0(
-    "Note: Results from ", actual_iterations,
+  caption_text <- er2_caption(paste0(
+    "Results from ", actual_iterations,
     " simulated datasets with ", sample_n, " respondents.\n",
     "Orange diamonds indicate observed Q3 residual correlation. ",
     "Black dots indicate median Q3 from simulations."
-  )
+  ))
 
   p <- ggplot2::ggplot(
     Q3_sim,
@@ -383,7 +384,8 @@ RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
-    er2_axis_margins()
+    er2_axis_margins() +
+    er2_plot_caption()
 
   p
 }

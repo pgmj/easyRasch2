@@ -52,6 +52,7 @@ Suggests:
     dplyr,
     geomtextpath,
     ggdist,
+    ggtext,
     iarm,
     mirai,
     ggplot2 (>= 3.4.0),

@@ -62,7 +62,7 @@
 #'
 #' @references
 #' Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.) (2013).
-#' \emph{Rasch Models in Health}, pp. 133--135. ISTE \& Wiley.
+#' \emph{Rasch Models in Health}, pp. 133--135. ISTE & Wiley.
 #' \doi{10.1002/9781118574454}
 #'
 #' @seealso \code{\link{RMlocdepGammaCutoff}}, \code{\link{RMlocdepGammaPlot}}
@@ -435,7 +435,7 @@ knit_print.RMlocdepGamma <- function(x, ...) {
 #'
 #' @references
 #' Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.) (2013).
-#' \emph{Rasch Models in Health}, pp. 133--135. ISTE \& Wiley.
+#' \emph{Rasch Models in Health}, pp. 133--135. ISTE & Wiley.
 #' \doi{10.1002/9781118574454}
 #'
 #' @seealso \code{\link[iarm]{partgam_LD}}, \code{\link{RMlocdepGamma}},
@@ -1078,11 +1078,11 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
       ggplot2::labs(
         x = "Partial gamma",
         y = "Item pair",
-        caption = paste0(
-          "Note: Results from ", actual_iterations,
+        caption = er2_caption(paste0(
+          "Results from ", actual_iterations,
           " simulated datasets with ", sample_n,
           " respondents (no true local dependence)."
-        )
+        ))
       ) +
       ggplot2::scale_color_manual(
         values = scales::brewer_pal()(3),
@@ -1091,7 +1091,8 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
       ) +
       ggplot2::theme_minimal() +
       ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
-      er2_axis_margins()
+      er2_axis_margins() +
+      er2_plot_caption()
 
     return(p)
   }
@@ -1112,12 +1113,12 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
 
   lo_hi$Pair_f <- factor(lo_hi$Pair, levels = pair_levels)
 
-  caption_text <- paste0(
-    "Note: Results from ", actual_iterations,
+  caption_text <- er2_caption(paste0(
+    "Results from ", actual_iterations,
     " simulated datasets with ", sample_n, " respondents.\n",
     "Orange diamonds indicate observed partial gamma LD. ",
     "Black dots indicate median gamma from simulations."
-  )
+  ))
 
   p <- ggplot2::ggplot(
     gamma_sim,
@@ -1182,7 +1183,8 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
-    er2_axis_margins()
+    er2_axis_margins() +
+    er2_plot_caption()
 
   p
 }

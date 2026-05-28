@@ -326,7 +326,7 @@ RMtargeting <- function(data, robust = FALSE,
     )
   }
 
-  caption_text <- paste0(
+  caption_text <- er2_caption(paste0(
     "Person location ", tolower(center_label), ": ",
     round(p_center, 2), " (", spread_label, " ",
     round(p_spread, 2), "). Item threshold location ",
@@ -334,7 +334,7 @@ RMtargeting <- function(data, robust = FALSE,
     round(t_center, 2), " (", spread_label, " ",
     round(t_spread, 2), "). n = ", nrow(data), ".\n",
     ci_caption
-  )
+  ))
 
   if (is_dicho) {
     p3 <- ggplot2::ggplot(
@@ -361,10 +361,10 @@ RMtargeting <- function(data, robust = FALSE,
       ) +
       ggplot2::theme_bw() +
       ggplot2::theme(
-        plot.caption = ggplot2::element_text(hjust = 0, face = "italic"),
-        plot.margin  = ggplot2::margin(0, 5, 5, 5)
+        plot.margin = ggplot2::margin(0, 5, 5, 5)
       ) +
-      er2_axis_margins()
+      er2_axis_margins() +
+      er2_plot_caption()
   } else {
     p3 <- ggplot2::ggplot(
       item_thresholds,
@@ -401,10 +401,10 @@ RMtargeting <- function(data, robust = FALSE,
       ggplot2::theme_bw() +
       ggplot2::theme(
         legend.position = "bottom",
-        plot.caption    = ggplot2::element_text(hjust = 0, face = "italic"),
         plot.margin     = ggplot2::margin(0, 5, 5, 5)
       ) +
-      er2_axis_margins()
+      er2_axis_margins() +
+      er2_plot_caption()
   }
 
   # --- Return -----------------------------------------------------------------

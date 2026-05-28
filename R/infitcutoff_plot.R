@@ -171,10 +171,10 @@ RMitemInfitCutoffPlot <- function(simfit, data, output = "infit") {
       ggplot2::labs(
         x = "Conditional MSQ",
         y = "Item",
-        caption = paste0(
-          "Note: Results from ", actual_iterations,
+        caption = er2_caption(paste0(
+          "Results from ", actual_iterations,
           " simulated datasets with ", sample_n, " respondents."
-        )
+        ))
       ) +
       ggplot2::scale_color_manual(
         values = scales::brewer_pal()(3)[-1],
@@ -188,7 +188,8 @@ RMitemInfitCutoffPlot <- function(simfit, data, output = "infit") {
       ) +
       ggplot2::theme_minimal() +
       ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
-      er2_axis_margins()
+      er2_axis_margins() +
+      er2_plot_caption()
 
     return(p)
   }
@@ -238,12 +239,12 @@ RMitemInfitCutoffPlot <- function(simfit, data, output = "infit") {
 
   lo_hi$Item_f <- factor(lo_hi$Item, levels = item_levels)
 
-  caption_text <- paste0(
-    "Note: Results from ", actual_iterations,
+  caption_text <- er2_caption(paste0(
+    "Results from ", actual_iterations,
     " simulated datasets with ", sample_n, " respondents.\n",
     "Orange dots indicate observed conditional item fit. ",
     "Black dots indicate median fit from simulations."
-  )
+  ))
 
   infit_p <- ggplot2::ggplot(
     infit_sim,

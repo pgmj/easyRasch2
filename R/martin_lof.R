@@ -1108,10 +1108,10 @@ RMdimMartinLofResiduals <- function(data,
     ggplot2::coord_equal() +
     ggplot2::theme_minimal(base_size = 12) +
     ggplot2::theme(
-      panel.grid   = ggplot2::element_blank(),
-      plot.caption = ggplot2::element_text(size = 9, hjust = 0)
+      panel.grid = ggplot2::element_blank()
     ) +
-    er2_axis_margins()
+    er2_axis_margins() +
+    er2_plot_caption()
 
   if (D == 2L) {
     return(
@@ -1119,11 +1119,11 @@ RMdimMartinLofResiduals <- function(data,
         ggplot2::labs(
           x = expression("Subscale 2 score (" * t[2] * ")"),
           y = expression("Subscale 1 score (" * t[1] * ")"),
-          caption = paste0(
+          caption = er2_caption(paste0(
             "Standardised residuals (Christensen et al. 2002, eq. 13). ",
             "n = ", N, " complete cases. Cells with |residual| > ",
             flag_threshold, " indicate potential dimensionality issues."
-          )
+          ))
         )
     )
   }
@@ -1134,12 +1134,12 @@ RMdimMartinLofResiduals <- function(data,
     ggplot2::labs(
       x = expression("Subscale 2 score (" * t[2] * ")"),
       y = expression("Subscale 1 score (" * t[1] * ")"),
-      caption = paste0(
+      caption = er2_caption(paste0(
         "Standardised residuals (Christensen et al. 2002, eq. 13). ",
         "n = ", N, " complete cases. Faceted by subscale 3 score (",
         expression(t[3]), "). |residual| > ", flag_threshold,
         " flagged."
-      )
+      ))
     )
 }
 
