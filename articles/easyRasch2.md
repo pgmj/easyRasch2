@@ -110,29 +110,30 @@ distributions:
 RMplotBar(items, ncol = 2)
 ```
 
-![Faceted bar chart of response
-distributions](figures/rasch-bar-plot-1.png)
+![\*\*Figure 1.\*\* \*Faceted bar chart of response
+distributions\*](figures/rasch-bar-plot-1.png)
 
-Faceted bar chart of response distributions
+**Figure 1.** *Faceted bar chart of response distributions*
 
 ``` r
 
 RMplotTile(items, category_labels = item_resp)
 ```
 
-![Response distribution tile plot](figures/rasch-tile-plot-1.png)
+![\*\*Figure 2.\*\* \*Response distribution tile
+plot\*](figures/rasch-tile-plot-1.png)
 
-Response distribution tile plot
+**Figure 2.** *Response distribution tile plot*
 
 ``` r
 
 RMplotStackedbar(items, show_percent = TRUE)
 ```
 
-![Stacked-bar response
-distribution](figures/rasch-stackedbar-plot-1.png)
+![\*\*Figure 3.\*\* \*Stacked-bar response
+distribution\*](figures/rasch-stackedbar-plot-1.png)
 
-Stacked-bar response distribution
+**Figure 3.** *Stacked-bar response distribution*
 
 ## 1. Unidimensionality
 
@@ -224,10 +225,10 @@ score.
 RMitemICCPlot(items, class_intervals = 5)
 ```
 
-![Conditional ICCs with five class
-intervals](figures/rasch-cicc-plot-1.png)
+![\*\*Figure 4.\*\* \*Conditional ICCs with five class
+intervals\*](figures/rasch-cicc-plot-1.png)
 
-Conditional ICCs with five class intervals
+**Figure 4.** *Conditional ICCs with five class intervals*
 
 ### Item-restscore
 
@@ -330,10 +331,10 @@ multidimensionality.
 RMdimResidualPCA(items, output = "loadings")
 ```
 
-![Standardised loadings on the first residual
-contrast](figures/rasch-pca-plot-1.png)
+![\*\*Figure 5.\*\* \*Standardised loadings on the first residual
+contrast\*](figures/rasch-pca-plot-1.png)
 
-Standardised loadings on the first residual contrast
+**Figure 5.** *Standardised loadings on the first residual contrast*
 
 ## 2. Local independence
 
@@ -457,9 +458,10 @@ are not being used in the intended order.
 RMitemHierarchy(items, item_labels = item_desc)
 ```
 
-![Item-hierarchy](figures/rasch-threshold-hierarchy-1.png)
+![\*\*Figure 6.\*\*
+\*Item-hierarchy\*](figures/rasch-threshold-hierarchy-1.png)
 
-Item-hierarchy
+**Figure 6.** *Item-hierarchy*
 
 ## 4. Invariance / no DIF
 
@@ -487,9 +489,10 @@ gender_g <- droplevels(gender[keep])
 RMdifLR(items_g, dif_var = gender_g, level = "threshold")
 ```
 
-![Andersen LR-test DIF locations by gender](figures/rasch-dif-lr-1.png)
+![\*\*Figure 7.\*\* \*Andersen LR-test DIF locations by
+gender\*](figures/rasch-dif-lr-1.png)
 
-Andersen LR-test DIF locations by gender
+**Figure 7.** *Andersen LR-test DIF locations by gender*
 
 The plot shows the item threshold locations estimated in each gender
 group with the corresponding confidence band.
@@ -533,9 +536,10 @@ Wright-map style display.
 RMtargeting(items)
 ```
 
-![Person-item targeting](figures/rasch-targeting-1.png)
+![\*\*Figure 8.\*\* \*Person-item
+targeting\*](figures/rasch-targeting-1.png)
 
-Person-item targeting
+**Figure 8.** *Person-item targeting*
 
 ## Reliability
 
@@ -560,7 +564,7 @@ RMreliability(items, draws = 200, rmu_iter = 20, parallel = FALSE,
 | Cronbach’s alpha | 0.886 | NA | NA | no bootstrap |
 | PSI | 0.847 | NA | NA | no bootstrap |
 | Empirical (WLE) | 0.872 | NA | NA | no bootstrap |
-| RMU (WLE) | 0.882 | 0.867 | 0.897 | 200 PVs, 20 RMU iterations |
+| RMU (WLE) | 0.882 | 0.868 | 0.897 | 200 PVs, 20 RMU iterations |
 
 Reliability for 9 items, n = 600. PSI excludes min/max scoring
 respondents. {.table}
