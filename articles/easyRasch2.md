@@ -292,6 +292,8 @@ items, 100 parametric-bootstrap iterations. Cutoffs are one-sided at the
 the observed value lies in the worst 1% of the null distribution in the
 unfavourable direction. {.table}
 
+Results can also be plotted using `RMdimCFAPlot(cfa_cut)`.
+
 ### Residual PCA
 
 After fitting the Rasch model, the residuals should contain no further
@@ -376,9 +378,10 @@ item-pairs that deviate the most.
 RMlocdepQ3Plot(simfit = q3_cut, data = items, n_pairs = 6)
 ```
 
-![plot of chunk plot_q3](figures/rasch-plot_q3-1.png)
+![\*\*Figure 6.\*\* \*Observed and expected Q3
+residuals\*](figures/rasch-plot_q3-1.png)
 
-plot of chunk plot_q3
+**Figure 6.** *Observed and expected Q3 residuals*
 
 A second perspective on LD is the *partial gamma* coefficient ([Kreiner
 and Christensen 2004](#ref-kreinerAnalysisLocalDependence2004); [Kreiner
@@ -443,9 +446,10 @@ probability of response curves for each item and response category.
 RMitemCatProb(items, category_labels = item_resp)
 ```
 
-![plot of chunk ipf_plot](figures/rasch-ipf_plot-1.png)
+![\*\*Figure 7.\*\* \*Item Probability Function
+curves\*](figures/rasch-ipf_plot-1.png)
 
-plot of chunk ipf_plot
+**Figure 7.** *Item Probability Function curves*
 
 [`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/reference/RMitemHierarchy.md)
 plots each item’s threshold locations on the latent scale, ordered by
@@ -458,10 +462,10 @@ are not being used in the intended order.
 RMitemHierarchy(items, item_labels = item_desc)
 ```
 
-![\*\*Figure 6.\*\*
+![\*\*Figure 8.\*\*
 \*Item-hierarchy\*](figures/rasch-threshold-hierarchy-1.png)
 
-**Figure 6.** *Item-hierarchy*
+**Figure 8.** *Item-hierarchy*
 
 ## 4. Invariance / no DIF
 
@@ -489,10 +493,10 @@ gender_g <- droplevels(gender[keep])
 RMdifLR(items_g, dif_var = gender_g, level = "threshold")
 ```
 
-![\*\*Figure 7.\*\* \*Andersen LR-test DIF locations by
+![\*\*Figure 9.\*\* \*Andersen LR-test DIF locations by
 gender\*](figures/rasch-dif-lr-1.png)
 
-**Figure 7.** *Andersen LR-test DIF locations by gender*
+**Figure 9.** *Andersen LR-test DIF locations by gender*
 
 The plot shows the item threshold locations estimated in each gender
 group with the corresponding confidence band.
@@ -536,10 +540,10 @@ Wright-map style display.
 RMtargeting(items)
 ```
 
-![\*\*Figure 8.\*\* \*Person-item
+![\*\*Figure 10.\*\* \*Person-item
 targeting\*](figures/rasch-targeting-1.png)
 
-**Figure 8.** *Person-item targeting*
+**Figure 10.** *Person-item targeting*
 
 ## Reliability
 
@@ -575,9 +579,16 @@ estimates with associated standard errors, use
 
 ``` r
 
-RMscoreSE(items, output = "figure")
-#> Error in `match.arg()`:
-#> ! 'arg' should be one of "kable", "dataframe", "ggplot"
+RMscoreSE(items, output = "ggplot")
+```
+
+![\*\*Figure 11.\*\* \*Sum-score to WLE conversion with 95%
+CIs\*](figures/rasch-scoreSE-1.png)
+
+**Figure 11.** *Sum-score to WLE conversion with 95% CIs*
+
+``` r
+
 RMscoreSE(items)
 ```
 
@@ -624,6 +635,9 @@ also has an option for EAP scores (expected á posteriori).
 - The simulation-based cut-offs used above (`RM*cutoff()`) can be
   parallelised on multiple CPU cores via the `mirai` package; see the
   relevant help pages.
+  - For a progress bar on time-consuming simulations, add
+    `verbose = TRUE` to the function call. This should not be used when
+    rendering Quarto/Rmd files.
 
 ## References
 
