@@ -82,15 +82,6 @@ str(items)
 summary(rowSums(items))
 #>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 #>    0.00   10.00   16.00   15.41   21.00   27.00
-hist(rowSums(items), col = "lightblue", main = "Histogram of ordinal sum scores")
-```
-
-![plot of chunk data-overview](figures/rasch-data-overview-1.png)
-
-plot of chunk data-overview
-
-``` r
-
 table(gender, useNA = "ifany")
 #> gender
 #> Female   Male   <NA> 
@@ -107,33 +98,43 @@ distributions:
 
 ``` r
 
+hist(rowSums(items), col = "lightblue", main = "")
+```
+
+![\*\*Figure 1.\*\* \*Histogram of ordinal sum
+scores\*](figures/rasch-hist-plot-1.png)
+
+**Figure 1.** *Histogram of ordinal sum scores*
+
+``` r
+
 RMplotBar(items, ncol = 2)
 ```
 
-![\*\*Figure 1.\*\* \*Faceted bar chart of response
+![\*\*Figure 2.\*\* \*Faceted bar chart of response
 distributions\*](figures/rasch-bar-plot-1.png)
 
-**Figure 1.** *Faceted bar chart of response distributions*
+**Figure 2.** *Faceted bar chart of response distributions*
 
 ``` r
 
 RMplotTile(items, category_labels = item_resp)
 ```
 
-![\*\*Figure 2.\*\* \*Response distribution tile
+![\*\*Figure 3.\*\* \*Response distribution tile
 plot\*](figures/rasch-tile-plot-1.png)
 
-**Figure 2.** *Response distribution tile plot*
+**Figure 3.** *Response distribution tile plot*
 
 ``` r
 
 RMplotStackedbar(items, show_percent = TRUE)
 ```
 
-![\*\*Figure 3.\*\* \*Stacked-bar response
+![\*\*Figure 4.\*\* \*Stacked-bar response
 distribution\*](figures/rasch-stackedbar-plot-1.png)
 
-**Figure 3.** *Stacked-bar response distribution*
+**Figure 4.** *Stacked-bar response distribution*
 
 ## 1. Unidimensionality
 
@@ -225,10 +226,10 @@ score.
 RMitemICCPlot(items, class_intervals = 5)
 ```
 
-![\*\*Figure 4.\*\* \*Conditional ICCs with five class
+![\*\*Figure 5.\*\* \*Conditional ICCs with five class
 intervals\*](figures/rasch-cicc-plot-1.png)
 
-**Figure 4.** *Conditional ICCs with five class intervals*
+**Figure 5.** *Conditional ICCs with five class intervals*
 
 ### Item-restscore
 
@@ -333,10 +334,10 @@ multidimensionality.
 RMdimResidualPCA(items, output = "loadings")
 ```
 
-![\*\*Figure 5.\*\* \*Standardised loadings on the first residual
+![\*\*Figure 6.\*\* \*Standardised loadings on the first residual
 contrast\*](figures/rasch-pca-plot-1.png)
 
-**Figure 5.** *Standardised loadings on the first residual contrast*
+**Figure 6.** *Standardised loadings on the first residual contrast*
 
 ## 2. Local independence
 
@@ -378,10 +379,10 @@ item-pairs that deviate the most.
 RMlocdepQ3Plot(simfit = q3_cut, data = items, n_pairs = 6)
 ```
 
-![\*\*Figure 6.\*\* \*Observed and expected Q3
+![\*\*Figure 7.\*\* \*Observed and expected Q3
 residuals\*](figures/rasch-plot_q3-1.png)
 
-**Figure 6.** *Observed and expected Q3 residuals*
+**Figure 7.** *Observed and expected Q3 residuals*
 
 A second perspective on LD is the *partial gamma* coefficient ([Kreiner
 and Christensen 2004](#ref-kreinerAnalysisLocalDependence2004); [Kreiner
@@ -446,10 +447,10 @@ probability of response curves for each item and response category.
 RMitemCatProb(items, category_labels = item_resp)
 ```
 
-![\*\*Figure 7.\*\* \*Item Probability Function
+![\*\*Figure 8.\*\* \*Item Probability Function
 curves\*](figures/rasch-ipf_plot-1.png)
 
-**Figure 7.** *Item Probability Function curves*
+**Figure 8.** *Item Probability Function curves*
 
 [`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/reference/RMitemHierarchy.md)
 plots each item’s threshold locations on the latent scale, ordered by
@@ -462,10 +463,10 @@ are not being used in the intended order.
 RMitemHierarchy(items, item_labels = item_desc)
 ```
 
-![\*\*Figure 8.\*\*
+![\*\*Figure 9.\*\*
 \*Item-hierarchy\*](figures/rasch-threshold-hierarchy-1.png)
 
-**Figure 8.** *Item-hierarchy*
+**Figure 9.** *Item-hierarchy*
 
 ## 4. Invariance / no DIF
 
@@ -493,10 +494,10 @@ gender_g <- droplevels(gender[keep])
 RMdifLR(items_g, dif_var = gender_g, level = "threshold")
 ```
 
-![\*\*Figure 9.\*\* \*Andersen LR-test DIF locations by
+![\*\*Figure 10.\*\* \*Andersen LR-test DIF locations by
 gender\*](figures/rasch-dif-lr-1.png)
 
-**Figure 9.** *Andersen LR-test DIF locations by gender*
+**Figure 10.** *Andersen LR-test DIF locations by gender*
 
 The plot shows the item threshold locations estimated in each gender
 group with the corresponding confidence band.
@@ -540,10 +541,10 @@ Wright-map style display.
 RMtargeting(items)
 ```
 
-![\*\*Figure 10.\*\* \*Person-item
+![\*\*Figure 11.\*\* \*Person-item
 targeting\*](figures/rasch-targeting-1.png)
 
-**Figure 10.** *Person-item targeting*
+**Figure 11.** *Person-item targeting*
 
 ## Reliability
 
@@ -568,7 +569,7 @@ RMreliability(items, draws = 200, rmu_iter = 20, parallel = FALSE,
 | Cronbach’s alpha | 0.886 | NA | NA | no bootstrap |
 | PSI | 0.847 | NA | NA | no bootstrap |
 | Empirical (WLE) | 0.872 | NA | NA | no bootstrap |
-| RMU (WLE) | 0.882 | 0.868 | 0.897 | 200 PVs, 20 RMU iterations |
+| RMU (WLE) | 0.882 | 0.867 | 0.897 | 200 PVs, 20 RMU iterations |
 
 Reliability for 9 items, n = 600. PSI excludes min/max scoring
 respondents. {.table}
@@ -582,10 +583,10 @@ estimates with associated standard errors, use
 RMscoreSE(items, output = "ggplot")
 ```
 
-![\*\*Figure 11.\*\* \*Sum-score to WLE conversion with 95%
+![\*\*Figure 12.\*\* \*Sum-score to WLE conversion with 95%
 CIs\*](figures/rasch-scoreSE-1.png)
 
-**Figure 11.** *Sum-score to WLE conversion with 95% CIs*
+**Figure 12.** *Sum-score to WLE conversion with 95% CIs*
 
 ``` r
 

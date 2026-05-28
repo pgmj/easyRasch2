@@ -163,14 +163,7 @@ the public domain by the U.S. federal government.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
 <span><span class="co">#&gt;    0.00   10.00   16.00   15.41   21.00   27.00</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"lightblue"</span>, main <span class="op">=</span> <span class="st">"Histogram of ordinal sum scores"</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="figures/rasch-data-overview-1.png" alt="plot of chunk data-overview" width="100%"><p class="caption">
-plot of chunk data-overview
-</p>
-</div>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">gender</span>, useNA <span class="op">=</span> <span class="st">"ifany"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">gender</span>, useNA <span class="op">=</span> <span class="st">"ifany"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; gender</span></span>
 <span><span class="co">#&gt; Female   Male   &lt;NA&gt; </span></span>
 <span><span class="co">#&gt;    426    143     31</span></span>
@@ -182,26 +175,33 @@ plot of chunk data-overview
 </h3>
 <p>Before fitting any model it is worth eyeballing the response
 distributions:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"lightblue"</span>, main <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="figures/rasch-hist-plot-1.png" alt="**Figure 1.** *Histogram of ordinal sum scores*" width="100%"><p class="caption">
+<strong>Figure 1.</strong> <em>Histogram of ordinal sum scores</em>
+</p>
+</div>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMplotBar.html">RMplotBar</a></span><span class="op">(</span><span class="va">items</span>, ncol <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-bar-plot-1.png" alt="**Figure 1.** *Faceted bar chart of response distributions*" width="100%"><p class="caption">
-<strong>Figure 1.</strong> <em>Faceted bar chart of response
+<img src="figures/rasch-bar-plot-1.png" alt="**Figure 2.** *Faceted bar chart of response distributions*" width="100%"><p class="caption">
+<strong>Figure 2.</strong> <em>Faceted bar chart of response
 distributions</em>
 </p>
 </div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMplotTile.html">RMplotTile</a></span><span class="op">(</span><span class="va">items</span>, category_labels <span class="op">=</span> <span class="va">item_resp</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-tile-plot-1.png" alt="**Figure 2.** *Response distribution tile plot*" width="100%"><p class="caption">
-<strong>Figure 2.</strong> <em>Response distribution tile plot</em>
+<img src="figures/rasch-tile-plot-1.png" alt="**Figure 3.** *Response distribution tile plot*" width="100%"><p class="caption">
+<strong>Figure 3.</strong> <em>Response distribution tile plot</em>
 </p>
 </div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMplotStackedbar.html">RMplotStackedbar</a></span><span class="op">(</span><span class="va">items</span>, show_percent <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-stackedbar-plot-1.png" alt="**Figure 3.** *Stacked-bar response distribution*" width="100%"><p class="caption">
-<strong>Figure 3.</strong> <em>Stacked-bar response distribution</em>
+<img src="figures/rasch-stackedbar-plot-1.png" alt="**Figure 4.** *Stacked-bar response distribution*" width="100%"><p class="caption">
+<strong>Figure 4.</strong> <em>Stacked-bar response distribution</em>
 </p>
 </div>
 </div>
@@ -363,8 +363,8 @@ total score.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemICCPlot.html">RMitemICCPlot</a></span><span class="op">(</span><span class="va">items</span>, class_intervals <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-cicc-plot-1.png" alt="**Figure 4.** *Conditional ICCs with five class intervals*" width="100%"><p class="caption">
-<strong>Figure 4.</strong> <em>Conditional ICCs with five class
+<img src="figures/rasch-cicc-plot-1.png" alt="**Figure 5.** *Conditional ICCs with five class intervals*" width="100%"><p class="caption">
+<strong>Figure 5.</strong> <em>Conditional ICCs with five class
 intervals</em>
 </p>
 </div>
@@ -619,8 +619,8 @@ multidimensionality.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdimResidualPCA.html">RMdimResidualPCA</a></span><span class="op">(</span><span class="va">items</span>, output <span class="op">=</span> <span class="st">"loadings"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-pca-plot-1.png" alt="**Figure 5.** *Standardised loadings on the first residual contrast*" width="100%"><p class="caption">
-<strong>Figure 5.</strong> <em>Standardised loadings on the first
+<img src="figures/rasch-pca-plot-1.png" alt="**Figure 6.** *Standardised loadings on the first residual contrast*" width="100%"><p class="caption">
+<strong>Figure 6.</strong> <em>Standardised loadings on the first
 residual contrast</em>
 </p>
 </div>
@@ -795,8 +795,8 @@ most.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMlocdepQ3plot.html">RMlocdepQ3Plot</a></span><span class="op">(</span>simfit <span class="op">=</span> <span class="va">q3_cut</span>, data <span class="op">=</span> <span class="va">items</span>, n_pairs <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-plot_q3-1.png" alt="**Figure 6.** *Observed and expected Q3 residuals*" width="100%"><p class="caption">
-<strong>Figure 6.</strong> <em>Observed and expected Q3 residuals</em>
+<img src="figures/rasch-plot_q3-1.png" alt="**Figure 7.** *Observed and expected Q3 residuals*" width="100%"><p class="caption">
+<strong>Figure 7.</strong> <em>Observed and expected Q3 residuals</em>
 </p>
 </div>
 <p>A second perspective on LD is the <em>partial gamma</em> coefficient
@@ -942,8 +942,8 @@ probability of response curves for each item and response category.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemCatProb.html">RMitemCatProb</a></span><span class="op">(</span><span class="va">items</span>, category_labels <span class="op">=</span> <span class="va">item_resp</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-ipf_plot-1.png" alt="**Figure 7.** *Item Probability Function curves*" width="100%"><p class="caption">
-<strong>Figure 7.</strong> <em>Item Probability Function curves</em>
+<img src="figures/rasch-ipf_plot-1.png" alt="**Figure 8.** *Item Probability Function curves*" width="100%"><p class="caption">
+<strong>Figure 8.</strong> <em>Item Probability Function curves</em>
 </p>
 </div>
 <p><code><a href="../reference/RMitemHierarchy.html">RMitemHierarchy()</a></code> plots each item’s threshold locations
@@ -954,8 +954,8 @@ order.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemHierarchy.html">RMitemHierarchy</a></span><span class="op">(</span><span class="va">items</span>, item_labels <span class="op">=</span> <span class="va">item_desc</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-threshold-hierarchy-1.png" alt="**Figure 8.** *Item-hierarchy*" width="100%"><p class="caption">
-<strong>Figure 8.</strong> <em>Item-hierarchy</em>
+<img src="figures/rasch-threshold-hierarchy-1.png" alt="**Figure 9.** *Item-hierarchy*" width="100%"><p class="caption">
+<strong>Figure 9.</strong> <em>Item-hierarchy</em>
 </p>
 </div>
 </div>
@@ -981,8 +981,8 @@ missing gender):</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdifLR.html">RMdifLR</a></span><span class="op">(</span><span class="va">items_g</span>, dif_var <span class="op">=</span> <span class="va">gender_g</span>, level <span class="op">=</span> <span class="st">"threshold"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-dif-lr-1.png" alt="**Figure 9.** *Andersen LR-test DIF locations by gender*" width="100%"><p class="caption">
-<strong>Figure 9.</strong> <em>Andersen LR-test DIF locations by
+<img src="figures/rasch-dif-lr-1.png" alt="**Figure 10.** *Andersen LR-test DIF locations by gender*" width="100%"><p class="caption">
+<strong>Figure 10.</strong> <em>Andersen LR-test DIF locations by
 gender</em>
 </p>
 </div>
@@ -1114,8 +1114,8 @@ Wright-map style display.</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMtargeting.html">RMtargeting</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-targeting-1.png" alt="**Figure 10.** *Person-item targeting*" width="100%"><p class="caption">
-<strong>Figure 10.</strong> <em>Person-item targeting</em>
+<img src="figures/rasch-targeting-1.png" alt="**Figure 11.** *Person-item targeting*" width="100%"><p class="caption">
+<strong>Figure 11.</strong> <em>Person-item targeting</em>
 </p>
 </div>
 </div>
@@ -1174,7 +1174,7 @@ respondents.</caption>
 <tr class="even">
 <td align="left">RMU (WLE)</td>
 <td align="right">0.882</td>
-<td align="right">0.868</td>
+<td align="right">0.867</td>
 <td align="right">0.897</td>
 <td align="left">200 PVs, 20 RMU iterations</td>
 </tr>
@@ -1186,8 +1186,8 @@ estimates with associated standard errors, use
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMscoreSE.html">RMscoreSE</a></span><span class="op">(</span><span class="va">items</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-scoreSE-1.png" alt="**Figure 11.** *Sum-score to WLE conversion with 95% CIs*" width="100%"><p class="caption">
-<strong>Figure 11.</strong> <em>Sum-score to WLE conversion with 95%
+<img src="figures/rasch-scoreSE-1.png" alt="**Figure 12.** *Sum-score to WLE conversion with 95% CIs*" width="100%"><p class="caption">
+<strong>Figure 12.</strong> <em>Sum-score to WLE conversion with 95%
 CIs</em>
 </p>
 </div>
