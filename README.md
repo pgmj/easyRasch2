@@ -4,10 +4,9 @@
 <a href="https://buymeacoffee.com/pgmj" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
 <!-- badges: end -->
 
-`easyRasch2` is a CRAN-targeted R package for Rasch measurement theory
+`easyRasch2` is an R package for Rasch measurement theory
 analysis workflows. It is the successor to
-[easyRasch](https://github.com/pgmj/easyRasch), offering a lightweight,
-CRAN-ready structure with proper namespacing and minimal dependencies.
+[`easyRasch`](https://pgmj.github.io/easyRasch/), offering a lightweight and consistent structure with proper namespacing and minimal dependencies.
 
 A central design choice is **simulation-based critical values** for various fit
 statistics. Rather than relying on rule-of-thumb cutoffs, most diagnostics
@@ -15,7 +14,7 @@ are paired with a parametric-bootstrap function that generates an empirical
 null distribution from the fitted Rasch / PCM model and the observed
 sample.
 
-For broader Rasch-analysis tutorials, see the
+The [Get Started](https://pgmj.github.io/easyRasch2/articles/easyRasch2.html) link above contains a short introduction. For broader Rasch-analysis tutorials, see the
 [vignette](https://pgmj.github.io/raschrvignette/RaschRvign.html) for the
 sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
 
