@@ -5,7 +5,7 @@ streamlines Rasch measurement theory workflows (local dependence,
 conditional infit, item-restscore, DIF via LR test / partial gamma /
 Rasch trees, dimensionality via Martin-Löf / residual PCA / CFA,
 targeting, reliability, and score-to-WLE transformations). It is the
-successor of the unpublished `easyRasch` package and rebuilds the API
+successor of the GitHub-only `easyRasch` package and rebuilds the API
 around a consistent `RM*()` naming scheme with full test coverage and
 simulation-based cutoffs for several diagnostics.
 
@@ -15,8 +15,7 @@ simulation-based cutoffs for several diagnostics.
   (0 errors / 0 warnings / 0 notes).
 * R-hub v2 (`rhub::rhub_check()`), Linux container — clean
   (0 errors / 0 warnings / 0 notes).
-* GitHub Actions (planned): ubuntu-latest, macOS-latest, windows-latest
-  on R release and devel.
+* `devtools::check_win_*()` only 1 NOTE for New submission
 
 ## R CMD check results
 
@@ -69,7 +68,7 @@ imposes no reverse-dependency burden.
 
 ## Additional notes for the reviewer
 
-* The package targets researchers working with ordinal/Rasch-scored
+* The package targets researchers working with ordinal/dichotomous
   questionnaire data. It deliberately re-exports a small layer of
   opinionated wrappers around `eRm`, `psychotools`, `iarm`, `mirt`,
   and `lavaan` rather than duplicating their estimation routines.

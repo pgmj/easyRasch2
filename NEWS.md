@@ -1,5 +1,25 @@
 # easyRasch2 0.8.0
 
+## Visual consistency across all plot output
+
+- Every `RM*` function that returns a `ggplot` now applies three
+  shared internal theme helpers:
+  * `er2_axis_margins()` --- extra breathing room around the x and y
+    axis titles.
+  * `er2_plot_caption()` --- left-aligned 9 pt plot caption. When the
+    optional `ggtext` package is installed (new in Suggests), the
+    caption renders via `ggtext::element_markdown()` so the
+    APA-conventional italic "*Note.*" prefix can sit alongside
+    roman body text. Without `ggtext`, it falls back to a plain
+    `element_text(face = "italic")` and a plain "Note. " prefix
+    --- no markdown asterisks ever leak through to the rendered text.
+  * `er2_caption()` --- builds the caption string with the "Note."
+    prefix and wraps long captions at 90 characters via `strwrap()`
+    so they no longer run off the right edge of the plot. The body
+    text is wrapped first then prefixed, so the prefix is never
+    broken by a line break.
+- All three helpers are internal (`@noRd`) and not exported.
+
 ## New function
 
 - **`RMitemCatProb()`** plots model-implied category-response

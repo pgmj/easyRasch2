@@ -24,16 +24,17 @@ er2_axis_margins <- function() {
 #' APA-style plot.caption theme element
 #'
 #' Returns a `ggplot2::theme()` object that sets `plot.caption` so it
-#' renders left-aligned ("Note." prefix in italic, body text in roman
-#' face). When `ggtext` is installed (recommended; in Suggests), the
-#' caption is rendered via `ggtext::element_markdown()` which lets the
-#' italic "*Note.*" prefix coexist with roman body text in a single
-#' caption. When `ggtext` is not installed, falls back to a plain
-#' `element_text(face = "italic", ...)` --- the whole caption goes
-#' italic, but no markdown asterisks leak through to the rendered text.
+#' renders left-aligned with the APA-conventional italic "Note." prefix
+#' followed by roman body text. When `ggtext` is installed
+#' (recommended; in Suggests), the caption is rendered via
+#' `ggtext::element_markdown()` which lets the italic "*Note.*" prefix
+#' coexist with roman body text in a single caption. When `ggtext` is
+#' not installed, falls back to a plain `element_text(face = "italic")`
+#' --- the whole caption goes italic, and the prefix collapses to a
+#' plain "Note. " (no asterisks leaked).
 #'
-#' Pair with \code{\link{er2_caption}} when building caption strings, so the
-#' "*Note.* " prefix is formatted to match whichever renderer is active.
+#' Pair with \code{\link{er2_caption}} when building caption strings,
+#' so the "Note." prefix matches whichever renderer is active.
 #'
 #' @return A `ggplot2::theme()` object.
 #' @keywords internal
@@ -48,24 +49,38 @@ er2_plot_caption <- function() {
   )
 }
 
-#' APA-style "Note." caption-text prefix
+#' APA-style "Note." caption-text prefix with line wrapping
 #'
-#' Wrap a plot caption with the standard APA prefix. When `ggtext` is
-#' installed, returns `"*Note.* <text>"` (markdown italic on "Note.");
-#' otherwise returns `"Note. <text>"` (plain text, with the whole
-#' caption set italic by \code{\link{er2_plot_caption}}). Centralises the prefix
-#' so a single edit here propagates to every plot in the package.
+#' Build a plot caption with the standard "Note." prefix and wrap the
+#' body text at `width` characters so long captions don't run off the
+#' right edge of the plot. The body text is wrapped first (via
+#' [strwrap()]) then prefixed --- so the prefix never gets broken by a
+#' line break, and the markdown asterisks (when `ggtext` is installed)
+#' stay together.
 #'
-#' @param text Character. The caption body text (everything after
-#'   "Note. ").
+#' When `ggtext` is installed, returns `"*Note.* <wrapped body>"`
+#' (markdown italic on "Note."); otherwise `"Note. <wrapped body>"`
+#' (plain text, with the whole caption set italic by
+#' \code{\link{er2_plot_caption}}).
+#'
+#' @param text Character. The caption body text (everything after the
+#'   "Note." prefix). Pre-existing `\\n` in `text` is treated as
+#'   ordinary whitespace by `strwrap()`; the wrapped output reflows
+#'   to fit `width`.
+#' @param width Integer. Maximum characters per line, passed to
+#'   [strwrap()] after subtracting the prefix length. Default `90L`
+#'   (suits the package's default 8-inch plot at 144 dpi).
 #' @return A character string ready to pass to
 #'   `ggplot2::labs(caption = ...)`.
 #' @keywords internal
 #' @noRd
-er2_caption <- function(text) {
-  if (requireNamespace("ggtext", quietly = TRUE)) {
-    paste0("*Note.* ", text)
+er2_caption <- function(text, width = 90L) {
+  prefix <- if (requireNamespace("ggtext", quietly = TRUE)) {
+    "*Note.* "
   } else {
-    paste0("Note. ", text)
+    "Note. "
   }
+  body_width <- max(20L, width - nchar(prefix))
+  body <- paste(strwrap(text, width = body_width), collapse = "\n")
+  paste0(prefix, body)
 }
