@@ -1,4 +1,4 @@
-# easyRasch2: Rasch Measurement Theory Analysis for R
+# easyRasch2: Psychometric Analysis with Rasch Measurement Theory
 
 Streamlines reproducible Rasch measurement theory analyses for ordinal
 item-response data, combining estimation routines from 'eRm',
@@ -35,10 +35,12 @@ Other contributors:
 
 - Nicklas Korsell (PCM simulation code) \[contributor\]
 
-- Mirka Henninger (MH / partial-gamma effect-size and ETS-classification
-  algorithms in dif_tree.R, adapted under MIT licence from the
-  raschtreeMH and effecttree packages) \[contributor\]
+- Mirka Henninger ([ORCID](https://orcid.org/0000-0003-4676-2361)) (MH /
+  partial-gamma effect-size and ETS-classification algorithms in
+  dif_tree.R, adapted under MIT licence from the raschtreeMH and
+  effecttree packages) \[contributor\]
 
-- Jan Radek (partial-gamma effect-size and ETS-classification algorithms
-  in dif_tree.R, adapted under MIT licence from the effecttree package)
+- Jan Radek ([ORCID](https://orcid.org/0009-0003-8842-9206))
+  (partial-gamma effect-size and ETS-classification algorithms in
+  dif_tree.R, adapted under MIT licence from the effecttree package)
   \[contributor\]
