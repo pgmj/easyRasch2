@@ -249,26 +249,21 @@ Modeling. <em>Journal of Statistical Software, 48</em>(2), 1-36.
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"raschdat1"</span>, package <span class="op">=</span> <span class="st">"eRm"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">RMdimCFACutoff</span><span class="op">(</span><span class="va">raschdat1</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">8</span><span class="op">]</span>, iterations <span class="op">=</span> <span class="fl">50</span>,</span></span>
-<span class="r-in"><span>            parallel <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Rasch Model posterior-predictive CFA fit-index check. Observed CFA fit (one-factor, lavaan WLSMV, ordered = TRUE) vs simulated null distribution under RM unidimensionality. n = 100 complete cases, 8 items, 39 parametric-bootstrap iterations. Cutoffs are one-sided at the 99th percentile of the simulated distribution; an item is flagged when the observed value lies in the worst 1% of the null distribution in the unfavourable direction.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Index | Observed| Cutoff|Direction  |Flagged |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |:-----|--------:|------:|:----------|:-------|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |CFI   |   0.9894| 0.3237|&lt; 1st pct  |        |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |RMSEA |   0.0162| 0.0832|&gt; 99th pct |        |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |SRMR  |   0.1158| 0.2287|&gt; 99th pct |        |</span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"lavaan"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"raschdat1"</span>, package <span class="op">=</span> <span class="st">"eRm"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Few iterations for a fast example; use 250+ in real analyses</span></span></span>
+<span class="r-in"><span>  <span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">RMdimCFACutoff</span><span class="op">(</span><span class="va">raschdat1</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">8</span><span class="op">]</span>, iterations <span class="op">=</span> <span class="fl">50</span>,</span></span>
+<span class="r-in"><span>                           parallel <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="fl">1</span>, output <span class="op">=</span> <span class="st">"list"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">result</span><span class="op">$</span><span class="va">observed</span></span></span>
+<span class="r-in"><span>  <span class="va">result</span><span class="op">$</span><span class="va">flagged</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="RMdimCFAPlot.html">RMdimCFAPlot</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">}</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-plt img"><img src="RMdimCFACutoff-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Default 250 iterations with parallel processing</span></span></span>
-<span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">RMdimCFACutoff</span><span class="op">(</span><span class="va">raschdat1</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">8</span><span class="op">]</span>, n_cores <span class="op">=</span> <span class="fl">4</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">result</span><span class="op">$</span><span class="va">observed</span></span></span>
-<span class="r-in"><span><span class="va">result</span><span class="op">$</span><span class="va">flagged</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="RMdimCFAPlot.html">RMdimCFAPlot</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

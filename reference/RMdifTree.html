@@ -308,6 +308,7 @@ the stability of results from supervised statistical learning.
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"psychotree"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">&amp;&amp;</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"partykit"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">&amp;&amp;</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"difR"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">&amp;&amp;</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"iarm"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"DIFSimPC"</span>, package <span class="op">=</span> <span class="st">"psychotree"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
@@ -324,18 +325,29 @@ the stability of results from supervised statistical learning.
 <span class="r-in"><span>  <span class="co"># Tree object (for plotting via partykit::plot)</span></span></span>
 <span class="r-in"><span>  <span class="va">tree</span> <span class="op">&lt;-</span> <span class="fu">RMdifTree</span><span class="op">(</span><span class="va">items</span>, covariates <span class="op">=</span> <span class="va">covs</span>, output <span class="op">=</span> <span class="st">"tree"</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">tree</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Stability assessment refits the tree on B resamples.</span></span></span>
+<span class="r-in"><span>  <span class="co"># (use more resamples, e.g. 100+, in real analyses)</span></span></span>
+<span class="r-in"><span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"stablelearner"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="va">kbl</span> <span class="op">&lt;-</span> <span class="fu">RMdifTree</span><span class="op">(</span><span class="va">items</span>, covariates <span class="op">=</span> <span class="va">covs</span>,</span></span>
+<span class="r-in"><span>                     purification <span class="op">=</span> <span class="st">"iterative"</span>, p_adj <span class="op">=</span> <span class="st">"fdr"</span>,</span></span>
+<span class="r-in"><span>                     stability <span class="op">=</span> <span class="cn">TRUE</span>, stability_B <span class="op">=</span> <span class="fl">25</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="va">kbl</span>                          <span class="co"># main effect-size kable</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">kbl</span>, <span class="st">"stability_kable"</span><span class="op">)</span> <span class="co"># pre-rendered stability kable</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">kbl</span>, <span class="st">"stability"</span><span class="op">)</span>       <span class="co"># raw stability data.frame</span></span></span>
+<span class="r-in"><span>  <span class="op">}</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-plt img"><img src="RMdifTree-1.png" alt="" width="700" height="433"></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error in root.matrix(switch(vcov, opg = chol2inv(chol(meat)), info = bread,  : </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Matrix is not positive semidefinite</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error in root.matrix(switch(vcov, opg = chol2inv(chol(meat)), info = bread,  : </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Matrix is not positive semidefinite</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Stability assessment notes (suppressed during fitting): 137 'minimum score not zero' rescaling warning(s); 21 'items with null categories' warning(s). These reflect sparsity in some resamples and are normal sampling variability; selection-frequency and cutpoint summaries are based on resamples that completed successfully.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     Variable    Type Selected_orig Selection_freq_pct Cutpoint_mean Cutpoint_sd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        age numeric          TRUE                100       42.9706      8.1556</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     gender  factor          TRUE                100            NA          NA</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 motivation ordered         FALSE                  4            NA          NA</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Stability assessment refits the tree on B resamples -- slow.</span></span></span>
-<span class="r-in"><span><span class="va">kbl</span> <span class="op">&lt;-</span> <span class="fu">RMdifTree</span><span class="op">(</span><span class="va">items</span>, covariates <span class="op">=</span> <span class="va">covs</span>,</span></span>
-<span class="r-in"><span>                 purification <span class="op">=</span> <span class="st">"iterative"</span>, p_adj <span class="op">=</span> <span class="st">"fdr"</span>,</span></span>
-<span class="r-in"><span>                 stability <span class="op">=</span> <span class="cn">TRUE</span>, stability_B <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">kbl</span>                          <span class="co"># main effect-size kable</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">kbl</span>, <span class="st">"stability_kable"</span><span class="op">)</span> <span class="co"># pre-rendered stability kable</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">kbl</span>, <span class="st">"stability"</span><span class="op">)</span>       <span class="co"># raw stability data.frame</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

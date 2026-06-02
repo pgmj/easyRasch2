@@ -165,18 +165,32 @@ residuals. <em>Educational and Psychological Measurement, 70</em>(5), 717-731.
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">1</span>, <span class="fl">200</span> <span class="op">*</span> <span class="fl">12</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">200</span>, ncol <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">dat</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"I"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">12</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">bound</span> <span class="op">&lt;-</span> <span class="fu">RMdimResidualPCACutoff</span><span class="op">(</span><span class="va">dat</span>, iterations <span class="op">=</span> <span class="fl">200</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Few iterations for a fast example; use 250+ in real analyses</span></span></span>
+<span class="r-in"><span><span class="va">bound</span> <span class="op">&lt;-</span> <span class="fu">RMdimResidualPCACutoff</span><span class="op">(</span><span class="va">dat</span>, iterations <span class="op">=</span> <span class="fl">50</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">bound</span><span class="op">$</span><span class="va">suggested_cutoff</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.656817</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="RMdimResidualPCA.html">RMdimResidualPCA</a></span><span class="op">(</span><span class="va">dat</span>, cutoff <span class="op">=</span> <span class="va">bound</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Rasch model (200 complete cases, 12 items). Total observed variance: 9.7% explained by measures, 90.3% unexplained</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> (basis for PCA; n = 200 non-extreme cases). First-contrast cutoff = 1.657 based on 50 simulation iterations (99th percentile).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Component | Eigenvalue| Proportion of variance|Flagged |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |:---------|----------:|----------------------:|:-------|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |PC1       |      1.464|                  0.121|FALSE   |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |PC2       |      1.425|                  0.118|FALSE   |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |PC3       |      1.281|                  0.106|FALSE   |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |PC4       |      1.155|                  0.096|FALSE   |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |PC5       |      1.125|                  0.093|FALSE   |</span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

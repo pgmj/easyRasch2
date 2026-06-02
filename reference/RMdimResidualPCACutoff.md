@@ -125,16 +125,30 @@ residuals. *Educational and Psychological Measurement, 70*(5), 717-731.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 set.seed(1)
 dat <- as.data.frame(
   matrix(sample(0:1, 200 * 12, replace = TRUE), nrow = 200, ncol = 12)
 )
 colnames(dat) <- paste0("I", 1:12)
 
-bound <- RMdimResidualPCACutoff(dat, iterations = 200, parallel = FALSE, seed = 1)
+# Few iterations for a fast example; use 250+ in real analyses
+bound <- RMdimResidualPCACutoff(dat, iterations = 50, parallel = FALSE, seed = 1)
 bound$suggested_cutoff
+#> [1] 1.656817
 
 RMdimResidualPCA(dat, cutoff = bound)
-} # }
+#> 
+#> 
+#> Table: Rasch model (200 complete cases, 12 items). Total observed variance: 9.7% explained by measures, 90.3% unexplained
+#> (basis for PCA; n = 200 non-extreme cases). First-contrast cutoff = 1.657 based on 50 simulation iterations (99th percentile).
+#> 
+#> |Component | Eigenvalue| Proportion of variance|Flagged |
+#> |:---------|----------:|----------------------:|:-------|
+#> |PC1       |      1.464|                  0.121|FALSE   |
+#> |PC2       |      1.425|                  0.118|FALSE   |
+#> |PC3       |      1.281|                  0.106|FALSE   |
+#> |PC4       |      1.155|                  0.096|FALSE   |
+#> |PC5       |      1.125|                  0.093|FALSE   |
+# }
 ```

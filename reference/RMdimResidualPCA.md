@@ -146,10 +146,21 @@ RMdimResidualPCA(dat)
 # PC1 loadings vs item location plot
 RMdimResidualPCA(dat, output = "loadings")
 
-# }
-if (FALSE) { # \dontrun{
-# Simulation-based cutoff (slow): 250 Monte-Carlo iterations
-bound <- RMdimResidualPCACutoff(dat, iterations = 250, parallel = FALSE, seed = 1)
+
+# Simulation-based cutoff (use 250+ iterations in real analyses)
+bound <- RMdimResidualPCACutoff(dat, iterations = 50, parallel = FALSE, seed = 1)
 RMdimResidualPCA(dat, cutoff = bound)
-} # }
+#> 
+#> 
+#> Table: Rasch model (200 complete cases, 12 items). Total observed variance: 9.7% explained by measures, 90.3% unexplained
+#> (basis for PCA; n = 200 non-extreme cases). First-contrast cutoff = 1.657 based on 50 simulation iterations (99th percentile).
+#> 
+#> |Component | Eigenvalue| Proportion of variance|Flagged |
+#> |:---------|----------:|----------------------:|:-------|
+#> |PC1       |      1.464|                  0.121|FALSE   |
+#> |PC2       |      1.425|                  0.118|FALSE   |
+#> |PC3       |      1.281|                  0.106|FALSE   |
+#> |PC4       |      1.155|                  0.096|FALSE   |
+#> |PC5       |      1.125|                  0.093|FALSE   |
+# }
 ```

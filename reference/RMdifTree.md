@@ -266,6 +266,7 @@ Computational and Graphical Statistics, 27*, 685-700.
 # \donttest{
 if (requireNamespace("psychotree", quietly = TRUE) &&
     requireNamespace("partykit", quietly = TRUE) &&
+    requireNamespace("difR", quietly = TRUE) &&
     requireNamespace("iarm", quietly = TRUE)) {
   data("DIFSimPC", package = "psychotree")
 
@@ -282,16 +283,27 @@ if (requireNamespace("psychotree", quietly = TRUE) &&
   # Tree object (for plotting via partykit::plot)
   tree <- RMdifTree(items, covariates = covs, output = "tree")
   plot(tree)
+
+  # Stability assessment refits the tree on B resamples.
+  # (use more resamples, e.g. 100+, in real analyses)
+  if (requireNamespace("stablelearner", quietly = TRUE)) {
+    kbl <- RMdifTree(items, covariates = covs,
+                     purification = "iterative", p_adj = "fdr",
+                     stability = TRUE, stability_B = 25)
+    kbl                          # main effect-size kable
+    attr(kbl, "stability_kable") # pre-rendered stability kable
+    attr(kbl, "stability")       # raw stability data.frame
+  }
 }
 
+#> Error in root.matrix(switch(vcov, opg = chol2inv(chol(meat)), info = bread,  : 
+#>   Matrix is not positive semidefinite
+#> Error in root.matrix(switch(vcov, opg = chol2inv(chol(meat)), info = bread,  : 
+#>   Matrix is not positive semidefinite
+#> Stability assessment notes (suppressed during fitting): 137 'minimum score not zero' rescaling warning(s); 21 'items with null categories' warning(s). These reflect sparsity in some resamples and are normal sampling variability; selection-frequency and cutpoint summaries are based on resamples that completed successfully.
+#>     Variable    Type Selected_orig Selection_freq_pct Cutpoint_mean Cutpoint_sd
+#> 1        age numeric          TRUE                100       42.9706      8.1556
+#> 2     gender  factor          TRUE                100            NA          NA
+#> 3 motivation ordered         FALSE                  4            NA          NA
 # }
-if (FALSE) { # \dontrun{
-# Stability assessment refits the tree on B resamples -- slow.
-kbl <- RMdifTree(items, covariates = covs,
-                 purification = "iterative", p_adj = "fdr",
-                 stability = TRUE, stability_B = 100)
-kbl                          # main effect-size kable
-attr(kbl, "stability_kable") # pre-rendered stability kable
-attr(kbl, "stability")       # raw stability data.frame
-} # }
 ```

@@ -169,22 +169,24 @@ Adams, R. J. (2005). Reliability as a measurement design effect.
 
 ``` r
 # \donttest{
-set.seed(1)
-RMreliability(eRm::raschdat1[, 1:20], draws = 1000)
+if (requireNamespace("ggdist", quietly = TRUE)) {
+  set.seed(1)
+  RMreliability(eRm::raschdat1[, 1:20], draws = 1000)
+
+  # Bootstrap CI for PSI and Empirical
+  # (use more bootstrap iterations, e.g. 200+, in real analyses)
+  RMreliability(eRm::raschdat1[, 1:20], draws = 1000,
+                boot = TRUE, boot_iter = 25, parallel = FALSE, seed = 42)
+}
 #> 
 #> 
-#> Table: Reliability for 20 items, n = 100. PSI excludes min/max scoring respondents.
+#> Table: Reliability for 20 items, n = 100. PSI excludes min/max scoring respondents. Bootstrap PSI is computed from mirt MLE thetas (matches eRm::SepRel to ~0.001 in typical data) for speed.
 #> 
 #> |Metric           | Estimate| Lower (95% HDCI)| Upper (95% HDCI)|Notes                       |
 #> |:----------------|--------:|----------------:|----------------:|:---------------------------|
-#> |Cronbach's alpha |    0.754|               NA|               NA|no bootstrap                |
-#> |PSI              |    0.747|               NA|               NA|no bootstrap                |
-#> |Empirical (WLE)  |    0.791|               NA|               NA|no bootstrap                |
-#> |RMU (WLE)        |    0.752|            0.683|            0.818|1000 PVs, 50 RMU iterations |
+#> |Cronbach's alpha |    0.754|            0.701|            0.813|25 bootstrap resamples      |
+#> |PSI              |    0.747|            0.703|            0.786|25 bootstrap resamples      |
+#> |Empirical (WLE)  |    0.791|            0.761|            0.818|25 bootstrap resamples      |
+#> |RMU (WLE)        |    0.753|            0.684|            0.819|1000 PVs, 50 RMU iterations |
 # }
-if (FALSE) { # \dontrun{
-# Bootstrap CI for PSI and Empirical (slow: 200 bootstrap iterations)
-RMreliability(eRm::raschdat1[, 1:20], draws = 1000,
-              boot = TRUE, boot_iter = 200, parallel = FALSE, seed = 42)
-} # }
 ```

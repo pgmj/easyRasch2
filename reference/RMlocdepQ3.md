@@ -111,10 +111,27 @@ RMlocdepQ3(sim_data)
 
 # Get the underlying data.frame
 q3_df <- RMlocdepQ3(sim_data, output = "dataframe")
+
+# Simulation-based cutoff (use 500+ iterations in real analyses)
+if (requireNamespace("ggdist", quietly = TRUE)) {
+  cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 50, parallel = FALSE)
+  RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
+}
+#> 
+#> 
+#> Table: Dynamic cut-off: 0.228 (mean Q3 = -0.012 + 0.24). Correlations exceeding the cut-off may indicate local dependence.
+#> 
+#> |       |Item1 |Item2 |Item3 |Item4 |Item5 |Item6 |Item7 |Item8 |Item9 |Item10 |above_cutoff |
+#> |:------|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:------|:------------|
+#> |Item1  |      |      |      |      |      |      |      |      |      |       |             |
+#> |Item2  |0.08  |      |      |      |      |      |      |      |      |       |             |
+#> |Item3  |-0.07 |-0.09 |      |      |      |      |      |      |      |       |             |
+#> |Item4  |-0.07 |-0.12 |-0.03 |      |      |      |      |      |      |       |             |
+#> |Item5  |-0.09 |0.02  |0.08  |-0.04 |      |      |      |      |      |       |             |
+#> |Item6  |-0.03 |-0.02 |-0.07 |0.09  |-0.1  |      |      |      |      |       |             |
+#> |Item7  |-0.05 |-0.03 |0.04  |0.13  |0.08  |0     |      |      |      |       |             |
+#> |Item8  |0.07  |0.05  |0     |-0.19 |0.05  |-0.06 |-0.05 |      |      |       |             |
+#> |Item9  |0.08  |0.05  |-0.02 |-0.07 |-0.09 |0.07  |0.04  |0.12  |      |       |             |
+#> |Item10 |-0.07 |-0.05 |0.08  |-0.04 |-0.02 |-0.12 |-0.04 |-0.03 |0     |       |             |
 # }
-if (FALSE) { # \dontrun{
-# Simulation-based cutoff (slow): 100+ Monte-Carlo iterations
-cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 100)
-RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
-} # }
 ```

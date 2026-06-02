@@ -191,24 +191,26 @@ from Complex Samples. <em>Psychometrika, 56</em>(2), 177-196.
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">RMreliability</span><span class="op">(</span><span class="fu">eRm</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/eRm/man/eRm.data.html" class="external-link">raschdat1</a></span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">20</span><span class="op">]</span>, draws <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggdist"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMreliability</span><span class="op">(</span><span class="fu">eRm</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/eRm/man/eRm.data.html" class="external-link">raschdat1</a></span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">20</span><span class="op">]</span>, draws <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Bootstrap CI for PSI and Empirical</span></span></span>
+<span class="r-in"><span>  <span class="co"># (use more bootstrap iterations, e.g. 200+, in real analyses)</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMreliability</span><span class="op">(</span><span class="fu">eRm</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/eRm/man/eRm.data.html" class="external-link">raschdat1</a></span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">20</span><span class="op">]</span>, draws <span class="op">=</span> <span class="fl">1000</span>,</span></span>
+<span class="r-in"><span>                boot <span class="op">=</span> <span class="cn">TRUE</span>, boot_iter <span class="op">=</span> <span class="fl">25</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Reliability for 20 items, n = 100. PSI excludes min/max scoring respondents.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Reliability for 20 items, n = 100. PSI excludes min/max scoring respondents. Bootstrap PSI is computed from mirt MLE thetas (matches eRm::SepRel to ~0.001 in typical data) for speed.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |Metric           | Estimate| Lower (95% HDCI)| Upper (95% HDCI)|Notes                       |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |:----------------|--------:|----------------:|----------------:|:---------------------------|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Cronbach's alpha |    0.754|               NA|               NA|no bootstrap                |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |PSI              |    0.747|               NA|               NA|no bootstrap                |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Empirical (WLE)  |    0.791|               NA|               NA|no bootstrap                |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |RMU (WLE)        |    0.752|            0.683|            0.818|1000 PVs, 50 RMU iterations |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Cronbach's alpha |    0.754|            0.701|            0.813|25 bootstrap resamples      |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |PSI              |    0.747|            0.703|            0.786|25 bootstrap resamples      |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Empirical (WLE)  |    0.791|            0.761|            0.818|25 bootstrap resamples      |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |RMU (WLE)        |    0.753|            0.684|            0.819|1000 PVs, 50 RMU iterations |</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Bootstrap CI for PSI and Empirical (slow: 200 bootstrap iterations)</span></span></span>
-<span class="r-in"><span><span class="fu">RMreliability</span><span class="op">(</span><span class="fu">eRm</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/eRm/man/eRm.data.html" class="external-link">raschdat1</a></span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">20</span><span class="op">]</span>, draws <span class="op">=</span> <span class="fl">1000</span>,</span></span>
-<span class="r-in"><span>              boot <span class="op">=</span> <span class="cn">TRUE</span>, boot_iter <span class="op">=</span> <span class="fl">200</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

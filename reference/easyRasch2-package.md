@@ -13,7 +13,7 @@ item-response plots. A distinguishing feature is the use of
 simulation-based critical values to replace rule-of-thumb cutoffs for
 conditional infit mean-square, Yen's Q3 local-dependence statistic, the
 largest residual-PCA eigenvalue, and ordinal CFA fit indices. Outputs
-are 'knitr::kable()' tables and 'ggplot2' figures suitable for direct
+are knitr::kable() tables and 'ggplot2' figures suitable for direct
 inclusion in 'Quarto' and 'R Markdown' reports.
 
 ## See also

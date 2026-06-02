@@ -211,24 +211,19 @@ Modeling. *Journal of Statistical Software, 48*(2), 1-36.
 
 ``` r
 # \donttest{
-data("raschdat1", package = "eRm")
-RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
-            parallel = FALSE, seed = 1)
-#> 
-#> 
-#> Table: Rasch Model posterior-predictive CFA fit-index check. Observed CFA fit (one-factor, lavaan WLSMV, ordered = TRUE) vs simulated null distribution under RM unidimensionality. n = 100 complete cases, 8 items, 39 parametric-bootstrap iterations. Cutoffs are one-sided at the 99th percentile of the simulated distribution; an item is flagged when the observed value lies in the worst 1% of the null distribution in the unfavourable direction.
-#> 
-#> |Index | Observed| Cutoff|Direction  |Flagged |
-#> |:-----|--------:|------:|:----------|:-------|
-#> |CFI   |   0.9894| 0.3237|< 1st pct  |        |
-#> |RMSEA |   0.0162| 0.0832|> 99th pct |        |
-#> |SRMR  |   0.1158| 0.2287|> 99th pct |        |
+if (requireNamespace("lavaan", quietly = TRUE)) {
+  data("raschdat1", package = "eRm")
+
+  # Few iterations for a fast example; use 250+ in real analyses
+  result <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
+                           parallel = FALSE, seed = 1, output = "list")
+  result$observed
+  result$flagged
+
+  if (requireNamespace("ggplot2", quietly = TRUE)) {
+    RMdimCFAPlot(result)
+  }
+}
+
 # }
-if (FALSE) { # \dontrun{
-# Default 250 iterations with parallel processing
-result <- RMdimCFACutoff(raschdat1[, 1:8], n_cores = 4, seed = 1)
-result$observed
-result$flagged
-RMdimCFAPlot(result)
-} # }
 ```
