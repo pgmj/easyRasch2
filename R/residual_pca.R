@@ -95,10 +95,9 @@
 #'
 #' # PC1 loadings vs item location plot
 #' RMdimResidualPCA(dat, output = "loadings")
-#' }
-#' \dontrun{
-#' # Simulation-based cutoff (slow): 250 Monte-Carlo iterations
-#' bound <- RMdimResidualPCACutoff(dat, iterations = 250, parallel = FALSE, seed = 1)
+#'
+#' # Simulation-based cutoff (use 250+ iterations in real analyses)
+#' bound <- RMdimResidualPCACutoff(dat, iterations = 50, parallel = FALSE, seed = 1)
 #' RMdimResidualPCA(dat, cutoff = bound)
 #' }
 RMdimResidualPCA <- function(data,
@@ -402,14 +401,15 @@ RMdimResidualPCA <- function(data,
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' set.seed(1)
 #' dat <- as.data.frame(
 #'   matrix(sample(0:1, 200 * 12, replace = TRUE), nrow = 200, ncol = 12)
 #' )
 #' colnames(dat) <- paste0("I", 1:12)
 #'
-#' bound <- RMdimResidualPCACutoff(dat, iterations = 200, parallel = FALSE, seed = 1)
+#' # Few iterations for a fast example; use 250+ in real analyses
+#' bound <- RMdimResidualPCACutoff(dat, iterations = 50, parallel = FALSE, seed = 1)
 #' bound$suggested_cutoff
 #'
 #' RMdimResidualPCA(dat, cutoff = bound)

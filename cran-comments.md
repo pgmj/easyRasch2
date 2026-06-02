@@ -1,6 +1,22 @@
+## Resubmission
+
+This is a resubmission addressing the reviewer's feedback:
+
+* **Single quotes around a function name.** Removed the single quotes
+  around `knitr::kable()` in the `Description` field of `DESCRIPTION`
+  (it is a function call, not a package/software name).
+* **`\dontrun{}` → `\donttest{}`.** All `\dontrun{}` example blocks have
+  been replaced with `\donttest{}`, since none of them cannot
+  run (they were only simulation-heavy). Iteration / imputation /
+  bootstrap counts in these examples have been trimmed so each runs
+  quickly, with an inline comment advising larger values for real
+  analyses. Examples relying on suggested packages are guarded with
+  `requireNamespace(..., quietly = TRUE)`. The package now contains no
+  `\dontrun{}` examples.
+
 ## Submission summary
 
-This is the first CRAN submission of **easyRasch2**, an R package that
+**easyRasch2** is an R package that
 streamlines Rasch measurement theory workflows (local dependence,
 conditional infit, item-restscore, DIF via LR test / partial gamma /
 Rasch trees, dimensionality via Martin-Löf / residual PCA / CFA,
@@ -35,10 +51,10 @@ simulation-based cutoffs for several diagnostics.
   * Examples that exceed CRAN's 5 s budget but run correctly are wrapped
     in `\donttest{}` so they are still executed by
     `R CMD check --run-donttest` and by reverse-dependency checks.
-  * `\dontrun{}` is reserved for examples that genuinely cannot run on
-    CRAN: parallel back-ends via `mirai`, multiple-imputation workflows
-    via `mice`, and the `mirt`-based residual-PCA simulations whose
-    runtime exceeds reasonable check budgets.
+  * The package contains no `\dontrun{}` examples. Examples that use
+    suggested packages (e.g. `mice`, `lavaan`, `ggplot2`, `ggdist`,
+    `stablelearner`, `partykit`, `psychotree`, `difR`) are guarded with
+    `requireNamespace(..., quietly = TRUE)`.
 * **Suggested packages** are all guarded with `requireNamespace(...,
   quietly = TRUE)` before use, with a clear `stop()` message instructing
   the user how to install them. The package's hard dependencies
@@ -77,7 +93,7 @@ imposes no reverse-dependency burden.
   `RMdifGammaCutoff()`, `RMlocdepGammaCutoff()`, `RMlocdepQ3Cutoff()`,
   `RMdimResidualPCACutoff()`, `RMdimCFACutoff()`). These are the most computationally
   expensive entry points and account for the majority of `\donttest{}`
-  / `\dontrun{}` examples.
+  examples.
 * Spelling: the package uses British spellings in some user-facing
   prose ("behaviour", "centred") consistent with the underlying
   statistical literature. No misspellings are expected from

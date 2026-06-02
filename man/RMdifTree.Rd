@@ -197,6 +197,7 @@ has been adapted here under the MIT licence (see file header).
 \donttest{
 if (requireNamespace("psychotree", quietly = TRUE) &&
     requireNamespace("partykit", quietly = TRUE) &&
+    requireNamespace("difR", quietly = TRUE) &&
     requireNamespace("iarm", quietly = TRUE)) {
   data("DIFSimPC", package = "psychotree")
 
@@ -213,16 +214,18 @@ if (requireNamespace("psychotree", quietly = TRUE) &&
   # Tree object (for plotting via partykit::plot)
   tree <- RMdifTree(items, covariates = covs, output = "tree")
   plot(tree)
+
+  # Stability assessment refits the tree on B resamples.
+  # (use more resamples, e.g. 100+, in real analyses)
+  if (requireNamespace("stablelearner", quietly = TRUE)) {
+    kbl <- RMdifTree(items, covariates = covs,
+                     purification = "iterative", p_adj = "fdr",
+                     stability = TRUE, stability_B = 25)
+    kbl                          # main effect-size kable
+    attr(kbl, "stability_kable") # pre-rendered stability kable
+    attr(kbl, "stability")       # raw stability data.frame
+  }
 }
-}
-\dontrun{
-# Stability assessment refits the tree on B resamples -- slow.
-kbl <- RMdifTree(items, covariates = covs,
-                 purification = "iterative", p_adj = "fdr",
-                 stability = TRUE, stability_B = 100)
-kbl                          # main effect-size kable
-attr(kbl, "stability_kable") # pre-rendered stability kable
-attr(kbl, "stability")       # raw stability data.frame
 }
 
 }

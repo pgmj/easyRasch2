@@ -68,11 +68,12 @@
 #'
 #' # Get the underlying data.frame
 #' q3_df <- RMlocdepQ3(sim_data, output = "dataframe")
+#'
+#' # Simulation-based cutoff (use 500+ iterations in real analyses)
+#' if (requireNamespace("ggdist", quietly = TRUE)) {
+#'   cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 50, parallel = FALSE)
+#'   RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
 #' }
-#' \dontrun{
-#' # Simulation-based cutoff (slow): 100+ Monte-Carlo iterations
-#' cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 100)
-#' RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
 #' }
 RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
   # --- Input validation -------------------------------------------------------
@@ -240,20 +241,22 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' set.seed(42)
-#' sim_data <- as.data.frame(
-#'   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-#' )
-#' colnames(sim_data) <- paste0("Item", 1:10)
+#' \donttest{
+#' if (requireNamespace("ggdist", quietly = TRUE)) {
+#'   set.seed(42)
+#'   sim_data <- as.data.frame(
+#'     matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+#'   )
+#'   colnames(sim_data) <- paste0("Item", 1:10)
 #'
-#' # Run 100 iterations sequentially for a quick demo
-#' cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 100, parallel = FALSE,
-#'                                seed = 42)
-#' cutoff_res$suggested_cutoff  # 99th percentile
+#'   # Few iterations for a fast example; use 500+ in real analyses
+#'   cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 50, parallel = FALSE,
+#'                                  seed = 42)
+#'   cutoff_res$suggested_cutoff  # 99th percentile
 #'
-#' # Use the cutoff in RMlocdepQ3()
-#' RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
+#'   # Use the cutoff in RMlocdepQ3()
+#'   RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
+#' }
 #' }
 RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
                               n_cores = NULL, verbose = FALSE, seed = NULL,

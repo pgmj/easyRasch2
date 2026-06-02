@@ -67,11 +67,12 @@ RMlocdepQ3(sim_data)
 
 # Get the underlying data.frame
 q3_df <- RMlocdepQ3(sim_data, output = "dataframe")
+
+# Simulation-based cutoff (use 500+ iterations in real analyses)
+if (requireNamespace("ggdist", quietly = TRUE)) {
+  cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 50, parallel = FALSE)
+  RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
 }
-\dontrun{
-# Simulation-based cutoff (slow): 100+ Monte-Carlo iterations
-cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 100)
-RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
 }
 }
 \references{

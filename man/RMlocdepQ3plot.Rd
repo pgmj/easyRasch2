@@ -66,25 +66,28 @@ The \code{ggplot2}, \code{ggdist}, \code{mirt}, and \code{scales} packages must 
 installed (most are in Suggests, not Imports).
 }
 \examples{
-\dontrun{
-set.seed(42)
-sim_data <- as.data.frame(
-  matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-)
-colnames(sim_data) <- paste0("Item", 1:10)
+\donttest{
+if (requireNamespace("ggplot2", quietly = TRUE) &&
+    requireNamespace("ggdist", quietly = TRUE)) {
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+  )
+  colnames(sim_data) <- paste0("Item", 1:10)
 
-# Run simulation
-cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 100,
-                               parallel = FALSE, seed = 42)
+  # Run simulation (use more iterations, e.g. 500+, in real analyses)
+  cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 50,
+                                 parallel = FALSE, seed = 42)
 
-# Simulated distribution only
-RMlocdepQ3Plot(cutoff_res)
+  # Simulated distribution only
+  RMlocdepQ3Plot(cutoff_res)
 
-# With observed Q3 overlaid
-RMlocdepQ3Plot(cutoff_res, data = sim_data)
+  # With observed Q3 overlaid
+  RMlocdepQ3Plot(cutoff_res, data = sim_data)
 
-# Top 10 pairs by departure from null
-RMlocdepQ3Plot(cutoff_res, data = sim_data, n_pairs = 10)
+  # Top 10 pairs by departure from null
+  RMlocdepQ3Plot(cutoff_res, data = sim_data, n_pairs = 10)
+}
 }
 }
 \seealso{

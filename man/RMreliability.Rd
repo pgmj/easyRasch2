@@ -106,13 +106,15 @@ silently dropped.
 }
 \examples{
 \donttest{
-set.seed(1)
-RMreliability(eRm::raschdat1[, 1:20], draws = 1000)
+if (requireNamespace("ggdist", quietly = TRUE)) {
+  set.seed(1)
+  RMreliability(eRm::raschdat1[, 1:20], draws = 1000)
+
+  # Bootstrap CI for PSI and Empirical
+  # (use more bootstrap iterations, e.g. 200+, in real analyses)
+  RMreliability(eRm::raschdat1[, 1:20], draws = 1000,
+                boot = TRUE, boot_iter = 25, parallel = FALSE, seed = 42)
 }
-\dontrun{
-# Bootstrap CI for PSI and Empirical (slow: 200 bootstrap iterations)
-RMreliability(eRm::raschdat1[, 1:20], draws = 1000,
-              boot = TRUE, boot_iter = 200, parallel = FALSE, seed = 42)
 }
 }
 \references{

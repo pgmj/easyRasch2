@@ -126,16 +126,19 @@
 #'
 #' @examples
 #' \donttest{
-#' data("raschdat1", package = "eRm")
-#' RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
-#'             parallel = FALSE, seed = 1)
+#' if (requireNamespace("lavaan", quietly = TRUE)) {
+#'   data("raschdat1", package = "eRm")
+#'
+#'   # Few iterations for a fast example; use 250+ in real analyses
+#'   result <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
+#'                            parallel = FALSE, seed = 1, output = "list")
+#'   result$observed
+#'   result$flagged
+#'
+#'   if (requireNamespace("ggplot2", quietly = TRUE)) {
+#'     RMdimCFAPlot(result)
+#'   }
 #' }
-#' \dontrun{
-#' # Default 250 iterations with parallel processing
-#' result <- RMdimCFACutoff(raschdat1[, 1:8], n_cores = 4, seed = 1)
-#' result$observed
-#' result$flagged
-#' RMdimCFAPlot(result)
 #' }
 #'
 #' @importFrom rlang .data
@@ -448,11 +451,14 @@ render_cfa_kable <- function(result) {
 #'
 #' @examples
 #' \donttest{
-#' data("raschdat1", package = "eRm")
-#' res <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
-#'                    parallel = FALSE, seed = 1, output = "list")
-#' RMdimCFAPlot(res)                 # use the percentile from RMdimCFACutoff()
-#' RMdimCFAPlot(res, percentile = 95) # override (no re-simulation needed)
+#' if (requireNamespace("lavaan", quietly = TRUE) &&
+#'     requireNamespace("ggplot2", quietly = TRUE)) {
+#'   data("raschdat1", package = "eRm")
+#'   res <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
+#'                      parallel = FALSE, seed = 1, output = "list")
+#'   RMdimCFAPlot(res)                 # use the percentile from RMdimCFACutoff()
+#'   RMdimCFAPlot(res, percentile = 95) # override (no re-simulation needed)
+#' }
 #' }
 #'
 #' @importFrom rlang .data

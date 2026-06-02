@@ -91,20 +91,22 @@ Parallel processing is provided by the \code{mirai} package (optional). Install
 it with \code{install.packages("mirai")} to enable parallelisation.
 }
 \examples{
-\dontrun{
-set.seed(42)
-sim_data <- as.data.frame(
-  matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-)
-colnames(sim_data) <- paste0("Item", 1:10)
+\donttest{
+if (requireNamespace("ggdist", quietly = TRUE)) {
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+  )
+  colnames(sim_data) <- paste0("Item", 1:10)
 
-# Run 100 iterations sequentially for a quick demo
-cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 100, parallel = FALSE,
-                               seed = 42)
-cutoff_res$suggested_cutoff  # 99th percentile
+  # Few iterations for a fast example; use 500+ in real analyses
+  cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 50, parallel = FALSE,
+                                 seed = 42)
+  cutoff_res$suggested_cutoff  # 99th percentile
 
-# Use the cutoff in RMlocdepQ3()
-RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
+  # Use the cutoff in RMlocdepQ3()
+  RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
+}
 }
 }
 \seealso{

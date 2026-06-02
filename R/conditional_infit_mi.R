@@ -71,30 +71,32 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' library(mice)
+#' \donttest{
+#' if (requireNamespace("mice", quietly = TRUE)) {
+#'   # Create example data with missing values
+#'   set.seed(42)
+#'   sim_data <- as.data.frame(
+#'     matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
+#'   )
+#'   colnames(sim_data) <- paste0("Item", 1:8)
+#'   sim_data[sample(length(sim_data), 0.10 * length(sim_data))] <- NA
 #'
-#' # Create example data with missing values
-#' set.seed(42)
-#' sim_data <- as.data.frame(
-#'   matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
-#' )
-#' colnames(sim_data) <- paste0("Item", 1:8)
-#' sim_data[sample(length(sim_data), 0.10 * length(sim_data))] <- NA
+#'   # Impute (use more imputations, e.g. m = 5+, in real analyses)
+#'   imp <- mice::mice(sim_data, m = 2, method = "polr", seed = 123,
+#'                     printFlag = FALSE)
 #'
-#' # Impute
-#' imp <- mice(sim_data, m = 5, method = "polr", seed = 123, printFlag = FALSE)
+#'   # Pooled infit table (no cutoffs)
+#'   RMitemInfitMI(imp)
 #'
-#' # Pooled infit table (no cutoffs)
-#' RMitemInfitMI(imp)
+#'   # With simulation-based cutoffs
+#'   # (use more iterations, e.g. 250+, in real analyses)
+#'   cutoff_mi <- RMitemInfitCutoffMI(imp, iterations = 50, parallel = FALSE,
+#'                                 seed = 42)
+#'   RMitemInfitMI(imp, cutoff = cutoff_mi)
 #'
-#' # With simulation-based cutoffs
-#' cutoff_mi <- RMitemInfitCutoffMI(imp, iterations = 250, parallel = FALSE,
-#'                               seed = 42)
-#' RMitemInfitMI(imp, cutoff = cutoff_mi)
-#'
-#' # As data.frame
-#' df <- RMitemInfitMI(imp, cutoff = cutoff_mi, output = "dataframe")
+#'   # As data.frame
+#'   df <- RMitemInfitMI(imp, cutoff = cutoff_mi, output = "dataframe")
+#' }
 #' }
 RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable",
                            sort) {

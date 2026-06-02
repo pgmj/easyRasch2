@@ -139,7 +139,7 @@ a non-parametric estimate of the latent distribution, so no distributional
 assumption about \eqn{\theta} is needed.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(1)
 # Build 2-dimensional polytomous data: 4 items per subscale, 5 categories
 n     <- 400
@@ -154,16 +154,17 @@ make_pcm <- function(theta, n_items, taus) {
 dat <- cbind(make_pcm(theta1, 4, NULL), make_pcm(theta2, 4, NULL))
 colnames(dat) <- paste0("I", 1:8)
 
+# Few iterations for a fast example; use 1000+ in real analyses
 RMdimMartinLof(dat,
             partition = list(c("I1","I2","I3","I4"),
                              c("I5","I6","I7","I8")),
-            iterations = 200, parallel = FALSE, seed = 1)
+            iterations = 100, parallel = FALSE, seed = 1)
 
-# Sequential stopping: stop as soon as h = 50 simulated statistics exceed
+# Sequential stopping: stop as soon as h = 25 simulated statistics exceed
 # the observed one (cuts compute time under H0).
 RMdimMartinLof(dat,
             partition = c(1,1,1,1,2,2,2,2),
-            iterations = 1000, stopping = "sequential", h = 50,
+            iterations = 200, stopping = "sequential", h = 25,
             seed = 1)
 }
 }

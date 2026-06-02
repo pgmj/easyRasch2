@@ -29,11 +29,14 @@ the chosen percentile of the simulation in the unfavourable direction
 }
 \examples{
 \donttest{
-data("raschdat1", package = "eRm")
-res <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
-                   parallel = FALSE, seed = 1, output = "list")
-RMdimCFAPlot(res)                 # use the percentile from RMdimCFACutoff()
-RMdimCFAPlot(res, percentile = 95) # override (no re-simulation needed)
+if (requireNamespace("lavaan", quietly = TRUE) &&
+    requireNamespace("ggplot2", quietly = TRUE)) {
+  data("raschdat1", package = "eRm")
+  res <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
+                     parallel = FALSE, seed = 1, output = "list")
+  RMdimCFAPlot(res)                 # use the percentile from RMdimCFACutoff()
+  RMdimCFAPlot(res, percentile = 95) # override (no re-simulation needed)
+}
 }
 
 }

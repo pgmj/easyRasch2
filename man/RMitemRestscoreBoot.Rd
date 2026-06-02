@@ -99,39 +99,43 @@ it with \code{install.packages("mirai")} to enable parallelisation.
 The \code{iarm} package must be installed (it is in Suggests, not Imports).
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(42)
 sim_data <- as.data.frame(
-  matrix(sample(0:1, 800 * 8, replace = TRUE), nrow = 800, ncol = 8)
+  matrix(sample(0:1, 400 * 8, replace = TRUE), nrow = 400, ncol = 8)
 )
 colnames(sim_data) <- paste0("Item", 1:8)
 
+# Few iterations for a fast example; use 100+ in real analyses
 # Default kable output (only items flagged > cutoff\%)
-RMitemRestscoreBoot(sim_data, iterations = 100, samplesize = 400,
+RMitemRestscoreBoot(sim_data, iterations = 50, samplesize = 300,
                 parallel = FALSE, seed = 1)
 
 # Per-item summary data.frame (all classifications, including "no misfit")
-summary_df <- RMitemRestscoreBoot(sim_data, iterations = 100, samplesize = 400,
+summary_df <- RMitemRestscoreBoot(sim_data, iterations = 50, samplesize = 300,
                               parallel = FALSE, seed = 1,
                               output = "dataframe")
 
 # Per-iteration long data for custom plotting
-raw_df <- RMitemRestscoreBoot(sim_data, iterations = 100, samplesize = 400,
+raw_df <- RMitemRestscoreBoot(sim_data, iterations = 50, samplesize = 300,
                           parallel = FALSE, seed = 1, output = "raw")
 
 # Distribution of (expected - observed) across iterations, per item
-ggplot(raw_df, aes(x = Item, y = diff)) +
-  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
-  geom_violin(fill = "grey90", colour = NA) +
-  geom_jitter(aes(colour = item_restscore),
-              width = 0.15, alpha = 0.5, size = 0.8) +
-  scale_colour_manual(values = c("overfit"   = "#377eb8",
-                                 "underfit"  = "#e41a1c",
-                                 "no misfit" = "grey60")) +
-  labs(y = "Expected - observed restscore correlation",
-       colour = NULL) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  library(ggplot2)
+  ggplot(raw_df, aes(x = Item, y = diff)) +
+    geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
+    geom_violin(fill = "grey90", colour = NA) +
+    geom_jitter(aes(colour = item_restscore),
+                width = 0.15, alpha = 0.5, size = 0.8) +
+    scale_colour_manual(values = c("overfit"   = "#377eb8",
+                                   "underfit"  = "#e41a1c",
+                                   "no misfit" = "grey60")) +
+    labs(y = "Expected - observed restscore correlation",
+         colour = NULL) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
 }
 }
 \references{

@@ -73,28 +73,30 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' library(mice)
+#' \donttest{
+#' if (requireNamespace("mice", quietly = TRUE)) {
+#'   # Create example data with missing values
+#'   set.seed(42)
+#'   sim_data <- as.data.frame(
+#'     matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
+#'   )
+#'   colnames(sim_data) <- paste0("Item", 1:8)
+#'   # Introduce ~10% MCAR missingness
+#'   sim_data[sample(length(sim_data), 0.10 * length(sim_data))] <- NA
 #'
-#' # Create example data with missing values
-#' set.seed(42)
-#' sim_data <- as.data.frame(
-#'   matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
-#' )
-#' colnames(sim_data) <- paste0("Item", 1:8)
-#' # Introduce ~10% MCAR missingness
-#' sim_data[sample(length(sim_data), 0.10 * length(sim_data))] <- NA
+#'   # Impute (use more imputations, e.g. m = 5+, in real analyses)
+#'   imp <- mice::mice(sim_data, m = 2, method = "polr", seed = 123,
+#'                     printFlag = FALSE)
 #'
-#' # Impute
-#' imp <- mice(sim_data, m = 5, method = "polr", seed = 123, printFlag = FALSE)
+#'   # Compute simulation-based cutoffs across imputations
+#'   # (use more iterations, e.g. 250+, in real analyses)
+#'   cutoff_mi <- RMitemInfitCutoffMI(imp, iterations = 50, parallel = FALSE,
+#'                                 seed = 42)
+#'   cutoff_mi$item_cutoffs
 #'
-#' # Compute simulation-based cutoffs across imputations
-#' cutoff_mi <- RMitemInfitCutoffMI(imp, iterations = 250, parallel = FALSE,
-#'                               seed = 42)
-#' cutoff_mi$item_cutoffs
-#'
-#' # Use with RMitemInfitMI()
-#' RMitemInfitMI(imp, cutoff = cutoff_mi)
+#'   # Use with RMitemInfitMI()
+#'   RMitemInfitMI(imp, cutoff = cutoff_mi)
+#' }
 #' }
 RMitemInfitCutoffMI <- function(mids_object, iterations = 500, parallel = TRUE,
                              n_cores = NULL, verbose = FALSE, seed = NULL,

@@ -98,10 +98,9 @@ RMdimResidualPCA(dat)
 
 # PC1 loadings vs item location plot
 RMdimResidualPCA(dat, output = "loadings")
-}
-\dontrun{
-# Simulation-based cutoff (slow): 250 Monte-Carlo iterations
-bound <- RMdimResidualPCACutoff(dat, iterations = 250, parallel = FALSE, seed = 1)
+
+# Simulation-based cutoff (use 250+ iterations in real analyses)
+bound <- RMdimResidualPCACutoff(dat, iterations = 50, parallel = FALSE, seed = 1)
 RMdimResidualPCA(dat, cutoff = bound)
 }
 }

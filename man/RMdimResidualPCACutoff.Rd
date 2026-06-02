@@ -75,14 +75,15 @@ some category isn't represented) are silently dropped. The \code{iarm} package
 is \strong{not} required.
 }
 \examples{
-\dontrun{
+\donttest{
 set.seed(1)
 dat <- as.data.frame(
   matrix(sample(0:1, 200 * 12, replace = TRUE), nrow = 200, ncol = 12)
 )
 colnames(dat) <- paste0("I", 1:12)
 
-bound <- RMdimResidualPCACutoff(dat, iterations = 200, parallel = FALSE, seed = 1)
+# Few iterations for a fast example; use 250+ in real analyses
+bound <- RMdimResidualPCACutoff(dat, iterations = 50, parallel = FALSE, seed = 1)
 bound$suggested_cutoff
 
 RMdimResidualPCA(dat, cutoff = bound)
