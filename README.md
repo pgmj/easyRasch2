@@ -1,6 +1,10 @@
 # easyRasch2
 
 <!-- badges: start -->
+[![CRAN Version](https://www.r-pkg.org/badges/version/easyRasch2)](https://cran.r-project.org/package=easyRasch2)
+[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html)
+[![Downloads](https://cranlogs.r-pkg.org/badges/easyRasch2?color=brightgreen)](https://CRAN.R-project.org/package=easyRasch2)
+![Downloads Status](https://cranlogs.r-pkg.org/badges/grand-total/easyRasch2)
 <a href="https://buymeacoffee.com/pgmj" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
 <!-- badges: end -->
 
@@ -16,7 +20,22 @@ sample.
 
 The [Get Started](https://pgmj.github.io/easyRasch2/articles/easyRasch2.html) link above contains a short introduction. For broader Rasch-analysis tutorials, see the
 [vignette](https://pgmj.github.io/raschrvignette/RaschRvign.html) for the
-sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
+archived sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
+
+## Installation
+
+Install from CRAN:
+
+```r
+install.packages("easyRasch2")
+```
+
+Install the development version from GitHub:
+
+```r
+# install.packages("remotes") # if needed
+remotes::install_github("pgmj/easyRasch2")
+```
 
 ## Key design principles
 
@@ -80,14 +99,6 @@ sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
 - `RMplotTile()` — response-distribution heatmap with optional group faceting
 - `RMplotBar()` & `RMplotStackedbar()`
 
-## Installation
-
-Install the development version from GitHub:
-
-```r
-# install.packages("remotes")
-remotes::install_github("pgmj/easyRasch2")
-```
 
 ## Example
 
