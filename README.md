@@ -2,7 +2,6 @@
 
 <!-- badges: start -->
 [![CRAN Version](https://www.r-pkg.org/badges/version/easyRasch2)](https://cran.r-project.org/package=easyRasch2)
-[![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html)
 [![Downloads](https://cranlogs.r-pkg.org/badges/easyRasch2?color=brightgreen)](https://CRAN.R-project.org/package=easyRasch2)
 ![Downloads Status](https://cranlogs.r-pkg.org/badges/grand-total/easyRasch2)
 <a href="https://buymeacoffee.com/pgmj" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
