@@ -670,8 +670,9 @@ Henninger, Mirka, Jan Radek, Rudolf Debelak, and Carolin Strobl. 2025.
 DIF and DSF in Polytomous Items.” *Behaviormetrika* 52: 221–57.
 <https://doi.org/10.1007/s41237-024-00253-2>.
 
-Johansson, Magnus. 2025. “Detecting Local Dependence in Rasch Models via
-Simulation-Based Cutoffs for Yen’s Q3.” *Preprint*.
+Johansson, Magnus. 2025. “Detecting Item Misfit in Rasch Models.”
+*Educational Methods & Psychometrics* 3 (18).
+<https://doi.org/10.61186/emp.2025.5>.
 
 Kreiner, Svend. 2007. “Validity and Objectivity: Reflections on the Role
 and Nature of Rasch Models.” *Nordic Psychology* 59 (3): 268–98.
