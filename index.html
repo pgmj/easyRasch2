@@ -55,7 +55,18 @@
 
 <p><code>easyRasch2</code> is an R package for Rasch measurement theory analysis workflows. It is the successor to <a href="https://pgmj.github.io/easyRasch/" class="external-link"><code>easyRasch</code></a>, offering a lightweight and consistent structure with proper namespacing and minimal dependencies.</p>
 <p>A central design choice is <strong>simulation-based critical values</strong> for various fit statistics. Rather than relying on rule-of-thumb cutoffs, most diagnostics are paired with a parametric-bootstrap function that generates an empirical null distribution from the fitted Rasch / PCM model and the observed sample.</p>
-<p>The <a href="https://pgmj.github.io/easyRasch2/articles/easyRasch2.html">Get Started</a> link above contains a short introduction. For broader Rasch-analysis tutorials, see the <a href="https://pgmj.github.io/raschrvignette/RaschRvign.html" class="external-link">vignette</a> for the sibling package <a href="https://pgmj.github.io/easyRasch/" class="external-link"><code>easyRasch</code></a>.</p>
+<p>The <a href="https://pgmj.github.io/easyRasch2/articles/easyRasch2.html">Get Started</a> link above contains a short introduction. For broader Rasch-analysis tutorials, see the <a href="https://pgmj.github.io/raschrvignette/RaschRvign.html" class="external-link">vignette</a> for the archived sibling package <a href="https://pgmj.github.io/easyRasch/" class="external-link"><code>easyRasch</code></a>.</p>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>Install from CRAN:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"easyRasch2"</span><span class="op">)</span></span></code></pre></div>
+<p>Install the development version from GitHub:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("remotes") # if needed</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"pgmj/easyRasch2"</span><span class="op">)</span></span></code></pre></div>
+</div>
 <div class="section level2">
 <h2 id="key-design-principles">Key design principles<a class="anchor" aria-label="anchor" href="#key-design-principles"></a>
 </h2>
@@ -160,17 +171,9 @@
 </div>
 </div>
 <div class="section level2">
-<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
-</h2>
-<p>Install the development version from GitHub:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"pgmj/easyRasch2"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
 <h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/pgmj/easyRasch2" class="external-link">easyRasch2</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"pcmdat2"</span>, package <span class="op">=</span> <span class="st">"eRm"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>mc.cores <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
@@ -249,6 +252,7 @@
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
+<li><a href="https://cloud.r-project.org/package=easyRasch2" class="external-link">View on CRAN</a></li>
 <li><a href="https://github.com/pgmj/easyRasch2/" class="external-link">Browse source code</a></li>
 <li><a href="https://github.com/pgmj/easyRasch2/issues" class="external-link">Report a bug</a></li>
 </ul>

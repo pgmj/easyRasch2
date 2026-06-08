@@ -17,7 +17,25 @@ Started](https://pgmj.github.io/easyRasch2/articles/easyRasch2.html)
 link above contains a short introduction. For broader Rasch-analysis
 tutorials, see the
 [vignette](https://pgmj.github.io/raschrvignette/RaschRvign.html) for
-the sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
+the archived sibling package
+[`easyRasch`](https://pgmj.github.io/easyRasch/).
+
+## Installation
+
+Install from CRAN:
+
+``` r
+
+install.packages("easyRasch2")
+```
+
+Install the development version from GitHub:
+
+``` r
+
+# install.packages("remotes") # if needed
+remotes::install_github("pgmj/easyRasch2")
+```
 
 ## Key design principles
 
@@ -118,16 +136,6 @@ the sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
 - [`RMplotBar()`](https://pgmj.github.io/easyRasch2/reference/RMplotBar.md)
   &
   [`RMplotStackedbar()`](https://pgmj.github.io/easyRasch2/reference/RMplotStackedbar.md)
-
-## Installation
-
-Install the development version from GitHub:
-
-``` r
-
-# install.packages("remotes")
-remotes::install_github("pgmj/easyRasch2")
-```
 
 ## Example
 

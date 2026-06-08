@@ -2,6 +2,8 @@
 
 ## easyRasch2 0.8.0
 
+### Initial CRAN release!
+
 ### Visual consistency across all plot output
 
 - Every `RM*` function that returns a `ggplot` now applies three shared
