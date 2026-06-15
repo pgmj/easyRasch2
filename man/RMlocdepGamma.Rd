@@ -38,9 +38,12 @@ capped at that total.}
 \value{
 \itemize{
 \item If \code{output = "kable"}: an object of class \code{"RMlocdepGamma"}. Internally
-a list with two \code{knitr_kable} elements --- \verb{$direction1} (rest score
-= total - Item2) and \verb{$direction2} (rest score = total - Item1) ---
-each with columns "Item 1", "Item 2", "Partial gamma",
+a list with two \code{knitr_kable} elements, \verb{$direction1} and
+\verb{$direction2}. In both, the rest score is the total score minus
+Item 2 (the second column); the two elements list each item pair in
+the two possible orders, so together they cover both rest-score
+directions for every pair. Each has columns "Item 1", "Item 2",
+"Partial gamma",
 "Adj. p-value (BH)", and "p-value sign." (a star-string indicator
 from \code{iarm::partgam_LD()}). When \code{cutoff} is provided, additional
 columns "Gamma low", "Gamma high", and "Flagged" are included.

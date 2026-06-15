@@ -23,11 +23,13 @@
 #'   of the Q3 correlation matrix. When `cutoff` is provided, a footnote
 #'   describing the dynamic cut-off is included and an extra `above_cutoff`
 #'   column marks rows containing at least one value above the threshold.
-#' * If `output = "dataframe"`: a data.frame (rounded to 2 decimal places) with
+#' * If `output = "dataframe"`: a data.frame (4-decimal precision, matching
+#'   the precision of the simulated values in [RMlocdepQ3Cutoff()]) with
 #'   the lower triangle of the Q3 correlation matrix; the upper triangle and
 #'   diagonal are set to `NA`. When `cutoff` is provided, an additional logical
 #'   column `above_cutoff` indicates whether the row contains any value
-#'   exceeding the dynamic cut-off.
+#'   exceeding the dynamic cut-off. The kable display is rounded to 2
+#'   decimals; the cut-off comparison always uses the full-precision values.
 #'
 #' @details
 #' The Q3 statistic (Yen, 1984) is the correlation between residuals of pairs
@@ -103,7 +105,12 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
   )
 
   # --- Compute Q3 residual correlations ---------------------------------------
-  resid_mat <- mirt::residuals(mirt_model, type = "Q3", digits = 2, verbose = FALSE)
+  # digits = 4 matches the precision used for the simulated Q3 values in
+  # RMlocdepQ3Cutoff() (run_single_q3_sim also uses digits = 4), so the mean
+  # Q3, the dynamic cut-off, and the above_cutoff flags are all computed from
+  # equally precise observed values. Rounding to 2 decimals happens only for
+  # the kable display below.
+  resid_mat <- mirt::residuals(mirt_model, type = "Q3", digits = 4, verbose = FALSE)
 
   diag(resid_mat) <- NA
 
@@ -112,14 +119,13 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
 
   resid_df <- as.data.frame(resid_mat)
 
-  # Round values
-  resid_df[] <- lapply(resid_df, function(x) round(x, 2))
-
   # Blank out upper triangle and diagonal (set to NA)
   resid_df[upper.tri(resid_df)] <- NA
   diag(resid_df) <- NA
 
   # --- Add above_cutoff column when cutoff is provided ------------------------
+  # Flags are computed from the full-precision values; display rounding is
+  # applied later, to the kable output only.
   if (!is.null(cutoff)) {
     dyn_cutoff <- mean_resid + cutoff
     # Check each row for any value exceeding the dynamic cut-off
@@ -151,7 +157,7 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
   item_cols <- setdiff(names(resid_df), "above_cutoff")
   resid_display <- as.data.frame(
     lapply(resid_df[item_cols], function(x) {
-      ifelse(is.na(x), "", as.character(x))
+      ifelse(is.na(x), "", as.character(round(x, 2)))
     }),
     stringsAsFactors = FALSE
   )

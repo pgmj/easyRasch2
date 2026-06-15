@@ -42,13 +42,15 @@
 #' (max score 1) or polytomous (max score > 1) and selects the appropriate
 #' Rasch / Partial Credit model.
 #'
-#' **`method = "WLE"`** fits the model with `eRm::RM()` or `eRm::PCM()` (CML)
-#' and applies Warm's Weighted Likelihood correction for the bias inherent in
-#' MLE-based person estimates at the score boundaries. Score-boundary
-#' estimates are obtained via the `theta_range` search; if a boundary cannot
-#' be solved within that range it is returned as `Inf` / `-Inf` with `NA` SE.
-#' This path uses lightly patched copies of the iarm 0.4.x person-estimation
-#' code so that boundary scores converge cleanly across the full theta range.
+#' **`method = "WLE"`** fits the model with `eRm::RM()` or `eRm::PCM()` (CML),
+#' centres the item thresholds to grand-mean-zero, and solves Warm's
+#' weighted-likelihood equation for each raw score with the same engine used
+#' by [RMpersonParameters()]; the two functions therefore report identical
+#' locations and standard errors. Warm's bias correction yields finite
+#' locations even at the minimum and maximum scores (only a root outside
+#' `theta_range` is clamped to the boundary with `NA` SE). The reported
+#' `logit_se` is the information-based standard error `1 / sqrt(I(theta))`,
+#' matching `catR`, `TAM` and most Rasch software.
 #'
 #' **`method = "EAP"`** fits the model with `mirt::mirt(..., itemtype =
 #' "Rasch")` (MML) and obtains sum-score-based EAP estimates and posterior
@@ -174,10 +176,15 @@ RMscoreSE <- function(data,
 }
 
 # ---------------------------------------------------------------------------
-# Internal: WLE path (eRm + patched iarm helpers)
+# Internal: WLE path (shared Warm-WLE engine)
 # ---------------------------------------------------------------------------
 
-#' WLE score-to-theta lookup via eRm + patched iarm helpers
+#' WLE score-to-theta lookup via the shared Warm-WLE solver
+#'
+#' Uses the same CML item parameters (centred to grand-mean-zero) and the
+#' same [.theta_wle()] engine as [RMpersonParameters()], so the two
+#' functions report identical locations and standard errors. The SE is
+#' the information-based value `1 / sqrt(I(theta))`.
 #'
 #' @param data Validated response data.
 #' @param theta_range Boundary-score search interval.
@@ -185,28 +192,44 @@ RMscoreSE <- function(data,
 #' @keywords internal
 #' @noRd
 .scoreSE_wle <- function(data, theta_range) {
-  data_mat <- as.matrix(data)
+  fit       <- .rasch_fit_cml(data, se = FALSE)
+  thr_list  <- .center_thresholds(fit$thr_list)
+  steps     <- vapply(thr_list, length, integer(1))
+  max_score <- sum(steps)
 
-  if (max(data_mat, na.rm = TRUE) == 1L) {
-    erm_out <- eRm::RM(data)
-  } else {
-    erm_out <- eRm::PCM(data)
-  }
+  est <- vapply(0:max_score, function(r) {
+    .theta_wle(.score_pattern(r, steps), thr_list, theta_range)
+  }, numeric(2))
 
-  score_list <- iarm_person_estimates(
-    erm_out, properties = TRUE, sthetarange = theta_range
-  )
-
-  # score_list is a list of length 2: [[1]] MLE-based, [[2]] WLE-based.
-  wle_mat <- score_list[[2L]]
-  # Columns: Raw Score, WLE, SEM (= sem from pers_prop), Bias, RMSE, Score.SEM
   data.frame(
-    raw_score   = as.integer(wle_mat[, "Raw Score"]),
-    logit_score = as.numeric(wle_mat[, "WLE"]),
-    logit_se    = as.numeric(wle_mat[, "SEM"]),
+    raw_score   = 0:max_score,
+    logit_score = est[1L, ],
+    logit_se    = est[2L, ],
     stringsAsFactors = FALSE,
     row.names = NULL
   )
+}
+
+#' Build a representative response pattern summing to a given raw score
+#'
+#' For complete data the raw total is the sufficient statistic, so any
+#' pattern with that sum yields the same WLE; this greedily fills items
+#' up to their category maximum.
+#'
+#' @param r Target raw score.
+#' @param steps Integer vector of per-item threshold counts (category max).
+#' @return Integer response vector summing to `r`.
+#' @keywords internal
+#' @noRd
+.score_pattern <- function(r, steps) {
+  resp <- integer(length(steps))
+  rem  <- r
+  for (i in seq_along(steps)) {
+    take    <- min(steps[i], rem)
+    resp[i] <- take
+    rem     <- rem - take
+  }
+  resp
 }
 
 # ---------------------------------------------------------------------------

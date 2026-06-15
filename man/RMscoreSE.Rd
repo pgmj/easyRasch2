@@ -66,13 +66,15 @@ The function automatically detects whether the data is dichotomous
 (max score 1) or polytomous (max score > 1) and selects the appropriate
 Rasch / Partial Credit model.
 
-\strong{\code{method = "WLE"}} fits the model with \code{eRm::RM()} or \code{eRm::PCM()} (CML)
-and applies Warm's Weighted Likelihood correction for the bias inherent in
-MLE-based person estimates at the score boundaries. Score-boundary
-estimates are obtained via the \code{theta_range} search; if a boundary cannot
-be solved within that range it is returned as \code{Inf} / \code{-Inf} with \code{NA} SE.
-This path uses lightly patched copies of the iarm 0.4.x person-estimation
-code so that boundary scores converge cleanly across the full theta range.
+\strong{\code{method = "WLE"}} fits the model with \code{eRm::RM()} or \code{eRm::PCM()} (CML),
+centres the item thresholds to grand-mean-zero, and solves Warm's
+weighted-likelihood equation for each raw score with the same engine used
+by \code{\link[=RMpersonParameters]{RMpersonParameters()}}; the two functions therefore report identical
+locations and standard errors. Warm's bias correction yields finite
+locations even at the minimum and maximum scores (only a root outside
+\code{theta_range} is clamped to the boundary with \code{NA} SE). The reported
+\code{logit_se} is the information-based standard error \code{1 / sqrt(I(theta))},
+matching \code{catR}, \code{TAM} and most Rasch software.
 
 \strong{\code{method = "EAP"}} fits the model with \code{mirt::mirt(..., itemtype = "Rasch")} (MML) and obtains sum-score-based EAP estimates and posterior
 SDs via \code{mirt::fscores(method = "EAPsum", full.scores = FALSE, full.scores.SE = TRUE)}. EAP estimates are finite at all score boundaries

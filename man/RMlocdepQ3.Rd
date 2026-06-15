@@ -27,11 +27,13 @@ cut-off applied.}
 of the Q3 correlation matrix. When \code{cutoff} is provided, a footnote
 describing the dynamic cut-off is included and an extra \code{above_cutoff}
 column marks rows containing at least one value above the threshold.
-\item If \code{output = "dataframe"}: a data.frame (rounded to 2 decimal places) with
+\item If \code{output = "dataframe"}: a data.frame (4-decimal precision, matching
+the precision of the simulated values in \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}) with
 the lower triangle of the Q3 correlation matrix; the upper triangle and
 diagonal are set to \code{NA}. When \code{cutoff} is provided, an additional logical
 column \code{above_cutoff} indicates whether the row contains any value
-exceeding the dynamic cut-off.
+exceeding the dynamic cut-off. The kable display is rounded to 2
+decimals; the cut-off comparison always uses the full-precision values.
 }
 }
 \description{

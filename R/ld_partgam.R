@@ -30,9 +30,12 @@
 #'
 #' @return
 #' * If `output = "kable"`: an object of class `"RMlocdepGamma"`. Internally
-#'   a list with two `knitr_kable` elements --- `$direction1` (rest score
-#'   = total - Item2) and `$direction2` (rest score = total - Item1) ---
-#'   each with columns "Item 1", "Item 2", "Partial gamma",
+#'   a list with two `knitr_kable` elements, `$direction1` and
+#'   `$direction2`. In both, the rest score is the total score minus
+#'   Item 2 (the second column); the two elements list each item pair in
+#'   the two possible orders, so together they cover both rest-score
+#'   directions for every pair. Each has columns "Item 1", "Item 2",
+#'   "Partial gamma",
 #'   "Adj. p-value (BH)", and "p-value sign." (a star-string indicator
 #'   from `iarm::partgam_LD()`). When `cutoff` is provided, additional
 #'   columns "Gamma low", "Gamma high", and "Flagged" are included.
@@ -295,7 +298,9 @@ RMlocdepGamma <- function(data, cutoff = NULL, output = "kable",
     format    = "pipe",
     col.names = if (is.null(cutoff)) col_names_no_cutoff else col_names_cutoff,
     caption   = paste0(caption_text,
-                       " Direction 2: rest score = total - Item1.")
+                       " Direction 2: rest score = total - Item2 ",
+                       "(item pairs shown in the reverse order to ",
+                       "direction 1).")
   )
 
   # `knitr::kable(format = "pipe")` returns a multi-line *character vector*

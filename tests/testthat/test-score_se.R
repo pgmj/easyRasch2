@@ -60,6 +60,31 @@ test_that("RMscoreSE output = 'ggplot' returns a ggplot", {
   expect_s3_class(p, "ggplot")
 })
 
+# WLE results must agree with RMpersonParameters (shared engine + scale)
+test_that("RMscoreSE WLE matches RMpersonParameters (point and SE)", {
+  skip_if_not_installed("eRm")
+  for (df in list(make_dichotomous(), make_polytomous())) {
+    ss <- RMscoreSE(df, method = "WLE", output = "dataframe")
+    pp <- RMpersonParameters(df, output = "dataframe")
+    ag <- aggregate(cbind(theta, sem) ~ sum_score, data = pp, FUN = mean)
+    m  <- merge(ss, ag, by.x = "raw_score", by.y = "sum_score")
+    expect_equal(m$logit_score, m$theta, tolerance = 1e-3)
+    expect_equal(m$logit_se,    m$sem,   tolerance = 1e-3)
+  }
+})
+
+test_that("RMscoreSE WLE SE equals the information-based 1/sqrt(I)", {
+  skip_if_not_installed("eRm")
+  df  <- make_dichotomous()
+  res <- RMscoreSE(df, method = "WLE", output = "dataframe")
+  beta <- -as.numeric(eRm::RM(df)$betapar)       # difficulties
+  for (i in which(res$raw_score %in% 1:(ncol(df) - 1L))) {
+    th   <- res$logit_score[i]
+    info <- sum(stats::plogis(th - beta) * (1 - stats::plogis(th - beta)))
+    expect_equal(res$logit_se[i], 1 / sqrt(info), tolerance = 1e-3)
+  }
+})
+
 # EAP method goes through mirt; skip if not available
 test_that("RMscoreSE method = 'EAP' produces a valid table when mirt is installed", {
   skip_if_not_installed("mirt")

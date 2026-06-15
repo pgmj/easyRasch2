@@ -1,3 +1,61 @@
+# easyRasch2 (development version)
+
+- `RMscoreSE()`: the WLE `method` now reports the information-based
+  standard error `1 / sqrt(I(theta))` (matching `RMpersonParameters()`,
+  `catR` and `TAM`) instead of the previous iarm "expected SEM". Point
+  estimates are unchanged; standard errors differ at the score extremes
+  (where they are now larger). The WLE path now shares the same solver
+  and grand-mean-zero threshold centering as `RMpersonParameters()`, so
+  the two functions are fully consistent.
+
+- New `RMpersonFit()`: per-respondent person-fit analysis. Reports
+  conditional infit and outfit mean-squares (computed on each response
+  pattern via elementary symmetric functions, so partial missingness is
+  handled and no biased person estimate enters the residual) plus the
+  standardized log-likelihood `lz`. Significance is assessed by
+  Monte-Carlo resampling under the fitted model — either at the estimated
+  person location or conditional on the total score — rather than by an
+  unreliable asymptotic null (Sinharay, 2016; Müller, 2020). The
+  Wilson-Hilferty (ZSTD) transform of MSQ is available via `zstd = TRUE`
+  but, following Müller (2020), is provided only as a comparability
+  metric and not used for inference.
+
+- New `RMitemParameters()`: returns item difficulty (dichotomous) or
+  Andrich-threshold (polytomous) parameters in long or wide format, with
+  optional standard errors and Wald confidence intervals. Item
+  parameters are estimated by CML (via `eRm`) by default, or by MML (via
+  `mirt`) for sparse data; polytomous threshold SEs use the delta method.
+
+- New `RMpersonParameters()`: estimates a person location (theta) and its
+  SEM for every respondent, working directly on each response pattern so
+  partial missingness is handled correctly (unlike the sum-score lookup
+  in `RMscoreSE()`). Supports Warm's WLE (default) and EAP under a normal
+  prior whose SD is estimated from the data by marginal maximum
+  likelihood unless fixed via `prior_sd`. Replaces the `catR`-based theta
+  estimation used in the predecessor `easyRasch` package, without the
+  `catR` dependency or its speed penalty.
+
+- `RMlocdepGamma()`: corrected the `$direction2` kable caption and the
+  `@return` documentation, which described that table's rest score as
+  "total - Item1". `iarm::partgam_LD()` always removes the second item
+  (Item 2) from the rest score in *both* directions; the two tables
+  differ only in the order the items of each pair are listed (so each
+  pair is tested with each of its items removed). The caption now reads
+  "total - Item2" with a note that direction 2 lists pairs in the
+  reverse order. Computations are unchanged -- this is a labelling fix.
+
+- `RMlocdepQ3()` now computes the observed Q3 matrix with
+  `mirt::residuals(digits = 4)` (was `digits = 2`), matching the precision
+  already used for the simulated Q3 values in `RMlocdepQ3Cutoff()` and
+  `RMlocdepQ3Plot()`. The mean Q3, the dynamic cut-off, and the
+  `above_cutoff` flags are now computed from full-precision values
+  (previously the flags were derived from values rounded to 2 decimals),
+  and `output = "dataframe"` returns 4-decimal precision. The kable
+  display remains rounded to 2 decimals. Borderline pairs close to the
+  cut-off may flag differently than before -- the new behaviour is the
+  more accurate one. Aligns with the same fix in the easyRasch2jmv jamovi
+  module (1.1.0).
+
 # easyRasch2 0.8.0
 
 ## Initial CRAN release!
