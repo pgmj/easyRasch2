@@ -1,0 +1,141 @@
+# Q3 Residual Correlations for Local Dependence Assessment
+
+Computes Yen's Q3 residual correlations between item pairs using a Rasch
+model fitted via Marginal Maximum Likelihood (MML) in `mirt`. High
+correlations (above the dynamic cut-off) indicate potential local
+dependence between items. See
+[`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
+for how to determine the appropriate dynamic cut-off for your data.
+
+## Usage
+
+``` r
+RMlocdepQ3(data, cutoff = NULL, output = "kable")
+```
+
+## Arguments
+
+- data:
+
+  A data.frame or matrix of item responses. Items must be scored
+  starting at 0 (non-negative integers). Missing values (`NA`) are
+  allowed.
+
+- cutoff:
+
+  Optional. Either a single numeric value (added to the mean
+  off-diagonal Q3 correlation to produce the dynamic cut-off threshold)
+  or the full list returned by
+  [`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
+  (from which `$suggested_cutoff` is extracted automatically). When
+  `NULL` (default), the raw Q3 residual correlation matrix is returned
+  without any dynamic cut-off applied.
+
+- output:
+
+  Character string controlling the return value. Either `"kable"`
+  (default) for a formatted
+  [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html) table, or
+  `"dataframe"` for the underlying numeric data.frame.
+
+## Value
+
+- If `output = "kable"`: a `knitr_kable` object showing the lower
+  triangle of the Q3 correlation matrix. When `cutoff` is provided, a
+  footnote describing the dynamic cut-off is included and an extra
+  `above_cutoff` column marks rows containing at least one value above
+  the threshold.
+
+- If `output = "dataframe"`: a data.frame (4-decimal precision, matching
+  the precision of the simulated values in
+  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md))
+  with the lower triangle of the Q3 correlation matrix; the upper
+  triangle and diagonal are set to `NA`. When `cutoff` is provided, an
+  additional logical column `above_cutoff` indicates whether the row
+  contains any value exceeding the dynamic cut-off. The kable display is
+  rounded to 2 decimals; the cut-off comparison always uses the
+  full-precision values.
+
+## Details
+
+The Q3 statistic (Yen, 1984) is the correlation between residuals of
+pairs of items after accounting for the latent trait. Under local
+independence, Q3 values are expected to be around \\-1/(k-1)\\ where
+\\k\\ is the number of items. When `cutoff` is supplied, the dynamic
+cut-off is the mean of all off-diagonal Q3 values plus `cutoff`,
+following the approach of Christensen et al. (2017). Use
+[`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
+to obtain a simulation-based cutoff recommendation.
+
+`mirt` is used for model fitting here because Q3 requires model-based
+expected responses, which are most readily available from MML
+estimation.
+
+## References
+
+Yen, W. M. (1984). Effects of local item dependence on the fit and
+equating performance of the three-parameter logistic model. *Applied
+Psychological Measurement, 8*(2), 125–145.
+[doi:10.1177/014662168400800201](https://doi.org/10.1177/014662168400800201)
+
+Christensen, K. B., Makransky, G., & Horton, M. (2017). Critical values
+for Yen's Q3: Identification of local dependence in the Rasch model.
+*Applied Psychological Measurement, 41*(3), 178–194.
+[doi:10.1177/0146621616677520](https://doi.org/10.1177/0146621616677520)
+
+## Examples
+
+``` r
+# \donttest{
+# Simulate binary item response data (10 items, 200 persons)
+set.seed(42)
+sim_data <- as.data.frame(
+  matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+)
+colnames(sim_data) <- paste0("Item", 1:10)
+
+# Raw Q3 matrix (no cutoff)
+RMlocdepQ3(sim_data)
+#> 
+#> 
+#> Table: Raw Q3 residual correlations (lower triangle). Use RMlocdepQ3Cutoff() to derive a cutoff.
+#> 
+#> |       |Item1 |Item2 |Item3 |Item4 |Item5 |Item6 |Item7 |Item8 |Item9 |Item10 |
+#> |:------|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:------|
+#> |Item1  |      |      |      |      |      |      |      |      |      |       |
+#> |Item2  |0.08  |      |      |      |      |      |      |      |      |       |
+#> |Item3  |-0.07 |-0.09 |      |      |      |      |      |      |      |       |
+#> |Item4  |-0.07 |-0.12 |-0.03 |      |      |      |      |      |      |       |
+#> |Item5  |-0.09 |0.02  |0.08  |-0.04 |      |      |      |      |      |       |
+#> |Item6  |-0.03 |-0.02 |-0.07 |0.09  |-0.1  |      |      |      |      |       |
+#> |Item7  |-0.05 |-0.03 |0.04  |0.13  |0.08  |0     |      |      |      |       |
+#> |Item8  |0.07  |0.05  |0     |-0.19 |0.05  |-0.06 |-0.05 |      |      |       |
+#> |Item9  |0.08  |0.05  |-0.02 |-0.07 |-0.09 |0.07  |0.04  |0.12  |      |       |
+#> |Item10 |-0.07 |-0.05 |0.08  |-0.04 |-0.02 |-0.12 |-0.04 |-0.03 |0     |       |
+
+# Get the underlying data.frame
+q3_df <- RMlocdepQ3(sim_data, output = "dataframe")
+
+# Simulation-based cutoff (use 500+ iterations in real analyses)
+if (requireNamespace("ggdist", quietly = TRUE)) {
+  cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 50, parallel = FALSE)
+  RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
+}
+#> 
+#> 
+#> Table: Dynamic cut-off: 0.228 (mean Q3 = -0.012 + 0.24). Correlations exceeding the cut-off may indicate local dependence.
+#> 
+#> |       |Item1 |Item2 |Item3 |Item4 |Item5 |Item6 |Item7 |Item8 |Item9 |Item10 |above_cutoff |
+#> |:------|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:------|:------------|
+#> |Item1  |      |      |      |      |      |      |      |      |      |       |             |
+#> |Item2  |0.08  |      |      |      |      |      |      |      |      |       |             |
+#> |Item3  |-0.07 |-0.09 |      |      |      |      |      |      |      |       |             |
+#> |Item4  |-0.07 |-0.12 |-0.03 |      |      |      |      |      |      |       |             |
+#> |Item5  |-0.09 |0.02  |0.08  |-0.04 |      |      |      |      |      |       |             |
+#> |Item6  |-0.03 |-0.02 |-0.07 |0.09  |-0.1  |      |      |      |      |       |             |
+#> |Item7  |-0.05 |-0.03 |0.04  |0.13  |0.08  |0     |      |      |      |       |             |
+#> |Item8  |0.07  |0.05  |0     |-0.19 |0.05  |-0.06 |-0.05 |      |      |       |             |
+#> |Item9  |0.08  |0.05  |-0.02 |-0.07 |-0.09 |0.07  |0.04  |0.12  |      |       |             |
+#> |Item10 |-0.07 |-0.05 |0.08  |-0.04 |-0.02 |-0.12 |-0.04 |-0.03 |0     |       |             |
+# }
+```
