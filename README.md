@@ -93,6 +93,20 @@ remotes::install_github("pgmj/easyRasch2")
 - `RMtargeting()` — Wright-map style person-item targeting plot
 - `RMscoreSE()` — raw-score → logit transformation table (WLE / EAP)
 
+### Item & person parameters
+
+- `RMitemParameters()` — item difficulty / threshold locations in long or wide
+  format, with optional standard errors and confidence intervals (CML via
+  `eRm`, or MML via `mirt` for sparse data)
+- `RMpersonParameters()` — per-respondent person locations (WLE or EAP),
+  estimated on each response pattern so partial missingness is handled directly
+
+### Person fit
+
+- `RMpersonFit()` — per-respondent conditional infit / outfit MSQ and the
+  standardized log-likelihood `lz`, with resampling-based p-values rather than
+  unreliable asymptotic nulls (Sinharay, 2016; Müller, 2020)
+
 ### Data visualization
 
 - `RMplotTile()` — response-distribution heatmap with optional group faceting
@@ -171,6 +185,9 @@ RMdifTree(pcmdat2, covariates = covs)
 - Rosseel, Y. (2012). lavaan: An R package for structural equation modeling.
   *Journal of Statistical Software, 48*(2), 1–36.
   <https://doi.org/10.18637/jss.v048.i02>
+- Sinharay, S. (2016). Assessment of person fit using resampling-based
+  approaches. *Journal of Educational Measurement, 53*(1), 63–85.
+  <https://doi.org/10.1111/jedm.12101>
 - Strobl, C., Kopf, J., & Zeileis, A. (2015). Rasch trees: A new method for
   detecting DIF in the Rasch model. *Psychometrika, 80*, 289–316.
   <https://doi.org/10.1007/s11336-013-9388-3>

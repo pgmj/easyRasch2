@@ -66,6 +66,15 @@ reference:
       - RMdimResidualPCACutoff
       - RMdimMartinLof
       - RMdimMartinLofResiduals
+  - title: "Item & person parameters"
+    desc: "Item difficulty/threshold and person-location estimation"
+    contents:
+      - RMitemParameters
+      - RMpersonParameters
+  - title: "Person fit"
+    desc: "Per-respondent fit statistics with resampling-based p-values"
+    contents:
+      - RMpersonFit
   - title: "Descriptive functions"
     desc: "Targeting and other plots/tables"
     contents:
