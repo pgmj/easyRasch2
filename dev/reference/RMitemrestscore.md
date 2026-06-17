@@ -47,12 +47,14 @@ RMitemRestscore(data, output = "kable", sort, p.adj = "BH")
 - If `output = "kable"`: a `knitr_kable` object (plain text table via
   `format = "pipe"`) with columns for item name, observed and expected
   restscore correlations, the signed difference (observed minus
-  expected), adjusted p-value, significance level, item location, and
-  item location relative to the sample mean person location.
+  expected), adjusted p-value, the `Flagged` misfit label, and item
+  location relative to the sample mean person location.
 
 - If `output = "dataframe"`: a data.frame with columns `Item`,
-  `Observed`, `Expected`, `Difference`, `p_adjusted`, `Significance`,
-  `Location`, and `Relative_location`.
+  `Observed`, `Expected`, `Difference`, `p_adjusted`, `Flagged`, and
+  `Relative_location`. `Flagged` is `"overfit"` (observed above
+  expected, adj. p \< .05), `"underfit"` (below, adj. p \< .05), or `""`
+  (not flagged).
 
 The `Difference` column is signed (observed minus expected): *positive*
 values indicate that the item correlates more strongly with the
@@ -109,32 +111,36 @@ RMitemRestscore(sim_data)
 #> 
 #> 
 #> 
-#> |Item  | Observed value| Expected value| Difference| Adj. p-value (BH)|p-value sign. | Location| Rel. location|
-#> |:-----|--------------:|--------------:|----------:|-----------------:|:-------------|--------:|-------------:|
-#> |Item1 |           0.00|           0.01|      -0.01|             0.955|              |    -0.20|         -0.23|
-#> |Item2 |           0.00|           0.01|      -0.01|             0.955|              |     0.16|          0.13|
-#> |Item3 |          -0.01|           0.01|      -0.02|             0.955|              |     0.02|         -0.01|
-#> |Item4 |          -0.05|           0.01|      -0.06|             0.955|              |    -0.02|         -0.05|
-#> |Item5 |           0.07|           0.01|       0.06|             0.955|              |     0.12|          0.09|
-#> |Item6 |          -0.04|           0.01|      -0.05|             0.955|              |    -0.06|         -0.09|
-#> |Item7 |           0.15|           0.01|       0.14|             0.955|              |    -0.02|         -0.05|
-#> |Item8 |          -0.01|           0.01|      -0.02|             0.955|              |     0.00|         -0.03|
+#> Table: Item-restscore associations (n = 200 complete cases). Flagged (adj. p < .05): overfit = observed above expected (over-discrimination, often local dependence); underfit = below (under-discrimination, often multidimensionality/noise).
+#> 
+#> |Item  | Observed| Expected| Difference| Adj. p-value (BH)|Flagged | Rel. location|
+#> |:-----|--------:|--------:|----------:|-----------------:|:-------|-------------:|
+#> |Item1 |     0.00|     0.01|      -0.01|             0.955|        |         -0.23|
+#> |Item2 |     0.00|     0.01|      -0.01|             0.955|        |          0.13|
+#> |Item3 |    -0.01|     0.01|      -0.02|             0.955|        |         -0.01|
+#> |Item4 |    -0.05|     0.01|      -0.06|             0.955|        |         -0.05|
+#> |Item5 |     0.07|     0.01|       0.06|             0.955|        |          0.09|
+#> |Item6 |    -0.04|     0.01|      -0.05|             0.955|        |         -0.09|
+#> |Item7 |     0.15|     0.01|       0.14|             0.955|        |         -0.05|
+#> |Item8 |    -0.01|     0.01|      -0.02|             0.955|        |         -0.03|
 
 # Sorted by absolute difference
 RMitemRestscore(sim_data, sort = "diff")
 #> 
 #> 
 #> 
-#> |Item  | Observed value| Expected value| Difference| Adj. p-value (BH)|p-value sign. | Location| Rel. location|
-#> |:-----|--------------:|--------------:|----------:|-----------------:|:-------------|--------:|-------------:|
-#> |Item7 |           0.15|           0.01|       0.14|             0.955|              |    -0.02|         -0.05|
-#> |Item4 |          -0.05|           0.01|      -0.06|             0.955|              |    -0.02|         -0.05|
-#> |Item5 |           0.07|           0.01|       0.06|             0.955|              |     0.12|          0.09|
-#> |Item6 |          -0.04|           0.01|      -0.05|             0.955|              |    -0.06|         -0.09|
-#> |Item3 |          -0.01|           0.01|      -0.02|             0.955|              |     0.02|         -0.01|
-#> |Item8 |          -0.01|           0.01|      -0.02|             0.955|              |     0.00|         -0.03|
-#> |Item1 |           0.00|           0.01|      -0.01|             0.955|              |    -0.20|         -0.23|
-#> |Item2 |           0.00|           0.01|      -0.01|             0.955|              |     0.16|          0.13|
+#> Table: Item-restscore associations (n = 200 complete cases). Flagged (adj. p < .05): overfit = observed above expected (over-discrimination, often local dependence); underfit = below (under-discrimination, often multidimensionality/noise).
+#> 
+#> |Item  | Observed| Expected| Difference| Adj. p-value (BH)|Flagged | Rel. location|
+#> |:-----|--------:|--------:|----------:|-----------------:|:-------|-------------:|
+#> |Item7 |     0.15|     0.01|       0.14|             0.955|        |         -0.05|
+#> |Item4 |    -0.05|     0.01|      -0.06|             0.955|        |         -0.05|
+#> |Item5 |     0.07|     0.01|       0.06|             0.955|        |          0.09|
+#> |Item6 |    -0.04|     0.01|      -0.05|             0.955|        |         -0.09|
+#> |Item3 |    -0.01|     0.01|      -0.02|             0.955|        |         -0.01|
+#> |Item8 |    -0.01|     0.01|      -0.02|             0.955|        |         -0.03|
+#> |Item1 |     0.00|     0.01|      -0.01|             0.955|        |         -0.23|
+#> |Item2 |     0.00|     0.01|      -0.01|             0.955|        |          0.13|
 
 # Return as data.frame for further processing
 df <- RMitemRestscore(sim_data, output = "dataframe")

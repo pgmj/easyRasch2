@@ -6,8 +6,8 @@ p-values. Three statistics are reported: conditional **infit** and
 familiar from Rasch analysis – and the standardized log-likelihood
 statistic **lz**. The conditional MSQ statistics use response
 probabilities conditional on the total score, which require no person
-estimate and are therefore unbiased (Kreiner & Christensen); they are
-computed on each person's observed response pattern, so partial
+estimate and are therefore unbiased (Kreiner & Christensen, 2011); they
+are computed on each person's observed response pattern, so partial
 missingness is handled directly.
 
 ## Usage
@@ -18,9 +18,9 @@ RMpersonFit(
   statistics = c("infit", "outfit", "lz"),
   estimator = c("CML", "MML"),
   theta_method = c("WLE", "EAP"),
-  resample = c("theta", "conditional"),
   iterations = 500L,
   flag_alpha = 0.05,
+  flag = c("both", "underfit"),
   zstd = FALSE,
   parallel = FALSE,
   n_cores = NULL,
@@ -52,14 +52,6 @@ RMpersonFit(
   Character. Person-location estimator used for the lz statistic:
   `"WLE"` (default) or `"EAP"`. Ignored if `"lz"` is not requested.
 
-- resample:
-
-  Character. Resampling scheme for the null distribution: `"theta"`
-  (default) simulates each person's responses at their estimated
-  location; `"conditional"` samples response patterns conditional on the
-  person's total score (no person estimate required, fully consistent
-  with the conditional MSQ statistics).
-
 - iterations:
 
   Integer. Number of Monte-Carlo replications per person. `0` skips
@@ -67,8 +59,19 @@ RMpersonFit(
 
 - flag_alpha:
 
-  Numeric in (0, 1). Two-sided significance level for the `flagged`
-  column. Default `0.05`.
+  Numeric in (0, 1). Significance level for the `flagged` column and the
+  plot highlighting. Default `0.05`.
+
+- flag:
+
+  Character. Which misfit direction drives flagging for the MSQ
+  statistics: `"both"` (default) flags either direction with a two-sided
+  p-value; `"underfit"` flags only underfit (MSQ \> 1, noisy responding)
+  with a one-sided upper p-value, which is more powerful for detecting
+  it and ignores (benign) overfit. The reported `p_infit` / `p_outfit`
+  follow this choice. lz is one-sided regardless. Overfit can
+  occasionally be suspicious (e.g. fabricated or copied response
+  patterns), so `"both"` is the default.
 
 - zstd:
 
@@ -88,9 +91,14 @@ RMpersonFit(
 
 - output:
 
-  Character. `"kable"` (default), `"dataframe"`, or `"ggplot"` (a
-  person-fit map of outfit MSQ against person location, flagged
-  respondents highlighted).
+  Character. `"kable"` (default), `"dataframe"`, or `"ggplot"`. For
+  `"ggplot"`, a **named list** of person-fit maps is returned – one per
+  requested statistic (e.g. `$infit`, `$outfit`, `$lz`) – each plotting
+  the statistic against person location, with respondents flagged by
+  *that* statistic highlighted and a caption reporting the assessed
+  sample size and the proportion flagged. For the MSQ maps the flagged
+  count is split into underfit (MSQ \> 1, noisy/erratic responding) and
+  overfit (MSQ \< 1, overly deterministic responding).
 
 ## Value
 
@@ -98,10 +106,17 @@ For `output = "dataframe"`, a data.frame with one row per respondent
 (input order): `id`, `n_answered`, `sum_score`, the requested statistics
 (`infit_msq`, `outfit_msq`, `lz`), their resampled p-values (`p_infit`,
 `p_outfit`, `p_lz`) when `iterations > 0`, `flagged`, and – if
-`zstd = TRUE` – `infit_zstd`, `outfit_zstd`. Extreme scorers (minimum or
-maximum possible given the items they answered) receive `NA` statistics.
-For `output = "kable"` the same content as a `knitr_kable`; for
-`output = "ggplot"` a person-fit map.
+`zstd = TRUE` – `infit_zstd`, `outfit_zstd`. The `flagged` column is
+`TRUE` when the marginal (uncorrected) p-value of **any** requested
+statistic is below `flag_alpha` for that respondent; it is therefore a
+per-person screening flag, not corrected for the number of respondents
+tested (so under fit expect about `flag_alpha` of respondents to be
+flagged by chance). Each `output = "ggplot"` map instead colours and
+counts respondents flagged by its **own** statistic alone. Extreme
+scorers (minimum or maximum possible given the items they answered)
+receive `NA` statistics and are not assessed. For `output = "kable"` the
+same content as a `knitr_kable`; for `output = "ggplot"` the named list
+of maps described under that argument.
 
 ## Details
 
@@ -121,6 +136,16 @@ mean of \\z\_{vi}^2\\; infit is the information-weighted mean. Because
 the conditional moments use only item parameters, no (biased) person
 estimate enters the residual.
 
+**Interpreting MSQ direction.** Values near 1 indicate fit. MSQ \> 1
+(*underfit*) means the responses are noisier / more erratic than the
+model expects – the validity-relevant direction, indicating careless or
+aberrant responding. MSQ \< 1 (*overfit*) means responses are overly
+deterministic (Guttman-like); usually benign for score validity, though
+a suspiciously perfect pattern can occasionally signal copied or
+fabricated data. Use `flag = "underfit"` to flag only the former. lz is
+one-sided: low (negative) values flag the aberrant (underfit-like)
+direction.
+
 **lz.** The standardized log-likelihood of the response pattern
 evaluated at the estimated person location (Drasgow, Levine & Williams,
 1985); small (negative) values indicate misfit. Its asymptotic
@@ -129,14 +154,17 @@ estimated; the resampled p-value is therefore the basis for inference,
 which makes the analytic lz\\ standardization (Snijders, 2001)
 unnecessary here.
 
-**Resampling.** For each person, `iterations` response patterns are
-simulated under the fitted model – either at the estimated location
-(`resample = "theta"`) or conditional on the observed total score
-(`resample = "conditional"`) – and each statistic is recomputed. The
-two-sided p-value is the proportion of replicates at least as extreme as
-the observed value. This follows the resampling-based person-fit
-approach (Sinharay, 2016) and the bootstrap recommendation of Müller
-(2020).
+**Resampling.** Each statistic is referenced against the null that
+matches it, removing the need to choose a scheme. The conditional MSQ
+statistics use patterns sampled **conditional on the person's total
+score** – the exact Rasch-native null, requiring no person estimate and
+fully consistent with the (conditional) statistic. lz, which is defined
+at the estimated location, uses patterns **simulated at that location**.
+Both are computed per person over the items actually answered, so
+partial missingness is handled by either scheme. The p-value is the
+proportion of the `iterations` replicates at least as extreme as the
+observed value. This follows the resampling-based person-fit approach
+(Sinharay, 2016) and the bootstrap recommendation of Müller (2020).
 
 ## References
 
@@ -176,12 +204,12 @@ colnames(dat) <- paste0("Item", 1:8)
 # Conditional infit/outfit MSQ + lz with resampled p-values
 RMpersonFit(dat, iterations = 200, output = "dataframe") |> head()
 #>   id n_answered sum_score infit_msq outfit_msq      lz p_infit p_outfit  p_lz
-#> 1  1          8         5    1.3900     1.3989  0.0619  0.2424   0.2727 0.525
-#> 2  2          8         6    0.7271     0.7335 -0.0611  0.3300   0.3500 0.470
-#> 3  3          8         2    0.8185     0.8472  0.2747  0.8108   0.8865 0.570
-#> 4  4          8        10    0.7120     0.6872  0.4211  0.3500   0.3200 0.580
-#> 5  5          8         4    1.5137     1.4542  0.3392  0.1443   0.1753 0.620
-#> 6  6          8         4    1.5322     1.4837  0.2989  0.1218   0.1320 0.595
+#> 1  1          8         5    1.3900     1.3989  0.0619    0.32     0.32 0.505
+#> 2  2          8         6    0.7271     0.7335 -0.0611    0.34     0.39 0.415
+#> 3  3          8         2    0.8185     0.8472  0.2747    0.79     0.79 0.545
+#> 4  4          8        10    0.7120     0.6872  0.4211    0.27     0.19 0.620
+#> 5  5          8         4    1.5137     1.4542  0.3392    0.22     0.22 0.615
+#> 6  6          8         4    1.5322     1.4837  0.2989    0.16     0.16 0.620
 #>   flagged
 #> 1   FALSE
 #> 2   FALSE
@@ -190,10 +218,29 @@ RMpersonFit(dat, iterations = 200, output = "dataframe") |> head()
 #> 5   FALSE
 #> 6   FALSE
 
-# Compare the two resampling schemes
-a <- RMpersonFit(dat, resample = "theta",       iterations = 200,
-                 output = "dataframe")
-b <- RMpersonFit(dat, resample = "conditional", iterations = 200,
-                 output = "dataframe")
+# Person-fit maps: a named list with one plot per statistic
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  plots <- RMpersonFit(dat, iterations = 200, output = "ggplot")
+  plots$infit    # infit map (each plot's caption reports the % flagged)
+}
+
+
+# Flag only underfit (noisy responding), the validity-relevant direction
+RMpersonFit(dat, iterations = 200, flag = "underfit",
+            output = "dataframe") |> head()
+#>   id n_answered sum_score infit_msq outfit_msq      lz p_infit p_outfit  p_lz
+#> 1  1          8         5    1.3900     1.3989  0.0619   0.140    0.115 0.485
+#> 2  2          8         6    0.7271     0.7335 -0.0611   0.820    0.800 0.425
+#> 3  3          8         2    0.8185     0.8472  0.2747   0.430    0.430 0.570
+#> 4  4          8        10    0.7120     0.6872  0.4211   0.820    0.845 0.640
+#> 5  5          8         4    1.5137     1.4542  0.3392   0.095    0.095 0.610
+#> 6  6          8         4    1.5322     1.4837  0.2989   0.070    0.070 0.595
+#>   flagged
+#> 1   FALSE
+#> 2   FALSE
+#> 3   FALSE
+#> 4   FALSE
+#> 5   FALSE
+#> 6   FALSE
 # }
 ```

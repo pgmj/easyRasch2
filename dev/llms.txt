@@ -55,7 +55,9 @@ remotes::install_github("pgmj/easyRasch2")
 ### Item fit
 
 - [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
-  — conditional infit MSQ
+  — conditional infit MSQ; optional bootstrap p-values
+  (`p_value = TRUE`) with family-wise (Westfall–Young) or FDR
+  multiple-comparison correction
 - [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md) +
   [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffPlot.md)
   — simulation-based cutoffs and plot
@@ -73,7 +75,9 @@ remotes::install_github("pgmj/easyRasch2")
 
 - [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md) +
   [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
-  — Yen’s Q3 residual correlations
+  — Yen’s Q3 residual correlations; optional per-pair bootstrap p-values
+  (`p_value = TRUE`) with family-wise (Westfall–Young) or FDR correction
+  across item pairs
 - [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md) +
   [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md) +
   [`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaPlot.md)
@@ -203,6 +207,11 @@ RMdifTree(pcmdat2, covariates = covs)
   values for Yen’s Q3: Identification of local dependence in the Rasch
   model using residual correlations. *Applied Psychological Measurement,
   41*(3), 178–194. <https://doi.org/10.1177/0146621616677520>
+- Ferreira, J. A. (2024). Methods of testing a ‘small’ or ‘moderate’
+  number of hypotheses simultaneously: An account focusing on the
+  control of the probability of at least one incorrect rejection and of
+  the false discovery rate. *Journal of Statistical Theory and Practice,
+  19*(6). <https://doi.org/10.1007/s42519-024-00412-4>
 - Henninger, M., Debelak, R., & Strobl, C. (2023). A new stopping
   criterion for Rasch trees based on the Mantel-Haenszel effect size
   measure for DIF. *Educational and Psychological Measurement, 83*,

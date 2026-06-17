@@ -170,7 +170,7 @@ if (requireNamespace("ggdist", quietly = TRUE)) {
 }
 #> 
 #> 
-#> Table: Dynamic cut-off: 0.237 (mean Q3 = -0.012 + 0.249). Correlations exceeding the cut-off may indicate local dependence.
+#> Table: Dynamic cut-off: 0.237 (mean Q3 -0.012 + 0.249). Correlations exceeding the cut-off may indicate local dependence; see the per-pair table for detail.
 #> 
 #> |       |Item1 |Item2 |Item3 |Item4 |Item5 |Item6 |Item7 |Item8 |Item9 |Item10 |above_cutoff |
 #> |:------|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:------|:------------|

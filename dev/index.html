@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.900</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.906</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,7 +88,7 @@
 </h3>
 <ul>
 <li>
-<code><a href="reference/RMiteminfit.html">RMitemInfit()</a></code> — conditional infit MSQ</li>
+<code><a href="reference/RMiteminfit.html">RMitemInfit()</a></code> — conditional infit MSQ; optional bootstrap p-values (<code>p_value = TRUE</code>) with family-wise (Westfall–Young) or FDR multiple-comparison correction</li>
 <li>
 <code><a href="reference/RMitemInfitCutoff.html">RMitemInfitCutoff()</a></code> + <code><a href="reference/RMitemInfitCutoffPlot.html">RMitemInfitCutoffPlot()</a></code> — simulation-based cutoffs and plot</li>
 <li>
@@ -106,7 +106,7 @@
 </h3>
 <ul>
 <li>
-<code><a href="reference/RMlocdepQ3.html">RMlocdepQ3()</a></code> + <code><a href="reference/RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code> — Yen’s Q3 residual correlations</li>
+<code><a href="reference/RMlocdepQ3.html">RMlocdepQ3()</a></code> + <code><a href="reference/RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code> — Yen’s Q3 residual correlations; optional per-pair bootstrap p-values (<code>p_value = TRUE</code>) with family-wise (Westfall–Young) or FDR correction across item pairs</li>
 <li>
 <code><a href="reference/RMlocdepGamma.html">RMlocdepGamma()</a></code> + <code><a href="reference/RMlocdepGammaCutoff.html">RMlocdepGammaCutoff()</a></code> + <code><a href="reference/RMlocdepGammaPlot.html">RMlocdepGammaPlot()</a></code> — partial-gamma local dependence</li>
 </ul>
@@ -230,6 +230,8 @@
 <li>Christensen, K. B., &amp; Kreiner, S. (2007). A Monte Carlo approach to unidimensionality testing in polytomous Rasch models. <em>Applied Psychological Measurement, 31</em>(1), 20–30. <a href="https://doi.org/10.1177/0146621605286204" class="external-link uri">https://doi.org/10.1177/0146621605286204</a>
 </li>
 <li>Christensen, K. B., Makransky, G., &amp; Horton, M. (2017). Critical values for Yen’s Q3: Identification of local dependence in the Rasch model using residual correlations. <em>Applied Psychological Measurement, 41</em>(3), 178–194. <a href="https://doi.org/10.1177/0146621616677520" class="external-link uri">https://doi.org/10.1177/0146621616677520</a>
+</li>
+<li>Ferreira, J. A. (2024). Methods of testing a ‘small’ or ‘moderate’ number of hypotheses simultaneously: An account focusing on the control of the probability of at least one incorrect rejection and of the false discovery rate. <em>Journal of Statistical Theory and Practice, 19</em>(6). <a href="https://doi.org/10.1007/s42519-024-00412-4" class="external-link uri">https://doi.org/10.1007/s42519-024-00412-4</a>
 </li>
 <li>Henninger, M., Debelak, R., &amp; Strobl, C. (2023). A new stopping criterion for Rasch trees based on the Mantel-Haenszel effect size measure for DIF. <em>Educational and Psychological Measurement, 83</em>, 181–212. <a href="https://doi.org/10.1177/00131644221077135" class="external-link uri">https://doi.org/10.1177/00131644221077135</a>
 </li>

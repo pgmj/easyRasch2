@@ -184,17 +184,17 @@ if (requireNamespace("mice", quietly = TRUE)) {
 }
 #> 
 #> 
-#> Table: Pooled MSQ values from 2 imputations (Rubin's rules). n = 200 per imputed dataset. Cutoff values based on 50 total simulation iterations across 2 imputations (99.9% HDCI).
+#> Table: Pooled MSQ values from 2 imputations (Rubin's rules). n = 200 per imputed dataset. Cutoff values based on 50 total simulation iterations across 2 imputations (99.9% HDCI). Flagged: overfit = infit below range (more predictable); underfit = above range (noisier).
 #> 
 #> |Item  | Infit MSQ| Infit SE| Infit low| Infit high|Flagged | Relative location|
 #> |:-----|---------:|--------:|---------:|----------:|:-------|-----------------:|
-#> |Item1 |     1.015|    0.049|     0.869|      1.184|FALSE   |             -0.23|
-#> |Item2 |     1.000|    0.048|     0.870|      1.109|FALSE   |              0.13|
-#> |Item3 |     1.009|    0.047|     0.921|      1.102|FALSE   |             -0.01|
-#> |Item4 |     1.038|    0.047|     0.920|      1.104|FALSE   |             -0.05|
-#> |Item5 |     0.973|    0.048|     0.887|      1.111|FALSE   |              0.09|
-#> |Item6 |     1.026|    0.047|     0.913|      1.101|FALSE   |             -0.09|
-#> |Item7 |     0.929|    0.047|     0.859|      1.149|FALSE   |             -0.05|
-#> |Item8 |     1.009|    0.047|     0.904|      1.093|FALSE   |             -0.03|
+#> |Item1 |     1.015|    0.049|     0.869|      1.184|        |             -0.23|
+#> |Item2 |     1.000|    0.048|     0.870|      1.109|        |              0.13|
+#> |Item3 |     1.009|    0.047|     0.921|      1.102|        |             -0.01|
+#> |Item4 |     1.038|    0.047|     0.920|      1.104|        |             -0.05|
+#> |Item5 |     0.973|    0.048|     0.887|      1.111|        |              0.09|
+#> |Item6 |     1.026|    0.047|     0.913|      1.101|        |             -0.09|
+#> |Item7 |     0.929|    0.047|     0.859|      1.149|        |             -0.05|
+#> |Item8 |     1.009|    0.047|     0.904|      1.093|        |             -0.03|
 # }
 ```

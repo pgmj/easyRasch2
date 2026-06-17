@@ -11,7 +11,7 @@ imputed dataset and pools the results using Rubin's rules."><meta name="robots" 
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.900</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.906</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,7 +68,9 @@ kable caption.</p></li>
 <li><p>The <code>$item_cutoffs</code> data.frame directly: must have columns <code>Item</code>,
 <code>infit_low</code>, and <code>infit_high</code>.
 When provided, adds columns <code>Infit_low</code>, <code>Infit_high</code>, and <code>Flagged</code> to
-the result.</p></li>
+the result. <code>Flagged</code> is a character column labelling the misfit
+direction: <code>"overfit"</code> (pooled infit below the range), <code>"underfit"</code>
+(above), or <code>""</code> (within range).</p></li>
 </ul></dd>
 
 
@@ -94,7 +96,9 @@ complete cases. When <code>cutoff</code> is provided, columns "Infit low",
 <li><p>If <code>output = "dataframe"</code>: a data.frame with columns <code>Item</code>,
 <code>Infit_MSQ</code>, <code>Infit_SE</code>, and <code>Relative_location</code>. When <code>cutoff</code> is
 provided, columns <code>Infit_low</code>, <code>Infit_high</code>, and <code>Flagged</code> are also
-included (inserted after <code>Infit_SE</code>, before <code>Relative_location</code>).</p></li>
+included (inserted after <code>Infit_SE</code>, before <code>Relative_location</code>).
+<code>Flagged</code> is a character column (<code>"overfit"</code> / <code>"underfit"</code> / <code>""</code>),
+not the previous logical.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

@@ -11,7 +11,7 @@ mean person location."><meta name="robots" content="noindex"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.900</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.906</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,15 @@ mean person location.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RMitemInfit</span><span class="op">(</span><span class="va">data</span>, cutoff <span class="op">=</span> <span class="cn">NULL</span>, output <span class="op">=</span> <span class="st">"kable"</span>, <span class="va">sort</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RMitemInfit</span><span class="op">(</span></span>
+<span>  <span class="va">data</span>,</span>
+<span>  cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  p_value <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  correction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fwer"</span>, <span class="st">"fdr_bh"</span>, <span class="st">"fdr_by"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
+<span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  output <span class="op">=</span> <span class="st">"kable"</span>,</span>
+<span>  <span class="va">sort</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -68,9 +76,34 @@ caption.</p></li>
 <li><p>The <code>$item_cutoffs</code> data.frame from <code><a href="RMitemInfitCutoff.html">RMitemInfitCutoff</a></code> directly: must
 have columns <code>Item</code>, <code>infit_low</code>, and <code>infit_high</code>.
 When provided, adds columns <code>Infit_low</code>, <code>Infit_high</code>, and <code>Flagged</code>
-(logical; <code>TRUE</code> when <code>Infit_MSQ</code> falls outside the credible range) to
-the result.</p></li>
+to the result. <code>Flagged</code> labels the misfit direction: <code>"overfit"</code>
+(infit below the range – more predictable than the model expects),
+<code>"underfit"</code> (above the range – noisier than expected), or <code>""</code> (within
+range, no misfit).</p></li>
 </ul></dd>
+
+
+<dt id="arg-p-value">p_value<a class="anchor" aria-label="anchor" href="#arg-p-value"></a></dt>
+<dd><p>Logical. If <code>TRUE</code>, bootstrap p-values are computed from the
+simulated null distribution and added to the output. This requires
+<code>cutoff</code> to be the <strong>full</strong> <code><a href="RMitemInfitCutoff.html">RMitemInfitCutoff</a></code> object (which
+carries the per-item simulated values in its <code>$results</code> element); the
+summarised <code>$item_cutoffs</code> data.frame is not sufficient. Default <code>FALSE</code>,
+in which case behaviour is unchanged.</p></dd>
+
+
+<dt id="arg-correction">correction<a class="anchor" aria-label="anchor" href="#arg-correction"></a></dt>
+<dd><p>Character. Multiple-comparison correction applied across
+items when <code>p_value = TRUE</code>: <code>"fwer"</code> (default) for the Westfall-Young
+studentised-max step-down (family-wise error rate), <code>"fdr_bh"</code> /
+<code>"fdr_by"</code> for Benjamini-Hochberg / Benjamini-Yekutieli false discovery
+rate control, or <code>"none"</code> for uncorrected per-item p-values.</p></dd>
+
+
+<dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
+<dd><p>Numeric in (0, 1). Significance level for the <code>Flagged</code> column
+when <code>p_value = TRUE</code> (an item is flagged when its corrected p-value is
+below <code>alpha</code>). Default <code>0.05</code>.</p></dd>
 
 
 <dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
@@ -95,7 +128,12 @@ are also included, and the caption notes the simulation-based cutoffs.</p></li>
 <li><p>If <code>output = "dataframe"</code>: a data.frame with columns <code>Item</code>,
 <code>Infit_MSQ</code>, and <code>Relative_location</code>. When <code>cutoff</code> is provided, columns
 <code>Infit_low</code>, <code>Infit_high</code>, and <code>Flagged</code> are also included (inserted
-after <code>Infit_MSQ</code>, before <code>Relative_location</code>).</p></li>
+after <code>Infit_MSQ</code>, before <code>Relative_location</code>). <code>Flagged</code> is a character
+column with values <code>"overfit"</code>, <code>"underfit"</code>, or <code>""</code> (not the previous
+logical). When <code>p_value = TRUE</code>, columns <code>p_infit</code> (marginal two-sided
+p-value) and <code>padj_infit</code> (corrected p-value) are added and <code>Flagged</code>
+reflects items with <code>padj_infit &lt; alpha</code> (direction from <code>Infit_MSQ</code>
+relative to 1).</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -122,12 +160,54 @@ columns are used instead. Person locations are estimated via
 <p>Relative item location is defined as the item's average location minus the
 sample mean person location, providing a measure of item targeting.</p>
 <p>The <code>iarm</code> package must be installed (it is in Suggests, not Imports).</p>
+<p><strong>Bootstrap p-values.</strong> When <code>p_value = TRUE</code>, each item's observed
+infit is compared against its simulated null distribution (from
+<code>cutoff$results</code>). The per-item statistic is the residual studentised by
+the bootstrap mean and SD – deliberately the empirical SD rather than the
+Wilson-Hilferty / ZSTD transform, which is uninformative for conditional
+MSQ (Müller, 2020). The marginal p-value is the two-sided Monte-Carlo
+p-value <code>(1 + #{|t*| &gt;= |t|}) / (B + 1)</code>. For <code>correction = "fwer"</code> the
+family-wise adjustment uses the Westfall-Young studentised-max step-down,
+which exploits the bootstrap dependence among items and is more powerful
+than Bonferroni/Holm (Ferreira, 2024); its validity rests on subset
+pivotality. <code>"fdr_bh"</code>/<code>"fdr_by"</code> apply Benjamini-Hochberg / Benjamini-
+Yekutieli instead. These are model-conditional, sample-size-sensitive
+p-values and are reported alongside the simulated effect-size band, not in
+place of it. p-values can be no smaller than <code>1 / (B + 1)</code>, and the
+studentised-max (FWER) correction is <em>liberal</em> when the simulation is small
+(the bootstrap mean/SD used for studentisation are then too noisy). At
+least 1000 <code>iterations</code> in <code><a href="RMitemInfitCutoff.html">RMitemInfitCutoff()</a></code> are recommended – in
+simulations the family-wise error rate is then controlled at the nominal
+level – and a warning is issued when the simulation is smaller. The
+marginal p-values are well calibrated even at a few hundred iterations.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="multiple-comparisons">Multiple comparisons<a class="anchor" aria-label="anchor" href="#multiple-comparisons"></a></h2>
+
+
+<p>The marginal p-value controls the error rate of a <em>single</em> comparison: for
+one item (or item pair) decided on in advance it is the relevant value. But
+scanning all <em>k</em> comparisons and flagging whichever fall below <code>alpha</code> tests
+<em>k</em> hypotheses at once, so the chance of at least one false flag inflates to
+roughly \(1 - (1 - \alpha)^k\) (e.g. about 34% for <em>k</em> = 8 at
+<code>alpha = 0.05</code>) – even when every marginal p-value is correctly calibrated.
+The corrected (adjusted) p-value controls this: <code>correction = "fwer"</code> bounds
+the probability of <em>any</em> false flag (strict, lower power), while <code>"fdr_bh"</code> /
+<code>"fdr_by"</code> bound the expected <em>proportion</em> of false flags among those raised
+(a more lenient middle ground). Rule of thumb: use the marginal p-value for a
+single pre-specified comparison, and a corrected p-value when screening the
+whole table – the usual workflow.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Müller, M. (2020). Item fit statistics for Rasch analysis: Can we trust
 them? <em>Journal of Statistical Distributions and Applications</em>, 7(5).
 <a href="https://doi.org/10.1186/s40488-020-00108-7" class="external-link">doi:10.1186/s40488-020-00108-7</a></p>
+<p>Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
+of hypotheses simultaneously. <em>Journal of Statistical Theory and Practice,
+19</em>(6). <a href="https://doi.org/10.1007/s42519-024-00412-4" class="external-link">doi:10.1007/s42519-024-00412-4</a></p>
+<p>Westfall, P. H., &amp; Young, S. S. (1993). <em>Resampling-Based Multiple Testing</em>.
+Wiley.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -182,22 +262,40 @@ them? <em>Journal of Statistical Distributions and Applications</em>, 7(5).
 <span class="r-in"><span><span class="fu">RMitemInfit</span><span class="op">(</span><span class="va">sim_data</span>, cutoff <span class="op">=</span> <span class="va">cutoff_res</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Table: MSQ values based on conditional estimation (n = 40 complete cases). Cutoff values based on 99 simulation iterations (99.9% HDCI).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: MSQ values based on conditional estimation (n = 40 complete cases). Cutoff values based on 99 simulation iterations (99.9% HDCI). Flagged: overfit = infit below range (more predictable); underfit = above range (noisier).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |Item  | Infit MSQ| Infit low| Infit high|Flagged | Relative location|</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |:-----|---------:|---------:|----------:|:-------|-----------------:|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item1 |     1.049|     0.576|      1.489|FALSE   |             -0.03|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2 |     0.929|     0.660|      1.537|FALSE   |             -0.54|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3 |     0.828|     0.547|      1.374|FALSE   |             -0.23|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4 |     1.216|     0.699|      1.349|FALSE   |              0.26|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5 |     0.931|     0.689|      1.315|FALSE   |             -0.76|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item1 |     1.049|     0.576|      1.489|        |             -0.03|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2 |     0.929|     0.660|      1.537|        |             -0.54|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3 |     0.828|     0.547|      1.374|        |             -0.23|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4 |     1.216|     0.699|      1.349|        |              0.26|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5 |     0.931|     0.689|      1.315|        |             -0.76|</span>
 <span class="r-in"><span><span class="fu">RMitemInfit</span><span class="op">(</span><span class="va">sim_data</span>, cutoff <span class="op">=</span> <span class="va">cutoff_res</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    Item Infit_MSQ Infit_low Infit_high Flagged Relative_location</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item1     1.049     0.576      1.489   FALSE             -0.03</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2     0.929     0.660      1.537   FALSE             -0.54</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item3     0.828     0.547      1.374   FALSE             -0.23</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4     1.216     0.699      1.349   FALSE              0.26</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item5     0.931     0.689      1.315   FALSE             -0.76</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item1     1.049     0.576      1.489                     -0.03</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2     0.929     0.660      1.537                     -0.54</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item3     0.828     0.547      1.374                     -0.23</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4     1.216     0.699      1.349                      0.26</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item5     0.931     0.689      1.315                     -0.76</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Bootstrap p-values with family-wise (Westfall-Young) correction</span></span></span>
+<span class="r-in"><span><span class="co"># (use iterations &gt;= 1000 in real analyses for stable p-values)</span></span></span>
+<span class="r-in"><span><span class="fu">RMitemInfit</span><span class="op">(</span><span class="va">sim_data</span>, cutoff <span class="op">=</span> <span class="va">cutoff_res</span>, p_value <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>            output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Bootstrap p-values are based on only 99 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations &gt;= 1000 in RMitemInfitCutoff() for reliable p-values.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Item Infit_MSQ Infit_low Infit_high p_infit padj_infit Flagged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item1     1.049     0.576      1.489    0.74       0.85        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2     0.929     0.660      1.537    0.65       0.85        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item3     0.828     0.547      1.374    0.25       0.68        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4     1.216     0.699      1.349    0.10       0.28        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item5     0.931     0.689      1.315    0.48       0.85        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Relative_location</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1             -0.03</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2             -0.54</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3             -0.23</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4              0.26</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5             -0.76</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

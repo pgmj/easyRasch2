@@ -35,7 +35,10 @@ RMitemInfitMI(mids_object, cutoff = NULL, output = "kable", sort)
 
   - The `$item_cutoffs` data.frame directly: must have columns `Item`,
     `infit_low`, and `infit_high`. When provided, adds columns
-    `Infit_low`, `Infit_high`, and `Flagged` to the result.
+    `Infit_low`, `Infit_high`, and `Flagged` to the result. `Flagged` is
+    a character column labelling the misfit direction: `"overfit"`
+    (pooled infit below the range), `"underfit"` (above), or `""`
+    (within range).
 
 - output:
 
@@ -61,6 +64,8 @@ RMitemInfitMI(mids_object, cutoff = NULL, output = "kable", sort)
   `Infit_MSQ`, `Infit_SE`, and `Relative_location`. When `cutoff` is
   provided, columns `Infit_low`, `Infit_high`, and `Flagged` are also
   included (inserted after `Infit_SE`, before `Relative_location`).
+  `Flagged` is a character column (`"overfit"` / `"underfit"` / `""`),
+  not the previous logical.
 
 ## Details
 
