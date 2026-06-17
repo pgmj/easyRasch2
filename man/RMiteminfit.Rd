@@ -4,7 +4,15 @@
 \alias{RMitemInfit}
 \title{Conditional Item Infit MSQ}
 \usage{
-RMitemInfit(data, cutoff = NULL, output = "kable", sort)
+RMitemInfit(
+  data,
+  cutoff = NULL,
+  p_value = FALSE,
+  correction = c("fwer", "fdr_bh", "fdr_by", "none"),
+  alpha = 0.05,
+  output = "kable",
+  sort
+)
 }
 \arguments{
 \item{data}{A data.frame or matrix of item responses. Items must be scored
@@ -21,9 +29,28 @@ caption.
 \item The \verb{$item_cutoffs} data.frame from \code{\link{RMitemInfitCutoff}} directly: must
 have columns \code{Item}, \code{infit_low}, and \code{infit_high}.
 When provided, adds columns \code{Infit_low}, \code{Infit_high}, and \code{Flagged}
-(logical; \code{TRUE} when \code{Infit_MSQ} falls outside the credible range) to
-the result.
+to the result. \code{Flagged} labels the misfit direction: \code{"overfit"}
+(infit below the range -- more predictable than the model expects),
+\code{"underfit"} (above the range -- noisier than expected), or \code{""} (within
+range, no misfit).
 }}
+
+\item{p_value}{Logical. If \code{TRUE}, bootstrap p-values are computed from the
+simulated null distribution and added to the output. This requires
+\code{cutoff} to be the \strong{full} \code{\link{RMitemInfitCutoff}} object (which
+carries the per-item simulated values in its \verb{$results} element); the
+summarised \verb{$item_cutoffs} data.frame is not sufficient. Default \code{FALSE},
+in which case behaviour is unchanged.}
+
+\item{correction}{Character. Multiple-comparison correction applied across
+items when \code{p_value = TRUE}: \code{"fwer"} (default) for the Westfall-Young
+studentised-max step-down (family-wise error rate), \code{"fdr_bh"} /
+\code{"fdr_by"} for Benjamini-Hochberg / Benjamini-Yekutieli false discovery
+rate control, or \code{"none"} for uncorrected per-item p-values.}
+
+\item{alpha}{Numeric in (0, 1). Significance level for the \code{Flagged} column
+when \code{p_value = TRUE} (an item is flagged when its corrected p-value is
+below \code{alpha}). Default \code{0.05}.}
 
 \item{output}{Character string controlling the return value. Either
 \code{"kable"} (default) for a formatted \code{knitr::kable()} table, or
@@ -42,7 +69,12 @@ are also included, and the caption notes the simulation-based cutoffs.
 \item If \code{output = "dataframe"}: a data.frame with columns \code{Item},
 \code{Infit_MSQ}, and \code{Relative_location}. When \code{cutoff} is provided, columns
 \code{Infit_low}, \code{Infit_high}, and \code{Flagged} are also included (inserted
-after \code{Infit_MSQ}, before \code{Relative_location}).
+after \code{Infit_MSQ}, before \code{Relative_location}). \code{Flagged} is a character
+column with values \code{"overfit"}, \code{"underfit"}, or \code{""} (not the previous
+logical). When \code{p_value = TRUE}, columns \code{p_infit} (marginal two-sided
+p-value) and \code{padj_infit} (corrected p-value) are added and \code{Flagged}
+reflects items with \code{padj_infit < alpha} (direction from \code{Infit_MSQ}
+relative to 1).
 }
 }
 \description{
@@ -79,7 +111,44 @@ Relative item location is defined as the item's average location minus the
 sample mean person location, providing a measure of item targeting.
 
 The \code{iarm} package must be installed (it is in Suggests, not Imports).
+
+\strong{Bootstrap p-values.} When \code{p_value = TRUE}, each item's observed
+infit is compared against its simulated null distribution (from
+\code{cutoff$results}). The per-item statistic is the residual studentised by
+the bootstrap mean and SD -- deliberately the empirical SD rather than the
+Wilson-Hilferty / ZSTD transform, which is uninformative for conditional
+MSQ (Müller, 2020). The marginal p-value is the two-sided Monte-Carlo
+p-value \verb{(1 + #\{|t*| >= |t|\}) / (B + 1)}. For \code{correction = "fwer"} the
+family-wise adjustment uses the Westfall-Young studentised-max step-down,
+which exploits the bootstrap dependence among items and is more powerful
+than Bonferroni/Holm (Ferreira, 2024); its validity rests on subset
+pivotality. \code{"fdr_bh"}/\code{"fdr_by"} apply Benjamini-Hochberg / Benjamini-
+Yekutieli instead. These are model-conditional, sample-size-sensitive
+p-values and are reported alongside the simulated effect-size band, not in
+place of it. p-values can be no smaller than \code{1 / (B + 1)}, and the
+studentised-max (FWER) correction is \emph{liberal} when the simulation is small
+(the bootstrap mean/SD used for studentisation are then too noisy). At
+least 1000 \code{iterations} in \code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}} are recommended -- in
+simulations the family-wise error rate is then controlled at the nominal
+level -- and a warning is issued when the simulation is smaller. The
+marginal p-values are well calibrated even at a few hundred iterations.
 }
+\section{Multiple comparisons}{
+
+The marginal p-value controls the error rate of a \emph{single} comparison: for
+one item (or item pair) decided on in advance it is the relevant value. But
+scanning all \emph{k} comparisons and flagging whichever fall below \code{alpha} tests
+\emph{k} hypotheses at once, so the chance of at least one false flag inflates to
+roughly \eqn{1 - (1 - \alpha)^k} (e.g. about 34\% for \emph{k} = 8 at
+\code{alpha = 0.05}) -- even when every marginal p-value is correctly calibrated.
+The corrected (adjusted) p-value controls this: \code{correction = "fwer"} bounds
+the probability of \emph{any} false flag (strict, lower power), while \code{"fdr_bh"} /
+\code{"fdr_by"} bound the expected \emph{proportion} of false flags among those raised
+(a more lenient middle ground). Rule of thumb: use the marginal p-value for a
+single pre-specified comparison, and a corrected p-value when screening the
+whole table -- the usual workflow.
+}
+
 \examples{
 \donttest{
 # Simulate binary item response data (5 items, 40 persons)
@@ -104,12 +173,24 @@ cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100, parallel = FALSE,
                             seed = 42)
 RMitemInfit(sim_data, cutoff = cutoff_res)
 RMitemInfit(sim_data, cutoff = cutoff_res, output = "dataframe")
+
+# Bootstrap p-values with family-wise (Westfall-Young) correction
+# (use iterations >= 1000 in real analyses for stable p-values)
+RMitemInfit(sim_data, cutoff = cutoff_res, p_value = TRUE,
+            output = "dataframe")
 }
 }
 \references{
 Müller, M. (2020). Item fit statistics for Rasch analysis: Can we trust
 them? \emph{Journal of Statistical Distributions and Applications}, 7(5).
 \doi{10.1186/s40488-020-00108-7}
+
+Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
+of hypotheses simultaneously. \emph{Journal of Statistical Theory and Practice,
+19}(6). \doi{10.1007/s42519-024-00412-4}
+
+Westfall, P. H., & Young, S. S. (1993). \emph{Resampling-Based Multiple Testing}.
+Wiley.
 }
 \seealso{
 \code{\link{RMitemInfitCutoff}}

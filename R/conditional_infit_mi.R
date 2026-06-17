@@ -16,7 +16,9 @@
 #'   * The `$item_cutoffs` data.frame directly: must have columns `Item`,
 #'     `infit_low`, and `infit_high`.
 #'   When provided, adds columns `Infit_low`, `Infit_high`, and `Flagged` to
-#'   the result.
+#'   the result. `Flagged` is a character column labelling the misfit
+#'   direction: `"overfit"` (pooled infit below the range), `"underfit"`
+#'   (above), or `""` (within range).
 #' @param output Character string controlling the return value. Either
 #'   `"kable"` (default) for a formatted `knitr::kable()` table, or
 #'   `"dataframe"` for the underlying data.frame.
@@ -33,6 +35,8 @@
 #'   `Infit_MSQ`, `Infit_SE`, and `Relative_location`. When `cutoff` is
 #'   provided, columns `Infit_low`, `Infit_high`, and `Flagged` are also
 #'   included (inserted after `Infit_SE`, before `Relative_location`).
+#'   `Flagged` is a character column (`"overfit"` / `"underfit"` / `""`),
+#'   not the previous logical.
 #'
 #' @details
 #' For each of the `m` imputed datasets, the function:
@@ -320,8 +324,12 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable",
     item_fit_table$Infit_high <- round(item_fit_table$infit_high, 3)
     item_fit_table$infit_low  <- NULL
     item_fit_table$infit_high <- NULL
-    item_fit_table$Flagged <- item_fit_table$Infit_MSQ < item_fit_table$Infit_low |
-      item_fit_table$Infit_MSQ > item_fit_table$Infit_high
+    # Flagged labels the misfit direction: overfit (pooled infit below the
+    # range, more predictable), underfit (above, noisier), "" within range.
+    item_fit_table$Flagged <- ifelse(
+      item_fit_table$Infit_MSQ < item_fit_table$Infit_low, "overfit",
+      ifelse(item_fit_table$Infit_MSQ > item_fit_table$Infit_high, "underfit", "")
+    )
     # Reorder columns
     item_fit_table <- item_fit_table[, c("Item", "Infit_MSQ", "Infit_SE",
                                          "Infit_low", "Infit_high", "Flagged",
@@ -371,6 +379,11 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable",
   }
 
   caption <- paste0(base_caption, if (!is.null(cutoff_caption)) cutoff_caption)
+  if (!is.null(cutoff)) {
+    caption <- paste0(caption,
+      " Flagged: overfit = infit below range (more predictable); ",
+      "underfit = above range (noisier).")
+  }
 
   knitr::kable(
     item_fit_table,

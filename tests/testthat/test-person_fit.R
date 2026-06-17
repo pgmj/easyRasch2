@@ -80,9 +80,9 @@ test_that("conditional MSQ means are near 1 under the null", {
   expect_equal(mean(res$outfit_msq, na.rm = TRUE), 1, tolerance = 0.05)
 })
 
-test_that("Type I error is near nominal under the null (theta scheme)", {
+test_that("Type I error is near nominal under the null", {
   skip_if_not_installed("eRm")
-  res <- RMpersonFit(sim_pcm_null(n = 400), resample = "theta",
+  res <- RMpersonFit(sim_pcm_null(n = 400),
                      iterations = 400, seed = 4, output = "dataframe")
   expect_lt(mean(res$flagged, na.rm = TRUE), 0.12)
 })
@@ -122,15 +122,24 @@ test_that("extreme scorers receive NA statistics", {
   expect_true(is.na(res$outfit_msq[1]) && is.na(res$outfit_msq[2]))
 })
 
-test_that("both resampling schemes run and broadly agree", {
+test_that("all three statistics get valid p-values (per-statistic schemes)", {
+  skip_if_not_installed("eRm")
+  res <- RMpersonFit(sim_pcm_null(n = 150), iterations = 200, seed = 7,
+                     output = "dataframe")
+  for (col in c("p_infit", "p_outfit", "p_lz")) {
+    p <- res[[col]][!is.na(res[[col]])]
+    expect_true(length(p) > 0L && all(p >= 0 & p <= 1))
+  }
+})
+
+test_that("MSQ-only run needs no person estimate but still yields p-values", {
   skip_if_not_installed("eRm")
   dat <- sim_pcm_null(n = 150)
-  a <- RMpersonFit(dat, resample = "theta",       iterations = 200, seed = 7,
-                   output = "dataframe")
-  b <- RMpersonFit(dat, resample = "conditional", iterations = 200, seed = 7,
-                   output = "dataframe")
-  expect_equal(nrow(a), nrow(b))
-  expect_gt(cor(a$p_outfit, b$p_outfit, use = "complete.obs"), 0.6)
+  dat[cbind(sample(150, 25), sample(8, 25, replace = TRUE))] <- NA
+  res <- RMpersonFit(dat, statistics = c("infit", "outfit"),
+                     iterations = 200, seed = 1, output = "dataframe")
+  ok <- res$n_answered > 1L & res$sum_score > 0 & !is.na(res$infit_msq)
+  expect_true(all(is.finite(res$p_infit[ok])))   # conditional scheme, missingness handled
 })
 
 test_that("conditional sampler produces patterns with the fixed total", {
@@ -146,11 +155,83 @@ test_that("zstd adds non-inferential ZSTD columns", {
   expect_true(all(c("infit_zstd", "outfit_zstd") %in% names(res)))
 })
 
-test_that("kable and ggplot outputs return the right classes", {
+test_that("kable output returns knitr_kable", {
   skip_if_not_installed("eRm")
   skip_if_not_installed("knitr")
   dat <- sim_pcm_null(n = 100)
   expect_s3_class(RMpersonFit(dat, iterations = 50), "knitr_kable")
+})
+
+test_that("ggplot output returns a named list of plots, one per statistic", {
+  skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
-  expect_s3_class(RMpersonFit(dat, iterations = 50, output = "ggplot"), "ggplot")
+  dat <- sim_pcm_null(n = 120)
+  g <- RMpersonFit(dat, iterations = 100, seed = 1, output = "ggplot")
+  expect_type(g, "list")
+  expect_named(g, c("infit", "outfit", "lz"))
+  expect_true(all(vapply(g, function(p) inherits(p, "ggplot"), logical(1))))
+  # each plot is non-blank (has plotted points) -- the infit-blank regression
+  expect_true(all(vapply(g, function(p) nrow(p$data) > 0L, logical(1))))
+})
+
+test_that("ggplot with a single statistic is a one-element list and not blank", {
+  skip_if_not_installed("eRm")
+  skip_if_not_installed("ggplot2")
+  dat <- sim_pcm_null(n = 120)
+  gi <- RMpersonFit(dat, statistics = "infit", iterations = 100, seed = 1,
+                    output = "ggplot")
+  expect_named(gi, "infit")
+  expect_s3_class(gi$infit, "ggplot")
+  expect_gt(nrow(gi$infit$data), 0L)            # not blank
+  expect_match(gi$infit$labels$caption, "flagged")
+})
+
+test_that("MSQ plot captions split flagged into underfit/overfit; lz does not", {
+  skip_if_not_installed("eRm")
+  skip_if_not_installed("ggplot2")
+  set.seed(2); n <- 400; J <- 8
+  theta <- rnorm(n, 0, 1.3); beta <- seq(-1.5, 1.5, length.out = J)
+  m <- sapply(seq_len(J), function(j) rbinom(n, 1, plogis(theta - beta[j])))
+  m[1:8, ] <- m[1:8, J:1]                        # reversed -> underfit
+  dat <- as.data.frame(m); colnames(dat) <- paste0("I", seq_len(J))
+  g <- RMpersonFit(dat, iterations = 400, seed = 1, output = "ggplot")
+  # (caption may wrap across lines, so check the words separately)
+  expect_match(g$infit$labels$caption,  "underfit")
+  expect_match(g$infit$labels$caption,  "overfit")
+  expect_match(g$outfit$labels$caption, "underfit")
+  expect_no_match(g$lz$labels$caption,  "underfit")   # one-sided: no split
+})
+
+test_that("flag = 'underfit' flags only the upper (MSQ > 1) direction", {
+  skip_if_not_installed("eRm")
+  set.seed(2); n <- 400; J <- 8
+  theta <- rnorm(n, 0, 1.3); beta <- seq(-1.5, 1.5, length.out = J)
+  m <- sapply(seq_len(J), function(j) rbinom(n, 1, plogis(theta - beta[j])))
+  m[1:10, ] <- m[1:10, J:1]
+  dat <- as.data.frame(m); colnames(dat) <- paste0("I", seq_len(J))
+  res <- RMpersonFit(dat, statistics = "infit", iterations = 400, seed = 1,
+                     flag = "underfit", output = "dataframe")
+  flagged <- res[!is.na(res$flagged) & res$flagged, ]
+  expect_true(all(flagged$infit_msq > 1))            # never flags overfit
+})
+
+test_that("flag = 'underfit' uses a one-sided MSQ p-value (differs from both)", {
+  skip_if_not_installed("eRm")
+  dat <- sim_pcm_null(n = 200)
+  a <- RMpersonFit(dat, statistics = "infit", iterations = 400, seed = 1,
+                   flag = "both",     output = "dataframe")
+  b <- RMpersonFit(dat, statistics = "infit", iterations = 400, seed = 1,
+                   flag = "underfit", output = "dataframe")
+  expect_false(isTRUE(all.equal(a$p_infit, b$p_infit)))
+})
+
+test_that("plot status colours respondents by direction", {
+  skip_if_not_installed("eRm")
+  skip_if_not_installed("ggplot2")
+  dat <- sim_pcm_null(n = 150)
+  g <- RMpersonFit(dat, iterations = 300, seed = 1, output = "ggplot")
+  expect_true("status" %in% names(g$infit$data))
+  expect_true(all(levels(g$infit$data$status) %in%
+                  c("Not flagged", "Underfit", "Overfit")))
+  expect_true(all(levels(g$lz$data$status) %in% c("Not flagged", "Flagged")))
 })

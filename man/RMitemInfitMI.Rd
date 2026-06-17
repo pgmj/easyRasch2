@@ -21,7 +21,9 @@ kable caption.
 \item The \verb{$item_cutoffs} data.frame directly: must have columns \code{Item},
 \code{infit_low}, and \code{infit_high}.
 When provided, adds columns \code{Infit_low}, \code{Infit_high}, and \code{Flagged} to
-the result.
+the result. \code{Flagged} is a character column labelling the misfit
+direction: \code{"overfit"} (pooled infit below the range), \code{"underfit"}
+(above), or \code{""} (within range).
 }}
 
 \item{output}{Character string controlling the return value. Either
@@ -42,6 +44,8 @@ complete cases. When \code{cutoff} is provided, columns "Infit low",
 \code{Infit_MSQ}, \code{Infit_SE}, and \code{Relative_location}. When \code{cutoff} is
 provided, columns \code{Infit_low}, \code{Infit_high}, and \code{Flagged} are also
 included (inserted after \code{Infit_SE}, before \code{Relative_location}).
+\code{Flagged} is a character column (\code{"overfit"} / \code{"underfit"} / \code{""}),
+not the previous logical.
 }
 }
 \description{

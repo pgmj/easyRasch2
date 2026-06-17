@@ -9,9 +9,9 @@ RMpersonFit(
   statistics = c("infit", "outfit", "lz"),
   estimator = c("CML", "MML"),
   theta_method = c("WLE", "EAP"),
-  resample = c("theta", "conditional"),
   iterations = 500L,
   flag_alpha = 0.05,
+  flag = c("both", "underfit"),
   zstd = FALSE,
   parallel = FALSE,
   n_cores = NULL,
@@ -34,18 +34,21 @@ are allowed.}
 lz statistic: \code{"WLE"} (default) or \code{"EAP"}. Ignored if \code{"lz"} is not
 requested.}
 
-\item{resample}{Character. Resampling scheme for the null
-distribution: \code{"theta"} (default) simulates each person's responses
-at their estimated location; \code{"conditional"} samples response
-patterns conditional on the person's total score (no person estimate
-required, fully consistent with the conditional MSQ statistics).}
-
 \item{iterations}{Integer. Number of Monte-Carlo replications per
 person. \code{0} skips resampling and returns statistics only. Default
 \code{500}.}
 
-\item{flag_alpha}{Numeric in (0, 1). Two-sided significance level for
-the \code{flagged} column. Default \code{0.05}.}
+\item{flag_alpha}{Numeric in (0, 1). Significance level for the \code{flagged}
+column and the plot highlighting. Default \code{0.05}.}
+
+\item{flag}{Character. Which misfit direction drives flagging for the MSQ
+statistics: \code{"both"} (default) flags either direction with a two-sided
+p-value; \code{"underfit"} flags only underfit (MSQ > 1, noisy responding)
+with a one-sided upper p-value, which is more powerful for detecting it
+and ignores (benign) overfit. The reported \code{p_infit} / \code{p_outfit} follow
+this choice. lz is one-sided regardless. Overfit can occasionally be
+suspicious (e.g. fabricated or copied response patterns), so \code{"both"} is
+the default.}
 
 \item{zstd}{Logical. If \code{TRUE}, also report the Wilson-Hilferty
 standardized (ZSTD) versions of the MSQ statistics. These are
@@ -58,8 +61,13 @@ across persons via \pkg{mirai} when available. Default sequential.}
 \item{seed}{Optional integer for reproducible resampling.}
 
 \item{output}{Character. \code{"kable"} (default), \code{"dataframe"}, or
-\code{"ggplot"} (a person-fit map of outfit MSQ against person location,
-flagged respondents highlighted).}
+\code{"ggplot"}. For \code{"ggplot"}, a \strong{named list} of person-fit maps is
+returned -- one per requested statistic (e.g. \verb{$infit}, \verb{$outfit},
+\verb{$lz}) -- each plotting the statistic against person location, with
+respondents flagged by \emph{that} statistic highlighted and a caption
+reporting the assessed sample size and the proportion flagged. For the
+MSQ maps the flagged count is split into underfit (MSQ > 1, noisy/erratic
+responding) and overfit (MSQ < 1, overly deterministic responding).}
 }
 \value{
 For \code{output = "dataframe"}, a data.frame with one row per respondent
@@ -67,9 +75,16 @@ For \code{output = "dataframe"}, a data.frame with one row per respondent
 statistics (\code{infit_msq}, \code{outfit_msq}, \code{lz}), their resampled
 p-values (\code{p_infit}, \code{p_outfit}, \code{p_lz}) when \code{iterations > 0},
 \code{flagged}, and -- if \code{zstd = TRUE} -- \code{infit_zstd}, \code{outfit_zstd}.
-Extreme scorers (minimum or maximum possible given the items they
-answered) receive \code{NA} statistics. For \code{output = "kable"} the same
-content as a \code{knitr_kable}; for \code{output = "ggplot"} a person-fit map.
+The \code{flagged} column is \code{TRUE} when the marginal (uncorrected) p-value of
+\strong{any} requested statistic is below \code{flag_alpha} for that respondent; it
+is therefore a per-person screening flag, not corrected for the number of
+respondents tested (so under fit expect about \code{flag_alpha} of respondents
+to be flagged by chance). Each \code{output = "ggplot"} map instead colours and
+counts respondents flagged by its \strong{own} statistic alone. Extreme scorers
+(minimum or maximum possible given the items they answered) receive \code{NA}
+statistics and are not assessed. For \code{output = "kable"} the same content as
+a \code{knitr_kable}; for \code{output = "ggplot"} the named list of maps described
+under that argument.
 }
 \description{
 Computes per-respondent person-fit statistics and resampling-based
@@ -78,7 +93,7 @@ p-values. Three statistics are reported: conditional \strong{infit} and
 familiar from Rasch analysis -- and the standardized log-likelihood
 statistic \strong{lz}. The conditional MSQ statistics use response
 probabilities conditional on the total score, which require no person
-estimate and are therefore unbiased (Kreiner & Christensen); they are
+estimate and are therefore unbiased (Kreiner & Christensen, 2011); they are
 computed on each person's observed response pattern, so partial
 missingness is handled directly.
 }
@@ -99,6 +114,15 @@ parameters. Outfit is the unweighted mean of \eqn{z_{vi}^2}; infit is
 the information-weighted mean. Because the conditional moments use only
 item parameters, no (biased) person estimate enters the residual.
 
+\strong{Interpreting MSQ direction.} Values near 1 indicate fit. MSQ > 1
+(\emph{underfit}) means the responses are noisier / more erratic than the
+model expects -- the validity-relevant direction, indicating careless or
+aberrant responding. MSQ < 1 (\emph{overfit}) means responses are overly
+deterministic (Guttman-like); usually benign for score validity, though a
+suspiciously perfect pattern can occasionally signal copied or fabricated
+data. Use \code{flag = "underfit"} to flag only the former. lz is one-sided:
+low (negative) values flag the aberrant (underfit-like) direction.
+
 \strong{lz.} The standardized log-likelihood of the response pattern
 evaluated at the estimated person location (Drasgow, Levine &
 Williams, 1985); small (negative) values indicate misfit. Its
@@ -107,13 +131,16 @@ is estimated; the resampled p-value is therefore the basis for
 inference, which makes the analytic lz\* standardization (Snijders,
 2001) unnecessary here.
 
-\strong{Resampling.} For each person, \code{iterations} response patterns
-are simulated under the fitted model -- either at the estimated
-location (\code{resample = "theta"}) or conditional on the observed total
-score (\code{resample = "conditional"}) -- and each statistic is
-recomputed. The two-sided p-value is the proportion of replicates at
-least as extreme as the observed value. This follows the
-resampling-based person-fit approach (Sinharay, 2016) and the
+\strong{Resampling.} Each statistic is referenced against the null that
+matches it, removing the need to choose a scheme. The conditional MSQ
+statistics use patterns sampled \strong{conditional on the person's total
+score} -- the exact Rasch-native null, requiring no person estimate and
+fully consistent with the (conditional) statistic. lz, which is defined at
+the estimated location, uses patterns \strong{simulated at that location}. Both
+are computed per person over the items actually answered, so partial
+missingness is handled by either scheme. The p-value is the proportion of
+the \code{iterations} replicates at least as extreme as the observed value. This
+follows the resampling-based person-fit approach (Sinharay, 2016) and the
 bootstrap recommendation of Müller (2020).
 }
 \examples{
@@ -127,11 +154,15 @@ colnames(dat) <- paste0("Item", 1:8)
 # Conditional infit/outfit MSQ + lz with resampled p-values
 RMpersonFit(dat, iterations = 200, output = "dataframe") |> head()
 
-# Compare the two resampling schemes
-a <- RMpersonFit(dat, resample = "theta",       iterations = 200,
-                 output = "dataframe")
-b <- RMpersonFit(dat, resample = "conditional", iterations = 200,
-                 output = "dataframe")
+# Person-fit maps: a named list with one plot per statistic
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  plots <- RMpersonFit(dat, iterations = 200, output = "ggplot")
+  plots$infit    # infit map (each plot's caption reports the \% flagged)
+}
+
+# Flag only underfit (noisy responding), the validity-relevant direction
+RMpersonFit(dat, iterations = 200, flag = "underfit",
+            output = "dataframe") |> head()
 }
 }
 \references{

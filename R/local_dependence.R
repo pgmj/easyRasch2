@@ -8,28 +8,46 @@
 #'
 #' @param data A data.frame or matrix of item responses. Items must be scored
 #'   starting at 0 (non-negative integers). Missing values (`NA`) are allowed.
-#' @param cutoff Optional. Either a single numeric value (added to the mean
-#'   off-diagonal Q3 correlation to produce the dynamic cut-off threshold) or
-#'   the full list returned by \code{\link{RMlocdepQ3Cutoff}} (from which
-#'   `$suggested_cutoff` is extracted automatically). When `NULL` (default),
-#'   the raw Q3 residual correlation matrix is returned without any dynamic
-#'   cut-off applied.
+#' @param cutoff Optional. `NULL` (default) returns the raw Q3 matrix. A single
+#'   numeric value returns the Q3 matrix with a global dynamic cut-off (the
+#'   value added to the mean off-diagonal Q3). The **full list** returned by
+#'   \code{\link{RMlocdepQ3Cutoff}} returns a *list of two tables* (see Value):
+#'   the cut-off matrix plus a per-pair table.
 #' @param output Character string controlling the return value. Either
-#'   `"kable"` (default) for a formatted `knitr::kable()` table, or
-#'   `"dataframe"` for the underlying numeric data.frame.
+#'   `"kable"` (default) for formatted `knitr::kable()` table(s), or
+#'   `"dataframe"` for the underlying data.frame(s).
+#' @param n_pairs Integer or `NULL` (default). When the full cutoff object is
+#'   supplied, limits the per-pair table to the `n_pairs` pairs with the
+#'   largest departure from their expected range. `NULL` shows all pairs.
+#' @param p_value Logical. If `TRUE` (requires the full
+#'   \code{\link{RMlocdepQ3Cutoff}} object), the per-pair table also reports
+#'   one-sided bootstrap p-values (`p_q3`, `padj_q3`) and flags pairs on
+#'   `padj_q3 < alpha` instead of the expected range. Default `FALSE`.
+#' @param correction Character. Multiple-comparison correction across item
+#'   pairs when `p_value = TRUE`: `"fwer"` (default) for the Westfall-Young
+#'   studentised-max step-down, `"fdr_bh"` / `"fdr_by"` for Benjamini-Hochberg
+#'   / Benjamini-Yekutieli, or `"none"`.
+#' @param alpha Numeric in (0, 1). Significance level for `Flagged` when
+#'   `p_value = TRUE`. Default `0.05`.
 #'
 #' @return
-#' * If `output = "kable"`: a `knitr_kable` object showing the lower triangle
-#'   of the Q3 correlation matrix. When `cutoff` is provided, a footnote
-#'   describing the dynamic cut-off is included and an extra `above_cutoff`
-#'   column marks rows containing at least one value above the threshold.
-#' * If `output = "dataframe"`: a data.frame (4-decimal precision, matching
-#'   the precision of the simulated values in [RMlocdepQ3Cutoff()]) with
-#'   the lower triangle of the Q3 correlation matrix; the upper triangle and
-#'   diagonal are set to `NA`. When `cutoff` is provided, an additional logical
-#'   column `above_cutoff` indicates whether the row contains any value
-#'   exceeding the dynamic cut-off. The kable display is rounded to 2
-#'   decimals; the cut-off comparison always uses the full-precision values.
+#' With `cutoff = NULL` or a bare numeric cut-off, a single object (`kable` or
+#' data.frame) holding the lower triangle of the Q3 matrix; a numeric cut-off
+#' adds an `above_cutoff` row flag and a caption describing the dynamic
+#' cut-off.
+#'
+#' With the **full `RMlocdepQ3Cutoff()` object**, a named list of two:
+#' \describe{
+#'   \item{`$matrix`}{the Q3 lower-triangle matrix with the *global* dynamic
+#'     cut-off (mean off-diagonal Q3 + suggested cut-off), as above.}
+#'   \item{`$pairs`}{one row per item pair: `Item1`, `Item2`, `Observed` (Q3),
+#'     `Low`/`High` (the per-pair expected range, i.e. the simulated bounds),
+#'     and `Flagged` -- `"above"` (Q3 above the upper bound, indicating local
+#'     dependence), `"below"` (below the lower bound), or `""`. Sorted by
+#'     absolute departure from the per-pair simulated median and truncated to
+#'     `n_pairs`. With `p_value = TRUE`, columns `p_q3` and `padj_q3` are added
+#'     and `Flagged` reflects `padj_q3 < alpha` and only flags `"above"`.}
+#' }
 #'
 #' @details
 #' The Q3 statistic (Yen, 1984) is the correlation between residuals of pairs
@@ -43,6 +61,25 @@
 #' `mirt` is used for model fitting here because Q3 requires model-based
 #' expected responses, which are most readily available from MML estimation.
 #'
+#' \strong{Two views of local dependence.} Given the full
+#' \code{\link{RMlocdepQ3Cutoff}} object, two complementary tables are returned.
+#' The `$matrix` applies a single *global* cut-off (the Christensen et al.
+#' approach: the 99th percentile of the simulated max-minus-mean Q3) -- a
+#' family-wise "is there any local dependence" overview. The `$pairs` table is
+#' the per-comparison view: each observed Q3 against its own simulated expected
+#' range (the `Low`/`High` bounds), so individual dependent pairs can be read
+#' off and ranked.
+#'
+#' \strong{Bootstrap p-values.} When `p_value = TRUE`, the `$pairs` table also
+#' tests each observed Q3 against its simulated null (from `cutoff$pair_results`)
+#' with a one-sided (upper-tail) test for excess local dependence. The pair
+#' statistic is studentised by the bootstrap mean and SD; the marginal p-value
+#' is `(1 + #{Q3* >= Q3}) / (B + 1)`, and `correction` applies the family-wise
+#' (Westfall-Young step-down) or FDR adjustment across the \eqn{k(k-1)/2} pairs.
+#' As for item fit, the family-wise correction is liberal when the simulation is
+#' small, so >= 1000 `iterations` in [RMlocdepQ3Cutoff()] are recommended (a
+#' warning is issued otherwise).
+#'
 #' @references
 #' Yen, W. M. (1984). Effects of local item dependence on the fit and
 #' equating performance of the three-parameter logistic model.
@@ -53,6 +90,12 @@
 #' for Yen's Q3: Identification of local dependence in the Rasch model.
 #' *Applied Psychological Measurement, 41*(3), 178--194.
 #' \doi{10.1177/0146621616677520}
+#'
+#' Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
+#' of hypotheses simultaneously. *Journal of Statistical Theory and Practice,
+#' 19*(6). \doi{10.1007/s42519-024-00412-4}
+#'
+#' @inheritSection RMitemInfit Multiple comparisons
 #'
 #' @export
 #'
@@ -74,15 +117,31 @@
 #' # Simulation-based cutoff (use 500+ iterations in real analyses)
 #' if (requireNamespace("ggdist", quietly = TRUE)) {
 #'   cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 50, parallel = FALSE)
+#'
+#'   # Bare numeric cutoff -> just the matrix
 #'   RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
+#'
+#'   # Full object -> list of two tables: $matrix and $pairs
+#'   res <- RMlocdepQ3(sim_data, cutoff = cutoff_res, output = "dataframe")
+#'   res$pairs
+#'
+#'   # Top 5 pairs, with bootstrap p-values (use iterations >= 1000 in practice)
+#'   RMlocdepQ3(sim_data, cutoff = cutoff_res, n_pairs = 5, p_value = TRUE,
+#'              output = "dataframe")$pairs
 #' }
 #' }
-RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
+RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
+                       n_pairs    = NULL,
+                       p_value    = FALSE,
+                       correction = c("fwer", "fdr_bh", "fdr_by", "none"),
+                       alpha      = 0.05) {
   # --- Input validation -------------------------------------------------------
+  cutoff_full <- NULL   # full object (carries simulated $pair_results)
   if (!is.null(cutoff)) {
     # Accept the full RMlocdepQ3Cutoff() return list as well as a bare numeric.
     if (is.list(cutoff) && !is.data.frame(cutoff) &&
         "suggested_cutoff" %in% names(cutoff)) {
+      cutoff_full <- cutoff
       cutoff <- as.numeric(cutoff$suggested_cutoff)
     }
     if (!is.numeric(cutoff) || length(cutoff) != 1L || is.na(cutoff)) {
@@ -91,7 +150,31 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
     }
   }
 
-  output <- match.arg(output, c("kable", "dataframe"))
+  output     <- match.arg(output, c("kable", "dataframe"))
+  correction <- match.arg(correction)
+  if (!is.numeric(alpha) || length(alpha) != 1L || alpha <= 0 || alpha >= 1) {
+    stop("`alpha` must be a single number in (0, 1).", call. = FALSE)
+  }
+  if (!is.null(n_pairs) &&
+      (!is.numeric(n_pairs) || length(n_pairs) != 1L || n_pairs < 1)) {
+    stop("`n_pairs` must be NULL or a single positive integer.", call. = FALSE)
+  }
+
+  if (p_value) {
+    if (is.null(cutoff_full) || is.null(cutoff_full$pair_results)) {
+      stop("`p_value = TRUE` requires the full RMlocdepQ3Cutoff() object (it ",
+           "carries the simulated per-pair distributions in $pair_results); a ",
+           "numeric cutoff or NULL is not sufficient.", call. = FALSE)
+    }
+    if (!is.null(cutoff_full$actual_iterations) &&
+        cutoff_full$actual_iterations < 1000L) {
+      warning("Bootstrap p-values are based on only ",
+              cutoff_full$actual_iterations, " simulation iterations. With few ",
+              "iterations the studentised-max (FWER) correction is liberal and ",
+              "small p-values are imprecise; use iterations >= 1000 in ",
+              "RMlocdepQ3Cutoff() for reliable p-values.", call. = FALSE)
+    }
+  }
 
   validate_response_data(data)
 
@@ -117,43 +200,65 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
   # Compute mean of off-diagonal correlations before zeroing upper triangle
   mean_resid <- mean(resid_mat, na.rm = TRUE)
 
-  resid_df <- as.data.frame(resid_mat)
+  # Matrix view (global dynamic cutoff = mean + cutoff, or raw when NULL).
+  matrix_out <- .q3_matrix_output(resid_mat, mean_resid, cutoff, output,
+                                  cutoff_full)
 
-  # Blank out upper triangle and diagonal (set to NA)
+  # NULL or bare-numeric cutoff: just the matrix (single object).
+  if (is.null(cutoff_full)) {
+    return(matrix_out)
+  }
+
+  # Full RMlocdepQ3Cutoff() object: a list of the matrix and the per-pair table.
+  pairs_out <- .q3_pairs_table(resid_mat, cutoff_full, n_pairs, p_value,
+                               correction, alpha, output)
+  list(matrix = matrix_out, pairs = pairs_out)
+}
+
+#' Render the Q3 lower-triangle matrix with an optional global cutoff
+#'
+#' @param resid_mat Observed Q3 matrix (symmetric, `NA` diagonal).
+#' @param mean_resid Mean of the off-diagonal Q3 values.
+#' @param cutoff Numeric global cutoff (added to `mean_resid`), or `NULL`.
+#' @param output `"kable"` or `"dataframe"`.
+#' @param cutoff_full Optional full cutoff object, used to enrich the caption.
+#' @keywords internal
+#' @noRd
+.q3_matrix_output <- function(resid_mat, mean_resid, cutoff, output,
+                              cutoff_full = NULL) {
+  resid_df <- as.data.frame(resid_mat)
   resid_df[upper.tri(resid_df)] <- NA
   diag(resid_df) <- NA
 
-  # --- Add above_cutoff column when cutoff is provided ------------------------
-  # Flags are computed from the full-precision values; display rounding is
-  # applied later, to the kable output only.
   if (!is.null(cutoff)) {
     dyn_cutoff <- mean_resid + cutoff
-    # Check each row for any value exceeding the dynamic cut-off
     resid_df$above_cutoff <- apply(
-      resid_df, 1,
-      function(row) any(row > dyn_cutoff, na.rm = TRUE)
+      resid_df, 1L, function(row) any(row > dyn_cutoff, na.rm = TRUE)
     )
   }
 
-  # --- Return -----------------------------------------------------------------
   if (output == "dataframe") {
     return(resid_df)
   }
 
-  # Build caption
   if (!is.null(cutoff)) {
     caption_text <- paste0(
       "Dynamic cut-off: ", round(dyn_cutoff, 3),
-      " (mean Q3 = ", round(mean_resid, 3),
-      " + ", round(cutoff, 3), ").",
-      " Correlations exceeding the cut-off may indicate local dependence."
+      " (mean Q3 ", round(mean_resid, 3), " + ", round(cutoff, 3), ").",
+      if (!is.null(cutoff_full)) {
+        paste0(" Global simulation cutoff (99th pctl of max-mean Q3) from ",
+               cutoff_full$actual_iterations, " iterations.")
+      } else "",
+      " Correlations exceeding the cut-off may indicate local dependence; ",
+      "see the per-pair table for detail."
     )
   } else {
-    caption_text <- "Raw Q3 residual correlations (lower triangle). Use RMlocdepQ3Cutoff() to derive a cutoff."
+    caption_text <- paste0(
+      "Raw Q3 residual correlations (lower triangle). Use RMlocdepQ3Cutoff() ",
+      "to derive a cutoff."
+    )
   }
 
-  # Replace NA with "" for display (knitr::kable doesn't render NA nicely)
-  # Determine which columns are the item columns (all except above_cutoff)
   item_cols <- setdiff(names(resid_df), "above_cutoff")
   resid_display <- as.data.frame(
     lapply(resid_df[item_cols], function(x) {
@@ -162,17 +267,106 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable") {
     stringsAsFactors = FALSE
   )
   rownames(resid_display) <- rownames(resid_df)
-
-  # Add above_cutoff column for kable display
   if (!is.null(cutoff)) {
     resid_display$above_cutoff <- ifelse(resid_df$above_cutoff, "*", "")
   }
 
-  knitr::kable(
-    resid_display,
-    caption = caption_text,
-    format = "pipe"
+  knitr::kable(resid_display, caption = caption_text, format = "pipe")
+}
+
+#' Build the per-pair Q3 table (observed vs expected range, flagged)
+#'
+#' One row per item pair: observed Q3, the per-pair expected range (the
+#' simulated `Low`/`High` bounds), and a `Flagged` label -- `"above"` (Q3
+#' above the upper bound, local dependence), `"below"` (below the lower
+#' bound), or `""`. Rows are sorted by absolute departure from the per-pair
+#' simulated median; `n_pairs` keeps the top rows. With `p_value = TRUE`,
+#' one-sided bootstrap p-values (`p_q3`, `padj_q3`) are added and `Flagged`
+#' reflects `padj_q3 < alpha`.
+#'
+#' @param resid_mat Observed Q3 matrix (symmetric, `NA` diagonal).
+#' @param cutoff_full Full [RMlocdepQ3Cutoff()] object.
+#' @param n_pairs Integer or `NULL`; keep the top-`n_pairs` pairs by departure.
+#' @param p_value Logical; add bootstrap p-values and flag on them.
+#' @param correction,alpha Passed to `.bootstrap_pvalues()` / flagging.
+#' @param output `"kable"` or `"dataframe"`.
+#' @return A per-pair table (kable or data.frame).
+#' @keywords internal
+#' @noRd
+.q3_pairs_table <- function(resid_mat, cutoff_full, n_pairs, p_value,
+                            correction, alpha, output) {
+  pc <- cutoff_full$pair_cutoffs                 # Item1, Item2, Q3_low, Q3_high
+  pr <- cutoff_full$pair_results                 # Item1, Item2, Q3, iteration
+  pr$key <- paste(pr$Item1, pr$Item2, sep = "___")
+  keys   <- paste(pc$Item1, pc$Item2, sep = "___")
+
+  observed <- mapply(function(a, b) resid_mat[a, b], pc$Item1, pc$Item2)
+  median_q3 <- tapply(pr$Q3, pr$key, stats::median)[keys]   # expected (sort/dir)
+  low  <- pc$Q3_low
+  high <- pc$Q3_high
+
+  tbl <- data.frame(
+    Item1    = pc$Item1,
+    Item2    = pc$Item2,
+    Observed = round(as.numeric(observed), 3),
+    Low      = round(as.numeric(low), 3),
+    High     = round(as.numeric(high), 3),
+    stringsAsFactors = FALSE,
+    row.names = NULL
   )
+
+  if (p_value) {
+    sim_mat <- tapply(pr$Q3, list(pr$iteration, pr$key), function(x) x[1L])
+    obs_named <- stats::setNames(as.numeric(observed), keys)
+    pv  <- .bootstrap_pvalues(obs_named, sim_mat, correction = correction,
+                              tail = "upper")
+    idx <- match(keys, pv$name)
+    tbl$p_q3    <- round(pv$p[idx],    4)
+    tbl$padj_q3 <- round(pv$padj[idx], 4)
+    is_flagged  <- !is.na(tbl$padj_q3) & tbl$padj_q3 < alpha
+  } else {
+    is_flagged  <- observed > high | observed < low
+  }
+
+  # Direction relative to the per-pair simulated median.
+  tbl$Flagged <- ifelse(!is_flagged, "",
+                        ifelse(observed > median_q3, "above", "below"))
+
+  # Sort by absolute departure from expected, then keep the top n_pairs.
+  ord <- order(abs(observed - median_q3), decreasing = TRUE)
+  tbl <- tbl[ord, , drop = FALSE]
+  rownames(tbl) <- NULL
+  if (!is.null(n_pairs)) {
+    tbl <- tbl[seq_len(min(as.integer(n_pairs), nrow(tbl))), , drop = FALSE]
+  }
+
+  if (output == "dataframe") return(tbl)
+
+  width_pct <- round(100 * cutoff_full$hdci_width, 1)
+  caption <- paste0(
+    "Q3 by item pair, sorted by departure from the expected range. ",
+    "Expected range = ", width_pct, "% interval of the simulated Q3 per pair (",
+    cutoff_full$actual_iterations, " iterations). Flagged: above = Q3 above ",
+    "the upper bound (local dependence); below = below the lower bound."
+  )
+  if (p_value) {
+    corr_label <- switch(
+      correction,
+      fwer   = "Westfall-Young step-down (FWER)",
+      fdr_bh = "Benjamini-Hochberg (FDR)",
+      fdr_by = "Benjamini-Yekutieli (FDR)",
+      none   = "uncorrected"
+    )
+    caption <- paste0(caption, " p_q3/padj_q3: one-sided bootstrap p-values, ",
+                      corr_label, "; flagged at padj < ", alpha, ".")
+    col.names <- c("Item 1", "Item 2", "Observed Q3", "Exp. low", "Exp. high",
+                   "p", "p (adj)", "Flagged")
+  } else {
+    col.names <- c("Item 1", "Item 2", "Observed Q3", "Exp. low", "Exp. high",
+                   "Flagged")
+  }
+  knitr::kable(tbl, format = "pipe", col.names = col.names, caption = caption,
+               row.names = FALSE)
 }
 
 #' Simulation-Based Q3 Cutoff Determination

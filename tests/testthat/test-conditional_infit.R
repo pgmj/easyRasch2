@@ -126,7 +126,8 @@ test_that("RMitemInfit with mock cutoff data.frame adds expected columns", {
     names(result),
     c("Item", "Infit_MSQ", "Infit_low", "Infit_high", "Flagged", "Relative_location")
   )
-  expect_type(result$Flagged, "logical")
+  expect_type(result$Flagged, "character")
+  expect_true(all(result$Flagged %in% c("overfit", "underfit", "")))
   expect_true(all(result$Infit_low  == 0.7))
   expect_true(all(result$Infit_high == 1.3))
 })
@@ -368,7 +369,8 @@ test_that("RMitemInfit Flagged column correctly identifies values outside cutoff
     stringsAsFactors = FALSE
   )
   tight_result <- RMitemInfit(df, cutoff = tight_cutoff, output = "dataframe")
-  expect_true(all(tight_result$Flagged))
+  # each MSQ is below its (MSQ + 0.1) lower bound -> all flagged "overfit"
+  expect_true(all(tight_result$Flagged == "overfit"))
 
   # Loose cutoff: no items should be flagged (window encompasses all values)
   loose_cutoff <- data.frame(
@@ -378,5 +380,5 @@ test_that("RMitemInfit Flagged column correctly identifies values outside cutoff
     stringsAsFactors = FALSE
   )
   loose_result <- RMitemInfit(df, cutoff = loose_cutoff, output = "dataframe")
-  expect_false(any(loose_result$Flagged))
+  expect_true(all(loose_result$Flagged == ""))
 })

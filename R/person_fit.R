@@ -6,7 +6,7 @@
 #' familiar from Rasch analysis -- and the standardized log-likelihood
 #' statistic **lz**. The conditional MSQ statistics use response
 #' probabilities conditional on the total score, which require no person
-#' estimate and are therefore unbiased (Kreiner & Christensen); they are
+#' estimate and are therefore unbiased (Kreiner & Christensen, 2011); they are
 #' computed on each person's observed response pattern, so partial
 #' missingness is handled directly.
 #'
@@ -27,16 +27,19 @@
 #' @param theta_method Character. Person-location estimator used for the
 #'   lz statistic: `"WLE"` (default) or `"EAP"`. Ignored if `"lz"` is not
 #'   requested.
-#' @param resample Character. Resampling scheme for the null
-#'   distribution: `"theta"` (default) simulates each person's responses
-#'   at their estimated location; `"conditional"` samples response
-#'   patterns conditional on the person's total score (no person estimate
-#'   required, fully consistent with the conditional MSQ statistics).
 #' @param iterations Integer. Number of Monte-Carlo replications per
 #'   person. `0` skips resampling and returns statistics only. Default
 #'   `500`.
-#' @param flag_alpha Numeric in (0, 1). Two-sided significance level for
-#'   the `flagged` column. Default `0.05`.
+#' @param flag_alpha Numeric in (0, 1). Significance level for the `flagged`
+#'   column and the plot highlighting. Default `0.05`.
+#' @param flag Character. Which misfit direction drives flagging for the MSQ
+#'   statistics: `"both"` (default) flags either direction with a two-sided
+#'   p-value; `"underfit"` flags only underfit (MSQ > 1, noisy responding)
+#'   with a one-sided upper p-value, which is more powerful for detecting it
+#'   and ignores (benign) overfit. The reported `p_infit` / `p_outfit` follow
+#'   this choice. lz is one-sided regardless. Overfit can occasionally be
+#'   suspicious (e.g. fabricated or copied response patterns), so `"both"` is
+#'   the default.
 #' @param zstd Logical. If `TRUE`, also report the Wilson-Hilferty
 #'   standardized (ZSTD) versions of the MSQ statistics. These are
 #'   provided only as a familiar cross-person comparability metric and
@@ -45,8 +48,13 @@
 #'   across persons via \pkg{mirai} when available. Default sequential.
 #' @param seed Optional integer for reproducible resampling.
 #' @param output Character. `"kable"` (default), `"dataframe"`, or
-#'   `"ggplot"` (a person-fit map of outfit MSQ against person location,
-#'   flagged respondents highlighted).
+#'   `"ggplot"`. For `"ggplot"`, a **named list** of person-fit maps is
+#'   returned -- one per requested statistic (e.g. `$infit`, `$outfit`,
+#'   `$lz`) -- each plotting the statistic against person location, with
+#'   respondents flagged by *that* statistic highlighted and a caption
+#'   reporting the assessed sample size and the proportion flagged. For the
+#'   MSQ maps the flagged count is split into underfit (MSQ > 1, noisy/erratic
+#'   responding) and overfit (MSQ < 1, overly deterministic responding).
 #'
 #' @return
 #' For `output = "dataframe"`, a data.frame with one row per respondent
@@ -54,9 +62,16 @@
 #' statistics (`infit_msq`, `outfit_msq`, `lz`), their resampled
 #' p-values (`p_infit`, `p_outfit`, `p_lz`) when `iterations > 0`,
 #' `flagged`, and -- if `zstd = TRUE` -- `infit_zstd`, `outfit_zstd`.
-#' Extreme scorers (minimum or maximum possible given the items they
-#' answered) receive `NA` statistics. For `output = "kable"` the same
-#' content as a `knitr_kable`; for `output = "ggplot"` a person-fit map.
+#' The `flagged` column is `TRUE` when the marginal (uncorrected) p-value of
+#' **any** requested statistic is below `flag_alpha` for that respondent; it
+#' is therefore a per-person screening flag, not corrected for the number of
+#' respondents tested (so under fit expect about `flag_alpha` of respondents
+#' to be flagged by chance). Each `output = "ggplot"` map instead colours and
+#' counts respondents flagged by its **own** statistic alone. Extreme scorers
+#' (minimum or maximum possible given the items they answered) receive `NA`
+#' statistics and are not assessed. For `output = "kable"` the same content as
+#' a `knitr_kable`; for `output = "ggplot"` the named list of maps described
+#' under that argument.
 #'
 #' @details
 #' \strong{Conditional MSQ.} For person \eqn{v} with answered items
@@ -68,6 +83,15 @@
 #' the information-weighted mean. Because the conditional moments use only
 #' item parameters, no (biased) person estimate enters the residual.
 #'
+#' \strong{Interpreting MSQ direction.} Values near 1 indicate fit. MSQ > 1
+#' (\emph{underfit}) means the responses are noisier / more erratic than the
+#' model expects -- the validity-relevant direction, indicating careless or
+#' aberrant responding. MSQ < 1 (\emph{overfit}) means responses are overly
+#' deterministic (Guttman-like); usually benign for score validity, though a
+#' suspiciously perfect pattern can occasionally signal copied or fabricated
+#' data. Use `flag = "underfit"` to flag only the former. lz is one-sided:
+#' low (negative) values flag the aberrant (underfit-like) direction.
+#'
 #' \strong{lz.} The standardized log-likelihood of the response pattern
 #' evaluated at the estimated person location (Drasgow, Levine &
 #' Williams, 1985); small (negative) values indicate misfit. Its
@@ -76,13 +100,16 @@
 #' inference, which makes the analytic lz\* standardization (Snijders,
 #' 2001) unnecessary here.
 #'
-#' \strong{Resampling.} For each person, `iterations` response patterns
-#' are simulated under the fitted model -- either at the estimated
-#' location (`resample = "theta"`) or conditional on the observed total
-#' score (`resample = "conditional"`) -- and each statistic is
-#' recomputed. The two-sided p-value is the proportion of replicates at
-#' least as extreme as the observed value. This follows the
-#' resampling-based person-fit approach (Sinharay, 2016) and the
+#' \strong{Resampling.} Each statistic is referenced against the null that
+#' matches it, removing the need to choose a scheme. The conditional MSQ
+#' statistics use patterns sampled **conditional on the person's total
+#' score** -- the exact Rasch-native null, requiring no person estimate and
+#' fully consistent with the (conditional) statistic. lz, which is defined at
+#' the estimated location, uses patterns **simulated at that location**. Both
+#' are computed per person over the items actually answered, so partial
+#' missingness is handled by either scheme. The p-value is the proportion of
+#' the `iterations` replicates at least as extreme as the observed value. This
+#' follows the resampling-based person-fit approach (Sinharay, 2016) and the
 #' bootstrap recommendation of Müller (2020).
 #'
 #' @references
@@ -119,19 +146,23 @@
 #' # Conditional infit/outfit MSQ + lz with resampled p-values
 #' RMpersonFit(dat, iterations = 200, output = "dataframe") |> head()
 #'
-#' # Compare the two resampling schemes
-#' a <- RMpersonFit(dat, resample = "theta",       iterations = 200,
-#'                  output = "dataframe")
-#' b <- RMpersonFit(dat, resample = "conditional", iterations = 200,
-#'                  output = "dataframe")
+#' # Person-fit maps: a named list with one plot per statistic
+#' if (requireNamespace("ggplot2", quietly = TRUE)) {
+#'   plots <- RMpersonFit(dat, iterations = 200, output = "ggplot")
+#'   plots$infit    # infit map (each plot's caption reports the % flagged)
+#' }
+#'
+#' # Flag only underfit (noisy responding), the validity-relevant direction
+#' RMpersonFit(dat, iterations = 200, flag = "underfit",
+#'             output = "dataframe") |> head()
 #' }
 RMpersonFit <- function(data,
                         statistics   = c("infit", "outfit", "lz"),
                         estimator    = c("CML", "MML"),
                         theta_method = c("WLE", "EAP"),
-                        resample     = c("theta", "conditional"),
                         iterations   = 500L,
                         flag_alpha   = 0.05,
+                        flag         = c("both", "underfit"),
                         zstd         = FALSE,
                         parallel     = FALSE,
                         n_cores      = NULL,
@@ -142,8 +173,11 @@ RMpersonFit <- function(data,
                             several.ok = TRUE)
   estimator    <- match.arg(estimator)
   theta_method <- match.arg(theta_method)
-  resample     <- match.arg(resample)
+  flag         <- match.arg(flag)
   output       <- match.arg(output)
+  # Underfit-only flagging uses a one-sided (upper) MSQ test; lz is always
+  # one-sided (low = aberrant) and is unaffected.
+  msq_tail <- if (flag == "underfit") "upper" else "two.sided"
 
   validate_response_data(data)
   if (!is.numeric(flag_alpha) || length(flag_alpha) != 1L ||
@@ -176,9 +210,13 @@ RMpersonFit <- function(data,
   }, numeric(1))
   extreme <- n_answered > 0L & (sum_score == 0 | sum_score == max_score)
 
-  # --- Person location (for lz) ----------------------------------------------
+  # --- Person location -------------------------------------------------------
+  # Needed for lz (both the statistic and its theta-based resampling) and for
+  # the ggplot x-axis. The MSQ statistics and their conditional resampling
+  # need no person estimate.
+  need_theta <- ("lz" %in% statistics) || (output == "ggplot")
   theta <- rep(NA_real_, n)
-  if ("lz" %in% statistics) {
+  if (need_theta) {
     theta <- .person_theta(data_mat, thr_list, theta_method)
   }
 
@@ -199,8 +237,8 @@ RMpersonFit <- function(data,
   if (iterations > 0L) {
     pv <- .person_fit_resample(
       data_mat, thr_list, theta, statistics, obs,
-      resample = resample, iterations = iterations,
-      parallel = parallel, n_cores = n_cores
+      iterations = iterations,
+      parallel = parallel, n_cores = n_cores, msq_tail = msq_tail
     )
     if ("infit"  %in% statistics) out$p_infit  <- pv$infit
     if ("outfit" %in% statistics) out$p_outfit <- pv$outfit
@@ -228,7 +266,7 @@ RMpersonFit <- function(data,
   if ("flagged" %in% names(out)) out$flagged[extreme] <- NA
 
   .person_fit_output(out, theta, extreme, statistics, output, flag_alpha,
-                     resample, iterations)
+                     iterations, flag)
 }
 
 # ---------------------------------------------------------------------
@@ -399,51 +437,56 @@ RMpersonFit <- function(data,
 #' @keywords internal
 #' @noRd
 .person_fit_resample <- function(data_mat, thr_list, theta, statistics, obs,
-                                 resample, iterations, parallel, n_cores) {
+                                 iterations, parallel, n_cores,
+                                 msq_tail = "two.sided") {
   n <- nrow(data_mat)
   want_msq <- any(c("infit", "outfit") %in% statistics)
   want_lz  <- "lz" %in% statistics
 
+  # Each statistic uses its matching null: the conditional MSQ statistics are
+  # referenced against patterns sampled conditional on the total score (no
+  # person estimate, consistent with the statistic); lz, which is defined at
+  # the estimated location, is referenced against patterns simulated there.
   one_person <- function(p) {
     ans <- which(!is.na(data_mat[p, ]))
     res <- c(infit = NA_real_, outfit = NA_real_, lz = NA_real_)
     if (length(ans) == 0L) return(res)
     thr_sub <- thr_list[ans]
     r_obs   <- sum(data_mat[p, ans])
-    mom     <- if (want_msq) .cond_moments(thr_sub) else NULL
-    if (!is.null(mom) && (r_obs == 0L || r_obs == mom$max_score)) return(res)
 
-    # simulate `iterations` patterns over this person's answered items
-    sims <- if (resample == "theta") {
-      .sim_theta(thr_sub, theta[p], iterations)
-    } else {
-      .sim_conditional(thr_sub, r_obs, iterations)
-    }
-    if (is.null(sims)) return(res)
-
-    # statistics on each simulated pattern
+    # MSQ: conditional-on-total-score resampling
     if (want_msq) {
-      stat <- t(apply(sims, 1L, function(xs) {
-        rr <- sum(xs)
-        if (rr == 0L || rr == mom$max_score) return(c(NA, NA))
-        e <- mom$E[rr + 1L, ]; v <- mom$V[rr + 1L, ]
-        z <- (xs - e) / sqrt(v)
-        c(mean(z^2), sum(v * z^2) / sum(v))            # outfit, infit
-      }))
-      if ("outfit" %in% statistics) {
-        res["outfit"] <- .two_sided_p(stat[, 1L], obs$outfit[p])
-      }
-      if ("infit" %in% statistics) {
-        res["infit"] <- .two_sided_p(stat[, 2L], obs$infit[p])
+      mom <- .cond_moments(thr_sub)
+      if (r_obs > 0L && r_obs < mom$max_score) {
+        sims <- .sim_conditional(thr_sub, r_obs, iterations)
+        if (!is.null(sims)) {
+          stat <- t(apply(sims, 1L, function(xs) {
+            rr <- sum(xs)
+            if (rr == 0L || rr == mom$max_score) return(c(NA, NA))
+            e <- mom$E[rr + 1L, ]; v <- mom$V[rr + 1L, ]
+            z <- (xs - e) / sqrt(v)
+            c(mean(z^2), sum(v * z^2) / sum(v))          # outfit, infit
+          }))
+          if ("outfit" %in% statistics) {
+            res["outfit"] <- .mc_pvalue(stat[, 1L], obs$outfit[p], msq_tail)
+          }
+          if ("infit" %in% statistics) {
+            res["infit"] <- .mc_pvalue(stat[, 2L], obs$infit[p], msq_tail)
+          }
+        }
       }
     }
+
+    # lz: simulate at the estimated location (lower tail = misfit)
     if (want_lz && is.finite(theta[p])) {
-      lz_sim <- apply(sims, 1L, function(xs) {
-        full <- rep(NA_real_, ncol(data_mat)); full[ans] <- xs
-        .person_lz(full, thr_list, theta[p])
-      })
-      # lz: misfit is the lower tail
-      res["lz"] <- mean(lz_sim <= obs$lz[p], na.rm = TRUE)
+      sims <- .sim_theta(thr_sub, theta[p], iterations)
+      if (!is.null(sims)) {
+        lz_sim <- apply(sims, 1L, function(xs) {
+          full <- rep(NA_real_, ncol(data_mat)); full[ans] <- xs
+          .person_lz(full, thr_list, theta[p])
+        })
+        res["lz"] <- mean(lz_sim <= obs$lz[p], na.rm = TRUE)
+      }
     }
     res
   }
@@ -453,12 +496,18 @@ RMpersonFit <- function(data,
   list(infit = m[, "infit"], outfit = m[, "outfit"], lz = m[, "lz"])
 }
 
-#' Two-sided empirical p-value for an MSQ-type statistic (centred at 1)
+#' Empirical p-value for an MSQ-type statistic against its simulated null
+#'
+#' @param sim Numeric vector of simulated null values.
+#' @param obs Observed value.
+#' @param tail `"two.sided"` (deviation in either direction) or `"upper"`
+#'   (underfit only -- the validity-relevant direction).
 #' @keywords internal
 #' @noRd
-.two_sided_p <- function(sim, obs) {
+.mc_pvalue <- function(sim, obs, tail = "two.sided") {
   sim <- sim[!is.na(sim)]
   if (length(sim) == 0L || is.na(obs)) return(NA_real_)
+  if (tail == "upper") return(mean(sim >= obs))
   p_upper <- mean(sim >= obs)
   p_lower <- mean(sim <= obs)
   min(1, 2 * min(p_upper, p_lower))
@@ -560,7 +609,7 @@ RMpersonFit <- function(data,
 #' @keywords internal
 #' @noRd
 .person_fit_output <- function(out, theta, extreme, statistics, output,
-                               flag_alpha, resample, iterations) {
+                               flag_alpha, iterations, flag = "both") {
   if (output == "dataframe") {
     num <- vapply(out, is.numeric, logical(1))
     out[num] <- lapply(out[num], function(x) round(x, 4))
@@ -572,22 +621,19 @@ RMpersonFit <- function(data,
       stop("Package 'ggplot2' is required for output = \"ggplot\". ",
            "Install it with: install.packages(\"ggplot2\")", call. = FALSE)
     }
-    ycol <- if ("outfit_msq" %in% names(out)) "outfit_msq" else
-            if ("infit_msq"  %in% names(out)) "infit_msq" else "lz"
-    plot_df <- data.frame(theta = theta, y = out[[ycol]],
-                          flagged = if ("flagged" %in% names(out)) out$flagged else FALSE)
-    plot_df <- plot_df[is.finite(plot_df$theta) & is.finite(plot_df$y), ]
-    return(
-      ggplot2::ggplot(plot_df, ggplot2::aes(x = .data$theta, y = .data$y)) +
-        ggplot2::geom_point(ggplot2::aes(colour = .data$flagged),
-                            alpha = 0.7) +
-        ggplot2::scale_colour_manual(values = c("FALSE" = "grey60",
-                                                "TRUE" = "#e41a1c"),
-                                     name = "Flagged") +
-        ggplot2::labs(x = "Person location (logits)", y = ycol) +
-        ggplot2::theme_bw() +
-        er2_axis_margins()
+    # One plot per requested statistic, returned as a named list.
+    stat_map <- list(
+      infit  = list(col = "infit_msq",  pcol = "p_infit",  label = "Infit MSQ",  ref = 1, split = TRUE),
+      outfit = list(col = "outfit_msq", pcol = "p_outfit", label = "Outfit MSQ", ref = 1, split = TRUE),
+      lz     = list(col = "lz",         pcol = "p_lz",      label = "lz",          ref = 0, split = FALSE)
     )
+    plots <- lapply(statistics, function(s) {
+      m <- stat_map[[s]]
+      .person_fit_plot(out, theta, m$col, m$pcol, m$label, m$ref, m$split,
+                       flag_alpha, iterations, flag)
+    })
+    names(plots) <- statistics
+    return(plots)
   }
 
   display <- out
@@ -596,12 +642,103 @@ RMpersonFit <- function(data,
   caption <- paste0(
     "Person fit (conditional MSQ + lz). ",
     if (iterations > 0L) {
-      paste0("Two-sided p-values from ", iterations,
-             " Monte-Carlo replications (",
-             if (resample == "theta") "simulated at theta-hat" else
-               "conditional on total score", "); ",
+      msq_desc <- if (flag == "underfit") {
+        "one-sided (underfit) MSQ p-values"
+      } else {
+        "two-sided MSQ p-values"
+      }
+      paste0(msq_desc, " from ", iterations,
+             " Monte-Carlo replications (MSQ conditional on the total score, ",
+             "lz simulated at the estimated location); ",
              "flagged at alpha = ", flag_alpha, ".")
     } else "No resampling (iterations = 0)."
   )
   knitr::kable(display, format = "pipe", caption = caption, row.names = FALSE)
+}
+
+#' Build one person-fit map (statistic vs person location)
+#'
+#' @param out The assembled person-fit data.frame.
+#' @param theta Person locations (x-axis).
+#' @param ycol,pcol Column names for the statistic and its marginal p-value.
+#' @param ylab Axis label for the statistic.
+#' @param ref Horizontal reference line (expected value), or `NA` for none.
+#' @param split Logical. If `TRUE` (the MSQ statistics), flagged respondents
+#'   are split into underfit (above `ref`) and overfit (below `ref`) for both
+#'   the point colour and the caption. `FALSE` for one-sided statistics (lz).
+#' @param flag_alpha Flagging threshold on the marginal p-value.
+#' @param iterations Number of resampling iterations (0 = no p-values).
+#' @param flag `"both"` (two-sided MSQ test) or `"underfit"` (one-sided);
+#'   controls the caption wording for the MSQ maps.
+#' @return A `ggplot`. Caption reports the assessed sample size and the
+#'   proportion flagged by this statistic.
+#' @keywords internal
+#' @noRd
+.person_fit_plot <- function(out, theta, ycol, pcol, ylab, ref, split,
+                             flag_alpha, iterations, flag = "both") {
+  has_p <- iterations > 0L && pcol %in% names(out)
+  df <- data.frame(
+    theta   = theta,
+    y       = out[[ycol]],
+    flagged = if (has_p) out[[pcol]] < flag_alpha else FALSE
+  )
+  df <- df[is.finite(df$theta) & is.finite(df$y), , drop = FALSE]
+  n_assessed <- nrow(df)
+
+  # Classify each respondent for colouring.
+  df$status <- "Not flagged"
+  if (split && is.finite(ref)) {
+    df$status[df$flagged & df$y > ref] <- "Underfit"
+    df$status[df$flagged & df$y < ref] <- "Overfit"
+  } else {
+    df$status[df$flagged] <- "Flagged"
+  }
+  pal     <- c("Not flagged" = "grey55", "Underfit" = "#e41a1c",
+               "Overfit" = "#377eb8", "Flagged" = "#e41a1c")
+  present <- intersect(names(pal), unique(df$status))
+  df$status <- factor(df$status, levels = present)
+
+  if (has_p) {
+    n_flag <- sum(df$flagged, na.rm = TRUE)
+    pct    <- if (n_assessed > 0L) round(100 * n_flag / n_assessed, 1) else NA_real_
+    if (split && is.finite(ref)) {
+      n_under <- sum(df$flagged & df$y > ref, na.rm = TRUE)   # MSQ > 1: noisy
+      n_over  <- sum(df$flagged & df$y < ref, na.rm = TRUE)   # MSQ < 1: muted
+      caption <- if (flag == "underfit") {
+        paste0("n = ", n_assessed, " assessed; ", n_flag, " (", pct,
+               "%) flagged as underfit (MSQ > ", ref,
+               "; one-sided p < ", flag_alpha, ").")
+      } else {
+        paste0("n = ", n_assessed, " assessed; ", n_flag, " (", pct,
+               "%) flagged: ", n_under, " underfit (MSQ > ", ref, "), ",
+               n_over, " overfit (MSQ < ", ref, ") (p < ", flag_alpha, ").")
+      }
+    } else {
+      caption <- paste0("n = ", n_assessed, " assessed; ", n_flag, " (", pct,
+                        "%) flagged as misfitting (p < ", flag_alpha, ").")
+    }
+  } else {
+    caption <- paste0("n = ", n_assessed,
+                      " assessed (no resampling; iterations = 0).")
+  }
+
+  p <- ggplot2::ggplot(df, ggplot2::aes(x = .data$theta, y = .data$y))
+  if (is.finite(ref)) {
+    p <- p + ggplot2::geom_hline(yintercept = ref, linetype = "dashed",
+                                 colour = "grey60")
+  }
+  if (has_p && length(present) > 1L) {
+    p <- p +
+      ggplot2::geom_point(ggplot2::aes(colour = .data$status), alpha = 0.7) +
+      ggplot2::scale_colour_manual(values = pal, name = "Person fit",
+                                   breaks = present)
+  } else {
+    p <- p + ggplot2::geom_point(colour = "grey45", alpha = 0.7)
+  }
+  p +
+    ggplot2::labs(x = "Person location (logits)", y = ylab,
+                  caption = er2_caption(caption)) +
+    ggplot2::theme_bw() +
+    er2_axis_margins() +
+    er2_plot_caption()
 }

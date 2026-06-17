@@ -1,24 +1,23 @@
 # easyRasch2 (development version)
 
-- `RMscoreSE()`: the WLE `method` now reports the information-based
-  standard error `1 / sqrt(I(theta))` (matching `RMpersonParameters()`,
-  `catR` and `TAM`) instead of the previous iarm "expected SEM". Point
-  estimates are unchanged; standard errors differ at the score extremes
-  (where they are now larger). The WLE path now shares the same solver
-  and grand-mean-zero threshold centering as `RMpersonParameters()`, so
-  the two functions are fully consistent.
-
 - New `RMpersonFit()`: per-respondent person-fit analysis. Reports
   conditional infit and outfit mean-squares (computed on each response
   pattern via elementary symmetric functions, so partial missingness is
   handled and no biased person estimate enters the residual) plus the
   standardized log-likelihood `lz`. Significance is assessed by
-  Monte-Carlo resampling under the fitted model — either at the estimated
-  person location or conditional on the total score — rather than by an
-  unreliable asymptotic null (Sinharay, 2016; Müller, 2020). The
+  Monte-Carlo resampling under the fitted model — each statistic against the
+  null that matches it (MSQ conditional on the total score, lz simulated at
+  the estimated location) — rather than by an unreliable asymptotic null
+  (Sinharay, 2016; Müller, 2020). The
   Wilson-Hilferty (ZSTD) transform of MSQ is available via `zstd = TRUE`
   but, following Müller (2020), is provided only as a comparability
-  metric and not used for inference.
+  metric and not used for inference. Output is a table, a data.frame, or
+  (`output = "ggplot"`) a named list of person-fit maps -- one per
+  statistic -- each captioned with the assessed sample size and the
+  proportion of respondents flagged by that statistic (split into underfit
+  vs overfit for the MSQ maps), with points coloured by fit direction.
+  `flag = "underfit"` restricts flagging to the validity-relevant underfit
+  direction (MSQ > 1) using a more powerful one-sided p-value.
 
 - New `RMitemParameters()`: returns item difficulty (dichotomous) or
   Andrich-threshold (polytomous) parameters in long or wide format, with
@@ -31,9 +30,57 @@
   partial missingness is handled correctly (unlike the sum-score lookup
   in `RMscoreSE()`). Supports Warm's WLE (default) and EAP under a normal
   prior whose SD is estimated from the data by marginal maximum
-  likelihood unless fixed via `prior_sd`. Replaces the `catR`-based theta
-  estimation used in the predecessor `easyRasch` package, without the
-  `catR` dependency or its speed penalty.
+  likelihood unless fixed via `prior_sd`.
+
+- The `Flagged` column now labels the misfit *direction* instead of a logical
+  TRUE/FALSE: `"overfit"`, `"underfit"`, or `""` (no misfit), to simplify
+  interpretation. In `RMitemInfit()` and `RMitemInfitMI()` infit below the
+  range is `"overfit"` (more predictable than expected) and above is
+  `"underfit"` (noisier); `RMitemRestscore()` gains a `Flagged` column where
+  over-discrimination (observed > expected, adj. p < .05, often local
+  dependence) is `"overfit"` and under-discrimination is `"underfit"`. Note
+  the value direction is opposite between the two (a *high* infit is underfit,
+  a *high* restscore correlation is overfit). This changes the type of the
+  `RMitemInfit()`/`RMitemInfitMI()` `Flagged` column from logical to character.
+  `RMitemRestscore()` also drops the now-redundant `Significance` ("p-value
+  sign.") star column -- the numeric `p_adjusted` and the new `Flagged` label
+  convey the same information more directly -- and the `Location` column (the
+  relative location is sufficient), and trims the table headers ("Observed",
+  "Expected") for a narrower table with an explanatory caption.
+
+- `RMitemInfit()` gains an optional `p_value` argument. When `TRUE` (and the
+  full `RMitemInfitCutoff()` object is supplied), it reports per-item
+  bootstrap p-values from the simulated null with multiple-comparison
+  correction: Westfall-Young studentised-max step-down for the family-wise
+  error rate (`correction = "fwer"`, default), or Benjamini-Hochberg /
+  Benjamini-Yekutieli FDR. Items are studentised by the bootstrap SD (not the
+  ZSTD transform), and p-values are shown alongside the simulated effect-size
+  band. At least 1000 cutoff `iterations` are recommended (a warning is issued
+  otherwise); default behaviour with `p_value = FALSE` is unchanged. Methods
+  follow Ferreira (2024) and Westfall & Young (1993).
+
+- `RMlocdepQ3()` now returns two complementary views when the full
+  `RMlocdepQ3Cutoff()` object is supplied: a `list` with `$matrix` (the Q3
+  residual-correlation matrix, flagged against the single global cutoff) and
+  `$pairs` (a per-pair table giving each pair's observed Q3 with its simulated
+  low/high reference band, `Flagged` as `"above"`/`"below"`/`""`, sorted by
+  departure from the per-pair median and optionally truncated to the most
+  extreme `n_pairs`). This matches the pairwise Q3 table in the `easyRasch2jmv`
+  jamovi module. With a bare numeric `cutoff` (or none) the single matrix is
+  returned as before. The optional `p_value` layer now folds one-sided
+  bootstrap p-values for excess local dependence (with the same Westfall-Young
+  FWER / FDR `correction` options across the *k(k-1)/2* pairs) into `$pairs`,
+  which then flags on the adjusted p-value. `RMlocdepQ3()` and `RMitemInfit()`
+  share a "Multiple comparisons" help section explaining when to use marginal
+  vs corrected p-values.
+
+- `RMscoreSE()`: the WLE `method` now reports the information-based
+  standard error `1 / sqrt(I(theta))` (matching `RMpersonParameters()`,
+  `catR` and `TAM`) instead of the previous iarm "expected SEM". Point
+  estimates are unchanged; standard errors differ at the score extremes
+  (where they are now larger). The WLE path now shares the same solver
+  and grand-mean-zero threshold centering as `RMpersonParameters()`, so
+  the two functions are fully consistent.
 
 - `RMlocdepGamma()`: corrected the `$direction2` kable caption and the
   `@return` documentation, which described that table's rest score as

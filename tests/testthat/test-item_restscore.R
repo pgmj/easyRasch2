@@ -42,9 +42,13 @@ test_that("RMitemRestscore output = 'dataframe' returns correct structure (dicho
   expect_equal(nrow(result), 5L)
   expected_cols <- c(
     "Item", "Observed", "Expected", "Difference",
-    "p_adjusted", "Significance", "Location", "Relative_location"
+    "p_adjusted", "Flagged", "Relative_location"
   )
   expect_equal(names(result), expected_cols)
+  expect_true(all(result$Flagged %in% c("overfit", "underfit", "")))
+  # overfit <=> observed above expected, underfit <=> below (when flagged)
+  flg <- result$Flagged != ""
+  expect_true(all((result$Difference[flg] > 0) == (result$Flagged[flg] == "overfit")))
   expect_equal(result$Item, colnames(df))
   # Signed difference equals Observed - Expected (allowing rounding noise)
   expect_equal(result$Difference,

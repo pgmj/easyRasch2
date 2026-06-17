@@ -75,7 +75,8 @@ test_that("RMitemInfitMI accepts an RMitemInfitCutoffMI result and adds Flagged 
   res  <- RMitemInfitMI(imp, cutoff = cuts, output = "dataframe")
   expect_s3_class(res, "data.frame")
   expect_true("Flagged" %in% names(res))
-  expect_type(res$Flagged, "logical")
+  expect_type(res$Flagged, "character")
+  expect_true(all(res$Flagged %in% c("overfit", "underfit", "")))
 })
 
 test_that("RMitemInfitMI output = 'kable' returns a knitr_kable", {

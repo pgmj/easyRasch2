@@ -22,11 +22,12 @@
 #' * If `output = "kable"`: a `knitr_kable` object (plain text table via
 #'   `format = "pipe"`) with columns for item name, observed and expected
 #'   restscore correlations, the signed difference (observed minus
-#'   expected), adjusted p-value, significance level, item location, and
-#'   item location relative to the sample mean person location.
+#'   expected), adjusted p-value, the `Flagged` misfit label, and item
+#'   location relative to the sample mean person location.
 #' * If `output = "dataframe"`: a data.frame with columns `Item`, `Observed`,
-#'   `Expected`, `Difference`, `p_adjusted`, `Significance`,
-#'   `Location`, and `Relative_location`.
+#'   `Expected`, `Difference`, `p_adjusted`, `Flagged`, and
+#'   `Relative_location`. `Flagged` is `"overfit"` (observed above expected,
+#'   adj. p < .05), `"underfit"` (below, adj. p < .05), or `""` (not flagged).
 #'
 #' The `Difference` column is signed (observed minus expected):
 #' *positive* values indicate that the item correlates more strongly with
@@ -101,6 +102,7 @@ RMitemRestscore <- function(data, output = "kable", sort, p.adj = "BH") {
 
   data_mat <- as.matrix(data)
   n_items <- ncol(data)
+  n_complete <- nrow(stats::na.omit(data))
 
   # --- Fit Rasch model and compute item/person locations ----------------------
   if (max(data_mat, na.rm = TRUE) == 1L) {
@@ -136,17 +138,26 @@ RMitemRestscore <- function(data, output = "kable", sort, p.adj = "BH") {
   observed  <- round(as.numeric(res_mat[seq_len(n_items), 1L]), 2)
   expected  <- round(as.numeric(res_mat[seq_len(n_items), 2L]), 2)
   p_adjusted <- round(as.numeric(res_mat[seq_len(n_items), 5L]), 3)
-  significance <- as.character(res_mat[seq_len(n_items), 6L])
+
+  # Flagged labels the misfit direction (only when adj. p < .05): observed
+  # above expected = over-discrimination ("overfit", often local dependence);
+  # below = under-discrimination ("underfit", often multidimensionality/noise);
+  # "" otherwise. Note the value direction is opposite to infit (where a high
+  # statistic is underfit).
+  difference <- round(observed - expected, 3)
+  flagged <- ifelse(
+    !is.na(p_adjusted) & p_adjusted < 0.05 & difference > 0, "overfit",
+    ifelse(!is.na(p_adjusted) & p_adjusted < 0.05 & difference < 0, "underfit", "")
+  )
 
   # --- Assemble result data.frame --------------------------------------------
   i2 <- data.frame(
     Item                = names(data),
     Observed            = observed,
     Expected            = expected,
-    Difference          = round(observed - expected, 3),
+    Difference          = difference,
     p_adjusted          = p_adjusted,
-    Significance        = significance,
-    Location            = round(item_avg_locations, 2),
+    Flagged             = flagged,
     Relative_location   = round(relative_item_avg_locations, 2),
     stringsAsFactors    = FALSE,
     row.names           = NULL
@@ -170,13 +181,18 @@ RMitemRestscore <- function(data, output = "kable", sort, p.adj = "BH") {
     format   = "pipe",
     col.names = c(
       "Item",
-      "Observed value",
-      "Expected value",
+      "Observed",
+      "Expected",
       "Difference",
       paste0("Adj. p-value (", p.adj, ")"),
-      "p-value sign.",
-      "Location",
+      "Flagged",
       "Rel. location"
+    ),
+    caption = paste0(
+      "Item-restscore associations (n = ", n_complete, " complete cases). ",
+      "Flagged (adj. p < .05): overfit = observed above expected ",
+      "(over-discrimination, often local dependence); underfit = below ",
+      "(under-discrimination, often multidimensionality/noise)."
     )
   )
 }

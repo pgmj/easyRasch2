@@ -313,7 +313,7 @@ RMitemParameters <- function(data,
 #' Fit a Rasch/PCM by MML and extract thresholds (+ delta-method SEs)
 #'
 #' @inheritParams .rasch_fit_cml
-#' @return Same normalised structure as [.rasch_fit_cml()].
+#' @return Same normalised structure as `.rasch_fit_cml()`.
 #' @keywords internal
 #' @noRd
 .rasch_fit_mml <- function(data, se = TRUE) {

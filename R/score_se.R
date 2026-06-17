@@ -182,7 +182,7 @@ RMscoreSE <- function(data,
 #' WLE score-to-theta lookup via the shared Warm-WLE solver
 #'
 #' Uses the same CML item parameters (centred to grand-mean-zero) and the
-#' same [.theta_wle()] engine as [RMpersonParameters()], so the two
+#' same `.theta_wle()` engine as [RMpersonParameters()], so the two
 #' functions report identical locations and standard errors. The SE is
 #' the information-based value `1 / sqrt(I(theta))`.
 #'

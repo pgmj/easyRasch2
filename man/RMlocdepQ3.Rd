@@ -4,36 +4,64 @@
 \alias{RMlocdepQ3}
 \title{Q3 Residual Correlations for Local Dependence Assessment}
 \usage{
-RMlocdepQ3(data, cutoff = NULL, output = "kable")
+RMlocdepQ3(
+  data,
+  cutoff = NULL,
+  output = "kable",
+  n_pairs = NULL,
+  p_value = FALSE,
+  correction = c("fwer", "fdr_bh", "fdr_by", "none"),
+  alpha = 0.05
+)
 }
 \arguments{
 \item{data}{A data.frame or matrix of item responses. Items must be scored
 starting at 0 (non-negative integers). Missing values (\code{NA}) are allowed.}
 
-\item{cutoff}{Optional. Either a single numeric value (added to the mean
-off-diagonal Q3 correlation to produce the dynamic cut-off threshold) or
-the full list returned by \code{\link{RMlocdepQ3Cutoff}} (from which
-\verb{$suggested_cutoff} is extracted automatically). When \code{NULL} (default),
-the raw Q3 residual correlation matrix is returned without any dynamic
-cut-off applied.}
+\item{cutoff}{Optional. \code{NULL} (default) returns the raw Q3 matrix. A single
+numeric value returns the Q3 matrix with a global dynamic cut-off (the
+value added to the mean off-diagonal Q3). The \strong{full list} returned by
+\code{\link{RMlocdepQ3Cutoff}} returns a \emph{list of two tables} (see Value):
+the cut-off matrix plus a per-pair table.}
 
 \item{output}{Character string controlling the return value. Either
-\code{"kable"} (default) for a formatted \code{knitr::kable()} table, or
-\code{"dataframe"} for the underlying numeric data.frame.}
+\code{"kable"} (default) for formatted \code{knitr::kable()} table(s), or
+\code{"dataframe"} for the underlying data.frame(s).}
+
+\item{n_pairs}{Integer or \code{NULL} (default). When the full cutoff object is
+supplied, limits the per-pair table to the \code{n_pairs} pairs with the
+largest departure from their expected range. \code{NULL} shows all pairs.}
+
+\item{p_value}{Logical. If \code{TRUE} (requires the full
+\code{\link{RMlocdepQ3Cutoff}} object), the per-pair table also reports
+one-sided bootstrap p-values (\code{p_q3}, \code{padj_q3}) and flags pairs on
+\code{padj_q3 < alpha} instead of the expected range. Default \code{FALSE}.}
+
+\item{correction}{Character. Multiple-comparison correction across item
+pairs when \code{p_value = TRUE}: \code{"fwer"} (default) for the Westfall-Young
+studentised-max step-down, \code{"fdr_bh"} / \code{"fdr_by"} for Benjamini-Hochberg
+/ Benjamini-Yekutieli, or \code{"none"}.}
+
+\item{alpha}{Numeric in (0, 1). Significance level for \code{Flagged} when
+\code{p_value = TRUE}. Default \code{0.05}.}
 }
 \value{
-\itemize{
-\item If \code{output = "kable"}: a \code{knitr_kable} object showing the lower triangle
-of the Q3 correlation matrix. When \code{cutoff} is provided, a footnote
-describing the dynamic cut-off is included and an extra \code{above_cutoff}
-column marks rows containing at least one value above the threshold.
-\item If \code{output = "dataframe"}: a data.frame (4-decimal precision, matching
-the precision of the simulated values in \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}) with
-the lower triangle of the Q3 correlation matrix; the upper triangle and
-diagonal are set to \code{NA}. When \code{cutoff} is provided, an additional logical
-column \code{above_cutoff} indicates whether the row contains any value
-exceeding the dynamic cut-off. The kable display is rounded to 2
-decimals; the cut-off comparison always uses the full-precision values.
+With \code{cutoff = NULL} or a bare numeric cut-off, a single object (\code{kable} or
+data.frame) holding the lower triangle of the Q3 matrix; a numeric cut-off
+adds an \code{above_cutoff} row flag and a caption describing the dynamic
+cut-off.
+
+With the \strong{full \code{RMlocdepQ3Cutoff()} object}, a named list of two:
+\describe{
+\item{\verb{$matrix}}{the Q3 lower-triangle matrix with the \emph{global} dynamic
+cut-off (mean off-diagonal Q3 + suggested cut-off), as above.}
+\item{\verb{$pairs}}{one row per item pair: \code{Item1}, \code{Item2}, \code{Observed} (Q3),
+\code{Low}/\code{High} (the per-pair expected range, i.e. the simulated bounds),
+and \code{Flagged} -- \code{"above"} (Q3 above the upper bound, indicating local
+dependence), \code{"below"} (below the lower bound), or \code{""}. Sorted by
+absolute departure from the per-pair simulated median and truncated to
+\code{n_pairs}. With \code{p_value = TRUE}, columns \code{p_q3} and \code{padj_q3} are added
+and \code{Flagged} reflects \code{padj_q3 < alpha} and only flags \code{"above"}.}
 }
 }
 \description{
@@ -54,7 +82,42 @@ simulation-based cutoff recommendation.
 
 \code{mirt} is used for model fitting here because Q3 requires model-based
 expected responses, which are most readily available from MML estimation.
+
+\strong{Two views of local dependence.} Given the full
+\code{\link{RMlocdepQ3Cutoff}} object, two complementary tables are returned.
+The \verb{$matrix} applies a single \emph{global} cut-off (the Christensen et al.
+approach: the 99th percentile of the simulated max-minus-mean Q3) -- a
+family-wise "is there any local dependence" overview. The \verb{$pairs} table is
+the per-comparison view: each observed Q3 against its own simulated expected
+range (the \code{Low}/\code{High} bounds), so individual dependent pairs can be read
+off and ranked.
+
+\strong{Bootstrap p-values.} When \code{p_value = TRUE}, the \verb{$pairs} table also
+tests each observed Q3 against its simulated null (from \code{cutoff$pair_results})
+with a one-sided (upper-tail) test for excess local dependence. The pair
+statistic is studentised by the bootstrap mean and SD; the marginal p-value
+is \verb{(1 + #\{Q3* >= Q3\}) / (B + 1)}, and \code{correction} applies the family-wise
+(Westfall-Young step-down) or FDR adjustment across the \eqn{k(k-1)/2} pairs.
+As for item fit, the family-wise correction is liberal when the simulation is
+small, so >= 1000 \code{iterations} in \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}} are recommended (a
+warning is issued otherwise).
 }
+\section{Multiple comparisons}{
+
+The marginal p-value controls the error rate of a \emph{single} comparison: for
+one item (or item pair) decided on in advance it is the relevant value. But
+scanning all \emph{k} comparisons and flagging whichever fall below \code{alpha} tests
+\emph{k} hypotheses at once, so the chance of at least one false flag inflates to
+roughly \eqn{1 - (1 - \alpha)^k} (e.g. about 34\% for \emph{k} = 8 at
+\code{alpha = 0.05}) -- even when every marginal p-value is correctly calibrated.
+The corrected (adjusted) p-value controls this: \code{correction = "fwer"} bounds
+the probability of \emph{any} false flag (strict, lower power), while \code{"fdr_bh"} /
+\code{"fdr_by"} bound the expected \emph{proportion} of false flags among those raised
+(a more lenient middle ground). Rule of thumb: use the marginal p-value for a
+single pre-specified comparison, and a corrected p-value when screening the
+whole table -- the usual workflow.
+}
+
 \examples{
 \donttest{
 # Simulate binary item response data (10 items, 200 persons)
@@ -73,7 +136,17 @@ q3_df <- RMlocdepQ3(sim_data, output = "dataframe")
 # Simulation-based cutoff (use 500+ iterations in real analyses)
 if (requireNamespace("ggdist", quietly = TRUE)) {
   cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 50, parallel = FALSE)
+
+  # Bare numeric cutoff -> just the matrix
   RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
+
+  # Full object -> list of two tables: $matrix and $pairs
+  res <- RMlocdepQ3(sim_data, cutoff = cutoff_res, output = "dataframe")
+  res$pairs
+
+  # Top 5 pairs, with bootstrap p-values (use iterations >= 1000 in practice)
+  RMlocdepQ3(sim_data, cutoff = cutoff_res, n_pairs = 5, p_value = TRUE,
+             output = "dataframe")$pairs
 }
 }
 }
@@ -87,4 +160,8 @@ Christensen, K. B., Makransky, G., & Horton, M. (2017). Critical values
 for Yen's Q3: Identification of local dependence in the Rasch model.
 \emph{Applied Psychological Measurement, 41}(3), 178--194.
 \doi{10.1177/0146621616677520}
+
+Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
+of hypotheses simultaneously. \emph{Journal of Statistical Theory and Practice,
+19}(6). \doi{10.1007/s42519-024-00412-4}
 }

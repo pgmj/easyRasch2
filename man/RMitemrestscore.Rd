@@ -28,11 +28,12 @@ See \code{\link[stats:p.adjust]{stats::p.adjust()}} for available methods.}
 \item If \code{output = "kable"}: a \code{knitr_kable} object (plain text table via
 \code{format = "pipe"}) with columns for item name, observed and expected
 restscore correlations, the signed difference (observed minus
-expected), adjusted p-value, significance level, item location, and
-item location relative to the sample mean person location.
+expected), adjusted p-value, the \code{Flagged} misfit label, and item
+location relative to the sample mean person location.
 \item If \code{output = "dataframe"}: a data.frame with columns \code{Item}, \code{Observed},
-\code{Expected}, \code{Difference}, \code{p_adjusted}, \code{Significance},
-\code{Location}, and \code{Relative_location}.
+\code{Expected}, \code{Difference}, \code{p_adjusted}, \code{Flagged}, and
+\code{Relative_location}. \code{Flagged} is \code{"overfit"} (observed above expected,
+adj. p < .05), \code{"underfit"} (below, adj. p < .05), or \code{""} (not flagged).
 }
 
 The \code{Difference} column is signed (observed minus expected):

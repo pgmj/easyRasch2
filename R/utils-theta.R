@@ -146,7 +146,7 @@
 #'
 #' @param data_mat Numeric response matrix (persons x items).
 #' @param logp_tabs List of per-item log-probability tables from
-#'   [.logp_tables()].
+#'   `.logp_tables()`.
 #' @param grid Numeric vector of quadrature nodes.
 #' @return Numeric matrix (persons x nodes) of log-likelihoods.
 #' @keywords internal
@@ -171,7 +171,7 @@
 #' maximises the marginal likelihood of the data over the quadrature
 #' grid. Used as the default EAP prior when the user does not supply one.
 #'
-#' @param loglik Person-by-node log-likelihood matrix from [.grid_loglik()].
+#' @param loglik Person-by-node log-likelihood matrix from `.grid_loglik()`.
 #' @param grid Numeric quadrature nodes.
 #' @param prior_mean Numeric prior mean.
 #' @return Numeric scalar: the estimated prior SD.

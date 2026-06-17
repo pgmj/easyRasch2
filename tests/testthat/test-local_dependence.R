@@ -154,7 +154,7 @@ test_that("RMlocdepQ3Cutoff cutoff_method = 'quantile' works without ggdist", {
 # ---------------------------------------------------------------------
 # RMlocdepQ3 accepts the full simfit object
 # ---------------------------------------------------------------------
-test_that("RMlocdepQ3 extracts $suggested_cutoff when given full simfit", {
+test_that("full simfit returns list whose $matrix matches the scalar cutoff", {
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggdist")
@@ -162,10 +162,11 @@ test_that("RMlocdepQ3 extracts $suggested_cutoff when given full simfit", {
   df <- as.data.frame(matrix(sample(0:1, 200 * 6, replace = TRUE), 200, 6))
   colnames(df) <- paste0("I", 1:6)
   cu  <- RMlocdepQ3Cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
-  # Pass the FULL list — should match passing just the scalar
+  # Full object -> list($matrix, $pairs); $matrix matches the scalar-cutoff matrix
   a <- RMlocdepQ3(df, cutoff = cu,                  output = "dataframe")
   b <- RMlocdepQ3(df, cutoff = cu$suggested_cutoff, output = "dataframe")
-  expect_equal(a, b)
+  expect_named(a, c("matrix", "pairs"))
+  expect_equal(a$matrix, b)
 })
 
 # ---------------------------------------------------------------------
@@ -228,4 +229,80 @@ test_that("RMlocdepQ3Plot validates inputs", {
                regexp = "Unknown item")
   expect_error(RMlocdepQ3Plot(cu, items = c("I1")),
                regexp = "at least 2 item names")
+})
+
+# ---------------------------------------------------------------------
+# RMlocdepQ3() bootstrap p-values (per item pair)
+# ---------------------------------------------------------------------
+
+q3_null_data <- function(n = 300, J = 7, seed = 11L) {
+  set.seed(seed)
+  theta <- rnorm(n, 0, 1.3); beta <- seq(-1.5, 1.5, length.out = J)
+  df <- as.data.frame(sapply(seq_len(J), function(j) rbinom(n, 1, plogis(theta - beta[j]))))
+  colnames(df) <- paste0("I", seq_len(J)); df
+}
+
+test_that("full cutoff object returns list($matrix, $pairs)", {
+  skip_if_not_installed("mirt"); skip_if_not_installed("ggdist")
+  df  <- q3_null_data()
+  sim <- RMlocdepQ3Cutoff(df, iterations = 300, parallel = FALSE, seed = 1)
+  res <- RMlocdepQ3(df, cutoff = sim, output = "dataframe")
+  expect_named(res, c("matrix", "pairs"))
+  expect_named(res$pairs, c("Item1", "Item2", "Observed", "Low", "High", "Flagged"))
+  expect_equal(nrow(res$pairs), choose(ncol(df), 2L))          # one row per pair
+  expect_true(all(res$pairs$Flagged %in% c("above", "below", "")))
+})
+
+test_that("n_pairs truncates the $pairs table", {
+  skip_if_not_installed("mirt"); skip_if_not_installed("ggdist")
+  df  <- q3_null_data()
+  sim <- RMlocdepQ3Cutoff(df, iterations = 200, parallel = FALSE, seed = 1)
+  res <- RMlocdepQ3(df, cutoff = sim, n_pairs = 3, output = "dataframe")
+  expect_equal(nrow(res$pairs), 3L)
+})
+
+test_that("p_value = TRUE adds p columns to $pairs and flags on padj", {
+  skip_if_not_installed("mirt"); skip_if_not_installed("ggdist")
+  df  <- q3_null_data()
+  sim <- RMlocdepQ3Cutoff(df, iterations = 300, parallel = FALSE, seed = 1)
+  res <- suppressWarnings(
+    RMlocdepQ3(df, cutoff = sim, p_value = TRUE, output = "dataframe")
+  )
+  expect_true(all(c("p_q3", "padj_q3") %in% names(res$pairs)))
+  expect_true(all(res$pairs$p_q3 >= 0 & res$pairs$p_q3 <= 1, na.rm = TRUE))
+  expect_true(all(res$pairs$padj_q3 >= res$pairs$p_q3 - 1e-9, na.rm = TRUE))
+})
+
+test_that("RMlocdepQ3 p_value = TRUE errors without the full cutoff object", {
+  skip_if_not_installed("mirt"); skip_if_not_installed("ggdist")
+  df  <- q3_null_data()
+  sim <- RMlocdepQ3Cutoff(df, iterations = 200, parallel = FALSE, seed = 1)
+  expect_error(RMlocdepQ3(df, p_value = TRUE), regexp = "full RMlocdepQ3Cutoff")
+  expect_error(RMlocdepQ3(df, cutoff = sim$suggested_cutoff, p_value = TRUE),
+               regexp = "full RMlocdepQ3Cutoff")
+})
+
+test_that("NULL cutoff is unchanged (single square matrix)", {
+  skip_if_not_installed("mirt")
+  df  <- q3_null_data()
+  res <- RMlocdepQ3(df, output = "dataframe")
+  expect_false(is.list(res) && all(c("matrix", "pairs") %in% names(res)))
+  expect_equal(nrow(res), ncol(df))                            # square matrix
+})
+
+test_that("RMlocdepQ3 detects an injected locally dependent pair", {
+  skip_if_not_installed("mirt"); skip_if_not_installed("ggdist")
+  set.seed(3); n <- 400; J <- 7
+  theta <- rnorm(n, 0, 1.3); beta <- seq(-1.5, 1.5, length.out = J)
+  m <- sapply(seq_len(J), function(j) rbinom(n, 1, plogis(theta - beta[j])))
+  cp <- sample(n, 0.7 * n); m[cp, 2] <- m[cp, 1]              # I1, I2 dependent
+  df <- as.data.frame(m); colnames(df) <- paste0("I", seq_len(J))
+  sim <- RMlocdepQ3Cutoff(df, iterations = 500, parallel = FALSE, seed = 4)
+  res <- RMlocdepQ3(df, cutoff = sim, output = "dataframe")$pairs
+  dep <- res[(res$Item1 == "I1" & res$Item2 == "I2") |
+             (res$Item1 == "I2" & res$Item2 == "I1"), ]
+  expect_identical(dep$Flagged, "above")
+  # the injected pair has the largest departure -> sorted to the top row
+  expect_true((res$Item1[1] == "I1" && res$Item2[1] == "I2") ||
+              (res$Item1[1] == "I2" && res$Item2[1] == "I1"))
 })
