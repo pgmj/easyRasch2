@@ -53,8 +53,9 @@ with median and Highest Density Continuous Interval (HDCI) summaries.
 
 When \code{data} \strong{is} supplied, the function:
 \enumerate{
-\item Fits a Rasch model to \code{data} via \code{mirt::mirt()} and extracts
-observed Q3 residual correlations.
+\item Computes observed Q3 residual correlations under the same
+estimator used to build \code{simfit} (its \verb{$estimator}: CML/WLE by
+default, or MML via \code{mirt}).
 \item Overlays observed Q3 values as orange diamond markers on the
 simulated distributions.
 \item Shows per-pair cutoff intervals (from \code{simfit$pair_cutoffs})

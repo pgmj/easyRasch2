@@ -12,7 +12,8 @@ RMlocdepQ3Cutoff(
   verbose = FALSE,
   seed = NULL,
   cutoff_method = "hdci",
-  hdci_width = 0.99
+  hdci_width = 0.99,
+  estimator = c("CML", "MML")
 )
 }
 \arguments{
@@ -43,6 +44,13 @@ Highest Density Continuous Interval via \code{ggdist::hdci()}) or
 \item{hdci_width}{Numeric in (0, 1). Width of the HDCI when
 \code{cutoff_method = "hdci"}. Default \code{0.99}. Ignored when
 \code{cutoff_method = "quantile"}.}
+
+\item{estimator}{Character. Estimation engine for the simulated Q3 values,
+passed through to the per-iteration computation. \code{"CML"} (default) uses
+CML item parameters and WLE person locations; \code{"MML"} uses \code{mirt}. This
+must match the \code{estimator} later given to \code{\link{RMlocdepQ3}}; the
+value is stored in the returned object's \verb{$estimator} and reused
+automatically.}
 }
 \value{
 A list with components:
@@ -67,6 +75,9 @@ scalar cutoff for \code{\link{RMlocdepQ3}}.}
 (\code{"hdci"} or \code{"quantile"}).}
 \item{\code{hdci_width}}{The HDCI width used (only meaningful when
 \code{cutoff_method = "hdci"}).}
+\item{\code{estimator}}{The estimator used for the simulated Q3 (\code{"CML"} or
+\code{"MML"}); reused by \code{\link{RMlocdepQ3}} and
+\code{\link{RMlocdepQ3Plot}}.}
 }
 }
 \description{
@@ -76,16 +87,16 @@ residuals have an unknown distribution; this function simulates that
 distribution and returns empirical percentiles.
 }
 \details{
-For each simulation iteration, person parameters (thetas) are resampled
-with replacement from ML estimates, response data are simulated under the
-Rasch model, a \code{mirt} Rasch model is fitted to the simulated data, and Q3
-residuals are extracted. The distribution of \code{max(Q3) - mean(Q3)} across
-iterations provides empirical critical values. Failed iterations (e.g., due
-to convergence issues) are silently discarded.
+The generating model is fitted once: CML item parameters (via
+\code{psychotools}) and WLE person locations. For each simulation iteration,
+those WLE thetas are resampled with replacement, response data are simulated
+under the Rasch / Partial Credit model, the model is refitted, and Q3
+residuals are computed under \code{estimator}. The distribution of
+\code{max(Q3) - mean(Q3)} across iterations provides empirical critical values.
+Failed iterations (e.g., due to convergence issues) are silently discarded.
 
-Supports both \strong{dichotomous} data (via \code{eRm::RM()} and
-\code{psychotools::rrm()}) and \strong{polytomous} data (via \code{eRm::PCM()} and an
-internal partial credit score simulator).
+Supports both \strong{dichotomous} data (simulated via \code{psychotools::rrm()}) and
+\strong{polytomous} data (via an internal partial credit score simulator).
 
 Parallel processing is provided by the \code{mirai} package (optional). Install
 it with \code{install.packages("mirai")} to enable parallelisation.

@@ -311,7 +311,9 @@ RMitemInfitCutoffPlot <- function(simfit, data, output = "infit") {
       minor_breaks = NULL
     ) +
     ggplot2::theme_minimal() +
-    ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm"))
+    ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
+    er2_axis_margins() +
+    er2_plot_caption()
 
   # --- Build outfit data ------------------------------------------------------
   outfit_sim <- data.frame(
@@ -389,7 +391,9 @@ RMitemInfitCutoffPlot <- function(simfit, data, output = "infit") {
       minor_breaks = NULL
     ) +
     ggplot2::theme_minimal() +
-    ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm"))
+    ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
+    er2_axis_margins() +
+    er2_plot_caption()
 
   # --- Return the requested panel(s) ------------------------------------------
   if (output == "both") {

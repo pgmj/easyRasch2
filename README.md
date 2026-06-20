@@ -40,8 +40,10 @@ remotes::install_github("pgmj/easyRasch2")
 
 - **Estimation**: Conditional Maximum Likelihood (CML) via `eRm`,
   `psychotools`, and `iarm` for item parameters; Weighted Likelihood
-  Estimation (WLE) for person parameters; `mirt` (MML) only where CML
-  alternatives do not exist (e.g., Q3 residual correlations).
+  Estimation (WLE) for person parameters. This now extends to Yen's Q3
+  residual correlations (`RMlocdepQ3()`, CML/WLE by default); `mirt` (MML)
+  is retained as an optional engine (`estimator = "MML"`) and for the few
+  places without a CML alternative (e.g., some reliability indices).
 - **Output**: `knitr::kable()` for tables (Quarto-friendly), `ggplot2`
   for figures, and `"dataframe"` output options for downstream use.
 - **Naming**: Functions use the `RM` prefix (e.g., `RMlocdepQ3()`).
@@ -61,9 +63,11 @@ remotes::install_github("pgmj/easyRasch2")
 
 ### Local dependence
 
-- `RMlocdepQ3()` + `RMlocdepQ3Cutoff()` — Yen's Q3 residual correlations;
-  optional per-pair bootstrap p-values (`p_value = TRUE`) with family-wise
-  (Westfall–Young) or FDR correction across item pairs
+- `RMlocdepQ3()` + `RMlocdepQ3Cutoff()` — Yen's Q3 residual correlations
+  (CML/WLE by default, `estimator = "MML"` optional); a viridis heatmap of
+  the Q3 matrix in the cut-off list output (`$plot`); optional per-pair
+  bootstrap p-values (`p_value = TRUE`) with family-wise (Westfall–Young) or
+  FDR correction across item pairs
 - `RMlocdepGamma()` + `RMlocdepGammaCutoff()` + `RMlocdepGammaPlot()` — partial-gamma local dependence
 
 ### Dimensionality / unidimensionality

@@ -404,15 +404,17 @@ RMpersonFit <- function(data,
   (l - El) / sqrt(Vl)
 }
 
-#' Person location for lz (reuses the theta machinery)
+#' Person location for lz (reuses the shared theta machinery)
 #' @keywords internal
 #' @noRd
 .person_theta <- function(data_mat, thr_list, theta_method,
                           theta_range = c(-10, 10)) {
   if (theta_method == "WLE") {
-    vapply(seq_len(nrow(data_mat)), function(p) {
-      .theta_wle(data_mat[p, ], thr_list, theta_range)[["theta"]]
-    }, numeric(1))
+    # .estimate_thetas() solves WLE once per distinct (answered-set, score)
+    # key and maps back, so it is identical to a per-row .theta_wle() loop but
+    # faster when response patterns repeat.
+    .estimate_thetas(data_mat, thr_list, method = "WLE",
+                     theta_range = theta_range)$theta
   } else {
     grid      <- seq(theta_range[1L], theta_range[2L], length.out = 121L)
     logp_tabs <- .logp_tables(thr_list, grid)

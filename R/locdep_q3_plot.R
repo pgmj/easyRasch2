@@ -42,8 +42,9 @@
 #'
 #' When `data` **is** supplied, the function:
 #' \enumerate{
-#'   \item Fits a Rasch model to `data` via `mirt::mirt()` and extracts
-#'     observed Q3 residual correlations.
+#'   \item Computes observed Q3 residual correlations under the same
+#'     estimator used to build `simfit` (its `$estimator`: CML/WLE by
+#'     default, or MML via `mirt`).
 #'   \item Overlays observed Q3 values as orange diamond markers on the
 #'     simulated distributions.
 #'   \item Shows per-pair cutoff intervals (from `simfit$pair_cutoffs`)
@@ -117,6 +118,8 @@ RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
   actual_iterations <- simfit$actual_iterations
   sample_n          <- simfit$sample_n
   item_names        <- simfit$item_names
+  # Match the estimator used to build the cut-off (older objects predate it).
+  estimator         <- if (is.null(simfit$estimator)) "CML" else simfit$estimator
 
   # --- Validate items parameter -----------------------------------------------
   if (!is.null(items)) {
@@ -165,25 +168,18 @@ RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
   # --- Compute observed Q3 (when data supplied) -------------------------------
   observed_df <- NULL
   if (!missing(data)) {
-    if (!requireNamespace("mirt", quietly = TRUE)) {
+    if (estimator == "MML" && !requireNamespace("mirt", quietly = TRUE)) {
       stop(
-        "Package 'mirt' is required to compute observed Q3 but is not ",
-        "installed.\nInstall it with: install.packages(\"mirt\")",
+        "Package 'mirt' is required to compute observed Q3 with ",
+        "estimator = \"MML\" but is not installed.\n",
+        "Install it with: install.packages(\"mirt\")",
         call. = FALSE
       )
     }
     validate_response_data(data)
 
-    mirt_fit <- mirt::mirt(
-      data,
-      model      = 1L,
-      itemtype   = "Rasch",
-      verbose    = FALSE,
-      accelerate = "squarem"
-    )
-    q3_mat <- mirt::residuals(mirt_fit, type = "Q3", digits = 4,
-                              verbose = FALSE)
-    diag(q3_mat) <- NA
+    # Same estimator as the simulated cut-off (stored in simfit$estimator).
+    q3_mat <- .q3_residual_matrix(data, estimator = estimator)
     item_names_q3 <- colnames(q3_mat)
     if (is.null(item_names_q3)) item_names_q3 <- item_names
     upper_idx <- which(upper.tri(q3_mat), arr.ind = TRUE)

@@ -11,7 +11,8 @@ RMlocdepQ3(
   n_pairs = NULL,
   p_value = FALSE,
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
-  alpha = 0.05
+  alpha = 0.05,
+  estimator = c("CML", "MML")
 )
 }
 \arguments{
@@ -44,6 +45,16 @@ studentised-max step-down, \code{"fdr_bh"} / \code{"fdr_by"} for Benjamini-Hochb
 
 \item{alpha}{Numeric in (0, 1). Significance level for \code{Flagged} when
 \code{p_value = TRUE}. Default \code{0.05}.}
+
+\item{estimator}{Character. Estimation engine for the Q3 residual
+correlations. \code{"CML"} (default) fits item parameters by conditional
+maximum likelihood (\code{psychotools}) and person locations by Warm's
+weighted likelihood (WLE) -- true to the Rasch tradition and finite
+at extreme scores. \code{"MML"} uses the marginal-ML / EAP engine
+(\code{mirt}), retained for backward compatibility. The estimator must
+match the one used by \code{\link{RMlocdepQ3Cutoff}}; when the full
+cutoff object is supplied, its stored estimator takes precedence (a
+mismatching \code{estimator} argument is overridden with a warning).}
 }
 \value{
 With \code{cutoff = NULL} or a bare numeric cut-off, a single object (\code{kable} or
@@ -51,7 +62,7 @@ data.frame) holding the lower triangle of the Q3 matrix; a numeric cut-off
 adds an \code{above_cutoff} row flag and a caption describing the dynamic
 cut-off.
 
-With the \strong{full \code{RMlocdepQ3Cutoff()} object}, a named list of two:
+With the \strong{full \code{RMlocdepQ3Cutoff()} object}, a named list of three:
 \describe{
 \item{\verb{$matrix}}{the Q3 lower-triangle matrix with the \emph{global} dynamic
 cut-off (mean off-diagonal Q3 + suggested cut-off), as above.}
@@ -62,6 +73,9 @@ dependence), \code{"below"} (below the lower bound), or \code{""}. Sorted by
 absolute departure from the per-pair simulated median and truncated to
 \code{n_pairs}. With \code{p_value = TRUE}, columns \code{p_q3} and \code{padj_q3} are added
 and \code{Flagged} reflects \code{padj_q3 < alpha} and only flags \code{"above"}.}
+\item{\verb{$plot}}{a \code{ggplot2} heatmap (lower-triangle tile plot, viridis
+fill) of the observed Q3 matrix; pairs exceeding the global dynamic
+cut-off are outlined in red. \code{NULL} if \code{ggplot2} is not installed.}
 }
 }
 \description{
@@ -80,8 +94,15 @@ of all off-diagonal Q3 values plus \code{cutoff}, following the approach of
 Christensen et al. (2017). Use \code{\link{RMlocdepQ3Cutoff}} to obtain a
 simulation-based cutoff recommendation.
 
-\code{mirt} is used for model fitting here because Q3 requires model-based
-expected responses, which are most readily available from MML estimation.
+Q3 is the column-wise correlation matrix of the model standardized
+residuals \eqn{(x - E)/\sqrt{Var}}. By default (\code{estimator = "CML"}) item
+parameters are estimated by conditional maximum likelihood (\code{psychotools})
+and person locations by Warm's weighted likelihood; \code{estimator = "MML"}
+instead uses \code{mirt}'s marginal-ML model and its built-in Q3 residuals.
+The two estimators give very similar Q3 values (off-diagonal correlation
+typically > 0.95); what matters for inference is that the observed Q3 and
+the simulated cut-off in \code{\link{RMlocdepQ3Cutoff}} use the \emph{same}
+estimator, which the functions enforce.
 
 \strong{Two views of local dependence.} Given the full
 \code{\link{RMlocdepQ3Cutoff}} object, two complementary tables are returned.

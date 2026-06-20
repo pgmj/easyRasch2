@@ -59,9 +59,16 @@ er2_plot_caption <- function() {
 #' stay together.
 #'
 #' When `ggtext` is installed, returns `"*Note.* <wrapped body>"`
-#' (markdown italic on "Note."); otherwise `"Note. <wrapped body>"`
-#' (plain text, with the whole caption set italic by
-#' \code{\link{er2_plot_caption}}).
+#' (markdown italic on "Note."); otherwise `"Note. <wrapped body>"` (plain
+#' text, with the whole caption set italic by \code{\link{er2_plot_caption}}).
+#'
+#' Wrapped lines are joined with the CommonMark "hard line break" token --- two
+#' trailing spaces before a newline (`"  \\n"`). This is honoured as a line
+#' break by **both** caption renderers: `ggtext::element_markdown()` (markdown,
+#' where a bare `"\\n"` would instead collapse to a space) and the plain
+#' `element_text()` fallback. So wrapping survives even on a plot that forgets
+#' to apply \code{\link{er2_plot_caption}}; that pairing then only governs the
+#' italic "Note." styling, not the wrapping.
 #'
 #' @param text Character. The caption body text (everything after the
 #'   "Note." prefix). Pre-existing `\\n` in `text` is treated as
@@ -75,12 +82,11 @@ er2_plot_caption <- function() {
 #' @keywords internal
 #' @noRd
 er2_caption <- function(text, width = 90L) {
-  prefix <- if (requireNamespace("ggtext", quietly = TRUE)) {
-    "*Note.* "
-  } else {
-    "Note. "
-  }
+  prefix     <- if (requireNamespace("ggtext", quietly = TRUE)) "*Note.* " else "Note. "
   body_width <- max(20L, width - nchar(prefix))
-  body <- paste(strwrap(text, width = body_width), collapse = "\n")
+  # "  \n" = CommonMark hard line break: rendered as a break by both
+  # element_markdown() (markdown) and element_text() (plain). A bare "\n"
+  # would be collapsed to a space by element_markdown().
+  body <- paste(strwrap(text, width = body_width), collapse = "  \n")
   paste0(prefix, body)
 }

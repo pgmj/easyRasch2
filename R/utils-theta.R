@@ -215,3 +215,121 @@
   sd[empty]  <- NA_real_
   data.frame(theta = eap, sem = sd)
 }
+
+# ---------------------------------------------------------------------
+# Shared CML/WLE estimation engine (used by the Q3 local-dependence
+# functions; intended as the common entry point for migrating other
+# functions off mirt MML/EAP and eRm MLE).
+# ---------------------------------------------------------------------
+
+#' Conditional-maximum-likelihood item thresholds via psychotools
+#'
+#' Fits a Rasch model (dichotomous) or Partial Credit Model (polytomous)
+#' by CML using `psychotools::raschmodel()` / `psychotools::pcmodel()`
+#' and returns a list of grand-mean-centred Andrich threshold vectors,
+#' one per item --- the normalised representation consumed by
+#' `.pcm_cat_probs()`, `.theta_wle()`, and the residual routines.
+#' `psychotools` is used (rather than `eRm`) because its CML fitter is
+#' an order of magnitude faster, handles missing data without the
+#' per-NA-pattern slowdown of `eRm`, and returns numerically identical
+#' parameters after centring.
+#'
+#' @param data Numeric response matrix or data.frame (items scored from 0).
+#' @return List of centred Andrich threshold vectors, one per item.
+#' @keywords internal
+#' @noRd
+.fit_cml_thresholds <- function(data) {
+  data <- as.matrix(data)
+  is_poly <- max(data, na.rm = TRUE) > 1L
+  fit <- if (is_poly) psychotools::pcmodel(data) else psychotools::raschmodel(data)
+  thr_list <- lapply(psychotools::threshpar(fit), as.numeric)
+  .center_thresholds(thr_list)
+}
+
+#' Estimate person locations under a fixed item model
+#'
+#' Shared person-estimation entry point. Given centred item thresholds,
+#' returns a per-respondent location estimate (and its SEM) by Warm's
+#' weighted likelihood (`"WLE"`, the default) or expected a posteriori
+#' (`"EAP"`). WLE depends only on the sufficient statistic --- the
+#' answered-item set and the partial raw score over it --- so estimates
+#' are solved once per distinct (answered-set, score) key and mapped
+#' back to respondents. On complete data this collapses to one solve
+#' per distinct raw score.
+#'
+#' @param data Numeric response matrix or data.frame (items from 0; `NA`
+#'   allowed).
+#' @param thr_list List of centred Andrich threshold vectors, one per
+#'   item, aligned with the columns of `data` (e.g. from
+#'   `.fit_cml_thresholds()`).
+#' @param method `"WLE"` (default) or `"EAP"`.
+#' @param theta_range Length-2 search/boundary range for WLE and the EAP
+#'   quadrature grid.
+#' @param prior_mean,prior_sd Normal-prior parameters for `"EAP"`. When
+#'   `prior_sd` is `NULL` it is estimated from the data by marginal
+#'   maximum likelihood.
+#' @param n_nodes Number of EAP quadrature nodes.
+#' @return data.frame with columns `theta` and `sem`, one row per
+#'   respondent (in input order).
+#' @keywords internal
+#' @noRd
+.estimate_thetas <- function(data, thr_list, method = c("WLE", "EAP"),
+                             theta_range = c(-6, 6), prior_mean = 0,
+                             prior_sd = NULL, n_nodes = 61L) {
+  method <- match.arg(method)
+  data <- as.matrix(data)
+
+  if (method == "EAP") {
+    grid   <- seq(theta_range[1L], theta_range[2L], length.out = n_nodes)
+    logp   <- .logp_tables(thr_list, grid)
+    loglik <- .grid_loglik(data, logp, grid)
+    if (is.null(prior_sd)) prior_sd <- .estimate_prior_sd(loglik, grid, prior_mean)
+    return(.theta_eap(loglik, grid, prior_mean, prior_sd))
+  }
+
+  # WLE: cache by sufficient statistic (answered-set, partial score).
+  pat <- apply(!is.na(data), 1L, function(z) paste0(which(z), collapse = ","))
+  rs  <- rowSums(data, na.rm = TRUE)
+  key <- paste(pat, rs, sep = "|")
+  rep_idx <- which(!duplicated(key))
+  est <- vapply(rep_idx, function(i) .theta_wle(data[i, ], thr_list, theta_range),
+                numeric(2L))                       # rows: theta, sem; cols: reps
+  m <- match(key, key[rep_idx])
+  data.frame(theta = est["theta", m], sem = est["sem", m])
+}
+
+#' Standardized Rasch/PCM residual matrix (CML items + chosen person estimator)
+#'
+#' Computes the model standardized residuals \eqn{(x - E)/\sqrt{Var}} for
+#' every person-by-item cell, using CML item thresholds and WLE (or EAP)
+#' person locations. This is the residual object underlying Yen's Q3
+#' (its column-wise correlation matrix) and is reusable for residual-based
+#' diagnostics. Non-finite residuals (e.g. zero-variance cells) are set
+#' to `NA`.
+#'
+#' @param data Numeric response matrix or data.frame (items from 0; `NA`
+#'   allowed).
+#' @param method Person estimator passed to `.estimate_thetas()`.
+#' @return Numeric matrix (persons x items) of standardized residuals,
+#'   with the item names of `data` as column names.
+#' @keywords internal
+#' @noRd
+.rasch_std_residuals <- function(data, method = "WLE") {
+  data <- as.matrix(data)
+  thr_list <- .fit_cml_thresholds(data)
+  th <- .estimate_thetas(data, thr_list, method = method)$theta
+  N <- nrow(data); K <- ncol(data)
+  E <- W <- matrix(NA_real_, N, K)
+  for (i in seq_len(K)) {
+    cats <- 0:length(thr_list[[i]])
+    P  <- vapply(th, function(z) .pcm_cat_probs(z, thr_list[[i]]),
+                 numeric(length(cats)))            # (n_cat x N)
+    Ei <- as.numeric(crossprod(cats, P))
+    W[, i] <- as.numeric(crossprod(cats^2, P)) - Ei^2
+    E[, i] <- Ei
+  }
+  R <- (data - E) / sqrt(W)
+  R[!is.finite(R)] <- NA
+  colnames(R) <- colnames(data)
+  R
+}

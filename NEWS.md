@@ -1,5 +1,34 @@
 # easyRasch2 (development version)
 
+- `RMlocdepQ3()` now computes Yen's Q3 by **conditional maximum likelihood
+  with Warm's weighted likelihood** person locations by default
+  (`estimator = "CML"`), replacing the previous reliance on marginal ML /
+  EAP via `mirt`. CML/WLE is true to the Rasch tradition, gives finite
+  estimates at extreme scores, and (via `psychotools`) is markedly faster
+  in the parametric bootstrap. The previous engine remains available with
+  `estimator = "MML"`. **This changes the Q3 values, cut-offs, and flags
+  relative to earlier versions** — the statistic is the same but the
+  estimator differs (observed-vs-MML off-diagonal correlation is typically
+  above 0.95 on real data). `RMlocdepQ3Cutoff()` gains a matching `estimator`
+  argument and stores it in its return value (`$estimator`); `RMlocdepQ3()`
+  and `RMlocdepQ3Plot()` read that stored estimator so the observed Q3 and
+  the simulated cut-off are always computed the same way (a mismatching
+  `estimator` argument is overridden with a warning). The shared
+  CML/WLE/EAP person-estimation engine is reusable internally for migrating
+  other functions off `mirt`/`eRm` over time. `RMlocdepQ3Cutoff()`'s
+  parametric-bootstrap *generating* distribution now also uses CML item
+  parameters and WLE (not MLE) person locations, so the whole pipeline is
+  CML/WLE-coherent; this slightly shifts the simulated cut-offs relative to
+  earlier development versions.
+
+- `RMlocdepQ3()` given the full `RMlocdepQ3Cutoff()` object now returns a
+  third list element, `$plot`: a tile heatmap (lower triangle, diverging
+  RdYlBu fill) of the observed Q3 matrix, with pairs above the global
+  dynamic cut-off outlined. Adapted from the `RASCHplot` package's
+  `ggQ3star()` and styled to match the package's other ggplots. (The returned list is now
+  `$matrix`, `$pairs`, `$plot`; the simple `cutoff = NULL` / numeric-cutoff
+  return values are unchanged.)
+
 - New `RMpersonFit()`: per-respondent person-fit analysis. Reports
   conditional infit and outfit mean-squares (computed on each response
   pattern via elementary symmetric functions, so partial missingness is

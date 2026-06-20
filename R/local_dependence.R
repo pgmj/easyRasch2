@@ -29,6 +29,15 @@
 #'   / Benjamini-Yekutieli, or `"none"`.
 #' @param alpha Numeric in (0, 1). Significance level for `Flagged` when
 #'   `p_value = TRUE`. Default `0.05`.
+#' @param estimator Character. Estimation engine for the Q3 residual
+#'   correlations. `"CML"` (default) fits item parameters by conditional
+#'   maximum likelihood (`psychotools`) and person locations by Warm's
+#'   weighted likelihood (WLE) -- true to the Rasch tradition and finite
+#'   at extreme scores. `"MML"` uses the marginal-ML / EAP engine
+#'   (`mirt`), retained for backward compatibility. The estimator must
+#'   match the one used by \code{\link{RMlocdepQ3Cutoff}}; when the full
+#'   cutoff object is supplied, its stored estimator takes precedence (a
+#'   mismatching `estimator` argument is overridden with a warning).
 #'
 #' @return
 #' With `cutoff = NULL` or a bare numeric cut-off, a single object (`kable` or
@@ -36,7 +45,7 @@
 #' adds an `above_cutoff` row flag and a caption describing the dynamic
 #' cut-off.
 #'
-#' With the **full `RMlocdepQ3Cutoff()` object**, a named list of two:
+#' With the **full `RMlocdepQ3Cutoff()` object**, a named list of three:
 #' \describe{
 #'   \item{`$matrix`}{the Q3 lower-triangle matrix with the *global* dynamic
 #'     cut-off (mean off-diagonal Q3 + suggested cut-off), as above.}
@@ -47,6 +56,9 @@
 #'     absolute departure from the per-pair simulated median and truncated to
 #'     `n_pairs`. With `p_value = TRUE`, columns `p_q3` and `padj_q3` are added
 #'     and `Flagged` reflects `padj_q3 < alpha` and only flags `"above"`.}
+#'   \item{`$plot`}{a `ggplot2` heatmap (lower-triangle tile plot, viridis
+#'     fill) of the observed Q3 matrix; pairs exceeding the global dynamic
+#'     cut-off are outlined in red. `NULL` if `ggplot2` is not installed.}
 #' }
 #'
 #' @details
@@ -58,8 +70,15 @@
 #' Christensen et al. (2017). Use \code{\link{RMlocdepQ3Cutoff}} to obtain a
 #' simulation-based cutoff recommendation.
 #'
-#' `mirt` is used for model fitting here because Q3 requires model-based
-#' expected responses, which are most readily available from MML estimation.
+#' Q3 is the column-wise correlation matrix of the model standardized
+#' residuals \eqn{(x - E)/\sqrt{Var}}. By default (`estimator = "CML"`) item
+#' parameters are estimated by conditional maximum likelihood (`psychotools`)
+#' and person locations by Warm's weighted likelihood; `estimator = "MML"`
+#' instead uses `mirt`'s marginal-ML model and its built-in Q3 residuals.
+#' The two estimators give very similar Q3 values (off-diagonal correlation
+#' typically > 0.95); what matters for inference is that the observed Q3 and
+#' the simulated cut-off in \code{\link{RMlocdepQ3Cutoff}} use the *same*
+#' estimator, which the functions enforce.
 #'
 #' \strong{Two views of local dependence.} Given the full
 #' \code{\link{RMlocdepQ3Cutoff}} object, two complementary tables are returned.
@@ -134,7 +153,8 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
                        n_pairs    = NULL,
                        p_value    = FALSE,
                        correction = c("fwer", "fdr_bh", "fdr_by", "none"),
-                       alpha      = 0.05) {
+                       alpha      = 0.05,
+                       estimator  = c("CML", "MML")) {
   # --- Input validation -------------------------------------------------------
   cutoff_full <- NULL   # full object (carries simulated $pair_results)
   if (!is.null(cutoff)) {
@@ -152,6 +172,17 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 
   output     <- match.arg(output, c("kable", "dataframe"))
   correction <- match.arg(correction)
+  estimator  <- match.arg(estimator)
+  # The observed Q3 must use the same estimator as the simulated cut-off, so
+  # the estimator stored in the cutoff object takes precedence over the arg.
+  if (!is.null(cutoff_full) && !is.null(cutoff_full$estimator) &&
+      !identical(cutoff_full$estimator, estimator)) {
+    warning("Using estimator \"", cutoff_full$estimator, "\" from the ",
+            "RMlocdepQ3Cutoff() object (overriding estimator = \"", estimator,
+            "\") so the observed Q3 matches the simulated cut-off.",
+            call. = FALSE)
+    estimator <- cutoff_full$estimator
+  }
   if (!is.numeric(alpha) || length(alpha) != 1L || alpha <= 0 || alpha >= 1) {
     stop("`alpha` must be a single number in (0, 1).", call. = FALSE)
   }
@@ -178,26 +209,14 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 
   validate_response_data(data)
 
-  # --- Model fitting ----------------------------------------------------------
-  mirt_model <- mirt::mirt(
-    data,
-    model = 1,
-    itemtype = "Rasch",
-    verbose = FALSE,
-    accelerate = "squarem"
-  )
-
   # --- Compute Q3 residual correlations ---------------------------------------
-  # digits = 4 matches the precision used for the simulated Q3 values in
-  # RMlocdepQ3Cutoff() (run_single_q3_sim also uses digits = 4), so the mean
-  # Q3, the dynamic cut-off, and the above_cutoff flags are all computed from
-  # equally precise observed values. Rounding to 2 decimals happens only for
-  # the kable display below.
-  resid_mat <- mirt::residuals(mirt_model, type = "Q3", digits = 4, verbose = FALSE)
+  # .q3_residual_matrix() returns a symmetric Q3 matrix with an NA diagonal,
+  # computed under the chosen estimator (CML/WLE residual correlations, or
+  # mirt's MML Q3). The same routine is used for the simulated Q3 in
+  # RMlocdepQ3Cutoff(), so observed and simulated values are comparable.
+  resid_mat <- .q3_residual_matrix(data, estimator = estimator)
 
-  diag(resid_mat) <- NA
-
-  # Compute mean of off-diagonal correlations before zeroing upper triangle
+  # Mean of the off-diagonal correlations (diagonal already NA).
   mean_resid <- mean(resid_mat, na.rm = TRUE)
 
   # Matrix view (global dynamic cutoff = mean + cutoff, or raw when NULL).
@@ -209,10 +228,158 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
     return(matrix_out)
   }
 
-  # Full RMlocdepQ3Cutoff() object: a list of the matrix and the per-pair table.
+  # Full RMlocdepQ3Cutoff() object: matrix, per-pair table, and heatmap.
   pairs_out <- .q3_pairs_table(resid_mat, cutoff_full, n_pairs, p_value,
                                correction, alpha, output)
-  list(matrix = matrix_out, pairs = pairs_out)
+  plot_out  <- .q3_tile_plot(resid_mat,
+                             dyn_cutoff = mean_resid + cutoff,
+                             estimator = estimator,
+                             actual_iterations = cutoff_full$actual_iterations)
+  list(matrix = matrix_out, pairs = pairs_out, plot = plot_out)
+}
+
+#' Lower-triangle heatmap of the observed Q3 matrix
+#'
+#' Viridis tile plot of the Q3 residual correlations (lower triangle),
+#' styled to match the package's other ggplots. Pairs whose Q3 exceeds the
+#' global dynamic cut-off are outlined in red. Returns `NULL` (with a
+#' message) when `ggplot2` is not installed, so the rest of the list output
+#' is unaffected.
+#'
+#' @param resid_mat Observed Q3 matrix (symmetric, `NA` diagonal, item names).
+#' @param dyn_cutoff Numeric global dynamic cut-off, or `NULL`.
+#' @param estimator Character estimator label for the caption.
+#' @param actual_iterations Number of simulation iterations (for the caption),
+#'   or `NULL`.
+#' @return A `ggplot` object, or `NULL`.
+#' @keywords internal
+#' @noRd
+.q3_tile_plot <- function(resid_mat, dyn_cutoff = NULL, estimator = "CML",
+                          actual_iterations = NULL) {
+  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    message("Package 'ggplot2' is required for the Q3 heatmap ($plot); ",
+            "returning NULL. Install it with: install.packages(\"ggplot2\")")
+    return(NULL)
+  }
+
+  items <- colnames(resid_mat)
+  if (is.null(items)) items <- as.character(seq_len(ncol(resid_mat)))
+  lt <- which(lower.tri(resid_mat), arr.ind = TRUE)
+  df <- data.frame(
+    row = factor(items[lt[, "row"]], levels = items),
+    col = factor(items[lt[, "col"]], levels = items),
+    Q3  = resid_mat[lt],
+    stringsAsFactors = FALSE
+  )
+  df$flagged <- if (!is.null(dyn_cutoff)) df$Q3 > dyn_cutoff else FALSE
+  df$label   <- formatC(df$Q3, format = "f", digits = 2)
+
+  # Diverging fill centred on the mean off-diagonal Q3 (the value expected
+  # under local independence), following RASCHplot's ggQ3star(): the neutral
+  # colour marks the baseline, warm (red) is above it, cool (blue) below.
+  # Symmetric limits about the centre keep the two sides comparable in
+  # intensity.
+  mean_resid <- mean(resid_mat, na.rm = TRUE)
+  # Round the half-range up to the next 0.01 (as RASCHplot does) so the most
+  # extreme cell sits strictly inside the limits rather than on the boundary,
+  # where floating-point rounding could clip it to NA (grey).
+  max_dev <- ceiling(max(abs(df$Q3 - mean_resid), na.rm = TRUE) * 100) / 100
+
+  est_label <- switch(estimator,
+                      CML = "CML item / WLE person",
+                      MML = "MML item / EAP person",
+                      estimator)
+  cap <- paste0(
+    "Yen's Q3 residual correlations (lower triangle; ", est_label,
+    "). Diverging fill centred on the mean off-diagonal Q3 (",
+    formatC(mean_resid, format = "f", digits = 3),
+    "), the value expected under local independence.",
+    if (!is.null(dyn_cutoff))
+      paste0(" Dynamic cut-off ", formatC(dyn_cutoff, format = "f", digits = 3),
+             "; ", sum(df$flagged, na.rm = TRUE),
+             " pair(s) above it outlined in black.") else "",
+    if (!is.null(actual_iterations))
+      paste0(" Cut-off from ", actual_iterations, " simulation iterations.")
+    else ""
+  )
+
+  p <- ggplot2::ggplot(
+    df, ggplot2::aes(x = .data$col, y = .data$row, fill = .data$Q3)
+  ) +
+    ggplot2::geom_tile(color = "white", linewidth = 0.5)
+  if (any(df$flagged, na.rm = TRUE)) {
+    # Black outline (the RdYlBu high end is red, so a red outline would clash).
+    p <- p + ggplot2::geom_tile(
+      data = df[df$flagged %in% TRUE, , drop = FALSE],
+      color = "black", linewidth = 1.1, fill = NA, width = 0.92, height = 0.92
+    )
+  }
+  p +
+    ggplot2::geom_text(
+      ggplot2::aes(label = .data$label), color = "grey15", size = 3
+    ) +
+    # RdYlBu anchor colours, diverging about the local-independence baseline.
+    # high Q3 -> red (potential local dependence), low -> blue.
+    ggplot2::scale_fill_gradient2(
+      name     = "Q3",
+      low      = "#4575b4",
+      mid      = "#ffffbf",
+      high     = "#d73027",
+      midpoint = mean_resid,
+      limits   = mean_resid + c(-1, 1) * max_dev
+    ) +
+    ggplot2::scale_x_discrete(limits = utils::head(items, -1L)) +
+    ggplot2::scale_y_discrete(limits = rev(items[-1L])) +
+    ggplot2::coord_fixed() +
+    ggplot2::labs(x = NULL, y = NULL, caption = er2_caption(cap)) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(
+      panel.grid  = ggplot2::element_blank(),
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)
+    ) +
+    er2_axis_margins() +
+    er2_plot_caption()
+}
+
+#' Compute the Yen's Q3 residual-correlation matrix under a chosen estimator
+#'
+#' Single entry point used by `RMlocdepQ3()`, the per-iteration simulation in
+#' `RMlocdepQ3Cutoff()`, and the observed overlay in `RMlocdepQ3Plot()`, so
+#' observed and simulated Q3 are always computed the same way.
+#'
+#' `"CML"` (default) returns the correlation matrix of the CML/WLE standardized
+#' residuals from `.rasch_std_residuals()`; `"MML"` returns `mirt`'s Q3
+#' residuals from a marginal-ML Rasch fit. The matrix is symmetric with an `NA`
+#' diagonal and carries the item names.
+#'
+#' @param data Numeric response matrix or data.frame (items from 0; `NA` ok).
+#' @param estimator `"CML"` or `"MML"`.
+#' @param fast Logical. For `"MML"` only, use the faster (lower-precision)
+#'   `mirt` settings (`quadpts = 29`, `TOL = 0.005`) appropriate for the
+#'   simulation loop. Ignored for `"CML"`.
+#' @return Symmetric Q3 matrix with `NA` diagonal.
+#' @keywords internal
+#' @noRd
+.q3_residual_matrix <- function(data, estimator = c("CML", "MML"),
+                                fast = FALSE) {
+  estimator <- match.arg(estimator)
+  if (estimator == "MML") {
+    mirt_fit <- if (fast) {
+      mirt::mirt(data, model = 1, itemtype = "Rasch", verbose = FALSE,
+                 accelerate = "squarem", quadpts = 29, TOL = 0.005)
+    } else {
+      mirt::mirt(data, model = 1, itemtype = "Rasch", verbose = FALSE,
+                 accelerate = "squarem")
+    }
+    m <- mirt::residuals(mirt_fit, type = "Q3", digits = 4, verbose = FALSE)
+    diag(m) <- NA
+    return(m)
+  }
+  # CML/WLE: Q3 is the column-wise correlation of standardized residuals.
+  m <- stats::cor(.rasch_std_residuals(data, method = "WLE"),
+                  use = "pairwise.complete.obs")
+  diag(m) <- NA
+  m
 }
 
 #' Render the Q3 lower-triangle matrix with an optional global cutoff
@@ -396,6 +563,12 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 #' @param hdci_width Numeric in (0, 1). Width of the HDCI when
 #'   `cutoff_method = "hdci"`. Default `0.99`. Ignored when
 #'   `cutoff_method = "quantile"`.
+#' @param estimator Character. Estimation engine for the simulated Q3 values,
+#'   passed through to the per-iteration computation. `"CML"` (default) uses
+#'   CML item parameters and WLE person locations; `"MML"` uses `mirt`. This
+#'   must match the `estimator` later given to \code{\link{RMlocdepQ3}}; the
+#'   value is stored in the returned object's `$estimator` and reused
+#'   automatically.
 #'
 #' @return A list with components:
 #' \describe{
@@ -419,19 +592,22 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 #'     (`"hdci"` or `"quantile"`).}
 #'   \item{`hdci_width`}{The HDCI width used (only meaningful when
 #'     `cutoff_method = "hdci"`).}
+#'   \item{`estimator`}{The estimator used for the simulated Q3 (`"CML"` or
+#'     `"MML"`); reused by \code{\link{RMlocdepQ3}} and
+#'     \code{\link{RMlocdepQ3Plot}}.}
 #' }
 #'
 #' @details
-#' For each simulation iteration, person parameters (thetas) are resampled
-#' with replacement from ML estimates, response data are simulated under the
-#' Rasch model, a `mirt` Rasch model is fitted to the simulated data, and Q3
-#' residuals are extracted. The distribution of `max(Q3) - mean(Q3)` across
-#' iterations provides empirical critical values. Failed iterations (e.g., due
-#' to convergence issues) are silently discarded.
+#' The generating model is fitted once: CML item parameters (via
+#' `psychotools`) and WLE person locations. For each simulation iteration,
+#' those WLE thetas are resampled with replacement, response data are simulated
+#' under the Rasch / Partial Credit model, the model is refitted, and Q3
+#' residuals are computed under `estimator`. The distribution of
+#' `max(Q3) - mean(Q3)` across iterations provides empirical critical values.
+#' Failed iterations (e.g., due to convergence issues) are silently discarded.
 #'
-#' Supports both **dichotomous** data (via `eRm::RM()` and
-#' `psychotools::rrm()`) and **polytomous** data (via `eRm::PCM()` and an
-#' internal partial credit score simulator).
+#' Supports both **dichotomous** data (simulated via `psychotools::rrm()`) and
+#' **polytomous** data (via an internal partial credit score simulator).
 #'
 #' Parallel processing is provided by the `mirai` package (optional). Install
 #' it with `install.packages("mirai")` to enable parallelisation.
@@ -460,9 +636,11 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 #' }
 RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
                               n_cores = NULL, verbose = FALSE, seed = NULL,
-                              cutoff_method = "hdci", hdci_width = 0.99) {
+                              cutoff_method = "hdci", hdci_width = 0.99,
+                              estimator = c("CML", "MML")) {
   validate_response_data(data)
 
+  estimator     <- match.arg(estimator)
   cutoff_method <- match.arg(cutoff_method, c("hdci", "quantile"))
   if (cutoff_method == "hdci" && !requireNamespace("ggdist", quietly = TRUE)) {
     stop(
@@ -522,41 +700,36 @@ RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
     item_names_sim <- paste0("V", seq_len(ncol(data_mat)))
   }
 
+  # Generating model: CML item thresholds + WLE person locations, computed
+  # once with the shared native engine. Items and thetas are on the same scale
+  # by construction, so the simulated data are internally coherent. WLE (rather
+  # than eRm's MLE person.parameter) keeps the generating distribution
+  # consistent with the WLE used for the Q3 residuals and is finite at extreme
+  # scores. Non-finite thetas (none under WLE for the observed scores) are
+  # dropped from the resampling pool.
+  thr_list <- .fit_cml_thresholds(data_mat)
+  thetas   <- .estimate_thetas(data_mat, thr_list, method = "WLE")$theta
+  thetas   <- thetas[is.finite(thetas)]
+
   if (is_polytomous) {
-    # Fit PCM, extract thresholds and thetas
-    pcm_fit <- eRm::PCM(data_mat)
-    pp <- eRm::person.parameter(pcm_fit)
-    theta_table <- pp$theta.table[["Person Parameter"]]
-    raw_scores <- rowSums(data_mat, na.rm = TRUE)
-    thetas <- as.numeric(stats::na.omit(theta_table[raw_scores]))
-    thresh_mat <- extract_item_thresholds(data_mat)
-    # Convert threshold matrix rows to a list of threshold vectors (one per item)
-    deltaslist <- lapply(seq_len(nrow(thresh_mat)), function(i) {
-      as.numeric(thresh_mat[i, !is.na(thresh_mat[i, ])])
-    })
     sim_data_list <- list(
       type       = "polytomous",
       thetas     = thetas,
-      deltaslist = deltaslist,
+      deltaslist = thr_list,
       n_items    = ncol(data_mat),
       sample_n   = sample_n,
-      item_names = item_names_sim
+      item_names = item_names_sim,
+      estimator  = estimator
     )
   } else {
-    # Fit RM, extract thetas
-    rm_fit <- eRm::RM(data_mat)
-    pp <- eRm::person.parameter(rm_fit)
-    theta_table <- pp$theta.table[["Person Parameter"]]
-    raw_scores <- rowSums(data_mat, na.rm = TRUE)
-    thetas <- as.numeric(stats::na.omit(theta_table[raw_scores]))
-    item_params <- -rm_fit$betapar
     sim_data_list <- list(
       type        = "dichotomous",
       thetas      = thetas,
-      item_params = item_params,
+      item_params = unlist(thr_list, use.names = FALSE),
       n_items     = ncol(data_mat),
       sample_n    = sample_n,
-      item_names  = item_names_sim
+      item_names  = item_names_sim,
+      estimator   = estimator
     )
   }
 
@@ -647,6 +820,7 @@ RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
   out$suggested_cutoff  <- out$p99
   out$cutoff_method     <- cutoff_method
   out$hdci_width        <- hdci_width
+  out$estimator         <- estimator
   out
 }
 
@@ -701,19 +875,10 @@ run_single_q3_sim <- function(seed, data_list) {
       colnames(sim_df) <- data_list$item_names
     }
 
-    # Fit Rasch model via mirt
-    mirt_fit <- mirt::mirt(
-      sim_df,
-      model = 1,
-      itemtype = "Rasch",
-      verbose = FALSE,
-      accelerate = "squarem",
-      quadpts = 29, # for about 20-25% speed improvement without noticeable
-      TOL = 0.005   # precision loss for Q3 residuals
-    )
-
-    q3_mat <- mirt::residuals(mirt_fit, type = "Q3", digits = 4, verbose = FALSE)
-    diag(q3_mat) <- NA
+    # Q3 matrix under the same estimator as the observed analysis. For "MML"
+    # the faster (lower-precision) mirt settings are used in the loop.
+    q3_mat <- .q3_residual_matrix(sim_df, estimator = data_list$estimator,
+                                  fast = TRUE)
 
     mean_q3 <- mean(q3_mat, na.rm = TRUE)
     max_q3  <- max(q3_mat, na.rm = TRUE)
@@ -771,9 +936,18 @@ run_q3_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
       },
       seed = sim_seeds[sim],
       data_list = sim_data_list,
-      run_single_q3_sim = run_single_q3_sim,
-      sim_partial_score = sim_partial_score,
-      sim_poly_item = sim_poly_item
+      run_single_q3_sim   = run_single_q3_sim,
+      sim_partial_score   = sim_partial_score,
+      sim_poly_item       = sim_poly_item,
+      # Engine helpers needed by .q3_residual_matrix() inside the daemon
+      # (the CML/WLE path; the MML path uses namespaced mirt::).
+      .q3_residual_matrix = .q3_residual_matrix,
+      .rasch_std_residuals = .rasch_std_residuals,
+      .fit_cml_thresholds = .fit_cml_thresholds,
+      .estimate_thetas    = .estimate_thetas,
+      .theta_wle          = .theta_wle,
+      .pcm_cat_probs      = .pcm_cat_probs,
+      .center_thresholds  = .center_thresholds
     )
   })
 

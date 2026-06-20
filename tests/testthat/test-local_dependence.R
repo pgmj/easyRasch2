@@ -165,8 +165,11 @@ test_that("full simfit returns list whose $matrix matches the scalar cutoff", {
   # Full object -> list($matrix, $pairs); $matrix matches the scalar-cutoff matrix
   a <- RMlocdepQ3(df, cutoff = cu,                  output = "dataframe")
   b <- RMlocdepQ3(df, cutoff = cu$suggested_cutoff, output = "dataframe")
-  expect_named(a, c("matrix", "pairs"))
+  expect_named(a, c("matrix", "pairs", "plot"))
   expect_equal(a$matrix, b)
+  if (requireNamespace("ggplot2", quietly = TRUE)) {
+    expect_s3_class(a$plot, "ggplot")
+  }
 })
 
 # ---------------------------------------------------------------------
@@ -242,12 +245,12 @@ q3_null_data <- function(n = 300, J = 7, seed = 11L) {
   colnames(df) <- paste0("I", seq_len(J)); df
 }
 
-test_that("full cutoff object returns list($matrix, $pairs)", {
+test_that("full cutoff object returns list($matrix, $pairs, $plot)", {
   skip_if_not_installed("mirt"); skip_if_not_installed("ggdist")
   df  <- q3_null_data()
   sim <- RMlocdepQ3Cutoff(df, iterations = 300, parallel = FALSE, seed = 1)
   res <- RMlocdepQ3(df, cutoff = sim, output = "dataframe")
-  expect_named(res, c("matrix", "pairs"))
+  expect_named(res, c("matrix", "pairs", "plot"))
   expect_named(res$pairs, c("Item1", "Item2", "Observed", "Low", "High", "Flagged"))
   expect_equal(nrow(res$pairs), choose(ncol(df), 2L))          # one row per pair
   expect_true(all(res$pairs$Flagged %in% c("above", "below", "")))
@@ -305,4 +308,56 @@ test_that("RMlocdepQ3 detects an injected locally dependent pair", {
   # the injected pair has the largest departure -> sorted to the top row
   expect_true((res$Item1[1] == "I1" && res$Item2[1] == "I2") ||
               (res$Item1[1] == "I2" && res$Item2[1] == "I1"))
+})
+
+# ---------------------------------------------------------------------
+# Estimator engine (CML/WLE default, MML/EAP optional)
+# ---------------------------------------------------------------------
+test_that("CML is the default estimator and MML stays available", {
+  skip_if_not_installed("psychotools")
+  set.seed(3)
+  df <- as.data.frame(matrix(sample(0:3, 250 * 6, replace = TRUE), 250, 6))
+  colnames(df) <- paste0("I", 1:6)
+
+  cml <- RMlocdepQ3(df, output = "dataframe")                    # default
+  expect_s3_class(cml, "data.frame")
+  expect_equal(dim(cml), c(6L, 6L))
+
+  skip_if_not_installed("mirt")
+  mml <- RMlocdepQ3(df, output = "dataframe", estimator = "MML")
+  # Same statistic, different engine -> correlated but not identical. The bound
+  # is loose because this is unstructured (noise) data; on real Rasch data the
+  # CML/MML off-diagonal correlation is typically > 0.95.
+  expect_gt(stats::cor(as.matrix(cml)[lower.tri(cml)],
+                       as.matrix(mml)[lower.tri(mml)]), 0.6)
+})
+
+test_that("cutoff object stores its estimator and RMlocdepQ3 honours it", {
+  skip_if_not_installed("psychotools"); skip_if_not_installed("ggdist")
+  skip_if_not_installed("mirt")
+  set.seed(4)
+  df <- as.data.frame(matrix(sample(0:1, 200 * 6, replace = TRUE), 200, 6))
+  colnames(df) <- paste0("I", 1:6)
+
+  cu <- RMlocdepQ3Cutoff(df, iterations = 10, parallel = FALSE, seed = 1)
+  expect_identical(cu$estimator, "CML")
+
+  # Asking for MML while the cut-off is CML must warn and fall back to CML.
+  expect_warning(
+    RMlocdepQ3(df, cutoff = cu, estimator = "MML", output = "dataframe"),
+    "overriding estimator"
+  )
+})
+
+test_that("shared person-estimation helper returns theta + sem for WLE and EAP", {
+  skip_if_not_installed("psychotools")
+  set.seed(5)
+  df <- matrix(sample(0:2, 150 * 5, replace = TRUE), 150, 5)
+  thr <- .fit_cml_thresholds(df)
+  wle <- .estimate_thetas(df, thr, method = "WLE")
+  eap <- .estimate_thetas(df, thr, method = "EAP")
+  expect_named(wle, c("theta", "sem"))
+  expect_named(eap, c("theta", "sem"))
+  expect_equal(nrow(wle), nrow(df))
+  expect_gt(stats::cor(wle$theta, eap$theta, use = "complete.obs"), 0.95)
 })
