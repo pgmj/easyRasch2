@@ -15,7 +15,7 @@ the appropriate dynamic cut-off for your data."><meta name="robots" content="noi
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.906</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.910</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,7 +59,8 @@ the appropriate dynamic cut-off for your data.</p>
 <span>  n_pairs <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  p_value <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  correction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fwer"</span>, <span class="st">"fdr_bh"</span>, <span class="st">"fdr_by"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
-<span>  alpha <span class="op">=</span> <span class="fl">0.05</span></span>
+<span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  estimator <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CML"</span>, <span class="st">"MML"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -110,6 +111,18 @@ studentised-max step-down, <code>"fdr_bh"</code> / <code>"fdr_by"</code> for Ben
 <dd><p>Numeric in (0, 1). Significance level for <code>Flagged</code> when
 <code>p_value = TRUE</code>. Default <code>0.05</code>.</p></dd>
 
+
+<dt id="arg-estimator">estimator<a class="anchor" aria-label="anchor" href="#arg-estimator"></a></dt>
+<dd><p>Character. Estimation engine for the Q3 residual
+correlations. <code>"CML"</code> (default) fits item parameters by conditional
+maximum likelihood (<code>psychotools</code>) and person locations by Warm's
+weighted likelihood (WLE) – true to the Rasch tradition and finite
+at extreme scores. <code>"MML"</code> uses the marginal-ML / EAP engine
+(<code>mirt</code>), retained for backward compatibility. The estimator must
+match the one used by <code><a href="RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff</a></code>; when the full
+cutoff object is supplied, its stored estimator takes precedence (a
+mismatching <code>estimator</code> argument is overridden with a warning).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -117,7 +130,7 @@ studentised-max step-down, <code>"fdr_bh"</code> / <code>"fdr_by"</code> for Ben
 data.frame) holding the lower triangle of the Q3 matrix; a numeric cut-off
 adds an <code>above_cutoff</code> row flag and a caption describing the dynamic
 cut-off.</p>
-<p>With the <strong>full <code><a href="RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code> object</strong>, a named list of two:</p><dl><dt><code>$matrix</code></dt>
+<p>With the <strong>full <code><a href="RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code> object</strong>, a named list of three:</p><dl><dt><code>$matrix</code></dt>
 <dd><p>the Q3 lower-triangle matrix with the <em>global</em> dynamic
 cut-off (mean off-diagonal Q3 + suggested cut-off), as above.</p></dd>
 
@@ -130,6 +143,11 @@ absolute departure from the per-pair simulated median and truncated to
 <code>n_pairs</code>. With <code>p_value = TRUE</code>, columns <code>p_q3</code> and <code>padj_q3</code> are added
 and <code>Flagged</code> reflects <code>padj_q3 &lt; alpha</code> and only flags <code>"above"</code>.</p></dd>
 
+<dt><code>$plot</code></dt>
+<dd><p>a <code>ggplot2</code> heatmap (lower-triangle tile plot, viridis
+fill) of the observed Q3 matrix; pairs exceeding the global dynamic
+cut-off are outlined in red. <code>NULL</code> if <code>ggplot2</code> is not installed.</p></dd>
+
 
 </dl></div>
     <div class="section level2">
@@ -141,8 +159,15 @@ number of items. When <code>cutoff</code> is supplied, the dynamic cut-off is th
 of all off-diagonal Q3 values plus <code>cutoff</code>, following the approach of
 Christensen et al. (2017). Use <code><a href="RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff</a></code> to obtain a
 simulation-based cutoff recommendation.</p>
-<p><code>mirt</code> is used for model fitting here because Q3 requires model-based
-expected responses, which are most readily available from MML estimation.</p>
+<p>Q3 is the column-wise correlation matrix of the model standardized
+residuals \((x - E)/\sqrt{Var}\). By default (<code>estimator = "CML"</code>) item
+parameters are estimated by conditional maximum likelihood (<code>psychotools</code>)
+and person locations by Warm's weighted likelihood; <code>estimator = "MML"</code>
+instead uses <code>mirt</code>'s marginal-ML model and its built-in Q3 residuals.
+The two estimators give very similar Q3 values (off-diagonal correlation
+typically &gt; 0.95); what matters for inference is that the observed Q3 and
+the simulated cut-off in <code><a href="RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff</a></code> use the <em>same</em>
+estimator, which the functions enforce.</p>
 <p><strong>Two views of local dependence.</strong> Given the full
 <code><a href="RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff</a></code> object, two complementary tables are returned.
 The <code>$matrix</code> applies a single <em>global</em> cut-off (the Christensen et al.
@@ -212,15 +237,15 @@ of hypotheses simultaneously. <em>Journal of Statistical Theory and Practice,
 <span class="r-out co"><span class="r-pr">#&gt;</span> |       |Item1 |Item2 |Item3 |Item4 |Item5 |Item6 |Item7 |Item8 |Item9 |Item10 |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |:------|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:------|</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |Item1  |      |      |      |      |      |      |      |      |      |       |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2  |0.08  |      |      |      |      |      |      |      |      |       |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3  |-0.07 |-0.09 |      |      |      |      |      |      |      |       |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4  |-0.07 |-0.12 |-0.03 |      |      |      |      |      |      |       |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5  |-0.09 |0.02  |0.08  |-0.04 |      |      |      |      |      |       |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item6  |-0.03 |-0.02 |-0.07 |0.09  |-0.1  |      |      |      |      |       |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item7  |-0.05 |-0.03 |0.04  |0.13  |0.08  |0     |      |      |      |       |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item8  |0.07  |0.05  |0     |-0.19 |0.05  |-0.06 |-0.05 |      |      |       |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item9  |0.08  |0.05  |-0.02 |-0.07 |-0.09 |0.07  |0.04  |0.12  |      |       |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item10 |-0.07 |-0.05 |0.08  |-0.04 |-0.02 |-0.12 |-0.04 |-0.03 |0     |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2  |-0.02 |      |      |      |      |      |      |      |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3  |-0.17 |-0.2  |      |      |      |      |      |      |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4  |-0.13 |-0.2  |-0.1  |      |      |      |      |      |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5  |-0.19 |-0.06 |-0.02 |-0.12 |      |      |      |      |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item6  |-0.1  |-0.1  |-0.17 |0.03  |-0.19 |      |      |      |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item7  |-0.17 |-0.13 |-0.07 |0.03  |-0.04 |-0.11 |      |      |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item8  |-0.03 |-0.06 |-0.11 |-0.28 |-0.05 |-0.16 |-0.18 |      |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item9  |-0.03 |-0.08 |-0.16 |-0.19 |-0.22 |-0.03 |-0.1  |-0.02 |      |       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item10 |-0.16 |-0.14 |0     |-0.09 |-0.1  |-0.18 |-0.15 |-0.12 |-0.09 |       |</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Get the underlying data.frame</span></span></span>
 <span class="r-in"><span><span class="va">q3_df</span> <span class="op">&lt;-</span> <span class="fu">RMlocdepQ3</span><span class="op">(</span><span class="va">sim_data</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
@@ -241,12 +266,12 @@ of hypotheses simultaneously. <em>Journal of Statistical Theory and Practice,
 <span class="r-in"><span>             output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span><span class="op">$</span><span class="va">pairs</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Bootstrap p-values are based on only 50 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations &gt;= 1000 in RMlocdepQ3Cutoff() for reliable p-values.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Item1 Item2 Observed    Low  High   p_q3 padj_q3 Flagged</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item4 Item7    0.127 -0.242 0.081 0.0196  0.2549        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item8 Item9    0.116 -0.155 0.148 0.0392  0.3333        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item1 Item9    0.083 -0.208 0.105 0.0392  0.8039        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4 Item8   -0.185 -0.183 0.096 1.0000  1.0000        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item3 Item5    0.077 -0.169 0.094 0.0588  0.7843        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Item1  Item2 Observed    Low  High   p_q3 padj_q3 Flagged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item4  Item8   -0.277 -0.270 0.014 1.0000  1.0000        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item4  Item7    0.029 -0.264 0.016 0.0196  0.4510        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item5  Item9   -0.220 -0.216 0.033 1.0000  1.0000        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4  Item6    0.028 -0.259 0.027 0.0196  0.5098        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item3 Item10    0.001 -0.243 0.028 0.0588  0.8824        </span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

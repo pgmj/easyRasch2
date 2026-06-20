@@ -13,7 +13,7 @@ converting raw totals to interval-scaled scores for downstream analysis."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.906</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.910</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -188,25 +188,25 @@ in a microcomputer environment. <em>Applied Psychological Measurement, 6</em>(4)
 <span class="r-in"><span><span class="co"># Underlying data.frame</span></span></span>
 <span class="r-in"><span><span class="fu">RMscoreSE</span><span class="op">(</span><span class="va">sim_data</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    raw_score  logit_score  logit_se</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1          0 -2.543004740 1.2975401</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2          1 -1.581232465 0.7377473</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3          2 -1.169506443 0.5749932</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4          3 -0.902149098 0.4938854</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5          4 -0.698683188 0.4456048</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6          5 -0.529798895 0.4145554</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7          6 -0.381484680 0.3941221</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1          0 -2.543004730 1.2975401</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2          1 -1.581232459 0.7377473</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3          2 -1.169506439 0.5749932</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4          3 -0.902149095 0.4938854</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5          4 -0.698683186 0.4456048</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6          5 -0.529798893 0.4145554</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7          6 -0.381484679 0.3941221</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 8          7 -0.245771039 0.3810602</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 9          8 -0.117451949 0.3736802</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 10         9  0.007350623 0.3711475</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 11        10  0.131958556 0.3731981</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 12        11  0.259668311 0.3800583</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 13        12  0.394278309 0.3925159</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 14        13  0.540823958 0.4121881</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 15        14  0.706934551 0.4421918</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 16        15  0.905894511 0.4888757</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 17        16  1.165238246 0.5671656</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 18        17  1.560005394 0.7236119</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 19        18  2.472071230 1.2591208</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11        10  0.131958555 0.3731981</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12        11  0.259668309 0.3800583</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13        12  0.394278307 0.3925159</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14        13  0.540823955 0.4121881</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15        14  0.706934548 0.4421918</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16        15  0.905894507 0.4888757</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17        16  1.165238242 0.5671656</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18        17  1.560005389 0.7236119</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19        18  2.472071226 1.2591208</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># ggplot figure</span></span></span>
 <span class="r-in"><span><span class="fu">RMscoreSE</span><span class="op">(</span><span class="va">sim_data</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></span>

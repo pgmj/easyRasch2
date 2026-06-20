@@ -187,6 +187,6 @@ if (requireNamespace("ggdist", quietly = TRUE)) {
 #> |Cronbach's alpha |    0.754|            0.701|            0.813|25 bootstrap resamples      |
 #> |PSI              |    0.747|            0.703|            0.786|25 bootstrap resamples      |
 #> |Empirical (WLE)  |    0.791|            0.761|            0.818|25 bootstrap resamples      |
-#> |RMU (WLE)        |    0.753|            0.684|            0.819|1000 PVs, 50 RMU iterations |
+#> |RMU (WLE)        |    0.753|            0.683|            0.817|1000 PVs, 50 RMU iterations |
 # }
 ```

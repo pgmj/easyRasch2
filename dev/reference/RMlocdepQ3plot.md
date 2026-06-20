@@ -69,9 +69,9 @@ with median and Highest Density Continuous Interval (HDCI) summaries.
 
 When `data` **is** supplied, the function:
 
-1.  Fits a Rasch model to `data` via
-    [`mirt::mirt()`](https://philchalmers.github.io/mirt/reference/mirt.html)
-    and extracts observed Q3 residual correlations.
+1.  Computes observed Q3 residual correlations under the same estimator
+    used to build `simfit` (its `$estimator`: CML/WLE by default, or MML
+    via `mirt`).
 
 2.  Overlays observed Q3 values as orange diamond markers on the
     simulated distributions.

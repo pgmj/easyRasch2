@@ -17,7 +17,8 @@ RMlocdepQ3(
   n_pairs = NULL,
   p_value = FALSE,
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
-  alpha = 0.05
+  alpha = 0.05,
+  estimator = c("CML", "MML")
 )
 ```
 
@@ -71,6 +72,19 @@ RMlocdepQ3(
   Numeric in (0, 1). Significance level for `Flagged` when
   `p_value = TRUE`. Default `0.05`.
 
+- estimator:
+
+  Character. Estimation engine for the Q3 residual correlations. `"CML"`
+  (default) fits item parameters by conditional maximum likelihood
+  (`psychotools`) and person locations by Warm's weighted likelihood
+  (WLE) – true to the Rasch tradition and finite at extreme scores.
+  `"MML"` uses the marginal-ML / EAP engine (`mirt`), retained for
+  backward compatibility. The estimator must match the one used by
+  [`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md);
+  when the full cutoff object is supplied, its stored estimator takes
+  precedence (a mismatching `estimator` argument is overridden with a
+  warning).
+
 ## Value
 
 With `cutoff = NULL` or a bare numeric cut-off, a single object (`kable`
@@ -80,7 +94,7 @@ dynamic cut-off.
 
 With the **full
 [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
-object**, a named list of two:
+object**, a named list of three:
 
 - `$matrix`:
 
@@ -98,6 +112,12 @@ object**, a named list of two:
   added and `Flagged` reflects `padj_q3 < alpha` and only flags
   `"above"`.
 
+- `$plot`:
+
+  a `ggplot2` heatmap (lower-triangle tile plot, viridis fill) of the
+  observed Q3 matrix; pairs exceeding the global dynamic cut-off are
+  outlined in red. `NULL` if `ggplot2` is not installed.
+
 ## Details
 
 The Q3 statistic (Yen, 1984) is the correlation between residuals of
@@ -109,9 +129,16 @@ following the approach of Christensen et al. (2017). Use
 [`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
 to obtain a simulation-based cutoff recommendation.
 
-`mirt` is used for model fitting here because Q3 requires model-based
-expected responses, which are most readily available from MML
-estimation.
+Q3 is the column-wise correlation matrix of the model standardized
+residuals \\(x - E)/\sqrt{Var}\\. By default (`estimator = "CML"`) item
+parameters are estimated by conditional maximum likelihood
+(`psychotools`) and person locations by Warm's weighted likelihood;
+`estimator = "MML"` instead uses `mirt`'s marginal-ML model and its
+built-in Q3 residuals. The two estimators give very similar Q3 values
+(off-diagonal correlation typically \> 0.95); what matters for inference
+is that the observed Q3 and the simulated cut-off in
+[`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
+use the *same* estimator, which the functions enforce.
 
 **Two views of local dependence.** Given the full
 [`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
@@ -188,15 +215,15 @@ RMlocdepQ3(sim_data)
 #> |       |Item1 |Item2 |Item3 |Item4 |Item5 |Item6 |Item7 |Item8 |Item9 |Item10 |
 #> |:------|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:------|
 #> |Item1  |      |      |      |      |      |      |      |      |      |       |
-#> |Item2  |0.08  |      |      |      |      |      |      |      |      |       |
-#> |Item3  |-0.07 |-0.09 |      |      |      |      |      |      |      |       |
-#> |Item4  |-0.07 |-0.12 |-0.03 |      |      |      |      |      |      |       |
-#> |Item5  |-0.09 |0.02  |0.08  |-0.04 |      |      |      |      |      |       |
-#> |Item6  |-0.03 |-0.02 |-0.07 |0.09  |-0.1  |      |      |      |      |       |
-#> |Item7  |-0.05 |-0.03 |0.04  |0.13  |0.08  |0     |      |      |      |       |
-#> |Item8  |0.07  |0.05  |0     |-0.19 |0.05  |-0.06 |-0.05 |      |      |       |
-#> |Item9  |0.08  |0.05  |-0.02 |-0.07 |-0.09 |0.07  |0.04  |0.12  |      |       |
-#> |Item10 |-0.07 |-0.05 |0.08  |-0.04 |-0.02 |-0.12 |-0.04 |-0.03 |0     |       |
+#> |Item2  |-0.02 |      |      |      |      |      |      |      |      |       |
+#> |Item3  |-0.17 |-0.2  |      |      |      |      |      |      |      |       |
+#> |Item4  |-0.13 |-0.2  |-0.1  |      |      |      |      |      |      |       |
+#> |Item5  |-0.19 |-0.06 |-0.02 |-0.12 |      |      |      |      |      |       |
+#> |Item6  |-0.1  |-0.1  |-0.17 |0.03  |-0.19 |      |      |      |      |       |
+#> |Item7  |-0.17 |-0.13 |-0.07 |0.03  |-0.04 |-0.11 |      |      |      |       |
+#> |Item8  |-0.03 |-0.06 |-0.11 |-0.28 |-0.05 |-0.16 |-0.18 |      |      |       |
+#> |Item9  |-0.03 |-0.08 |-0.16 |-0.19 |-0.22 |-0.03 |-0.1  |-0.02 |      |       |
+#> |Item10 |-0.16 |-0.14 |0     |-0.09 |-0.1  |-0.18 |-0.15 |-0.12 |-0.09 |       |
 
 # Get the underlying data.frame
 q3_df <- RMlocdepQ3(sim_data, output = "dataframe")
@@ -217,11 +244,11 @@ if (requireNamespace("ggdist", quietly = TRUE)) {
              output = "dataframe")$pairs
 }
 #> Warning: Bootstrap p-values are based on only 50 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations >= 1000 in RMlocdepQ3Cutoff() for reliable p-values.
-#>   Item1 Item2 Observed    Low  High   p_q3 padj_q3 Flagged
-#> 1 Item4 Item7    0.127 -0.242 0.081 0.0196  0.2549        
-#> 2 Item8 Item9    0.116 -0.155 0.148 0.0392  0.3333        
-#> 3 Item1 Item9    0.083 -0.208 0.105 0.0392  0.8039        
-#> 4 Item4 Item8   -0.185 -0.183 0.096 1.0000  1.0000        
-#> 5 Item3 Item5    0.077 -0.169 0.094 0.0588  0.7843        
+#>   Item1  Item2 Observed    Low  High   p_q3 padj_q3 Flagged
+#> 1 Item4  Item8   -0.277 -0.270 0.014 1.0000  1.0000        
+#> 2 Item4  Item7    0.029 -0.264 0.016 0.0196  0.4510        
+#> 3 Item5  Item9   -0.220 -0.216 0.033 1.0000  1.0000        
+#> 4 Item4  Item6    0.028 -0.259 0.027 0.0196  0.5098        
+#> 5 Item3 Item10    0.001 -0.243 0.028 0.0588  0.8824        
 # }
 ```

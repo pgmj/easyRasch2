@@ -298,11 +298,9 @@ if (requireNamespace("psychotree", quietly = TRUE) &&
 
 #> Error in root.matrix(switch(vcov, opg = chol2inv(chol(meat)), info = bread,  : 
 #>   Matrix is not positive semidefinite
-#> Error in root.matrix(switch(vcov, opg = chol2inv(chol(meat)), info = bread,  : 
-#>   Matrix is not positive semidefinite
 #> Stability assessment notes (suppressed during fitting): 137 'minimum score not zero' rescaling warning(s); 21 'items with null categories' warning(s). These reflect sparsity in some resamples and are normal sampling variability; selection-frequency and cutpoint summaries are based on resamples that completed successfully.
 #>     Variable    Type Selected_orig Selection_freq_pct Cutpoint_mean Cutpoint_sd
-#> 1        age numeric          TRUE                100       42.9706      8.1556
+#> 1        age numeric          TRUE                100       43.6571      9.0031
 #> 2     gender  factor          TRUE                100            NA          NA
 #> 3 motivation ordered         FALSE                  4            NA          NA
 # }

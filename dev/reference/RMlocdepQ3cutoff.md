@@ -18,7 +18,8 @@ RMlocdepQ3Cutoff(
   verbose = FALSE,
   seed = NULL,
   cutoff_method = "hdci",
-  hdci_width = 0.99
+  hdci_width = 0.99,
+  estimator = c("CML", "MML")
 )
 ```
 
@@ -67,6 +68,16 @@ RMlocdepQ3Cutoff(
 
   Numeric in (0, 1). Width of the HDCI when `cutoff_method = "hdci"`.
   Default `0.99`. Ignored when `cutoff_method = "quantile"`.
+
+- estimator:
+
+  Character. Estimation engine for the simulated Q3 values, passed
+  through to the per-iteration computation. `"CML"` (default) uses CML
+  item parameters and WLE person locations; `"MML"` uses `mirt`. This
+  must match the `estimator` later given to
+  [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md);
+  the value is stored in the returned object's `$estimator` and reused
+  automatically.
 
 ## Value
 
@@ -126,21 +137,29 @@ A list with components:
 
   The HDCI width used (only meaningful when `cutoff_method = "hdci"`).
 
+- `estimator`:
+
+  The estimator used for the simulated Q3 (`"CML"` or `"MML"`); reused
+  by
+  [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
+  and
+  [`RMlocdepQ3Plot`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md).
+
 ## Details
 
-For each simulation iteration, person parameters (thetas) are resampled
-with replacement from ML estimates, response data are simulated under
-the Rasch model, a `mirt` Rasch model is fitted to the simulated data,
-and Q3 residuals are extracted. The distribution of `max(Q3) - mean(Q3)`
-across iterations provides empirical critical values. Failed iterations
-(e.g., due to convergence issues) are silently discarded.
+The generating model is fitted once: CML item parameters (via
+`psychotools`) and WLE person locations. For each simulation iteration,
+those WLE thetas are resampled with replacement, response data are
+simulated under the Rasch / Partial Credit model, the model is refitted,
+and Q3 residuals are computed under `estimator`. The distribution of
+`max(Q3) - mean(Q3)` across iterations provides empirical critical
+values. Failed iterations (e.g., due to convergence issues) are silently
+discarded.
 
-Supports both **dichotomous** data (via
-[`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html) and
+Supports both **dichotomous** data (simulated via
 [`psychotools::rrm()`](https://rdrr.io/pkg/psychotools/man/rrm.html))
-and **polytomous** data (via
-[`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html) and an internal
-partial credit score simulator).
+and **polytomous** data (via an internal partial credit score
+simulator).
 
 Parallel processing is provided by the `mirai` package (optional).
 Install it with `install.packages("mirai")` to enable parallelisation.
@@ -170,19 +189,19 @@ if (requireNamespace("ggdist", quietly = TRUE)) {
 }
 #> 
 #> 
-#> Table: Dynamic cut-off: 0.237 (mean Q3 -0.012 + 0.249). Correlations exceeding the cut-off may indicate local dependence; see the per-pair table for detail.
+#> Table: Dynamic cut-off: 0.112 (mean Q3 -0.11 + 0.222). Correlations exceeding the cut-off may indicate local dependence; see the per-pair table for detail.
 #> 
 #> |       |Item1 |Item2 |Item3 |Item4 |Item5 |Item6 |Item7 |Item8 |Item9 |Item10 |above_cutoff |
 #> |:------|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:------|:------------|
 #> |Item1  |      |      |      |      |      |      |      |      |      |       |             |
-#> |Item2  |0.08  |      |      |      |      |      |      |      |      |       |             |
-#> |Item3  |-0.07 |-0.09 |      |      |      |      |      |      |      |       |             |
-#> |Item4  |-0.07 |-0.12 |-0.03 |      |      |      |      |      |      |       |             |
-#> |Item5  |-0.09 |0.02  |0.08  |-0.04 |      |      |      |      |      |       |             |
-#> |Item6  |-0.03 |-0.02 |-0.07 |0.09  |-0.1  |      |      |      |      |       |             |
-#> |Item7  |-0.05 |-0.03 |0.04  |0.13  |0.08  |0     |      |      |      |       |             |
-#> |Item8  |0.07  |0.05  |0     |-0.19 |0.05  |-0.06 |-0.05 |      |      |       |             |
-#> |Item9  |0.08  |0.05  |-0.02 |-0.07 |-0.09 |0.07  |0.04  |0.12  |      |       |             |
-#> |Item10 |-0.07 |-0.05 |0.08  |-0.04 |-0.02 |-0.12 |-0.04 |-0.03 |0     |       |             |
+#> |Item2  |-0.02 |      |      |      |      |      |      |      |      |       |             |
+#> |Item3  |-0.17 |-0.2  |      |      |      |      |      |      |      |       |             |
+#> |Item4  |-0.13 |-0.2  |-0.1  |      |      |      |      |      |      |       |             |
+#> |Item5  |-0.19 |-0.06 |-0.02 |-0.12 |      |      |      |      |      |       |             |
+#> |Item6  |-0.1  |-0.1  |-0.17 |0.03  |-0.19 |      |      |      |      |       |             |
+#> |Item7  |-0.17 |-0.13 |-0.07 |0.03  |-0.04 |-0.11 |      |      |      |       |             |
+#> |Item8  |-0.03 |-0.06 |-0.11 |-0.28 |-0.05 |-0.16 |-0.18 |      |      |       |             |
+#> |Item9  |-0.03 |-0.08 |-0.16 |-0.19 |-0.22 |-0.03 |-0.1  |-0.02 |      |       |             |
+#> |Item10 |-0.16 |-0.14 |0     |-0.09 |-0.1  |-0.18 |-0.15 |-0.12 |-0.09 |       |             |
 # }
 ```
