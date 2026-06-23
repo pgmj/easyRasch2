@@ -71,18 +71,15 @@ and their total score on the remaining items (the "restscore"). Under a
 correctly fitting Rasch model, observed and model-expected correlations
 should agree closely.
 
-For **dichotomous** data (maximum score = 1), a Rasch model is fitted
-via [`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html). Item locations
-are the negative beta parameters. Person locations are estimated via
-[`eRm::person.parameter()`](https://rdrr.io/pkg/eRm/man/person.parameter.html).
-
-For **polytomous** data (maximum score \> 1), a Partial Credit Model is
-fitted via [`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html). Item
-average locations are the row-means of the threshold parameter table
-returned by
-[`eRm::thresholds()`](https://rdrr.io/pkg/eRm/man/thresholds.html).
-Person locations are estimated via
-[`eRm::person.parameter()`](https://rdrr.io/pkg/eRm/man/person.parameter.html).
+Item parameters are estimated by conditional maximum likelihood via
+[`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
+(a dichotomous item is a 2-category PCM); the item-restscore statistic
+itself comes from
+[`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html)
+and is conditional on the total score, so it is invariant to the
+estimation engine. Per-item average locations are the means of the CML
+thresholds, and the person-location reference is the mean of the Warm
+WLE estimates.
 
 Relative item location is defined as the item's average location minus
 the sample mean person location, providing a measure of item targeting.

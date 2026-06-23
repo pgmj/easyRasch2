@@ -25,7 +25,7 @@ with confidence intervals based on threshold standard errors.
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.910</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.914</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -152,19 +152,18 @@ makes it easy to assess whether the test is well-targeted to the sample.</p>
 The function checks whether any item response category has fewer than 3
 observations. If all categories have at least 3 responses, item threshold
 locations and their standard errors are estimated via Conditional Maximum
-Likelihood (CML) using <code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code> (dichotomous) or <code><a href="https://rdrr.io/pkg/eRm/man/PCM.html" class="external-link">eRm::PCM()</a></code>
-(polytomous), with SEs from <code><a href="https://rdrr.io/pkg/eRm/man/thresholds.html" class="external-link">eRm::thresholds()</a></code>. If any category has fewer
-than 3 responses, the function falls back to Marginal Maximum Likelihood
-(MML) estimation via <code><a href="https://philchalmers.github.io/mirt/reference/mirt.html" class="external-link">mirt::mirt()</a></code> with <code>itemtype = "Rasch"</code> and
-<code>SE = TRUE</code>, which is more numerically stable under sparse-category
-conditions. A message is emitted when the MML fallback is used.</p>
+Likelihood (CML) using <code><a href="https://rdrr.io/pkg/psychotools/man/pcmodel.html" class="external-link">psychotools::pcmodel()</a></code> (a dichotomous item is a
+2-category PCM). If any category has fewer than 3 responses, the function
+falls back to Marginal Maximum Likelihood (MML) estimation via
+<code><a href="https://philchalmers.github.io/mirt/reference/mirt.html" class="external-link">mirt::mirt()</a></code> with <code>itemtype = "Rasch"</code> and <code>SE = TRUE</code>, which is more
+numerically stable under sparse-category conditions. A message is emitted
+when the MML fallback is used.</p>
 <p>In both cases, item threshold locations are centered (shifted so the grand
 mean of all thresholds equals zero).</p>
-<p><strong>Person estimates</strong> are obtained via Maximum Likelihood (ML) from
-<code><a href="https://rdrr.io/pkg/eRm/man/person.parameter.html" class="external-link">eRm::person.parameter()</a></code>, which uses spline interpolation to extrapolate
-location estimates for persons with extreme scores (all-zero or perfect).
-Persons for whom the spline interpolation fails receive <code>NA</code> and are
-excluded from the histogram.</p>
+<p><strong>Person estimates</strong> are obtained by Warm's weighted likelihood (WLE)
+from the fitted item thresholds, consistent with the rest of the package.
+WLE is finite at extreme scores, so all-zero and perfect responders are
+located rather than dropped.</p>
 <p><strong>Confidence intervals</strong> for item thresholds are based on Wald-type
 intervals: threshold estimate ± z × SE, where z is the standard normal
 quantile corresponding to <code>ci_level</code>.</p>
@@ -177,8 +176,7 @@ Suggests, not Imports).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="https://rdrr.io/pkg/eRm/man/PCM.html" class="external-link">eRm::PCM()</a></code>, <code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code>, <code><a href="https://philchalmers.github.io/mirt/reference/mirt.html" class="external-link">mirt::mirt()</a></code>,
-<code><a href="https://rdrr.io/pkg/eRm/man/person.parameter.html" class="external-link">eRm::person.parameter()</a></code>, <code><a href="https://rdrr.io/pkg/eRm/man/thresholds.html" class="external-link">eRm::thresholds()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="https://rdrr.io/pkg/psychotools/man/pcmodel.html" class="external-link">psychotools::pcmodel()</a></code>, <code><a href="https://philchalmers.github.io/mirt/reference/mirt.html" class="external-link">mirt::mirt()</a></code></p></div>
     </div>
 
     <div class="section level2">

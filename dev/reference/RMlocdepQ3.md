@@ -1,9 +1,10 @@
 # Q3 Residual Correlations for Local Dependence Assessment
 
-Computes Yen's Q3 residual correlations between item pairs using a Rasch
-model fitted via Marginal Maximum Likelihood (MML) in `mirt`. High
-correlations (above the dynamic cut-off) indicate potential local
-dependence between items. See
+Computes Yen's Q3 residual correlations between item pairs. By default
+the Rasch model is fitted by conditional maximum likelihood with WLE
+person locations (`estimator = "CML"`); marginal ML via `mirt` is
+available with `estimator = "MML"`. High correlations (above the dynamic
+cut-off) indicate potential local dependence between items. See
 [`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
 for how to determine the appropriate dynamic cut-off for your data.
 

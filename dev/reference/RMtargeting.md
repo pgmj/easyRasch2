@@ -102,12 +102,10 @@ makes it easy to assess whether the test is well-targeted to the sample.
 response category has fewer than 3 observations. If all categories have
 at least 3 responses, item threshold locations and their standard errors
 are estimated via Conditional Maximum Likelihood (CML) using
-[`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html) (dichotomous) or
-[`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html) (polytomous), with
-SEs from
-[`eRm::thresholds()`](https://rdrr.io/pkg/eRm/man/thresholds.html). If
-any category has fewer than 3 responses, the function falls back to
-Marginal Maximum Likelihood (MML) estimation via
+[`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
+(a dichotomous item is a 2-category PCM). If any category has fewer than
+3 responses, the function falls back to Marginal Maximum Likelihood
+(MML) estimation via
 [`mirt::mirt()`](https://philchalmers.github.io/mirt/reference/mirt.html)
 with `itemtype = "Rasch"` and `SE = TRUE`, which is more numerically
 stable under sparse-category conditions. A message is emitted when the
@@ -116,12 +114,10 @@ MML fallback is used.
 In both cases, item threshold locations are centered (shifted so the
 grand mean of all thresholds equals zero).
 
-**Person estimates** are obtained via Maximum Likelihood (ML) from
-[`eRm::person.parameter()`](https://rdrr.io/pkg/eRm/man/person.parameter.html),
-which uses spline interpolation to extrapolate location estimates for
-persons with extreme scores (all-zero or perfect). Persons for whom the
-spline interpolation fails receive `NA` and are excluded from the
-histogram.
+**Person estimates** are obtained by Warm's weighted likelihood (WLE)
+from the fitted item thresholds, consistent with the rest of the
+package. WLE is finite at extreme scores, so all-zero and perfect
+responders are located rather than dropped.
 
 **Confidence intervals** for item thresholds are based on Wald-type
 intervals: threshold estimate ± z × SE, where z is the standard normal
@@ -136,11 +132,8 @@ Wright, B. D. & Stone, M. H. (1979). *Best Test Design*. MESA Press.
 
 ## See also
 
-[`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html),
-[`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html),
-[`mirt::mirt()`](https://philchalmers.github.io/mirt/reference/mirt.html),
-[`eRm::person.parameter()`](https://rdrr.io/pkg/eRm/man/person.parameter.html),
-[`eRm::thresholds()`](https://rdrr.io/pkg/eRm/man/thresholds.html)
+[`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html),
+[`mirt::mirt()`](https://philchalmers.github.io/mirt/reference/mirt.html)
 
 ## Examples
 

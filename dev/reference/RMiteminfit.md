@@ -120,19 +120,14 @@ which uses the conditional distribution of the sufficient statistics
 (Müller, 2020). Only complete cases (rows without any `NA`) are used in
 the conditional fit calculation.
 
-For **dichotomous** data (maximum score = 1), a Rasch model is fitted
-via [`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html). Item locations
-are the negative beta parameters. Person locations are estimated via
-[`eRm::person.parameter()`](https://rdrr.io/pkg/eRm/man/person.parameter.html).
-
-For **polytomous** data (maximum score \> 1), a Partial Credit Model is
-fitted via [`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html). Item
-average locations are taken from the "Location" column of the threshold
-parameter table returned by
-[`eRm::thresholds()`](https://rdrr.io/pkg/eRm/man/thresholds.html); if
-that column is absent, row means of the threshold columns are used
-instead. Person locations are estimated via
-[`eRm::person.parameter()`](https://rdrr.io/pkg/eRm/man/person.parameter.html).
+Item parameters are estimated by conditional maximum likelihood via
+[`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
+(a dichotomous item is a 2-category PCM); the conditional infit/outfit
+MSQ comes from
+[`iarm::out_infit()`](https://rdrr.io/pkg/iarm/man/out_infit.html) and
+is invariant to the estimation engine. Per-item average locations are
+the means of the CML thresholds, and the person-location reference is
+the mean of the Warm WLE estimates.
 
 Relative item location is defined as the item's average location minus
 the sample mean person location, providing a measure of item targeting.
@@ -216,11 +211,11 @@ RMitemInfit(sim_data)
 #> 
 #> |Item  | Infit MSQ| Relative location|
 #> |:-----|---------:|-----------------:|
-#> |Item1 |     1.049|             -0.03|
-#> |Item2 |     0.929|             -0.54|
-#> |Item3 |     0.828|             -0.23|
-#> |Item4 |     1.216|              0.26|
-#> |Item5 |     0.931|             -0.76|
+#> |Item1 |     1.049|              0.04|
+#> |Item2 |     0.929|             -0.48|
+#> |Item3 |     0.828|             -0.16|
+#> |Item4 |     1.216|              0.33|
+#> |Item5 |     0.931|             -0.70|
 
 # Sorted by infit MSQ descending
 RMitemInfit(sim_data, sort = "infit")
@@ -230,11 +225,11 @@ RMitemInfit(sim_data, sort = "infit")
 #> 
 #> |Item  | Infit MSQ| Relative location|
 #> |:-----|---------:|-----------------:|
-#> |Item4 |     1.216|              0.26|
-#> |Item1 |     1.049|             -0.03|
-#> |Item5 |     0.931|             -0.76|
-#> |Item2 |     0.929|             -0.54|
-#> |Item3 |     0.828|             -0.23|
+#> |Item4 |     1.216|              0.33|
+#> |Item1 |     1.049|              0.04|
+#> |Item5 |     0.931|             -0.70|
+#> |Item2 |     0.929|             -0.48|
+#> |Item3 |     0.828|             -0.16|
 
 # Return as data.frame for further processing
 df <- RMitemInfit(sim_data, output = "dataframe")
@@ -246,39 +241,39 @@ cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100, parallel = FALSE,
 RMitemInfit(sim_data, cutoff = cutoff_res)
 #> 
 #> 
-#> Table: MSQ values based on conditional estimation (n = 40 complete cases). Cutoff values based on 99 simulation iterations (99.9% HDCI). Flagged: overfit = infit below range (more predictable); underfit = above range (noisier).
+#> Table: MSQ values based on conditional estimation (n = 40 complete cases). Cutoff values based on 100 simulation iterations (99.9% HDCI). Flagged: overfit = infit below range (more predictable); underfit = above range (noisier).
 #> 
 #> |Item  | Infit MSQ| Infit low| Infit high|Flagged | Relative location|
 #> |:-----|---------:|---------:|----------:|:-------|-----------------:|
-#> |Item1 |     1.049|     0.576|      1.489|        |             -0.03|
-#> |Item2 |     0.929|     0.660|      1.537|        |             -0.54|
-#> |Item3 |     0.828|     0.547|      1.374|        |             -0.23|
-#> |Item4 |     1.216|     0.699|      1.349|        |              0.26|
-#> |Item5 |     0.931|     0.689|      1.315|        |             -0.76|
+#> |Item1 |     1.049|     0.607|      1.577|        |              0.04|
+#> |Item2 |     0.929|     0.625|      1.519|        |             -0.48|
+#> |Item3 |     0.828|     0.674|      1.354|        |             -0.16|
+#> |Item4 |     1.216|     0.643|      1.434|        |              0.33|
+#> |Item5 |     0.931|     0.648|      1.353|        |             -0.70|
 RMitemInfit(sim_data, cutoff = cutoff_res, output = "dataframe")
 #>    Item Infit_MSQ Infit_low Infit_high Flagged Relative_location
-#> 1 Item1     1.049     0.576      1.489                     -0.03
-#> 2 Item2     0.929     0.660      1.537                     -0.54
-#> 3 Item3     0.828     0.547      1.374                     -0.23
-#> 4 Item4     1.216     0.699      1.349                      0.26
-#> 5 Item5     0.931     0.689      1.315                     -0.76
+#> 1 Item1     1.049     0.607      1.577                      0.04
+#> 2 Item2     0.929     0.625      1.519                     -0.48
+#> 3 Item3     0.828     0.674      1.354                     -0.16
+#> 4 Item4     1.216     0.643      1.434                      0.33
+#> 5 Item5     0.931     0.648      1.353                     -0.70
 
 # Bootstrap p-values with family-wise (Westfall-Young) correction
 # (use iterations >= 1000 in real analyses for stable p-values)
 RMitemInfit(sim_data, cutoff = cutoff_res, p_value = TRUE,
             output = "dataframe")
-#> Warning: Bootstrap p-values are based on only 99 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations >= 1000 in RMitemInfitCutoff() for reliable p-values.
+#> Warning: Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations >= 1000 in RMitemInfitCutoff() for reliable p-values.
 #>    Item Infit_MSQ Infit_low Infit_high p_infit padj_infit Flagged
-#> 1 Item1     1.049     0.576      1.489    0.74       0.85        
-#> 2 Item2     0.929     0.660      1.537    0.65       0.85        
-#> 3 Item3     0.828     0.547      1.374    0.25       0.68        
-#> 4 Item4     1.216     0.699      1.349    0.10       0.28        
-#> 5 Item5     0.931     0.689      1.315    0.48       0.85        
+#> 1 Item1     1.049     0.607      1.577  0.5842     0.9208        
+#> 2 Item2     0.929     0.625      1.519  0.6436     0.9208        
+#> 3 Item3     0.828     0.674      1.354  0.1980     0.5347        
+#> 4 Item4     1.216     0.643      1.434  0.0792     0.2970        
+#> 5 Item5     0.931     0.648      1.353  0.6634     0.9208        
 #>   Relative_location
-#> 1             -0.03
-#> 2             -0.54
-#> 3             -0.23
-#> 4              0.26
-#> 5             -0.76
+#> 1              0.04
+#> 2             -0.48
+#> 3             -0.16
+#> 4              0.33
+#> 5             -0.70
 # }
 ```

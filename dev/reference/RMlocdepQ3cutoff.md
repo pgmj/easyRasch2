@@ -19,7 +19,8 @@ RMlocdepQ3Cutoff(
   seed = NULL,
   cutoff_method = "hdci",
   hdci_width = 0.99,
-  estimator = c("CML", "MML")
+  estimator = c("CML", "MML"),
+  dgp = c("resample", "conditional")
 )
 ```
 
@@ -78,6 +79,19 @@ RMlocdepQ3Cutoff(
   [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md);
   the value is stored in the returned object's `$estimator` and reused
   automatically.
+
+- dgp:
+
+  Character. Data-generating process for the parametric bootstrap.
+  `"resample"` (default) draws person locations by resampling the WLE
+  estimates with replacement and simulates responses under the model – a
+  *marginal* null. `"conditional"` instead simulates each respondent's
+  pattern from the exact Rasch conditional distribution given their
+  observed total score (and answered items), with item parameters fixed
+  – a *conditional* null that fixes the score margin and needs no latent
+  distribution, avoiding the over-dispersion of resampled point
+  estimates. The two give different cut-offs; see the package's
+  comparison study. **Experimental.**
 
 ## Value
 
@@ -144,6 +158,10 @@ A list with components:
   [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
   and
   [`RMlocdepQ3Plot`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md).
+
+- `dgp`:
+
+  The data-generating process used (`"resample"` or `"conditional"`).
 
 ## Details
 

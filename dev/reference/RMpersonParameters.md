@@ -49,8 +49,8 @@ RMpersonParameters(
 - estimator:
 
   Character. How item parameters are estimated when `item_params` is
-  `NULL`: `"CML"` (default, via eRm) or `"MML"` (via mirt). Ignored when
-  `item_params` is supplied.
+  `NULL`: `"CML"` (default, via psychotools) or `"MML"` (via mirt).
+  Ignored when `item_params` is supplied.
 
 - theta_range:
 
@@ -164,7 +164,7 @@ RMpersonParameters(dat, output = "dataframe") |> head()
 eap <- RMpersonParameters(dat, method = "EAP", output = "dataframe")
 attr(eap, "prior")
 #>      mean        sd estimated 
-#> 0.0000000 0.1600475 1.0000000 
+#> 0.0000000 0.1600477 1.0000000 
 
 # EAP with a fixed N(0, 1) prior
 RMpersonParameters(dat, method = "EAP", prior_sd = 1, output = "dataframe") |>

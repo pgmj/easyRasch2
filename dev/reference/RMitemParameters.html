@@ -3,12 +3,12 @@
 (polytomous) parameters and returns them in long or wide format, with
 optional standard errors and Wald confidence intervals. Item
 parameters are estimated by conditional maximum likelihood (CML, via
-eRm) by default, with marginal maximum likelihood (MML, via
+psychotools) by default, with marginal maximum likelihood (MML, via
 mirt) available for sparse data where CML can be unstable."><meta property="og:description" content="Estimates item difficulty (dichotomous) or item-category threshold
 (polytomous) parameters and returns them in long or wide format, with
 optional standard errors and Wald confidence intervals. Item
 parameters are estimated by conditional maximum likelihood (CML, via
-eRm) by default, with marginal maximum likelihood (MML, via
+psychotools) by default, with marginal maximum likelihood (MML, via
 mirt) available for sparse data where CML can be unstable."><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -17,7 +17,7 @@ mirt) available for sparse data where CML can be unstable."><meta name="robots" 
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.910</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.914</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,7 +49,7 @@ mirt) available for sparse data where CML can be unstable."><meta name="robots" 
 (polytomous) parameters and returns them in long or wide format, with
 optional standard errors and Wald confidence intervals. Item
 parameters are estimated by conditional maximum likelihood (CML, via
-<span class="pkg">eRm</span>) by default, with marginal maximum likelihood (MML, via
+<span class="pkg">psychotools</span>) by default, with marginal maximum likelihood (MML, via
 <span class="pkg">mirt</span>) available for sparse data where CML can be unstable.</p>
     </div>
 
@@ -78,8 +78,9 @@ are allowed; both estimators handle them.</p></dd>
 
 <dt id="arg-estimator">estimator<a class="anchor" aria-label="anchor" href="#arg-estimator"></a></dt>
 <dd><p>Character. <code>"CML"</code> (default) estimates item
-parameters with <code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code> / <code><a href="https://rdrr.io/pkg/eRm/man/PCM.html" class="external-link">eRm::PCM()</a></code>; <code>"MML"</code> uses
-<code><a href="https://philchalmers.github.io/mirt/reference/mirt.html" class="external-link">mirt::mirt()</a></code> with <code>itemtype = "Rasch"</code>. CML is preferred for
+parameters with <code><a href="https://rdrr.io/pkg/psychotools/man/pcmodel.html" class="external-link">psychotools::pcmodel()</a></code> (a dichotomous item is a
+2-category PCM); <code>"MML"</code> uses <code><a href="https://philchalmers.github.io/mirt/reference/mirt.html" class="external-link">mirt::mirt()</a></code> with
+<code>itemtype = "Rasch"</code>. CML is preferred for
 Rasch measurement; MML can be more robust when data are sparse.
 When <code>estimator = "CML"</code> and sparse response categories are
 detected, a warning suggests switching to MML.</p></dd>
@@ -133,13 +134,11 @@ are appended. For <code>output = "kable"</code>, the same content as a
 accordingly. Thresholds are reported as Andrich thresholds (the
 person locations at which adjacent response categories are equally
 probable) on the logit difficulty scale, matching <code><a href="RMtargeting.html">RMtargeting()</a></code>.</p>
-<p><strong>Standard errors.</strong> For the CML path, dichotomous difficulty
-SEs come directly from <span class="pkg">eRm</span>. Polytomous threshold SEs are
-obtained by the delta method: the full item-category parameter
-covariance is reconstructed as <code>W V W'</code> (with <code>W</code> the eRm design
-matrix and <code>V</code> the basic-parameter covariance) and propagated through
-the linear threshold map. For the MML path, SEs come from the
-<span class="pkg">mirt</span> parameter covariance, propagated through the same map.
+<p><strong>Standard errors.</strong> For the CML path, threshold SEs are the
+square roots of the diagonal of the threshold-parameter covariance from
+<code>psychotools::threshpar(vcov = TRUE)</code>. For the MML path, SEs come from
+the <span class="pkg">mirt</span> parameter covariance, propagated by the delta method
+through the linear threshold map.
 Confidence intervals are Wald intervals and are symmetric on the
 logit scale.</p>
     </div>
@@ -174,16 +173,16 @@ Statistical Software, 20</em>(9), 1-20. <a href="https://doi.org/10.18637/jss.v0
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |item  | threshold| location|    se| ci_lower| ci_upper|</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |:-----|---------:|--------:|-----:|--------:|--------:|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item1 |         1|   -0.014| 0.142|   -0.292|    0.264|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item1 |         2|    0.086| 0.163|   -0.233|    0.406|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2 |         1|    0.165| 0.145|   -0.119|    0.449|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2 |         2|   -0.101| 0.166|   -0.426|    0.225|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3 |         1|    0.009| 0.141|   -0.268|    0.285|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3 |         2|    0.113| 0.164|   -0.209|    0.435|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4 |         1|   -0.217| 0.144|   -0.500|    0.066|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4 |         2|    0.054| 0.158|   -0.255|    0.363|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5 |         1|    0.203| 0.149|   -0.090|    0.496|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5 |         2|   -0.299| 0.166|   -0.625|    0.027|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item1 |         1|   -0.014| 0.149|   -0.305|    0.278|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item1 |         2|    0.086| 0.154|   -0.215|    0.388|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2 |         1|    0.165| 0.152|   -0.134|    0.463|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2 |         2|   -0.101| 0.156|   -0.407|    0.206|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3 |         1|    0.009| 0.148|   -0.282|    0.299|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3 |         2|    0.113| 0.155|   -0.190|    0.416|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4 |         1|   -0.217| 0.152|   -0.514|    0.080|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4 |         2|    0.054| 0.148|   -0.237|    0.345|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5 |         1|    0.203| 0.157|   -0.106|    0.511|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5 |         2|   -0.299| 0.156|   -0.605|    0.008|</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Wide format, point estimates only</span></span></span>
 <span class="r-in"><span><span class="fu">RMitemParameters</span><span class="op">(</span><span class="va">poly</span>, format <span class="op">=</span> <span class="st">"wide"</span>, se <span class="op">=</span> <span class="cn">FALSE</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
@@ -202,11 +201,11 @@ Statistical Software, 20</em>(9), 1-20. <a href="https://doi.org/10.18637/jss.v0
 <span class="r-in"><span><span class="fu">RMitemParameters</span><span class="op">(</span><span class="va">dich</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    item threshold location     se ci_lower ci_upper</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item1         1  -0.0539 0.1162  -0.2817   0.1738</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2         1  -0.0215 0.1161  -0.2491   0.2060</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2         1  -0.0215 0.1161  -0.2491   0.2061</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item3         1  -0.0377 0.1162  -0.2654   0.1899</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4         1   0.0754 0.1160  -0.1520   0.3028</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item5         1   0.0593 0.1160  -0.1681   0.2867</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 Item6         1  -0.0215 0.1161  -0.2491   0.2060</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 Item6         1  -0.0215 0.1161  -0.2491   0.2061</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

@@ -13,7 +13,7 @@ converting raw totals to interval-scaled scores for downstream analysis."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.910</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.914</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,8 +73,8 @@ the underlying model fit handles them.</p></dd>
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
 <dd><p>Character string. Either <code>"WLE"</code> (default) for Warm's Weighted
 Likelihood Estimator computed from a CML-fitted Rasch / Partial Credit
-Model via <code>eRm</code>, or <code>"EAP"</code> for Expected A Posteriori sum-score estimates
-from an MML-fitted model via <code>mirt</code>.</p></dd>
+Model via <code>psychotools</code>, or <code>"EAP"</code> for Expected A Posteriori sum-score
+estimates from an MML-fitted model via <code>mirt</code>.</p></dd>
 
 
 <dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
@@ -123,7 +123,7 @@ to the theoretical maximum).</p></li>
     <p>The function automatically detects whether the data is dichotomous
 (max score 1) or polytomous (max score &gt; 1) and selects the appropriate
 Rasch / Partial Credit model.</p>
-<p><strong><code>method = "WLE"</code></strong> fits the model with <code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code> or <code><a href="https://rdrr.io/pkg/eRm/man/PCM.html" class="external-link">eRm::PCM()</a></code> (CML),
+<p><strong><code>method = "WLE"</code></strong> fits the model by CML with <code><a href="https://rdrr.io/pkg/psychotools/man/pcmodel.html" class="external-link">psychotools::pcmodel()</a></code>,
 centres the item thresholds to grand-mean-zero, and solves Warm's
 weighted-likelihood equation for each raw score with the same engine used
 by <code><a href="RMpersonParameters.html">RMpersonParameters()</a></code>; the two functions therefore report identical
@@ -161,7 +161,7 @@ in a microcomputer environment. <em>Applied Psychological Measurement, 6</em>(4)
 <span class="r-in"><span><span class="fu">RMscoreSE</span><span class="op">(</span><span class="va">sim_data</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Person locations via Warm's WLE (CML item parameters from eRm).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Person locations via Warm's WLE (CML item parameters).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | Ordinal sum score| Logit score| Logit std.error|</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |-----------------:|-----------:|---------------:|</span>
@@ -188,25 +188,25 @@ in a microcomputer environment. <em>Applied Psychological Measurement, 6</em>(4)
 <span class="r-in"><span><span class="co"># Underlying data.frame</span></span></span>
 <span class="r-in"><span><span class="fu">RMscoreSE</span><span class="op">(</span><span class="va">sim_data</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    raw_score  logit_score  logit_se</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1          0 -2.543004730 1.2975401</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2          1 -1.581232459 0.7377473</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3          2 -1.169506439 0.5749932</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4          3 -0.902149095 0.4938854</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5          4 -0.698683186 0.4456048</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6          5 -0.529798893 0.4145554</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7          6 -0.381484679 0.3941221</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8          7 -0.245771039 0.3810602</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9          8 -0.117451949 0.3736802</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10         9  0.007350623 0.3711475</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 11        10  0.131958555 0.3731981</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 12        11  0.259668309 0.3800583</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 13        12  0.394278307 0.3925159</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 14        13  0.540823955 0.4121881</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 15        14  0.706934548 0.4421918</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 16        15  0.905894507 0.4888757</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 17        16  1.165238242 0.5671656</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 18        17  1.560005389 0.7236119</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 19        18  2.472071226 1.2591208</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1          0 -2.543009251 1.2975432</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2          1 -1.581232885 0.7377485</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3          2 -1.169505478 0.5749937</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4          3 -0.902147524 0.4938857</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5          4 -0.698681315 0.4456050</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6          5 -0.529796880 0.4145554</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7          6 -0.381482620 0.3941221</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8          7 -0.245769004 0.3810601</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9          8 -0.117449995 0.3736801</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10         9  0.007352443 0.3711473</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11        10  0.131960186 0.3731978</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12        11  0.259669689 0.3800580</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13        12  0.394279356 0.3925154</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14        13  0.540824565 0.4121876</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15        14  0.706934558 0.4421911</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16        15  0.905893650 0.4888747</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17        16  1.165236002 0.5671642</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18        17  1.560000535 0.7236097</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19        18  2.472059396 1.2591152</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># ggplot figure</span></span></span>
 <span class="r-in"><span><span class="fu">RMscoreSE</span><span class="op">(</span><span class="va">sim_data</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></span>

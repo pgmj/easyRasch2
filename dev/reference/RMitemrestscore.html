@@ -13,7 +13,7 @@ item locations relative to the sample mean person location."><meta name="robots"
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.910</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.914</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -105,13 +105,12 @@ values indicate weaker-than-expected association (under-discrimination
 the association between a person's score on a single item and their total
 score on the remaining items (the "restscore"). Under a correctly fitting
 Rasch model, observed and model-expected correlations should agree closely.</p>
-<p>For <strong>dichotomous</strong> data (maximum score = 1), a Rasch model is fitted via
-<code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code>. Item locations are the negative beta parameters. Person
-locations are estimated via <code><a href="https://rdrr.io/pkg/eRm/man/person.parameter.html" class="external-link">eRm::person.parameter()</a></code>.</p>
-<p>For <strong>polytomous</strong> data (maximum score &gt; 1), a Partial Credit Model is
-fitted via <code><a href="https://rdrr.io/pkg/eRm/man/PCM.html" class="external-link">eRm::PCM()</a></code>. Item average locations are the row-means of the
-threshold parameter table returned by <code><a href="https://rdrr.io/pkg/eRm/man/thresholds.html" class="external-link">eRm::thresholds()</a></code>. Person locations
-are estimated via <code><a href="https://rdrr.io/pkg/eRm/man/person.parameter.html" class="external-link">eRm::person.parameter()</a></code>.</p>
+<p>Item parameters are estimated by conditional maximum likelihood via
+<code><a href="https://rdrr.io/pkg/psychotools/man/pcmodel.html" class="external-link">psychotools::pcmodel()</a></code> (a dichotomous item is a 2-category PCM); the
+item-restscore statistic itself comes from <code><a href="https://rdrr.io/pkg/iarm/man/item_restscore.html" class="external-link">iarm::item_restscore()</a></code> and is
+conditional on the total score, so it is invariant to the estimation engine.
+Per-item average locations are the means of the CML thresholds, and the
+person-location reference is the mean of the Warm WLE estimates.</p>
 <p>Relative item location is defined as the item's average location minus the
 sample mean person location, providing a measure of item targeting.</p>
 <p>The <code>iarm</code> package must be installed (it is in Suggests, not Imports).</p>

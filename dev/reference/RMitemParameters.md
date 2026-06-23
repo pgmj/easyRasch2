@@ -3,9 +3,9 @@
 Estimates item difficulty (dichotomous) or item-category threshold
 (polytomous) parameters and returns them in long or wide format, with
 optional standard errors and Wald confidence intervals. Item parameters
-are estimated by conditional maximum likelihood (CML, via eRm) by
-default, with marginal maximum likelihood (MML, via mirt) available for
-sparse data where CML can be unstable.
+are estimated by conditional maximum likelihood (CML, via psychotools)
+by default, with marginal maximum likelihood (MML, via mirt) available
+for sparse data where CML can be unstable.
 
 ## Usage
 
@@ -32,8 +32,8 @@ RMitemParameters(
 - estimator:
 
   Character. `"CML"` (default) estimates item parameters with
-  [`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html) /
-  [`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html); `"MML"` uses
+  [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
+  (a dichotomous item is a 2-category PCM); `"MML"` uses
   [`mirt::mirt()`](https://philchalmers.github.io/mirt/reference/mirt.html)
   with `itemtype = "Rasch"`. CML is preferred for Rasch measurement; MML
   can be more robust when data are sparse. When `estimator = "CML"` and
@@ -88,14 +88,12 @@ locations at which adjacent response categories are equally probable) on
 the logit difficulty scale, matching
 [`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md).
 
-**Standard errors.** For the CML path, dichotomous difficulty SEs come
-directly from eRm. Polytomous threshold SEs are obtained by the delta
-method: the full item-category parameter covariance is reconstructed as
-`W V W'` (with `W` the eRm design matrix and `V` the basic-parameter
-covariance) and propagated through the linear threshold map. For the MML
-path, SEs come from the mirt parameter covariance, propagated through
-the same map. Confidence intervals are Wald intervals and are symmetric
-on the logit scale.
+**Standard errors.** For the CML path, threshold SEs are the square
+roots of the diagonal of the threshold-parameter covariance from
+`psychotools::threshpar(vcov = TRUE)`. For the MML path, SEs come from
+the mirt parameter covariance, propagated by the delta method through
+the linear threshold map. Confidence intervals are Wald intervals and
+are symmetric on the logit scale.
 
 ## References
 
@@ -132,16 +130,16 @@ RMitemParameters(poly)
 #> 
 #> |item  | threshold| location|    se| ci_lower| ci_upper|
 #> |:-----|---------:|--------:|-----:|--------:|--------:|
-#> |Item1 |         1|   -0.014| 0.142|   -0.292|    0.264|
-#> |Item1 |         2|    0.086| 0.163|   -0.233|    0.406|
-#> |Item2 |         1|    0.165| 0.145|   -0.119|    0.449|
-#> |Item2 |         2|   -0.101| 0.166|   -0.426|    0.225|
-#> |Item3 |         1|    0.009| 0.141|   -0.268|    0.285|
-#> |Item3 |         2|    0.113| 0.164|   -0.209|    0.435|
-#> |Item4 |         1|   -0.217| 0.144|   -0.500|    0.066|
-#> |Item4 |         2|    0.054| 0.158|   -0.255|    0.363|
-#> |Item5 |         1|    0.203| 0.149|   -0.090|    0.496|
-#> |Item5 |         2|   -0.299| 0.166|   -0.625|    0.027|
+#> |Item1 |         1|   -0.014| 0.149|   -0.305|    0.278|
+#> |Item1 |         2|    0.086| 0.154|   -0.215|    0.388|
+#> |Item2 |         1|    0.165| 0.152|   -0.134|    0.463|
+#> |Item2 |         2|   -0.101| 0.156|   -0.407|    0.206|
+#> |Item3 |         1|    0.009| 0.148|   -0.282|    0.299|
+#> |Item3 |         2|    0.113| 0.155|   -0.190|    0.416|
+#> |Item4 |         1|   -0.217| 0.152|   -0.514|    0.080|
+#> |Item4 |         2|    0.054| 0.148|   -0.237|    0.345|
+#> |Item5 |         1|    0.203| 0.157|   -0.106|    0.511|
+#> |Item5 |         2|   -0.299| 0.156|   -0.605|    0.008|
 
 # Wide format, point estimates only
 RMitemParameters(poly, format = "wide", se = FALSE, output = "dataframe")
@@ -160,10 +158,10 @@ colnames(dich) <- paste0("Item", 1:6)
 RMitemParameters(dich, output = "dataframe")
 #>    item threshold location     se ci_lower ci_upper
 #> 1 Item1         1  -0.0539 0.1162  -0.2817   0.1738
-#> 2 Item2         1  -0.0215 0.1161  -0.2491   0.2060
+#> 2 Item2         1  -0.0215 0.1161  -0.2491   0.2061
 #> 3 Item3         1  -0.0377 0.1162  -0.2654   0.1899
 #> 4 Item4         1   0.0754 0.1160  -0.1520   0.3028
 #> 5 Item5         1   0.0593 0.1160  -0.1681   0.2867
-#> 6 Item6         1  -0.0215 0.1161  -0.2491   0.2060
+#> 6 Item6         1  -0.0215 0.1161  -0.2491   0.2061
 # }
 ```

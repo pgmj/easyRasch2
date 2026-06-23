@@ -23,7 +23,7 @@ missingness is handled directly."><meta name="robots" content="noindex"></head><
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.910</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.914</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -249,12 +249,12 @@ approaches. <em>Journal of Educational Measurement, 53</em>(1), 63-85.
 <span class="r-in"><span><span class="co"># Conditional infit/outfit MSQ + lz with resampled p-values</span></span></span>
 <span class="r-in"><span><span class="fu">RMpersonFit</span><span class="op">(</span><span class="va">dat</span>, iterations <span class="op">=</span> <span class="fl">200</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   id n_answered sum_score infit_msq outfit_msq      lz p_infit p_outfit  p_lz</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1          8         5    1.3900     1.3989  0.0619    0.32     0.32 0.505</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1          8         5    1.3900     1.3988  0.0619    0.32     0.32 0.505</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2  2          8         6    0.7271     0.7335 -0.0611    0.34     0.39 0.415</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3  3          8         2    0.8185     0.8472  0.2747    0.79     0.79 0.545</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  4          8        10    0.7120     0.6872  0.4211    0.27     0.19 0.620</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  5          8         4    1.5137     1.4542  0.3392    0.22     0.22 0.615</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6  6          8         4    1.5322     1.4837  0.2989    0.16     0.16 0.620</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  4          8        10    0.7119     0.6872  0.4211    0.27     0.19 0.620</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  5          8         4    1.5137     1.4541  0.3392    0.22     0.22 0.615</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  6          8         4    1.5322     1.4836  0.2989    0.16     0.16 0.620</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   flagged</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1   FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2   FALSE</span>
@@ -274,12 +274,12 @@ approaches. <em>Journal of Educational Measurement, 53</em>(1), 63-85.
 <span class="r-in"><span><span class="fu">RMpersonFit</span><span class="op">(</span><span class="va">dat</span>, iterations <span class="op">=</span> <span class="fl">200</span>, flag <span class="op">=</span> <span class="st">"underfit"</span>,</span></span>
 <span class="r-in"><span>            output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   id n_answered sum_score infit_msq outfit_msq      lz p_infit p_outfit  p_lz</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1          8         5    1.3900     1.3989  0.0619   0.140    0.115 0.485</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1          8         5    1.3900     1.3988  0.0619   0.140    0.115 0.485</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2  2          8         6    0.7271     0.7335 -0.0611   0.820    0.800 0.425</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3  3          8         2    0.8185     0.8472  0.2747   0.430    0.430 0.570</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  4          8        10    0.7120     0.6872  0.4211   0.820    0.845 0.640</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  5          8         4    1.5137     1.4542  0.3392   0.095    0.095 0.610</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6  6          8         4    1.5322     1.4837  0.2989   0.070    0.070 0.595</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  4          8        10    0.7119     0.6872  0.4211   0.820    0.845 0.640</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  5          8         4    1.5137     1.4541  0.3392   0.095    0.095 0.610</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  6          8         4    1.5322     1.4836  0.2989   0.070    0.070 0.595</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   flagged</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1   FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2   FALSE</span>

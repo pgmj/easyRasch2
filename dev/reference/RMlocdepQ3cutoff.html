@@ -13,7 +13,7 @@ distribution and returns empirical percentiles."><meta name="robots" content="no
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.910</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.914</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,8 @@ distribution and returns empirical percentiles.</p>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cutoff_method <span class="op">=</span> <span class="st">"hdci"</span>,</span>
 <span>  hdci_width <span class="op">=</span> <span class="fl">0.99</span>,</span>
-<span>  estimator <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CML"</span>, <span class="st">"MML"</span><span class="op">)</span></span>
+<span>  estimator <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CML"</span>, <span class="st">"MML"</span><span class="op">)</span>,</span>
+<span>  dgp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"resample"</span>, <span class="st">"conditional"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -118,6 +119,19 @@ must match the <code>estimator</code> later given to <code><a href="RMlocdepQ3.h
 value is stored in the returned object's <code>$estimator</code> and reused
 automatically.</p></dd>
 
+
+<dt id="arg-dgp">dgp<a class="anchor" aria-label="anchor" href="#arg-dgp"></a></dt>
+<dd><p>Character. Data-generating process for the parametric bootstrap.
+<code>"resample"</code> (default) draws person locations by resampling the WLE
+estimates with replacement and simulates responses under the model – a
+<em>marginal</em> null. <code>"conditional"</code> instead simulates each respondent's
+pattern from the exact Rasch conditional distribution given their observed
+total score (and answered items), with item parameters fixed – a
+<em>conditional</em> null that fixes the score margin and needs no latent
+distribution, avoiding the over-dispersion of resampled point estimates.
+The two give different cut-offs; see the package's comparison study.
+<strong>Experimental.</strong></p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -169,6 +183,10 @@ scalar cutoff for <code><a href="RMlocdepQ3.html">RMlocdepQ3</a></code>.</p></dd
 <dd><p>The estimator used for the simulated Q3 (<code>"CML"</code> or
 <code>"MML"</code>); reused by <code><a href="RMlocdepQ3.html">RMlocdepQ3</a></code> and
 <code><a href="RMlocdepQ3plot.html">RMlocdepQ3Plot</a></code>.</p></dd>
+
+<dt><code>dgp</code></dt>
+<dd><p>The data-generating process used (<code>"resample"</code> or
+<code>"conditional"</code>).</p></dd>
 
 
 </dl></div>

@@ -17,7 +17,8 @@ RMitemInfitCutoff(
   verbose = FALSE,
   seed = NULL,
   cutoff_method = "hdci",
-  hdci_width = 0.999
+  hdci_width = 0.999,
+  dgp = c("resample", "conditional")
 )
 ```
 
@@ -66,6 +67,17 @@ RMitemInfitCutoff(
   Numeric. Width of the HDCI when `cutoff_method = "hdci"`. Default is
   `0.999` (99.9% HDCI). Ignored when `cutoff_method = "quantile"`.
 
+- dgp:
+
+  Character. Data-generating process for the parametric bootstrap.
+  `"resample"` (default) resamples WLE person locations with replacement
+  and simulates responses under the model (a *marginal* null).
+  `"conditional"` simulates each respondent's pattern from the exact
+  Rasch conditional distribution given their observed total score, item
+  parameters fixed (a *conditional* null). Because the conditional
+  infit/outfit statistic is itself conditional on the total score,
+  `"conditional"` is its naturally matched null. **Experimental.**
+
 ## Value
 
 A list with components:
@@ -105,23 +117,22 @@ A list with components:
 
   The HDCI width used (only meaningful when `cutoff_method = "hdci"`).
 
+- `dgp`:
+
+  The data-generating process used (`"resample"` or `"conditional"`).
+
 ## Details
 
-For each simulation iteration, person parameters (thetas) are resampled
-with replacement from ML estimates, response data are simulated under
-the Rasch model, the model is refitted, and conditional infit and outfit
-MSQ statistics are computed via
+The generating model is CML item parameters (via `psychotools`) with WLE
+person locations. For each iteration a dataset is simulated under the
+chosen `dgp`, the model is refitted by CML
+([`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html),
+which handles dichotomous and polytomous data and is accepted by
+`iarm`), and conditional infit and outfit MSQ are computed via
 [`iarm::out_infit()`](https://rdrr.io/pkg/iarm/man/out_infit.html). The
 distribution of these statistics across iterations provides empirical
-critical values per item. Failed iterations (e.g., due to convergence
-issues or degenerate data) are silently discarded.
-
-Supports both **dichotomous** data (via
-[`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html) and
-[`psychotools::rrm()`](https://rdrr.io/pkg/psychotools/man/rrm.html))
-and **polytomous** data (via
-[`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html) and an internal
-partial credit score simulator).
+critical values per item. Failed iterations (e.g., degenerate simulated
+data) are silently discarded.
 
 Parallel processing is provided by the `mirai` package (optional).
 Install it with `install.packages("mirai")` to enable parallelisation.
@@ -147,16 +158,16 @@ cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100, parallel = FALSE,
                             seed = 42)
 cutoff_res$item_cutoffs
 #>      Item infit_low infit_high outfit_low outfit_high
-#> 1   Item1     0.902      1.152      0.851       1.324
-#> 2   Item2     0.873      1.124      0.844       1.161
-#> 3   Item3     0.872      1.101      0.822       1.181
-#> 4   Item4     0.883      1.131      0.843       1.186
-#> 5   Item5     0.884      1.122      0.870       1.191
-#> 6   Item6     0.878      1.172      0.808       1.252
-#> 7   Item7     0.863      1.132      0.813       1.237
-#> 8   Item8     0.922      1.095      0.864       1.173
-#> 9   Item9     0.862      1.105      0.866       1.169
-#> 10 Item10     0.901      1.129      0.877       1.181
+#> 1   Item1     0.819      1.180      0.787       1.360
+#> 2   Item2     0.873      1.133      0.813       1.229
+#> 3   Item3     0.872      1.139      0.819       1.210
+#> 4   Item4     0.865      1.122      0.814       1.180
+#> 5   Item5     0.868      1.125      0.835       1.165
+#> 6   Item6     0.837      1.121      0.786       1.185
+#> 7   Item7     0.883      1.147      0.828       1.248
+#> 8   Item8     0.873      1.117      0.836       1.205
+#> 9   Item9     0.890      1.157      0.829       1.270
+#> 10 Item10     0.873      1.112      0.788       1.233
 
 # Use the cutoffs in RMitemInfit()
 RMitemInfit(sim_data)
@@ -175,6 +186,6 @@ RMitemInfit(sim_data)
 #> |Item7  |     0.943|             -0.04|
 #> |Item8  |     0.988|             -0.02|
 #> |Item9  |     0.933|              0.12|
-#> |Item10 |     1.044|              0.39|
+#> |Item10 |     1.044|              0.38|
 # }
 ```

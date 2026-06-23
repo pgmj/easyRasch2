@@ -32,8 +32,8 @@ RMscoreSE(
 
   Character string. Either `"WLE"` (default) for Warm's Weighted
   Likelihood Estimator computed from a CML-fitted Rasch / Partial Credit
-  Model via `eRm`, or `"EAP"` for Expected A Posteriori sum-score
-  estimates from an MML-fitted model via `mirt`.
+  Model via `psychotools`, or `"EAP"` for Expected A Posteriori
+  sum-score estimates from an MML-fitted model via `mirt`.
 
 - output:
 
@@ -84,10 +84,9 @@ The function automatically detects whether the data is dichotomous (max
 score 1) or polytomous (max score \> 1) and selects the appropriate
 Rasch / Partial Credit model.
 
-**`method = "WLE"`** fits the model with
-[`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html) or
-[`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html) (CML), centres the
-item thresholds to grand-mean-zero, and solves Warm's
+**`method = "WLE"`** fits the model by CML with
+[`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html),
+centres the item thresholds to grand-mean-zero, and solves Warm's
 weighted-likelihood equation for each raw score with the same engine
 used by
 [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md);
@@ -132,7 +131,7 @@ colnames(sim_data) <- paste0("Item", 1:6)
 RMscoreSE(sim_data)
 #> 
 #> 
-#> Table: Person locations via Warm's WLE (CML item parameters from eRm).
+#> Table: Person locations via Warm's WLE (CML item parameters).
 #> 
 #> | Ordinal sum score| Logit score| Logit std.error|
 #> |-----------------:|-----------:|---------------:|
@@ -159,25 +158,25 @@ RMscoreSE(sim_data)
 # Underlying data.frame
 RMscoreSE(sim_data, output = "dataframe")
 #>    raw_score  logit_score  logit_se
-#> 1          0 -2.543004730 1.2975401
-#> 2          1 -1.581232459 0.7377473
-#> 3          2 -1.169506439 0.5749932
-#> 4          3 -0.902149095 0.4938854
-#> 5          4 -0.698683186 0.4456048
-#> 6          5 -0.529798893 0.4145554
-#> 7          6 -0.381484679 0.3941221
-#> 8          7 -0.245771039 0.3810602
-#> 9          8 -0.117451949 0.3736802
-#> 10         9  0.007350623 0.3711475
-#> 11        10  0.131958555 0.3731981
-#> 12        11  0.259668309 0.3800583
-#> 13        12  0.394278307 0.3925159
-#> 14        13  0.540823955 0.4121881
-#> 15        14  0.706934548 0.4421918
-#> 16        15  0.905894507 0.4888757
-#> 17        16  1.165238242 0.5671656
-#> 18        17  1.560005389 0.7236119
-#> 19        18  2.472071226 1.2591208
+#> 1          0 -2.543009251 1.2975432
+#> 2          1 -1.581232885 0.7377485
+#> 3          2 -1.169505478 0.5749937
+#> 4          3 -0.902147524 0.4938857
+#> 5          4 -0.698681315 0.4456050
+#> 6          5 -0.529796880 0.4145554
+#> 7          6 -0.381482620 0.3941221
+#> 8          7 -0.245769004 0.3810601
+#> 9          8 -0.117449995 0.3736801
+#> 10         9  0.007352443 0.3711473
+#> 11        10  0.131960186 0.3731978
+#> 12        11  0.259669689 0.3800580
+#> 13        12  0.394279356 0.3925154
+#> 14        13  0.540824565 0.4121876
+#> 15        14  0.706934558 0.4421911
+#> 16        15  0.905893650 0.4888747
+#> 17        16  1.165236002 0.5671642
+#> 18        17  1.560000535 0.7236097
+#> 19        18  2.472059396 1.2591152
 
 # ggplot figure
 RMscoreSE(sim_data, output = "ggplot")

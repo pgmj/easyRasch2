@@ -11,7 +11,7 @@ mean person location."><meta name="robots" content="noindex"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.910</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.914</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -148,15 +148,12 @@ rule-of-thumb value that is correct.</p>
 uses the conditional distribution of the sufficient statistics (Müller, 2020).
 Only complete cases (rows without any <code>NA</code>) are used in the conditional fit
 calculation.</p>
-<p>For <strong>dichotomous</strong> data (maximum score = 1), a Rasch model is fitted via
-<code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code>. Item locations are the negative beta parameters. Person
-locations are estimated via <code><a href="https://rdrr.io/pkg/eRm/man/person.parameter.html" class="external-link">eRm::person.parameter()</a></code>.</p>
-<p>For <strong>polytomous</strong> data (maximum score &gt; 1), a Partial Credit Model is
-fitted via <code><a href="https://rdrr.io/pkg/eRm/man/PCM.html" class="external-link">eRm::PCM()</a></code>. Item average locations are taken from the
-"Location" column of the threshold parameter table returned by
-<code><a href="https://rdrr.io/pkg/eRm/man/thresholds.html" class="external-link">eRm::thresholds()</a></code>; if that column is absent, row means of the threshold
-columns are used instead. Person locations are estimated via
-<code><a href="https://rdrr.io/pkg/eRm/man/person.parameter.html" class="external-link">eRm::person.parameter()</a></code>.</p>
+<p>Item parameters are estimated by conditional maximum likelihood via
+<code><a href="https://rdrr.io/pkg/psychotools/man/pcmodel.html" class="external-link">psychotools::pcmodel()</a></code> (a dichotomous item is a 2-category PCM); the
+conditional infit/outfit MSQ comes from <code><a href="https://rdrr.io/pkg/iarm/man/out_infit.html" class="external-link">iarm::out_infit()</a></code> and is invariant
+to the estimation engine. Per-item average locations are the means of the
+CML thresholds, and the person-location reference is the mean of the Warm
+WLE estimates.</p>
 <p>Relative item location is defined as the item's average location minus the
 sample mean person location, providing a measure of item targeting.</p>
 <p>The <code>iarm</code> package must be installed (it is in Suggests, not Imports).</p>
@@ -232,11 +229,11 @@ Wiley.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |Item  | Infit MSQ| Relative location|</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |:-----|---------:|-----------------:|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item1 |     1.049|             -0.03|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2 |     0.929|             -0.54|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3 |     0.828|             -0.23|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4 |     1.216|              0.26|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5 |     0.931|             -0.76|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item1 |     1.049|              0.04|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2 |     0.929|             -0.48|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3 |     0.828|             -0.16|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4 |     1.216|              0.33|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5 |     0.931|             -0.70|</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Sorted by infit MSQ descending</span></span></span>
 <span class="r-in"><span><span class="fu">RMitemInfit</span><span class="op">(</span><span class="va">sim_data</span>, sort <span class="op">=</span> <span class="st">"infit"</span><span class="op">)</span></span></span>
@@ -246,11 +243,11 @@ Wiley.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |Item  | Infit MSQ| Relative location|</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |:-----|---------:|-----------------:|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4 |     1.216|              0.26|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item1 |     1.049|             -0.03|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5 |     0.931|             -0.76|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2 |     0.929|             -0.54|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3 |     0.828|             -0.23|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4 |     1.216|              0.33|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item1 |     1.049|              0.04|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5 |     0.931|             -0.70|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2 |     0.929|             -0.48|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3 |     0.828|             -0.16|</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Return as data.frame for further processing</span></span></span>
 <span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">RMitemInfit</span><span class="op">(</span><span class="va">sim_data</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
@@ -262,40 +259,40 @@ Wiley.</p>
 <span class="r-in"><span><span class="fu">RMitemInfit</span><span class="op">(</span><span class="va">sim_data</span>, cutoff <span class="op">=</span> <span class="va">cutoff_res</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Table: MSQ values based on conditional estimation (n = 40 complete cases). Cutoff values based on 99 simulation iterations (99.9% HDCI). Flagged: overfit = infit below range (more predictable); underfit = above range (noisier).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: MSQ values based on conditional estimation (n = 40 complete cases). Cutoff values based on 100 simulation iterations (99.9% HDCI). Flagged: overfit = infit below range (more predictable); underfit = above range (noisier).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |Item  | Infit MSQ| Infit low| Infit high|Flagged | Relative location|</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |:-----|---------:|---------:|----------:|:-------|-----------------:|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item1 |     1.049|     0.576|      1.489|        |             -0.03|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2 |     0.929|     0.660|      1.537|        |             -0.54|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3 |     0.828|     0.547|      1.374|        |             -0.23|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4 |     1.216|     0.699|      1.349|        |              0.26|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5 |     0.931|     0.689|      1.315|        |             -0.76|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item1 |     1.049|     0.607|      1.577|        |              0.04|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2 |     0.929|     0.625|      1.519|        |             -0.48|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3 |     0.828|     0.674|      1.354|        |             -0.16|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4 |     1.216|     0.643|      1.434|        |              0.33|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5 |     0.931|     0.648|      1.353|        |             -0.70|</span>
 <span class="r-in"><span><span class="fu">RMitemInfit</span><span class="op">(</span><span class="va">sim_data</span>, cutoff <span class="op">=</span> <span class="va">cutoff_res</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    Item Infit_MSQ Infit_low Infit_high Flagged Relative_location</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item1     1.049     0.576      1.489                     -0.03</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2     0.929     0.660      1.537                     -0.54</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item3     0.828     0.547      1.374                     -0.23</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4     1.216     0.699      1.349                      0.26</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item5     0.931     0.689      1.315                     -0.76</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item1     1.049     0.607      1.577                      0.04</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2     0.929     0.625      1.519                     -0.48</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item3     0.828     0.674      1.354                     -0.16</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4     1.216     0.643      1.434                      0.33</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item5     0.931     0.648      1.353                     -0.70</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Bootstrap p-values with family-wise (Westfall-Young) correction</span></span></span>
 <span class="r-in"><span><span class="co"># (use iterations &gt;= 1000 in real analyses for stable p-values)</span></span></span>
 <span class="r-in"><span><span class="fu">RMitemInfit</span><span class="op">(</span><span class="va">sim_data</span>, cutoff <span class="op">=</span> <span class="va">cutoff_res</span>, p_value <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>            output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Bootstrap p-values are based on only 99 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations &gt;= 1000 in RMitemInfitCutoff() for reliable p-values.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations &gt;= 1000 in RMitemInfitCutoff() for reliable p-values.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    Item Infit_MSQ Infit_low Infit_high p_infit padj_infit Flagged</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item1     1.049     0.576      1.489    0.74       0.85        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2     0.929     0.660      1.537    0.65       0.85        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item3     0.828     0.547      1.374    0.25       0.68        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4     1.216     0.699      1.349    0.10       0.28        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item5     0.931     0.689      1.315    0.48       0.85        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item1     1.049     0.607      1.577  0.5842     0.9208        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2     0.929     0.625      1.519  0.6436     0.9208        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item3     0.828     0.674      1.354  0.1980     0.5347        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4     1.216     0.643      1.434  0.0792     0.2970        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item5     0.931     0.648      1.353  0.6634     0.9208        </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Relative_location</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1             -0.03</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2             -0.54</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3             -0.23</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4              0.26</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5             -0.76</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1              0.04</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2             -0.48</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3             -0.16</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4              0.33</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5             -0.70</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
