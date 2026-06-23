@@ -224,42 +224,27 @@ RMdimCFACutoff <- function(data,
   if (is.null(item_names_vec))
     item_names_vec <- paste0("V", seq_len(ncol(data_mat)))
 
-  # Fit observed Rasch / PCM and assemble simulation list
+  # Generating Rasch model: CML item thresholds (psychotools) + WLE person
+  # locations, consistent with the rest of the package. The DGP is unchanged
+  # (thetas resampled with replacement; data simulated under the model). The
+  # CFA itself (observed and per-iteration) is unaffected -- it is fitted by
+  # lavaan. `estimator` here is the lavaan estimator, not the Rasch one.
+  thr_list   <- .fit_cml_thresholds(data_mat)
+  wle_thetas <- .estimate_thetas(data_mat, thr_list, method = "WLE")$theta
+  wle_thetas <- wle_thetas[is.finite(wle_thetas)]
+
+  sim_data_list <- list(
+    type       = if (is_polytomous) "polytomous" else "dichotomous",
+    thetas     = wle_thetas,
+    n_items    = ncol(data_mat),
+    sample_n   = sample_n,
+    item_names = item_names_vec,
+    estimator  = estimator
+  )
   if (is_polytomous) {
-    pcm_fit     <- eRm::PCM(data_mat)
-    pp          <- eRm::person.parameter(pcm_fit)
-    theta_table <- pp$theta.table[["Person Parameter"]]
-    raw_scores  <- rowSums(data_mat, na.rm = TRUE)
-    thetas      <- as.numeric(stats::na.omit(theta_table[raw_scores]))
-    thresh_mat  <- extract_item_thresholds(data_mat)
-    deltaslist  <- lapply(seq_len(nrow(thresh_mat)), function(i) {
-      as.numeric(thresh_mat[i, !is.na(thresh_mat[i, ])])
-    })
-    sim_data_list <- list(
-      type       = "polytomous",
-      thetas     = thetas,
-      deltaslist = deltaslist,
-      n_items    = ncol(data_mat),
-      sample_n   = sample_n,
-      item_names = item_names_vec,
-      estimator  = estimator
-    )
+    sim_data_list$deltaslist <- thr_list
   } else {
-    rm_fit      <- eRm::RM(data_mat)
-    pp          <- eRm::person.parameter(rm_fit)
-    theta_table <- pp$theta.table[["Person Parameter"]]
-    raw_scores  <- rowSums(data_mat, na.rm = TRUE)
-    thetas      <- as.numeric(stats::na.omit(theta_table[raw_scores]))
-    item_params <- -rm_fit$betapar
-    sim_data_list <- list(
-      type        = "dichotomous",
-      thetas      = thetas,
-      item_params = item_params,
-      n_items     = ncol(data_mat),
-      sample_n    = sample_n,
-      item_names  = item_names_vec,
-      estimator   = estimator
-    )
+    sim_data_list$item_params <- unlist(thr_list, use.names = FALSE)
   }
 
   # Observed CFA fit on the actual data

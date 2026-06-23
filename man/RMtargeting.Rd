@@ -80,21 +80,20 @@ makes it easy to assess whether the test is well-targeted to the sample.
 The function checks whether any item response category has fewer than 3
 observations. If all categories have at least 3 responses, item threshold
 locations and their standard errors are estimated via Conditional Maximum
-Likelihood (CML) using \code{eRm::RM()} (dichotomous) or \code{eRm::PCM()}
-(polytomous), with SEs from \code{eRm::thresholds()}. If any category has fewer
-than 3 responses, the function falls back to Marginal Maximum Likelihood
-(MML) estimation via \code{mirt::mirt()} with \code{itemtype = "Rasch"} and
-\code{SE = TRUE}, which is more numerically stable under sparse-category
-conditions. A message is emitted when the MML fallback is used.
+Likelihood (CML) using \code{psychotools::pcmodel()} (a dichotomous item is a
+2-category PCM). If any category has fewer than 3 responses, the function
+falls back to Marginal Maximum Likelihood (MML) estimation via
+\code{mirt::mirt()} with \code{itemtype = "Rasch"} and \code{SE = TRUE}, which is more
+numerically stable under sparse-category conditions. A message is emitted
+when the MML fallback is used.
 
 In both cases, item threshold locations are centered (shifted so the grand
 mean of all thresholds equals zero).
 
-\strong{Person estimates} are obtained via Maximum Likelihood (ML) from
-\code{eRm::person.parameter()}, which uses spline interpolation to extrapolate
-location estimates for persons with extreme scores (all-zero or perfect).
-Persons for whom the spline interpolation fails receive \code{NA} and are
-excluded from the histogram.
+\strong{Person estimates} are obtained by Warm's weighted likelihood (WLE)
+from the fitted item thresholds, consistent with the rest of the package.
+WLE is finite at extreme scores, so all-zero and perfect responders are
+located rather than dropped.
 
 \strong{Confidence intervals} for item thresholds are based on Wald-type
 intervals: threshold estimate ± z × SE, where z is the standard normal
@@ -134,6 +133,5 @@ RMtargeting(sim_bin)
 Wright, B. D. & Stone, M. H. (1979). \emph{Best Test Design}. MESA Press.
 }
 \seealso{
-\code{\link[eRm:PCM]{eRm::PCM()}}, \code{\link[eRm:RM]{eRm::RM()}}, \code{\link[mirt:mirt]{mirt::mirt()}},
-\code{\link[eRm:person.parameter]{eRm::person.parameter()}}, \code{\link[eRm:thresholds]{eRm::thresholds()}}
+\code{\link[psychotools:pcmodel]{psychotools::pcmodel()}}, \code{\link[mirt:mirt]{mirt::mirt()}}
 }

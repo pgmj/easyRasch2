@@ -79,11 +79,12 @@ cut-off are outlined in red. \code{NULL} if \code{ggplot2} is not installed.}
 }
 }
 \description{
-Computes Yen's Q3 residual correlations between item pairs using a Rasch
-model fitted via Marginal Maximum Likelihood (MML) in \code{mirt}. High
-correlations (above the dynamic cut-off) indicate potential local dependence
-between items. See \code{\link{RMlocdepQ3Cutoff}} for how to determine
-the appropriate dynamic cut-off for your data.
+Computes Yen's Q3 residual correlations between item pairs. By default the
+Rasch model is fitted by conditional maximum likelihood with WLE person
+locations (\code{estimator = "CML"}); marginal ML via \code{mirt} is available with
+\code{estimator = "MML"}. High correlations (above the dynamic cut-off) indicate
+potential local dependence between items. See \code{\link{RMlocdepQ3Cutoff}}
+for how to determine the appropriate dynamic cut-off for your data.
 }
 \details{
 The Q3 statistic (Yen, 1984) is the correlation between residuals of pairs

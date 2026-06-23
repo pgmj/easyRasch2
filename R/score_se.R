@@ -10,8 +10,8 @@
 #'   the underlying model fit handles them.
 #' @param method Character string. Either `"WLE"` (default) for Warm's Weighted
 #'   Likelihood Estimator computed from a CML-fitted Rasch / Partial Credit
-#'   Model via `eRm`, or `"EAP"` for Expected A Posteriori sum-score estimates
-#'   from an MML-fitted model via `mirt`.
+#'   Model via `psychotools`, or `"EAP"` for Expected A Posteriori sum-score
+#'   estimates from an MML-fitted model via `mirt`.
 #' @param output Character string controlling the return value: `"kable"`
 #'   (default) for a formatted `knitr::kable()` table, `"dataframe"` for the
 #'   underlying data.frame, or `"ggplot"` for a `ggplot2` figure showing each
@@ -42,7 +42,7 @@
 #' (max score 1) or polytomous (max score > 1) and selects the appropriate
 #' Rasch / Partial Credit model.
 #'
-#' **`method = "WLE"`** fits the model with `eRm::RM()` or `eRm::PCM()` (CML),
+#' **`method = "WLE"`** fits the model by CML with `psychotools::pcmodel()`,
 #' centres the item thresholds to grand-mean-zero, and solves Warm's
 #' weighted-likelihood equation for each raw score with the same engine used
 #' by [RMpersonParameters()]; the two functions therefore report identical
@@ -133,7 +133,7 @@ RMscoreSE <- function(data,
     )
     caption <- paste0(
       if (method == "WLE") {
-        "Person locations via Warm's WLE (CML item parameters from eRm)."
+        "Person locations via Warm's WLE (CML item parameters)."
       } else {
         "Person locations via EAPsum (MML item parameters from mirt; depends on a normal theta prior)."
       }

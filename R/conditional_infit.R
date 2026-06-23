@@ -70,16 +70,12 @@
 #' Only complete cases (rows without any `NA`) are used in the conditional fit
 #' calculation.
 #'
-#' For **dichotomous** data (maximum score = 1), a Rasch model is fitted via
-#' `eRm::RM()`. Item locations are the negative beta parameters. Person
-#' locations are estimated via `eRm::person.parameter()`.
-#'
-#' For **polytomous** data (maximum score > 1), a Partial Credit Model is
-#' fitted via `eRm::PCM()`. Item average locations are taken from the
-#' "Location" column of the threshold parameter table returned by
-#' `eRm::thresholds()`; if that column is absent, row means of the threshold
-#' columns are used instead. Person locations are estimated via
-#' `eRm::person.parameter()`.
+#' Item parameters are estimated by conditional maximum likelihood via
+#' `psychotools::pcmodel()` (a dichotomous item is a 2-category PCM); the
+#' conditional infit/outfit MSQ comes from `iarm::out_infit()` and is invariant
+#' to the estimation engine. Per-item average locations are the means of the
+#' CML thresholds, and the person-location reference is the mean of the Warm
+#' WLE estimates.
 #'
 #' Relative item location is defined as the item's average location minus the
 #' sample mean person location, providing a measure of item targeting.
@@ -238,25 +234,16 @@ RMitemInfit <- function(data, cutoff = NULL,
   data_mat <- as.matrix(data)
 
   # --- Fit Rasch model and compute item/person locations ----------------------
-  if (max(data_mat, na.rm = TRUE) == 1L) {
-    # Dichotomous: Rasch model
-    erm_out <- eRm::RM(data)
-    item_avg_locations <- stats::coef(erm_out, "beta") * -1
-    pp <- eRm::person.parameter(erm_out)
-    person_avg_location <- mean(pp$theta.table[["Person Parameter"]], na.rm = TRUE)
-  } else {
-    # Polytomous: Partial Credit Model
-    erm_out <- eRm::PCM(data)
-    thresh_obj <- eRm::thresholds(erm_out)
-    thresh_table <- thresh_obj$threshtable[[1]]
-    if ("Location" %in% colnames(thresh_table)) {
-      item_avg_locations <- thresh_table[, "Location"]
-    } else {
-      item_avg_locations <- rowMeans(thresh_table, na.rm = TRUE)
-    }
-    pp <- eRm::person.parameter(erm_out)
-    person_avg_location <- mean(pp$theta.table[["Person Parameter"]], na.rm = TRUE)
-  }
+  # CML item parameters (psychotools; a dichotomous item is a 2-category PCM)
+  # and WLE person locations, consistent with the rest of the package. The
+  # conditional infit/outfit statistic from iarm is engine-invariant; only the
+  # relative-location reference shifts slightly (WLE vs eRm MLE person mean).
+  fit      <- psychotools::pcmodel(data)
+  thr_list <- .center_thresholds(lapply(psychotools::threshpar(fit), as.numeric))
+  item_avg_locations <- vapply(thr_list, mean, numeric(1L))
+  names(item_avg_locations) <- names(data)
+  person_avg_location <- mean(
+    .estimate_thetas(data_mat, thr_list, method = "WLE")$theta, na.rm = TRUE)
 
   relative_item_avg_locations <- item_avg_locations - person_avg_location
 
@@ -266,7 +253,7 @@ RMitemInfit <- function(data, cutoff = NULL,
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
 
   # --- Compute conditional infit MSQ via iarm ---------------------------------
-  cfit <- iarm::out_infit(erm_out)
+  cfit <- iarm::out_infit(fit)
 
   # --- Count complete cases ---------------------------------------------------
   n_complete <- nrow(stats::na.omit(data))

@@ -20,8 +20,9 @@ scored starting at 0 (non-negative integers). Missing values (\code{NA})
 are allowed; both estimators handle them.}
 
 \item{estimator}{Character. \code{"CML"} (default) estimates item
-parameters with \code{\link[eRm:RM]{eRm::RM()}} / \code{\link[eRm:PCM]{eRm::PCM()}}; \code{"MML"} uses
-\code{\link[mirt:mirt]{mirt::mirt()}} with \code{itemtype = "Rasch"}. CML is preferred for
+parameters with \code{\link[psychotools:pcmodel]{psychotools::pcmodel()}} (a dichotomous item is a
+2-category PCM); \code{"MML"} uses \code{\link[mirt:mirt]{mirt::mirt()}} with
+\code{itemtype = "Rasch"}. CML is preferred for
 Rasch measurement; MML can be more robust when data are sparse.
 When \code{estimator = "CML"} and sparse response categories are
 detected, a warning suggests switching to MML.}
@@ -61,7 +62,7 @@ Estimates item difficulty (dichotomous) or item-category threshold
 (polytomous) parameters and returns them in long or wide format, with
 optional standard errors and Wald confidence intervals. Item
 parameters are estimated by conditional maximum likelihood (CML, via
-\pkg{eRm}) by default, with marginal maximum likelihood (MML, via
+\pkg{psychotools}) by default, with marginal maximum likelihood (MML, via
 \pkg{mirt}) available for sparse data where CML can be unstable.
 }
 \details{
@@ -71,13 +72,11 @@ accordingly. Thresholds are reported as Andrich thresholds (the
 person locations at which adjacent response categories are equally
 probable) on the logit difficulty scale, matching \code{\link[=RMtargeting]{RMtargeting()}}.
 
-\strong{Standard errors.} For the CML path, dichotomous difficulty
-SEs come directly from \pkg{eRm}. Polytomous threshold SEs are
-obtained by the delta method: the full item-category parameter
-covariance is reconstructed as \verb{W V W'} (with \code{W} the eRm design
-matrix and \code{V} the basic-parameter covariance) and propagated through
-the linear threshold map. For the MML path, SEs come from the
-\pkg{mirt} parameter covariance, propagated through the same map.
+\strong{Standard errors.} For the CML path, threshold SEs are the
+square roots of the diagonal of the threshold-parameter covariance from
+\code{psychotools::threshpar(vcov = TRUE)}. For the MML path, SEs come from
+the \pkg{mirt} parameter covariance, propagated by the delta method
+through the linear threshold map.
 Confidence intervals are Wald intervals and are symmetric on the
 logit scale.
 }

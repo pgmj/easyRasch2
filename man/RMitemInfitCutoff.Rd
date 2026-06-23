@@ -12,7 +12,8 @@ RMitemInfitCutoff(
   verbose = FALSE,
   seed = NULL,
   cutoff_method = "hdci",
-  hdci_width = 0.999
+  hdci_width = 0.999,
+  dgp = c("resample", "conditional")
 )
 }
 \arguments{
@@ -41,6 +42,15 @@ computed. Either \code{"hdci"} (default) for the Highest Density Interval via
 
 \item{hdci_width}{Numeric. Width of the HDCI when \code{cutoff_method = "hdci"}.
 Default is \code{0.999} (99.9\% HDCI). Ignored when \code{cutoff_method = "quantile"}.}
+
+\item{dgp}{Character. Data-generating process for the parametric bootstrap.
+\code{"resample"} (default) resamples WLE person locations with replacement and
+simulates responses under the model (a \emph{marginal} null). \code{"conditional"}
+simulates each respondent's pattern from the exact Rasch conditional
+distribution given their observed total score, item parameters fixed (a
+\emph{conditional} null). Because the conditional infit/outfit statistic is
+itself conditional on the total score, \code{"conditional"} is its naturally
+matched null. \strong{Experimental.}}
 }
 \value{
 A list with components:
@@ -58,6 +68,8 @@ computed using the method specified by \code{cutoff_method}.}
 \code{"quantile"}).}
 \item{\code{hdci_width}}{The HDCI width used (only meaningful when
 \code{cutoff_method = "hdci"}).}
+\item{\code{dgp}}{The data-generating process used (\code{"resample"} or
+\code{"conditional"}).}
 }
 }
 \description{
@@ -66,17 +78,14 @@ for \code{\link{RMitemInfit}}. This function simulates data from a correctly fit
 Rasch model that mimics your data and returns per-item empirical cutoffs.
 }
 \details{
-For each simulation iteration, person parameters (thetas) are resampled
-with replacement from ML estimates, response data are simulated under the
-Rasch model, the model is refitted, and conditional infit and outfit MSQ
-statistics are computed via \code{iarm::out_infit()}. The distribution of these
-statistics across iterations provides empirical critical values per item.
-Failed iterations (e.g., due to convergence issues or degenerate data) are
-silently discarded.
-
-Supports both \strong{dichotomous} data (via \code{eRm::RM()} and
-\code{psychotools::rrm()}) and \strong{polytomous} data (via \code{eRm::PCM()} and an
-internal partial credit score simulator).
+The generating model is CML item parameters (via \code{psychotools}) with WLE
+person locations. For each iteration a dataset is simulated under the chosen
+\code{dgp}, the model is refitted by CML (\code{psychotools::pcmodel()}, which handles
+dichotomous and polytomous data and is accepted by \code{iarm}), and conditional
+infit and outfit MSQ are computed via \code{iarm::out_infit()}. The distribution
+of these statistics across iterations provides empirical critical values per
+item. Failed iterations (e.g., degenerate simulated data) are silently
+discarded.
 
 Parallel processing is provided by the \code{mirai} package (optional). Install
 it with \code{install.packages("mirai")} to enable parallelisation.

@@ -50,21 +50,20 @@
 #' The function checks whether any item response category has fewer than 3
 #' observations. If all categories have at least 3 responses, item threshold
 #' locations and their standard errors are estimated via Conditional Maximum
-#' Likelihood (CML) using `eRm::RM()` (dichotomous) or `eRm::PCM()`
-#' (polytomous), with SEs from `eRm::thresholds()`. If any category has fewer
-#' than 3 responses, the function falls back to Marginal Maximum Likelihood
-#' (MML) estimation via `mirt::mirt()` with `itemtype = "Rasch"` and
-#' `SE = TRUE`, which is more numerically stable under sparse-category
-#' conditions. A message is emitted when the MML fallback is used.
+#' Likelihood (CML) using `psychotools::pcmodel()` (a dichotomous item is a
+#' 2-category PCM). If any category has fewer than 3 responses, the function
+#' falls back to Marginal Maximum Likelihood (MML) estimation via
+#' `mirt::mirt()` with `itemtype = "Rasch"` and `SE = TRUE`, which is more
+#' numerically stable under sparse-category conditions. A message is emitted
+#' when the MML fallback is used.
 #'
 #' In both cases, item threshold locations are centered (shifted so the grand
 #' mean of all thresholds equals zero).
 #'
-#' \strong{Person estimates} are obtained via Maximum Likelihood (ML) from
-#' `eRm::person.parameter()`, which uses spline interpolation to extrapolate
-#' location estimates for persons with extreme scores (all-zero or perfect).
-#' Persons for whom the spline interpolation fails receive `NA` and are
-#' excluded from the histogram.
+#' \strong{Person estimates} are obtained by Warm's weighted likelihood (WLE)
+#' from the fitted item thresholds, consistent with the rest of the package.
+#' WLE is finite at extreme scores, so all-zero and perfect responders are
+#' located rather than dropped.
 #'
 #' \strong{Confidence intervals} for item thresholds are based on Wald-type
 #' intervals: threshold estimate ± z × SE, where z is the standard normal
@@ -76,8 +75,7 @@
 #' @references
 #' Wright, B. D. & Stone, M. H. (1979). *Best Test Design*. MESA Press.
 #'
-#' @seealso [eRm::PCM()], [eRm::RM()], [mirt::mirt()],
-#'   [eRm::person.parameter()], [eRm::thresholds()]
+#' @seealso [psychotools::pcmodel()], [mirt::mirt()]
 #'
 #' @export
 #'
@@ -168,12 +166,19 @@ RMtargeting <- function(data, robust = FALSE,
 
   # data.frame: Item, Threshold, Location, SE
   item_thresholds <- thresh_info$thresholds
-  erm_out         <- thresh_info$erm_out
 
-  # --- Person estimates (ML via eRm, with spline extrapolation) ---------------
-  pp <- eRm::person.parameter(erm_out)
-  person_theta <- pp$theta.table[["Person Parameter"]]
-  person_theta <- person_theta[!is.na(person_theta)]
+  # --- Person estimates: WLE on the fitted item thresholds --------------------
+  # Reconstruct the per-item threshold list from the (centred) locations and
+  # estimate person locations by Warm's WLE, consistent with the rest of the
+  # package and finite at extreme scores. Persons and items share a scale by
+  # construction, so the targeting overlap is unaffected by the centring.
+  thr_list <- lapply(
+    split(item_thresholds$Location,
+          factor(item_thresholds$Item, levels = names(data))),
+    as.numeric)
+  person_theta <- .estimate_thetas(as.matrix(data), thr_list,
+                                   method = "WLE")$theta
+  person_theta <- person_theta[is.finite(person_theta)]
 
   # --- Compute CI bounds for thresholds ---------------------------------------
   show_ci <- !is.null(ci_level) && all(!is.na(item_thresholds$SE))
@@ -451,66 +456,33 @@ RMtargeting <- function(data, robust = FALSE,
 #' @return Named list.
 #' @noRd
 .estimate_thresholds_cml <- function(data, is_dicho) {
-  if (is_dicho) {
-    erm_out <- eRm::RM(data)
-    item_locs <- stats::coef(erm_out, "beta") * -1
-    item_ses  <- erm_out$se.beta
+  # CML Andrich thresholds + SEs via psychotools (a dichotomous item is a
+  # 2-category PCM), on the grand-mean-zero scale. Locations match the previous
+  # eRm values; SEs differ slightly (psychotools vs eRm vcov). Person locations
+  # are estimated downstream by WLE from these thresholds.
+  fit    <- psychotools::pcmodel(data)
+  tp     <- psychotools::threshpar(fit, vcov = TRUE)
+  se_all <- sqrt(diag(attr(tp, "vcov")))
+  loc    <- unlist(lapply(tp, as.numeric), use.names = FALSE)
+  loc    <- loc - mean(loc, na.rm = TRUE)
 
-    thresh_df <- data.frame(
-      Item      = names(data),
-      Threshold = "T1",
-      Location  = as.numeric(item_locs),
-      SE        = as.numeric(item_ses),
-      stringsAsFactors = FALSE
-    )
-  } else {
-    erm_out <- eRm::PCM(data)
-    thresh_obj   <- eRm::thresholds(erm_out)
-    thresh_table <- thresh_obj$threshtable[[1]]
-
-    # Remove Location column if present
-    if ("Location" %in% colnames(thresh_table)) {
-      thresh_table <- thresh_table[, colnames(thresh_table) != "Location",
-                                   drop = FALSE]
-    }
-
-    # Center thresholds
-    grand_mean   <- mean(thresh_table, na.rm = TRUE)
-    thresh_table <- thresh_table - grand_mean
-
-    # Extract SEs — thresh_obj$se.thresh is a named vector matching
-    # thresh_obj$threshpar (one SE per threshold, items × thresholds)
-    se_vec <- thresh_obj$se.thresh
-
-    # Build long data.frame
-    thresh_list <- vector("list", nrow(thresh_table))
-    se_idx <- 1L
-    for (i in seq_len(nrow(thresh_table))) {
-      vals   <- thresh_table[i, ]
-      non_na <- !is.na(vals)
-      n_thresh <- sum(non_na)
-      thresh_list[[i]] <- data.frame(
-        Item      = names(data)[i],
-        Threshold = paste0("T", seq_len(n_thresh)),
-        Location  = as.numeric(vals[non_na]),
-        SE        = as.numeric(se_vec[se_idx:(se_idx + n_thresh - 1L)]),
-        stringsAsFactors = FALSE
-      )
-      se_idx <- se_idx + n_thresh
-    }
-    thresh_df <- do.call(rbind, thresh_list)
-    rownames(thresh_df) <- NULL
-  }
-
-  list(thresholds = thresh_df, erm_out = erm_out)
+  thresh_df <- data.frame(
+    Item      = rep(names(tp), lengths(tp)),
+    Threshold = paste0("T", unlist(lapply(tp, seq_along), use.names = FALSE)),
+    Location  = loc,
+    SE        = as.numeric(se_all),
+    stringsAsFactors = FALSE
+  )
+  rownames(thresh_df) <- NULL
+  list(thresholds = thresh_df, erm_out = NULL)
 }
 
 
-#' Estimate item thresholds via MML (mirt) with eRm fallback for person params
+#' Estimate item thresholds via MML (mirt) for sparse-category data
 #'
 #' Uses `mirt::mirt()` with `itemtype = "Rasch"` and `SE = TRUE` for threshold
-#' estimation (more stable with sparse categories), but still fits an eRm
-#' model for person parameter estimation via `eRm::person.parameter()`.
+#' estimation (more stable with sparse categories). Person locations are
+#' estimated downstream by WLE from these thresholds.
 #'
 #' @param data A data.frame of item responses.
 #' @param is_dicho Logical. `TRUE` for dichotomous data.
@@ -554,18 +526,6 @@ RMtargeting <- function(data, robust = FALSE,
   grand_mean <- mean(thresh_df$Location, na.rm = TRUE)
   thresh_df$Location <- thresh_df$Location - grand_mean
 
-  # Fit eRm for person parameters
-  erm_out <- tryCatch(
-    if (is_dicho) eRm::RM(data) else eRm::PCM(data),
-    error = function(e) {
-      stop(
-        "eRm model fitting failed for person parameter estimation: ",
-        conditionMessage(e),
-        "\nThe data may be too sparse for reliable analysis.",
-        call. = FALSE
-      )
-    }
-  )
-
-  list(thresholds = thresh_df, erm_out = erm_out)
+  # Person locations are estimated downstream by WLE from these thresholds.
+  list(thresholds = thresh_df, erm_out = NULL)
 }

@@ -21,8 +21,8 @@ the underlying model fit handles them.}
 
 \item{method}{Character string. Either \code{"WLE"} (default) for Warm's Weighted
 Likelihood Estimator computed from a CML-fitted Rasch / Partial Credit
-Model via \code{eRm}, or \code{"EAP"} for Expected A Posteriori sum-score estimates
-from an MML-fitted model via \code{mirt}.}
+Model via \code{psychotools}, or \code{"EAP"} for Expected A Posteriori sum-score
+estimates from an MML-fitted model via \code{mirt}.}
 
 \item{output}{Character string controlling the return value: \code{"kable"}
 (default) for a formatted \code{knitr::kable()} table, \code{"dataframe"} for the
@@ -66,7 +66,7 @@ The function automatically detects whether the data is dichotomous
 (max score 1) or polytomous (max score > 1) and selects the appropriate
 Rasch / Partial Credit model.
 
-\strong{\code{method = "WLE"}} fits the model with \code{eRm::RM()} or \code{eRm::PCM()} (CML),
+\strong{\code{method = "WLE"}} fits the model by CML with \code{psychotools::pcmodel()},
 centres the item thresholds to grand-mean-zero, and solves Warm's
 weighted-likelihood equation for each raw score with the same engine used
 by \code{\link[=RMpersonParameters]{RMpersonParameters()}}; the two functions therefore report identical

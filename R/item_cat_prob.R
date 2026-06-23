@@ -1,9 +1,9 @@
 #' Item Category Probability Curves
 #'
 #' Plots model-implied response-category probability curves for each item
-#' as a function of the latent trait \eqn{\theta}. Polytomous items are
-#' fitted with the Partial Credit Model via `eRm::PCM()`; dichotomous
-#' items are fitted with the Rasch model via `eRm::RM()`. Each item gets
+#' as a function of the latent trait \eqn{\theta}. Item parameters are
+#' estimated by conditional maximum likelihood via `psychotools::pcmodel()`
+#' (a dichotomous item is a 2-category PCM). Each item gets
 #' its own facet panel, with one curve per response category coloured
 #' from low to high using the viridis palette. Comparable in scope to
 #' `eRm::plotICC()` and `mirt`'s trace plots, with a `ggplot2` /
@@ -74,8 +74,8 @@
 #' @details
 #' For each polytomous item *i* with response categories
 #' \eqn{0, 1, \ldots, K_i} and threshold parameters
-#' \eqn{\delta_{i,1}, \ldots, \delta_{i,K_i}} from
-#' `eRm::thresholds()`, the PCM category probability is
+#' \eqn{\delta_{i,1}, \ldots, \delta_{i,K_i}} (CML, `psychotools`),
+#' the PCM category probability is
 #'
 #' \deqn{P(X_i = k \mid \theta) = \frac{\exp(\sum_{j=1}^{k}
 #'   (\theta - \delta_{i,j}))}{\sum_{k'=0}^{K_i} \exp(\sum_{j=1}^{k'}
@@ -286,32 +286,12 @@ RMitemCatProb <- function(
   # ---------------------------------------------------------------------
   is_polytomous <- max_score > 1L
 
-  # Per-item thresholds: a list, one numeric vector per item.
-  if (is_polytomous) {
-    pcm_fit <- eRm::PCM(data)
-    thresh_obj <- eRm::thresholds(pcm_fit)
-    thresh_mat <- thresh_obj$threshtable[[1L]]
-    # Drop the "Location" column (always first); keep only the actual
-    # threshold columns (Threshold 1, Threshold 2, ...).
-    if ("Location" %in% colnames(thresh_mat)) {
-      thresh_mat <- thresh_mat[, -1L, drop = FALSE]
-    }
-    item_thresholds <- lapply(seq_len(nrow(thresh_mat)), function(i) {
-      v <- as.numeric(thresh_mat[i, ])
-      v[!is.na(v)]
-    })
-    names(item_thresholds) <- rownames(thresh_mat)
-  } else {
-    rm_fit <- eRm::RM(data)
-    # Item difficulty delta_i = -beta_i (eRm parametrises beta as
-    # easiness; we want difficulty for the threshold convention).
-    deltas <- as.numeric(-rm_fit$betapar)
-    item_thresholds <- lapply(deltas, function(d) d)
-    names(item_thresholds) <- item_names
-  }
-
-  # Make sure the order matches the input data column order
-  item_thresholds <- item_thresholds[item_names]
+  # Per-item thresholds (a list, one numeric vector per item) by CML via
+  # psychotools, on the grand-mean-zero scale used across the package. A
+  # dichotomous item is a 2-category PCM. The curve shapes are unchanged; for
+  # polytomous data the common scale can shift the absolute theta position
+  # relative to the earlier eRm parameterisation.
+  item_thresholds <- .fit_cml_thresholds(data)[item_names]
 
   # ---------------------------------------------------------------------
   # Compute category probability curves on the theta grid

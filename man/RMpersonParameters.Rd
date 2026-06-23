@@ -31,7 +31,7 @@ vectors (one per item) or the long-format data.frame returned by
 estimated from \code{data}.}
 
 \item{estimator}{Character. How item parameters are estimated when
-\code{item_params} is \code{NULL}: \code{"CML"} (default, via \pkg{eRm}) or
+\code{item_params} is \code{NULL}: \code{"CML"} (default, via \pkg{psychotools}) or
 \code{"MML"} (via \pkg{mirt}). Ignored when \code{item_params} is supplied.}
 
 \item{theta_range}{Numeric length 2. Search range for the WLE root

@@ -4,15 +4,16 @@
 #' (polytomous) parameters and returns them in long or wide format, with
 #' optional standard errors and Wald confidence intervals. Item
 #' parameters are estimated by conditional maximum likelihood (CML, via
-#' \pkg{eRm}) by default, with marginal maximum likelihood (MML, via
+#' \pkg{psychotools}) by default, with marginal maximum likelihood (MML, via
 #' \pkg{mirt}) available for sparse data where CML can be unstable.
 #'
 #' @param data A data.frame or matrix of item responses. Items must be
 #'   scored starting at 0 (non-negative integers). Missing values (`NA`)
 #'   are allowed; both estimators handle them.
 #' @param estimator Character. `"CML"` (default) estimates item
-#'   parameters with [eRm::RM()] / [eRm::PCM()]; `"MML"` uses
-#'   [mirt::mirt()] with `itemtype = "Rasch"`. CML is preferred for
+#'   parameters with [psychotools::pcmodel()] (a dichotomous item is a
+#'   2-category PCM); `"MML"` uses [mirt::mirt()] with
+#'   `itemtype = "Rasch"`. CML is preferred for
 #'   Rasch measurement; MML can be more robust when data are sparse.
 #'   When `estimator = "CML"` and sparse response categories are
 #'   detected, a warning suggests switching to MML.
@@ -49,13 +50,11 @@
 #' person locations at which adjacent response categories are equally
 #' probable) on the logit difficulty scale, matching [RMtargeting()].
 #'
-#' \strong{Standard errors.} For the CML path, dichotomous difficulty
-#' SEs come directly from \pkg{eRm}. Polytomous threshold SEs are
-#' obtained by the delta method: the full item-category parameter
-#' covariance is reconstructed as `W V W'` (with `W` the eRm design
-#' matrix and `V` the basic-parameter covariance) and propagated through
-#' the linear threshold map. For the MML path, SEs come from the
-#' \pkg{mirt} parameter covariance, propagated through the same map.
+#' \strong{Standard errors.} For the CML path, threshold SEs are the
+#' square roots of the diagonal of the threshold-parameter covariance from
+#' `psychotools::threshpar(vcov = TRUE)`. For the MML path, SEs come from
+#' the \pkg{mirt} parameter covariance, propagated by the delta method
+#' through the linear threshold map.
 #' Confidence intervals are Wald intervals and are symmetric on the
 #' logit scale.
 #'
@@ -227,8 +226,13 @@ RMitemParameters <- function(data,
 
   .sparsity_warning(data, is_poly)
 
+  # CML via psychotools (a dichotomous item is a 2-category PCM). Andrich
+  # thresholds and their covariance come from threshpar(); callers re-centre
+  # the thresholds, so the parameterisation here is immaterial. (Previously
+  # eRm::PCM/RM + eRm threshold SEs; threshold locations match to ~5e-5, the
+  # reported SEs differ slightly, psychotools vs eRm vcov.)
   fit <- tryCatch(
-    if (is_poly) eRm::PCM(data) else eRm::RM(data),
+    psychotools::pcmodel(data),
     error = function(e) {
       stop("CML estimation failed (", conditionMessage(e), "). ",
            "This often indicates sparse data; try estimator = \"MML\".",
@@ -236,74 +240,20 @@ RMitemParameters <- function(data,
     }
   )
 
-  items <- colnames(data)
-
-  if (!is_poly) {
-    # Item difficulty = -beta; eRm reports se.beta for every item.
-    diff_i  <- -as.numeric(fit$betapar)
-    thr_list <- as.list(diff_i)
-    se_list  <- if (se) as.list(as.numeric(fit$se.beta)) else NULL
-    return(list(model = "RM", items = items, is_polytomous = FALSE,
-                thr_list = thr_list, se_list = se_list))
-  }
-
-  # Polytomous: thresholds from eRm, SEs by the delta method.
-  thr_tab <- eRm::thresholds(fit)$threshtable[[1L]]
-  thr_cols <- grep("^Threshold", colnames(thr_tab))
-  thr_mat  <- thr_tab[, thr_cols, drop = FALSE]
-  thr_list <- lapply(seq_len(nrow(thr_mat)), function(i) {
-    v <- as.numeric(thr_mat[i, ])
-    v[!is.na(v)]
-  })
-  names(thr_list) <- items
+  items    <- colnames(data)
+  tp       <- psychotools::threshpar(fit, vcov = se)
+  thr_list <- stats::setNames(lapply(tp, as.numeric), items)
 
   se_list <- NULL
   if (se) {
-    se_list <- .pcm_threshold_se(fit, thr_list)
+    se_all  <- sqrt(diag(attr(tp, "vcov")))
+    se_list <- split(se_all, rep.int(seq_along(thr_list), lengths(thr_list)))
+    se_list <- stats::setNames(lapply(se_list, as.numeric), items)
   }
 
-  list(model = "PCM", items = items, is_polytomous = TRUE,
+  list(model = if (is_poly) "PCM" else "RM",
+       items = items, is_polytomous = is_poly,
        thr_list = thr_list, se_list = se_list)
-}
-
-#' Delta-method threshold SEs for an eRm PCM fit
-#'
-#' Reconstructs the full item-category parameter covariance as `W V W'`
-#' and propagates it through the linear map from item-category
-#' parameters to Andrich thresholds (`tau_i1 = -b_i1`,
-#' `tau_ik = b_i(k-1) - b_ik`).
-#'
-#' @param fit An [eRm::PCM()] fit.
-#' @param thr_list Thresholds per item (defines the per-item step counts).
-#' @return List of threshold-SE vectors, one per item.
-#' @keywords internal
-#' @noRd
-.pcm_threshold_se <- function(fit, thr_list) {
-  W      <- fit$W
-  v_beta <- W %*% stats::vcov(fit) %*% t(W) # covariance of all betapar
-  steps  <- vapply(thr_list, length, integer(1))
-
-  # Block-diagonal linear map C: thresholds <- betapar, per item.
-  n_beta <- nrow(v_beta)
-  C <- matrix(0, sum(steps), n_beta)
-  r0 <- 0L; c0 <- 0L
-  for (m in steps) {
-    for (k in seq_len(m)) {
-      if (k == 1L) {
-        C[r0 + 1L, c0 + 1L] <- -1
-      } else {
-        C[r0 + k, c0 + k - 1L] <- 1
-        C[r0 + k, c0 + k]      <- -1
-      }
-    }
-    r0 <- r0 + m
-    c0 <- c0 + m
-  }
-
-  v_tau <- C %*% v_beta %*% t(C)
-  se_tau <- sqrt(pmax(diag(v_tau), 0))
-
-  split(se_tau, rep(seq_along(steps), steps))
 }
 
 # ---------------------------------------------------------------------

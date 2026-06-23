@@ -1,10 +1,11 @@
 #' Q3 Residual Correlations for Local Dependence Assessment
 #'
-#' Computes Yen's Q3 residual correlations between item pairs using a Rasch
-#' model fitted via Marginal Maximum Likelihood (MML) in `mirt`. High
-#' correlations (above the dynamic cut-off) indicate potential local dependence
-#' between items. See \code{\link{RMlocdepQ3Cutoff}} for how to determine
-#' the appropriate dynamic cut-off for your data.
+#' Computes Yen's Q3 residual correlations between item pairs. By default the
+#' Rasch model is fitted by conditional maximum likelihood with WLE person
+#' locations (`estimator = "CML"`); marginal ML via `mirt` is available with
+#' `estimator = "MML"`. High correlations (above the dynamic cut-off) indicate
+#' potential local dependence between items. See \code{\link{RMlocdepQ3Cutoff}}
+#' for how to determine the appropriate dynamic cut-off for your data.
 #'
 #' @param data A data.frame or matrix of item responses. Items must be scored
 #'   starting at 0 (non-negative integers). Missing values (`NA`) are allowed.
@@ -569,6 +570,16 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 #'   must match the `estimator` later given to \code{\link{RMlocdepQ3}}; the
 #'   value is stored in the returned object's `$estimator` and reused
 #'   automatically.
+#' @param dgp Character. Data-generating process for the parametric bootstrap.
+#'   `"resample"` (default) draws person locations by resampling the WLE
+#'   estimates with replacement and simulates responses under the model -- a
+#'   *marginal* null. `"conditional"` instead simulates each respondent's
+#'   pattern from the exact Rasch conditional distribution given their observed
+#'   total score (and answered items), with item parameters fixed -- a
+#'   *conditional* null that fixes the score margin and needs no latent
+#'   distribution, avoiding the over-dispersion of resampled point estimates.
+#'   The two give different cut-offs; see the package's comparison study.
+#'   \strong{Experimental.}
 #'
 #' @return A list with components:
 #' \describe{
@@ -595,6 +606,8 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 #'   \item{`estimator`}{The estimator used for the simulated Q3 (`"CML"` or
 #'     `"MML"`); reused by \code{\link{RMlocdepQ3}} and
 #'     \code{\link{RMlocdepQ3Plot}}.}
+#'   \item{`dgp`}{The data-generating process used (`"resample"` or
+#'     `"conditional"`).}
 #' }
 #'
 #' @details
@@ -637,10 +650,12 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
                               n_cores = NULL, verbose = FALSE, seed = NULL,
                               cutoff_method = "hdci", hdci_width = 0.99,
-                              estimator = c("CML", "MML")) {
+                              estimator = c("CML", "MML"),
+                              dgp = c("resample", "conditional")) {
   validate_response_data(data)
 
   estimator     <- match.arg(estimator)
+  dgp           <- match.arg(dgp)
   cutoff_method <- match.arg(cutoff_method, c("hdci", "quantile"))
   if (cutoff_method == "hdci" && !requireNamespace("ggdist", quietly = TRUE)) {
     stop(
@@ -700,37 +715,39 @@ RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
     item_names_sim <- paste0("V", seq_len(ncol(data_mat)))
   }
 
-  # Generating model: CML item thresholds + WLE person locations, computed
-  # once with the shared native engine. Items and thetas are on the same scale
-  # by construction, so the simulated data are internally coherent. WLE (rather
-  # than eRm's MLE person.parameter) keeps the generating distribution
-  # consistent with the WLE used for the Q3 residuals and is finite at extreme
-  # scores. Non-finite thetas (none under WLE for the observed scores) are
-  # dropped from the resampling pool.
-  thr_list <- .fit_cml_thresholds(data_mat)
-  thetas   <- .estimate_thetas(data_mat, thr_list, method = "WLE")$theta
-  thetas   <- thetas[is.finite(thetas)]
+  # Generating model: CML item thresholds (psychotools), computed once. WLE
+  # person locations are computed for the sample summary and, under the
+  # "resample" DGP, as the generating theta pool.
+  thr_list   <- .fit_cml_thresholds(data_mat)
+  wle_thetas <- .estimate_thetas(data_mat, thr_list, method = "WLE")$theta
+  wle_thetas <- wle_thetas[is.finite(wle_thetas)]
 
-  if (is_polytomous) {
-    sim_data_list <- list(
-      type       = "polytomous",
-      thetas     = thetas,
-      deltaslist = thr_list,
-      n_items    = ncol(data_mat),
-      sample_n   = sample_n,
-      item_names = item_names_sim,
-      estimator  = estimator
-    )
+  sim_data_list <- list(
+    dgp        = dgp,
+    type       = if (is_polytomous) "polytomous" else "dichotomous",
+    thr_list   = thr_list,
+    n_items    = ncol(data_mat),
+    sample_n   = sample_n,
+    item_names = item_names_sim,
+    estimator  = estimator
+  )
+  if (dgp == "resample") {
+    # Marginal DGP: resample WLE thetas with replacement, then simulate data
+    # parametrically under the model (items and thetas on a common scale).
+    sim_data_list$thetas <- wle_thetas
+    if (is_polytomous) {
+      sim_data_list$deltaslist <- thr_list
+    } else {
+      sim_data_list$item_params <- unlist(thr_list, use.names = FALSE)
+    }
   } else {
-    sim_data_list <- list(
-      type        = "dichotomous",
-      thetas      = thetas,
-      item_params = unlist(thr_list, use.names = FALSE),
-      n_items     = ncol(data_mat),
-      sample_n    = sample_n,
-      item_names  = item_names_sim,
-      estimator   = estimator
-    )
+    # Conditional DGP: simulate each respondent's pattern from the exact Rasch
+    # conditional distribution given their observed total score (and answered
+    # items), item parameters fixed. No latent distribution is estimated, so
+    # the sufficient statistic -- not a resampled point estimate -- defines the
+    # null. Respondents are grouped by (answered-set, score) so each group is
+    # drawn in one batch.
+    sim_data_list$cond_groups <- .cond_groups(data_mat, thr_list)
   }
 
   if (use_parallel) {
@@ -809,7 +826,7 @@ RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
   out$pair_cutoffs      <- pair_cutoffs
   out$actual_iterations <- actual_iterations
   out$sample_n          <- sample_n
-  out$sample_summary    <- summary(sim_data_list$thetas)
+  out$sample_summary    <- summary(wle_thetas)
   out$item_names        <- item_names_vec
   out$max_diff          <- max(results$diff)
   out$sd_diff           <- stats::sd(results$diff)
@@ -821,12 +838,72 @@ RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
   out$cutoff_method     <- cutoff_method
   out$hdci_width        <- hdci_width
   out$estimator         <- estimator
+  out$dgp               <- dgp
   out
 }
 
 # ---------------------------------------------------------------------------
 # Internal: single simulation iteration
 # ---------------------------------------------------------------------------
+
+#' Group respondents by sufficient statistic for the conditional DGP
+#'
+#' Shared by the conditional-DGP cutoff simulators (`RMlocdepQ3Cutoff()`,
+#' `RMitemInfitCutoff()`, ...). Returns one element per distinct (answered-item
+#' set, total score) so each group can be drawn in a single
+#' `.sim_conditional()` call.
+#'
+#' @param data_mat Observed response matrix.
+#' @param thr_list Item thresholds (unused here but kept for symmetry).
+#' @return List of `list(rows, ans, score)` groups.
+#' @keywords internal
+#' @noRd
+.cond_groups <- function(data_mat, thr_list) {
+  n       <- nrow(data_mat)
+  ans_key <- apply(!is.na(data_mat), 1L, function(z) paste0(which(z), collapse = ","))
+  score   <- rowSums(data_mat, na.rm = TRUE)
+  key     <- paste(ans_key, score, sep = "|")
+  unname(lapply(split(seq_len(n), key), function(rows) {
+    ans <- which(!is.na(data_mat[rows[1L], ]))
+    list(rows = rows, ans = ans, score = sum(data_mat[rows[1L], ans]))
+  }))
+}
+
+#' Simulate one conditional-DGP dataset
+#'
+#' For each (answered-set, score) group, draw the required number of response
+#' patterns from the Rasch conditional distribution given the total score
+#' (`.sim_conditional()`, in person_fit.R); extreme scores (0 or maximum) yield
+#' their unique degenerate pattern. The observed missingness pattern is
+#' preserved (unanswered cells stay `NA`). Shared by the conditional-DGP cutoff
+#' simulators.
+#'
+#' @param data_list A simulation list with `dgp = "conditional"` (carries
+#'   `thr_list`, `cond_groups`, `sample_n`, `n_items`).
+#' @return A data.frame of simulated responses.
+#' @keywords internal
+#' @noRd
+.sim_cond_dataset <- function(data_list) {
+  N   <- data_list$sample_n
+  K   <- data_list$n_items
+  out <- matrix(NA_integer_, N, K)
+  for (g in data_list$cond_groups) {
+    thr_sub <- data_list$thr_list[g$ans]
+    m       <- length(g$rows)
+    pat     <- .sim_conditional(thr_sub, g$score, m)
+    if (is.null(pat)) {
+      # Extreme score: deterministic pattern (all-0 or all-maximum-category).
+      steps <- vapply(thr_sub, length, integer(1L))
+      pat   <- if (g$score <= 0L) {
+        matrix(0L, m, length(g$ans))
+      } else {
+        matrix(steps, nrow = m, ncol = length(g$ans), byrow = TRUE)
+      }
+    }
+    out[g$rows, g$ans] <- pat
+  }
+  as.data.frame(out)
+}
 
 #' Run a single Q3 simulation iteration
 #'
@@ -837,30 +914,31 @@ RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
 run_single_q3_sim <- function(seed, data_list) {
   set.seed(seed)
 
-  thetas_res <- sample(data_list$thetas, size = data_list$sample_n, replace = TRUE)
-
   tryCatch({
-    if (data_list$type == "dichotomous") {
-      # Simulate dichotomous data via psychotools::rrm()
-      sim_mat <- psychotools::rrm(
-        theta = thetas_res,
-        beta = data_list$item_params
+    # --- Generate one simulated dataset under the chosen DGP -----------------
+    if (identical(data_list$dgp, "conditional")) {
+      sim_df <- .sim_cond_dataset(data_list)
+    } else if (data_list$type == "dichotomous") {
+      thetas_res <- sample(data_list$thetas, size = data_list$sample_n,
+                           replace = TRUE)
+      sim_df <- as.data.frame(
+        psychotools::rrm(theta = thetas_res, beta = data_list$item_params)$data
       )
-      sim_df <- as.data.frame(sim_mat$data)
+    } else {
+      thetas_res <- sample(data_list$thetas, size = data_list$sample_n,
+                           replace = TRUE)
+      sim_df <- as.data.frame(sim_partial_score(data_list$deltaslist, thetas_res))
+    }
 
-      # Validate: every item must have at least 8 positive responses.
-      # Fewer than 8 positives can cause numerical instability in mirt fitting.
-      pos_counts <- colSums(sim_df, na.rm = TRUE)
-      if (any(pos_counts < 8L)) {
+    # --- Validate the simulated dataset (estimable refit) --------------------
+    if (data_list$type == "dichotomous") {
+      # Every item must have at least 8 positive responses (numerical stability).
+      if (any(colSums(sim_df, na.rm = TRUE) < 8L)) {
         return("validation_failed: fewer than 8 positive responses in at least one item")
       }
     } else {
-      # Simulate polytomous data
-      sim_mat <- sim_partial_score(data_list$deltaslist, thetas_res)
-      sim_df <- as.data.frame(sim_mat)
-
-      # Validate: all categories must be represented in each item
-      n_cats <- vapply(data_list$deltaslist, function(d) length(d) + 1L, integer(1L))
+      # Every item must show all categories.
+      n_cats <- vapply(data_list$thr_list, function(d) length(d) + 1L, integer(1L))
       for (j in seq_len(ncol(sim_df))) {
         tab <- tabulate(sim_df[[j]] + 1L, nbins = n_cats[j])
         if (any(tab == 0L)) {
@@ -939,6 +1017,10 @@ run_q3_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
       run_single_q3_sim   = run_single_q3_sim,
       sim_partial_score   = sim_partial_score,
       sim_poly_item       = sim_poly_item,
+      # Conditional-DGP generators.
+      .sim_cond_dataset = .sim_cond_dataset,
+      .sim_conditional    = .sim_conditional,
+      .esf_convolve       = .esf_convolve,
       # Engine helpers needed by .q3_residual_matrix() inside the daemon
       # (the CML/WLE path; the MML path uses namespaced mirt::).
       .q3_residual_matrix = .q3_residual_matrix,

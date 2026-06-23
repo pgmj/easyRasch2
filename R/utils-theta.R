@@ -241,6 +241,12 @@
 .fit_cml_thresholds <- function(data) {
   data <- as.matrix(data)
   is_poly <- max(data, na.rm = TRUE) > 1L
+  # A dichotomous item is a 2-category PCM, so pcmodel() handles both types and
+  # gives the identical CML estimate (same log-likelihood, difficulties match to
+  # 0). raschmodel() is used for the dichotomous case only because it is ~2x
+  # faster, which matters in the per-iteration bootstrap loops that call this.
+  # The one-time `.rasch_fit_cml()` (item_parameters.R) uses pcmodel() for both,
+  # where that speed difference is immaterial.
   fit <- if (is_poly) psychotools::pcmodel(data) else psychotools::raschmodel(data)
   thr_list <- lapply(psychotools::threshpar(fit), as.numeric)
   .center_thresholds(thr_list)

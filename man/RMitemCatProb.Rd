@@ -102,9 +102,9 @@ theta gridpoint.
 }
 \description{
 Plots model-implied response-category probability curves for each item
-as a function of the latent trait \eqn{\theta}. Polytomous items are
-fitted with the Partial Credit Model via \code{eRm::PCM()}; dichotomous
-items are fitted with the Rasch model via \code{eRm::RM()}. Each item gets
+as a function of the latent trait \eqn{\theta}. Item parameters are
+estimated by conditional maximum likelihood via \code{psychotools::pcmodel()}
+(a dichotomous item is a 2-category PCM). Each item gets
 its own facet panel, with one curve per response category coloured
 from low to high using the viridis palette. Comparable in scope to
 \code{eRm::plotICC()} and \code{mirt}'s trace plots, with a \code{ggplot2} /
@@ -114,8 +114,8 @@ categories.
 \details{
 For each polytomous item \emph{i} with response categories
 \eqn{0, 1, \ldots, K_i} and threshold parameters
-\eqn{\delta_{i,1}, \ldots, \delta_{i,K_i}} from
-\code{eRm::thresholds()}, the PCM category probability is
+\eqn{\delta_{i,1}, \ldots, \delta_{i,K_i}} (CML, \code{psychotools}),
+the PCM category probability is
 
 \deqn{P(X_i = k \mid \theta) = \frac{\exp(\sum_{j=1}^{k}
   (\theta - \delta_{i,j}))}{\sum_{k'=0}^{K_i} \exp(\sum_{j=1}^{k'}

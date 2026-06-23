@@ -13,7 +13,8 @@ RMlocdepQ3Cutoff(
   seed = NULL,
   cutoff_method = "hdci",
   hdci_width = 0.99,
-  estimator = c("CML", "MML")
+  estimator = c("CML", "MML"),
+  dgp = c("resample", "conditional")
 )
 }
 \arguments{
@@ -51,6 +52,17 @@ CML item parameters and WLE person locations; \code{"MML"} uses \code{mirt}. Thi
 must match the \code{estimator} later given to \code{\link{RMlocdepQ3}}; the
 value is stored in the returned object's \verb{$estimator} and reused
 automatically.}
+
+\item{dgp}{Character. Data-generating process for the parametric bootstrap.
+\code{"resample"} (default) draws person locations by resampling the WLE
+estimates with replacement and simulates responses under the model -- a
+\emph{marginal} null. \code{"conditional"} instead simulates each respondent's
+pattern from the exact Rasch conditional distribution given their observed
+total score (and answered items), with item parameters fixed -- a
+\emph{conditional} null that fixes the score margin and needs no latent
+distribution, avoiding the over-dispersion of resampled point estimates.
+The two give different cut-offs; see the package's comparison study.
+\strong{Experimental.}}
 }
 \value{
 A list with components:
@@ -78,6 +90,8 @@ scalar cutoff for \code{\link{RMlocdepQ3}}.}
 \item{\code{estimator}}{The estimator used for the simulated Q3 (\code{"CML"} or
 \code{"MML"}); reused by \code{\link{RMlocdepQ3}} and
 \code{\link{RMlocdepQ3Plot}}.}
+\item{\code{dgp}}{The data-generating process used (\code{"resample"} or
+\code{"conditional"}).}
 }
 }
 \description{

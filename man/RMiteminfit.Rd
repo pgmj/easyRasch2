@@ -96,16 +96,12 @@ uses the conditional distribution of the sufficient statistics (Müller, 2020).
 Only complete cases (rows without any \code{NA}) are used in the conditional fit
 calculation.
 
-For \strong{dichotomous} data (maximum score = 1), a Rasch model is fitted via
-\code{eRm::RM()}. Item locations are the negative beta parameters. Person
-locations are estimated via \code{eRm::person.parameter()}.
-
-For \strong{polytomous} data (maximum score > 1), a Partial Credit Model is
-fitted via \code{eRm::PCM()}. Item average locations are taken from the
-"Location" column of the threshold parameter table returned by
-\code{eRm::thresholds()}; if that column is absent, row means of the threshold
-columns are used instead. Person locations are estimated via
-\code{eRm::person.parameter()}.
+Item parameters are estimated by conditional maximum likelihood via
+\code{psychotools::pcmodel()} (a dichotomous item is a 2-category PCM); the
+conditional infit/outfit MSQ comes from \code{iarm::out_infit()} and is invariant
+to the estimation engine. Per-item average locations are the means of the
+CML thresholds, and the person-location reference is the mean of the Warm
+WLE estimates.
 
 Relative item location is defined as the item's average location minus the
 sample mean person location, providing a measure of item targeting.

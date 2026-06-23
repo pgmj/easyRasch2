@@ -62,13 +62,13 @@ Rule-of-thumb cutoffs for the first-contrast eigenvalue depend strongly on
 sample size, test length, and item-parameter spread; simulation-based
 cutoffs tailored to the data are more defensible (Chou & Wang, 2010).
 
-Per iteration: theta values are sampled with replacement from the WLE/MLE
-estimates derived from the fitted full-sample model; response data are
-simulated under the model (\code{psychotools::rrm} for dichotomous,
-partial-credit simulator for polytomous); the model is refitted with
-\code{eRm::RM()} / \code{eRm::PCM()}; standardized residuals are extracted via
-\code{eRm::itemfit()$st.res}; \code{prcomp()} is run; the first-contrast eigenvalue
-is recorded.
+The generating model uses CML item parameters (\code{psychotools}) and WLE person
+locations. Per iteration: theta values are sampled with replacement from the
+WLE estimates; response data are simulated under the model
+(\code{psychotools::rrm} for dichotomous, partial-credit simulator for
+polytomous); CML/WLE standardized residuals are computed (the same engine as
+the observed analysis); \code{prcomp()} is run; the first-contrast eigenvalue is
+recorded.
 
 Iterations that fail (e.g., due to a degenerate simulated dataset where
 some category isn't represented) are silently dropped. The \code{iarm} package

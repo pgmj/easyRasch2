@@ -37,12 +37,12 @@ random column split). Estimates are averaged across repetitions to
 stabilise against split-induced variability. Default \code{50}.}
 
 \item{estim}{Character. Theta estimator used by \code{mirt::fscores()} for the
-empirical reliability and the plausible-value seed. One of \code{"WLE"}
-(default), \code{"EAP"}, \code{"MAP"}, \code{"ML"}. Plausible draws themselves are
-produced by Metropolis-Hastings.}
+RMU plausible-value seed. One of \code{"WLE"} (default), \code{"EAP"}, \code{"MAP"},
+\code{"ML"}. Plausible draws themselves are produced by Metropolis-Hastings.
+(PSI and marginal reliability are computed natively and do not use this.)}
 
 \item{boot}{Logical. If \code{TRUE}, run a non-parametric bootstrap to obtain
-CIs for PSI and Empirical reliability. Default \code{FALSE}.}
+CIs for PSI and Marginal reliability. Default \code{FALSE}.}
 
 \item{boot_iter}{Integer. Number of bootstrap iterations when
 \code{boot = TRUE}. Default \code{200}.}
@@ -74,35 +74,43 @@ the bootstrap. Default \code{FALSE}.}
 }
 \description{
 Computes three reliability indices for a Rasch / partial credit model:
-the Person Separation Index (PSI) via \code{eRm::SepRel()}, empirical
-reliability via \code{mirt::empirical_rxx()}, and Relative Measurement
-Uncertainty (RMU) via \code{\link[=RMUreliability]{RMUreliability()}} applied to plausible values
-from \code{mirt::fscores()}.
+the Person Separation Index (PSI) -- WLE-based separation reliability -- the
+marginal reliability (native, CML test information integrated over the
+estimated normal latent density), and Relative Measurement Uncertainty (RMU)
+via \code{\link[=RMUreliability]{RMUreliability()}} applied to plausible values from \code{mirt::fscores()}.
 }
 \details{
-Confidence intervals for \strong{PSI} and \strong{Empirical} reliability are obtained
-by non-parametric bootstrap (refitting both the eRm and mirt models on
-each resample). The RMU interval is the HDCI of correlations across
-plausible-value draws, averaged over \code{rmu_iter} random splits of the draws.
+Confidence intervals for \strong{PSI} and \strong{Marginal} reliability are obtained
+by non-parametric bootstrap (resampling respondents; all three indices are
+recomputed natively per resample, no model is refitted by \code{mirt}). The RMU
+interval is the HDCI of correlations across plausible-value draws, averaged
+over \code{rmu_iter} random splits of the draws.
 
-This is a CRAN-friendly replacement for \code{easyRasch::RIreliability()}. The
-TAM-based plausible-values path has been removed; mirt is the only MML
-backend.
+Marginal reliability is the native Green (1984) coefficient,
+\eqn{1 - \overline{1/I(\theta)}/\sigma^2}, where the test information
+\eqn{I(\theta)} is summed from the CML item parameters and the average error
+variance is taken over the estimated normal latent density \eqn{N(0,
+\sigma^2)} (\eqn{\sigma} from marginal ML). Unlike \code{mirt::marginal_rxx()},
+which assumes \eqn{N(0,1)}, this integrates over the estimated latent
+variance, so it is correct on the Rasch logit scale (where \eqn{\sigma}
+is typically well above 1, and the \eqn{N(0,1)} assumption
+underestimates reliability). It is the model-based complement to the
+sample-based PSI; a large gap between the two flags an off-target or
+non-normal sample.
 
-For \strong{dichotomous} data (max = 1), \code{mirt::mirt(..., itemtype = "Rasch")}
-and \code{eRm::RM()} are fitted. For \strong{polytomous} data, the same \code{itemtype}
-is used in mirt and \code{eRm::PCM()} in eRm.
-
-PSI is computed by \code{eRm::SepRel()} on the person-parameter object from
-\code{eRm::person.parameter()}. Note that PSI excludes respondents with extreme
-(min/max) raw scores by construction.
+PSI is the WLE-based separation reliability,
+\eqn{1 - \overline{SEM^2} / \mathrm{Var}(\hat\theta)}, computed from CML item
+thresholds (\code{psychotools}) and Warm's WLE person locations / analytic SEMs.
+Respondents with extreme (min/max) raw scores are excluded -- their boundary
+estimates would inflate the person variance and overstate reliability.
+(Earlier versions used \code{eRm::SepRel()} with MLE; the values can differ, most
+noticeably for scales with many extreme scorers, e.g. dichotomous items.)
 
 RMU is from Bignardi, Kievit, & Bürkner (2025), modified here to use mirt
 plausible values rather than fully Bayesian posterior draws (see Mislevy,
 1991, for the plausible-values framework).
 
-Bootstrap iterations that fail to converge in either mirt or eRm are
-silently dropped.
+Bootstrap iterations that fail to converge are silently dropped.
 }
 \examples{
 \donttest{
@@ -110,7 +118,7 @@ if (requireNamespace("ggdist", quietly = TRUE)) {
   set.seed(1)
   RMreliability(eRm::raschdat1[, 1:20], draws = 1000)
 
-  # Bootstrap CI for PSI and Empirical
+  # Bootstrap CI for PSI and Marginal
   # (use more bootstrap iterations, e.g. 200+, in real analyses)
   RMreliability(eRm::raschdat1[, 1:20], draws = 1000,
                 boot = TRUE, boot_iter = 25, parallel = FALSE, seed = 42)
@@ -121,6 +129,11 @@ if (requireNamespace("ggdist", quietly = TRUE)) {
 Bignardi, G., Kievit, R., & Bürkner, P. C. (2025). A general method for
 estimating reliability using Bayesian Measurement Uncertainty. \emph{PsyArXiv}.
 \doi{10.31234/osf.io/h54k8_v1}
+
+Green, B. F., Bock, R. D., Humphreys, L. G., Linn, R. L., & Reckase, M. D.
+(1984). Technical Guidelines for Assessing Computerized Adaptive Tests.
+\emph{Journal of Educational Measurement, 21}(4), 347–360.
+\doi{10.1111/j.1745-3984.1984.tb01039.x}
 
 Mislevy, R. J. (1991). Randomization-Based Inference about Latent Variables
 from Complex Samples. \emph{Psychometrika, 56}(2), 177-196.

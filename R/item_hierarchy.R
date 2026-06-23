@@ -46,8 +46,8 @@
 #' visually degenerate in that case. For dichotomous data use
 #' [RMtargeting()] or [RMscoreSE()] instead.
 #'
-#' \strong{Centring convention.} The PCM thresholds returned by
-#' [eRm::thresholds()] are shifted so that their grand mean is zero;
+#' \strong{Centring convention.} The CML PCM thresholds (estimated via
+#' `psychotools::pcmodel()`) are shifted so that their grand mean is zero;
 #' each item's location is then the mean of its centred thresholds.
 #' The dashed horizontal reference line on the plot marks this zero --
 #' i.e., the average threshold across all items.
@@ -127,31 +127,29 @@ RMitemHierarchy <- function(data,
   options(rgl.useNULL = TRUE)
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
 
-  erm_fit <- eRm::PCM(data)
-  thr_obj <- eRm::thresholds(erm_fit)
+  # CML Andrich thresholds + their SEs via psychotools, consistent with the
+  # rest of the package. threshpar() returns a per-item list (in data column
+  # order); with vcov = TRUE the threshold-parameter covariance aligns with the
+  # flattened threshold order, so SEs are the square-root of its diagonal.
+  # Threshold locations match the previous eRm values after grand-mean
+  # centring; the reported SEs differ slightly (psychotools vs eRm vcov).
+  fit    <- psychotools::pcmodel(data)
+  tp     <- psychotools::threshpar(fit, vcov = TRUE)
+  se_all <- sqrt(diag(attr(tp, "vcov")))
 
-  # threshpar / se.thresh: named numeric vectors in the same item-threshold
-  # order, e.g. "thresh beta I1.c1", "thresh beta I1.c2", ...
-  loc_named <- thr_obj$threshpar
-  se_named  <- thr_obj$se.thresh
-  if (is.list(loc_named)) loc_named <- unlist(loc_named, use.names = TRUE)
-  if (is.list(se_named))  se_named  <- unlist(se_named,  use.names = TRUE)
+  item_per_thr   <- rep(names(tp), lengths(tp))
+  thr_index      <- unlist(lapply(tp, seq_along), use.names = FALSE)
+  thresh_raw     <- unlist(lapply(tp, as.numeric), use.names = FALSE)
 
-  parsed <- parse_threshold_names(names(loc_named), names(data))
-
-  # Centre thresholds at the grand mean (matching the original
-  # easyRasch::RIitemHierarchy convention)
-  thresh_raw     <- as.numeric(loc_named)
+  # Centre thresholds at the grand mean
   thresh_centred <- thresh_raw - mean(thresh_raw, na.rm = TRUE)
 
   long_df <- data.frame(
-    Item              = parsed$Item,
-    ItemLabel         = item_labels[match(parsed$Item, names(data))],
-    Threshold         = paste0("T", as.integer(
-                          sub("[^0-9]+", "", parsed$Threshold)
-                        )),
+    Item              = item_per_thr,
+    ItemLabel         = item_labels[match(item_per_thr, names(data))],
+    Threshold         = paste0("T", thr_index),
     ThresholdLocation = thresh_centred,
-    ThresholdSE       = as.numeric(se_named),
+    ThresholdSE       = as.numeric(se_all),
     stringsAsFactors  = FALSE
   )
 

@@ -22,9 +22,7 @@ number of items. Default \code{5}.}
 
 \item{output}{Character. \code{"kable"} (default) for a formatted
 \code{knitr::kable()} table, \code{"dataframe"} for the underlying data.frame, or
-\code{"loadings"} for a ggplot of PC1 loadings against item locations
-(similar in spirit to the loadings-by-location plot used in
-\code{easyRasch::RIloadLoc}).}
+\code{"loadings"} for a ggplot of PC1 loadings against item locations.}
 }
 \value{
 \itemize{
@@ -48,9 +46,9 @@ installed; otherwise plain \code{geom_text()}.
 }
 }
 \description{
-Fits a Rasch model (\code{eRm::RM()} for dichotomous data, \code{eRm::PCM()} for
-polytomous data — chosen automatically), extracts standardized residuals
-via \code{eRm::itemfit()$st.res}, and runs an unrotated principal-component
+Fits a Rasch model by CML via \code{psychotools} (a dichotomous item is a
+2-category PCM), extracts the standardized residuals \eqn{(x - E)/\sqrt{Var}}
+at WLE person locations, and runs an unrotated principal-component
 analysis on those residuals via \code{stats::prcomp()}. The function reports
 the top \code{n_components} eigenvalues and their proportions of unexplained
 variance, and optionally compares the first-contrast eigenvalue against
@@ -66,24 +64,22 @@ bounds tailored to the data structure should be used instead — see
 \code{\link{RMdimResidualPCACutoff}}, and Chou & Wang (2010) for the underlying
 simulation argument.
 
-The PCA is performed on the standardized residuals returned by
-\code{eRm::itemfit()$st.res}, which are \code{(observed - expected) / sqrt(var)}
-under the Rasch model. The reported eigenvalues are unrotated; rotation
-is appropriate for \emph{interpreting} a multidimensional solution but obscures
-the dominant first contrast that dimensionality assessment is concerned
-with.
+The PCA is performed on the standardized residuals
+\eqn{(x - E)/\sqrt{Var}} from the shared CML/WLE engine (CML item
+parameters via \code{psychotools}, WLE person locations). The reported
+eigenvalues are unrotated; rotation is appropriate for \emph{interpreting} a
+multidimensional solution but obscures the dominant first contrast that
+dimensionality assessment is concerned with.
 
-Item locations on the loadings plot are computed as the per-item mean of
-Andrich thresholds for polytomous data (PCM) or as \code{-beta} for dichotomous
-data (RM).
+Item locations on the loadings plot are the per-item mean of the CML
+Andrich thresholds.
 
-The variance partition follows Linacre's CML/MLE convention: per-item
-observed variance is compared to per-item \emph{expected} variance under the
-fitted model, summed across items. Expected scores are computed from
-MLE person locations (via \code{eRm::person.parameter()}) and the CML item
-parameters from \code{eRm::RM()} / \code{eRm::PCM()}. Persons with extreme raw
-scores (no finite MLE theta) are excluded from the partition, matching
-the sample used by \code{eRm::SepRel()} and the PCA itself.
+The variance partition follows Linacre's convention: per-item observed
+variance is compared to per-item \emph{expected} variance under the fitted
+model, summed across items. Expected scores are computed from the CML item
+parameters and WLE person locations. WLE is finite at extreme scores, so
+all persons are retained (the previous MLE partition dropped extreme-score
+cases).
 }
 \examples{
 \donttest{

@@ -55,14 +55,12 @@ the association between a person's score on a single item and their total
 score on the remaining items (the "restscore"). Under a correctly fitting
 Rasch model, observed and model-expected correlations should agree closely.
 
-For \strong{dichotomous} data (maximum score = 1), a Rasch model is fitted via
-\code{eRm::RM()}. Item locations are the negative beta parameters. Person
-locations are estimated via \code{eRm::person.parameter()}.
-
-For \strong{polytomous} data (maximum score > 1), a Partial Credit Model is
-fitted via \code{eRm::PCM()}. Item average locations are the row-means of the
-threshold parameter table returned by \code{eRm::thresholds()}. Person locations
-are estimated via \code{eRm::person.parameter()}.
+Item parameters are estimated by conditional maximum likelihood via
+\code{psychotools::pcmodel()} (a dichotomous item is a 2-category PCM); the
+item-restscore statistic itself comes from \code{iarm::item_restscore()} and is
+conditional on the total score, so it is invariant to the estimation engine.
+Per-item average locations are the means of the CML thresholds, and the
+person-location reference is the mean of the Warm WLE estimates.
 
 Relative item location is defined as the item's average location minus the
 sample mean person location, providing a measure of item targeting.

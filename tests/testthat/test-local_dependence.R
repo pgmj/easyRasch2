@@ -361,3 +361,27 @@ test_that("shared person-estimation helper returns theta + sem for WLE and EAP",
   expect_equal(nrow(wle), nrow(df))
   expect_gt(stats::cor(wle$theta, eap$theta, use = "complete.obs"), 0.95)
 })
+
+# ---------------------------------------------------------------------
+# Conditional DGP option
+# ---------------------------------------------------------------------
+test_that("dgp = 'conditional' runs and is consumable downstream", {
+  skip_if_not_installed("psychotools"); skip_if_not_installed("ggdist")
+  set.seed(6)
+  df <- as.data.frame(matrix(sample(0:1, 200 * 6, replace = TRUE), 200, 6))
+  colnames(df) <- paste0("I", 1:6)
+
+  cu <- RMlocdepQ3Cutoff(df, iterations = 20, parallel = FALSE, seed = 1,
+                         dgp = "conditional")
+  expect_identical(cu$dgp, "conditional")
+  expect_true(is.finite(cu$suggested_cutoff))
+  expect_equal(nrow(cu$pair_cutoffs), choose(ncol(df), 2L))
+
+  # default is still "resample"
+  cu_def <- RMlocdepQ3Cutoff(df, iterations = 5, parallel = FALSE, seed = 1)
+  expect_identical(cu_def$dgp, "resample")
+
+  # the conditional object flows through RMlocdepQ3()
+  res <- RMlocdepQ3(df, cutoff = cu, output = "dataframe")
+  expect_named(res, c("matrix", "pairs", "plot"))
+})

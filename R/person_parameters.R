@@ -20,7 +20,7 @@
 #'   [RMitemParameters()]. When `NULL` (default) item parameters are
 #'   estimated from `data`.
 #' @param estimator Character. How item parameters are estimated when
-#'   `item_params` is `NULL`: `"CML"` (default, via \pkg{eRm}) or
+#'   `item_params` is `NULL`: `"CML"` (default, via \pkg{psychotools}) or
 #'   `"MML"` (via \pkg{mirt}). Ignored when `item_params` is supplied.
 #' @param theta_range Numeric length 2. Search range for the WLE root
 #'   and bounds for the EAP quadrature grid. Default `c(-10, 10)`. Only

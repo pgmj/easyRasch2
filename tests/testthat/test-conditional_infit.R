@@ -243,8 +243,8 @@ test_that("RMitemInfitCutoff errors when cutoff_method = 'hdci' but ggdist is no
 })
 
 test_that("RMitemInfitCutoff cutoff_method = 'quantile' returns valid cutoffs", {
+  # RMitemInfitCutoff() fits via psychotools (Imports) + iarm; no eRm needed.
   skip_if_not_installed("iarm")
-  skip_if_not_installed("eRm")
   set.seed(42)
   df <- as.data.frame(
     matrix(sample(0:1, 1000, replace = TRUE), nrow = 200, ncol = 5)
@@ -265,7 +265,6 @@ test_that("RMitemInfitCutoff cutoff_method = 'quantile' returns valid cutoffs", 
 
 test_that("RMitemInfitCutoff cutoff_method = 'hdci' returns valid cutoffs", {
   skip_if_not_installed("iarm")
-  skip_if_not_installed("eRm")
   skip_if_not_installed("ggdist")
   set.seed(42)
   df <- as.data.frame(
@@ -282,6 +281,29 @@ test_that("RMitemInfitCutoff cutoff_method = 'hdci' returns valid cutoffs", {
   expect_equal(nrow(res$item_cutoffs), 5L)
   expect_true(all(res$item_cutoffs$infit_low < res$item_cutoffs$infit_high))
   expect_true(all(res$item_cutoffs$outfit_low < res$item_cutoffs$outfit_high))
+})
+
+test_that("RMitemInfitCutoff dgp = 'conditional' runs; default is 'resample'", {
+  skip_if_not_installed("iarm")
+  set.seed(6)
+  df <- as.data.frame(matrix(sample(0:1, 200 * 6, replace = TRUE), 200, 6))
+  colnames(df) <- paste0("I", 1:6)
+
+  cu <- RMitemInfitCutoff(df, iterations = 20, parallel = FALSE, seed = 1,
+                          dgp = "conditional")
+  expect_identical(cu$dgp, "conditional")
+  expect_s3_class(cu$item_cutoffs, "data.frame")
+  expect_equal(nrow(cu$item_cutoffs), 6L)
+  expect_true(all(cu$item_cutoffs$infit_low < cu$item_cutoffs$infit_high))
+
+  # default DGP is unchanged
+  cu_def <- RMitemInfitCutoff(df, iterations = 5, parallel = FALSE, seed = 1)
+  expect_identical(cu_def$dgp, "resample")
+
+  # the conditional object flows through RMitemInfit()
+  skip_if_not_installed("eRm")
+  res <- RMitemInfit(df, cutoff = cu, output = "dataframe")
+  expect_true(is.data.frame(res))
 })
 
 test_that("RMitemInfit with cutoff data.frame (no actual_iterations) uses generic caption", {

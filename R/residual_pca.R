@@ -1,8 +1,8 @@
 #' PCA of Standardized Rasch Residuals
 #'
-#' Fits a Rasch model (`eRm::RM()` for dichotomous data, `eRm::PCM()` for
-#' polytomous data — chosen automatically), extracts standardized residuals
-#' via `eRm::itemfit()$st.res`, and runs an unrotated principal-component
+#' Fits a Rasch model by CML via `psychotools` (a dichotomous item is a
+#' 2-category PCM), extracts the standardized residuals \eqn{(x - E)/\sqrt{Var}}
+#' at WLE person locations, and runs an unrotated principal-component
 #' analysis on those residuals via `stats::prcomp()`. The function reports
 #' the top `n_components` eigenvalues and their proportions of unexplained
 #' variance, and optionally compares the first-contrast eigenvalue against
@@ -29,9 +29,7 @@
 #'   number of items. Default `5`.
 #' @param output Character. `"kable"` (default) for a formatted
 #'   `knitr::kable()` table, `"dataframe"` for the underlying data.frame, or
-#'   `"loadings"` for a ggplot of PC1 loadings against item locations
-#'   (similar in spirit to the loadings-by-location plot used in
-#'   `easyRasch::RIloadLoc`).
+#'   `"loadings"` for a ggplot of PC1 loadings against item locations.
 #'
 #' @return
 #' * If `output = "kable"`: a `knitr_kable` object with columns Component,
@@ -53,24 +51,22 @@
 #'   installed; otherwise plain `geom_text()`.
 #'
 #' @details
-#' The PCA is performed on the standardized residuals returned by
-#' `eRm::itemfit()$st.res`, which are `(observed - expected) / sqrt(var)`
-#' under the Rasch model. The reported eigenvalues are unrotated; rotation
-#' is appropriate for *interpreting* a multidimensional solution but obscures
-#' the dominant first contrast that dimensionality assessment is concerned
-#' with.
+#' The PCA is performed on the standardized residuals
+#' \eqn{(x - E)/\sqrt{Var}} from the shared CML/WLE engine (CML item
+#' parameters via `psychotools`, WLE person locations). The reported
+#' eigenvalues are unrotated; rotation is appropriate for *interpreting* a
+#' multidimensional solution but obscures the dominant first contrast that
+#' dimensionality assessment is concerned with.
 #'
-#' Item locations on the loadings plot are computed as the per-item mean of
-#' Andrich thresholds for polytomous data (PCM) or as `-beta` for dichotomous
-#' data (RM).
+#' Item locations on the loadings plot are the per-item mean of the CML
+#' Andrich thresholds.
 #'
-#' The variance partition follows Linacre's CML/MLE convention: per-item
-#' observed variance is compared to per-item *expected* variance under the
-#' fitted model, summed across items. Expected scores are computed from
-#' MLE person locations (via `eRm::person.parameter()`) and the CML item
-#' parameters from `eRm::RM()` / `eRm::PCM()`. Persons with extreme raw
-#' scores (no finite MLE theta) are excluded from the partition, matching
-#' the sample used by `eRm::SepRel()` and the PCA itself.
+#' The variance partition follows Linacre's convention: per-item observed
+#' variance is compared to per-item *expected* variance under the fitted
+#' model, summed across items. Expected scores are computed from the CML item
+#' parameters and WLE person locations. WLE is finite at extreme scores, so
+#' all persons are retained (the previous MLE partition dropped extreme-score
+#' cases).
 #'
 #' @references
 #' Chou, Y.-T., & Wang, W.-C. (2010). Checking dimensionality in item
@@ -142,61 +138,36 @@ RMdimResidualPCA <- function(data,
   data_mat      <- as.matrix(data)
   is_polytomous <- max(data_mat, na.rm = TRUE) > 1L
 
-  if (is_polytomous) {
-    erm_fit <- eRm::PCM(data)
-    thresh_table <- eRm::thresholds(erm_fit)$threshtable[[1L]]
-    if ("Location" %in% colnames(thresh_table)) {
-      item_locations <- thresh_table[, "Location"]
-    } else {
-      item_locations <- rowMeans(thresh_table, na.rm = TRUE)
-    }
-    # PCM rownames are already plain item names; strip a "beta " prefix
-    # defensively so the loadings-plot lookup `item_locations[loadings$Item]`
-    # is robust across eRm versions.
-    names(item_locations) <- sub("^beta\\s+", "", names(item_locations))
-  } else {
-    erm_fit <- eRm::RM(data)
-    item_locations <- stats::coef(erm_fit, "beta") * -1
-    # `coef(fit, "beta")` names items as "beta I1", "beta I2", ..., which
-    # breaks `item_locations[loadings$Item]` (yields all-NA locations on
-    # the loadings plot). Strip the prefix.
-    names(item_locations) <- sub("^beta\\s+", "", names(item_locations))
-  }
+  # CML item thresholds (psychotools) and WLE-based standardized residuals,
+  # consistent with the rest of the package. Item locations are per-item mean
+  # thresholds; the standardized residuals (x - E)/sqrt(Var) come from the
+  # shared CML/WLE engine. (Previously eRm CML + eRm::itemfit() MLE residuals.)
+  thr_list       <- .fit_cml_thresholds(data)
+  item_locations <- vapply(thr_list, mean, numeric(1L))
+  names(item_locations) <- names(data)
 
-  pp        <- eRm::person.parameter(erm_fit)
-  ifit      <- eRm::itemfit(pp)
-  st_resids <- ifit$st.res
-
+  st_resids <- .rasch_std_residuals(data, method = "WLE")
   if (anyNA(st_resids)) {
-    # Should be rare after na.omit on data, but possible if itemfit returns
-    # NA for an unestimable cell.
     keep_rows <- stats::complete.cases(st_resids)
     st_resids <- st_resids[keep_rows, , drop = FALSE]
   }
 
-  # --- Variance partition (Linacre-style; CML item params, MLE thetas) -------
+  # --- Variance partition (Linacre-style; CML items, WLE thetas) -------------
   # Compares Var(observed) to Var(model-expected) per item, summed across
-  # items. Persons with extreme raw scores have no finite MLE theta and are
-  # dropped from the partition (consistent with eRm::SepRel and the residual
-  # rows the PCA is run on).
-  thetas_all    <- pp$theta.table[["Person Parameter"]]
+  # items. WLE locations are finite at extreme scores, so all persons are
+  # retained (unlike the MLE partition, which dropped extreme-score cases).
+  thetas_all    <- .estimate_thetas(data_mat, thr_list, method = "WLE")$theta
   finite_thetas <- is.finite(thetas_all)
 
   if (sum(finite_thetas) >= 2L) {
-    if (is_polytomous) {
-      thresh_only <- if ("Location" %in% colnames(thresh_table)) {
-        thresh_table[, colnames(thresh_table) != "Location", drop = FALSE]
-      } else {
-        thresh_table
-      }
-      expected_mat <- .pcm_expected_scores(thetas_all[finite_thetas],
-                                           as.matrix(thresh_only))
-    } else {
-      expected_mat <- outer(thetas_all[finite_thetas],
-                            as.numeric(item_locations),
-                            function(t, b) stats::plogis(t - b))
-    }
-    data_finite     <- as.matrix(data)[finite_thetas, , drop = FALSE]
+    th <- thetas_all[finite_thetas]
+    expected_mat <- vapply(seq_along(thr_list), function(i) {
+      cats <- 0:length(thr_list[[i]])
+      P    <- vapply(th, function(z) .pcm_cat_probs(z, thr_list[[i]]),
+                     numeric(length(cats)))
+      as.numeric(crossprod(cats, P))                 # E[score] per person
+    }, numeric(length(th)))
+    data_finite     <- data_mat[finite_thetas, , drop = FALSE]
     var_total       <- sum(apply(data_finite,  2L, stats::var, na.rm = TRUE))
     var_explained   <- sum(apply(expected_mat, 2L, stats::var, na.rm = TRUE))
     var_unexplained <- max(var_total - var_explained, 0)
@@ -378,13 +349,13 @@ RMdimResidualPCA <- function(data,
 #' }
 #'
 #' @details
-#' Per iteration: theta values are sampled with replacement from the WLE/MLE
-#' estimates derived from the fitted full-sample model; response data are
-#' simulated under the model (`psychotools::rrm` for dichotomous,
-#' partial-credit simulator for polytomous); the model is refitted with
-#' `eRm::RM()` / `eRm::PCM()`; standardized residuals are extracted via
-#' `eRm::itemfit()$st.res`; `prcomp()` is run; the first-contrast eigenvalue
-#' is recorded.
+#' The generating model uses CML item parameters (`psychotools`) and WLE person
+#' locations. Per iteration: theta values are sampled with replacement from the
+#' WLE estimates; response data are simulated under the model
+#' (`psychotools::rrm` for dichotomous, partial-credit simulator for
+#' polytomous); CML/WLE standardized residuals are computed (the same engine as
+#' the observed analysis); `prcomp()` is run; the first-contrast eigenvalue is
+#' recorded.
 #'
 #' Iterations that fail (e.g., due to a degenerate simulated dataset where
 #' some category isn't represented) are silently dropped. The `iarm` package
@@ -459,40 +430,24 @@ RMdimResidualPCACutoff <- function(data,
   is_polytomous  <- max(data_mat, na.rm = TRUE) > 1L
   item_names_vec <- colnames(data_mat)
 
-  # Build sim_data_list mirroring RMitemInfitCutoff's structure
+  # Generating model: CML item thresholds (psychotools) + WLE person locations,
+  # consistent with the rest of the package. The DGP is unchanged: thetas are
+  # resampled with replacement and data simulated parametrically.
+  thr_list   <- .fit_cml_thresholds(data_mat)
+  wle_thetas <- .estimate_thetas(data_mat, thr_list, method = "WLE")$theta
+  wle_thetas <- wle_thetas[is.finite(wle_thetas)]
+
+  sim_data_list <- list(
+    type       = if (is_polytomous) "polytomous" else "dichotomous",
+    thetas     = wle_thetas,
+    n_items    = ncol(data_mat),
+    sample_n   = sample_n,
+    item_names = item_names_vec
+  )
   if (is_polytomous) {
-    pcm_fit <- eRm::PCM(data_mat)
-    pp <- eRm::person.parameter(pcm_fit)
-    theta_table <- pp$theta.table[["Person Parameter"]]
-    raw_scores <- rowSums(data_mat, na.rm = TRUE)
-    thetas <- as.numeric(stats::na.omit(theta_table[raw_scores]))
-    thresh_mat <- extract_item_thresholds(data_mat)
-    deltaslist <- lapply(seq_len(nrow(thresh_mat)), function(i) {
-      as.numeric(thresh_mat[i, !is.na(thresh_mat[i, ])])
-    })
-    sim_data_list <- list(
-      type       = "polytomous",
-      thetas     = thetas,
-      deltaslist = deltaslist,
-      n_items    = ncol(data_mat),
-      sample_n   = sample_n,
-      item_names = item_names_vec
-    )
+    sim_data_list$deltaslist <- thr_list
   } else {
-    rm_fit <- eRm::RM(data_mat)
-    pp <- eRm::person.parameter(rm_fit)
-    theta_table <- pp$theta.table[["Person Parameter"]]
-    raw_scores <- rowSums(data_mat, na.rm = TRUE)
-    thetas <- as.numeric(stats::na.omit(theta_table[raw_scores]))
-    item_params <- -rm_fit$betapar
-    sim_data_list <- list(
-      type        = "dichotomous",
-      thetas      = thetas,
-      item_params = item_params,
-      n_items     = ncol(data_mat),
-      sample_n    = sample_n,
-      item_names  = item_names_vec
-    )
+    sim_data_list$item_params <- unlist(thr_list, use.names = FALSE)
   }
 
   if (use_parallel) {
@@ -575,8 +530,6 @@ run_single_pca_sim <- function(seed, data_list) {
       if (any(neg_counts < 8L)) {
         return("validation_failed: fewer than 8 negative responses in at least one item")
       }
-
-      model_fit <- eRm::RM(sim_df, se = FALSE)
     } else {
       sim_mat <- sim_partial_score(data_list$deltaslist, thetas_res)
       sim_df  <- as.data.frame(sim_mat)
@@ -590,13 +543,10 @@ run_single_pca_sim <- function(seed, data_list) {
           return("validation_failed: not all categories represented")
         }
       }
-
-      model_fit <- eRm::PCM(sim_df, se = FALSE)
     }
 
-    pp        <- eRm::person.parameter(model_fit)
-    ifit      <- eRm::itemfit(pp)
-    st_resids <- ifit$st.res
+    # CML/WLE standardized residuals (same engine as the observed analysis).
+    st_resids <- .rasch_std_residuals(sim_df, method = "WLE")
 
     if (anyNA(st_resids)) {
       keep <- stats::complete.cases(st_resids)
@@ -634,7 +584,14 @@ run_pca_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
       data_list           = sim_data_list,
       run_single_pca_sim  = run_single_pca_sim,
       sim_partial_score   = sim_partial_score,
-      sim_poly_item       = sim_poly_item
+      sim_poly_item       = sim_poly_item,
+      # CML/WLE residual engine used by .rasch_std_residuals() in the daemon.
+      .rasch_std_residuals = .rasch_std_residuals,
+      .fit_cml_thresholds  = .fit_cml_thresholds,
+      .estimate_thetas     = .estimate_thetas,
+      .theta_wle           = .theta_wle,
+      .pcm_cat_probs       = .pcm_cat_probs,
+      .center_thresholds   = .center_thresholds
     )
   })
 
