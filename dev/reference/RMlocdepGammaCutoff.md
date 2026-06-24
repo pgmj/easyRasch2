@@ -112,8 +112,8 @@ A list with components:
 
 For each simulation iteration the function:
 
-1.  Resamples person parameters (thetas) with replacement from ML
-    estimates.
+1.  Resamples person parameters (thetas) with replacement from the WLE
+    person locations.
 
 2.  Simulates item response data under a Rasch model (dichotomous via
     [`psychotools::rrm()`](https://rdrr.io/pkg/psychotools/man/rrm.html)
@@ -130,12 +130,13 @@ dependence that exceeds what would be expected by chance. Failed
 iterations (e.g., due to convergence issues or degenerate data) are
 silently discarded.
 
-Supports both **dichotomous** data (via
-[`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html) and
-[`psychotools::rrm()`](https://rdrr.io/pkg/psychotools/man/rrm.html))
-and **polytomous** data (via
-[`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html) and an internal
-partial credit score simulator).
+The generating model uses CML item thresholds via
+[`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
+(a dichotomous item is a 2-category PCM) and WLE person locations,
+consistent with the rest of the package; responses are simulated with
+[`psychotools::rrm()`](https://rdrr.io/pkg/psychotools/man/rrm.html)
+(dichotomous) or an internal partial credit score simulator
+(polytomous).
 
 Parallel processing is provided by the `mirai` package (optional).
 Install it with `install.packages("mirai")` to enable parallelisation.
@@ -169,50 +170,50 @@ cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100, parallel = FALSE,
                            seed = 42)
 cutoff_res$pair_cutoffs
 #>    Item1  Item2  gamma_low gamma_high
-#> 1  Item1  Item2 -0.4306569  0.4306761
-#> 2  Item1  Item3 -0.3582424  0.3249651
-#> 3  Item1  Item4 -0.5086744  0.4304419
-#> 4  Item1  Item5 -0.3945250  0.3072829
-#> 5  Item1  Item6 -0.4643478  0.5241633
-#> 6  Item1  Item7 -0.4729345  0.4150514
-#> 7  Item1  Item8 -0.5020921  0.3392174
-#> 8  Item1  Item9 -0.5251263  0.3824885
-#> 9  Item1 Item10 -0.3755858  0.3699346
-#> 10 Item2  Item3 -0.4204398  0.3994601
-#> 11 Item2  Item4 -0.3644315  0.3534209
-#> 12 Item2  Item5 -0.4473970  0.4878331
-#> 13 Item2  Item6 -0.3730728  0.3733529
-#> 14 Item2  Item7 -0.4377953  0.4086538
-#> 15 Item2  Item8 -0.4017972  0.4588756
-#> 16 Item2  Item9 -0.3388430  0.3944811
-#> 17 Item2 Item10 -0.3537332  0.3087994
-#> 18 Item3  Item4 -0.3931570  0.4112150
-#> 19 Item3  Item5 -0.4140481  0.3298013
-#> 20 Item3  Item6 -0.3815603  0.4300039
-#> 21 Item3  Item7 -0.4352428  0.3839662
-#> 22 Item3  Item8 -0.4105651  0.3771429
-#> 23 Item3  Item9 -0.3846154  0.3843663
-#> 24 Item3 Item10 -0.3751171  0.4253835
-#> 25 Item4  Item5 -0.3895447  0.3688490
-#> 26 Item4  Item6 -0.4051667  0.4102190
-#> 27 Item4  Item7 -0.4657110  0.3573265
-#> 28 Item4  Item8 -0.4961380  0.4708393
-#> 29 Item4  Item9 -0.4414125  0.4671026
-#> 30 Item4 Item10 -0.3295775  0.2959772
-#> 31 Item5  Item6 -0.3552068  0.4885720
-#> 32 Item5  Item7 -0.4122038  0.3920705
-#> 33 Item5  Item8 -0.4357542  0.4475191
-#> 34 Item5  Item9 -0.3253012  0.3421405
-#> 35 Item5 Item10 -0.4073171  0.3440970
-#> 36 Item6  Item7 -0.3982301  0.4649695
-#> 37 Item6  Item8 -0.3762811  0.3933511
-#> 38 Item6  Item9 -0.3669915  0.4166667
-#> 39 Item6 Item10 -0.4095238  0.4507380
-#> 40 Item7  Item8 -0.3514916  0.4971444
-#> 41 Item7  Item9 -0.3357228  0.4801166
-#> 42 Item7 Item10 -0.3532645  0.3842173
-#> 43 Item8  Item9 -0.4445880  0.4311649
-#> 44 Item8 Item10 -0.3395225  0.4713264
-#> 45 Item9 Item10 -0.3807474  0.4108911
+#> 1  Item1  Item2 -0.4246238  0.3198758
+#> 2  Item1  Item3 -0.4725291  0.4400000
+#> 3  Item1  Item4 -0.4455579  0.3262195
+#> 4  Item1  Item5 -0.4192593  0.4463083
+#> 5  Item1  Item6 -0.3890363  0.3372093
+#> 6  Item1  Item7 -0.3239512  0.4533333
+#> 7  Item1  Item8 -0.4260870  0.4747872
+#> 8  Item1  Item9 -0.3201970  0.3996248
+#> 9  Item1 Item10 -0.3210702  0.3171954
+#> 10 Item2  Item3 -0.3423763  0.3693694
+#> 11 Item2  Item4 -0.2822086  0.4506687
+#> 12 Item2  Item5 -0.3933887  0.4179104
+#> 13 Item2  Item6 -0.3816425  0.3362769
+#> 14 Item2  Item7 -0.5614692  0.3977456
+#> 15 Item2  Item8 -0.4305085  0.3895771
+#> 16 Item2  Item9 -0.4109589  0.3747739
+#> 17 Item2 Item10 -0.3531353  0.3608790
+#> 18 Item3  Item4 -0.3698551  0.3174603
+#> 19 Item3  Item5 -0.4548193  0.4344904
+#> 20 Item3  Item6 -0.4166667  0.4460015
+#> 21 Item3  Item7 -0.4143335  0.4424779
+#> 22 Item3  Item8 -0.4346727  0.4184874
+#> 23 Item3  Item9 -0.3793103  0.3470952
+#> 24 Item3 Item10 -0.3508501  0.4581142
+#> 25 Item4  Item5 -0.3603667  0.4174067
+#> 26 Item4  Item6 -0.3335321  0.4556213
+#> 27 Item4  Item7 -0.3969336  0.3440059
+#> 28 Item4  Item8 -0.3689320  0.3484576
+#> 29 Item4  Item9 -0.3971429  0.3337701
+#> 30 Item4 Item10 -0.3641851  0.3455481
+#> 31 Item5  Item6 -0.3874426  0.3315698
+#> 32 Item5  Item7 -0.4620253  0.4496595
+#> 33 Item5  Item8 -0.3712256  0.4384670
+#> 34 Item5  Item9 -0.3704415  0.4069529
+#> 35 Item5 Item10 -0.4049501  0.3196481
+#> 36 Item6  Item7 -0.4504065  0.3748283
+#> 37 Item6  Item8 -0.2495922  0.3668176
+#> 38 Item6  Item9 -0.3822401  0.3897638
+#> 39 Item6 Item10 -0.3070326  0.4840983
+#> 40 Item7  Item8 -0.4427245  0.3660965
+#> 41 Item7  Item9 -0.3649123  0.3639609
+#> 42 Item7 Item10 -0.3774802  0.2980132
+#> 43 Item8  Item9 -0.4102012  0.3160813
+#> 44 Item8 Item10 -0.4171975  0.3995774
+#> 45 Item9 Item10 -0.3581972  0.3491311
 # }
 ```

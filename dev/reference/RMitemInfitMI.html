@@ -11,7 +11,7 @@ imputed dataset and pools the results using Rubin's rules."><meta name="robots" 
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.914</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.917</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -102,11 +102,13 @@ not the previous logical.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>For each of the <code>m</code> imputed datasets, the function:</p><ol><li><p>Fits a Rasch model (<code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code> for dichotomous data or
-<code><a href="https://rdrr.io/pkg/eRm/man/PCM.html" class="external-link">eRm::PCM()</a></code> for polytomous data).</p></li>
+    <p>For each of the <code>m</code> imputed datasets, the function:</p><ol><li><p>Fits a Rasch model by CML via <code><a href="https://rdrr.io/pkg/psychotools/man/pcmodel.html" class="external-link">psychotools::pcmodel()</a></code> (a
+dichotomous item is a 2-category partial credit model), consistent with
+<code><a href="RMiteminfit.html">RMitemInfit</a></code> and the rest of the package.</p></li>
 <li><p>Computes conditional infit MSQ and its standard error via
 <code><a href="https://rdrr.io/pkg/iarm/man/out_infit.html" class="external-link">iarm::out_infit()</a></code>.</p></li>
-<li><p>Computes item and person locations.</p></li>
+<li><p>Computes item locations (mean of the grand-mean-centred CML
+Andrich thresholds) and the mean WLE person location.</p></li>
 </ol><p>The per-imputation estimates are then pooled using Rubin's rules:</p><dl><dt>Pooled MSQ</dt>
 <dd><p>The mean of the <code>m</code> infit MSQ point estimates.</p></dd>
 
@@ -127,12 +129,26 @@ estimates.</p></dd>
 
 </dl><p>Relative item location is the mean of per-imputation relative locations
 (item location minus sample mean person location).</p>
+<p><strong>Caveat on the pooled SE.</strong> The within-imputation variance is the
+squared conditional infit SE from <code><a href="https://rdrr.io/pkg/iarm/man/out_infit.html" class="external-link">iarm::out_infit()</a></code>. Müller (2020) showed
+that this asymptotic SE is an unreliable measure of uncertainty for the
+conditional infit statistic; Rubin's pooled SE inherits that limitation, so
+the <code>Infit_SE</code>/<code>Infit SE</code> column should be read as an approximate indication
+of imputation-related variability rather than a trustworthy inferential
+standard error. For item misfit decisions, prefer the simulation-based
+cutoffs from <code><a href="RMitemInfitCutoffMI.html">RMitemInfitCutoffMI</a></code>.</p>
 <p>Imputed datasets that cause model convergence failures are dropped with a
 warning. If all imputations fail, the function stops with an error. At
 least two successful imputations are required to estimate between-imputation
 variance.</p>
 <p>The <code>mice</code> and <code>iarm</code> packages must be installed (they are in Suggests, not
 Imports).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Müller, M. (2020). Item fit statistics for Rasch analysis: Can we trust
+them? <em>Journal of Statistical Distributions and Applications</em>, 7(5).
+<a href="https://doi.org/10.1186/s40488-020-00108-7" class="external-link">doi:10.1186/s40488-020-00108-7</a></p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

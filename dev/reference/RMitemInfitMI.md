@@ -71,15 +71,18 @@ RMitemInfitMI(mids_object, cutoff = NULL, output = "kable", sort)
 
 For each of the `m` imputed datasets, the function:
 
-1.  Fits a Rasch model
-    ([`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html) for dichotomous
-    data or [`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html) for
-    polytomous data).
+1.  Fits a Rasch model by CML via
+    [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
+    (a dichotomous item is a 2-category partial credit model),
+    consistent with
+    [`RMitemInfit`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
+    and the rest of the package.
 
 2.  Computes conditional infit MSQ and its standard error via
     [`iarm::out_infit()`](https://rdrr.io/pkg/iarm/man/out_infit.html).
 
-3.  Computes item and person locations.
+3.  Computes item locations (mean of the grand-mean-centred CML Andrich
+    thresholds) and the mean WLE person location.
 
 The per-imputation estimates are then pooled using Rubin's rules:
 
@@ -106,6 +109,17 @@ The per-imputation estimates are then pooled using Rubin's rules:
 Relative item location is the mean of per-imputation relative locations
 (item location minus sample mean person location).
 
+**Caveat on the pooled SE.** The within-imputation variance is the
+squared conditional infit SE from
+[`iarm::out_infit()`](https://rdrr.io/pkg/iarm/man/out_infit.html).
+Müller (2020) showed that this asymptotic SE is an unreliable measure of
+uncertainty for the conditional infit statistic; Rubin's pooled SE
+inherits that limitation, so the `Infit_SE`/`Infit SE` column should be
+read as an approximate indication of imputation-related variability
+rather than a trustworthy inferential standard error. For item misfit
+decisions, prefer the simulation-based cutoffs from
+[`RMitemInfitCutoffMI`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md).
+
 Imputed datasets that cause model convergence failures are dropped with
 a warning. If all imputations fail, the function stops with an error. At
 least two successful imputations are required to estimate
@@ -113,6 +127,12 @@ between-imputation variance.
 
 The `mice` and `iarm` packages must be installed (they are in Suggests,
 not Imports).
+
+## References
+
+Müller, M. (2020). Item fit statistics for Rasch analysis: Can we trust
+them? *Journal of Statistical Distributions and Applications*, 7(5).
+[doi:10.1186/s40488-020-00108-7](https://doi.org/10.1186/s40488-020-00108-7)
 
 ## See also
 

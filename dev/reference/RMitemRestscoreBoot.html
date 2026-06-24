@@ -19,7 +19,7 @@ iterations in which each item is flagged.'><meta name="robots" content="noindex"
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.914</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.917</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -142,17 +142,21 @@ successful iteration (<code>iteration</code>, <code>Item</code>, <code>item_rest
 <code><a href="RMitemrestscore.html">RMitemRestscore</a></code> can flag items that are not practically
 misfitting; bootstrapping gives a more nuanced view of the probability of
 an item actually being misfit.</p>
-<p>For <strong>dichotomous</strong> data (maximum score = 1), the full-sample model is
-fitted via <code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code> and bootstrap iterations refit via <code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code> with
-<code>se = FALSE</code> for speed.</p>
-<p>For <strong>polytomous</strong> data (maximum score &gt; 1), the full-sample model is
-fitted via <code><a href="https://rdrr.io/pkg/eRm/man/PCM.html" class="external-link">eRm::PCM()</a></code> (so item locations can be obtained from
-<code><a href="https://rdrr.io/pkg/eRm/man/thresholds.html" class="external-link">eRm::thresholds()</a></code>) and bootstrap iterations refit via
-<code>psychotools::pcmodel(..., hessian = FALSE)</code> for speed.
-<code><a href="https://rdrr.io/pkg/iarm/man/item_restscore.html" class="external-link">iarm::item_restscore()</a></code> accepts both model classes.</p>
+<p>The full-sample model is fitted by CML via <code><a href="https://rdrr.io/pkg/psychotools/man/pcmodel.html" class="external-link">psychotools::pcmodel()</a></code> (a
+dichotomous item is a 2-category partial credit model), and item locations
+(mean of the grand-mean-centred CML Andrich thresholds) and the mean WLE
+person location are computed from it — consistent with
+<code><a href="RMitemrestscore.html">RMitemRestscore</a></code> and the rest of the package. Each bootstrap
+iteration draws a sample of size <code>samplesize</code> with replacement and refits via
+<code>psychotools::pcmodel(..., hessian = FALSE)</code> for speed;
+<code><a href="https://rdrr.io/pkg/iarm/man/item_restscore.html" class="external-link">iarm::item_restscore()</a></code> accepts the fitted model.</p>
 <p>Conditional infit MSQ (computed once on the full sample via
 <code><a href="https://rdrr.io/pkg/iarm/man/out_infit.html" class="external-link">iarm::out_infit()</a></code>) and relative item locations are reported alongside the
-bootstrap percentages for context.</p>
+bootstrap percentages for context. The item-restscore classification and the
+infit statistic are conditional and engine-invariant; only the relative-item
+location shifts slightly relative to the previous <code>eRm</code> implementation,
+because it now uses the WLE person mean (finite at extreme scores) rather
+than the <code>eRm</code> MLE mean.</p>
 <p>Iterations that fail (e.g., due to convergence issues on a degenerate
 bootstrap sample) are silently discarded; the caption / <code>actual_iterations</code>
 reflects only successful runs.</p>

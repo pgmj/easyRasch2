@@ -9,7 +9,7 @@ to the sample mean person location.
 ## Usage
 
 ``` r
-RMitemRestscore(data, output = "kable", sort, p.adj = "BH")
+RMitemRestscore(data, output = "kable", sort, p_adj = "BH")
 ```
 
 ## Arguments
@@ -34,7 +34,7 @@ RMitemRestscore(data, output = "kable", sort, p.adj = "BH")
   the absolute magnitude of `Difference` in descending order, so that
   both over- and underfitting items appear near the top.
 
-- p.adj:
+- p_adj:
 
   Character string specifying the p-value adjustment method passed to
   [`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html).

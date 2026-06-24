@@ -144,11 +144,11 @@ RMitemParameters(poly)
 # Wide format, point estimates only
 RMitemParameters(poly, format = "wide", se = FALSE, output = "dataframe")
 #>    item      t1      t2 location
+#> 1 Item1 -0.0138  0.0864   0.0363
+#> 2 Item2  0.1650 -0.1007   0.0321
+#> 3 Item3  0.0086  0.1131   0.0609
 #> 4 Item4 -0.2167  0.0543  -0.0812
 #> 5 Item5  0.2028 -0.2989  -0.0481
-#> 2 Item2  0.1650 -0.1007   0.0321
-#> 1 Item1 -0.0138  0.0864   0.0363
-#> 3 Item3  0.0086  0.1131   0.0609
 
 # Dichotomous data
 dich <- as.data.frame(

@@ -19,7 +19,7 @@ a simulation-based bound from RMdimResidualPCACutoff."><meta name="robots" conte
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.914</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.917</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,7 +87,8 @@ number of items. Default <code>5</code>.</p></dd>
 <dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
 <dd><p>Character. <code>"kable"</code> (default) for a formatted
 <code><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">knitr::kable()</a></code> table, <code>"dataframe"</code> for the underlying data.frame, or
-<code>"loadings"</code> for a ggplot of PC1 loadings against item locations.</p></dd>
+<code>"ggplot"</code> for a ggplot of PC1 loadings against item locations.
+<code>"loadings"</code> is accepted as a backward-compatible alias for <code>"ggplot"</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -105,7 +106,7 @@ provided). The variance partition is attached as the
 <code>explained</code>, <code>unexplained</code>, <code>pct_explained</code>, <code>pct_unexplained</code>,
 <code>n_persons</code>. Access via
 <code>attr(result, "variance_partition")</code>.</p></li>
-<li><p>If <code>output = "loadings"</code>: a ggplot showing each item's PC1 loading on
+<li><p>If <code>output = "ggplot"</code>: a ggplot showing each item's PC1 loading on
 the x-axis and Rasch item location on the y-axis, with dashed reference
 lines at zero, and the variance partition in the figure caption. Item
 names are labelled via <code><a href="https://ggrepel.slowkow.com/reference/geom_text_repel.html" class="external-link">ggrepel::geom_text_repel()</a></code> when <code>ggrepel</code> is
@@ -173,7 +174,7 @@ residuals. <em>Educational and Psychological Measurement, 70</em>(5), 717-731.
 <span class="r-out co"><span class="r-pr">#&gt;</span> |PC5       |      1.105|                  0.093|</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># PC1 loadings vs item location plot</span></span></span>
-<span class="r-in"><span><span class="fu">RMdimResidualPCA</span><span class="op">(</span><span class="va">dat</span>, output <span class="op">=</span> <span class="st">"loadings"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">RMdimResidualPCA</span><span class="op">(</span><span class="va">dat</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="RMdimResidualPCA-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Simulation-based cutoff (use 250+ iterations in real analyses)</span></span></span>

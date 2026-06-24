@@ -8,7 +8,7 @@ optionally overlaying observed item fit from the original data.
 ## Usage
 
 ``` r
-RMitemInfitCutoffPlot(simfit, data, output = "infit")
+RMitemInfitCutoffPlot(simfit, data, statistic = "infit")
 ```
 
 ## Arguments
@@ -29,7 +29,7 @@ RMitemInfitCutoffPlot(simfit, data, output = "infit")
   alongside the simulated distribution, plus segment summaries from the
   cutoff intervals.
 
-- output:
+- statistic:
 
   Character string. Either `"infit"` (default) to show only the infit
   panel, `"outfit"` to show only the outfit panel, or `"both"` to show
@@ -38,7 +38,7 @@ RMitemInfitCutoffPlot(simfit, data, output = "infit")
 
 ## Value
 
-A `ggplot` object (or a `patchwork` object when `output = "both"` and
+A `ggplot` object (or a `patchwork` object when `statistic = "both"` and
 `data` is supplied).
 
 ## Details
@@ -103,7 +103,7 @@ RMitemInfitCutoffPlot(cutoff_res, data = sim_data)
 
 
 # Both infit and outfit panels side by side
-RMitemInfitCutoffPlot(cutoff_res, data = sim_data, output = "both")
+RMitemInfitCutoffPlot(cutoff_res, data = sim_data, statistic = "both")
 
 # }
 ```

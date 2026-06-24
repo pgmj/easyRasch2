@@ -17,7 +17,7 @@ critical values."><meta name="robots" content="noindex"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.914</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.917</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -152,8 +152,8 @@ parameters.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>For each simulation iteration the function:</p><ol><li><p>Resamples person parameters (thetas) with replacement from ML
-estimates.</p></li>
+    <p>For each simulation iteration the function:</p><ol><li><p>Resamples person parameters (thetas) with replacement from the
+WLE person locations.</p></li>
 <li><p>Simulates item response data under a Rasch model (dichotomous via
 <code><a href="https://rdrr.io/pkg/psychotools/man/rrm.html" class="external-link">psychotools::rrm()</a></code> or polytomous via an internal partial credit
 simulator).</p></li>
@@ -165,9 +165,11 @@ across iterations provides empirical critical values per item pair. Values
 from real data that fall outside these bounds suggest local dependence that
 exceeds what would be expected by chance. Failed iterations (e.g., due to
 convergence issues or degenerate data) are silently discarded.</p>
-<p>Supports both <strong>dichotomous</strong> data (via <code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code> and
-<code><a href="https://rdrr.io/pkg/psychotools/man/rrm.html" class="external-link">psychotools::rrm()</a></code>) and <strong>polytomous</strong> data (via <code><a href="https://rdrr.io/pkg/eRm/man/PCM.html" class="external-link">eRm::PCM()</a></code> and an
-internal partial credit score simulator).</p>
+<p>The generating model uses CML item thresholds via <code><a href="https://rdrr.io/pkg/psychotools/man/pcmodel.html" class="external-link">psychotools::pcmodel()</a></code>
+(a dichotomous item is a 2-category PCM) and WLE person locations,
+consistent with the rest of the package; responses are simulated with
+<code><a href="https://rdrr.io/pkg/psychotools/man/rrm.html" class="external-link">psychotools::rrm()</a></code> (dichotomous) or an internal partial credit score
+simulator (polytomous).</p>
 <p>Parallel processing is provided by the <code>mirai</code> package (optional). Install
 it with <code>install.packages("mirai")</code> to enable parallelisation.</p>
 <p>The <code>iarm</code> package must be installed (it is in Suggests, not Imports).</p>
@@ -198,51 +200,51 @@ it with <code>install.packages("mirai")</code> to enable parallelisation.</p>
 <span class="r-in"><span>                           seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">cutoff_res</span><span class="op">$</span><span class="va">pair_cutoffs</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    Item1  Item2  gamma_low gamma_high</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  Item1  Item2 -0.4306569  0.4306761</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  Item1  Item3 -0.3582424  0.3249651</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  Item1  Item4 -0.5086744  0.4304419</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  Item1  Item5 -0.3945250  0.3072829</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  Item1  Item6 -0.4643478  0.5241633</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6  Item1  Item7 -0.4729345  0.4150514</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7  Item1  Item8 -0.5020921  0.3392174</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8  Item1  Item9 -0.5251263  0.3824885</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9  Item1 Item10 -0.3755858  0.3699346</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10 Item2  Item3 -0.4204398  0.3994601</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 11 Item2  Item4 -0.3644315  0.3534209</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 12 Item2  Item5 -0.4473970  0.4878331</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 13 Item2  Item6 -0.3730728  0.3733529</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 14 Item2  Item7 -0.4377953  0.4086538</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 15 Item2  Item8 -0.4017972  0.4588756</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 16 Item2  Item9 -0.3388430  0.3944811</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 17 Item2 Item10 -0.3537332  0.3087994</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 18 Item3  Item4 -0.3931570  0.4112150</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 19 Item3  Item5 -0.4140481  0.3298013</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 20 Item3  Item6 -0.3815603  0.4300039</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 21 Item3  Item7 -0.4352428  0.3839662</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 22 Item3  Item8 -0.4105651  0.3771429</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 23 Item3  Item9 -0.3846154  0.3843663</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 24 Item3 Item10 -0.3751171  0.4253835</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 25 Item4  Item5 -0.3895447  0.3688490</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 26 Item4  Item6 -0.4051667  0.4102190</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 27 Item4  Item7 -0.4657110  0.3573265</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 28 Item4  Item8 -0.4961380  0.4708393</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 29 Item4  Item9 -0.4414125  0.4671026</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 30 Item4 Item10 -0.3295775  0.2959772</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 31 Item5  Item6 -0.3552068  0.4885720</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 32 Item5  Item7 -0.4122038  0.3920705</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 33 Item5  Item8 -0.4357542  0.4475191</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 34 Item5  Item9 -0.3253012  0.3421405</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 35 Item5 Item10 -0.4073171  0.3440970</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 36 Item6  Item7 -0.3982301  0.4649695</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 37 Item6  Item8 -0.3762811  0.3933511</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 38 Item6  Item9 -0.3669915  0.4166667</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 39 Item6 Item10 -0.4095238  0.4507380</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 40 Item7  Item8 -0.3514916  0.4971444</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 41 Item7  Item9 -0.3357228  0.4801166</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 42 Item7 Item10 -0.3532645  0.3842173</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 43 Item8  Item9 -0.4445880  0.4311649</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 44 Item8 Item10 -0.3395225  0.4713264</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 45 Item9 Item10 -0.3807474  0.4108911</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  Item1  Item2 -0.4246238  0.3198758</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  Item1  Item3 -0.4725291  0.4400000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  Item1  Item4 -0.4455579  0.3262195</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  Item1  Item5 -0.4192593  0.4463083</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  Item1  Item6 -0.3890363  0.3372093</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  Item1  Item7 -0.3239512  0.4533333</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7  Item1  Item8 -0.4260870  0.4747872</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8  Item1  Item9 -0.3201970  0.3996248</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9  Item1 Item10 -0.3210702  0.3171954</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 Item2  Item3 -0.3423763  0.3693694</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11 Item2  Item4 -0.2822086  0.4506687</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 12 Item2  Item5 -0.3933887  0.4179104</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 13 Item2  Item6 -0.3816425  0.3362769</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 14 Item2  Item7 -0.5614692  0.3977456</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 15 Item2  Item8 -0.4305085  0.3895771</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 16 Item2  Item9 -0.4109589  0.3747739</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 17 Item2 Item10 -0.3531353  0.3608790</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 18 Item3  Item4 -0.3698551  0.3174603</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 19 Item3  Item5 -0.4548193  0.4344904</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 20 Item3  Item6 -0.4166667  0.4460015</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 21 Item3  Item7 -0.4143335  0.4424779</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 22 Item3  Item8 -0.4346727  0.4184874</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 23 Item3  Item9 -0.3793103  0.3470952</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 24 Item3 Item10 -0.3508501  0.4581142</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25 Item4  Item5 -0.3603667  0.4174067</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 26 Item4  Item6 -0.3335321  0.4556213</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27 Item4  Item7 -0.3969336  0.3440059</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 28 Item4  Item8 -0.3689320  0.3484576</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 29 Item4  Item9 -0.3971429  0.3337701</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 30 Item4 Item10 -0.3641851  0.3455481</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 31 Item5  Item6 -0.3874426  0.3315698</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 32 Item5  Item7 -0.4620253  0.4496595</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 33 Item5  Item8 -0.3712256  0.4384670</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 34 Item5  Item9 -0.3704415  0.4069529</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 35 Item5 Item10 -0.4049501  0.3196481</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 36 Item6  Item7 -0.4504065  0.3748283</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 37 Item6  Item8 -0.2495922  0.3668176</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 38 Item6  Item9 -0.3822401  0.3897638</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 39 Item6 Item10 -0.3070326  0.4840983</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 40 Item7  Item8 -0.4427245  0.3660965</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 41 Item7  Item9 -0.3649123  0.3639609</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 42 Item7 Item10 -0.3774802  0.2980132</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 43 Item8  Item9 -0.4102012  0.3160813</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 44 Item8 Item10 -0.4171975  0.3995774</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 45 Item9 Item10 -0.3581972  0.3491311</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

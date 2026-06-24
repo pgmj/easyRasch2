@@ -2,306 +2,203 @@
 
 ## easyRasch2 (development version)
 
-- The shared CML item-fit helper `.rasch_fit_cml()` (behind
-  [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemParameters.md),
-  [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md),
-  and
-  [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md))
-  now fits by CML via `psychotools` instead of `eRm`, completing the
-  move of the parameter/reliability functions to a single CML engine.
-  Because all three callers re-centre the thresholds to grand-mean-zero,
-  item *locations*, person locations, and score SEs are unchanged (CML
-  estimates match `eRm` to ~5e-5); only
-  [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemParameters.md)’s
-  reported **threshold SEs** change slightly (square roots of the
-  `psychotools::threshpar(vcov = TRUE)` diagonal rather than an `eRm`
-  delta-method reconstruction; typically a few percent).
+A large consolidation release in preparation for the next CRAN
+submission. The headline change is that the whole package now runs on a
+**single estimation engine** — conditional maximum likelihood (CML) item
+parameters via `psychotools` and Warm’s weighted-likelihood (WLE) person
+locations — replacing the previous mix of `eRm` (MLE) and `mirt`
+(MML/EAP). On top of that: new CFA loading diagnostics, three new
+functions for person+item parameters and person fit, bootstrap p-values
+with multiplicity correction, and a round of naming/output consistency
+fixes. After this release `eRm` is used only by
+[`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
+(Andersen’s LR test) and `mirt` only for the RMU plausible values.
 
-- [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md):
-  the `mirt`-based empirical reliability is replaced by a native
-  **marginal reliability** – Green’s (1984) coefficient,
-  `1 - mean(1/I(theta)) / sigma^2`, with the test information `I(theta)`
-  summed from the CML item parameters and the average error variance
-  integrated over the *estimated* normal latent density `N(0, sigma^2)`
-  (sigma from marginal ML). This is the model-based complement to the
-  sample-based PSI (a large PSI-vs-marginal gap flags an off-target or
-  non-normal sample), and it corrects a problem with
-  [`mirt::marginal_rxx()`](https://philchalmers.github.io/mirt/reference/marginal_rxx.html),
-  which assumes `N(0,1)` and so badly underestimates reliability on the
-  Rasch logit scale where sigma \> 1 (e.g. on a phq9 dichotomization
-  mirt’s marginal was 0.27 vs ~0.65 native). The output’s “Empirical”
-  row is now “Marginal”; because empirical reliability was essentially
-  the EAP twin of the WLE PSI, no information is lost. A side benefit:
-  the bootstrap is now fully native (CML/WLE) and fits no `mirt` model
-  per resample (`mirt` is used only once, for the RMU plausible values).
+Many items below shift reported numbers slightly: the underlying
+statistics are unchanged, only the estimation engine (WLE locations are
+finite at extreme scores, so extreme-score cases are now retained rather
+than dropped).
 
-- [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md):
-  the Person Separation Index (PSI) is now the **WLE-based separation
-  reliability** – `1 - mean(SEM^2) / Var(theta)` computed from CML item
-  thresholds (`psychotools`) and Warm’s WLE person locations and
-  analytic SEMs – replacing
-  [`eRm::SepRel()`](https://rdrr.io/pkg/eRm/man/SepRel.html) for the
-  point estimate and `mirt` ML thetas for the bootstrap, so the two now
-  share one definition. Extreme (min/max) scorers are excluded (their
-  boundary estimates would inflate the person variance). PSI values can
-  differ from the previous
-  [`eRm::SepRel()`](https://rdrr.io/pkg/eRm/man/SepRel.html) output,
-  most noticeably for scales with many extreme scorers (e.g. dichotomous
-  items); empirical reliability, Cronbach’s alpha, and RMU are
-  unchanged.
+### Unified CML/WLE estimation engine
 
-- Consistency revision (continued):
-  [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md)
-  and the simulation functions
-  [`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md)
-  and
-  [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md)
-  now use the shared CML (`psychotools`) + WLE engine for both the
-  observed analysis and the parametric-bootstrap *generating* model,
-  replacing `eRm` +
-  [`eRm::person.parameter()`](https://rdrr.io/pkg/eRm/man/person.parameter.html)
-  (MLE). The bootstrap DGP (resample person locations with replacement)
-  is unchanged. For residual PCA the standardized residuals now come
-  from the shared CML/WLE engine rather than `eRm::itemfit()$st.res`,
-  and the variance partition uses WLE locations, which are finite at
-  extreme scores – so all persons are retained (the previous MLE
-  partition/PCA dropped extreme-score cases). This shifts the reported
-  PCA eigenvalues, the variance-partition percentages, and the
-  simulation-based eigenvalue cut-off;
-  [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md)’s
-  observed and per-iteration CFA fits (lavaan) are unchanged, but its
-  cut-off shifts slightly with the modernised generating distribution.
-
-- Consistency revision: several observed-analysis functions now estimate
-  item parameters by CML via `psychotools` and person locations by WLE,
-  instead of `eRm` +
-  [`eRm::person.parameter()`](https://rdrr.io/pkg/eRm/man/person.parameter.html)
-  (MLE), unifying the package on one estimation engine. Affected:
+- **Observed item statistics** —
   [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md),
   [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
   [`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatProb.md),
   [`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemHierarchy.md),
-  and
-  [`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md).
-  The conditional `iarm` statistics (restscore, infit/outfit) are
-  engine-invariant and unchanged; what shifts is minor and on the common
-  grand-mean-zero scale: the `Relative_location` reference (WLE vs MLE
-  person mean, `RMitemRestscore` / `RMitemInfit`); reported threshold
-  SEs (psychotools vs eRm `vcov`, ~few %, `RMitemHierarchy` /
-  `RMtargeting`); the absolute theta position of polytomous
-  [`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatProb.md)
-  curves; and the
   [`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md)
-  person distribution (WLE, now including finite extreme-score
-  locations).
+  — moved to CML (`psychotools`) + WLE. The conditional `iarm`
+  statistics are engine-invariant; only minor things move on the common
+  grand-mean-zero scale (`Relative_location` via the WLE person mean;
+  threshold SEs ~few %; polytomous ICC curve position; the targeting
+  person distribution).
   [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
-  is intentionally left on
-  [`eRm::LRtest()`](https://rdrr.io/pkg/eRm/man/LRtest.html) (the
-  Andersen likelihood-ratio test, not a plain item-fit step).
+  deliberately stays on
+  [`eRm::LRtest()`](https://rdrr.io/pkg/eRm/man/LRtest.html).
+- **Parameter / score functions** — the shared `.rasch_fit_cml()` behind
+  [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemParameters.md),
+  [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md),
+  [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md)
+  now fits by CML via `psychotools`. Locations, person estimates and
+  score SEs are unchanged (match `eRm` to ~5e-5); only
+  [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemParameters.md)’s
+  threshold SEs shift slightly (psychotools `vcov` vs the eRm delta
+  method, ~few %).
+- **[`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md)**
+  — the WLE method now reports the information-based SE
+  `1/sqrt(I(theta))` (matching
+  [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md),
+  `catR`, `TAM`); point estimates unchanged, SEs differ (larger) at the
+  score extremes, and the WLE solver/centring is now shared with
+  [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md).
+- **[`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)**
+  — empirical reliability is replaced by a native **marginal
+  reliability** (Green 1984; the “Empirical” row is now “Marginal”),
+  While
+  [`mirt::marginal_rxx()`](https://philchalmers.github.io/mirt/reference/marginal_rxx.html)
+  uses `N(0,1)`, this integrates over the estimated latent variance, so
+  it is correct on the Rasch logit scale; and the **PSI** is now the
+  WLE-based separation reliability (`1 - mean(SEM^2)/Var(theta)`,
+  excluding extreme scorers), replacing
+  [`eRm::SepRel()`](https://rdrr.io/pkg/eRm/man/SepRel.html) + `mirt`.
+  The bootstrap is now fully native (no `mirt` per resample). PSI can
+  differ noticeably for scales with many extreme scorers; alpha and RMU
+  are unchanged.
+- **Simulation-based tools** now both generate and refit on the CML/WLE
+  engine:
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)/[`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md),
+  [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md),
+  [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)/[`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md),
+  [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md),
+  [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md)/[`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md),
+  [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md),
+  [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md),
+  [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md),
+  [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md).
+  The eRm-based internal `extract_item_thresholds()` helper is removed.
+  Conditional / scale-invariant statistics (infit/outfit, item-restscore
+  classification, the Martin-Löf Monte-Carlo p-value, pooled MI infit
+  MSQ/SE) are unchanged; residual-based and simulated quantities shift
+  slightly — Q3 values/cut-offs/flags (the statistic is unchanged;
+  observed-vs-old-MML correlation is typically \>0.95), PCA eigenvalues
+  / variance partition / cut-off, and the gamma cut-offs.
+- [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)/[`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
+  keep the previous engine available via `estimator = "MML"` (default
+  `"CML"`); the estimator is stored in the cutoff object and reused by
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)/[`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md)
+  (a mismatch is overridden with a warning).
+  [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)’s
+  pooled-SE caveat (Müller 2020) is now documented.
 
-- [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
-  now computes Yen’s Q3 by **conditional maximum likelihood with Warm’s
-  weighted likelihood** person locations by default
-  (`estimator = "CML"`), replacing the previous reliance on marginal ML
-  / EAP via `mirt`. CML/WLE is true to the Rasch tradition, gives finite
-  estimates at extreme scores, and (via `psychotools`) is markedly
-  faster in the parametric bootstrap. The previous engine remains
-  available with `estimator = "MML"`. **This changes the Q3 values,
-  cut-offs, and flags relative to earlier versions** — the statistic is
-  the same but the estimator differs (observed-vs-MML off-diagonal
-  correlation is typically above 0.95 on real data).
-  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
-  gains a matching `estimator` argument and stores it in its return
-  value (`$estimator`);
-  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
-  and
-  [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md)
-  read that stored estimator so the observed Q3 and the simulated
-  cut-off are always computed the same way (a mismatching `estimator`
-  argument is overridden with a warning). The shared CML/WLE/EAP
-  person-estimation engine is reusable internally for migrating other
-  functions off `mirt`/`eRm` over time.
-  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)’s
-  parametric-bootstrap *generating* distribution now also uses CML item
-  parameters and WLE (not MLE) person locations, so the whole pipeline
-  is CML/WLE-coherent; this slightly shifts the simulated cut-offs
-  relative to earlier development versions.
+### New functions
 
-- [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)’s
-  parametric-bootstrap generator was modernised to the shared CML/WLE
-  engine: item parameters by CML (`psychotools`), person locations by
-  WLE (replacing `eRm` MLE via `person.parameter()`), and the
-  per-iteration refit unified to
-  [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
-  for both dichotomous and polytomous data (it is accepted by
-  [`iarm::out_infit()`](https://rdrr.io/pkg/iarm/man/out_infit.html) and
-  matches `eRm` to ~1e-6 while being faster). The conditional
-  infit/outfit statistic is unchanged. The function also gains the same
-  experimental `dgp` argument as
-  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
-  (`"resample"` default vs `"conditional"`); because the statistic is
-  conditional on the total score, `"conditional"` is its matched null.
-  See `dev/infit_dgp_comparison.R`.
+- **[`RMpersonFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonFit.md)**
+  — per-respondent conditional infit/outfit MSQ and the standardized
+  log-likelihood `lz`, computed per response pattern (handles partial
+  missingness, no biased person estimate in the residual). Significance
+  is by Monte-Carlo resampling under the fitted model, not the
+  unreliable asymptotic null (Sinharay 2016; Müller 2020). Output as
+  table, data.frame, or a named list of person-fit maps; `zstd = TRUE`
+  adds the Wilson-Hilferty transform (comparability only, not for
+  inference); `flag = "underfit"` restricts flagging to the
+  validity-relevant direction.
+- **[`RMitemParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemParameters.md)**
+  — item difficulty (dichotomous) or Andrich-threshold (polytomous)
+  parameters in long/wide format, with optional SEs and Wald CIs.
+- **[`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md)**
+  — per-respondent theta and SEM computed on each response pattern
+  (handles partial missingness), via Warm’s WLE (default) or EAP under a
+  normal prior (SD estimated by marginal ML unless fixed).
 
-- [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
-  gains an experimental `dgp` argument selecting the data-generating
-  process for the parametric bootstrap. `"resample"` (default,
-  unchanged) resamples WLE person locations with replacement and
-  simulates under the model (a *marginal* null). `"conditional"` instead
-  simulates each respondent’s pattern from the exact Rasch conditional
-  distribution given their observed total score, item parameters fixed
-  (a *conditional* null) – this fixes the score margin, needs no
-  latent-distribution estimate, and avoids the over-dispersion that
-  resampling point estimates introduces. The chosen DGP is stored in
-  `$dgp`. See `dev/q3_dgp_comparison.R` for the calibration study
-  comparing the two.
+### CFA dimensionality: loadings + three-function split
 
-- [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
-  given the full
-  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
-  object now returns a third list element, `$plot`: a tile heatmap
-  (lower triangle, diverging RdYlBu fill) of the observed Q3 matrix,
-  with pairs above the global dynamic cut-off outlined. Adapted from the
-  `RASCHplot` package’s `ggQ3star()` and styled to match the package’s
-  other ggplots. (The returned list is now `$matrix`, `$pairs`, `$plot`;
-  the simple `cutoff = NULL` / numeric-cutoff return values are
-  unchanged.)
+CFA now also reports **per-item standardized factor loadings** (observed
+vs a simulated expected range), restructured to match the other
+simulation tools:
 
-- New
-  [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonFit.md):
-  per-respondent person-fit analysis. Reports conditional infit and
-  outfit mean-squares (computed on each response pattern via elementary
-  symmetric functions, so partial missingness is handled and no biased
-  person estimate enters the residual) plus the standardized
-  log-likelihood `lz`. Significance is assessed by Monte-Carlo
-  resampling under the fitted model — each statistic against the null
-  that matches it (MSQ conditional on the total score, lz simulated at
-  the estimated location) — rather than by an unreliable asymptotic null
-  (Sinharay, 2016; Müller, 2020). The Wilson-Hilferty (ZSTD) transform
-  of MSQ is available via `zstd = TRUE` but, following Müller (2020), is
-  provided only as a comparability metric and not used for inference.
-  Output is a table, a data.frame, or (`output = "ggplot"`) a named list
-  of person-fit maps – one per statistic – each captioned with the
-  assessed sample size and the proportion of respondents flagged by that
-  statistic (split into underfit vs overfit for the MSQ maps), with
-  points coloured by fit direction. `flag = "underfit"` restricts
-  flagging to the validity-relevant underfit direction (MSQ \> 1) using
-  a more powerful one-sided p-value.
+- [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md)
+  is now **simulate-only** — returns the simulation object (null
+  distributions + cutoffs for fit indices *and* loadings); it no longer
+  computes the observed fit, and `output = "kable"` errors with a
+  pointer to
+  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md).
+  **(Breaking.)**
+- [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
+  *(new)* takes `data` + a required cutoff object and returns a list of
+  two tables, `$fit` (CFI/RMSEA/SRMR) and `$loadings` (observed loading
+  vs the two-sided expected range), as kables (default) or data.frames.
+- `RMdimCFAPlot(cutoff_res, data)` now returns a **list of two ggplots**
+  (`$loadings`, in the
+  [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffPlot.md)
+  style; and `$fit`, the faceted fit-index distributions) and requires
+  `data`. **(Breaking: previously a single ggplot.)**
 
-- New
-  [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemParameters.md):
-  returns item difficulty (dichotomous) or Andrich-threshold
-  (polytomous) parameters in long or wide format, with optional standard
-  errors and Wald confidence intervals. Item parameters are estimated by
-  CML (via `eRm`) by default, or by MML (via `mirt`) for sparse data;
-  polytomous threshold SEs use the delta method.
-
-- New
-  [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md):
-  estimates a person location (theta) and its SEM for every respondent,
-  working directly on each response pattern so partial missingness is
-  handled correctly (unlike the sum-score lookup in
-  [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md)).
-  Supports Warm’s WLE (default) and EAP under a normal prior whose SD is
-  estimated from the data by marginal maximum likelihood unless fixed
-  via `prior_sd`.
-
-- The `Flagged` column now labels the misfit *direction* instead of a
-  logical TRUE/FALSE: `"overfit"`, `"underfit"`, or `""` (no misfit), to
-  simplify interpretation. In
-  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
-  and
-  [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
-  infit below the range is `"overfit"` (more predictable than expected)
-  and above is `"underfit"` (noisier);
-  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
-  gains a `Flagged` column where over-discrimination (observed \>
-  expected, adj. p \< .05, often local dependence) is `"overfit"` and
-  under-discrimination is `"underfit"`. Note the value direction is
-  opposite between the two (a *high* infit is underfit, a *high*
-  restscore correlation is overfit). This changes the type of the
-  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)/[`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
-  `Flagged` column from logical to character.
-  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
-  also drops the now-redundant `Significance` (“p-value sign.”) star
-  column – the numeric `p_adjusted` and the new `Flagged` label convey
-  the same information more directly – and the `Location` column (the
-  relative location is sufficient), and trims the table headers
-  (“Observed”, “Expected”) for a narrower table with an explanatory
-  caption.
+### Bootstrap p-values and multiplicity correction
 
 - [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
-  gains an optional `p_value` argument. When `TRUE` (and the full
+  gains `p_value`: per-item bootstrap p-values from the simulated null
+  (needs the full
   [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
-  object is supplied), it reports per-item bootstrap p-values from the
-  simulated null with multiple-comparison correction: Westfall-Young
-  studentised-max step-down for the family-wise error rate
-  (`correction = "fwer"`, default), or Benjamini-Hochberg /
-  Benjamini-Yekutieli FDR. Items are studentised by the bootstrap SD
-  (not the ZSTD transform), and p-values are shown alongside the
-  simulated effect-size band. At least 1000 cutoff `iterations` are
-  recommended (a warning is issued otherwise); default behaviour with
-  `p_value = FALSE` is unchanged. Methods follow Ferreira (2024) and
-  Westfall & Young (1993).
-
+  object), studentised by the bootstrap SD, with Westfall-Young
+  studentised-max FWER (default) or Benjamini-Hochberg /
+  Benjamini-Yekutieli FDR. ≥1000 cutoff iterations recommended (warning
+  otherwise); default (`p_value = FALSE`) unchanged. (Ferreira 2024;
+  Westfall & Young 1993.)
 - [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
-  now returns two complementary views when the full
-  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
-  object is supplied: a `list` with `$matrix` (the Q3
-  residual-correlation matrix, flagged against the single global cutoff)
-  and `$pairs` (a per-pair table giving each pair’s observed Q3 with its
-  simulated low/high reference band, `Flagged` as
-  `"above"`/`"below"`/`""`, sorted by departure from the per-pair median
-  and optionally truncated to the most extreme `n_pairs`). This matches
-  the pairwise Q3 table in the `easyRasch2jmv` jamovi module. With a
-  bare numeric `cutoff` (or none) the single matrix is returned as
-  before. The optional `p_value` layer now folds one-sided bootstrap
-  p-values for excess local dependence (with the same Westfall-Young
-  FWER / FDR `correction` options across the *k(k-1)/2* pairs) into
-  `$pairs`, which then flags on the adjusted p-value.
-  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
+  with the full cutoff object now returns `$matrix` plus a per-pair
+  `$pairs` table (observed Q3 vs simulated low/high band, directional
+  flag, sorted by departure from the per-pair median, optional `n_pairs`
+  cap). An optional `p_value` layer folds one-sided bootstrap p-values
+  for excess local dependence (same FWER/FDR `correction`) into
+  `$pairs`.
+- [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
   and
   [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
-  share a “Multiple comparisons” help section explaining when to use
-  marginal vs corrected p-values.
+  share a “Multiple comparisons” help section.
 
-- [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md):
-  the WLE `method` now reports the information-based standard error
-  `1 / sqrt(I(theta))` (matching
-  [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md),
-  `catR` and `TAM`) instead of the previous iarm “expected SEM”. Point
-  estimates are unchanged; standard errors differ at the score extremes
-  (where they are now larger). The WLE path now shares the same solver
-  and grand-mean-zero threshold centering as
-  [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md),
-  so the two functions are fully consistent.
+### Output and argument consistency
 
-- [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md):
-  corrected the `$direction2` kable caption and the `@return`
-  documentation, which described that table’s rest score as “total -
-  Item1”.
-  [`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html)
-  always removes the second item (Item 2) from the rest score in *both*
-  directions; the two tables differ only in the order the items of each
-  pair are listed (so each pair is tested with each of its items
-  removed). The caption now reads “total - Item2” with a note that
-  direction 2 lists pairs in the reverse order. Computations are
-  unchanged – this is a labelling fix.
+- Naming aligned across functions (no deprecation aliases):
+  [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md)
+  plot output is now `output = "ggplot"` (`"loadings"` kept as a
+  backward-compatible alias);
+  [`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md)
+  `output = "figure"` → `"patchwork"` (matching
+  [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md));
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+  `p.adj` → `p_adj`;
+  [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffPlot.md)
+  `output` → `statistic`.
+- The `Flagged` column now labels misfit **direction** (`"overfit"` /
+  `"underfit"` / `""`) instead of logical TRUE/FALSE in
+  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
+  /
+  [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
+  (column type changes from logical to character).
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+  gains a `Flagged` column and drops the redundant significance-star and
+  `Location` columns (trimmed headers + explanatory caption). Note the
+  value direction differs: a *high* infit is underfit, a *high*
+  restscore correlation is overfit.
 
-- [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
-  now computes the observed Q3 matrix with `mirt::residuals(digits = 4)`
-  (was `digits = 2`), matching the precision already used for the
-  simulated Q3 values in
-  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
+### Other changes and fixes
+
+- [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
   and
-  [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md).
-  The mean Q3, the dynamic cut-off, and the `above_cutoff` flags are now
-  computed from full-precision values (previously the flags were derived
-  from values rounded to 2 decimals), and `output = "dataframe"` returns
-  4-decimal precision. The kable display remains rounded to 2 decimals.
-  Borderline pairs close to the cut-off may flag differently than before
-  – the new behaviour is the more accurate one. Aligns with the same fix
-  in the easyRasch2jmv jamovi module (1.1.0).
+  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
+  gain an experimental `dgp` argument — `"resample"` (default; resample
+  WLE locations and simulate, a marginal null) vs `"conditional"`
+  (simulate each pattern from the exact Rasch conditional given the
+  observed total score, a matched conditional null) — stored in the
+  result. See `dev/q3_dgp_comparison.R` / `dev/infit_dgp_comparison.R`.
+- [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md)
+  given the full cutoff object also returns `$matrix`: a lower-triangle
+  diverging-RdYlBu tile heatmap of the observed Q3 matrix with
+  above-cutoff pairs.
+- [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md):
+  corrected the `$direction2` caption / `@return` wording to “total -
+  Item2” (with a note that direction 2 lists pairs in reverse order);
+  computations unchanged (labelling fix).
 
 ## easyRasch2 0.8.0
 

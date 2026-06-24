@@ -67,11 +67,12 @@ DIF assessment functions
 PCA of residuals, and more to come
 
 - [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md)
-  : Posterior-predictive CFA fit-index cutoffs under PCM
-  unidimensionality
+  : Simulated null distribution for one-factor CFA fit and loadings
+  under PCM unidimensionality
+- [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
+  : Observed one-factor CFA fit and loadings vs a simulated reference
 - [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFAPlot.md)
-  : Plot observed CFA fit indices against the simulated null
-  distribution
+  : Plot observed CFA fit and loadings against the simulated null
 - [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md)
   : PCA of Standardized Rasch Residuals
 - [`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md)

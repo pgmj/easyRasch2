@@ -43,8 +43,9 @@ RMdimResidualPCA(data, cutoff = NULL, n_components = 5L, output = "kable")
 
   Character. `"kable"` (default) for a formatted
   [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html) table,
-  `"dataframe"` for the underlying data.frame, or `"loadings"` for a
-  ggplot of PC1 loadings against item locations.
+  `"dataframe"` for the underlying data.frame, or `"ggplot"` for a
+  ggplot of PC1 loadings against item locations. `"loadings"` is
+  accepted as a backward-compatible alias for `"ggplot"`.
 
 ## Value
 
@@ -61,7 +62,7 @@ RMdimResidualPCA(data, cutoff = NULL, n_components = 5L, output = "kable")
   `explained`, `unexplained`, `pct_explained`, `pct_unexplained`,
   `n_persons`. Access via `attr(result, "variance_partition")`.
 
-- If `output = "loadings"`: a ggplot showing each item's PC1 loading on
+- If `output = "ggplot"`: a ggplot showing each item's PC1 loading on
   the x-axis and Rasch item location on the y-axis, with dashed
   reference lines at zero, and the variance partition in the figure
   caption. Item names are labelled via
@@ -134,7 +135,7 @@ RMdimResidualPCA(dat)
 #> |PC5       |      1.105|                  0.093|
 
 # PC1 loadings vs item location plot
-RMdimResidualPCA(dat, output = "loadings")
+RMdimResidualPCA(dat, output = "ggplot")
 
 
 # Simulation-based cutoff (use 250+ iterations in real analyses)

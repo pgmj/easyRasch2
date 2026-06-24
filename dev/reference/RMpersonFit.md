@@ -44,8 +44,8 @@ RMpersonFit(
 
 - estimator:
 
-  Character. How item parameters are estimated: `"CML"` (default, via
-  eRm) or `"MML"` (via mirt).
+  Character. How item parameters are estimated: `"CML"` (default) or
+  `"MML"` (via mirt).
 
 - theta_method:
 
