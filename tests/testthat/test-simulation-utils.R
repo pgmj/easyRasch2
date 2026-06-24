@@ -22,17 +22,16 @@ test_that("sim_poly_item responses are within valid range", {
   expect_true(all(result %in% 0:2))
 })
 
-test_that("extract_item_thresholds works with polytomous data", {
-  skip_if_not_installed("eRm")
+test_that(".fit_cml_thresholds returns a per-item threshold list (poly)", {
   set.seed(7)
-  # Simulate polytomous data (0-2)
   poly_data <- as.data.frame(
     matrix(sample(0:2, 120, replace = TRUE), nrow = 30, ncol = 4)
   )
-  thresh <- easyRasch2:::extract_item_thresholds(poly_data)
-  expect_true(is.matrix(thresh))
-  # Should have 4 rows (one per item)
-  expect_equal(nrow(thresh), 4L)
-  # Location column should not be present
-  expect_false("Location" %in% colnames(thresh))
+  thr <- easyRasch2:::.fit_cml_thresholds(poly_data)
+  expect_type(thr, "list")
+  # One element per item, each with (categories - 1) = 2 thresholds
+  expect_length(thr, 4L)
+  expect_true(all(vapply(thr, length, integer(1L)) == 2L))
+  # Grand-mean centred
+  expect_equal(mean(unlist(thr)), 0, tolerance = 1e-8)
 })

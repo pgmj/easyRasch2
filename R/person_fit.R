@@ -23,7 +23,7 @@
 #' @param statistics Character vector. Which statistics to report; any of
 #'   `"infit"`, `"outfit"`, `"lz"`. Defaults to all three.
 #' @param estimator Character. How item parameters are estimated:
-#'   `"CML"` (default, via \pkg{eRm}) or `"MML"` (via \pkg{mirt}).
+#'   `"CML"` (default) or `"MML"` (via \pkg{mirt}).
 #' @param theta_method Character. Person-location estimator used for the
 #'   lz statistic: `"WLE"` (default) or `"EAP"`. Ignored if `"lz"` is not
 #'   requested.

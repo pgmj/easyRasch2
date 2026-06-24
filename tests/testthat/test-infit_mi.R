@@ -16,7 +16,6 @@ make_mids <- function(n = 200, k = 5, prop_na = 0.05, seed = 1L) {
 # ---------------------------------------------------------------------
 test_that("RMitemInfitCutoffMI returns the expected list structure", {
   skip_if_not_installed("mice")
-  skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
 
@@ -36,7 +35,6 @@ test_that("RMitemInfitCutoffMI returns the expected list structure", {
 
 test_that("RMitemInfitCutoffMI is reproducible with the same seed", {
   skip_if_not_installed("mice")
-  skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
 
@@ -53,7 +51,6 @@ test_that("RMitemInfitCutoffMI is reproducible with the same seed", {
 # ---------------------------------------------------------------------
 test_that("RMitemInfitMI output = 'dataframe' returns pooled infit per item", {
   skip_if_not_installed("mice")
-  skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
 
   imp <- make_mids()
@@ -65,7 +62,6 @@ test_that("RMitemInfitMI output = 'dataframe' returns pooled infit per item", {
 
 test_that("RMitemInfitMI accepts an RMitemInfitCutoffMI result and adds Flagged column", {
   skip_if_not_installed("mice")
-  skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
 
@@ -81,7 +77,6 @@ test_that("RMitemInfitMI accepts an RMitemInfitCutoffMI result and adds Flagged 
 
 test_that("RMitemInfitMI output = 'kable' returns a knitr_kable", {
   skip_if_not_installed("mice")
-  skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("knitr")
 

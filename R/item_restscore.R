@@ -14,7 +14,7 @@
 #' @param sort Optional character string. When `sort = "diff"`, rows are sorted
 #'   by the absolute magnitude of `Difference` in descending order, so that
 #'   both over- and underfitting items appear near the top.
-#' @param p.adj Character string specifying the p-value adjustment method
+#' @param p_adj Character string specifying the p-value adjustment method
 #'   passed to `iarm::item_restscore()`. Default `"BH"` (Benjamini-Hochberg).
 #'   See [stats::p.adjust()] for available methods.
 #'
@@ -79,7 +79,7 @@
 #' # Return as data.frame for further processing
 #' df <- RMitemRestscore(sim_data, output = "dataframe")
 #' }
-RMitemRestscore <- function(data, output = "kable", sort, p.adj = "BH") {
+RMitemRestscore <- function(data, output = "kable", sort, p_adj = "BH") {
 
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
@@ -123,7 +123,7 @@ RMitemRestscore <- function(data, output = "kable", sort, p.adj = "BH") {
   options(rgl.useNULL = TRUE)
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
 
-  i1 <- iarm::item_restscore(fit, p.adj = p.adj)
+  i1 <- iarm::item_restscore(fit, p.adj = p_adj)
   i1 <- as.data.frame(i1)
 
   # i1[[1]] is the results matrix: col 1 = observed, col 2 = expected,
@@ -178,7 +178,7 @@ RMitemRestscore <- function(data, output = "kable", sort, p.adj = "BH") {
       "Observed",
       "Expected",
       "Difference",
-      paste0("Adj. p-value (", p.adj, ")"),
+      paste0("Adj. p-value (", p_adj, ")"),
       "Flagged",
       "Rel. location"
     ),

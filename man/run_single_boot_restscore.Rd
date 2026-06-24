@@ -10,7 +10,7 @@ run_single_boot_restscore(seed, data_list)
 \item{seed}{Integer seed for reproducibility.}
 
 \item{data_list}{List produced inside \code{\link[=RMitemRestscoreBoot]{RMitemRestscoreBoot()}} containing \code{data},
-\code{samplesize}, \code{is_polytomous}, \code{item_names}.}
+\code{samplesize}, \code{item_names}.}
 }
 \value{
 A data.frame with columns \code{Item}, \code{item_restscore}, \code{diff},

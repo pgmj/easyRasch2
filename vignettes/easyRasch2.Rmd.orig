@@ -62,7 +62,7 @@ figure > figcaption {
 
 ## Overview
 
-This vignette walks through a worked Rasch analysis of the
+This vignette walks through a brief Rasch analysis of the
 nine-item Patient Health Questionnaire (PHQ-9; @kroenke_phq9_2001) using
 the **easyRasch2** package. The example follows the four psychometric
 criteria proposed by @christensen_psychometric_2021 for the validation
@@ -76,13 +76,6 @@ of patient-reported outcome measures (PROMs):
    up the latent trait increases the probability of higher categories.
 4. **Invariance / no DIF** --- item parameters are the same across
    relevant external groups (e.g. gender).
-
-We then move on to two complementary descriptors that are commonly
-reported alongside the four criteria above:
-
-* **Targeting** --- how well person and item locations overlap on the
-  latent continuum.
-* **Reliability** --- how precisely the scale separates respondents.
 
 For a more extensive treatment of Rasch analysis in R, see
 <https://pgmj.github.io/raschrvignette/RaschRvign.html>. For a Bayesian sibling package, see <https://pgmj.github.io/easyRaschBayes/>
@@ -217,21 +210,28 @@ RMitemRestscore(items)
 ```
 
 
-### CFA-based cutoff for CFI / RMSEA
+### CFA-based cutoffs for CFI / RMSEA and item loadings
 
-`RMdimCFACutoff()` fits a unidimensional ordinal CFA both to the observed
-data and to data simulated from a unidimensional PCM, and returns
-parametric-bootstrap cut-offs for model fit indices SRMR, CFI and RMSEA.
-Model fit values that exceed the simulated cut-off values are *more extreme
-than is plausible under a unidimensional data generating process*.
+`RMdimCFACutoff()` simulates data from a unidimensional PCM and fits a
+unidimensional ordinal CFA to each simulated dataset, building a
+parametric-bootstrap reference distribution for the model fit indices (SRMR,
+CFI, RMSEA) *and* for the per-item standardized factor loadings. It returns
+this simulation object; `RMdimCFA()` then fits the CFA to the observed data and
+tabulates the observed fit indices and loadings against the simulated reference.
+Values more extreme than the simulated cut-offs are *more extreme than is
+plausible under a unidimensional data generating process*.
 
 ```{r cfa-cutoff, results = "asis"}
 cfa_cut <- RMdimCFACutoff(items, iterations = 100, parallel = FALSE,
                        seed = 2)
-cfa_cut
+cfa_tabs <- RMdimCFA(items, cutoff = cfa_cut)
+cfa_tabs$fit
+cfa_tabs$loadings
 ```
 
-Results can also be plotted using `RMdimCFAPlot(cfa_cut)`.
+`RMdimCFAPlot(cfa_cut, data = items)` returns a list of two figures: `$loadings`
+(observed loadings against their simulated expected ranges) and `$fit` (the
+simulated fit-index distributions with the observed values overlaid).
 
 ### Residual PCA
 
@@ -251,7 +251,7 @@ contrast and item locations. This figure can be helpful to identify clusters
 in data, perhaps related to local dependency and/or multidimensionality.
 
 ```{r pca-plot, fig.cap = "Standardised loadings on the first residual contrast", fig.height = 5}
-RMdimResidualPCA(items, output = "loadings")
+RMdimResidualPCA(items, output = "ggplot")
 ```
 
 
@@ -265,13 +265,15 @@ $Q_3$ values above the simulation-based cut-off flag LD [@christensen2017].
 ```{r q3, results = "asis"}
 q3_cut <- RMlocdepQ3Cutoff(items, iterations = 100, parallel = FALSE,
                            seed = 4)
-RMlocdepQ3(items, cutoff = q3_cut)
+q3_results <- RMlocdepQ3(items, cutoff = q3_cut)
+q3_results$matrix
 ```
 
 For a more powerful $Q_3$ test, one can use the simulated cutoffs object to plot the expected range of residual correlations for each item-pair and compare with the observed value. We'll limit the output to the 6 item-pairs that deviate the most.
 
-```{r plot_q3, fig.cap = "Observed and expected Q3 residuals"}
-RMlocdepQ3Plot(simfit = q3_cut, data = items, n_pairs = 6)
+```{r plot_q3, fig.cap = "Observed and expected $Q_3$ residuals"}
+q3_plots <- RMlocdepQ3Plot(simfit = q3_cut, data = items, n_pairs = 6)
+q3_plots$pairs
 ```
 
 A second perspective on LD is the *partial gamma* coefficient
@@ -369,6 +371,22 @@ RMreliability(items, draws = 200, rmu_iter = 20, parallel = FALSE,
               seed = 5)
 ```
 
+## Person/item parameters
+
+Item (threshold) locations can be easily summarized in wide or long format, with or without SEs.
+
+```{r itempars}
+RMitemParameters(items, format = "wide")
+```
+
+Person parameters are also sometimes referred to as thetas, latent scores, or person locations. By default, Warm's weighted likelihood estimation (WLE) is used for minimal bias. The function exports one value and SE for each individual, below reduced to only print the first 10 rows of the dataframe. Note that all table outputs in `easyRasch2` can be output as dataframes instead, if so desired.
+
+```{r personpars}
+head(RMpersonParameters(items, output = "dataframe"), 10)
+```
+
+## Ordinal-interval transformation table
+
 For converting ordinal sum-scores to interval-scaled person-location
 estimates with associated standard errors, use `RMscoreSE()`.
 
@@ -379,12 +397,21 @@ RMscoreSE(items)
 
 `RMscoreSE()` also has an option for EAP scores (expected á posteriori).
 
+## Person fit
+
+Conditional infit/outfit and lz with are the methods implemented, with Monte-Carlo resampling for *p*-values.
+
+```{r personfit, fig.cap = "Person fit with the lz statistic", fig.height = 5}
+pfit <- RMpersonFit(items, output = "ggplot")
+pfit$lz
+```
+
 
 ## Where to next
 
 * Each `RM*()` function is documented with its own `?function`
   reference page including a worked example.
-* The simulation-based cut-offs used above (`RM*cutoff()`) can be
+* The simulation-based cut-offs used above (`RM*Cutoff()`) can be
   parallelised on multiple CPU cores via the `mirai` package; see the relevant help pages.
   * For a progress bar on time-consuming simulations, add `verbose = TRUE` to the function call. This should not be used when rendering Quarto/Rmd files.
 

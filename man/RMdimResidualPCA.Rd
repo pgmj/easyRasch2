@@ -22,7 +22,8 @@ number of items. Default \code{5}.}
 
 \item{output}{Character. \code{"kable"} (default) for a formatted
 \code{knitr::kable()} table, \code{"dataframe"} for the underlying data.frame, or
-\code{"loadings"} for a ggplot of PC1 loadings against item locations.}
+\code{"ggplot"} for a ggplot of PC1 loadings against item locations.
+\code{"loadings"} is accepted as a backward-compatible alias for \code{"ggplot"}.}
 }
 \value{
 \itemize{
@@ -38,7 +39,7 @@ provided). The variance partition is attached as the
 \code{explained}, \code{unexplained}, \code{pct_explained}, \code{pct_unexplained},
 \code{n_persons}. Access via
 \code{attr(result, "variance_partition")}.
-\item If \code{output = "loadings"}: a ggplot showing each item's PC1 loading on
+\item If \code{output = "ggplot"}: a ggplot showing each item's PC1 loading on
 the x-axis and Rasch item location on the y-axis, with dashed reference
 lines at zero, and the variance partition in the figure caption. Item
 names are labelled via \code{ggrepel::geom_text_repel()} when \code{ggrepel} is
@@ -93,7 +94,7 @@ colnames(dat) <- paste0("I", 1:12)
 RMdimResidualPCA(dat)
 
 # PC1 loadings vs item location plot
-RMdimResidualPCA(dat, output = "loadings")
+RMdimResidualPCA(dat, output = "ggplot")
 
 # Simulation-based cutoff (use 250+ iterations in real analyses)
 bound <- RMdimResidualPCACutoff(dat, iterations = 50, parallel = FALSE, seed = 1)

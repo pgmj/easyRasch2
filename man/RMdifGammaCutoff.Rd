@@ -83,8 +83,8 @@ critical values.
 \details{
 For each simulation iteration the function:
 \enumerate{
-\item Resamples person parameters (thetas) with replacement from ML
-estimates.
+\item Resamples person parameters (thetas) with replacement from the
+WLE person locations.
 \item Simulates item response data under a Rasch model (dichotomous via
 \code{psychotools::rrm()} or polytomous via an internal partial credit
 simulator).
@@ -101,9 +101,11 @@ outside these bounds suggest DIF that exceeds what would be expected by
 chance under a correctly fitting Rasch model. Failed iterations (e.g.,
 due to convergence issues or degenerate data) are silently discarded.
 
-Supports both \strong{dichotomous} data (via \code{eRm::RM()} and
-\code{psychotools::rrm()}) and \strong{polytomous} data (via \code{eRm::PCM()} and an
-internal partial credit score simulator).
+The generating model uses CML item thresholds via \code{psychotools::pcmodel()}
+(a dichotomous item is a 2-category PCM) and WLE person locations,
+consistent with the rest of the package; responses are simulated with
+\code{psychotools::rrm()} (dichotomous) or an internal partial credit score
+simulator (polytomous).
 
 Parallel processing is provided by the \code{mirai} package (optional). Install
 it with \code{install.packages("mirai")} to enable parallelisation.

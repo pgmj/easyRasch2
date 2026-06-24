@@ -4,7 +4,7 @@
 \alias{RMitemInfitCutoffPlot}
 \title{Plot Distribution of Simulated Infit and Outfit MSQ Values}
 \usage{
-RMitemInfitCutoffPlot(simfit, data, output = "infit")
+RMitemInfitCutoffPlot(simfit, data, statistic = "infit")
 }
 \arguments{
 \item{simfit}{The return value of \code{\link{RMitemInfitCutoff}} (a list with
@@ -17,13 +17,13 @@ starting at 0 (non-negative integers). When provided, the plot includes
 orange diamond markers for the observed infit/outfit MSQ alongside the
 simulated distribution, plus segment summaries from the cutoff intervals.}
 
-\item{output}{Character string. Either \code{"infit"} (default) to show only the
+\item{statistic}{Character string. Either \code{"infit"} (default) to show only the
 infit panel, \code{"outfit"} to show only the outfit panel, or \code{"both"} to show
 infit and outfit side by side (requires the \code{patchwork} package when
 \code{data} is supplied).}
 }
 \value{
-A \code{ggplot} object (or a \code{patchwork} object when \code{output = "both"}
+A \code{ggplot} object (or a \code{patchwork} object when \code{statistic = "both"}
 and \code{data} is supplied).
 }
 \description{
@@ -75,7 +75,7 @@ RMitemInfitCutoffPlot(cutoff_res)
 RMitemInfitCutoffPlot(cutoff_res, data = sim_data)
 
 # Both infit and outfit panels side by side
-RMitemInfitCutoffPlot(cutoff_res, data = sim_data, output = "both")
+RMitemInfitCutoffPlot(cutoff_res, data = sim_data, statistic = "both")
 }
 }
 \seealso{

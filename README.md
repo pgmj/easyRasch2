@@ -76,8 +76,9 @@ remotes::install_github("pgmj/easyRasch2")
   with simulation-based first-contrast cutoff (Chou & Wang, 2010)
 - `RMdimMartinLof()` + `RMdimMartinLofResiduals()` — Martin-Löf LR test
   (Christensen & Kreiner, 2007), supports polytomous data
-- `RMdimCFACutoff()` + `RMdimCFAPlot()` — posterior-predictive CFA fit-index
-  cutoffs under PCM unidimensionality (via `lavaan` WLSMV)
+- `RMdimCFACutoff()` + `RMdimCFA()` + `RMdimCFAPlot()` — posterior-predictive CFA
+  fit-index and per-item loading checks under PCM unidimensionality (via `lavaan`
+  WLSMV)
 
 ### Differential item functioning
 
@@ -134,9 +135,13 @@ simfit <- RMitemInfitCutoff(pcmdat2, iterations = 250)
 RMitemInfit(pcmdat2, cutoff = simfit)
 
 # Test of unidimensionality via posterior-predictive ordinal CFA
-cfa_res <- RMdimCFACutoff(pcmdat2, iterations = 250)
-cfa_res                # kable: observed vs simulated cutoffs
-RMdimCFAPlot(cfa_res)     # histogram + observed diamond
+cfa_sim <- RMdimCFACutoff(pcmdat2, iterations = 250)   # simulated reference
+tabs <- RMdimCFA(pcmdat2, cutoff = cfa_sim)            # observed vs expected
+tabs$fit                                                # fit-index table
+tabs$loadings                                           # per-item loading table
+plots <- RMdimCFAPlot(cfa_sim, data = pcmdat2)          # list of 2 ggplots
+plots$loadings                                          # observed vs expected loadings
+plots$fit                                               # fit-index distributions
 
 # DIF analysis via Andersen's LR test
 grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))

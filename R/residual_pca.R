@@ -29,7 +29,8 @@
 #'   number of items. Default `5`.
 #' @param output Character. `"kable"` (default) for a formatted
 #'   `knitr::kable()` table, `"dataframe"` for the underlying data.frame, or
-#'   `"loadings"` for a ggplot of PC1 loadings against item locations.
+#'   `"ggplot"` for a ggplot of PC1 loadings against item locations.
+#'   `"loadings"` is accepted as a backward-compatible alias for `"ggplot"`.
 #'
 #' @return
 #' * If `output = "kable"`: a `knitr_kable` object with columns Component,
@@ -44,7 +45,7 @@
 #'   `explained`, `unexplained`, `pct_explained`, `pct_unexplained`,
 #'   `n_persons`. Access via
 #'   `attr(result, "variance_partition")`.
-#' * If `output = "loadings"`: a ggplot showing each item's PC1 loading on
+#' * If `output = "ggplot"`: a ggplot showing each item's PC1 loading on
 #'   the x-axis and Rasch item location on the y-axis, with dashed reference
 #'   lines at zero, and the variance partition in the figure caption. Item
 #'   names are labelled via `ggrepel::geom_text_repel()` when `ggrepel` is
@@ -90,7 +91,7 @@
 #' RMdimResidualPCA(dat)
 #'
 #' # PC1 loadings vs item location plot
-#' RMdimResidualPCA(dat, output = "loadings")
+#' RMdimResidualPCA(dat, output = "ggplot")
 #'
 #' # Simulation-based cutoff (use 250+ iterations in real analyses)
 #' bound <- RMdimResidualPCACutoff(dat, iterations = 50, parallel = FALSE, seed = 1)
@@ -101,7 +102,10 @@ RMdimResidualPCA <- function(data,
                           n_components = 5L,
                           output       = "kable") {
 
-  output <- match.arg(output, c("kable", "dataframe", "loadings"))
+  output <- match.arg(output, c("kable", "dataframe", "ggplot", "loadings"))
+  # "loadings" is a backward-compatible alias for "ggplot" (the canonical value,
+  # consistent with the other single-ggplot functions).
+  if (output == "loadings") output <- "ggplot"
 
   validate_response_data(data)
 
@@ -226,9 +230,9 @@ RMdimResidualPCA <- function(data,
   )
 
   # --- Loadings plot ---------------------------------------------------------
-  if (output == "loadings") {
+  if (output == "ggplot") {
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
-      stop("Package 'ggplot2' is required for output = \"loadings\".",
+      stop("Package 'ggplot2' is required for output = \"ggplot\".",
            call. = FALSE)
     }
     loadings <- as.data.frame(pca_fit$rotation)

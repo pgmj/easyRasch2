@@ -47,19 +47,22 @@
 #'   `diff_abs`), where `diff = expected - observed`.
 #'
 #' @details
-#' For **dichotomous** data (maximum score = 1), the full-sample model is
-#' fitted via `eRm::RM()` and bootstrap iterations refit via `eRm::RM()` with
-#' `se = FALSE` for speed.
-#'
-#' For **polytomous** data (maximum score > 1), the full-sample model is
-#' fitted via `eRm::PCM()` (so item locations can be obtained from
-#' `eRm::thresholds()`) and bootstrap iterations refit via
-#' `psychotools::pcmodel(..., hessian = FALSE)` for speed.
-#' `iarm::item_restscore()` accepts both model classes.
+#' The full-sample model is fitted by CML via `psychotools::pcmodel()` (a
+#' dichotomous item is a 2-category partial credit model), and item locations
+#' (mean of the grand-mean-centred CML Andrich thresholds) and the mean WLE
+#' person location are computed from it — consistent with
+#' \code{\link{RMitemRestscore}} and the rest of the package. Each bootstrap
+#' iteration draws a sample of size `samplesize` with replacement and refits via
+#' `psychotools::pcmodel(..., hessian = FALSE)` for speed;
+#' `iarm::item_restscore()` accepts the fitted model.
 #'
 #' Conditional infit MSQ (computed once on the full sample via
 #' `iarm::out_infit()`) and relative item locations are reported alongside the
-#' bootstrap percentages for context.
+#' bootstrap percentages for context. The item-restscore classification and the
+#' infit statistic are conditional and engine-invariant; only the relative-item
+#' location shifts slightly relative to the previous `eRm` implementation,
+#' because it now uses the WLE person mean (finite at extreme scores) rather
+#' than the `eRm` MLE mean.
 #'
 #' Iterations that fail (e.g., due to convergence issues on a degenerate
 #' bootstrap sample) are silently discarded; the caption / `actual_iterations`
@@ -157,26 +160,22 @@ RMitemRestscoreBoot <- function(data,
   data_mat      <- as.matrix(data)
   item_names    <- colnames(data_mat)
   n_items       <- ncol(data_mat)
-  is_polytomous <- max(data_mat, na.rm = TRUE) > 1L
 
   # --- Full-sample model: locations + conditional infit ----------------------
-  if (is_polytomous) {
-    erm_full <- eRm::PCM(data)
-    thresh_table <- eRm::thresholds(erm_full)$threshtable[[1L]]
-    if ("Location" %in% colnames(thresh_table)) {
-      item_avg_locations <- thresh_table[, "Location"]
-    } else {
-      item_avg_locations <- rowMeans(thresh_table, na.rm = TRUE)
-    }
-  } else {
-    erm_full <- eRm::RM(data)
-    item_avg_locations <- stats::coef(erm_full, "beta") * -1
-  }
-  pp <- eRm::person.parameter(erm_full)
-  person_avg_location <- mean(pp$theta.table[["Person Parameter"]], na.rm = TRUE)
+  # CML item parameters (psychotools; a dichotomous item is a 2-category PCM)
+  # and WLE person locations, consistent with RMitemRestscore() and the rest of
+  # the package. The item-restscore and infit statistics from iarm are
+  # conditional and engine-invariant; only the relative-location reference
+  # shifts slightly (WLE vs eRm MLE person mean).
+  fit_full <- psychotools::pcmodel(data)
+  thr_list <- .center_thresholds(lapply(psychotools::threshpar(fit_full),
+                                        as.numeric))
+  item_avg_locations <- vapply(thr_list, mean, numeric(1L))
+  person_avg_location <- mean(
+    .estimate_thetas(data_mat, thr_list, method = "WLE")$theta, na.rm = TRUE)
   relative_item_avg_locations <- item_avg_locations - person_avg_location
 
-  cfit       <- iarm::out_infit(erm_full)
+  cfit       <- iarm::out_infit(fit_full)
   n_complete <- nrow(stats::na.omit(data))
 
   # --- Parallel setup --------------------------------------------------------
@@ -213,7 +212,6 @@ RMitemRestscoreBoot <- function(data,
   boot_data_list <- list(
     data          = data,
     samplesize    = samplesize,
-    is_polytomous = is_polytomous,
     item_names    = item_names
   )
 
@@ -330,7 +328,7 @@ RMitemRestscoreBoot <- function(data,
 #'
 #' @param seed Integer seed for reproducibility.
 #' @param data_list List produced inside [RMitemRestscoreBoot()] containing `data`,
-#'   `samplesize`, `is_polytomous`, `item_names`.
+#'   `samplesize`, `item_names`.
 #' @return A data.frame with columns `Item`, `item_restscore`, `diff`,
 #'   `diff_abs`, or a character string on failure.
 #' @keywords internal
@@ -340,11 +338,10 @@ run_single_boot_restscore <- function(seed, data_list) {
   d   <- data_list$data[idx, , drop = FALSE]
 
   tryCatch({
-    if (data_list$is_polytomous) {
-      model_fit <- psychotools::pcmodel(d, hessian = FALSE)
-    } else {
-      model_fit <- eRm::RM(d, se = FALSE)
-    }
+    # CML refit via psychotools::pcmodel() for both dichotomous (2-category PCM)
+    # and polytomous data; accepted by iarm::item_restscore() and faster than
+    # eRm. hessian = FALSE skips the (unused) SE computation.
+    model_fit <- psychotools::pcmodel(d, hessian = FALSE)
 
     i1 <- as.data.frame(iarm::item_restscore(model_fit))
     res_mat <- i1[[1L]]

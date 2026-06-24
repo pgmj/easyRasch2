@@ -75,19 +75,22 @@ Useful with large samples, where the asymptotic test underlying
 misfitting; bootstrapping gives a more nuanced view of the probability of
 an item actually being misfit.
 
-For \strong{dichotomous} data (maximum score = 1), the full-sample model is
-fitted via \code{eRm::RM()} and bootstrap iterations refit via \code{eRm::RM()} with
-\code{se = FALSE} for speed.
-
-For \strong{polytomous} data (maximum score > 1), the full-sample model is
-fitted via \code{eRm::PCM()} (so item locations can be obtained from
-\code{eRm::thresholds()}) and bootstrap iterations refit via
-\code{psychotools::pcmodel(..., hessian = FALSE)} for speed.
-\code{iarm::item_restscore()} accepts both model classes.
+The full-sample model is fitted by CML via \code{psychotools::pcmodel()} (a
+dichotomous item is a 2-category partial credit model), and item locations
+(mean of the grand-mean-centred CML Andrich thresholds) and the mean WLE
+person location are computed from it — consistent with
+\code{\link{RMitemRestscore}} and the rest of the package. Each bootstrap
+iteration draws a sample of size \code{samplesize} with replacement and refits via
+\code{psychotools::pcmodel(..., hessian = FALSE)} for speed;
+\code{iarm::item_restscore()} accepts the fitted model.
 
 Conditional infit MSQ (computed once on the full sample via
 \code{iarm::out_infit()}) and relative item locations are reported alongside the
-bootstrap percentages for context.
+bootstrap percentages for context. The item-restscore classification and the
+infit statistic are conditional and engine-invariant; only the relative-item
+location shifts slightly relative to the previous \code{eRm} implementation,
+because it now uses the WLE person mean (finite at extreme scores) rather
+than the \code{eRm} MLE mean.
 
 Iterations that fail (e.g., due to convergence issues on a degenerate
 bootstrap sample) are silently discarded; the caption / \code{actual_iterations}

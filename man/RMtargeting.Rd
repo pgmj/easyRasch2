@@ -14,7 +14,7 @@ RMtargeting(
   person_fill = "#0072B2",
   threshold_fill = "#D55E00",
   height_ratios = c(3, 2, 5),
-  output = "figure"
+  output = "patchwork"
 )
 }
 \arguments{
@@ -49,13 +49,13 @@ Default is \code{0.95} (95\% CI). Set to \code{NULL} to hide error bars.}
 heights of the top (person), middle (threshold), and bottom (dot-whisker)
 panels. Default \code{c(3, 2, 5)}.}
 
-\item{output}{Character string. \code{"figure"} (the default) returns the
+\item{output}{Character string. \code{"patchwork"} (the default) returns the
 combined patchwork plot. \code{"list"} returns a named list of the three
 ggplot objects (\code{p1}, \code{p2}, \code{p3}) for further customisation.}
 }
 \value{
 \itemize{
-\item If \code{output = "figure"}: a \code{patchwork} object (combined \code{ggplot}).
+\item If \code{output = "patchwork"}: a \code{patchwork} object (combined \code{ggplot}).
 \item If \code{output = "list"}: a named list with elements \code{p1} (person histogram),
 \code{p2} (threshold histogram), and \code{p3} (item threshold dot-whisker plot).
 }

@@ -30,20 +30,7 @@ sim_partial_score <- function(deltaslist, thetavec) {
   sapply(X = deltaslist, FUN = sim_poly_item, thetas = thetavec)
 }
 
-#' Extract item threshold parameters from polytomous data via CML
-#'
-#' Fits a Partial Credit Model using `eRm::PCM()` and returns the threshold
-#' matrix (rows = items, cols = thresholds), without the location column.
-#'
-#' @param data A data.frame or matrix of polytomous item responses (min = 0).
-#' @return Numeric matrix of threshold parameters.
-#' @noRd
-extract_item_thresholds <- function(data) {
-  pcm_fit <- eRm::PCM(data)
-  thresh <- eRm::thresholds(pcm_fit)
-  thresh_mat <- thresh$threshtable$`1`
-  if ("Location" %in% colnames(thresh_mat)) {
-    thresh_mat <- thresh_mat[, colnames(thresh_mat) != "Location", drop = FALSE]
-  }
-  thresh_mat
-}
+# CML item thresholds are now obtained via `.fit_cml_thresholds()` (psychotools,
+# grand-mean centred; see utils-theta.R), which returns the per-item threshold
+# list the bootstrap generators consume directly. The former eRm-based
+# `extract_item_thresholds()` matrix helper has been removed.

@@ -28,7 +28,7 @@ are allowed.}
 \code{"infit"}, \code{"outfit"}, \code{"lz"}. Defaults to all three.}
 
 \item{estimator}{Character. How item parameters are estimated:
-\code{"CML"} (default, via \pkg{eRm}) or \code{"MML"} (via \pkg{mirt}).}
+\code{"CML"} (default) or \code{"MML"} (via \pkg{mirt}).}
 
 \item{theta_method}{Character. Person-location estimator used for the
 lz statistic: \code{"WLE"} (default) or \code{"EAP"}. Ignored if \code{"lz"} is not

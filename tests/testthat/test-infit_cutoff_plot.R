@@ -31,22 +31,22 @@ test_that("RMitemInfitCutoffPlot with observed data overlay returns a ggplot", {
   skip_if_not_installed("ggplot2")
   df     <- make_dichotomous()
   simfit <- RMitemInfitCutoff(df, iterations = 10L, parallel = FALSE, seed = 1L)
-  p <- RMitemInfitCutoffPlot(simfit, df)  # default output = "infit"
+  p <- RMitemInfitCutoffPlot(simfit, df)  # default statistic = "infit"
   expect_s3_class(p, "ggplot")
 })
 
-test_that("RMitemInfitCutoffPlot output = 'outfit' returns a ggplot", {
+test_that("RMitemInfitCutoffPlot statistic = 'outfit' returns a ggplot", {
   skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   skip_if_not_installed("ggplot2")
   df     <- make_dichotomous()
   simfit <- RMitemInfitCutoff(df, iterations = 10L, parallel = FALSE, seed = 1L)
-  p <- RMitemInfitCutoffPlot(simfit, df, output = "outfit")
+  p <- RMitemInfitCutoffPlot(simfit, df, statistic = "outfit")
   expect_s3_class(p, "ggplot")
 })
 
-test_that("RMitemInfitCutoffPlot output = 'both' returns a (patchwork) ggplot", {
+test_that("RMitemInfitCutoffPlot statistic = 'both' returns a (patchwork) ggplot", {
   skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
@@ -54,7 +54,7 @@ test_that("RMitemInfitCutoffPlot output = 'both' returns a (patchwork) ggplot", 
   skip_if_not_installed("patchwork")
   df     <- make_dichotomous()
   simfit <- RMitemInfitCutoff(df, iterations = 10L, parallel = FALSE, seed = 1L)
-  p <- RMitemInfitCutoffPlot(simfit, df, output = "both")
+  p <- RMitemInfitCutoffPlot(simfit, df, statistic = "both")
   # patchwork compositions also inherit ggplot
   expect_s3_class(p, "ggplot")
 })

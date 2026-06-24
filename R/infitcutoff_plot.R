@@ -16,12 +16,12 @@
 #'   starting at 0 (non-negative integers). When provided, the plot includes
 #'   orange diamond markers for the observed infit/outfit MSQ alongside the
 #'   simulated distribution, plus segment summaries from the cutoff intervals.
-#' @param output Character string. Either `"infit"` (default) to show only the
+#' @param statistic Character string. Either `"infit"` (default) to show only the
 #'   infit panel, `"outfit"` to show only the outfit panel, or `"both"` to show
 #'   infit and outfit side by side (requires the `patchwork` package when
 #'   `data` is supplied).
 #'
-#' @return A `ggplot` object (or a `patchwork` object when `output = "both"`
+#' @return A `ggplot` object (or a `patchwork` object when `statistic = "both"`
 #'   and `data` is supplied).
 #'
 #' @details
@@ -69,9 +69,9 @@
 #' RMitemInfitCutoffPlot(cutoff_res, data = sim_data)
 #'
 #' # Both infit and outfit panels side by side
-#' RMitemInfitCutoffPlot(cutoff_res, data = sim_data, output = "both")
+#' RMitemInfitCutoffPlot(cutoff_res, data = sim_data, statistic = "both")
 #' }
-RMitemInfitCutoffPlot <- function(simfit, data, output = "infit") {
+RMitemInfitCutoffPlot <- function(simfit, data, statistic = "infit") {
 
   # --- Check required packages ------------------------------------------------
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
@@ -89,7 +89,7 @@ RMitemInfitCutoffPlot <- function(simfit, data, output = "infit") {
     )
   }
 
-  output <- match.arg(output, c("infit", "outfit", "both"))
+  statistic <- match.arg(statistic, c("infit", "outfit", "both"))
 
   # --- Validate simfit --------------------------------------------------------
   required_names <- c("results", "item_cutoffs", "actual_iterations",
@@ -396,16 +396,16 @@ RMitemInfitCutoffPlot <- function(simfit, data, output = "infit") {
     er2_plot_caption()
 
   # --- Return the requested panel(s) ------------------------------------------
-  if (output == "both") {
+  if (statistic == "both") {
     if (!requireNamespace("patchwork", quietly = TRUE)) {
       stop(
-        "Package 'patchwork' is required for output = \"both\" but is not installed.\n",
+        "Package 'patchwork' is required for statistic = \"both\" but is not installed.\n",
         "Install it with: install.packages(\"patchwork\")",
         call. = FALSE
       )
     }
     return(infit_p + outfit_p)
-  } else if (output == "outfit") {
+  } else if (statistic == "outfit") {
     return(outfit_p)
   } else {
     # default: infit only, add caption to infit panel

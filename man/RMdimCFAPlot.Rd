@@ -2,44 +2,53 @@
 % Please edit documentation in R/cfa_cutoff.R
 \name{RMdimCFAPlot}
 \alias{RMdimCFAPlot}
-\title{Plot observed CFA fit indices against the simulated null distribution}
+\title{Plot observed CFA fit and loadings against the simulated null}
 \usage{
-RMdimCFAPlot(cutoff_res, percentile = NULL)
+RMdimCFAPlot(cutoff_res, data, percentile = NULL)
 }
 \arguments{
-\item{cutoff_res}{The list returned by \code{\link{RMdimCFACutoff}} with
-\code{output = "list"}, or the kable returned with \code{output = "kable"}
-(the underlying list is read from \code{attr(., "result")}).}
+\item{cutoff_res}{The list returned by \code{\link{RMdimCFACutoff}}.}
+
+\item{data}{The item-response data the CFA was run on (the same items used
+for the cutoff). Required: the observed values are computed from it.}
 
 \item{percentile}{Numeric in (50, 100) or \code{NULL}. When supplied, the
-cutoff and the flagged status are recomputed at this percentile
-from the simulated distribution stored in \code{cutoff_res} (no
-re-simulation needed). When \code{NULL} (default), the percentile that
-was used by the original \code{RMdimCFACutoff()} call is reused.}
+cutoffs and flags are recomputed at this percentile from the stored
+simulated distributions (no re-simulation). When \code{NULL} (default), the
+percentile from the original \code{RMdimCFACutoff()} call is reused.}
 }
 \value{
-A \code{ggplot} object.
+A named list of two \code{ggplot} objects:
+\describe{
+\item{\code{loadings}}{Per-item standardized loadings: simulated distribution
+(dots), expected interval, and the observed loading as a diamond
+(red when flagged).}
+\item{\code{fit}}{Faceted CFI / RMSEA / SRMR simulated distributions with the
+observed value and cutoff overlaid.}
+}
 }
 \description{
-Faceted histograms of the simulated CFI, RMSEA, and SRMR distributions
-(one panel per index), with the observed value overlaid as a vertical
-line. The line is coloured red when the observed value falls outside
-the chosen percentile of the simulation in the unfavourable direction
-(CFI from below; RMSEA / SRMR from above), and grey otherwise.
+Returns two figures (in a list) comparing the observed one-factor CFA to
+the simulated null distribution from \code{\link{RMdimCFACutoff}}:
+a per-item standardized-loadings plot (observed marker against each item's
+simulated distribution and expected range, in the style of
+\code{\link{RMitemInfitCutoffPlot}}), and a faceted plot of the CFI / RMSEA
+/ SRMR distributions with the observed value overlaid.
 }
 \examples{
 \donttest{
 if (requireNamespace("lavaan", quietly = TRUE) &&
     requireNamespace("ggplot2", quietly = TRUE)) {
   data("raschdat1", package = "eRm")
-  res <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
-                     parallel = FALSE, seed = 1, output = "list")
-  RMdimCFAPlot(res)                 # use the percentile from RMdimCFACutoff()
-  RMdimCFAPlot(res, percentile = 95) # override (no re-simulation needed)
+  sim <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
+                        parallel = FALSE, seed = 1)
+  plots <- RMdimCFAPlot(sim, data = raschdat1[, 1:8])
+  plots$loadings
+  plots$fit
 }
 }
 
 }
 \seealso{
-\code{\link{RMdimCFACutoff}}
+\code{\link{RMdimCFACutoff}}, \code{\link{RMdimCFA}}
 }

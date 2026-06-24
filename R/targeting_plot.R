@@ -36,12 +36,12 @@
 #' @param height_ratios Numeric vector of length 3 specifying the relative
 #'   heights of the top (person), middle (threshold), and bottom (dot-whisker)
 #'   panels. Default `c(3, 2, 5)`.
-#' @param output Character string. `"figure"` (the default) returns the
+#' @param output Character string. `"patchwork"` (the default) returns the
 #'   combined patchwork plot. `"list"` returns a named list of the three
 #'   ggplot objects (`p1`, `p2`, `p3`) for further customisation.
 #'
 #' @return
-#' * If `output = "figure"`: a `patchwork` object (combined `ggplot`).
+#' * If `output = "patchwork"`: a `patchwork` object (combined `ggplot`).
 #' * If `output = "list"`: a named list with elements `p1` (person histogram),
 #'   `p2` (threshold histogram), and `p3` (item threshold dot-whisker plot).
 #'
@@ -112,7 +112,7 @@ RMtargeting <- function(data, robust = FALSE,
                         person_fill = "#0072B2",
                         threshold_fill = "#D55E00",
                         height_ratios = c(3, 2, 5),
-                        output = "figure") {
+                        output = "patchwork") {
 
   # --- Check required packages ------------------------------------------------
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
@@ -140,7 +140,7 @@ RMtargeting <- function(data, robust = FALSE,
   }
 
   sort_items <- match.arg(sort_items)
-  output     <- match.arg(output, c("figure", "list"))
+  output     <- match.arg(output, c("patchwork", "list"))
 
   validate_response_data(data)
 

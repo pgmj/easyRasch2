@@ -61,6 +61,7 @@ reference:
     desc: "PCA of residuals, and more to come"
     contents:
       - RMdimCFACutoff
+      - RMdimCFA
       - RMdimCFAPlot
       - RMdimResidualPCA
       - RMdimResidualPCACutoff

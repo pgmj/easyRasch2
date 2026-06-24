@@ -57,7 +57,15 @@ test_that("RMdimResidualPCA output = 'kable' returns knitr_kable", {
   expect_s3_class(out, "knitr_kable")
 })
 
-test_that("RMdimResidualPCA output = 'loadings' returns a ggplot", {
+test_that("RMdimResidualPCA output = 'ggplot' returns a ggplot", {
+  skip_if_not_installed("eRm")
+  skip_if_not_installed("ggplot2")
+  df <- make_dichotomous()
+  p  <- RMdimResidualPCA(df, output = "ggplot")
+  expect_s3_class(p, "ggplot")
+})
+
+test_that("RMdimResidualPCA output = 'loadings' is a backward-compatible alias for 'ggplot'", {
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
   df <- make_dichotomous()

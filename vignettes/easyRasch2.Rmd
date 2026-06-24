@@ -30,7 +30,7 @@ figure > figcaption {
 
 ## Overview
 
-This vignette walks through a worked Rasch analysis of the
+This vignette walks through a brief Rasch analysis of the
 nine-item Patient Health Questionnaire (PHQ-9; @kroenke_phq9_2001) using
 the **easyRasch2** package. The example follows the four psychometric
 criteria proposed by @christensen_psychometric_2021 for the validation
@@ -44,13 +44,6 @@ of patient-reported outcome measures (PROMs):
    up the latent trait increases the probability of higher categories.
 4. **Invariance / no DIF** --- item parameters are the same across
    relevant external groups (e.g. gender).
-
-We then move on to two complementary descriptors that are commonly
-reported alongside the four criteria above:
-
-* **Targeting** --- how well person and item locations overlap on the
-  latent continuum.
-* **Reliability** --- how precisely the scale separates respondents.
 
 For a more extensive treatment of Rasch analysis in R, see
 <https://pgmj.github.io/raschrvignette/RaschRvign.html>. For a Bayesian sibling package, see <https://pgmj.github.io/easyRaschBayes/>
@@ -186,19 +179,19 @@ RMitemInfit(items, cutoff = infit_cut)
 
 
 
-Table: MSQ values based on conditional estimation (n = 600 complete cases). Cutoff values based on 100 simulation iterations (99.9% HDCI).
+Table: MSQ values based on conditional estimation (n = 600 complete cases). Cutoff values based on 100 simulation iterations (99.9% HDCI). Flagged: overfit = infit below range (more predictable); underfit = above range (noisier).
 
-|Item | Infit MSQ| Infit low| Infit high|Flagged | Relative location|
-|:----|---------:|---------:|----------:|:-------|-----------------:|
-|q1   |     0.946|     0.891|      1.125|FALSE   |             -0.58|
-|q2   |     0.778|     0.887|      1.157|TRUE    |             -0.78|
-|q3   |     1.234|     0.854|      1.199|TRUE    |             -0.85|
-|q4   |     0.835|     0.793|      1.156|FALSE   |             -1.51|
-|q5   |     1.069|     0.894|      1.119|FALSE   |             -0.60|
-|q6   |     0.895|     0.858|      1.090|FALSE   |             -0.78|
-|q7   |     0.986|     0.843|      1.170|FALSE   |             -0.68|
-|q8   |     1.260|     0.835|      1.198|TRUE    |              0.95|
-|q9   |     1.315|     0.832|      1.136|TRUE    |              0.77|
+|Item | Infit MSQ| Infit low| Infit high|Flagged  | Relative location|
+|:----|---------:|---------:|----------:|:--------|-----------------:|
+|q1   |     0.946|     0.883|      1.143|         |             -0.56|
+|q2   |     0.778|     0.883|      1.107|overfit  |             -0.76|
+|q3   |     1.234|     0.878|      1.194|underfit |             -0.83|
+|q4   |     0.835|     0.867|      1.178|overfit  |             -1.48|
+|q5   |     1.069|     0.900|      1.110|         |             -0.58|
+|q6   |     0.895|     0.858|      1.219|         |             -0.76|
+|q7   |     0.986|     0.899|      1.153|         |             -0.66|
+|q8   |     1.260|     0.856|      1.136|underfit |              0.97|
+|q9   |     1.315|     0.842|      1.199|underfit |              0.79|
 
 
 
@@ -256,49 +249,79 @@ RMitemRestscore(items)
 
 
 
-|Item | Observed value| Expected value| Difference| Adj. p-value (BH)|p-value sign. | Location| Rel. location|
-|:----|--------------:|--------------:|----------:|-----------------:|:-------------|--------:|-------------:|
-|q1   |           0.66|           0.62|       0.04|             0.210|              |     0.17|         -0.58|
-|q2   |           0.72|           0.62|       0.10|             0.000|***           |    -0.04|         -0.78|
-|q3   |           0.57|           0.63|      -0.06|             0.085|.             |    -0.11|         -0.85|
-|q4   |           0.71|           0.62|       0.09|             0.000|***           |    -0.76|         -1.51|
-|q5   |           0.62|           0.62|       0.00|             0.968|              |     0.14|         -0.60|
-|q6   |           0.69|           0.63|       0.06|             0.021|*             |    -0.04|         -0.78|
-|q7   |           0.64|           0.62|       0.02|             0.476|              |     0.06|         -0.68|
-|q8   |           0.55|           0.63|      -0.08|             0.021|*             |     1.70|          0.95|
-|q9   |           0.59|           0.64|      -0.05|             0.151|              |     1.51|          0.77|
+Table: Item-restscore associations (n = 600 complete cases). Flagged (adj. p < .05): overfit = observed above expected (over-discrimination, often local dependence); underfit = below (under-discrimination, often multidimensionality/noise).
+
+|Item | Observed| Expected| Difference| Adj. p-value (BH)|Flagged  | Rel. location|
+|:----|--------:|--------:|----------:|-----------------:|:--------|-------------:|
+|q1   |     0.66|     0.62|       0.04|             0.210|         |         -0.56|
+|q2   |     0.72|     0.62|       0.10|             0.000|overfit  |         -0.76|
+|q3   |     0.57|     0.63|      -0.06|             0.085|         |         -0.83|
+|q4   |     0.71|     0.62|       0.09|             0.000|overfit  |         -1.48|
+|q5   |     0.62|     0.62|       0.00|             0.968|         |         -0.58|
+|q6   |     0.69|     0.63|       0.06|             0.021|overfit  |         -0.76|
+|q7   |     0.64|     0.62|       0.02|             0.476|         |         -0.66|
+|q8   |     0.55|     0.63|      -0.08|             0.021|underfit |          0.97|
+|q9   |     0.59|     0.64|      -0.05|             0.151|         |          0.79|
 
 
 
 
-### CFA-based cutoff for CFI / RMSEA
+### CFA-based cutoffs for CFI / RMSEA and item loadings
 
-`RMdimCFACutoff()` fits a unidimensional ordinal CFA both to the observed
-data and to data simulated from a unidimensional PCM, and returns
-parametric-bootstrap cut-offs for model fit indices SRMR, CFI and RMSEA.
-Model fit values that exceed the simulated cut-off values are *more extreme
-than is plausible under a unidimensional data generating process*.
+`RMdimCFACutoff()` simulates data from a unidimensional PCM and fits a
+unidimensional ordinal CFA to each simulated dataset, building a
+parametric-bootstrap reference distribution for the model fit indices (SRMR,
+CFI, RMSEA) *and* for the per-item standardized factor loadings. It returns
+this simulation object; `RMdimCFA()` then fits the CFA to the observed data and
+tabulates the observed fit indices and loadings against the simulated reference.
+Values more extreme than the simulated cut-offs are *more extreme than is
+plausible under a unidimensional data generating process*.
 
 
 ``` r
 cfa_cut <- RMdimCFACutoff(items, iterations = 100, parallel = FALSE,
                        seed = 2)
-cfa_cut
+cfa_tabs <- RMdimCFA(items, cutoff = cfa_cut)
+cfa_tabs$fit
 ```
 
 
 
-Table: Partial Credit Model posterior-predictive CFA fit-index check. Observed CFA fit (one-factor, lavaan WLSMV, ordered = TRUE) vs simulated null distribution under PCM unidimensionality. n = 600 complete cases, 9 items, 100 parametric-bootstrap iterations. Cutoffs are one-sided at the 99th percentile of the simulated distribution; an item is flagged when the observed value lies in the worst 1% of the null distribution in the unfavourable direction.
+Table: Partial Credit Model posterior-predictive CFA fit-index check. Observed CFA fit (one-factor, lavaan WLSMV, ordered = TRUE; n = 600) vs simulated null under PCM unidimensionality (100 iterations at n = 600). Cutoffs one-sided at the 99th percentile; flagged when the observed value lies in the worst 1% of the null in the unfavourable direction.
 
 |Index | Observed| Cutoff|Direction  |Flagged |
 |:-----|--------:|------:|:----------|:-------|
-|CFI   |   0.9623| 0.9977|< 1st pct  |TRUE    |
-|RMSEA |   0.1217| 0.0377|> 99th pct |TRUE    |
-|SRMR  |   0.0572| 0.0230|> 99th pct |TRUE    |
+|CFI   |   0.9623| 0.9957|< 1st pct  |TRUE    |
+|RMSEA |   0.1217| 0.0351|> 99th pct |TRUE    |
+|SRMR  |   0.0572| 0.0257|> 99th pct |TRUE    |
 
 
 
-Results can also be plotted using `RMdimCFAPlot(cfa_cut)`.
+``` r
+cfa_tabs$loadings
+```
+
+
+
+Table: Standardized factor loadings (one-factor, lavaan WLSMV; n = 600) vs the simulated expected range under PCM unidimensionality (100 iterations at n = 600). Expected range is the two-sided central 99% interval of the simulated loadings; Flagged = below / above that range.
+
+|Item | Observed| Expected low| Expected high|Flagged |
+|:----|--------:|------------:|-------------:|:-------|
+|q1   |    0.790|        0.682|         0.786|above   |
+|q2   |    0.876|        0.689|         0.809|above   |
+|q3   |    0.693|        0.707|         0.814|below   |
+|q4   |    0.823|        0.664|         0.824|        |
+|q5   |    0.737|        0.699|         0.812|        |
+|q6   |    0.797|        0.702|         0.821|        |
+|q7   |    0.753|        0.704|         0.805|        |
+|q8   |    0.670|        0.692|         0.816|below   |
+|q9   |    0.718|        0.709|         0.816|        |
+
+
+
+`RMdimCFAPlot(cfa_cut, data = items)` returns a list of two figures: `$loadings`
+(observed loadings against their simulated expected ranges) and `$fit` (the
+simulated fit-index distributions with the observed values overlaid).
 
 ### Residual PCA
 
@@ -316,16 +339,16 @@ RMdimResidualPCA(items, cutoff = pca_cut)
 
 
 
-Table: Partial Credit Model (600 complete cases, 9 items). Total observed variance: 54.6% explained by measures, 45.4% unexplained
-(basis for PCA; n = 600 non-extreme cases). First-contrast cutoff = 1.303 based on 100 simulation iterations (99th percentile).
+Table: Partial Credit Model (600 complete cases, 9 items). Total observed variance: 51.3% explained by measures, 48.7% unexplained
+(basis for PCA; n = 600 non-extreme cases). First-contrast cutoff = 1.217 based on 100 simulation iterations (99th percentile).
 
 |Component | Eigenvalue| Proportion of variance|Flagged |
 |:---------|----------:|----------------------:|:-------|
-|PC1       |      1.652|                  0.200|TRUE    |
-|PC2       |      1.453|                  0.176|TRUE    |
-|PC3       |      1.220|                  0.148|FALSE   |
-|PC4       |      0.988|                  0.120|FALSE   |
-|PC5       |      0.930|                  0.113|FALSE   |
+|PC1       |      1.520|                  0.200|TRUE    |
+|PC2       |      1.341|                  0.176|TRUE    |
+|PC3       |      1.113|                  0.146|FALSE   |
+|PC4       |      0.909|                  0.119|FALSE   |
+|PC5       |      0.853|                  0.112|FALSE   |
 
 
 
@@ -335,7 +358,7 @@ in data, perhaps related to local dependency and/or multidimensionality.
 
 
 ``` r
-RMdimResidualPCA(items, output = "loadings")
+RMdimResidualPCA(items, output = "ggplot")
 ```
 
 <div class="figure">
@@ -355,24 +378,25 @@ $Q_3$ values above the simulation-based cut-off flag LD [@christensen2017].
 ``` r
 q3_cut <- RMlocdepQ3Cutoff(items, iterations = 100, parallel = FALSE,
                            seed = 4)
-RMlocdepQ3(items, cutoff = q3_cut)
+q3_results <- RMlocdepQ3(items, cutoff = q3_cut)
+q3_results$matrix
 ```
 
 
 
-Table: Dynamic cut-off: 0.037 (mean Q3 = -0.114 + 0.152). Correlations exceeding the cut-off may indicate local dependence.
+Table: Dynamic cut-off: 0.031 (mean Q3 -0.109 + 0.14). Global simulation cutoff (99th pctl of max-mean Q3) from 100 iterations. Correlations exceeding the cut-off may indicate local dependence; see the per-pair table for detail.
 
 |   |q1    |q2    |q3    |q4    |q5    |q6    |q7    |q8    |q9 |above_cutoff |
 |:--|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:--|:------------|
 |q1 |      |      |      |      |      |      |      |      |   |             |
-|q2 |0.25  |      |      |      |      |      |      |      |   |*            |
-|q3 |-0.19 |-0.2  |      |      |      |      |      |      |   |             |
-|q4 |0     |-0.04 |0.07  |      |      |      |      |      |   |*            |
-|q5 |-0.21 |-0.28 |0.07  |0     |      |      |      |      |   |*            |
-|q6 |-0.18 |0.04  |-0.2  |-0.16 |-0.13 |      |      |      |   |*            |
-|q7 |-0.13 |-0.2  |-0.22 |-0.09 |-0.14 |-0.05 |      |      |   |             |
-|q8 |-0.17 |-0.3  |-0.17 |-0.15 |-0.09 |-0.17 |0.07  |      |   |*            |
-|q9 |-0.14 |0.06  |-0.23 |-0.28 |-0.24 |0.01  |-0.18 |-0.12 |   |*            |
+|q2 |0.23  |      |      |      |      |      |      |      |   |*            |
+|q3 |-0.19 |-0.19 |      |      |      |      |      |      |   |             |
+|q4 |0     |-0.03 |0.08  |      |      |      |      |      |   |*            |
+|q5 |-0.2  |-0.25 |0.09  |0     |      |      |      |      |   |*            |
+|q6 |-0.18 |0.02  |-0.15 |-0.14 |-0.12 |      |      |      |   |             |
+|q7 |-0.13 |-0.18 |-0.2  |-0.08 |-0.13 |-0.05 |      |      |   |             |
+|q8 |-0.17 |-0.3  |-0.18 |-0.16 |-0.1  |-0.18 |0.08  |      |   |*            |
+|q9 |-0.12 |0.06  |-0.23 |-0.31 |-0.24 |0.02  |-0.19 |-0.11 |   |*            |
 
 
 
@@ -380,13 +404,10 @@ For a more powerful $Q_3$ test, one can use the simulated cutoffs object to plot
 
 
 ``` r
-RMlocdepQ3Plot(simfit = q3_cut, data = items, n_pairs = 6)
+q3_plots <- RMlocdepQ3Plot(simfit = q3_cut, data = items, n_pairs = 6)
+q3_plots$pairs
+#> NULL
 ```
-
-<div class="figure">
-<img src="figures/rasch-plot_q3-1.png" alt="**Figure 7.** *Observed and expected Q3 residuals*" width="100%" />
-<p class="caption">**Figure 7.** *Observed and expected Q3 residuals*</p>
-</div>
 
 A second perspective on LD is the *partial gamma* coefficient
 [@kreinerAnalysisLocalDependence2004;@kreiner_validity_2007] between observed
@@ -408,7 +429,7 @@ Table: Partial gamma LD analysis (n = 600 complete cases). Positive gamma indica
 |q7     |q8     |         0.303|             0.001|***           |
 |q6     |q9     |         0.287|             0.009|**            |
 
-Table: Partial gamma LD analysis (n = 600 complete cases). Positive gamma indicates positive local dependence between items. Showing top 6 of 36 pairs by |gamma|. Direction 2: rest score = total - Item1.
+Table: Partial gamma LD analysis (n = 600 complete cases). Positive gamma indicates positive local dependence between items. Showing top 6 of 36 pairs by |gamma|. Direction 2: rest score = total - Item2 (item pairs shown in the reverse order to direction 1).
 
 |Item 1 |Item 2 | Partial gamma| Adj. p-value (BH)|p-value sign. |
 |:------|:------|-------------:|-----------------:|:-------------|
@@ -553,16 +574,63 @@ RMreliability(items, draws = 200, rmu_iter = 20, parallel = FALSE,
 
 
 
-Table: Reliability for 9 items, n = 600. PSI excludes min/max scoring respondents.
+Table: Reliability for 9 items, n = 600. PSI is the WLE-based separation reliability and excludes min/max scoring respondents.
 
 |Metric           | Estimate| Lower (95% HDCI)| Upper (95% HDCI)|Notes                      |
 |:----------------|--------:|----------------:|----------------:|:--------------------------|
 |Cronbach's alpha |    0.886|               NA|               NA|no bootstrap               |
-|PSI              |    0.847|               NA|               NA|no bootstrap               |
-|Empirical (WLE)  |    0.872|               NA|               NA|no bootstrap               |
-|RMU (WLE)        |    0.882|            0.867|            0.897|200 PVs, 20 RMU iterations |
+|PSI              |    0.838|               NA|               NA|no bootstrap               |
+|Marginal         |    0.862|               NA|               NA|no bootstrap               |
+|RMU (WLE)        |    0.882|            0.868|            0.897|200 PVs, 20 RMU iterations |
 
 
+
+## Person/item parameters
+
+Item (threshold) locations can be easily summarized in wide or long format, with or without SEs.
+
+
+``` r
+RMitemParameters(items, format = "wide")
+```
+
+
+
+Table: Item thresholds via CML (Andrich thresholds, logit scale). SE and 95% Wald CI shown.
+
+|item |     t1|     t2|     t3| location| se_t1| se_t2| se_t3|
+|:----|------:|------:|------:|--------:|-----:|-----:|-----:|
+|q1   | -1.966|  0.634|  0.950|   -0.127| 0.165| 0.115| 0.124|
+|q2   | -1.793|  0.300|  0.503|   -0.330| 0.168| 0.122| 0.118|
+|q3   | -1.447|  0.039|  0.212|   -0.399| 0.166| 0.130| 0.116|
+|q4   | -2.578| -0.506| -0.085|   -1.056| 0.250| 0.136| 0.109|
+|q5   | -1.074| -0.048|  0.671|   -0.150| 0.153| 0.125| 0.115|
+|q6   | -1.259| -0.051|  0.318|   -0.330| 0.161| 0.130| 0.114|
+|q7   | -1.262|  0.041|  0.531|   -0.230| 0.157| 0.125| 0.115|
+|q8   |  0.912|  1.572|  1.723|    1.402| 0.110| 0.151| 0.180|
+|q9   |  0.749|  1.605|  1.307|    1.221| 0.110| 0.153| 0.172|
+
+
+
+Person parameters are also sometimes referred to as thetas, latent scores, or person locations. By default, Warm's weighted likelihood estimation (WLE) is used for minimal bias. The function exports one value and SE for each individual, below reduced to only print the first 10 rows of the dataframe. Note that all table outputs in `easyRasch2` can be output as dataframes instead, if so desired.
+
+
+``` r
+head(RMpersonParameters(items, output = "dataframe"), 10)
+#>      theta    sem sum_score n_answered extreme
+#> 1   2.2761 0.6185        25          9   FALSE
+#> 2  -0.9998 0.4659         7          9   FALSE
+#> 3   1.1407 0.4262        20          9   FALSE
+#> 4   0.3379 0.3960        15          9   FALSE
+#> 5   3.6996 1.3248        27          9    TRUE
+#> 6   1.1407 0.4262        20          9   FALSE
+#> 7  -0.6130 0.4288         9          9   FALSE
+#> 8   0.9701 0.4155        19          9   FALSE
+#> 9   0.6466 0.4019        17          9   FALSE
+#> 10 -3.2339 0.9217         1          9   FALSE
+```
+
+## Ordinal-interval transformation table
 
 For converting ordinal sum-scores to interval-scaled person-location
 estimates with associated standard errors, use `RMscoreSE()`.
@@ -583,49 +651,64 @@ RMscoreSE(items)
 
 
 
-Table: Person locations via Warm's WLE (CML item parameters from eRm).
+Table: Person locations via Warm's WLE (CML item parameters).
 
 | Ordinal sum score| Logit score| Logit std.error|
 |-----------------:|-----------:|---------------:|
-|                 0|      -4.469|           0.682|
-|                 1|      -3.234|           0.815|
-|                 2|      -2.594|           0.748|
-|                 3|      -2.138|           0.661|
-|                 4|      -1.779|           0.592|
-|                 5|      -1.480|           0.540|
-|                 6|      -1.224|           0.502|
-|                 7|      -1.000|           0.473|
-|                 8|      -0.798|           0.450|
-|                 9|      -0.613|           0.433|
-|                10|      -0.440|           0.420|
-|                11|      -0.277|           0.410|
-|                12|      -0.119|           0.403|
-|                13|       0.034|           0.398|
+|                 0|      -4.469|           1.536|
+|                 1|      -3.234|           0.922|
+|                 2|      -2.594|           0.737|
+|                 3|      -2.138|           0.638|
+|                 4|      -1.779|           0.574|
+|                 5|      -1.480|           0.528|
+|                 6|      -1.224|           0.493|
+|                 7|      -1.000|           0.466|
+|                 8|      -0.798|           0.445|
+|                 9|      -0.613|           0.429|
+|                10|      -0.440|           0.417|
+|                11|      -0.277|           0.408|
+|                12|      -0.119|           0.401|
+|                13|       0.034|           0.397|
 |                14|       0.186|           0.396|
 |                15|       0.338|           0.396|
 |                16|       0.491|           0.398|
 |                17|       0.647|           0.402|
 |                18|       0.806|           0.408|
-|                19|       0.970|           0.417|
-|                20|       1.141|           0.431|
-|                21|       1.320|           0.450|
-|                22|       1.512|           0.478|
-|                23|       1.723|           0.516|
-|                24|       1.968|           0.565|
-|                25|       2.276|           0.620|
-|                26|       2.724|           0.659|
-|                27|       3.700|           0.567|
+|                19|       0.970|           0.416|
+|                20|       1.141|           0.426|
+|                21|       1.320|           0.441|
+|                22|       1.512|           0.462|
+|                23|       1.723|           0.492|
+|                24|       1.968|           0.539|
+|                25|       2.276|           0.618|
+|                26|       2.724|           0.778|
+|                27|       3.700|           1.325|
 
 
 
 `RMscoreSE()` also has an option for EAP scores (expected á posteriori).
+
+## Person fit
+
+Conditional infit/outfit and lz with are the methods implemented, with Monte-Carlo resampling for *p*-values.
+
+
+``` r
+pfit <- RMpersonFit(items, output = "ggplot")
+pfit$lz
+```
+
+<div class="figure">
+<img src="figures/rasch-personfit-1.png" alt="**Figure 13.** *Person fit with the lz statistic*" width="100%" />
+<p class="caption">**Figure 13.** *Person fit with the lz statistic*</p>
+</div>
 
 
 ## Where to next
 
 * Each `RM*()` function is documented with its own `?function`
   reference page including a worked example.
-* The simulation-based cut-offs used above (`RM*cutoff()`) can be
+* The simulation-based cut-offs used above (`RM*Cutoff()`) can be
   parallelised on multiple CPU cores via the `mirai` package; see the relevant help pages.
   * For a progress bar on time-consuming simulations, add `verbose = TRUE` to the function call. This should not be used when rendering Quarto/Rmd files.
 

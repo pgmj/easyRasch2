@@ -4,7 +4,7 @@
 \alias{RMitemRestscore}
 \title{Item Restscore Analysis}
 \usage{
-RMitemRestscore(data, output = "kable", sort, p.adj = "BH")
+RMitemRestscore(data, output = "kable", sort, p_adj = "BH")
 }
 \arguments{
 \item{data}{A data.frame or matrix of item responses. Items must be scored
@@ -19,7 +19,7 @@ but at least one complete case (row with no \code{NA}) must be present.}
 by the absolute magnitude of \code{Difference} in descending order, so that
 both over- and underfitting items appear near the top.}
 
-\item{p.adj}{Character string specifying the p-value adjustment method
+\item{p_adj}{Character string specifying the p-value adjustment method
 passed to \code{iarm::item_restscore()}. Default \code{"BH"} (Benjamini-Hochberg).
 See \code{\link[stats:p.adjust]{stats::p.adjust()}} for available methods.}
 }

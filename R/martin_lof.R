@@ -393,12 +393,13 @@ normalize_ml_partition <- function(partition, data) {
 #' @noRd
 extract_ml_sampling_params <- function(data, is_polytomous) {
   if (is_polytomous) {
-    thresh_mat <- extract_item_thresholds(as.matrix(data))  # from utils-simulation.R
-    params_list <- lapply(seq_len(nrow(thresh_mat)), function(i) {
-      taus <- as.numeric(thresh_mat[i, !is.na(thresh_mat[i, ])])
-      -cumsum(taus)
-    })
-    names(params_list) <- rownames(thresh_mat)
+    # CML Andrich thresholds via psychotools (grand-mean centred). The
+    # Martin-Löf conditional Monte Carlo samples patterns given the total
+    # score, so it is invariant to this overall location; the cumulative
+    # negated thresholds (epsilon) feed elementary_symmetric_functions().
+    thr_list <- .fit_cml_thresholds(as.matrix(data))
+    params_list <- lapply(thr_list, function(taus) -cumsum(as.numeric(taus)))
+    names(params_list) <- colnames(as.matrix(data))
     params_list
   } else {
     rasch_fit <- psychotools::raschmodel(data, hessian = FALSE)

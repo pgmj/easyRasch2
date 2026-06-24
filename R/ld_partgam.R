@@ -413,8 +413,8 @@ knit_print.RMlocdepGamma <- function(x, ...) {
 #' @details
 #' For each simulation iteration the function:
 #' \enumerate{
-#'   \item Resamples person parameters (thetas) with replacement from ML
-#'     estimates.
+#'   \item Resamples person parameters (thetas) with replacement from the
+#'     WLE person locations.
 #'   \item Simulates item response data under a Rasch model (dichotomous via
 #'     `psychotools::rrm()` or polytomous via an internal partial credit
 #'     simulator).
@@ -429,9 +429,11 @@ knit_print.RMlocdepGamma <- function(x, ...) {
 #' exceeds what would be expected by chance. Failed iterations (e.g., due to
 #' convergence issues or degenerate data) are silently discarded.
 #'
-#' Supports both **dichotomous** data (via `eRm::RM()` and
-#' `psychotools::rrm()`) and **polytomous** data (via `eRm::PCM()` and an
-#' internal partial credit score simulator).
+#' The generating model uses CML item thresholds via `psychotools::pcmodel()`
+#' (a dichotomous item is a 2-category PCM) and WLE person locations,
+#' consistent with the rest of the package; responses are simulated with
+#' `psychotools::rrm()` (dichotomous) or an internal partial credit score
+#' simulator (polytomous).
 #'
 #' Parallel processing is provided by the `mirai` package (optional). Install
 #' it with `install.packages("mirai")` to enable parallelisation.
@@ -542,35 +544,29 @@ RMlocdepGammaCutoff <- function(data, iterations = 250,
 
   item_names_vec <- colnames(data_mat)
 
+  # Generating model: CML item thresholds (psychotools) + WLE person locations,
+  # consistent with the rest of the package, replacing eRm CML +
+  # eRm::person.parameter() (MLE). Thetas form the pool resampled with
+  # replacement to build each simulated dataset; a dichotomous item is a
+  # 2-category PCM, so its centred threshold is the item difficulty for rrm().
+  thr_list   <- .fit_cml_thresholds(data_mat)
+  wle_thetas <- .estimate_thetas(data_mat, thr_list, method = "WLE")$theta
+  thetas     <- wle_thetas[is.finite(wle_thetas)]
+
   if (is_polytomous) {
-    pcm_fit <- eRm::PCM(data_mat)
-    pp <- eRm::person.parameter(pcm_fit)
-    theta_table <- pp$theta.table[["Person Parameter"]]
-    raw_scores <- rowSums(data_mat, na.rm = TRUE)
-    thetas <- as.numeric(stats::na.omit(theta_table[raw_scores]))
-    thresh_mat <- extract_item_thresholds(data_mat)
-    deltaslist <- lapply(seq_len(nrow(thresh_mat)), function(i) {
-      as.numeric(thresh_mat[i, !is.na(thresh_mat[i, ])])
-    })
     sim_data_list <- list(
       type = "polytomous",
       thetas = thetas,
-      deltaslist = deltaslist,
+      deltaslist = thr_list,
       n_items = ncol(data_mat),
       sample_n = sample_n,
       item_names = item_names_vec
     )
   } else {
-    rm_fit <- eRm::RM(data_mat)
-    pp <- eRm::person.parameter(rm_fit)
-    theta_table <- pp$theta.table[["Person Parameter"]]
-    raw_scores <- rowSums(data_mat, na.rm = TRUE)
-    thetas <- as.numeric(stats::na.omit(theta_table[raw_scores]))
-    item_params <- -rm_fit$betapar
     sim_data_list <- list(
       type = "dichotomous",
       thetas = thetas,
-      item_params = item_params,
+      item_params = unlist(thr_list, use.names = FALSE),
       n_items = ncol(data_mat),
       sample_n = sample_n,
       item_names = item_names_vec

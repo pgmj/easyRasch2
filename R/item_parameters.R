@@ -205,7 +205,7 @@ RMitemParameters <- function(data,
   }
   out <- do.call(rbind, rows)
   rownames(out) <- NULL
-  out[order(out$location), , drop = FALSE]
+  out[, , drop = FALSE]
 }
 
 # ---------------------------------------------------------------------

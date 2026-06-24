@@ -41,11 +41,13 @@
 #' @details
 #' For each of the `m` imputed datasets, the function:
 #' \enumerate{
-#'   \item Fits a Rasch model (`eRm::RM()` for dichotomous data or
-#'     `eRm::PCM()` for polytomous data).
+#'   \item Fits a Rasch model by CML via `psychotools::pcmodel()` (a
+#'     dichotomous item is a 2-category partial credit model), consistent with
+#'     \code{\link{RMitemInfit}} and the rest of the package.
 #'   \item Computes conditional infit MSQ and its standard error via
 #'     `iarm::out_infit()`.
-#'   \item Computes item and person locations.
+#'   \item Computes item locations (mean of the grand-mean-centred CML
+#'     Andrich thresholds) and the mean WLE person location.
 #' }
 #'
 #' The per-imputation estimates are then pooled using Rubin's rules:
@@ -62,6 +64,15 @@
 #' Relative item location is the mean of per-imputation relative locations
 #' (item location minus sample mean person location).
 #'
+#' \strong{Caveat on the pooled SE.} The within-imputation variance is the
+#' squared conditional infit SE from `iarm::out_infit()`. Müller (2020) showed
+#' that this asymptotic SE is an unreliable measure of uncertainty for the
+#' conditional infit statistic; Rubin's pooled SE inherits that limitation, so
+#' the `Infit_SE`/`Infit SE` column should be read as an approximate indication
+#' of imputation-related variability rather than a trustworthy inferential
+#' standard error. For item misfit decisions, prefer the simulation-based
+#' cutoffs from \code{\link{RMitemInfitCutoffMI}}.
+#'
 #' Imputed datasets that cause model convergence failures are dropped with a
 #' warning. If all imputations fail, the function stops with an error. At
 #' least two successful imputations are required to estimate between-imputation
@@ -69,6 +80,11 @@
 #'
 #' The `mice` and `iarm` packages must be installed (they are in Suggests, not
 #' Imports).
+#'
+#' @references
+#' Müller, M. (2020). Item fit statistics for Rasch analysis: Can we trust
+#' them? *Journal of Statistical Distributions and Applications*, 7(5).
+#' \doi{10.1186/s40488-020-00108-7}
 #'
 #' @seealso \code{\link{RMitemInfit}}, \code{\link{RMitemInfitCutoffMI}}
 #'
@@ -176,36 +192,27 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable",
     result_i <- tryCatch({
       validate_response_data(completed_data)
 
-      data_mat <- as.matrix(completed_data)
+      data_mat   <- as.matrix(completed_data)
       n_complete <- nrow(completed_data)
 
-      # Fit model
-      if (max(data_mat, na.rm = TRUE) == 1L) {
-        erm_out <- eRm::RM(completed_data)
-        item_avg_locations <- stats::coef(erm_out, "beta") * -1
-        pp <- eRm::person.parameter(erm_out)
-        person_avg_location <- mean(
-          pp$theta.table[["Person Parameter"]], na.rm = TRUE
-        )
-      } else {
-        erm_out <- eRm::PCM(completed_data)
-        thresh_obj   <- eRm::thresholds(erm_out)
-        thresh_table <- thresh_obj$threshtable[[1]]
-        if ("Location" %in% colnames(thresh_table)) {
-          item_avg_locations <- thresh_table[, "Location"]
-        } else {
-          item_avg_locations <- rowMeans(thresh_table, na.rm = TRUE)
-        }
-        pp <- eRm::person.parameter(erm_out)
-        person_avg_location <- mean(
-          pp$theta.table[["Person Parameter"]], na.rm = TRUE
-        )
-      }
+      # CML item parameters (psychotools; a dichotomous item is a 2-category
+      # PCM) and WLE person locations, consistent with RMitemInfit() and the
+      # rest of the package. The conditional infit/outfit statistic from iarm
+      # is engine-invariant; only the relative-location reference shifts
+      # slightly (WLE vs eRm MLE person mean).
+      fit      <- psychotools::pcmodel(completed_data)
+      thr_list <- .center_thresholds(lapply(psychotools::threshpar(fit),
+                                            as.numeric))
+      item_avg_locations  <- vapply(thr_list, mean, numeric(1L))
+      person_avg_location <- mean(
+        .estimate_thetas(data_mat, thr_list, method = "WLE")$theta,
+        na.rm = TRUE
+      )
 
       relative_locations <- item_avg_locations - person_avg_location
 
       # Conditional infit
-      cfit <- iarm::out_infit(erm_out)
+      cfit <- iarm::out_infit(fit)
 
       list(
         infit_msq         = cfit$Infit,
