@@ -162,32 +162,25 @@ RMpersonParameters <- function(data,
   }, numeric(1))
   extreme <- n_answered > 0L & (sum_score == 0 | sum_score == max_score)
 
-  # --- Estimation -------------------------------------------------------------
+  # --- Estimation (shared engine: see .estimate_thetas() in utils-theta.R) -----
   prior_used <- NULL
   if (method == "WLE") {
-    est <- t(vapply(seq_len(nrow(data_mat)), function(p) {
-      .theta_wle(data_mat[p, ], thr_list, theta_range)
-    }, numeric(2)))
-    theta <- est[, 1L]
-    sem   <- est[, 2L]
+    est   <- .estimate_thetas(data_mat, thr_list, method = "WLE",
+                              theta_range = theta_range)
+    theta <- est$theta
+    sem   <- est$sem
   } else {
-    grid      <- seq(theta_range[1L], theta_range[2L], length.out = 121L)
-    logp_tabs <- .logp_tables(thr_list, grid)
-    loglik    <- .grid_loglik(data_mat, logp_tabs, grid)
-
-    sd_used <- if (is.null(prior_sd)) {
-      .estimate_prior_sd(loglik, grid, prior_mean)
-    } else {
-      if (!is.numeric(prior_sd) || length(prior_sd) != 1L || prior_sd <= 0) {
-        stop("`prior_sd` must be a single positive number or NULL.",
-             call. = FALSE)
-      }
-      prior_sd
+    if (!is.null(prior_sd) &&
+        (!is.numeric(prior_sd) || length(prior_sd) != 1L || prior_sd <= 0)) {
+      stop("`prior_sd` must be a single positive number or NULL.",
+           call. = FALSE)
     }
-    eap   <- .theta_eap(loglik, grid, prior_mean, sd_used)
-    theta <- eap$theta
-    sem   <- eap$sem
-    prior_used <- c(mean = prior_mean, sd = sd_used,
+    est   <- .estimate_thetas(data_mat, thr_list, method = "EAP",
+                              theta_range = theta_range, prior_mean = prior_mean,
+                              prior_sd = prior_sd)
+    theta <- est$theta
+    sem   <- est$sem
+    prior_used <- c(mean = prior_mean, sd = attr(est, "prior_sd"),
                     estimated = as.numeric(is.null(prior_sd)))
   }
 

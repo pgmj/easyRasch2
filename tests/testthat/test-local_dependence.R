@@ -165,17 +165,14 @@ test_that("full simfit returns list whose $matrix matches the scalar cutoff", {
   # Full object -> list($matrix, $pairs); $matrix matches the scalar-cutoff matrix
   a <- RMlocdepQ3(df, cutoff = cu,                  output = "dataframe")
   b <- RMlocdepQ3(df, cutoff = cu$suggested_cutoff, output = "dataframe")
-  expect_named(a, c("matrix", "pairs", "plot"))
+  expect_named(a, c("matrix", "pairs"))
   expect_equal(a$matrix, b)
-  if (requireNamespace("ggplot2", quietly = TRUE)) {
-    expect_s3_class(a$plot, "ggplot")
-  }
 })
 
 # ---------------------------------------------------------------------
 # RMlocdepQ3Plot
 # ---------------------------------------------------------------------
-test_that("RMlocdepQ3Plot returns a ggplot in both cases", {
+test_that("RMlocdepQ3Plot returns a $matrix/$pairs list", {
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggdist")
@@ -186,13 +183,17 @@ test_that("RMlocdepQ3Plot returns a ggplot in both cases", {
   colnames(df) <- paste0("I", 1:6)
   cu <- RMlocdepQ3Cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
 
-  # Case 1: no data
-  p1 <- RMlocdepQ3Plot(cu)
-  expect_s3_class(p1, "ggplot")
+  # Case 1: no data -> per-pair plot only, $matrix is NULL
+  p1 <- suppressMessages(RMlocdepQ3Plot(cu))
+  expect_named(p1, c("matrix", "pairs"))
+  expect_null(p1$matrix)
+  expect_s3_class(p1$pairs, "ggplot")
 
-  # Case 2: observed data overlay
+  # Case 2: observed data -> both the heatmap and the per-pair plot
   p2 <- RMlocdepQ3Plot(cu, data = df)
-  expect_s3_class(p2, "ggplot")
+  expect_named(p2, c("matrix", "pairs"))
+  expect_s3_class(p2$matrix, "ggplot")
+  expect_s3_class(p2$pairs, "ggplot")
 })
 
 test_that("RMlocdepQ3Plot n_pairs trims and orders by deviation", {
@@ -207,9 +208,9 @@ test_that("RMlocdepQ3Plot n_pairs trims and orders by deviation", {
   cu <- RMlocdepQ3Cutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
 
   p <- RMlocdepQ3Plot(cu, data = df, n_pairs = 3L)
-  expect_s3_class(p, "ggplot")
+  expect_s3_class(p$pairs, "ggplot")
   # Pair factor should have exactly 3 levels
-  expect_equal(nlevels(p$data$Pair), 3L)
+  expect_equal(nlevels(p$pairs$data$Pair), 3L)
 })
 
 test_that("RMlocdepQ3Plot validates inputs", {
@@ -250,7 +251,7 @@ test_that("full cutoff object returns list($matrix, $pairs, $plot)", {
   df  <- q3_null_data()
   sim <- RMlocdepQ3Cutoff(df, iterations = 300, parallel = FALSE, seed = 1)
   res <- RMlocdepQ3(df, cutoff = sim, output = "dataframe")
-  expect_named(res, c("matrix", "pairs", "plot"))
+  expect_named(res, c("matrix", "pairs"))
   expect_named(res$pairs, c("Item1", "Item2", "Observed", "Low", "High", "Flagged"))
   expect_equal(nrow(res$pairs), choose(ncol(df), 2L))          # one row per pair
   expect_true(all(res$pairs$Flagged %in% c("above", "below", "")))
@@ -383,5 +384,14 @@ test_that("dgp = 'conditional' runs and is consumable downstream", {
 
   # the conditional object flows through RMlocdepQ3()
   res <- RMlocdepQ3(df, cutoff = cu, output = "dataframe")
-  expect_named(res, c("matrix", "pairs", "plot"))
+  expect_named(res, c("matrix", "pairs"))
+})
+
+test_that("RMlocdepQ3(estimator='CML') warns on sparse/zero-variance items", {
+  skip_if_not_installed("eRm")
+  df <- as.data.frame(matrix(sample(0:1, 200 * 6, replace = TRUE), 200, 6))
+  colnames(df) <- paste0("I", 1:6)
+  df[[1]] <- 0L   # constant item -> destabilises CML; should warn
+  expect_warning(try(RMlocdepQ3(df, estimator = "CML"), silent = TRUE),
+                 regexp = "[Ss]parse|zero-variance")
 })

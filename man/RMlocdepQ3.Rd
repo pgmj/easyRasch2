@@ -62,7 +62,7 @@ data.frame) holding the lower triangle of the Q3 matrix; a numeric cut-off
 adds an \code{above_cutoff} row flag and a caption describing the dynamic
 cut-off.
 
-With the \strong{full \code{RMlocdepQ3Cutoff()} object}, a named list of three:
+With the \strong{full \code{RMlocdepQ3Cutoff()} object}, a named list of two:
 \describe{
 \item{\verb{$matrix}}{the Q3 lower-triangle matrix with the \emph{global} dynamic
 cut-off (mean off-diagonal Q3 + suggested cut-off), as above.}
@@ -73,10 +73,10 @@ dependence), \code{"below"} (below the lower bound), or \code{""}. Sorted by
 absolute departure from the per-pair simulated median and truncated to
 \code{n_pairs}. With \code{p_value = TRUE}, columns \code{p_q3} and \code{padj_q3} are added
 and \code{Flagged} reflects \code{padj_q3 < alpha} and only flags \code{"above"}.}
-\item{\verb{$plot}}{a \code{ggplot2} heatmap (lower-triangle tile plot, viridis
-fill) of the observed Q3 matrix; pairs exceeding the global dynamic
-cut-off are outlined in red. \code{NULL} if \code{ggplot2} is not installed.}
 }
+The Q3 tile heatmap that earlier versions returned as \verb{$plot} is now produced
+by \code{\link{RMlocdepQ3Plot}} (as its \verb{$matrix} element), so the table and
+plot outputs share the same \verb{$matrix}/\verb{$pairs} structure.
 }
 \description{
 Computes Yen's Q3 residual correlations between item pairs. By default the

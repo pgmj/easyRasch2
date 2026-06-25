@@ -406,8 +406,12 @@ For a more powerful $Q_3$ test, one can use the simulated cutoffs object to plot
 ``` r
 q3_plots <- RMlocdepQ3Plot(simfit = q3_cut, data = items, n_pairs = 6)
 q3_plots$pairs
-#> NULL
 ```
+
+<div class="figure">
+<img src="figures/rasch-plot_q3-1.png" alt="**Figure 7.** *Observed and expected $Q_3$ residuals*" width="100%" />
+<p class="caption">**Figure 7.** *Observed and expected $Q_3$ residuals*</p>
+</div>
 
 A second perspective on LD is the *partial gamma* coefficient
 [@kreinerAnalysisLocalDependence2004;@kreiner_validity_2007] between observed
@@ -581,7 +585,7 @@ Table: Reliability for 9 items, n = 600. PSI is the WLE-based separation reliabi
 |Cronbach's alpha |    0.886|               NA|               NA|no bootstrap               |
 |PSI              |    0.838|               NA|               NA|no bootstrap               |
 |Marginal         |    0.862|               NA|               NA|no bootstrap               |
-|RMU (WLE)        |    0.882|            0.868|            0.897|200 PVs, 20 RMU iterations |
+|RMU (WLE)        |    0.882|            0.867|            0.897|200 PVs, 20 RMU iterations |
 
 
 
@@ -690,11 +694,11 @@ Table: Person locations via Warm's WLE (CML item parameters).
 
 ## Person fit
 
-Conditional infit/outfit and lz with are the methods implemented, with Monte-Carlo resampling for *p*-values.
+Conditional person infit/outfit and lz with are the methods implemented, with Monte-Carlo resampling for *p*-values.
 
 
 ``` r
-pfit <- RMpersonFit(items, output = "ggplot")
+pfit <- RMpersonFit(items, iterations = 100, output = "ggplot")
 pfit$lz
 ```
 

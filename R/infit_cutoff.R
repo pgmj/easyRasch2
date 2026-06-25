@@ -168,9 +168,9 @@ RMitemInfitCutoff <- function(data, iterations = 250, parallel = TRUE,
   # "conditional" DGP (simulate each respondent's pattern given their observed
   # score) is the matched null. The "resample" DGP draws WLE person locations
   # with replacement and simulates parametrically (a marginal null).
-  thr_list   <- .fit_cml_thresholds(data_mat)
-  wle_thetas <- .estimate_thetas(data_mat, thr_list, method = "WLE")$theta
-  wle_thetas <- wle_thetas[is.finite(wle_thetas)]
+  pool       <- .wle_theta_pool(data_mat)
+  thr_list   <- pool$thr_list
+  wle_thetas <- pool$thetas
 
   sim_data_list <- list(
     dgp        = dgp,

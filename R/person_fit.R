@@ -217,7 +217,11 @@ RMpersonFit <- function(data,
   need_theta <- ("lz" %in% statistics) || (output == "ggplot")
   theta <- rep(NA_real_, n)
   if (need_theta) {
-    theta <- .person_theta(data_mat, thr_list, theta_method)
+    # Shared engine (utils-theta.R): WLE caches by (answered-set, score); EAP
+    # uses its quadrature grid and estimates the prior SD from the data. The
+    # wider c(-10, 10) range locates extreme scorers (person-reporting scale).
+    theta <- .estimate_thetas(data_mat, thr_list, method = theta_method,
+                              theta_range = c(-10, 10))$theta
   }
 
   # --- Observed statistics ----------------------------------------------------
@@ -404,26 +408,6 @@ RMpersonFit <- function(data,
   (l - El) / sqrt(Vl)
 }
 
-#' Person location for lz (reuses the shared theta machinery)
-#' @keywords internal
-#' @noRd
-.person_theta <- function(data_mat, thr_list, theta_method,
-                          theta_range = c(-10, 10)) {
-  if (theta_method == "WLE") {
-    # .estimate_thetas() solves WLE once per distinct (answered-set, score)
-    # key and maps back, so it is identical to a per-row .theta_wle() loop but
-    # faster when response patterns repeat.
-    .estimate_thetas(data_mat, thr_list, method = "WLE",
-                     theta_range = theta_range)$theta
-  } else {
-    grid      <- seq(theta_range[1L], theta_range[2L], length.out = 121L)
-    logp_tabs <- .logp_tables(thr_list, grid)
-    loglik    <- .grid_loglik(data_mat, logp_tabs, grid)
-    sd_used   <- .estimate_prior_sd(loglik, grid, 0)
-    .theta_eap(loglik, grid, 0, sd_used)$theta
-  }
-}
-
 #' Wilson-Hilferty (ZSTD) transform of an MSQ value (non-inferential)
 #' @keywords internal
 #' @noRd
@@ -445,20 +429,36 @@ RMpersonFit <- function(data,
   want_msq <- any(c("infit", "outfit") %in% statistics)
   want_lz  <- "lz" %in% statistics
 
+  # .cond_moments() depends only on the answered-item set (not the person or
+  # the observed score), so compute it once per distinct answered-set and reuse
+  # it -- on complete data a single build instead of one per respondent. It is
+  # deterministic, so caching does not touch the resampling RNG stream.
+  ans_sets <- lapply(seq_len(n), function(p) which(!is.na(data_mat[p, ])))
+  ans_key  <- vapply(ans_sets, function(a) paste0(a, collapse = ","),
+                     character(1L))
+  mom_cache <- NULL
+  if (want_msq) {
+    mom_cache <- list()
+    for (k in unique(ans_key)) {
+      a <- ans_sets[[match(k, ans_key)]]
+      if (length(a) > 0L) mom_cache[[k]] <- .cond_moments(thr_list[a])
+    }
+  }
+
   # Each statistic uses its matching null: the conditional MSQ statistics are
   # referenced against patterns sampled conditional on the total score (no
   # person estimate, consistent with the statistic); lz, which is defined at
   # the estimated location, is referenced against patterns simulated there.
   one_person <- function(p) {
-    ans <- which(!is.na(data_mat[p, ]))
+    ans <- ans_sets[[p]]
     res <- c(infit = NA_real_, outfit = NA_real_, lz = NA_real_)
     if (length(ans) == 0L) return(res)
     thr_sub <- thr_list[ans]
     r_obs   <- sum(data_mat[p, ans])
 
-    # MSQ: conditional-on-total-score resampling
+    # MSQ: conditional-on-total-score resampling (moments cached per answered-set)
     if (want_msq) {
-      mom <- .cond_moments(thr_sub)
+      mom <- mom_cache[[ans_key[p]]]
       if (r_obs > 0L && r_obs < mom$max_score) {
         sims <- .sim_conditional(thr_sub, r_obs, iterations)
         if (!is.null(sims)) {
@@ -487,7 +487,7 @@ RMpersonFit <- function(data,
           full <- rep(NA_real_, ncol(data_mat)); full[ans] <- xs
           .person_lz(full, thr_list, theta[p])
         })
-        res["lz"] <- mean(lz_sim <= obs$lz[p], na.rm = TRUE)
+        res["lz"] <- .mc_pvalue(lz_sim, obs$lz[p], tail = "lower")
       }
     }
     res
@@ -502,16 +502,22 @@ RMpersonFit <- function(data,
 #'
 #' @param sim Numeric vector of simulated null values.
 #' @param obs Observed value.
-#' @param tail `"two.sided"` (deviation in either direction) or `"upper"`
-#'   (underfit only -- the validity-relevant direction).
+#' @param tail `"two.sided"` (deviation in either direction), `"upper"`
+#'   (underfit only -- the validity-relevant direction), or `"lower"` (e.g.
+#'   the lz statistic, where small values indicate misfit).
 #' @keywords internal
 #' @noRd
 .mc_pvalue <- function(sim, obs, tail = "two.sided") {
   sim <- sim[!is.na(sim)]
-  if (length(sim) == 0L || is.na(obs)) return(NA_real_)
-  if (tail == "upper") return(mean(sim >= obs))
-  p_upper <- mean(sim >= obs)
-  p_lower <- mean(sim <= obs)
+  B   <- length(sim)
+  if (B == 0L || is.na(obs)) return(NA_real_)
+  # (1 + count) / (B + 1) Monte-Carlo p-value, consistent with
+  # .bootstrap_pvalues() in utils-multiplicity.R: never exactly 0, and the
+  # denominator counts only the valid (non-NA) simulations.
+  if (tail == "upper") return((1 + sum(sim >= obs)) / (B + 1))
+  if (tail == "lower") return((1 + sum(sim <= obs)) / (B + 1))
+  p_upper <- (1 + sum(sim >= obs)) / (B + 1)
+  p_lower <- (1 + sum(sim <= obs)) / (B + 1)
   min(1, 2 * min(p_upper, p_lower))
 }
 

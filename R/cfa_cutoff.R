@@ -214,9 +214,9 @@ RMdimCFACutoff <- function(data,
   # locations, consistent with the rest of the package. The DGP is unchanged
   # (thetas resampled with replacement; data simulated under the model). The
   # CFA itself is fitted by lavaan; `estimator` is the lavaan estimator.
-  thr_list   <- .fit_cml_thresholds(data_mat)
-  wle_thetas <- .estimate_thetas(data_mat, thr_list, method = "WLE")$theta
-  wle_thetas <- wle_thetas[is.finite(wle_thetas)]
+  pool       <- .wle_theta_pool(data_mat)
+  thr_list   <- pool$thr_list
+  wle_thetas <- pool$thetas
 
   sim_data_list <- list(
     type       = if (is_polytomous) "polytomous" else "dichotomous",

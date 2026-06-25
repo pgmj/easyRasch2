@@ -30,7 +30,16 @@ null are plotted, sorted by \verb{|observed Q3 - median(simulated Q3 per pair)|}
 of available pairs are silently capped.}
 }
 \value{
-A \code{ggplot} object.
+A named list of two \code{ggplot} objects (mirroring the \verb{$matrix} /
+\verb{$pairs} structure of \code{\link{RMlocdepQ3}}'s table output):
+\describe{
+\item{\verb{$pairs}}{the per-pair plot described below (always returned).}
+\item{\verb{$matrix}}{a lower-triangle tile heatmap of the \strong{observed} Q3
+matrix, with pairs above the global dynamic cut-off outlined. This
+needs the observed data, so it is \code{NULL} (with a message) when \code{data}
+is not supplied. When \code{items} is given, the heatmap is subset to those
+items; \code{n_pairs} does not apply to it.}
+}
 }
 \description{
 Visualises the distribution of simulation-based Yen's Q3 residual
@@ -43,7 +52,8 @@ Uses \code{ggdist::stat_dotsinterval()} (when \code{data} is not supplied) or
 \code{ggdist::stat_dots()} (when \code{data} is supplied) with
 \code{point_interval = "median_hdci"} and \code{.width = c(0.66, 0.95, 0.99)}.
 
-The plot shows one row per item pair (labelled as "Item1 - Item2"). Only
+The \verb{$pairs} plot shows one row per item pair (labelled as "Item1 - Item2").
+Only
 the upper triangle of the Q3 matrix is plotted (pairs are unordered
 under symmetric Q3, unlike partial gamma which is direction-dependent).
 

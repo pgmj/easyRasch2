@@ -128,3 +128,11 @@ test_that("RMdimResidualPCACutoff is reproducible with the same seed", {
   r2 <- RMdimResidualPCACutoff(df, iterations = 5L, parallel = FALSE, seed = 42L)
   expect_equal(r1$results, r2$results)
 })
+
+test_that("RMdimResidualPCA warns on sparse/zero-variance items (CML)", {
+  skip_if_not_installed("eRm")
+  df <- make_dichotomous()
+  df[[1]] <- 0L   # constant item -> destabilises CML; should warn, not fail silently
+  expect_warning(try(RMdimResidualPCA(df, output = "dataframe"), silent = TRUE),
+                 regexp = "[Ss]parse|zero-variance")
+})

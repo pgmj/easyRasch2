@@ -270,18 +270,25 @@
 #'   `.fit_cml_thresholds()`).
 #' @param method `"WLE"` (default) or `"EAP"`.
 #' @param theta_range Length-2 search/boundary range for WLE and the EAP
-#'   quadrature grid.
+#'   quadrature grid. Person-reporting callers (`RMpersonParameters()`,
+#'   `RMpersonFit()`) pass the wider `c(-10, 10)` to locate extreme scorers;
+#'   the default `c(-6, 6)` is used by the parametric-bootstrap theta pools
+#'   (via `.wle_theta_pool()`), where it is the validated/calibrated range and
+#'   only the resampled extremes are affected.
 #' @param prior_mean,prior_sd Normal-prior parameters for `"EAP"`. When
 #'   `prior_sd` is `NULL` it is estimated from the data by marginal
 #'   maximum likelihood.
-#' @param n_nodes Number of EAP quadrature nodes.
+#' @param n_nodes Number of EAP quadrature nodes (default 121; the single
+#'   source for every EAP caller so the same data yields the same estimate).
 #' @return data.frame with columns `theta` and `sem`, one row per
-#'   respondent (in input order).
+#'   respondent (in input order). For `method = "EAP"` the result carries
+#'   `attr(., "prior_mean")` and `attr(., "prior_sd")` (the prior actually
+#'   used).
 #' @keywords internal
 #' @noRd
 .estimate_thetas <- function(data, thr_list, method = c("WLE", "EAP"),
                              theta_range = c(-6, 6), prior_mean = 0,
-                             prior_sd = NULL, n_nodes = 61L) {
+                             prior_sd = NULL, n_nodes = 121L) {
   method <- match.arg(method)
   data <- as.matrix(data)
 
@@ -290,7 +297,11 @@
     logp   <- .logp_tables(thr_list, grid)
     loglik <- .grid_loglik(data, logp, grid)
     if (is.null(prior_sd)) prior_sd <- .estimate_prior_sd(loglik, grid, prior_mean)
-    return(.theta_eap(loglik, grid, prior_mean, prior_sd))
+    out <- .theta_eap(loglik, grid, prior_mean, prior_sd)
+    # Expose the prior used so callers (e.g. RMpersonParameters) can report it.
+    attr(out, "prior_mean") <- prior_mean
+    attr(out, "prior_sd")   <- prior_sd
+    return(out)
   }
 
   # WLE: cache by sufficient statistic (answered-set, partial score).
@@ -302,6 +313,25 @@
                 numeric(2L))                       # rows: theta, sem; cols: reps
   m <- match(key, key[rep_idx])
   data.frame(theta = est["theta", m], sem = est["sem", m])
+}
+
+#' Finite WLE person-location pool for parametric-bootstrap DGPs
+#'
+#' Shared setup for the simulation-cutoff functions: fits CML item thresholds
+#' and returns them together with the finite WLE person locations used as the
+#' resampling pool. Centralises the block repeated across the `*Cutoff()`
+#' functions (Q3, infit, CFA, gamma DIF/LD).
+#'
+#' @param data Numeric response matrix or data.frame (items from 0).
+#' @return A list with `thr_list` (centred CML thresholds) and `thetas` (the
+#'   finite WLE person locations).
+#' @keywords internal
+#' @noRd
+.wle_theta_pool <- function(data) {
+  data     <- as.matrix(data)
+  thr_list <- .fit_cml_thresholds(data)
+  thetas   <- .estimate_thetas(data, thr_list, method = "WLE")$theta
+  list(thr_list = thr_list, thetas = thetas[is.finite(thetas)])
 }
 
 #' Standardized Rasch/PCM residual matrix (CML items + chosen person estimator)

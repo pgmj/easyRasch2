@@ -262,7 +262,8 @@ RMscoreSE <- function(data,
     mirt_fit,
     method         = "EAPsum",
     full.scores    = FALSE,
-    full.scores.SE = TRUE
+    full.scores.SE = TRUE,
+    verbose        = FALSE
   )
   sscores <- as.data.frame(sscores)
 

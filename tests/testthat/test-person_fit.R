@@ -235,3 +235,16 @@ test_that("plot status colours respondents by direction", {
                   c("Not flagged", "Underfit", "Overfit")))
   expect_true(all(levels(g$lz$data$status) %in% c("Not flagged", "Flagged")))
 })
+
+test_that("RMpersonFit Monte-Carlo p-values are never exactly 0", {
+  skip_if_not_installed("eRm")
+  dat <- sim_pcm_null()
+  res <- RMpersonFit(dat, iterations = 50, seed = 1, output = "dataframe")
+  p_cols <- grep("^p_", names(res), value = TRUE)
+  expect_true(length(p_cols) > 0L)
+  for (pc in p_cols) {
+    p <- res[[pc]][!is.na(res[[pc]])]
+    # (1 + count) / (B + 1) convention: strictly positive, never 0.
+    expect_true(all(p > 0 & p <= 1))
+  }
+})

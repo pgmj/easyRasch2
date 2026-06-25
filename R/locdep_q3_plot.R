@@ -29,10 +29,20 @@
 #'   `items` filter when both are supplied. Values larger than the number
 #'   of available pairs are silently capped.
 #'
-#' @return A `ggplot` object.
+#' @return A named list of two `ggplot` objects (mirroring the `$matrix` /
+#'   `$pairs` structure of \code{\link{RMlocdepQ3}}'s table output):
+#'   \describe{
+#'     \item{`$pairs`}{the per-pair plot described below (always returned).}
+#'     \item{`$matrix`}{a lower-triangle tile heatmap of the **observed** Q3
+#'       matrix, with pairs above the global dynamic cut-off outlined. This
+#'       needs the observed data, so it is `NULL` (with a message) when `data`
+#'       is not supplied. When `items` is given, the heatmap is subset to those
+#'       items; `n_pairs` does not apply to it.}
+#'   }
 #'
 #' @details
-#' The plot shows one row per item pair (labelled as "Item1 - Item2"). Only
+#' The `$pairs` plot shows one row per item pair (labelled as "Item1 - Item2").
+#' Only
 #' the upper triangle of the Q3 matrix is plotted (pairs are unordered
 #' under symmetric Q3, unlike partial gamma which is direction-dependent).
 #'
@@ -295,7 +305,11 @@ RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
       er2_axis_margins() +
       er2_plot_caption()
 
-    return(p)
+    # The $matrix tile heatmap needs the observed Q3 matrix, which requires
+    # `data`; without it only the per-pair distribution ($pairs) is available.
+    message("The Q3 tile heatmap ($matrix) requires `data`; ",
+            "returning $matrix = NULL.")
+    return(list(matrix = NULL, pairs = p))
   }
 
   # --- Case 2: observed data supplied -----------------------------------------
@@ -386,5 +400,20 @@ RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     er2_axis_margins() +
     er2_plot_caption()
 
-  p
+  # --- $matrix: tile heatmap of the observed Q3 matrix ------------------------
+  # Same heatmap earlier versions returned from RMlocdepQ3()$plot, now here so
+  # the table and plot outputs share the $matrix / $pairs structure. The global
+  # dynamic cut-off mirrors RMlocdepQ3(): mean off-diagonal Q3 + suggested
+  # cut-off. The `items` filter subsets the matrix; `n_pairs` does not apply.
+  q3_tile <- if (is.null(items)) q3_mat else q3_mat[items, items, drop = FALSE]
+  dyn_cutoff <- if (!is.null(simfit$suggested_cutoff)) {
+    mean(q3_tile, na.rm = TRUE) + as.numeric(simfit$suggested_cutoff)
+  } else {
+    NULL
+  }
+  matrix_plot <- .q3_tile_plot(q3_tile, dyn_cutoff = dyn_cutoff,
+                               estimator = estimator,
+                               actual_iterations = actual_iterations)
+
+  list(matrix = matrix_plot, pairs = p)
 }

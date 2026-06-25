@@ -1,6 +1,6 @@
 # Tests for RMscoreSE()
 
-make_polytomous <- function(n = 150, k = 5, seed = 1L) {
+make_polytomous <- function(n = 200, k = 5, seed = 1L) {
   set.seed(seed)
   df <- as.data.frame(matrix(sample(0:3, n * k, replace = TRUE), n, k))
   colnames(df) <- paste0("I", seq_len(k))

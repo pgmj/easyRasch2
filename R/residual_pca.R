@@ -142,6 +142,10 @@ RMdimResidualPCA <- function(data,
   data_mat      <- as.matrix(data)
   is_polytomous <- max(data_mat, na.rm = TRUE) > 1L
 
+  # CML (psychotools) can choke or destabilise on sparse / zero-variance
+  # response categories; warn before fitting, consistent with RMitemParameters().
+  .sparsity_warning(data, is_poly = is_polytomous)
+
   # CML item thresholds (psychotools) and WLE-based standardized residuals,
   # consistent with the rest of the package. Item locations are per-item mean
   # thresholds; the standardized residuals (x - E)/sqrt(Var) come from the
@@ -437,9 +441,9 @@ RMdimResidualPCACutoff <- function(data,
   # Generating model: CML item thresholds (psychotools) + WLE person locations,
   # consistent with the rest of the package. The DGP is unchanged: thetas are
   # resampled with replacement and data simulated parametrically.
-  thr_list   <- .fit_cml_thresholds(data_mat)
-  wle_thetas <- .estimate_thetas(data_mat, thr_list, method = "WLE")$theta
-  wle_thetas <- wle_thetas[is.finite(wle_thetas)]
+  pool       <- .wle_theta_pool(data_mat)
+  thr_list   <- pool$thr_list
+  wle_thetas <- pool$thetas
 
   sim_data_list <- list(
     type       = if (is_polytomous) "polytomous" else "dichotomous",

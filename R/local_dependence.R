@@ -46,7 +46,7 @@
 #' adds an `above_cutoff` row flag and a caption describing the dynamic
 #' cut-off.
 #'
-#' With the **full `RMlocdepQ3Cutoff()` object**, a named list of three:
+#' With the **full `RMlocdepQ3Cutoff()` object**, a named list of two:
 #' \describe{
 #'   \item{`$matrix`}{the Q3 lower-triangle matrix with the *global* dynamic
 #'     cut-off (mean off-diagonal Q3 + suggested cut-off), as above.}
@@ -57,10 +57,10 @@
 #'     absolute departure from the per-pair simulated median and truncated to
 #'     `n_pairs`. With `p_value = TRUE`, columns `p_q3` and `padj_q3` are added
 #'     and `Flagged` reflects `padj_q3 < alpha` and only flags `"above"`.}
-#'   \item{`$plot`}{a `ggplot2` heatmap (lower-triangle tile plot, viridis
-#'     fill) of the observed Q3 matrix; pairs exceeding the global dynamic
-#'     cut-off are outlined in red. `NULL` if `ggplot2` is not installed.}
 #' }
+#' The Q3 tile heatmap that earlier versions returned as `$plot` is now produced
+#' by \code{\link{RMlocdepQ3Plot}} (as its `$matrix` element), so the table and
+#' plot outputs share the same `$matrix`/`$pairs` structure.
 #'
 #' @details
 #' The Q3 statistic (Yen, 1984) is the correlation between residuals of pairs
@@ -210,6 +210,13 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 
   validate_response_data(data)
 
+  # The CML engine (psychotools) can choke or destabilise on sparse / zero-
+  # variance response categories; warn (and point to estimator = "MML") before
+  # fitting, consistent with RMitemParameters(). Not needed for the MML path.
+  if (estimator == "CML") {
+    .sparsity_warning(data, is_poly = max(as.matrix(data), na.rm = TRUE) > 1L)
+  }
+
   # --- Compute Q3 residual correlations ---------------------------------------
   # .q3_residual_matrix() returns a symmetric Q3 matrix with an NA diagonal,
   # computed under the chosen estimator (CML/WLE residual correlations, or
@@ -229,14 +236,13 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
     return(matrix_out)
   }
 
-  # Full RMlocdepQ3Cutoff() object: matrix, per-pair table, and heatmap.
+  # Full RMlocdepQ3Cutoff() object: the matrix view and the per-pair table.
+  # The Q3 tile heatmap now lives in RMlocdepQ3Plot()$matrix, so this table
+  # function no longer emits a plot (consistent with the other *Cutoff/table
+  # functions, which return data and leave rendering to the *Plot functions).
   pairs_out <- .q3_pairs_table(resid_mat, cutoff_full, n_pairs, p_value,
                                correction, alpha, output)
-  plot_out  <- .q3_tile_plot(resid_mat,
-                             dyn_cutoff = mean_resid + cutoff,
-                             estimator = estimator,
-                             actual_iterations = cutoff_full$actual_iterations)
-  list(matrix = matrix_out, pairs = pairs_out, plot = plot_out)
+  list(matrix = matrix_out, pairs = pairs_out)
 }
 
 #' Lower-triangle heatmap of the observed Q3 matrix
@@ -718,9 +724,9 @@ RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
   # Generating model: CML item thresholds (psychotools), computed once. WLE
   # person locations are computed for the sample summary and, under the
   # "resample" DGP, as the generating theta pool.
-  thr_list   <- .fit_cml_thresholds(data_mat)
-  wle_thetas <- .estimate_thetas(data_mat, thr_list, method = "WLE")$theta
-  wle_thetas <- wle_thetas[is.finite(wle_thetas)]
+  pool       <- .wle_theta_pool(data_mat)
+  thr_list   <- pool$thr_list
+  wle_thetas <- pool$thetas
 
   sim_data_list <- list(
     dgp        = dgp,

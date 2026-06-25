@@ -399,10 +399,10 @@ RMscoreSE(items)
 
 ## Person fit
 
-Conditional infit/outfit and lz with are the methods implemented, with Monte-Carlo resampling for *p*-values.
+Conditional person infit/outfit and lz with are the methods implemented, with Monte-Carlo resampling for *p*-values.
 
 ```{r personfit, fig.cap = "Person fit with the lz statistic", fig.height = 5}
-pfit <- RMpersonFit(items, output = "ggplot")
+pfit <- RMpersonFit(items, iterations = 100, output = "ggplot")
 pfit$lz
 ```
 

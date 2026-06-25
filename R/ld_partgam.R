@@ -549,9 +549,9 @@ RMlocdepGammaCutoff <- function(data, iterations = 250,
   # eRm::person.parameter() (MLE). Thetas form the pool resampled with
   # replacement to build each simulated dataset; a dichotomous item is a
   # 2-category PCM, so its centred threshold is the item difficulty for rrm().
-  thr_list   <- .fit_cml_thresholds(data_mat)
-  wle_thetas <- .estimate_thetas(data_mat, thr_list, method = "WLE")$theta
-  thetas     <- wle_thetas[is.finite(wle_thetas)]
+  pool       <- .wle_theta_pool(data_mat)
+  thr_list   <- pool$thr_list
+  thetas     <- pool$thetas
 
   if (is_polytomous) {
     sim_data_list <- list(
