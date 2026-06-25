@@ -17,7 +17,7 @@ for how to determine the appropriate dynamic cut-off for your data."><meta name=
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.917</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.918</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -133,7 +133,7 @@ mismatching <code>estimator</code> argument is overridden with a warning).</p></
 data.frame) holding the lower triangle of the Q3 matrix; a numeric cut-off
 adds an <code>above_cutoff</code> row flag and a caption describing the dynamic
 cut-off.</p>
-<p>With the <strong>full <code><a href="RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code> object</strong>, a named list of three:</p><dl><dt><code>$matrix</code></dt>
+<p>With the <strong>full <code><a href="RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code> object</strong>, a named list of two:</p><dl><dt><code>$matrix</code></dt>
 <dd><p>the Q3 lower-triangle matrix with the <em>global</em> dynamic
 cut-off (mean off-diagonal Q3 + suggested cut-off), as above.</p></dd>
 
@@ -146,13 +146,11 @@ absolute departure from the per-pair simulated median and truncated to
 <code>n_pairs</code>. With <code>p_value = TRUE</code>, columns <code>p_q3</code> and <code>padj_q3</code> are added
 and <code>Flagged</code> reflects <code>padj_q3 &lt; alpha</code> and only flags <code>"above"</code>.</p></dd>
 
-<dt><code>$plot</code></dt>
-<dd><p>a <code>ggplot2</code> heatmap (lower-triangle tile plot, viridis
-fill) of the observed Q3 matrix; pairs exceeding the global dynamic
-cut-off are outlined in red. <code>NULL</code> if <code>ggplot2</code> is not installed.</p></dd>
 
-
-</dl></div>
+</dl><p>The Q3 tile heatmap that earlier versions returned as <code>$plot</code> is now produced
+by <code><a href="RMlocdepQ3plot.html">RMlocdepQ3Plot</a></code> (as its <code>$matrix</code> element), so the table and
+plot outputs share the same <code>$matrix</code>/<code>$pairs</code> structure.</p>
+    </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The Q3 statistic (Yen, 1984) is the correlation between residuals of pairs

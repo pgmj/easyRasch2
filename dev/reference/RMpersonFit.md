@@ -203,13 +203,13 @@ colnames(dat) <- paste0("Item", 1:8)
 
 # Conditional infit/outfit MSQ + lz with resampled p-values
 RMpersonFit(dat, iterations = 200, output = "dataframe") |> head()
-#>   id n_answered sum_score infit_msq outfit_msq      lz p_infit p_outfit  p_lz
-#> 1  1          8         5    1.3900     1.3988  0.0619    0.32     0.32 0.505
-#> 2  2          8         6    0.7271     0.7335 -0.0611    0.34     0.39 0.415
-#> 3  3          8         2    0.8185     0.8472  0.2747    0.79     0.79 0.545
-#> 4  4          8        10    0.7119     0.6872  0.4211    0.27     0.19 0.620
-#> 5  5          8         4    1.5137     1.4541  0.3392    0.22     0.22 0.615
-#> 6  6          8         4    1.5322     1.4836  0.2989    0.16     0.16 0.620
+#>   id n_answered sum_score infit_msq outfit_msq      lz p_infit p_outfit   p_lz
+#> 1  1          8         5    1.3900     1.3988  0.0619  0.3284   0.3284 0.5075
+#> 2  2          8         6    0.7271     0.7335 -0.0611  0.3483   0.3980 0.4179
+#> 3  3          8         2    0.8185     0.8472  0.2747  0.7960   0.7960 0.5473
+#> 4  4          8        10    0.7119     0.6872  0.4211  0.2786   0.1990 0.6219
+#> 5  5          8         4    1.5137     1.4541  0.3392  0.2289   0.2289 0.6169
+#> 6  6          8         4    1.5322     1.4836  0.2989  0.1692   0.1692 0.6219
 #>   flagged
 #> 1   FALSE
 #> 2   FALSE
@@ -228,13 +228,13 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
 # Flag only underfit (noisy responding), the validity-relevant direction
 RMpersonFit(dat, iterations = 200, flag = "underfit",
             output = "dataframe") |> head()
-#>   id n_answered sum_score infit_msq outfit_msq      lz p_infit p_outfit  p_lz
-#> 1  1          8         5    1.3900     1.3988  0.0619   0.140    0.115 0.485
-#> 2  2          8         6    0.7271     0.7335 -0.0611   0.820    0.800 0.425
-#> 3  3          8         2    0.8185     0.8472  0.2747   0.430    0.430 0.570
-#> 4  4          8        10    0.7119     0.6872  0.4211   0.820    0.845 0.640
-#> 5  5          8         4    1.5137     1.4541  0.3392   0.095    0.095 0.610
-#> 6  6          8         4    1.5322     1.4836  0.2989   0.070    0.070 0.595
+#>   id n_answered sum_score infit_msq outfit_msq      lz p_infit p_outfit   p_lz
+#> 1  1          8         5    1.3900     1.3988  0.0619  0.1443   0.1194 0.4876
+#> 2  2          8         6    0.7271     0.7335 -0.0611  0.8209   0.8010 0.4279
+#> 3  3          8         2    0.8185     0.8472  0.2747  0.4328   0.4328 0.5721
+#> 4  4          8        10    0.7119     0.6872  0.4211  0.8209   0.8458 0.6418
+#> 5  5          8         4    1.5137     1.4541  0.3392  0.0995   0.0995 0.6119
+#> 6  6          8         4    1.5322     1.4836  0.2989  0.0746   0.0746 0.5970
 #>   flagged
 #> 1   FALSE
 #> 2   FALSE

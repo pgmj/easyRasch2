@@ -13,7 +13,7 @@ mirt::residuals(..., type = &quot;Q3&quot;)."><meta name="robots" content="noind
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.917</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.918</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -88,14 +88,26 @@ of available pairs are silently capped.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>ggplot</code> object.</p>
-    </div>
+    <p>A named list of two <code>ggplot</code> objects (mirroring the <code>$matrix</code> /
+<code>$pairs</code> structure of <code><a href="RMlocdepQ3.html">RMlocdepQ3</a></code>'s table output):</p><dl><dt><code>$pairs</code></dt>
+<dd><p>the per-pair plot described below (always returned).</p></dd>
+
+<dt><code>$matrix</code></dt>
+<dd><p>a lower-triangle tile heatmap of the <strong>observed</strong> Q3
+matrix, with pairs above the global dynamic cut-off outlined. This
+needs the observed data, so it is <code>NULL</code> (with a message) when <code>data</code>
+is not supplied. When <code>items</code> is given, the heatmap is subset to those
+items; <code>n_pairs</code> does not apply to it.</p></dd>
+
+
+</dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Uses <code><a href="https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html" class="external-link">ggdist::stat_dotsinterval()</a></code> (when <code>data</code> is not supplied) or
 <code><a href="https://mjskay.github.io/ggdist/reference/stat_dots.html" class="external-link">ggdist::stat_dots()</a></code> (when <code>data</code> is supplied) with
 <code>point_interval = "median_hdci"</code> and <code>.width = c(0.66, 0.95, 0.99)</code>.</p>
-<p>The plot shows one row per item pair (labelled as "Item1 - Item2"). Only
+<p>The <code>$pairs</code> plot shows one row per item pair (labelled as "Item1 - Item2").
+Only
 the upper triangle of the Q3 matrix is plotted (pairs are unordered
 under symmetric Q3, unlike partial gamma which is direction-dependent).</p>
 <p>When <code>data</code> is <strong>not</strong> supplied, the function plots the simulated Q3
@@ -142,7 +154,13 @@ installed (most are in Suggests, not Imports).</p>
 <span class="r-in"><span>  <span class="co"># Top 10 pairs by departure from null</span></span></span>
 <span class="r-in"><span>  <span class="fu">RMlocdepQ3Plot</span><span class="op">(</span><span class="va">cutoff_res</span>, data <span class="op">=</span> <span class="va">sim_data</span>, n_pairs <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> The Q3 tile heatmap ($matrix) requires `data`; returning $matrix = NULL.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $matrix</span>
 <span class="r-plt img"><img src="RMlocdepQ3plot-1.png" alt="" width="700" height="433"></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $pairs</span>
+<span class="r-plt img"><img src="RMlocdepQ3plot-2.png" alt="" width="700" height="433"></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

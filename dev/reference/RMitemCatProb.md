@@ -109,7 +109,7 @@ RMitemCatProb(
   Character. How response categories are identified. `"legend"`
   (default) draws lines and a separate colour legend with one swatch per
   category — the standard multi-item presentation. `"path"` uses
-  [`geomtextpath::geom_textpath()`](https://rdrr.io/pkg/geomtextpath/man/geom_textpath.html)
+  [`geomtextpath::geom_textpath()`](https://allancameron.github.io/geomtextpath/reference/geom_textpath.html)
   to write each category's label *along* its own curve (a la classic IRT
   trace plots) and suppresses the legend; valid for **a single item at a
   time** because narrow facets do not give path labels enough horizontal

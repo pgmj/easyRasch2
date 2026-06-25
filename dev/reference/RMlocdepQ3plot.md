@@ -47,7 +47,22 @@ RMlocdepQ3Plot(simfit, data, items = NULL, n_pairs = NULL)
 
 ## Value
 
-A `ggplot` object.
+A named list of two `ggplot` objects (mirroring the `$matrix` / `$pairs`
+structure of
+[`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)'s
+table output):
+
+- `$pairs`:
+
+  the per-pair plot described below (always returned).
+
+- `$matrix`:
+
+  a lower-triangle tile heatmap of the **observed** Q3 matrix, with
+  pairs above the global dynamic cut-off outlined. This needs the
+  observed data, so it is `NULL` (with a message) when `data` is not
+  supplied. When `items` is given, the heatmap is subset to those items;
+  `n_pairs` does not apply to it.
 
 ## Details
 
@@ -58,9 +73,10 @@ Uses
 (when `data` is supplied) with `point_interval = "median_hdci"` and
 `.width = c(0.66, 0.95, 0.99)`.
 
-The plot shows one row per item pair (labelled as "Item1 - Item2"). Only
-the upper triangle of the Q3 matrix is plotted (pairs are unordered
-under symmetric Q3, unlike partial gamma which is direction-dependent).
+The `$pairs` plot shows one row per item pair (labelled as "Item1 -
+Item2"). Only the upper triangle of the Q3 matrix is plotted (pairs are
+unordered under symmetric Q3, unlike partial gamma which is
+direction-dependent).
 
 When `data` is **not** supplied, the function plots the simulated Q3
 distributions as dot-interval plots using
@@ -114,6 +130,12 @@ if (requireNamespace("ggplot2", quietly = TRUE) &&
   # Top 10 pairs by departure from null
   RMlocdepQ3Plot(cutoff_res, data = sim_data, n_pairs = 10)
 }
+#> The Q3 tile heatmap ($matrix) requires `data`; returning $matrix = NULL.
+#> $matrix
 
+#> 
+#> $pairs
+
+#> 
 # }
 ```

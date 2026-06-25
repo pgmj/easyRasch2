@@ -410,8 +410,12 @@ item-pairs that deviate the most.
 
 q3_plots <- RMlocdepQ3Plot(simfit = q3_cut, data = items, n_pairs = 6)
 q3_plots$pairs
-#> NULL
 ```
+
+![\*\*Figure 7.\*\* \*Observed and expected \$Q_3\$
+residuals\*](figures/rasch-plot_q3-1.png)
+
+**Figure 7.** *Observed and expected Q_3 residuals*
 
 A second perspective on LD is the *partial gamma* coefficient ([Kreiner
 and Christensen 2004](#ref-kreinerAnalysisLocalDependence2004); [Kreiner
@@ -599,7 +603,7 @@ RMreliability(items, draws = 200, rmu_iter = 20, parallel = FALSE,
 | Cronbach’s alpha | 0.886 | NA | NA | no bootstrap |
 | PSI | 0.838 | NA | NA | no bootstrap |
 | Marginal | 0.862 | NA | NA | no bootstrap |
-| RMU (WLE) | 0.882 | 0.868 | 0.897 | 200 PVs, 20 RMU iterations |
+| RMU (WLE) | 0.882 | 0.867 | 0.897 | 200 PVs, 20 RMU iterations |
 
 Reliability for 9 items, n = 600. PSI is the WLE-based separation
 reliability and excludes min/max scoring respondents. {.table}
@@ -711,12 +715,12 @@ also has an option for EAP scores (expected á posteriori).
 
 ## Person fit
 
-Conditional infit/outfit and lz with are the methods implemented, with
-Monte-Carlo resampling for *p*-values.
+Conditional person infit/outfit and lz with are the methods implemented,
+with Monte-Carlo resampling for *p*-values.
 
 ``` r
 
-pfit <- RMpersonFit(items, output = "ggplot")
+pfit <- RMpersonFit(items, iterations = 100, output = "ggplot")
 pfit$lz
 ```
 

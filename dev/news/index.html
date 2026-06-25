@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.917</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.918</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,8 +91,7 @@
 <h3 id="other-changes-and-fixes-development-version">Other changes and fixes<a class="anchor" aria-label="anchor" href="#other-changes-and-fixes-development-version"></a></h3>
 <ul><li>
 <code><a href="../reference/RMitemInfitCutoff.html">RMitemInfitCutoff()</a></code> and <code><a href="../reference/RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code> gain an experimental <code>dgp</code> argument — <code>"resample"</code> (default; resample WLE locations and simulate, a marginal null) vs <code>"conditional"</code> (simulate each pattern from the exact Rasch conditional given the observed total score, a matched conditional null) — stored in the result. See <code>dev/q3_dgp_comparison.R</code> / <code>dev/infit_dgp_comparison.R</code>.</li>
-<li>
-<code><a href="../reference/RMlocdepQ3plot.html">RMlocdepQ3Plot()</a></code> given the full cutoff object also returns <code>$matrix</code>: a lower-triangle diverging-RdYlBu tile heatmap of the observed Q3 matrix with above-cutoff pairs.</li>
+<li>Q3 plot and table outputs now share a <code>$matrix</code> / <code>$pairs</code> structure. <code><a href="../reference/RMlocdepQ3plot.html">RMlocdepQ3Plot()</a></code> returns a list of two plots: <code>$pairs</code> (the per-pair simulated-vs-observed dot-interval, previously the single return value) and <code>$matrix</code> (a lower-triangle diverging-RdYlBu Q3 tile heatmap with above-cutoff pairs outlined, adapted from <code>RASCHplot::ggQ3star()</code>; needs <code>data</code>, else <code>NULL</code>).</li>
 <li>
 <code><a href="../reference/RMlocdepGamma.html">RMlocdepGamma()</a></code>: corrected the <code>$direction2</code> caption / <code>@return</code> wording to “total - Item2” (with a note that direction 2 lists pairs in reverse order); computations unchanged (labelling fix).</li>
 </ul></div>

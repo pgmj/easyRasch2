@@ -191,10 +191,13 @@ simulation tools:
   (simulate each pattern from the exact Rasch conditional given the
   observed total score, a matched conditional null) — stored in the
   result. See `dev/q3_dgp_comparison.R` / `dev/infit_dgp_comparison.R`.
-- [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md)
-  given the full cutoff object also returns `$matrix`: a lower-triangle
-  diverging-RdYlBu tile heatmap of the observed Q3 matrix with
-  above-cutoff pairs.
+- Q3 plot and table outputs now share a `$matrix` / `$pairs` structure.
+  [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md)
+  returns a list of two plots: `$pairs` (the per-pair
+  simulated-vs-observed dot-interval, previously the single return
+  value) and `$matrix` (a lower-triangle diverging-RdYlBu Q3 tile
+  heatmap with above-cutoff pairs outlined, adapted from
+  `RASCHplot::ggQ3star()`; needs `data`, else `NULL`).
 - [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md):
   corrected the `$direction2` caption / `@return` wording to “total -
   Item2” (with a note that direction 2 lists pairs in reverse order);

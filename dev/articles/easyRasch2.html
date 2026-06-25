@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.917</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.918</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -869,8 +869,12 @@ value. We’ll limit the output to the 6 item-pairs that deviate the
 most.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">q3_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMlocdepQ3plot.html">RMlocdepQ3Plot</a></span><span class="op">(</span>simfit <span class="op">=</span> <span class="va">q3_cut</span>, data <span class="op">=</span> <span class="va">items</span>, n_pairs <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
-<span><span class="va">q3_plots</span><span class="op">$</span><span class="va">pairs</span></span>
-<span><span class="co">#&gt; NULL</span></span></code></pre></div>
+<span><span class="va">q3_plots</span><span class="op">$</span><span class="va">pairs</span></span></code></pre></div>
+<div class="figure">
+<img src="figures/rasch-plot_q3-1.png" alt="**Figure 7.** *Observed and expected $Q_3$ residuals*" width="100%"><p class="caption">
+<strong>Figure 7.</strong> <em>Observed and expected <span class="math inline">Q_3</span> residuals</em>
+</p>
+</div>
 <p>A second perspective on LD is the <em>partial gamma</em> coefficient
 <span class="citation">(<a href="#ref-kreinerAnalysisLocalDependence2004">Kreiner and Christensen
 2004</a>; <a href="#ref-kreiner_validity_2007">Kreiner 2007</a>)</span>
@@ -1247,7 +1251,7 @@ respondents.</caption>
 <tr class="even">
 <td align="left">RMU (WLE)</td>
 <td align="right">0.882</td>
-<td align="right">0.868</td>
+<td align="right">0.867</td>
 <td align="right">0.897</td>
 <td align="left">200 PVs, 20 RMU iterations</td>
 </tr>
@@ -1561,10 +1565,10 @@ parameters).</caption>
 <div class="section level2">
 <h2 id="person-fit">Person fit<a class="anchor" aria-label="anchor" href="#person-fit"></a>
 </h2>
-<p>Conditional infit/outfit and lz with are the methods implemented,
-with Monte-Carlo resampling for <em>p</em>-values.</p>
+<p>Conditional person infit/outfit and lz with are the methods
+implemented, with Monte-Carlo resampling for <em>p</em>-values.</p>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMpersonFit.html">RMpersonFit</a></span><span class="op">(</span><span class="va">items</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMpersonFit.html">RMpersonFit</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span>
 <span><span class="va">pfit</span><span class="op">$</span><span class="va">lz</span></span></code></pre></div>
 <div class="figure">
 <img src="figures/rasch-personfit-1.png" alt="**Figure 13.** *Person fit with the lz statistic*" width="100%"><p class="caption">

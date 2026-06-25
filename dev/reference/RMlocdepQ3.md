@@ -95,7 +95,7 @@ dynamic cut-off.
 
 With the **full
 [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
-object**, a named list of three:
+object**, a named list of two:
 
 - `$matrix`:
 
@@ -113,11 +113,11 @@ object**, a named list of three:
   added and `Flagged` reflects `padj_q3 < alpha` and only flags
   `"above"`.
 
-- `$plot`:
-
-  a `ggplot2` heatmap (lower-triangle tile plot, viridis fill) of the
-  observed Q3 matrix; pairs exceeding the global dynamic cut-off are
-  outlined in red. `NULL` if `ggplot2` is not installed.
+The Q3 tile heatmap that earlier versions returned as `$plot` is now
+produced by
+[`RMlocdepQ3Plot`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md)
+(as its `$matrix` element), so the table and plot outputs share the same
+`$matrix`/`$pairs` structure.
 
 ## Details
 
