@@ -2,7 +2,7 @@
 % Please edit documentation in R/local_dependence.R
 \name{RMlocdepQ3}
 \alias{RMlocdepQ3}
-\title{Q3 Residual Correlations for Local Dependence Assessment}
+\title{\eqn{Q_3} Residual Correlations for Local Dependence Assessment}
 \usage{
 RMlocdepQ3(
   data,
@@ -19,9 +19,9 @@ RMlocdepQ3(
 \item{data}{A data.frame or matrix of item responses. Items must be scored
 starting at 0 (non-negative integers). Missing values (\code{NA}) are allowed.}
 
-\item{cutoff}{Optional. \code{NULL} (default) returns the raw Q3 matrix. A single
-numeric value returns the Q3 matrix with a global dynamic cut-off (the
-value added to the mean off-diagonal Q3). The \strong{full list} returned by
+\item{cutoff}{Optional. \code{NULL} (default) returns the raw \eqn{Q_3}matrix. A single
+numeric value returns the \eqn{Q_3} matrix with a global dynamic cut-off (the
+value added to the mean off-diagonal \eqn{Q_3}). The \strong{full list} returned by
 \code{\link{RMlocdepQ3Cutoff}} returns a \emph{list of two tables} (see Value):
 the cut-off matrix plus a per-pair table.}
 
@@ -35,8 +35,8 @@ largest departure from their expected range. \code{NULL} shows all pairs.}
 
 \item{p_value}{Logical. If \code{TRUE} (requires the full
 \code{\link{RMlocdepQ3Cutoff}} object), the per-pair table also reports
-one-sided bootstrap p-values (\code{p_q3}, \code{padj_q3}) and flags pairs on
-\code{padj_q3 < alpha} instead of the expected range. Default \code{FALSE}.}
+one-sided bootstrap p-values (\code{p_q3}, \code{padj_q3}) and flags \code{above} pairs
+(only) on \code{padj_q3 < alpha} instead of the expected range. Default \code{FALSE}.}
 
 \item{correction}{Character. Multiple-comparison correction across item
 pairs when \code{p_value = TRUE}: \code{"fwer"} (default) for the Westfall-Young
@@ -46,7 +46,7 @@ studentised-max step-down, \code{"fdr_bh"} / \code{"fdr_by"} for Benjamini-Hochb
 \item{alpha}{Numeric in (0, 1). Significance level for \code{Flagged} when
 \code{p_value = TRUE}. Default \code{0.05}.}
 
-\item{estimator}{Character. Estimation engine for the Q3 residual
+\item{estimator}{Character. Estimation engine for the \eqn{Q_3} residual
 correlations. \code{"CML"} (default) fits item parameters by conditional
 maximum likelihood (\code{psychotools}) and person locations by Warm's
 weighted likelihood (WLE) -- true to the Rasch tradition and finite
@@ -58,64 +58,64 @@ mismatching \code{estimator} argument is overridden with a warning).}
 }
 \value{
 With \code{cutoff = NULL} or a bare numeric cut-off, a single object (\code{kable} or
-data.frame) holding the lower triangle of the Q3 matrix; a numeric cut-off
-adds an \code{above_cutoff} row flag and a caption describing the dynamic
+data.frame) holding the lower triangle of the \eqn{Q_3} matrix; a numeric cut-off
+adds a \code{Flagged} row flag and a caption describing the dynamic
 cut-off.
 
 With the \strong{full \code{RMlocdepQ3Cutoff()} object}, a named list of two:
 \describe{
-\item{\verb{$matrix}}{the Q3 lower-triangle matrix with the \emph{global} dynamic
-cut-off (mean off-diagonal Q3 + suggested cut-off), as above.}
-\item{\verb{$pairs}}{one row per item pair: \code{Item1}, \code{Item2}, \code{Observed} (Q3),
+\item{\verb{$matrix}}{the \eqn{Q_3} lower-triangle matrix with the \emph{global} dynamic
+cut-off (mean off-diagonal \eqn{Q_3} + suggested cut-off), as above.}
+\item{\verb{$pairs}}{one row per item pair: \code{Item1}, \code{Item2}, \code{Observed} (\eqn{Q_3}),
 \code{Low}/\code{High} (the per-pair expected range, i.e. the simulated bounds),
-and \code{Flagged} -- \code{"above"} (Q3 above the upper bound, indicating local
+and \code{Flagged} -- \code{"above"} (\eqn{Q_3} above the upper bound, indicating local
 dependence), \code{"below"} (below the lower bound), or \code{""}. Sorted by
 absolute departure from the per-pair simulated median and truncated to
 \code{n_pairs}. With \code{p_value = TRUE}, columns \code{p_q3} and \code{padj_q3} are added
-and \code{Flagged} reflects \code{padj_q3 < alpha} and only flags \code{"above"}.}
+and \code{Flagged} reflects \code{padj_q3 < alpha} and \strong{only flags \code{"above"}}.}
 }
-The Q3 tile heatmap that earlier versions returned as \verb{$plot} is now produced
+The \eqn{Q_3} tile heatmap that earlier versions returned as \verb{$plot} is now produced
 by \code{\link{RMlocdepQ3Plot}} (as its \verb{$matrix} element), so the table and
 plot outputs share the same \verb{$matrix}/\verb{$pairs} structure.
 }
 \description{
-Computes Yen's Q3 residual correlations between item pairs. By default the
-Rasch model is fitted by conditional maximum likelihood with WLE person
+Computes Yen's \eqn{Q_3} residual correlations between item pairs. By default
+the Rasch model is fitted by conditional maximum likelihood with WLE person
 locations (\code{estimator = "CML"}); marginal ML via \code{mirt} is available with
 \code{estimator = "MML"}. High correlations (above the dynamic cut-off) indicate
 potential local dependence between items. See \code{\link{RMlocdepQ3Cutoff}}
 for how to determine the appropriate dynamic cut-off for your data.
 }
 \details{
-The Q3 statistic (Yen, 1984) is the correlation between residuals of pairs
+The \eqn{Q_3} statistic (Yen, 1984) is the correlation between residuals of pairs
 of items after accounting for the latent trait. Under local independence,
-Q3 values are expected to be around \eqn{-1/(k-1)} where \eqn{k} is the
+\eqn{Q_3} values are expected to be around \eqn{-1/(k-1)} where \eqn{k} is the
 number of items. When \code{cutoff} is supplied, the dynamic cut-off is the mean
-of all off-diagonal Q3 values plus \code{cutoff}, following the approach of
+of all off-diagonal \eqn{Q_3} values plus \code{cutoff}, following the approach of
 Christensen et al. (2017). Use \code{\link{RMlocdepQ3Cutoff}} to obtain a
 simulation-based cutoff recommendation.
 
-Q3 is the column-wise correlation matrix of the model standardized
+\eqn{Q_3} is the column-wise correlation matrix of the model standardized
 residuals \eqn{(x - E)/\sqrt{Var}}. By default (\code{estimator = "CML"}) item
 parameters are estimated by conditional maximum likelihood (\code{psychotools})
 and person locations by Warm's weighted likelihood; \code{estimator = "MML"}
-instead uses \code{mirt}'s marginal-ML model and its built-in Q3 residuals.
-The two estimators give very similar Q3 values (off-diagonal correlation
-typically > 0.95); what matters for inference is that the observed Q3 and
+instead uses \code{mirt}'s marginal-ML model and its built-in \eqn{Q_3} residuals.
+The two estimators give very similar \eqn{Q_3} values (off-diagonal correlation
+typically > 0.95); what matters for inference is that the observed \eqn{Q_3} and
 the simulated cut-off in \code{\link{RMlocdepQ3Cutoff}} use the \emph{same}
 estimator, which the functions enforce.
 
 \strong{Two views of local dependence.} Given the full
 \code{\link{RMlocdepQ3Cutoff}} object, two complementary tables are returned.
 The \verb{$matrix} applies a single \emph{global} cut-off (the Christensen et al.
-approach: the 99th percentile of the simulated max-minus-mean Q3) -- a
+approach: the 99th percentile of the simulated max-minus-mean \eqn{Q_3}) -- a
 family-wise "is there any local dependence" overview. The \verb{$pairs} table is
-the per-comparison view: each observed Q3 against its own simulated expected
+the per-comparison view: each observed \eqn{Q_3} against its own simulated expected
 range (the \code{Low}/\code{High} bounds), so individual dependent pairs can be read
 off and ranked.
 
 \strong{Bootstrap p-values.} When \code{p_value = TRUE}, the \verb{$pairs} table also
-tests each observed Q3 against its simulated null (from \code{cutoff$pair_results})
+tests each observed \eqn{Q_3} against its simulated null (from \code{cutoff$pair_results})
 with a one-sided (upper-tail) test for excess local dependence. The pair
 statistic is studentised by the bootstrap mean and SD; the marginal p-value
 is \verb{(1 + #\{Q3* >= Q3\}) / (B + 1)}, and \code{correction} applies the family-wise
@@ -179,7 +179,7 @@ equating performance of the three-parameter logistic model.
 \doi{10.1177/014662168400800201}
 
 Christensen, K. B., Makransky, G., & Horton, M. (2017). Critical values
-for Yen's Q3: Identification of local dependence in the Rasch model.
+for Yen's \eqn{Q_3}: Identification of local dependence in the Rasch model.
 \emph{Applied Psychological Measurement, 41}(3), 178--194.
 \doi{10.1177/0146621616677520}
 

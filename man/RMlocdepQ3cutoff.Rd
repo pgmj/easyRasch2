@@ -2,7 +2,7 @@
 % Please edit documentation in R/local_dependence.R
 \name{RMlocdepQ3Cutoff}
 \alias{RMlocdepQ3Cutoff}
-\title{Simulation-Based Q3 Cutoff Determination}
+\title{Simulation-Based \eqn{Q_3} Cutoff Determination}
 \usage{
 RMlocdepQ3Cutoff(
   data,
@@ -35,7 +35,7 @@ sequential (single core) processing.}
 
 \item{seed}{Integer or \code{NULL}. Random seed for reproducibility.}
 
-\item{cutoff_method}{Character. Method used to compute per-pair Q3
+\item{cutoff_method}{Character. Method used to compute per-pair \eqn{Q_3}
 credible intervals in \code{pair_cutoffs}. One of \code{"hdci"} (the default,
 Highest Density Continuous Interval via \code{ggdist::hdci()}) or
 \code{"quantile"} (symmetric 2.5th / 97.5th percentiles). Only affects
@@ -46,7 +46,7 @@ Highest Density Continuous Interval via \code{ggdist::hdci()}) or
 \code{cutoff_method = "hdci"}. Default \code{0.99}. Ignored when
 \code{cutoff_method = "quantile"}.}
 
-\item{estimator}{Character. Estimation engine for the simulated Q3 values,
+\item{estimator}{Character. Estimation engine for the simulated \eqn{Q_3} values,
 passed through to the per-iteration computation. \code{"CML"} (default) uses
 CML item parameters and WLE person locations; \code{"MML"} uses \code{mirt}. This
 must match the \code{estimator} later given to \code{\link{RMlocdepQ3}}; the
@@ -87,7 +87,7 @@ scalar cutoff for \code{\link{RMlocdepQ3}}.}
 (\code{"hdci"} or \code{"quantile"}).}
 \item{\code{hdci_width}}{The HDCI width used (only meaningful when
 \code{cutoff_method = "hdci"}).}
-\item{\code{estimator}}{The estimator used for the simulated Q3 (\code{"CML"} or
+\item{\code{estimator}}{The estimator used for the simulated \eqn{Q_3} (\code{"CML"} or
 \code{"MML"}); reused by \code{\link{RMlocdepQ3}} and
 \code{\link{RMlocdepQ3Plot}}.}
 \item{\code{dgp}}{The data-generating process used (\code{"resample"} or
@@ -96,15 +96,15 @@ scalar cutoff for \code{\link{RMlocdepQ3}}.}
 }
 \description{
 Uses parametric bootstrap simulation to determine an appropriate cutoff
-value for \code{\link{RMlocdepQ3}}. Under a correctly fitting Rasch model, Q3
-residuals have an unknown distribution; this function simulates that
-distribution and returns empirical percentiles.
+value for \code{\link{RMlocdepQ3}}. Under a correctly fitting Rasch model,
+\eqn{Q_3} residuals have an unknown distribution; this function simulates
+that distribution and returns empirical percentiles.
 }
 \details{
 The generating model is fitted once: CML item parameters (via
 \code{psychotools}) and WLE person locations. For each simulation iteration,
 those WLE thetas are resampled with replacement, response data are simulated
-under the Rasch / Partial Credit model, the model is refitted, and Q3
+under the Rasch / Partial Credit model, the model is refitted, and \eqn{Q_3}
 residuals are computed under \code{estimator}. The distribution of
 \code{max(Q3) - mean(Q3)} across iterations provides empirical critical values.
 Failed iterations (e.g., due to convergence issues) are silently discarded.

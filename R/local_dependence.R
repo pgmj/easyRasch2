@@ -1,7 +1,7 @@
-#' Q3 Residual Correlations for Local Dependence Assessment
+#' \eqn{Q_3} Residual Correlations for Local Dependence Assessment
 #'
-#' Computes Yen's Q3 residual correlations between item pairs. By default the
-#' Rasch model is fitted by conditional maximum likelihood with WLE person
+#' Computes Yen's \eqn{Q_3} residual correlations between item pairs. By default
+#' the Rasch model is fitted by conditional maximum likelihood with WLE person
 #' locations (`estimator = "CML"`); marginal ML via `mirt` is available with
 #' `estimator = "MML"`. High correlations (above the dynamic cut-off) indicate
 #' potential local dependence between items. See \code{\link{RMlocdepQ3Cutoff}}
@@ -9,9 +9,9 @@
 #'
 #' @param data A data.frame or matrix of item responses. Items must be scored
 #'   starting at 0 (non-negative integers). Missing values (`NA`) are allowed.
-#' @param cutoff Optional. `NULL` (default) returns the raw Q3 matrix. A single
-#'   numeric value returns the Q3 matrix with a global dynamic cut-off (the
-#'   value added to the mean off-diagonal Q3). The **full list** returned by
+#' @param cutoff Optional. `NULL` (default) returns the raw \eqn{Q_3}matrix. A single
+#'   numeric value returns the \eqn{Q_3} matrix with a global dynamic cut-off (the
+#'   value added to the mean off-diagonal \eqn{Q_3}). The **full list** returned by
 #'   \code{\link{RMlocdepQ3Cutoff}} returns a *list of two tables* (see Value):
 #'   the cut-off matrix plus a per-pair table.
 #' @param output Character string controlling the return value. Either
@@ -22,15 +22,15 @@
 #'   largest departure from their expected range. `NULL` shows all pairs.
 #' @param p_value Logical. If `TRUE` (requires the full
 #'   \code{\link{RMlocdepQ3Cutoff}} object), the per-pair table also reports
-#'   one-sided bootstrap p-values (`p_q3`, `padj_q3`) and flags pairs on
-#'   `padj_q3 < alpha` instead of the expected range. Default `FALSE`.
+#'   one-sided bootstrap p-values (`p_q3`, `padj_q3`) and flags `above` pairs
+#'   (only) on `padj_q3 < alpha` instead of the expected range. Default `FALSE`.
 #' @param correction Character. Multiple-comparison correction across item
 #'   pairs when `p_value = TRUE`: `"fwer"` (default) for the Westfall-Young
 #'   studentised-max step-down, `"fdr_bh"` / `"fdr_by"` for Benjamini-Hochberg
 #'   / Benjamini-Yekutieli, or `"none"`.
 #' @param alpha Numeric in (0, 1). Significance level for `Flagged` when
 #'   `p_value = TRUE`. Default `0.05`.
-#' @param estimator Character. Estimation engine for the Q3 residual
+#' @param estimator Character. Estimation engine for the \eqn{Q_3} residual
 #'   correlations. `"CML"` (default) fits item parameters by conditional
 #'   maximum likelihood (`psychotools`) and person locations by Warm's
 #'   weighted likelihood (WLE) -- true to the Rasch tradition and finite
@@ -42,56 +42,56 @@
 #'
 #' @return
 #' With `cutoff = NULL` or a bare numeric cut-off, a single object (`kable` or
-#' data.frame) holding the lower triangle of the Q3 matrix; a numeric cut-off
-#' adds an `above_cutoff` row flag and a caption describing the dynamic
+#' data.frame) holding the lower triangle of the \eqn{Q_3} matrix; a numeric cut-off
+#' adds a `Flagged` row flag and a caption describing the dynamic
 #' cut-off.
 #'
 #' With the **full `RMlocdepQ3Cutoff()` object**, a named list of two:
 #' \describe{
-#'   \item{`$matrix`}{the Q3 lower-triangle matrix with the *global* dynamic
-#'     cut-off (mean off-diagonal Q3 + suggested cut-off), as above.}
-#'   \item{`$pairs`}{one row per item pair: `Item1`, `Item2`, `Observed` (Q3),
+#'   \item{`$matrix`}{the \eqn{Q_3} lower-triangle matrix with the *global* dynamic
+#'     cut-off (mean off-diagonal \eqn{Q_3} + suggested cut-off), as above.}
+#'   \item{`$pairs`}{one row per item pair: `Item1`, `Item2`, `Observed` (\eqn{Q_3}),
 #'     `Low`/`High` (the per-pair expected range, i.e. the simulated bounds),
-#'     and `Flagged` -- `"above"` (Q3 above the upper bound, indicating local
+#'     and `Flagged` -- `"above"` (\eqn{Q_3} above the upper bound, indicating local
 #'     dependence), `"below"` (below the lower bound), or `""`. Sorted by
 #'     absolute departure from the per-pair simulated median and truncated to
 #'     `n_pairs`. With `p_value = TRUE`, columns `p_q3` and `padj_q3` are added
-#'     and `Flagged` reflects `padj_q3 < alpha` and only flags `"above"`.}
+#'     and `Flagged` reflects `padj_q3 < alpha` and **only flags `"above"`**.}
 #' }
-#' The Q3 tile heatmap that earlier versions returned as `$plot` is now produced
+#' The \eqn{Q_3} tile heatmap that earlier versions returned as `$plot` is now produced
 #' by \code{\link{RMlocdepQ3Plot}} (as its `$matrix` element), so the table and
 #' plot outputs share the same `$matrix`/`$pairs` structure.
 #'
 #' @details
-#' The Q3 statistic (Yen, 1984) is the correlation between residuals of pairs
+#' The \eqn{Q_3} statistic (Yen, 1984) is the correlation between residuals of pairs
 #' of items after accounting for the latent trait. Under local independence,
-#' Q3 values are expected to be around \eqn{-1/(k-1)} where \eqn{k} is the
+#' \eqn{Q_3} values are expected to be around \eqn{-1/(k-1)} where \eqn{k} is the
 #' number of items. When `cutoff` is supplied, the dynamic cut-off is the mean
-#' of all off-diagonal Q3 values plus `cutoff`, following the approach of
+#' of all off-diagonal \eqn{Q_3} values plus `cutoff`, following the approach of
 #' Christensen et al. (2017). Use \code{\link{RMlocdepQ3Cutoff}} to obtain a
 #' simulation-based cutoff recommendation.
 #'
-#' Q3 is the column-wise correlation matrix of the model standardized
+#' \eqn{Q_3} is the column-wise correlation matrix of the model standardized
 #' residuals \eqn{(x - E)/\sqrt{Var}}. By default (`estimator = "CML"`) item
 #' parameters are estimated by conditional maximum likelihood (`psychotools`)
 #' and person locations by Warm's weighted likelihood; `estimator = "MML"`
-#' instead uses `mirt`'s marginal-ML model and its built-in Q3 residuals.
-#' The two estimators give very similar Q3 values (off-diagonal correlation
-#' typically > 0.95); what matters for inference is that the observed Q3 and
+#' instead uses `mirt`'s marginal-ML model and its built-in \eqn{Q_3} residuals.
+#' The two estimators give very similar \eqn{Q_3} values (off-diagonal correlation
+#' typically > 0.95); what matters for inference is that the observed \eqn{Q_3} and
 #' the simulated cut-off in \code{\link{RMlocdepQ3Cutoff}} use the *same*
 #' estimator, which the functions enforce.
 #'
 #' \strong{Two views of local dependence.} Given the full
 #' \code{\link{RMlocdepQ3Cutoff}} object, two complementary tables are returned.
 #' The `$matrix` applies a single *global* cut-off (the Christensen et al.
-#' approach: the 99th percentile of the simulated max-minus-mean Q3) -- a
+#' approach: the 99th percentile of the simulated max-minus-mean \eqn{Q_3}) -- a
 #' family-wise "is there any local dependence" overview. The `$pairs` table is
-#' the per-comparison view: each observed Q3 against its own simulated expected
+#' the per-comparison view: each observed \eqn{Q_3} against its own simulated expected
 #' range (the `Low`/`High` bounds), so individual dependent pairs can be read
 #' off and ranked.
 #'
 #' \strong{Bootstrap p-values.} When `p_value = TRUE`, the `$pairs` table also
-#' tests each observed Q3 against its simulated null (from `cutoff$pair_results`)
+#' tests each observed \eqn{Q_3} against its simulated null (from `cutoff$pair_results`)
 #' with a one-sided (upper-tail) test for excess local dependence. The pair
 #' statistic is studentised by the bootstrap mean and SD; the marginal p-value
 #' is `(1 + #{Q3* >= Q3}) / (B + 1)`, and `correction` applies the family-wise
@@ -107,7 +107,7 @@
 #' \doi{10.1177/014662168400800201}
 #'
 #' Christensen, K. B., Makransky, G., & Horton, M. (2017). Critical values
-#' for Yen's Q3: Identification of local dependence in the Rasch model.
+#' for Yen's \eqn{Q_3}: Identification of local dependence in the Rasch model.
 #' *Applied Psychological Measurement, 41*(3), 178--194.
 #' \doi{10.1177/0146621616677520}
 #'
@@ -543,12 +543,12 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
                row.names = FALSE)
 }
 
-#' Simulation-Based Q3 Cutoff Determination
+#' Simulation-Based \eqn{Q_3} Cutoff Determination
 #'
 #' Uses parametric bootstrap simulation to determine an appropriate cutoff
-#' value for \code{\link{RMlocdepQ3}}. Under a correctly fitting Rasch model, Q3
-#' residuals have an unknown distribution; this function simulates that
-#' distribution and returns empirical percentiles.
+#' value for \code{\link{RMlocdepQ3}}. Under a correctly fitting Rasch model,
+#' \eqn{Q_3} residuals have an unknown distribution; this function simulates
+#' that distribution and returns empirical percentiles.
 #'
 #' @param data A data.frame or matrix of item responses. Items must be scored
 #'   starting at 0 (non-negative integers).
@@ -561,7 +561,7 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 #'   sequential (single core) processing.
 #' @param verbose Logical. Show a progress bar (default `FALSE`).
 #' @param seed Integer or `NULL`. Random seed for reproducibility.
-#' @param cutoff_method Character. Method used to compute per-pair Q3
+#' @param cutoff_method Character. Method used to compute per-pair \eqn{Q_3}
 #'   credible intervals in `pair_cutoffs`. One of `"hdci"` (the default,
 #'   Highest Density Continuous Interval via `ggdist::hdci()`) or
 #'   `"quantile"` (symmetric 2.5th / 97.5th percentiles). Only affects
@@ -570,7 +570,7 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 #' @param hdci_width Numeric in (0, 1). Width of the HDCI when
 #'   `cutoff_method = "hdci"`. Default `0.99`. Ignored when
 #'   `cutoff_method = "quantile"`.
-#' @param estimator Character. Estimation engine for the simulated Q3 values,
+#' @param estimator Character. Estimation engine for the simulated \eqn{Q_3} values,
 #'   passed through to the per-iteration computation. `"CML"` (default) uses
 #'   CML item parameters and WLE person locations; `"MML"` uses `mirt`. This
 #'   must match the `estimator` later given to \code{\link{RMlocdepQ3}}; the
@@ -609,7 +609,7 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 #'     (`"hdci"` or `"quantile"`).}
 #'   \item{`hdci_width`}{The HDCI width used (only meaningful when
 #'     `cutoff_method = "hdci"`).}
-#'   \item{`estimator`}{The estimator used for the simulated Q3 (`"CML"` or
+#'   \item{`estimator`}{The estimator used for the simulated \eqn{Q_3} (`"CML"` or
 #'     `"MML"`); reused by \code{\link{RMlocdepQ3}} and
 #'     \code{\link{RMlocdepQ3Plot}}.}
 #'   \item{`dgp`}{The data-generating process used (`"resample"` or
@@ -620,7 +620,7 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 #' The generating model is fitted once: CML item parameters (via
 #' `psychotools`) and WLE person locations. For each simulation iteration,
 #' those WLE thetas are resampled with replacement, response data are simulated
-#' under the Rasch / Partial Credit model, the model is refitted, and Q3
+#' under the Rasch / Partial Credit model, the model is refitted, and \eqn{Q_3}
 #' residuals are computed under `estimator`. The distribution of
 #' `max(Q3) - mean(Q3)` across iterations provides empirical critical values.
 #' Failed iterations (e.g., due to convergence issues) are silently discarded.
