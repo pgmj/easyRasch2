@@ -1,8 +1,8 @@
-# Q3 Residual Correlations for Local Dependence Assessment
+# \\Q_3\\ Residual Correlations for Local Dependence Assessment
 
-Computes Yen's Q3 residual correlations between item pairs. By default
-the Rasch model is fitted by conditional maximum likelihood with WLE
-person locations (`estimator = "CML"`); marginal ML via `mirt` is
+Computes Yen's \\Q_3\\ residual correlations between item pairs. By
+default the Rasch model is fitted by conditional maximum likelihood with
+WLE person locations (`estimator = "CML"`); marginal ML via `mirt` is
 available with `estimator = "MML"`. High correlations (above the dynamic
 cut-off) indicate potential local dependence between items. See
 [`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
@@ -33,9 +33,10 @@ RMlocdepQ3(
 
 - cutoff:
 
-  Optional. `NULL` (default) returns the raw Q3 matrix. A single numeric
-  value returns the Q3 matrix with a global dynamic cut-off (the value
-  added to the mean off-diagonal Q3). The **full list** returned by
+  Optional. `NULL` (default) returns the raw \\Q_3\\matrix. A single
+  numeric value returns the \\Q_3\\ matrix with a global dynamic cut-off
+  (the value added to the mean off-diagonal \\Q_3\\). The **full list**
+  returned by
   [`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
   returns a *list of two tables* (see Value): the cut-off matrix plus a
   per-pair table.
@@ -58,8 +59,8 @@ RMlocdepQ3(
   Logical. If `TRUE` (requires the full
   [`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
   object), the per-pair table also reports one-sided bootstrap p-values
-  (`p_q3`, `padj_q3`) and flags pairs on `padj_q3 < alpha` instead of
-  the expected range. Default `FALSE`.
+  (`p_q3`, `padj_q3`) and flags `above` pairs (only) on
+  `padj_q3 < alpha` instead of the expected range. Default `FALSE`.
 
 - correction:
 
@@ -75,12 +76,12 @@ RMlocdepQ3(
 
 - estimator:
 
-  Character. Estimation engine for the Q3 residual correlations. `"CML"`
-  (default) fits item parameters by conditional maximum likelihood
-  (`psychotools`) and person locations by Warm's weighted likelihood
-  (WLE) – true to the Rasch tradition and finite at extreme scores.
-  `"MML"` uses the marginal-ML / EAP engine (`mirt`), retained for
-  backward compatibility. The estimator must match the one used by
+  Character. Estimation engine for the \\Q_3\\ residual correlations.
+  `"CML"` (default) fits item parameters by conditional maximum
+  likelihood (`psychotools`) and person locations by Warm's weighted
+  likelihood (WLE) – true to the Rasch tradition and finite at extreme
+  scores. `"MML"` uses the marginal-ML / EAP engine (`mirt`), retained
+  for backward compatibility. The estimator must match the one used by
   [`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md);
   when the full cutoff object is supplied, its stored estimator takes
   precedence (a mismatching `estimator` argument is overridden with a
@@ -89,8 +90,8 @@ RMlocdepQ3(
 ## Value
 
 With `cutoff = NULL` or a bare numeric cut-off, a single object (`kable`
-or data.frame) holding the lower triangle of the Q3 matrix; a numeric
-cut-off adds an `above_cutoff` row flag and a caption describing the
+or data.frame) holding the lower triangle of the \\Q_3\\ matrix; a
+numeric cut-off adds a `Flagged` row flag and a caption describing the
 dynamic cut-off.
 
 With the **full
@@ -99,45 +100,45 @@ object**, a named list of two:
 
 - `$matrix`:
 
-  the Q3 lower-triangle matrix with the *global* dynamic cut-off (mean
-  off-diagonal Q3 + suggested cut-off), as above.
+  the \\Q_3\\ lower-triangle matrix with the *global* dynamic cut-off
+  (mean off-diagonal \\Q_3\\ + suggested cut-off), as above.
 
 - `$pairs`:
 
-  one row per item pair: `Item1`, `Item2`, `Observed` (Q3), `Low`/`High`
-  (the per-pair expected range, i.e. the simulated bounds), and
-  `Flagged` – `"above"` (Q3 above the upper bound, indicating local
-  dependence), `"below"` (below the lower bound), or `""`. Sorted by
-  absolute departure from the per-pair simulated median and truncated to
-  `n_pairs`. With `p_value = TRUE`, columns `p_q3` and `padj_q3` are
-  added and `Flagged` reflects `padj_q3 < alpha` and only flags
-  `"above"`.
+  one row per item pair: `Item1`, `Item2`, `Observed` (\\Q_3\\),
+  `Low`/`High` (the per-pair expected range, i.e. the simulated bounds),
+  and `Flagged` – `"above"` (\\Q_3\\ above the upper bound, indicating
+  local dependence), `"below"` (below the lower bound), or `""`. Sorted
+  by absolute departure from the per-pair simulated median and truncated
+  to `n_pairs`. With `p_value = TRUE`, columns `p_q3` and `padj_q3` are
+  added and `Flagged` reflects `padj_q3 < alpha` and **only flags
+  `"above"`**.
 
-The Q3 tile heatmap that earlier versions returned as `$plot` is now
-produced by
+The \\Q_3\\ tile heatmap that earlier versions returned as `$plot` is
+now produced by
 [`RMlocdepQ3Plot`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md)
 (as its `$matrix` element), so the table and plot outputs share the same
 `$matrix`/`$pairs` structure.
 
 ## Details
 
-The Q3 statistic (Yen, 1984) is the correlation between residuals of
-pairs of items after accounting for the latent trait. Under local
-independence, Q3 values are expected to be around \\-1/(k-1)\\ where
-\\k\\ is the number of items. When `cutoff` is supplied, the dynamic
-cut-off is the mean of all off-diagonal Q3 values plus `cutoff`,
-following the approach of Christensen et al. (2017). Use
+The \\Q_3\\ statistic (Yen, 1984) is the correlation between residuals
+of pairs of items after accounting for the latent trait. Under local
+independence, \\Q_3\\ values are expected to be around \\-1/(k-1)\\
+where \\k\\ is the number of items. When `cutoff` is supplied, the
+dynamic cut-off is the mean of all off-diagonal \\Q_3\\ values plus
+`cutoff`, following the approach of Christensen et al. (2017). Use
 [`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
 to obtain a simulation-based cutoff recommendation.
 
-Q3 is the column-wise correlation matrix of the model standardized
+\\Q_3\\ is the column-wise correlation matrix of the model standardized
 residuals \\(x - E)/\sqrt{Var}\\. By default (`estimator = "CML"`) item
 parameters are estimated by conditional maximum likelihood
 (`psychotools`) and person locations by Warm's weighted likelihood;
 `estimator = "MML"` instead uses `mirt`'s marginal-ML model and its
-built-in Q3 residuals. The two estimators give very similar Q3 values
-(off-diagonal correlation typically \> 0.95); what matters for inference
-is that the observed Q3 and the simulated cut-off in
+built-in \\Q_3\\ residuals. The two estimators give very similar \\Q_3\\
+values (off-diagonal correlation typically \> 0.95); what matters for
+inference is that the observed \\Q_3\\ and the simulated cut-off in
 [`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
 use the *same* estimator, which the functions enforce.
 
@@ -145,14 +146,14 @@ use the *same* estimator, which the functions enforce.
 [`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
 object, two complementary tables are returned. The `$matrix` applies a
 single *global* cut-off (the Christensen et al. approach: the 99th
-percentile of the simulated max-minus-mean Q3) – a family-wise "is there
-any local dependence" overview. The `$pairs` table is the per-comparison
-view: each observed Q3 against its own simulated expected range (the
-`Low`/`High` bounds), so individual dependent pairs can be read off and
-ranked.
+percentile of the simulated max-minus-mean \\Q_3\\) – a family-wise "is
+there any local dependence" overview. The `$pairs` table is the
+per-comparison view: each observed \\Q_3\\ against its own simulated
+expected range (the `Low`/`High` bounds), so individual dependent pairs
+can be read off and ranked.
 
 **Bootstrap p-values.** When `p_value = TRUE`, the `$pairs` table also
-tests each observed Q3 against its simulated null (from
+tests each observed \\Q_3\\ against its simulated null (from
 `cutoff$pair_results`) with a one-sided (upper-tail) test for excess
 local dependence. The pair statistic is studentised by the bootstrap
 mean and SD; the marginal p-value is `(1 + #{Q3* >= Q3}) / (B + 1)`, and
@@ -187,8 +188,8 @@ Psychological Measurement, 8*(2), 125–145.
 [doi:10.1177/014662168400800201](https://doi.org/10.1177/014662168400800201)
 
 Christensen, K. B., Makransky, G., & Horton, M. (2017). Critical values
-for Yen's Q3: Identification of local dependence in the Rasch model.
-*Applied Psychological Measurement, 41*(3), 178–194.
+for Yen's \\Q_3\\: Identification of local dependence in the Rasch
+model. *Applied Psychological Measurement, 41*(3), 178–194.
 [doi:10.1177/0146621616677520](https://doi.org/10.1177/0146621616677520)
 
 Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate'

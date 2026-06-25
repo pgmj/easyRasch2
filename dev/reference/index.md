@@ -35,11 +35,11 @@ Q3 residual correlations & partial gammal LD with simulation-based
 cutoffs
 
 - [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
-  : Q3 Residual Correlations for Local Dependence Assessment
+  : \\Q_3\\ Residual Correlations for Local Dependence Assessment
 - [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
-  : Simulation-Based Q3 Cutoff Determination
+  : Simulation-Based \\Q_3\\ Cutoff Determination
 - [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md)
-  : Plot Distribution of Simulated Q3 Residual Correlations
+  : Plot Distribution of Simulated \\Q_3\\ Residual Correlations
 - [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
   : Partial Gamma Local Dependence Analysis
 - [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md)

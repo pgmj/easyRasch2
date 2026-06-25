@@ -1,10 +1,10 @@
-# Plot Distribution of Simulated Q3 Residual Correlations
+# Plot Distribution of Simulated \\Q_3\\ Residual Correlations
 
-Visualises the distribution of simulation-based Yen's Q3 residual
+Visualises the distribution of simulation-based Yen's \\Q_3\\ residual
 correlations per item pair from
 [`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md),
-optionally overlaying observed Q3 values computed from real data via
-`mirt::residuals(..., type = "Q3")`.
+optionally overlaying observed \\Q_3\\ values computed from real data
+via `mirt::residuals(..., type = "Q3")`.
 
 ## Usage
 
@@ -24,9 +24,9 @@ RMlocdepQ3Plot(simfit, data, items = NULL, n_pairs = NULL)
 - data:
 
   Optional. A data.frame or matrix of item responses for computing and
-  overlaying observed Q3 values. Items must be scored starting at 0
+  overlaying observed \\Q_3\\ values. Items must be scored starting at 0
   (non-negative integers). When provided, the plot includes orange
-  diamond markers for the observed Q3 alongside the simulated
+  diamond markers for the observed \\Q_3\\ alongside the simulated
   distribution, plus segment summaries from the cutoff intervals.
 
 - items:
@@ -58,7 +58,7 @@ table output):
 
 - `$matrix`:
 
-  a lower-triangle tile heatmap of the **observed** Q3 matrix, with
+  a lower-triangle tile heatmap of the **observed** \\Q_3\\ matrix, with
   pairs above the global dynamic cut-off outlined. This needs the
   observed data, so it is `NULL` (with a message) when `data` is not
   supplied. When `items` is given, the heatmap is subset to those items;
@@ -74,8 +74,8 @@ Uses
 `.width = c(0.66, 0.95, 0.99)`.
 
 The `$pairs` plot shows one row per item pair (labelled as "Item1 -
-Item2"). Only the upper triangle of the Q3 matrix is plotted (pairs are
-unordered under symmetric Q3, unlike partial gamma which is
+Item2"). Only the upper triangle of the \\Q_3\\ matrix is plotted (pairs
+are unordered under symmetric \\Q_3\\, unlike partial gamma which is
 direction-dependent).
 
 When `data` is **not** supplied, the function plots the simulated Q3
@@ -85,11 +85,11 @@ with median and Highest Density Continuous Interval (HDCI) summaries.
 
 When `data` **is** supplied, the function:
 
-1.  Computes observed Q3 residual correlations under the same estimator
-    used to build `simfit` (its `$estimator`: CML/WLE by default, or MML
-    via `mirt`).
+1.  Computes observed \\Q_3\\ residual correlations under the same
+    estimator used to build `simfit` (its `$estimator`: CML/WLE by
+    default, or MML via `mirt`).
 
-2.  Overlays observed Q3 values as orange diamond markers on the
+2.  Overlays observed \\Q_3\\ values as orange diamond markers on the
     simulated distributions.
 
 3.  Shows per-pair cutoff intervals (from `simfit$pair_cutoffs`) as

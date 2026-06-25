@@ -1,9 +1,9 @@
-# Simulation-Based Q3 Cutoff Determination
+# Simulation-Based \\Q_3\\ Cutoff Determination
 
 Uses parametric bootstrap simulation to determine an appropriate cutoff
 value for
 [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md).
-Under a correctly fitting Rasch model, Q3 residuals have an unknown
+Under a correctly fitting Rasch model, \\Q_3\\ residuals have an unknown
 distribution; this function simulates that distribution and returns
 empirical percentiles.
 
@@ -57,8 +57,8 @@ RMlocdepQ3Cutoff(
 
 - cutoff_method:
 
-  Character. Method used to compute per-pair Q3 credible intervals in
-  `pair_cutoffs`. One of `"hdci"` (the default, Highest Density
+  Character. Method used to compute per-pair \\Q_3\\ credible intervals
+  in `pair_cutoffs`. One of `"hdci"` (the default, Highest Density
   Continuous Interval via
   [`ggdist::hdci()`](https://mjskay.github.io/ggdist/reference/point_interval.html))
   or `"quantile"` (symmetric 2.5th / 97.5th percentiles). Only affects
@@ -72,7 +72,7 @@ RMlocdepQ3Cutoff(
 
 - estimator:
 
-  Character. Estimation engine for the simulated Q3 values, passed
+  Character. Estimation engine for the simulated \\Q_3\\ values, passed
   through to the per-iteration computation. `"CML"` (default) uses CML
   item parameters and WLE person locations; `"MML"` uses `mirt`. This
   must match the `estimator` later given to
@@ -153,8 +153,8 @@ A list with components:
 
 - `estimator`:
 
-  The estimator used for the simulated Q3 (`"CML"` or `"MML"`); reused
-  by
+  The estimator used for the simulated \\Q_3\\ (`"CML"` or `"MML"`);
+  reused by
   [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
   and
   [`RMlocdepQ3Plot`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md).
@@ -169,8 +169,8 @@ The generating model is fitted once: CML item parameters (via
 `psychotools`) and WLE person locations. For each simulation iteration,
 those WLE thetas are resampled with replacement, response data are
 simulated under the Rasch / Partial Credit model, the model is refitted,
-and Q3 residuals are computed under `estimator`. The distribution of
-`max(Q3) - mean(Q3)` across iterations provides empirical critical
+and \\Q_3\\ residuals are computed under `estimator`. The distribution
+of `max(Q3) - mean(Q3)` across iterations provides empirical critical
 values. Failed iterations (e.g., due to convergence issues) are silently
 discarded.
 
