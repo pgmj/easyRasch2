@@ -1,4 +1,4 @@
-#' Martin-Lof Test of Unidimensionality
+#' Martin-Löf Test of Unidimensionality
 #'
 #' Likelihood-ratio test of unidimensionality against an *a priori* specified
 #' multidimensional alternative, generalised to polytomous Rasch / partial
@@ -44,7 +44,7 @@
 #'
 #' @return A list with components:
 #' \describe{
-#'   \item{`T_obs`}{Observed Martin-Lof likelihood-ratio statistic.}
+#'   \item{`T_obs`}{Observed Martin-Löf likelihood-ratio statistic.}
 #'   \item{`p_value`}{Monte Carlo p-value with `(n_exceed + 1) / (n + 1)`
 #'     correction.}
 #'   \item{`actual_iterations`}{Number of successful MC iterations

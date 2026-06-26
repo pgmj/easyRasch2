@@ -2,7 +2,7 @@
 % Please edit documentation in R/martin_lof.R
 \name{RMdimMartinLof}
 \alias{RMdimMartinLof}
-\title{Martin-Lof Test of Unidimensionality}
+\title{Martin-Löf Test of Unidimensionality}
 \usage{
 RMdimMartinLof(
   data,
@@ -60,7 +60,7 @@ to sequential with a warning.}
 \value{
 A list with components:
 \describe{
-\item{\code{T_obs}}{Observed Martin-Lof likelihood-ratio statistic.}
+\item{\code{T_obs}}{Observed Martin-Löf likelihood-ratio statistic.}
 \item{\code{p_value}}{Monte Carlo p-value with \code{(n_exceed + 1) / (n + 1)}
 correction.}
 \item{\code{actual_iterations}}{Number of successful MC iterations
