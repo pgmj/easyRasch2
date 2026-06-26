@@ -603,7 +603,7 @@ RMreliability(items, draws = 200, rmu_iter = 20, parallel = FALSE,
 | Cronbach’s alpha | 0.886 | NA | NA | no bootstrap |
 | PSI | 0.838 | NA | NA | no bootstrap |
 | Marginal | 0.862 | NA | NA | no bootstrap |
-| RMU (WLE) | 0.882 | 0.867 | 0.897 | 200 PVs, 20 RMU iterations |
+| RMU (WLE) | 0.883 | 0.868 | 0.897 | 200 PVs, 20 RMU iterations |
 
 Reliability for 9 items, n = 600. PSI is the WLE-based separation
 reliability and excludes min/max scoring respondents. {.table}
@@ -768,7 +768,7 @@ Measurement* 41 (3): 178–94. <https://doi.org/10.1177/0146621616677520>.
 Henninger, Mirka, Jan Radek, Rudolf Debelak, and Carolin Strobl. 2025.
 “Partial Credit Trees Meet the Partial Gamma Coefficient for Quantifying
 DIF and DSF in Polytomous Items.” *Behaviormetrika* 52: 221–57.
-<https://doi.org/10.1007/s41237-024-00253-2>.
+<https://doi.org/10.1007/s41237-024-00252-3>.
 
 Johansson, Magnus. 2025. “Detecting Item Misfit in Rasch Models.”
 *Educational Methods & Psychometrics* 3 (18).

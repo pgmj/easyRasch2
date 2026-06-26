@@ -1,4 +1,4 @@
-# Martin-Lof Test of Unidimensionality
+# Martin-Löf Test of Unidimensionality
 
 Likelihood-ratio test of unidimensionality against an *a priori*
 specified multidimensional alternative, generalised to polytomous Rasch
@@ -93,7 +93,7 @@ A list with components:
 
 - `T_obs`:
 
-  Observed Martin-Lof likelihood-ratio statistic.
+  Observed Martin-Löf likelihood-ratio statistic.
 
 - `p_value`:
 

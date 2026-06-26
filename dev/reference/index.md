@@ -78,7 +78,7 @@ PCA of residuals, and more to come
 - [`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md)
   : Simulation-based Cutoff for First-Contrast Eigenvalue
 - [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
-  : Martin-Lof Test of Unidimensionality
+  : Martin-Löf Test of Unidimensionality
 - [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLofResiduals.md)
   : Standardised Residuals from the Joint Subscore Distribution
 
