@@ -6,9 +6,14 @@
 \usage{
 RMitemICCPlot(
   data,
-  class_intervals = 4L,
-  method = c("cut", "score"),
   dif_var = NULL,
+  method = c("cut", "score"),
+  class_intervals = 4,
+  ci = TRUE,
+  error_band = FALSE,
+  conf_level = 0.95,
+  min_n = 8L,
+  items = NULL,
   output = c("patchwork", "list")
 )
 }
@@ -16,81 +21,100 @@ RMitemICCPlot(
 \item{data}{A data.frame or matrix of item responses (non-negative
 integers, 0-based). One column per item, one row per person.}
 
-\item{class_intervals}{Integer. Number of class intervals used to
-group respondents when \code{method = "cut"}. Default \code{4}. Each class
-interval needs enough respondents to compute a stable average
-observed item score; with small samples or many possible total
-scores, lower this. Ignored when \code{method = "score"}.}
+\item{dif_var}{Optional vector of length \code{nrow(data)} (factor or coercible
+to factor) defining a DIF grouping variable. When supplied, observed
+averages are shown separately per group and the partial-gamma DIF
+coefficient (\code{iarm::partgam_DIF()}, as in \code{\link[=RMdifGamma]{RMdifGamma()}}) is annotated
+per panel. Default \code{NULL} (no DIF).}
 
 \item{method}{One of \code{"cut"} (default) or \code{"score"}. \code{"cut"} groups
-respondents into \code{class_intervals} adjacent bins; \code{"score"} uses
-every possible total raw score.}
+respondents into \code{class_intervals} total-score bins (equal-count
+quantile bins, common across groups); \code{"score"} uses every observed
+total score as its own group.}
 
-\item{dif_var}{Optional vector of length \code{nrow(data)} (factor or
-coercible to factor) defining a DIF grouping variable. When
-supplied, observed averages are shown separately per group.
-Default \code{NULL} (no DIF).}
+\item{class_intervals}{Integer >= 2. Number of class intervals when
+\code{method = "cut"}. Default \code{4}. Ignored when \code{method = "score"}.}
 
-\item{output}{One of \code{"patchwork"} (default) -- composite patchwork
-figure -- or \code{"list"} -- a named list of per-item \code{ggplot} objects.}
+\item{ci}{Logical. Draw confidence intervals (error bars) on the observed
+class-interval means. Default \code{TRUE}.}
+
+\item{error_band}{Logical. Add a shaded band for the model's interval of the
+\emph{observed mean} at each total score, \eqn{E \pm z \sqrt{\mathrm{Var}/n_r}}
+(\code{n_r} = number of respondents at that total score), as in RASCHplot's
+\code{CICCplot}. Default \code{FALSE}.}
+
+\item{conf_level}{Numeric in (0, 1). Confidence level for the observed
+error bars and the model band. Default \code{0.95}.}
+
+\item{min_n}{Integer. A group-by-interval cell needs at least this many
+respondents to contribute an observed point + CI; sparser cells are
+skipped. Default \code{8} (the package's per-cell stability floor).}
+
+\item{items}{Optional character or integer vector selecting which items to
+plot. The model is always fitted on all items; only the rendering is
+filtered. Default \code{NULL} (all items).}
+
+\item{output}{One of \code{"patchwork"} (default) -- composite patchwork figure
+-- or \code{"list"} -- a named list of per-item \code{ggplot} objects.}
 }
 \value{
-Either a \code{ggplot} / \code{patchwork} composite (default), or a
-list of \code{ggplot} objects (\code{output = "list"}), one per item.
+Either a \code{patchwork}/\code{ggplot} composite (default) or a named list
+of per-item \code{ggplot} objects (\code{output = "list"}). In DIF mode the per-item
+partial-gamma table is attached as \code{attr(., "dif_gamma")}.
 }
 \description{
-Faceted panel of Conditional Item Characteristic Curves (cICCs) for all
-items in \code{data}. Each panel shows the model-expected ICC together with
-average observed item scores within class intervals (or for every
-possible total score, with \code{method = "score"}). When a \code{dif_var} is
-supplied, observed averages are computed separately per group, so each
-panel becomes a visual DIF check.
+Faceted panel of Conditional Item Characteristic Curves (cICCs), one per
+item. Each panel shows the model-expected conditional item score
+\eqn{E[X_i \mid R = r]} against the total score \eqn{r}, together with the
+average observed item score within class intervals of the total score and
+their confidence intervals. When a \code{dif_var} is supplied, observed averages
+are computed separately per group, turning each panel into a visual DIF
+check, and the partial-gamma DIF magnitude is reported per item.
 }
 \details{
-Wraps \code{\link[iarm:ICCplot]{iarm::ICCplot()}} (Santiago, Mueller, & Müller, 2022) for the
-per-item computation and composes the panels with \code{\link[patchwork:wrap_plots]{patchwork::wrap_plots()}}.
+The model curve and its conditional variance come from the shared CML
+engine (CML item thresholds via \code{psychotools} and the exact conditional
+distribution of each item score given the total score, via elementary
+symmetric functions). The conditional-ICC approach follows Buchardt,
+Christensen & Jensen (2023) and their \code{RASCHplot} package; the implementation
+here is native to easyRasch2's CML/WLE engine.
 
-\strong{Class intervals vs every total score.} With \code{method = "cut"}
-(the default) respondents are divided into \code{class_intervals} bins of
-roughly equal size based on their total raw score; each bin's average
-observed item score is plotted as a point. With \code{method = "score"},
-the average observed item score is computed for every observed total
-raw score. The cut method is the conventional Rasch-analysis default
-and works well at moderate sample sizes; the score method is more
-granular but can be unstable when raw-score totals are sparsely
-populated.
+\strong{Conditioning.} The expected curve is the exact conditional
+expectation of the item score given the total score (it accounts for the
+item being part of the total), not a marginal ICC.
 
-\strong{DIF mode.} With \code{dif_var} supplied, \code{\link[iarm:ICCplot]{iarm::ICCplot()}} computes
-average observed item scores separately for each level of the
-grouping variable. Each item's panel then shows the model-expected
-ICC (one black line) plus one set of observed points per DIF group.
-Stark visual divergence between groups suggests DIF.
+\strong{Class intervals.} With \code{method = "cut"}, total scores are split into
+\code{class_intervals} equal-count bins using common boundaries (so groups share
+the x-axis); each bin contributes one observed point at its mean total
+score. With \code{method = "score"}, every observed total score is a point. If
+the score distribution is too sparse to form \code{class_intervals} distinct
+bins, the function falls back to score-level points.
 
-\strong{Dependencies.} Requires \code{iarm} for the per-item curve, and
-\code{patchwork} + \code{ggplot2} for the figure composition. All three are in
-Suggests with runtime guards.
-}
-\examples{
-\donttest{
-data("pcmdat2", package = "eRm")
-# NB: with `method = "cut"` the quantile-based binning of total scores
-#     may collapse to fewer bins than requested when the score
-#     distribution is peaked. `pcmdat2` happens to accept 3 or 5 but
-#     not 4. See `?iarm::ICCplot`; `method = "score"` avoids the issue.
-RMitemICCPlot(pcmdat2, class_intervals = 5)
+\strong{Confidence intervals.} Observed error bars use the normal
+approximation \eqn{\bar{x}_l \pm z \sqrt{\mathrm{var}(x_l) / n_l}} within
+each (group, interval) cell, clamped to the item's score range; cells with
+fewer than \code{min_n} respondents are dropped. In DIF mode this makes sparse
+group differences visibly uncertain rather than over-interpreted.
 
-# With DIF grouping
-set.seed(1)
-grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
-RMitemICCPlot(pcmdat2, class_intervals = 5, dif_var = grp)
-}
-
+\strong{DIF magnitude.} The annotated partial gamma (Bjorner et al., 1998)
+is the association between the item score and the group conditional on the
+rest score -- a non-parametric effect size, complementary to the
+total-score-conditional visual. It is the same statistic as \code{\link[=RMdifGamma]{RMdifGamma()}}.
 }
 \references{
-Mueller, M., & Santiago, P. H. R. (2022). \emph{iarm: Item Analysis
-in Rasch Models}. R package version 0.4.3.
-\url{https://CRAN.R-project.org/package=iarm}
+Buchardt, A.-S., Christensen, K. B., & Jensen, S. N. (2023). Visualizing
+Rasch item fit using conditional item characteristic curves in R.
+\emph{Psychological Test and Assessment Modeling, 65}(2), 206-219.
+
+Andersen, E. B. (1995). Polytomous Rasch models and their estimation. In
+G. H. Fischer & I. W. Molenaar (Eds.), \emph{Rasch Models: Foundations, Recent
+Developments, and Applications} (pp. 271-291). Springer. (Conditional
+expectation of item scores given the total score; formula 15.22.)
+
+Bjorner, J. B., Kreiner, S., Ware, J. E., Damsgaard, M. T., & Bech, P.
+(1998). Differential item functioning in the Danish translation of the
+SF-36. \emph{Journal of Clinical Epidemiology, 51}(11), 1189-1202.
 }
 \seealso{
-\code{\link[iarm:ICCplot]{iarm::ICCplot()}}, \code{\link[=RMtargeting]{RMtargeting()}}, \code{\link[=RMplotTile]{RMplotTile()}}
+\code{\link{RMdifGamma}}, \code{\link{RMitemRestscore}}
 }

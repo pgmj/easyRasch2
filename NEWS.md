@@ -136,6 +136,18 @@ simulated expected range), restructured to match the other simulation tools:
   `$matrix` (a lower-triangle diverging-RdYlBu Q3 tile heatmap with above-cutoff
   pairs outlined, adapted from `RASCHplot::ggQ3star()`; needs `data`, else
   `NULL`).
+- `RMitemICCPlot()` is reimplemented on the CML engine, replacing the
+  `iarm::ICCplot()` wrapper. The conditional item curve and its variance now
+  come from `psychotools` CML thresholds + the exact conditional distribution
+  given the total score. It draws **confidence intervals** on the observed
+  class-interval means (`ci`, default on) and an optional model band
+  (`error_band`); in DIF mode it shows per-group CIs and annotates each panel
+  with the **partial-gamma DIF magnitude** (`iarm::partgam_DIF`, as in
+  `RMdifGamma()`), with the full table attached as `attr(., "dif_gamma")`. New
+  arguments `ci`, `error_band`, `conf_level`, `min_n` (per-cell floor, 8),
+  `items`; `method` / `class_intervals` / `dif_var` / `output` are unchanged.
+  The conditional-ICC approach follows Buchardt, Christensen & Jensen (2023)
+  and their `RASCHplot` package.
 - `RMlocdepGamma()`: corrected the `$direction2` caption / `@return` wording to
   "total - Item2" (with a note that direction 2 lists pairs in reverse order);
   computations unchanged (labelling fix).
