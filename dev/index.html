@@ -58,6 +58,12 @@
 <p>A central design choice is <strong>simulation-based critical values</strong> for various fit statistics. Rather than relying on rule-of-thumb cutoffs, most diagnostics are paired with a parametric-bootstrap function that generates an empirical null distribution from the fitted Rasch / PCM model and the observed sample.</p>
 <p>The <a href="https://pgmj.github.io/easyRasch2/articles/easyRasch2.html">Get Started</a> link above contains a short introduction. For broader Rasch-analysis tutorials, see the <a href="https://pgmj.github.io/raschrvignette/RaschRvign.html" class="external-link">vignette</a> for the archived sibling package <a href="https://pgmj.github.io/easyRasch/" class="external-link"><code>easyRasch</code></a>.</p>
 <div class="section level2">
+<h2 id="statement-of-need">Statement of need<a class="anchor" aria-label="anchor" href="#statement-of-need"></a>
+</h2>
+<p>A complete Rasch analysis requires many separate procedures — item fit, local dependence, dimensionality, differential item functioning, reliability, targeting, and more. In R these are spread across packages with differing data formats, argument conventions, and output objects, which raises the barrier to entry and can make analyses hard to reproduce. A further problem is that fit statistics (item fit MSQ, Yen’s <span class="math inline">Q_3</span> residuals, the first residual-PCA contrast, CFA fit indices) are usually judged against fixed rule-of-thumb cutoffs that are known to depend on sample size, number of items and other factors such as targeting, and the number of response categories.</p>
+<p><code>easyRasch2</code> targets applied researchers and students validating rating scales and tests in health, education, and psychology using modern psychometric methods. It provides a single, consistently named interface across the whole workflow with publication-ready output, and — as its distinguishing feature — replaces rule-of-thumb cutoffs with sample-specific critical values obtained by parametric bootstrap from the fitted Rasch/PCM model (Johansson, 2025). Several methods, including the polytomous Martin-Löf test with Monte Carlo <em>p</em>-values (Christensen &amp; Kreiner, 2007) and the bootstrap item-restscore test, are not available in other R packages.</p>
+</div>
+<div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <p>Install from CRAN:</p>
@@ -293,6 +299,12 @@
 </ul>
 </div>
 
+<div class="community">
+<h2 data-toc-skip>Community</h2>
+<ul class="list-unstyled">
+<li><a href="CONTRIBUTING.html">Contributing guide</a></li>
+</ul>
+</div>
 
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>

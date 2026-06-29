@@ -20,6 +20,30 @@ tutorials, see the
 the archived sibling package
 [`easyRasch`](https://pgmj.github.io/easyRasch/).
 
+## Statement of need
+
+A complete Rasch analysis requires many separate procedures — item fit,
+local dependence, dimensionality, differential item functioning,
+reliability, targeting, and more. In R these are spread across packages
+with differing data formats, argument conventions, and output objects,
+which raises the barrier to entry and can make analyses hard to
+reproduce. A further problem is that fit statistics (item fit MSQ, Yen’s
+Q_3 residuals, the first residual-PCA contrast, CFA fit indices) are
+usually judged against fixed rule-of-thumb cutoffs that are known to
+depend on sample size, number of items and other factors such as
+targeting, and the number of response categories.
+
+`easyRasch2` targets applied researchers and students validating rating
+scales and tests in health, education, and psychology using modern
+psychometric methods. It provides a single, consistently named interface
+across the whole workflow with publication-ready output, and — as its
+distinguishing feature — replaces rule-of-thumb cutoffs with
+sample-specific critical values obtained by parametric bootstrap from
+the fitted Rasch/PCM model (Johansson, 2025). Several methods, including
+the polytomous Martin-Löf test with Monte Carlo *p*-values (Christensen
+& Kreiner, 2007) and the bootstrap item-restscore test, are not
+available in other R packages.
+
 ## Installation
 
 Install from CRAN:
