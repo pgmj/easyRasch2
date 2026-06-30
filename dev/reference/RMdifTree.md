@@ -255,6 +255,12 @@ stability of results from supervised statistical learning. *Journal of
 Computational and Graphical Statistics, 27*, 685-700.
 [doi:10.1080/10618600.2018.1473779](https://doi.org/10.1080/10618600.2018.1473779)
 
+Asamoah, N. A. B., Turner, R. C., Lo, W.-J., Crawford, B. L., &
+Jozkowski, K. N. (2025). Impacts of DIF Item Balance and Effect Size
+Incorporation With the Rasch Tree. *Educational and Psychological
+Measurement*,
+[doi:10.1177/00131644251370605](https://doi.org/10.1177/00131644251370605)
+
 ## See also
 
 [`RMdifLR`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md),
@@ -298,9 +304,11 @@ if (requireNamespace("psychotree", quietly = TRUE) &&
 
 #> Error in root.matrix(switch(vcov, opg = chol2inv(chol(meat)), info = bread,  : 
 #>   Matrix is not positive semidefinite
+#> Error in root.matrix(switch(vcov, opg = chol2inv(chol(meat)), info = bread,  : 
+#>   Matrix is not positive semidefinite
 #> Stability assessment notes (suppressed during fitting): 137 'minimum score not zero' rescaling warning(s); 21 'items with null categories' warning(s). These reflect sparsity in some resamples and are normal sampling variability; selection-frequency and cutpoint summaries are based on resamples that completed successfully.
 #>     Variable    Type Selected_orig Selection_freq_pct Cutpoint_mean Cutpoint_sd
-#> 1        age numeric          TRUE                100       43.6571      9.0031
+#> 1        age numeric          TRUE                100       42.9706      8.1556
 #> 2     gender  factor          TRUE                100            NA          NA
 #> 3 motivation ordered         FALSE                  4            NA          NA
 # }
