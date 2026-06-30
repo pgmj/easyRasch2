@@ -5,6 +5,7 @@
 [![Downloads](https://cranlogs.r-pkg.org/badges/easyRasch2?color=brightgreen)](https://CRAN.R-project.org/package=easyRasch2)
 ![Downloads Status](https://cranlogs.r-pkg.org/badges/grand-total/easyRasch2)
 <a href="https://buymeacoffee.com/pgmj" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+[![R-CMD-check](https://github.com/pgmj/easyRasch2/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pgmj/easyRasch2/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 `easyRasch2` is an R package for Rasch measurement theory

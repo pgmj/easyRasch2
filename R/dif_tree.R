@@ -225,6 +225,11 @@
 #' \emph{Journal of Computational and Graphical Statistics, 27},
 #' 685-700. \doi{10.1080/10618600.2018.1473779}
 #'
+#' Asamoah, N. A. B., Turner, R. C., Lo, W.-J., Crawford, B. L., & Jozkowski,
+#' K. N. (2025). Impacts of DIF Item Balance and Effect Size Incorporation With
+#' the Rasch Tree. \emph{Educational and Psychological Measurement},
+#' \doi{10.1177/00131644251370605}
+#'
 #' @seealso \code{\link{RMdifLR}}, \code{\link{RMdifGamma}}
 #'
 #' @examples
