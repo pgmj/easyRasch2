@@ -48,7 +48,7 @@ Default is \code{0.999} (99.9\% HDCI). Ignored when
 \value{
 A list with the same structure as \code{\link{RMitemInfitCutoff}}, so
 that the result can be passed directly to \code{\link{RMitemInfit}},
-\code{\link{RMitemInfitMI}}, and \code{\link{RMitemInfitCutoffPlot}}:
+\code{\link{RMitemInfitMI}}, and \code{\link{RMitemInfitPlot}}:
 \describe{
 \item{\code{results}}{data.frame with columns \code{iteration}, \code{imputation},
 \code{Item}, \code{InfitMSQ}, \code{OutfitMSQ} — the stacked simulation results from
@@ -121,5 +121,5 @@ if (requireNamespace("mice", quietly = TRUE)) {
 }
 \seealso{
 \code{\link{RMitemInfitCutoff}}, \code{\link{RMitemInfitMI}},
-\code{\link{RMitemInfitCutoffPlot}}
+\code{\link{RMitemInfitPlot}}
 }

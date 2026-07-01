@@ -127,41 +127,59 @@
 #' }
 #'
 #' @export
-RMdimCFACutoff <- function(data,
-                        iterations = 250L,
-                        percentile = 99,
-                        output     = c("list", "kable"),
-                        parallel   = TRUE,
-                        n_cores    = NULL,
-                        verbose    = FALSE,
-                        seed       = NULL,
-                        estimator  = "WLSMV") {
-
+RMdimCFACutoff <- function(
+  data,
+  iterations = 250L,
+  percentile = 99,
+  output = c("list", "kable"),
+  parallel = TRUE,
+  n_cores = NULL,
+  verbose = FALSE,
+  seed = NULL,
+  estimator = "WLSMV"
+) {
   output <- match.arg(output)
   if (output == "kable") {
-    stop("RMdimCFACutoff() now returns the simulation object only (a list).\n",
-         "Use RMdimCFA(data, cutoff = <this object>) for the fit and loadings ",
-         "tables, and RMdimCFAPlot(<this object>, data) for the figures.",
-         call. = FALSE)
+    stop(
+      "RMdimCFACutoff() now returns the simulation object only (a list).\n",
+      "Use RMdimCFA(data, cutoff = <this object>) for the fit and loadings ",
+      "tables, and RMdimCFAPlot(<this object>, data) for the figures.",
+      call. = FALSE
+    )
   }
 
   if (!requireNamespace("lavaan", quietly = TRUE)) {
-    stop("Package 'lavaan' is required for RMdimCFACutoff(). ",
-         "Install with: install.packages(\"lavaan\")",
-         call. = FALSE)
+    stop(
+      "Package 'lavaan' is required for RMdimCFACutoff(). ",
+      "Install with: install.packages(\"lavaan\")",
+      call. = FALSE
+    )
   }
 
-  if (!is.numeric(percentile) || length(percentile) != 1L ||
-      !is.finite(percentile) || percentile <= 50 || percentile >= 100) {
-    stop("`percentile` must be a single numeric in (50, 100). ",
-         "Common choices: 95, 99, 99.5.", call. = FALSE)
+  if (
+    !is.numeric(percentile) ||
+      length(percentile) != 1L ||
+      !is.finite(percentile) ||
+      percentile <= 50 ||
+      percentile >= 100
+  ) {
+    stop(
+      "`percentile` must be a single numeric in (50, 100). ",
+      "Common choices: 95, 99, 99.5.",
+      call. = FALSE
+    )
   }
 
   estimator <- toupper(estimator[1L])
   if (estimator %in% c("ML", "MLR", "MLM", "MLF")) {
-    stop("`estimator = \"", estimator, "\"` is not appropriate for ",
-         "ordinal-CFA. Use a limited-information estimator such as ",
-         "\"WLSMV\", \"DWLS\", or \"ULSMV\".", call. = FALSE)
+    stop(
+      "`estimator = \"",
+      estimator,
+      "\"` is not appropriate for ",
+      "ordinal-CFA. Use a limited-information estimator such as ",
+      "\"WLSMV\", \"DWLS\", or \"ULSMV\".",
+      call. = FALSE
+    )
   }
 
   validate_response_data(data)
@@ -176,18 +194,24 @@ RMdimCFACutoff <- function(data,
     stop("No complete cases in `data`.", call. = FALSE)
   }
   if (ncol(data) < 3L) {
-    stop("RMdimCFACutoff() requires at least 3 items for a one-factor CFA.",
-         call. = FALSE)
+    stop(
+      "RMdimCFACutoff() requires at least 3 items for a one-factor CFA.",
+      call. = FALSE
+    )
   }
 
   # Parallel setup -- mirrors RMdimResidualPCACutoff()
   use_parallel <- parallel && requireNamespace("mirai", quietly = TRUE)
   if (parallel && !use_parallel) {
-    message("Install 'mirai' for parallel processing: install.packages(\"mirai\")")
+    message(
+      "Install 'mirai' for parallel processing: install.packages(\"mirai\")"
+    )
     message("Running sequentially...")
   }
   if (use_parallel) {
-    if (is.null(n_cores)) n_cores <- getOption("mc.cores")
+    if (is.null(n_cores)) {
+      n_cores <- getOption("mc.cores")
+    }
     if (is.null(n_cores)) {
       warning(
         "For parallel processing, specify n_cores or set options(mc.cores = N).\n",
@@ -200,31 +224,34 @@ RMdimCFACutoff <- function(data,
     }
   }
 
-  if (!is.null(seed)) set.seed(seed)
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
   sim_seeds <- sample.int(.Machine$integer.max, iterations)
 
-  data_mat       <- as.matrix(data)
-  sample_n       <- nrow(data_mat)
-  is_polytomous  <- max(data_mat, na.rm = TRUE) > 1L
+  data_mat <- as.matrix(data)
+  sample_n <- nrow(data_mat)
+  is_polytomous <- max(data_mat, na.rm = TRUE) > 1L
   item_names_vec <- colnames(data_mat)
-  if (is.null(item_names_vec))
+  if (is.null(item_names_vec)) {
     item_names_vec <- paste0("V", seq_len(ncol(data_mat)))
+  }
 
   # Generating Rasch model: CML item thresholds (psychotools) + WLE person
   # locations, consistent with the rest of the package. The DGP is unchanged
   # (thetas resampled with replacement; data simulated under the model). The
   # CFA itself is fitted by lavaan; `estimator` is the lavaan estimator.
-  pool       <- .wle_theta_pool(data_mat)
-  thr_list   <- pool$thr_list
+  pool <- .wle_theta_pool(data_mat)
+  thr_list <- pool$thr_list
   wle_thetas <- pool$thetas
 
   sim_data_list <- list(
-    type       = if (is_polytomous) "polytomous" else "dichotomous",
-    thetas     = wle_thetas,
-    n_items    = ncol(data_mat),
-    sample_n   = sample_n,
+    type = if (is_polytomous) "polytomous" else "dichotomous",
+    thetas = wle_thetas,
+    n_items = ncol(data_mat),
+    sample_n = sample_n,
     item_names = item_names_vec,
-    estimator  = estimator
+    estimator = estimator
   )
   if (is_polytomous) {
     sim_data_list$deltaslist <- thr_list
@@ -234,14 +261,23 @@ RMdimCFACutoff <- function(data,
 
   # Run the simulation
   if (use_parallel) {
-    results_raw <- run_cfa_sim_parallel(iterations, sim_seeds,
-                                        sim_data_list, n_cores, verbose)
+    results_raw <- run_cfa_sim_parallel(
+      iterations,
+      sim_seeds,
+      sim_data_list,
+      n_cores,
+      verbose
+    )
   } else {
-    results_raw <- run_cfa_sim_sequential(iterations, sim_seeds,
-                                          sim_data_list, verbose)
+    results_raw <- run_cfa_sim_sequential(
+      iterations,
+      sim_seeds,
+      sim_data_list,
+      verbose
+    )
   }
 
-  ok         <- vapply(results_raw, is.list, logical(1L))
+  ok <- vapply(results_raw, is.list, logical(1L))
   successful <- results_raw[ok]
 
   if (length(successful) == 0L) {
@@ -251,22 +287,25 @@ RMdimCFACutoff <- function(data,
     } else {
       "(no message captured)"
     }
-    stop("All CFA simulation iterations failed. Example: ", sample_msg,
-         call. = FALSE)
+    stop(
+      "All CFA simulation iterations failed. Example: ",
+      sample_msg,
+      call. = FALSE
+    )
   }
 
   actual_iterations <- length(successful)
 
-  fit_mat  <- do.call(rbind, lapply(successful, `[[`, "fit"))
+  fit_mat <- do.call(rbind, lapply(successful, `[[`, "fit"))
   load_mat <- do.call(rbind, lapply(successful, `[[`, "loadings"))
-  colnames(fit_mat)  <- c("cfi", "rmsea", "srmr")
+  colnames(fit_mat) <- c("cfi", "rmsea", "srmr")
   colnames(load_mat) <- item_names_vec
 
   simulated_df <- data.frame(
     iteration = seq_len(actual_iterations),
-    cfi       = as.numeric(fit_mat[, "cfi"]),
-    rmsea     = as.numeric(fit_mat[, "rmsea"]),
-    srmr      = as.numeric(fit_mat[, "srmr"]),
+    cfi = as.numeric(fit_mat[, "cfi"]),
+    rmsea = as.numeric(fit_mat[, "rmsea"]),
+    srmr = as.numeric(fit_mat[, "srmr"]),
     stringsAsFactors = FALSE
   )
 
@@ -277,22 +316,25 @@ RMdimCFACutoff <- function(data,
     stringsAsFactors = FALSE
   )
 
-  cutoffs         <- compute_cfa_cutoffs(simulated_df, percentile)
-  loading_cutoffs <- compute_cfa_loading_cutoffs(simulated_loadings,
-                                                 item_names_vec, percentile)
+  cutoffs <- compute_cfa_cutoffs(simulated_df, percentile)
+  loading_cutoffs <- compute_cfa_loading_cutoffs(
+    simulated_loadings,
+    item_names_vec,
+    percentile
+  )
 
   list(
-    simulated          = simulated_df,
+    simulated = simulated_df,
     simulated_loadings = simulated_loadings,
-    percentile         = percentile,
-    cutoffs            = cutoffs,
-    loading_cutoffs    = loading_cutoffs,
-    actual_iterations  = actual_iterations,
-    sample_n           = sample_n,
-    n_items            = ncol(data_mat),
-    item_names         = item_names_vec,
-    is_polytomous      = is_polytomous,
-    estimator          = estimator
+    percentile = percentile,
+    cutoffs = cutoffs,
+    loading_cutoffs = loading_cutoffs,
+    actual_iterations = actual_iterations,
+    sample_n = sample_n,
+    n_items = ncol(data_mat),
+    item_names = item_names_vec,
+    is_polytomous = is_polytomous,
+    estimator = estimator
   )
 }
 
@@ -309,13 +351,13 @@ compute_cfa_cutoffs <- function(simulated_df, percentile) {
   # Filter to finite values -- lavaan can return Inf for RMSEA when
   # chi-square is exactly 0 (degenerate near-perfect fit on a
   # simulated dataset), which would otherwise propagate into the cutoff.
-  cfi_v   <- simulated_df$cfi[is.finite(simulated_df$cfi)]
+  cfi_v <- simulated_df$cfi[is.finite(simulated_df$cfi)]
   rmsea_v <- simulated_df$rmsea[is.finite(simulated_df$rmsea)]
-  srmr_v  <- simulated_df$srmr[is.finite(simulated_df$srmr)]
+  srmr_v <- simulated_df$srmr[is.finite(simulated_df$srmr)]
   c(
-    cfi   = as.numeric(stats::quantile(cfi_v,   1 - pct, na.rm = TRUE)),
-    rmsea = as.numeric(stats::quantile(rmsea_v, pct,     na.rm = TRUE)),
-    srmr  = as.numeric(stats::quantile(srmr_v,  pct,     na.rm = TRUE))
+    cfi = as.numeric(stats::quantile(cfi_v, 1 - pct, na.rm = TRUE)),
+    rmsea = as.numeric(stats::quantile(rmsea_v, pct, na.rm = TRUE)),
+    srmr = as.numeric(stats::quantile(srmr_v, pct, na.rm = TRUE))
   )
 }
 
@@ -326,20 +368,26 @@ compute_cfa_cutoffs <- function(simulated_df, percentile) {
 #'
 #' @keywords internal
 #' @noRd
-compute_cfa_loading_cutoffs <- function(simulated_loadings, item_names,
-                                        percentile) {
+compute_cfa_loading_cutoffs <- function(
+  simulated_loadings,
+  item_names,
+  percentile
+) {
   tail <- (1 - percentile / 100) / 2
-  do.call(rbind, lapply(item_names, function(it) {
-    v <- simulated_loadings[[it]]
-    v <- v[is.finite(v)]
-    data.frame(
-      Item = it,
-      low  = as.numeric(stats::quantile(v, tail,     na.rm = TRUE)),
-      high = as.numeric(stats::quantile(v, 1 - tail, na.rm = TRUE)),
-      stringsAsFactors = FALSE,
-      row.names = NULL
-    )
-  }))
+  do.call(
+    rbind,
+    lapply(item_names, function(it) {
+      v <- simulated_loadings[[it]]
+      v <- v[is.finite(v)]
+      data.frame(
+        Item = it,
+        low = as.numeric(stats::quantile(v, tail, na.rm = TRUE)),
+        high = as.numeric(stats::quantile(v, 1 - tail, na.rm = TRUE)),
+        stringsAsFactors = FALSE,
+        row.names = NULL
+      )
+    })
+  )
 }
 
 #' Tiny ordinal-suffix helper for percentile labels (1st, 2nd, 3rd, 99th)
@@ -348,9 +396,10 @@ compute_cfa_loading_cutoffs <- function(simulated_loadings, item_names,
 #' @noRd
 ordinal_suffix <- function(n) {
   n_int <- as.integer(round(n))
-  if (n_int %% 100 %in% c(11L, 12L, 13L)) return("th")
-  switch(as.character(n_int %% 10),
-         "1" = "st", "2" = "nd", "3" = "rd", "th")
+  if (n_int %% 100 %in% c(11L, 12L, 13L)) {
+    return("th")
+  }
+  switch(as.character(n_int %% 10), "1" = "st", "2" = "nd", "3" = "rd", "th")
 }
 
 #' Apply directional fit-index flagging given observed values + cutoffs
@@ -359,9 +408,10 @@ ordinal_suffix <- function(n) {
 #' @noRd
 compute_cfa_flagged <- function(observed, cutoffs) {
   c(
-    cfi   = !is.na(observed[["cfi"]])   && observed[["cfi"]]   < cutoffs[["cfi"]],
-    rmsea = !is.na(observed[["rmsea"]]) && observed[["rmsea"]] > cutoffs[["rmsea"]],
-    srmr  = !is.na(observed[["srmr"]])  && observed[["srmr"]]  > cutoffs[["srmr"]]
+    cfi = !is.na(observed[["cfi"]]) && observed[["cfi"]] < cutoffs[["cfi"]],
+    rmsea = !is.na(observed[["rmsea"]]) &&
+      observed[["rmsea"]] > cutoffs[["rmsea"]],
+    srmr = !is.na(observed[["srmr"]]) && observed[["srmr"]] > cutoffs[["srmr"]]
   )
 }
 
@@ -375,9 +425,15 @@ compute_cfa_flagged <- function(observed, cutoffs) {
 #' @noRd
 compute_cfa_loading_flagged <- function(observed_loadings, loading_cutoffs) {
   obs <- as.numeric(observed_loadings[loading_cutoffs$Item])
-  ifelse(is.na(obs), "",
-         ifelse(obs < loading_cutoffs$low, "below",
-                ifelse(obs > loading_cutoffs$high, "above", "")))
+  ifelse(
+    is.na(obs),
+    "",
+    ifelse(
+      obs < loading_cutoffs$low,
+      "below",
+      ifelse(obs > loading_cutoffs$high, "above", "")
+    )
+  )
 }
 
 # ===========================================================================
@@ -428,24 +484,38 @@ compute_cfa_loading_flagged <- function(observed_loadings, loading_cutoffs) {
 #'
 #' @export
 RMdimCFA <- function(data, cutoff, output = c("kable", "dataframe")) {
-
   output <- match.arg(output)
 
   if (missing(cutoff) || is.null(cutoff)) {
-    stop("`cutoff` is required: pass the object returned by RMdimCFACutoff(). ",
-         "Observed CFA fit indices are not interpretable without the ",
-         "simulated reference distribution.", call. = FALSE)
+    stop(
+      "`cutoff` is required: pass the object returned by RMdimCFACutoff(). ",
+      "Observed CFA fit indices are not interpretable without the ",
+      "simulated reference distribution.",
+      call. = FALSE
+    )
   }
-  req <- c("simulated", "simulated_loadings", "cutoffs", "loading_cutoffs",
-           "percentile", "item_names", "estimator")
+  req <- c(
+    "simulated",
+    "simulated_loadings",
+    "cutoffs",
+    "loading_cutoffs",
+    "percentile",
+    "item_names",
+    "estimator"
+  )
   if (!is.list(cutoff) || !all(req %in% names(cutoff))) {
-    stop("`cutoff` must be the list returned by RMdimCFACutoff().",
-         call. = FALSE)
+    stop(
+      "`cutoff` must be the list returned by RMdimCFACutoff().",
+      call. = FALSE
+    )
   }
 
   if (!requireNamespace("lavaan", quietly = TRUE)) {
-    stop("Package 'lavaan' is required for RMdimCFA(). ",
-         "Install with: install.packages(\"lavaan\")", call. = FALSE)
+    stop(
+      "Package 'lavaan' is required for RMdimCFA(). ",
+      "Install with: install.packages(\"lavaan\")",
+      call. = FALSE
+    )
   }
   if (output == "kable" && !requireNamespace("knitr", quietly = TRUE)) {
     stop("Package 'knitr' is required for output = \"kable\".", call. = FALSE)
@@ -458,43 +528,60 @@ RMdimCFA <- function(data, cutoff, output = c("kable", "dataframe")) {
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
 
   data <- stats::na.omit(as.data.frame(data))
-  if (nrow(data) == 0L) stop("No complete cases in `data`.", call. = FALSE)
+  if (nrow(data) == 0L) {
+    stop("No complete cases in `data`.", call. = FALSE)
+  }
 
   item_names <- cutoff$item_names
   if (!setequal(names(data), item_names)) {
-    stop("Item names in `data` do not match those used for the cutoff.\n",
-         "  data   : ", paste(names(data),  collapse = ", "), "\n",
-         "  cutoff : ", paste(item_names,   collapse = ", "), call. = FALSE)
+    stop(
+      "Item names in `data` do not match those used for the cutoff.\n",
+      "  data   : ",
+      paste(names(data), collapse = ", "),
+      "\n",
+      "  cutoff : ",
+      paste(item_names, collapse = ", "),
+      call. = FALSE
+    )
   }
   data <- data[, item_names, drop = FALSE]
 
   # Observed CFA fit + standardized loadings (one lavaan fit)
   obs <- run_single_cfa_sim(
-    seed      = NA,
+    seed = NA,
     data_list = list(item_names = item_names, estimator = cutoff$estimator),
-    obs_data  = data
+    obs_data = data
   )
   if (!is.list(obs)) {
     stop("Observed CFA fit failed: ", obs, call. = FALSE)
   }
-  observed_fit  <- stats::setNames(obs$fit, c("cfi", "rmsea", "srmr"))
+  observed_fit <- stats::setNames(obs$fit, c("cfi", "rmsea", "srmr"))
   observed_load <- obs$loadings
 
-  flagged_fit     <- compute_cfa_flagged(observed_fit, cutoff$cutoffs)
-  loading_flagged <- compute_cfa_loading_flagged(observed_load,
-                                                 cutoff$loading_cutoffs)
+  flagged_fit <- compute_cfa_flagged(observed_fit, cutoff$cutoffs)
+  loading_flagged <- compute_cfa_loading_flagged(
+    observed_load,
+    cutoff$loading_cutoffs
+  )
 
-  fit_df  <- build_cfa_fit_df(observed_fit, cutoff$cutoffs, flagged_fit,
-                              cutoff$percentile)
-  load_df <- build_cfa_loadings_df(observed_load, cutoff$loading_cutoffs,
-                                   loading_flagged)
+  fit_df <- build_cfa_fit_df(
+    observed_fit,
+    cutoff$cutoffs,
+    flagged_fit,
+    cutoff$percentile
+  )
+  load_df <- build_cfa_loadings_df(
+    observed_load,
+    cutoff$loading_cutoffs,
+    loading_flagged
+  )
 
   if (output == "dataframe") {
     return(list(fit = fit_df, loadings = load_df))
   }
 
   list(
-    fit      = render_cfa_fit_kable(fit_df, cutoff, nrow(data)),
+    fit = render_cfa_fit_kable(fit_df, cutoff, nrow(data)),
     loadings = render_cfa_loadings_kable(load_df, cutoff, nrow(data))
   )
 }
@@ -505,18 +592,24 @@ RMdimCFA <- function(data, cutoff, output = c("kable", "dataframe")) {
 #' @noRd
 build_cfa_fit_df <- function(observed, cutoffs, flagged, percentile) {
   cfi_pct_lbl <- 100 - percentile
-  pct_suffix  <- ordinal_suffix(percentile)
-  cfi_suffix  <- ordinal_suffix(cfi_pct_lbl)
+  pct_suffix <- ordinal_suffix(percentile)
+  cfi_suffix <- ordinal_suffix(cfi_pct_lbl)
   data.frame(
-    Index     = c("CFI", "RMSEA", "SRMR"),
-    Observed  = round(c(observed[["cfi"]], observed[["rmsea"]],
-                        observed[["srmr"]]), 4),
-    Cutoff    = round(c(cutoffs[["cfi"]], cutoffs[["rmsea"]],
-                        cutoffs[["srmr"]]), 4),
-    Direction = c(paste0("< ", cfi_pct_lbl, cfi_suffix, " pct"),
-                  paste0("> ", percentile,  pct_suffix, " pct"),
-                  paste0("> ", percentile,  pct_suffix, " pct")),
-    Flagged   = ifelse(flagged[c("cfi", "rmsea", "srmr")], "TRUE", ""),
+    Index = c("CFI", "RMSEA", "SRMR"),
+    Observed = round(
+      c(observed[["cfi"]], observed[["rmsea"]], observed[["srmr"]]),
+      4
+    ),
+    Cutoff = round(
+      c(cutoffs[["cfi"]], cutoffs[["rmsea"]], cutoffs[["srmr"]]),
+      4
+    ),
+    Direction = c(
+      paste0("< ", cfi_pct_lbl, cfi_suffix, " pct"),
+      paste0("> ", percentile, pct_suffix, " pct"),
+      paste0("> ", percentile, pct_suffix, " pct")
+    ),
+    Flagged = ifelse(flagged[c("cfi", "rmsea", "srmr")], "TRUE", ""),
     stringsAsFactors = FALSE,
     row.names = NULL
   )
@@ -526,14 +619,17 @@ build_cfa_fit_df <- function(observed, cutoffs, flagged, percentile) {
 #'
 #' @keywords internal
 #' @noRd
-build_cfa_loadings_df <- function(observed_loadings, loading_cutoffs,
-                                  loading_flagged) {
+build_cfa_loadings_df <- function(
+  observed_loadings,
+  loading_cutoffs,
+  loading_flagged
+) {
   data.frame(
-    Item          = loading_cutoffs$Item,
-    Observed      = round(as.numeric(observed_loadings[loading_cutoffs$Item]), 3),
-    Expected_low  = round(loading_cutoffs$low,  3),
+    Item = loading_cutoffs$Item,
+    Observed = round(as.numeric(observed_loadings[loading_cutoffs$Item]), 3),
+    Expected_low = round(loading_cutoffs$low, 3),
     Expected_high = round(loading_cutoffs$high, 3),
-    Flagged       = loading_flagged,
+    Flagged = loading_flagged,
     stringsAsFactors = FALSE,
     row.names = NULL
   )
@@ -546,14 +642,22 @@ render_cfa_fit_kable <- function(fit_df, cutoff, observed_n) {
   caption <- paste0(
     if (cutoff$is_polytomous) "Partial Credit Model" else "Rasch Model",
     " posterior-predictive CFA fit-index check. ",
-    "Observed CFA fit (one-factor, lavaan ", cutoff$estimator,
-    ", ordered = TRUE; n = ", observed_n, ") vs simulated null under ",
+    "Observed CFA fit (one-factor, lavaan ",
+    cutoff$estimator,
+    ", ordered = TRUE; n = ",
+    observed_n,
+    ") vs simulated null under ",
     if (cutoff$is_polytomous) "PCM" else "RM",
-    " unidimensionality (", cutoff$actual_iterations,
-    " iterations at n = ", cutoff$sample_n, "). ",
-    "Cutoffs one-sided at the ", pct_label,
+    " unidimensionality (",
+    cutoff$actual_iterations,
+    " iterations at n = ",
+    cutoff$sample_n,
+    "). ",
+    "Cutoffs one-sided at the ",
+    pct_label,
     "th percentile; flagged when the observed value lies in the worst ",
-    100 - pct_label, "% of the null in the unfavourable direction."
+    100 - pct_label,
+    "% of the null in the unfavourable direction."
   )
   knitr::kable(fit_df, format = "pipe", caption = caption, row.names = FALSE)
 }
@@ -563,18 +667,32 @@ render_cfa_fit_kable <- function(fit_df, cutoff, observed_n) {
 render_cfa_loadings_kable <- function(load_df, cutoff, observed_n) {
   pct_label <- cutoff$percentile
   caption <- paste0(
-    "Standardized factor loadings (one-factor, lavaan ", cutoff$estimator,
-    "; n = ", observed_n, ") vs the simulated expected range under ",
+    "Standardized factor loadings (one-factor, lavaan ",
+    cutoff$estimator,
+    "; n = ",
+    observed_n,
+    ") vs the simulated expected range under ",
     if (cutoff$is_polytomous) "PCM" else "RM",
-    " unidimensionality (", cutoff$actual_iterations,
-    " iterations at n = ", cutoff$sample_n, "). ",
-    "Expected range is the two-sided central ", pct_label,
+    " unidimensionality (",
+    cutoff$actual_iterations,
+    " iterations at n = ",
+    cutoff$sample_n,
+    "). ",
+    "Expected range is the two-sided central ",
+    pct_label,
     "% interval of the simulated loadings; Flagged = below / above that range."
   )
   knitr::kable(
-    load_df, format = "pipe", row.names = FALSE,
-    col.names = c("Item", "Observed", "Expected low", "Expected high",
-                  "Flagged"),
+    load_df,
+    format = "pipe",
+    row.names = FALSE,
+    col.names = c(
+      "Item",
+      "Observed",
+      "Expected low",
+      "Expected high",
+      "Flagged"
+    ),
     caption = caption
   )
 }
@@ -589,10 +707,10 @@ render_cfa_loadings_kable <- function(load_df, cutoff, observed_n) {
 #' the simulated null distribution from \code{\link{RMdimCFACutoff}}:
 #' a per-item standardized-loadings plot (observed marker against each item's
 #' simulated distribution and expected range, in the style of
-#' \code{\link{RMitemInfitCutoffPlot}}), and a faceted plot of the CFI / RMSEA
+#' \code{\link{RMitemInfitPlot}}), and a faceted plot of the CFI / RMSEA
 #' / SRMR distributions with the observed value overlaid.
 #'
-#' @param cutoff_res The list returned by \code{\link{RMdimCFACutoff}}.
+#' @param simfit The list returned by \code{\link{RMdimCFACutoff}}.
 #' @param data The item-response data the CFA was run on (the same items used
 #'   for the cutoff). Required: the observed values are computed from it.
 #' @param percentile Numeric in (50, 100) or `NULL`. When supplied, the
@@ -626,159 +744,232 @@ render_cfa_loadings_kable <- function(load_df, cutoff, observed_n) {
 #'
 #' @importFrom rlang .data
 #' @export
-RMdimCFAPlot <- function(cutoff_res, data, percentile = NULL) {
-
+RMdimCFAPlot <- function(simfit, data, percentile = NULL) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Package 'ggplot2' is required for RMdimCFAPlot(). ",
-         "Install with: install.packages(\"ggplot2\")", call. = FALSE)
+    stop(
+      "Package 'ggplot2' is required for RMdimCFAPlot(). ",
+      "Install with: install.packages(\"ggplot2\")",
+      call. = FALSE
+    )
   }
   if (!requireNamespace("ggdist", quietly = TRUE)) {
-    stop("Package 'ggdist' is required for RMdimCFAPlot(). ",
-         "Install with: install.packages(\"ggdist\")", call. = FALSE)
+    stop(
+      "Package 'ggdist' is required for RMdimCFAPlot(). ",
+      "Install with: install.packages(\"ggdist\")",
+      call. = FALSE
+    )
   }
 
-  req <- c("simulated", "simulated_loadings", "cutoffs", "loading_cutoffs",
-           "percentile", "item_names", "estimator")
-  if (!is.list(cutoff_res) || !all(req %in% names(cutoff_res))) {
-    stop("`cutoff_res` must be the result returned by RMdimCFACutoff().",
-         call. = FALSE)
+  req <- c(
+    "simulated",
+    "simulated_loadings",
+    "cutoffs",
+    "loading_cutoffs",
+    "percentile",
+    "item_names",
+    "estimator"
+  )
+  if (!is.list(simfit) || !all(req %in% names(simfit))) {
+    stop(
+      "`simfit` must be the result returned by RMdimCFACutoff().",
+      call. = FALSE
+    )
   }
   if (missing(data)) {
-    stop("`data` is required: the observed CFA fit and loadings are computed ",
-         "from it for the overlay.", call. = FALSE)
+    stop(
+      "`data` is required: the observed CFA fit and loadings are computed ",
+      "from it for the overlay.",
+      call. = FALSE
+    )
   }
 
   # Resolve / override percentile
   if (is.null(percentile)) {
-    percentile <- cutoff_res$percentile
-  } else if (!is.numeric(percentile) || length(percentile) != 1L ||
-             !is.finite(percentile) || percentile <= 50 || percentile >= 100) {
-    stop("`percentile` must be a single numeric in (50, 100), or NULL.",
-         call. = FALSE)
+    percentile <- simfit$percentile
+  } else if (
+    !is.numeric(percentile) ||
+      length(percentile) != 1L ||
+      !is.finite(percentile) ||
+      percentile <= 50 ||
+      percentile >= 100
+  ) {
+    stop(
+      "`percentile` must be a single numeric in (50, 100), or NULL.",
+      call. = FALSE
+    )
   }
-  cutoffs         <- compute_cfa_cutoffs(cutoff_res$simulated, percentile)
-  loading_cutoffs <- compute_cfa_loading_cutoffs(cutoff_res$simulated_loadings,
-                                                 cutoff_res$item_names,
-                                                 percentile)
+  cutoffs <- compute_cfa_cutoffs(simfit$simulated, percentile)
+  loading_cutoffs <- compute_cfa_loading_cutoffs(
+    simfit$simulated_loadings,
+    simfit$item_names,
+    percentile
+  )
 
   # Observed fit + loadings from the data
   validate_response_data(data)
   data <- stats::na.omit(as.data.frame(data))
-  if (!setequal(names(data), cutoff_res$item_names)) {
-    stop("Item names in `data` do not match those used for the cutoff.",
-         call. = FALSE)
+  if (!setequal(names(data), simfit$item_names)) {
+    stop(
+      "Item names in `data` do not match those used for the cutoff.",
+      call. = FALSE
+    )
   }
-  data <- data[, cutoff_res$item_names, drop = FALSE]
+  data <- data[, simfit$item_names, drop = FALSE]
 
   old_rgl <- getOption("rgl.useNULL")
   options(rgl.useNULL = TRUE)
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
 
   obs <- run_single_cfa_sim(
-    seed      = NA,
-    data_list = list(item_names = cutoff_res$item_names,
-                     estimator  = cutoff_res$estimator),
-    obs_data  = data
+    seed = NA,
+    data_list = list(
+      item_names = simfit$item_names,
+      estimator = simfit$estimator
+    ),
+    obs_data = data
   )
-  if (!is.list(obs)) stop("Observed CFA fit failed: ", obs, call. = FALSE)
-  observed_fit  <- stats::setNames(obs$fit, c("cfi", "rmsea", "srmr"))
+  if (!is.list(obs)) {
+    stop("Observed CFA fit failed: ", obs, call. = FALSE)
+  }
+  observed_fit <- stats::setNames(obs$fit, c("cfi", "rmsea", "srmr"))
   observed_load <- obs$loadings
 
   list(
-    loadings = cfa_loadings_plot(cutoff_res, observed_load, loading_cutoffs,
-                                 percentile),
-    fit      = cfa_fit_plot(cutoff_res, observed_fit, cutoffs, percentile)
+    loadings = cfa_loadings_plot(
+      simfit,
+      observed_load,
+      loading_cutoffs,
+      percentile
+    ),
+    fit = cfa_fit_plot(simfit, observed_fit, cutoffs, percentile)
   )
 }
 
-#' Per-item standardized-loadings plot (RMitemInfitCutoffPlot style)
+#' Per-item standardized-loadings plot (RMitemInfitPlot style)
 #'
 #' @keywords internal
 #' @noRd
-cfa_loadings_plot <- function(cutoff_res, observed_load, loading_cutoffs,
-                              percentile) {
-  item_names  <- cutoff_res$item_names
+cfa_loadings_plot <- function(
+  simfit,
+  observed_load,
+  loading_cutoffs,
+  percentile
+) {
+  item_names <- simfit$item_names
   item_levels <- rev(item_names)
-  sim_load    <- cutoff_res$simulated_loadings
+  sim_load <- simfit$simulated_loadings
 
   # Long-format simulated loadings
-  sim_long <- do.call(rbind, lapply(item_names, function(it) {
-    data.frame(Item = it, Value = sim_load[[it]],
-               stringsAsFactors = FALSE, row.names = NULL)
-  }))
+  sim_long <- do.call(
+    rbind,
+    lapply(item_names, function(it) {
+      data.frame(
+        Item = it,
+        Value = sim_load[[it]],
+        stringsAsFactors = FALSE,
+        row.names = NULL
+      )
+    })
+  )
   sim_long$Item <- factor(sim_long$Item, levels = item_levels)
 
   # Per-item summary intervals (thin = 0.1/99.9, thick = 16.7/83.3, median)
-  lo_hi <- do.call(rbind, lapply(item_names, function(it) {
-    v <- sim_load[[it]]; v <- v[is.finite(v)]
-    data.frame(
-      Item   = it,
-      lo     = stats::quantile(v, 0.001, na.rm = TRUE),
-      hi     = stats::quantile(v, 0.999, na.rm = TRUE),
-      lo66   = stats::quantile(v, 0.167, na.rm = TRUE),
-      hi66   = stats::quantile(v, 0.833, na.rm = TRUE),
-      median = stats::median(v, na.rm = TRUE),
-      stringsAsFactors = FALSE, row.names = NULL
-    )
-  }))
+  lo_hi <- do.call(
+    rbind,
+    lapply(item_names, function(it) {
+      v <- sim_load[[it]]
+      v <- v[is.finite(v)]
+      data.frame(
+        Item = it,
+        lo = stats::quantile(v, 0.001, na.rm = TRUE),
+        hi = stats::quantile(v, 0.999, na.rm = TRUE),
+        lo66 = stats::quantile(v, 0.167, na.rm = TRUE),
+        hi66 = stats::quantile(v, 0.833, na.rm = TRUE),
+        median = stats::median(v, na.rm = TRUE),
+        stringsAsFactors = FALSE,
+        row.names = NULL
+      )
+    })
+  )
   lo_hi$Item_f <- factor(lo_hi$Item, levels = item_levels)
 
   flags <- compute_cfa_loading_flagged(observed_load, loading_cutoffs)
   obs_df <- data.frame(
-    Item     = loading_cutoffs$Item,
+    Item = loading_cutoffs$Item,
     observed = as.numeric(observed_load[loading_cutoffs$Item]),
-    Flagged  = flags != "",
+    Flagged = flags != "",
     stringsAsFactors = FALSE
   )
-  obs_df$Item  <- factor(obs_df$Item, levels = item_levels)
+  obs_df$Item <- factor(obs_df$Item, levels = item_levels)
   obs_df$Color <- ifelse(obs_df$Flagged, "red", "sienna2")
 
   caption_text <- er2_caption(paste0(
-    "Standardized factor loadings from ", cutoff_res$actual_iterations,
+    "Standardized factor loadings from ",
+    simfit$actual_iterations,
     " datasets simulated under ",
-    if (cutoff_res$is_polytomous) "PCM" else "RM",
-    " unidimensionality at n = ", cutoff_res$sample_n,
+    if (simfit$is_polytomous) "PCM" else "RM",
+    " unidimensionality at n = ",
+    simfit$sample_n,
     ", refitted with lavaan::cfa(ordered = TRUE, estimator = \"",
-    cutoff_res$estimator, "\").\n",
-    "Diamonds: observed loading (red = outside the two-sided ", percentile,
+    simfit$estimator,
+    "\").\n",
+    "Diamonds: observed loading (red = outside the two-sided ",
+    percentile,
     "% expected range). Black dots: simulated median."
   ))
 
   ggplot2::ggplot(sim_long, ggplot2::aes(x = .data$Value, y = .data$Item)) +
     ggdist::stat_dots(
       ggplot2::aes(slab_fill = ggplot2::after_stat(.data$level)),
-      quantiles = cutoff_res$actual_iterations,
-      layout = "weave", slab_color = NA, .width = c(0.666, 0.999)
+      quantiles = simfit$actual_iterations,
+      layout = "weave",
+      slab_color = NA,
+      .width = c(0.666, 0.999)
     ) +
     ggplot2::geom_segment(
       data = lo_hi,
-      ggplot2::aes(x = .data$lo, xend = .data$hi,
-                   y = .data$Item_f, yend = .data$Item_f),
-      color = "black", linewidth = 0.7
+      ggplot2::aes(
+        x = .data$lo,
+        xend = .data$hi,
+        y = .data$Item_f,
+        yend = .data$Item_f
+      ),
+      color = "black",
+      linewidth = 0.7
     ) +
     ggplot2::geom_segment(
       data = lo_hi,
-      ggplot2::aes(x = .data$lo66, xend = .data$hi66,
-                   y = .data$Item_f, yend = .data$Item_f),
-      color = "black", linewidth = 1.2
+      ggplot2::aes(
+        x = .data$lo66,
+        xend = .data$hi66,
+        y = .data$Item_f,
+        yend = .data$Item_f
+      ),
+      color = "black",
+      linewidth = 1.2
     ) +
     ggplot2::geom_point(
       data = lo_hi,
-      ggplot2::aes(x = .data$median, y = .data$Item_f), size = 3.6
+      ggplot2::aes(x = .data$median, y = .data$Item_f),
+      size = 3.6
     ) +
     ggplot2::geom_point(
       data = obs_df,
       ggplot2::aes(x = .data$observed, y = .data$Item, colour = .data$Color),
-      shape = 18, size = 4,
+      shape = 18,
+      size = 4,
       position = ggplot2::position_nudge(y = -0.1)
     ) +
     ggplot2::scale_colour_identity() +
     ggplot2::scale_color_manual(
       values = scales::brewer_pal()(3)[-1],
-      aesthetics = "slab_fill", guide = "none"
+      aesthetics = "slab_fill",
+      guide = "none"
     ) +
     ggplot2::labs(
-      x = "Standardized factor loading", y = "Item", caption = caption_text
+      x = "Standardized factor loading",
+      y = "Item",
+      caption = caption_text
     ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
@@ -790,61 +981,80 @@ cfa_loadings_plot <- function(cutoff_res, observed_load, loading_cutoffs,
 #'
 #' @keywords internal
 #' @noRd
-cfa_fit_plot <- function(cutoff_res, observed_fit, cutoffs, percentile) {
+cfa_fit_plot <- function(simfit, observed_fit, cutoffs, percentile) {
   flagged <- compute_cfa_flagged(observed_fit, cutoffs)
 
   sim_long <- data.frame(
-    Index = factor(rep(c("CFI", "RMSEA", "SRMR"),
-                       each = nrow(cutoff_res$simulated)),
-                   levels = c("CFI", "RMSEA", "SRMR")),
-    Value = c(cutoff_res$simulated$cfi,
-              cutoff_res$simulated$rmsea,
-              cutoff_res$simulated$srmr),
+    Index = factor(
+      rep(c("CFI", "RMSEA", "SRMR"), each = nrow(simfit$simulated)),
+      levels = c("CFI", "RMSEA", "SRMR")
+    ),
+    Value = c(
+      simfit$simulated$cfi,
+      simfit$simulated$rmsea,
+      simfit$simulated$srmr
+    ),
     stringsAsFactors = FALSE
   )
 
   obs_df <- data.frame(
-    Index    = factor(c("CFI", "RMSEA", "SRMR"),
-                      levels = c("CFI", "RMSEA", "SRMR")),
-    Observed = c(observed_fit[["cfi"]], observed_fit[["rmsea"]],
-                 observed_fit[["srmr"]]),
-    Cutoff   = c(cutoffs[["cfi"]], cutoffs[["rmsea"]], cutoffs[["srmr"]]),
-    Flagged  = c(flagged[["cfi"]], flagged[["rmsea"]], flagged[["srmr"]]),
+    Index = factor(
+      c("CFI", "RMSEA", "SRMR"),
+      levels = c("CFI", "RMSEA", "SRMR")
+    ),
+    Observed = c(
+      observed_fit[["cfi"]],
+      observed_fit[["rmsea"]],
+      observed_fit[["srmr"]]
+    ),
+    Cutoff = c(cutoffs[["cfi"]], cutoffs[["rmsea"]], cutoffs[["srmr"]]),
+    Flagged = c(flagged[["cfi"]], flagged[["rmsea"]], flagged[["srmr"]]),
     stringsAsFactors = FALSE
   )
   obs_df$Color <- ifelse(obs_df$Flagged, "red", "grey30")
 
   cfi_pct_lbl <- 100 - percentile
   caption <- er2_caption(paste0(
-    "Histograms: ", cutoff_res$actual_iterations,
+    "Histograms: ",
+    simfit$actual_iterations,
     " datasets simulated under ",
-    if (cutoff_res$is_polytomous) "PCM" else "RM",
-    " unidimensionality at n = ", cutoff_res$sample_n,
+    if (simfit$is_polytomous) "PCM" else "RM",
+    " unidimensionality at n = ",
+    simfit$sample_n,
     ",\nrefitted with lavaan::cfa(ordered = TRUE, estimator = \"",
-    cutoff_res$estimator, "\").\n",
-    "Diamond: observed value (red = flagged at the ", percentile,
+    simfit$estimator,
+    "\").\n",
+    "Diamond: observed value (red = flagged at the ",
+    percentile,
     "th percentile in the unfavourable direction).\n",
-    "Dashed line: cutoff (CFI: ", cfi_pct_lbl,
-    "th pct; RMSEA / SRMR: ", percentile, "th pct)."
+    "Dashed line: cutoff (CFI: ",
+    cfi_pct_lbl,
+    "th pct; RMSEA / SRMR: ",
+    percentile,
+    "th pct)."
   ))
 
   ggplot2::ggplot(sim_long, ggplot2::aes(x = .data$Value)) +
     ggplot2::geom_histogram(bins = 30, fill = "grey80", colour = "white") +
     ggplot2::geom_vline(
-      data = obs_df, ggplot2::aes(xintercept = .data$Cutoff),
-      linetype = "dashed", colour = "grey40"
+      data = obs_df,
+      ggplot2::aes(xintercept = .data$Cutoff),
+      linetype = "dashed",
+      colour = "grey40"
     ) +
     ggplot2::geom_point(
       data = obs_df,
-      ggplot2::aes(x = .data$Observed, colour = .data$Color), y = 0,
-      size = 4.5, shape = 18
+      ggplot2::aes(x = .data$Observed, colour = .data$Color),
+      y = 0,
+      size = 4.5,
+      shape = 18
     ) +
     ggplot2::scale_colour_identity() +
-    ggplot2::facet_wrap(~ Index, scales = "free", nrow = 1) +
+    ggplot2::facet_wrap(~Index, scales = "free", nrow = 1) +
     ggplot2::labs(
-      title   = "Observed CFA fit vs simulated null distribution",
-      x       = "Fit index value",
-      y       = "Count of simulated datasets",
+      title = "Observed CFA fit vs simulated null distribution",
+      x = "Fit index value",
+      y = "Count of simulated datasets",
       caption = caption
     ) +
     ggplot2::theme_bw(base_size = 13) +
@@ -866,32 +1076,41 @@ cfa_fit_plot <- function(cutoff_res, observed_fit, cutoffs, percentile) {
 #' @keywords internal
 #' @noRd
 run_single_cfa_sim <- function(seed, data_list, obs_data = NULL) {
-
   build_sim_df <- function() {
     set.seed(seed)
-    thetas_res <- sample(data_list$thetas, size = data_list$sample_n,
-                         replace = TRUE)
+    thetas_res <- sample(
+      data_list$thetas,
+      size = data_list$sample_n,
+      replace = TRUE
+    )
 
     if (data_list$type == "dichotomous") {
-      sim_mat <- psychotools::rrm(theta = thetas_res,
-                                  beta  = data_list$item_params)
+      sim_mat <- psychotools::rrm(
+        theta = thetas_res,
+        beta = data_list$item_params
+      )
       sim_df <- as.data.frame(sim_mat$data)
       colnames(sim_df) <- data_list$item_names
 
       pos_counts <- colSums(sim_df, na.rm = TRUE)
       neg_counts <- nrow(sim_df) - pos_counts
       if (any(pos_counts < 2L) || any(neg_counts < 2L)) {
-        return("validation_failed: an item has < 2 responses in one of the two categories")
+        return(
+          "validation_failed: an item has < 2 responses in one of the two categories"
+        )
       }
       return(sim_df)
     }
 
     sim_mat <- sim_partial_score(data_list$deltaslist, thetas_res)
-    sim_df  <- as.data.frame(sim_mat)
+    sim_df <- as.data.frame(sim_mat)
     colnames(sim_df) <- data_list$item_names
 
-    n_cats <- vapply(data_list$deltaslist,
-                     function(d) length(d) + 1L, integer(1L))
+    n_cats <- vapply(
+      data_list$deltaslist,
+      function(d) length(d) + 1L,
+      integer(1L)
+    )
     for (j in seq_len(ncol(sim_df))) {
       tab <- tabulate(sim_df[[j]] + 1L, nbins = n_cats[j])
       if (any(tab == 0L)) {
@@ -901,33 +1120,37 @@ run_single_cfa_sim <- function(seed, data_list, obs_data = NULL) {
     sim_df
   }
 
-  tryCatch({
-    fit_df <- if (is.null(obs_data)) build_sim_df() else obs_data
-    if (is.character(fit_df)) return(fit_df)
+  tryCatch(
+    {
+      fit_df <- if (is.null(obs_data)) build_sim_df() else obs_data
+      if (is.character(fit_df)) {
+        return(fit_df)
+      }
 
-    fmla <- paste0("F1 =~ ",
-                   paste(data_list$item_names, collapse = " + "))
+      fmla <- paste0("F1 =~ ", paste(data_list$item_names, collapse = " + "))
 
-    fit <- suppressWarnings(suppressMessages(
-      lavaan::cfa(
-        model     = fmla,
-        data      = fit_df,
-        ordered   = data_list$item_names,
-        estimator = data_list$estimator,
-        warn      = FALSE,
-        verbose   = FALSE
-      )
-    ))
+      fit <- suppressWarnings(suppressMessages(
+        lavaan::cfa(
+          model = fmla,
+          data = fit_df,
+          ordered = data_list$item_names,
+          estimator = data_list$estimator,
+          warn = FALSE,
+          verbose = FALSE
+        )
+      ))
 
-    if (!isTRUE(lavaan::lavInspect(fit, "converged"))) {
-      return("convergence_failed: lavaan did not converge")
-    }
+      if (!isTRUE(lavaan::lavInspect(fit, "converged"))) {
+        return("convergence_failed: lavaan did not converge")
+      }
 
-    suppressWarnings(list(
-      fit      = extract_cfa_fit(fit, data_list$estimator),
-      loadings = extract_cfa_loadings(fit, data_list$item_names)
-    ))
-  }, error = function(e) as.character(conditionMessage(e)))
+      suppressWarnings(list(
+        fit = extract_cfa_fit(fit, data_list$estimator),
+        loadings = extract_cfa_loadings(fit, data_list$item_names)
+      ))
+    },
+    error = function(e) as.character(conditionMessage(e))
+  )
 }
 
 #' Pull (CFI, RMSEA, SRMR) from a fitted lavaan object
@@ -954,9 +1177,7 @@ extract_cfa_fit <- function(fit, estimator = NULL) {
     }
     NA_real_
   }
-  c(pick_scaled("cfi"),
-    pick_scaled("rmsea"),
-    as.numeric(fm[["srmr"]]))
+  c(pick_scaled("cfi"), pick_scaled("rmsea"), as.numeric(fm[["srmr"]]))
 }
 
 #' Pull standardized factor loadings (one factor) from a fitted lavaan object
@@ -967,9 +1188,9 @@ extract_cfa_fit <- function(fit, estimator = NULL) {
 #' @keywords internal
 #' @noRd
 extract_cfa_loadings <- function(fit, item_names) {
-  ss  <- lavaan::standardizedSolution(fit)
+  ss <- lavaan::standardizedSolution(fit)
   lam <- ss[ss$op == "=~", , drop = FALSE]
-  v   <- stats::setNames(as.numeric(lam$est.std), lam$rhs)
+  v <- stats::setNames(as.numeric(lam$est.std), lam$rhs)
   # Keep names so callers can index by item (observed-side lookups rely on it).
   stats::setNames(as.numeric(v[item_names]), item_names)
 }
@@ -980,8 +1201,13 @@ extract_cfa_loadings <- function(fit, item_names) {
 
 #' @keywords internal
 #' @noRd
-run_cfa_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
-                                 n_cores, verbose = FALSE) {
+run_cfa_sim_parallel <- function(
+  iterations,
+  sim_seeds,
+  sim_data_list,
+  n_cores,
+  verbose = FALSE
+) {
   mirai::daemons(n_cores)
   on.exit(mirai::daemons(0), add = TRUE)
 
@@ -992,14 +1218,16 @@ run_cfa_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
 
   tasks <- lapply(seq_len(iterations), function(i) {
     mirai::mirai(
-      { run_single_cfa_sim(seed, data_list) },
-      seed                  = sim_seeds[i],
-      data_list             = sim_data_list,
-      run_single_cfa_sim    = run_single_cfa_sim,
-      extract_cfa_fit       = extract_cfa_fit,
-      extract_cfa_loadings  = extract_cfa_loadings,
-      sim_partial_score     = sim_partial_score,
-      sim_poly_item         = sim_poly_item
+      {
+        run_single_cfa_sim(seed, data_list)
+      },
+      seed = sim_seeds[i],
+      data_list = sim_data_list,
+      run_single_cfa_sim = run_single_cfa_sim,
+      extract_cfa_fit = extract_cfa_fit,
+      extract_cfa_loadings = extract_cfa_loadings,
+      sim_partial_score = sim_partial_score,
+      sim_poly_item = sim_poly_item
     )
   })
 
@@ -1024,9 +1252,15 @@ run_cfa_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
 
 #' @keywords internal
 #' @noRd
-run_cfa_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
-                                   verbose = FALSE) {
-  if (verbose) pb <- utils::txtProgressBar(min = 0, max = iterations, style = 3)
+run_cfa_sim_sequential <- function(
+  iterations,
+  sim_seeds,
+  sim_data_list,
+  verbose = FALSE
+) {
+  if (verbose) {
+    pb <- utils::txtProgressBar(min = 0, max = iterations, style = 3)
+  }
 
   results <- vector("list", iterations)
   for (i in seq_len(iterations)) {

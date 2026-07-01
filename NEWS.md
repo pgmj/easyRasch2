@@ -113,7 +113,19 @@ simulated expected range), restructured to match the other simulation tools:
   plot output is now `output = "ggplot"` (`"loadings"` kept as a backward-compatible
   alias); `RMtargeting()` `output = "figure"` → `"patchwork"` (matching
   `RMitemICCPlot()`); `RMitemRestscore()` `p.adj` → `p_adj`;
-  `RMitemInfitCutoffPlot()` `output` → `statistic`.
+  `RMitemInfitPlot()` `output` → `statistic`.
+- `RMitemInfitCutoffPlot()` renamed to `RMitemInfitPlot()`, matching the
+  `<base>Plot` form of the other bootstrap-cutoff plot functions
+  (`RMdifGammaPlot()`, `RMlocdepGammaPlot()`, `RMlocdepQ3Plot()`,
+  `RMdimCFAPlot()`). Because the old name shipped in the 0.8.0 CRAN release, it
+  is kept as a **deprecated alias** that warns and forwards (unlike the 0.8.0
+  renames, which dropped old names outright). Separately, `RMdimCFAPlot()`'s
+  first argument `cutoff_res` was renamed to `simfit` to match the other plot
+  functions (no alias).
+- `RMdifLR()` now defaults to `output = "kable"` (was `"ggplot"`), matching every
+  other function that offers both a `kable` and a `ggplot` output (`RMscoreSE()`,
+  `RMdimMartinLof()`, `RMpersonFit()`, `RMpersonParameters()`,
+  `RMdimResidualPCA()`). Pass `output = "ggplot"` for the previous default.
 - The `Flagged` column now labels misfit **direction** (`"overfit"` /
   `"underfit"` / `""`) instead of logical TRUE/FALSE in `RMitemInfit()` /
   `RMitemInfitMI()` (column type changes from logical to character).
@@ -151,6 +163,20 @@ simulated expected range), restructured to match the other simulation tools:
 - `RMlocdepGamma()`: corrected the `$direction2` caption / `@return` wording to
   "total - Item2" (with a note that direction 2 lists pairs in reverse order);
   computations unchanged (labelling fix).
+- `RMdifTree()`: fixed a "variable lengths differ" error when a single covariate
+  was passed by index or expression (e.g. `covariates = phq9[, 10]`). The
+  derived non-syntactic column name is now matched as a literal column rather
+  than re-evaluated as an R expression against the original (pre-NA-drop) data.
+- `RMdifTree(stability = TRUE)` no longer silences the console in front-ends
+  (e.g. RStudio) that redirect the message stream. The internal stderr capture
+  used to muffle resample-fit noise reset the message sink to the default,
+  clobbering the front-end's sink; it now only redirects when no foreign message
+  sink is active.
+- `RMitemRestscore(p_adj = "none")` now returns the unadjusted p-values instead
+  of `NA` with a "NAs introduced by coercion" warning. With no adjustment
+  `iarm::item_restscore()` omits the adjusted-p column, so the p-value is now
+  selected by name rather than by a fixed column position (which had picked up
+  the significance-stars column). The table header reads "p-value" in this case.
 
 # easyRasch2 0.8.0
 

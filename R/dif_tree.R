@@ -422,8 +422,14 @@ RMdifTree <- function(data,
   combined  <- covariates
   combined$.items <- items_mat
 
+  # Backtick-protect the covariate names so they are matched as literal
+  # column names in `combined`. Without this, a non-syntactic name (e.g.
+  # "phq9[, 10]", produced when the user passes a single column like
+  # `covariates = phq9[, 10]`) would be parsed by reformulate() as an R
+  # expression and re-evaluated against the *original* data inside
+  # model.frame(), triggering a "variable lengths differ" error.
   fmla <- stats::reformulate(
-    termlabels = names(covariates),
+    termlabels = sprintf("`%s`", names(covariates)),
     response   = ".items"
   )
 
@@ -528,10 +534,20 @@ RMdifTree <- function(data,
   #      invert a rank-deficient score covariance (printed via try()
   #      inside partykit::mob; non-fatal, the affected split is skipped).
   #
-  # We muffle the warnings via withCallingHandlers and capture stderr
-  # via sink() to swallow the printed try() error text. After the call
-  # returns we emit a single summary message so the user knows what
+  # We muffle the warnings via withCallingHandlers and (when safe) capture
+  # stderr via sink() to swallow the printed try() error text. After the
+  # call returns we emit a single summary message so the user knows what
   # happened during the resample fits.
+  #
+  # Caveat on the message sink: R allows only one message-stream sink at a
+  # time and offers no way to save and restore a pre-existing one. Some
+  # front-ends (notably RStudio) redirect the console's stderr at startup,
+  # so unconditionally calling sink(type = "message") here -- and resetting
+  # it with sink(NULL) afterwards -- would clobber that front-end sink and
+  # silence all subsequent console output (the symptom: RMdifTree() returns
+  # but prints nothing). We therefore only redirect when the message stream
+  # is still at its default (connection 2); otherwise we skip the capture
+  # (and the resample-error count) and let any rare try() text show.
   stability_result <- NULL
   if (stability) {
     sampler <- if (stability_sampler == "subsampling") {
@@ -543,9 +559,14 @@ RMdifTree <- function(data,
     n_min_zero  <- 0L
     n_null_cat  <- 0L
 
-    err_file <- tempfile(fileext = ".log")
-    err_con  <- file(err_file, open = "wt")
-    sink(err_con, type = "message")
+    capture_stderr <- sink.number(type = "message") == 2L
+    err_file <- NULL
+    err_con  <- NULL
+    if (capture_stderr) {
+      err_file <- tempfile(fileext = ".log")
+      err_con  <- file(err_file, open = "wt")
+      sink(err_con, type = "message")
+    }
 
     stability_result <- tryCatch(
       withCallingHandlers(
@@ -562,15 +583,20 @@ RMdifTree <- function(data,
         }
       ),
       finally = {
-        sink(NULL, type = "message")
-        close(err_con)
+        if (capture_stderr) {
+          sink(NULL, type = "message")
+          close(err_con)
+        }
       }
     )
 
-    err_lines <- tryCatch(readLines(err_file, warn = FALSE),
-                          error = function(e) character())
-    unlink(err_file)
-    n_resample_errors <- sum(grepl("^Error", err_lines))
+    n_resample_errors <- 0L
+    if (capture_stderr) {
+      err_lines <- tryCatch(readLines(err_file, warn = FALSE),
+                            error = function(e) character())
+      unlink(err_file)
+      n_resample_errors <- sum(grepl("^Error", err_lines))
+    }
 
     # Single user-facing summary, only if anything noteworthy happened.
     summary_parts <- character()

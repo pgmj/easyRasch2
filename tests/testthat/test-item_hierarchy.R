@@ -97,6 +97,19 @@ test_that("RMitemHierarchy actually applies item_labels to the x-axis", {
   }
 })
 
+test_that("RMitemHierarchy does not duplicate the column name when item_labels is unset", {
+  # Regression: with no item_labels the y-axis label should be just the column
+  # name, not "I1 - I1".
+  skip_if_not_installed("eRm")
+  skip_if_not_installed("ggplot2")
+  df <- make_polytomous()
+  p  <- RMitemHierarchy(df)
+  sc <- ggplot2::ggplot_build(p)$plot$scales$get_scales("x")
+  expect_setequal(names(sc$labels), names(df))
+  expect_equal(unname(sc$labels[names(df)]), names(df))
+  expect_false(any(grepl(" - ", sc$labels, fixed = TRUE)))
+})
+
 # ---------------------------------------------------------------------
 # Dataframe output
 # ---------------------------------------------------------------------

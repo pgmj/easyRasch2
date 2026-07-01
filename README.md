@@ -77,7 +77,7 @@ remotes::install_github("pgmj/easyRasch2")
 - `RMitemInfit()` — conditional infit MSQ; optional bootstrap p-values
   (`p_value = TRUE`) with family-wise (Westfall–Young) or FDR multiple-comparison
   correction
-- `RMitemInfitCutoff()` + `RMitemInfitCutoffPlot()` — simulation-based cutoffs and plot
+- `RMitemInfitCutoff()` + `RMitemInfitPlot()` — simulation-based cutoffs and plot
 - `RMitemInfitMI()` + `RMitemInfitCutoffMI()` — multiple-imputation variants
 - `RMitemRestscore()` — item-restscore with Goodman-Kruskal's gamma
 - `RMitemRestscoreBoot()` — non-parametric bootstrap of item-restscore fit

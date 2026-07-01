@@ -111,6 +111,7 @@ RMitemHierarchy <- function(data,
          call. = FALSE)
   }
 
+  labels_supplied <- !is.null(item_labels)
   if (is.null(item_labels)) {
     item_labels <- names(data)
   } else {
@@ -173,10 +174,17 @@ RMitemHierarchy <- function(data,
   if (output == "dataframe") return(long_df)
 
   # --- Plot ---------------------------------------------------------------
-  # Axis labels: "I1 - label" wrapped at 36 chars (base R; matches the
-  # original's str_wrap usage).
+  # Axis labels wrapped at 36 chars (base R; matches the original's str_wrap
+  # usage). Only append " - label" when item_labels were actually supplied;
+  # otherwise the default labels are the column names and would be repeated
+  # ("I1 - I1").
+  axis_base <- if (labels_supplied) {
+    paste0(item_order, " - ", label_order)
+  } else {
+    item_order
+  }
   axis_labels <- vapply(
-    paste0(item_order, " - ", label_order),
+    axis_base,
     function(s) paste(strwrap(s, width = 36L), collapse = "\n"),
     character(1L)
   )

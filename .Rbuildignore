@@ -14,6 +14,7 @@
 ^\.claude$
 ^Rplots\.pdf$
 ^data-raw$
+^CONTRIBUTING\.md$
 ^vignettes/precompile\.R$
 ^vignettes/easyRasch2-workflow\.Rmd\.orig$
 ^dev$

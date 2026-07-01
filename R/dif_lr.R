@@ -31,8 +31,8 @@
 #'   \code{"threshold"} reports each individual threshold per group. For
 #'   dichotomous (RM) data the two views are equivalent (one threshold per
 #'   item).
-#' @param output One of \code{"ggplot"} (default), \code{"kable"}, or
-#'   \code{"dataframe"}. The data.frame view always carries a
+#' @param output One of \code{"kable"} (default), \code{"dataframe"}, or
+#'   \code{"ggplot"}. The data.frame view always carries a
 #'   \code{Flagged} logical column; the kable view bolds flagged rows; the
 #'   ggplot view shows confidence intervals.
 #' @param cutoff Numeric or \code{NULL}. Threshold (in logits) for the
@@ -80,12 +80,14 @@
 #' data("pcmdat2", package = "eRm")
 #' grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
 #'
-#' # Default: ggplot panel of item locations with 95% CIs
+#' # Default: kable of per-group item locations
 #' RMdifLR(pcmdat2, dif_var = grp)
 #'
+#' # ggplot panel of item locations with 95% CIs
+#' RMdifLR(pcmdat2, dif_var = grp, output = "ggplot")
+#'
 #' # Threshold-level kable, sorted by MaxDiff
-#' RMdifLR(pcmdat2, dif_var = grp,
-#'         level = "threshold", output = "kable", sort = TRUE)
+#' RMdifLR(pcmdat2, dif_var = grp, level = "threshold", sort = TRUE)
 #'
 #' # Tidy data.frame for downstream use
 #' df <- RMdifLR(pcmdat2, dif_var = grp, output = "dataframe")
@@ -99,7 +101,7 @@ RMdifLR <- function(data,
                     dif_var,
                     model  = c("auto", "PCM", "RM"),
                     level  = c("item", "threshold"),
-                    output = c("ggplot", "kable", "dataframe"),
+                    output = c("kable", "dataframe", "ggplot"),
                     cutoff = 0.5,
                     conf   = 0.95,
                     sort   = FALSE) {

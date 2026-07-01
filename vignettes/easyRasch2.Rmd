@@ -195,7 +195,7 @@ Table: MSQ values based on conditional estimation (n = 600 complete cases). Cuto
 
 
 
-You can also get a plot summarizing simulated and observed item infit, using `RMitemInfitCutoffPlot()`. Since conditional infit needs complete data, there is a sibling function that uses multiple imputation with infit that is useful if you have partial missingness in your data - `RMitemInfitMI()` and `RMitemInfitCutoffMI()`.
+You can also get a plot summarizing simulated and observed item infit, using `RMitemInfitPlot()`. Since conditional infit needs complete data, there is a sibling function that uses multiple imputation with infit that is useful if you have partial missingness in your data - `RMitemInfitMI()` and `RMitemInfitCutoffMI()`.
 
 It is important to note that the `RIitemfit()` function uses **conditional**
 infit, which is both robust to different sample sizes and makes ZSTD unnecessary
@@ -508,7 +508,7 @@ gender_g <- droplevels(gender[keep])
 
 
 ``` r
-RMdifLR(items_g, dif_var = gender_g, level = "threshold")
+RMdifLR(items_g, dif_var = gender_g, level = "threshold", output = "ggplot")
 ```
 
 <div class="figure">
@@ -585,7 +585,7 @@ Table: Reliability for 9 items, n = 600. PSI is the WLE-based separation reliabi
 |Cronbach's alpha |    0.886|               NA|               NA|no bootstrap               |
 |PSI              |    0.838|               NA|               NA|no bootstrap               |
 |Marginal         |    0.862|               NA|               NA|no bootstrap               |
-|RMU (WLE)        |    0.883|            0.868|            0.897|200 PVs, 20 RMU iterations |
+|RMU (WLE)        |    0.882|            0.868|            0.898|200 PVs, 20 RMU iterations |
 
 
 

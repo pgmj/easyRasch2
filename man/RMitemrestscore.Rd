@@ -20,8 +20,9 @@ by the absolute magnitude of \code{Difference} in descending order, so that
 both over- and underfitting items appear near the top.}
 
 \item{p_adj}{Character string specifying the p-value adjustment method
-passed to \code{iarm::item_restscore()}. Default \code{"BH"} (Benjamini-Hochberg).
-See \code{\link[stats:p.adjust]{stats::p.adjust()}} for available methods.}
+passed to \code{iarm::item_restscore()}. Default \code{"BH"} (Benjamini-Hochberg);
+use \code{"none"} for unadjusted p-values. Run \code{?stats::p.adjust} for the list
+of available methods.}
 }
 \value{
 \itemize{

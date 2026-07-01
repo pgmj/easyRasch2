@@ -85,3 +85,75 @@ test_that("RMUreliability on synthetic high-reliability draws returns plausible 
   # Strong signal should give reliability well above 0.5
   expect_gt(res$rmu_estimate, 0.5)
 })
+
+# ---------------------------------------------------------------------
+# RMreliability() -- bootstrap path (sequential)
+# ---------------------------------------------------------------------
+test_that("RMreliability with boot = TRUE (sequential) returns finite CIs", {
+  skip_on_cran()
+  skip_if_not_installed("eRm")
+  skip_if_not_installed("mirt")
+  skip_if_not_installed("ggdist")
+  df <- make_dichotomous(n = 150, k = 8)
+  res <- RMreliability(df, draws = 30, rmu_iter = 5,
+                       boot = TRUE, boot_iter = 10, parallel = FALSE,
+                       seed = 42, output = "dataframe")
+  expect_s3_class(res, "data.frame")
+  psi_row  <- res[res$metric == "PSI", ]
+  marg_row <- res[res$metric == "Marginal", ]
+  expect_true(is.finite(psi_row$lower)  && is.finite(psi_row$upper))
+  expect_true(is.finite(marg_row$lower) && is.finite(marg_row$upper))
+  expect_match(psi_row$notes, "bootstrap resamples")
+})
+
+# ---------------------------------------------------------------------
+# RMreliability() -- bootstrap path (parallel via mirai)
+# ---------------------------------------------------------------------
+test_that("RMreliability with boot = TRUE (parallel) runs via mirai", {
+  skip_on_cran()
+  skip_if_not_installed("eRm")
+  skip_if_not_installed("mirt")
+  skip_if_not_installed("ggdist")
+  skip_if_not_installed("mirai")
+  df <- make_dichotomous(n = 120, k = 6)
+  res <- RMreliability(df, draws = 20, rmu_iter = 3,
+                       boot = TRUE, boot_iter = 4, parallel = TRUE,
+                       n_cores = 2, seed = 7, output = "dataframe")
+  expect_s3_class(res, "data.frame")
+  expect_true(nrow(res) >= 4L)
+})
+
+# ---------------------------------------------------------------------
+# cronbach_alpha() -- internal edge cases
+# ---------------------------------------------------------------------
+test_that("cronbach_alpha returns NA for <2 items or zero total variance", {
+  one_col <- data.frame(a = sample(0:1, 20, replace = TRUE))
+  expect_true(is.na(easyRasch2:::cronbach_alpha(one_col)))
+  const <- as.data.frame(matrix(1L, nrow = 30, ncol = 5))
+  expect_true(is.na(easyRasch2:::cronbach_alpha(const)))
+})
+
+# ---------------------------------------------------------------------
+# RMUreliability() -- warnings / verbose / degenerate columns
+# ---------------------------------------------------------------------
+test_that("RMUreliability warns on zero-SD columns", {
+  skip_if_not_installed("ggdist")
+  set.seed(1)
+  m <- cbind(rnorm(60), rnorm(60), rnorm(60), 5)  # last column constant
+  expect_warning(RMUreliability(m), regexp = "zero standard deviation")
+})
+
+test_that("RMUreliability warns on NA values", {
+  skip_if_not_installed("ggdist")
+  set.seed(2)
+  m <- matrix(rnorm(60 * 4), nrow = 60, ncol = 4)
+  m[1, 1] <- NA
+  expect_warning(RMUreliability(m), regexp = "NA value")
+})
+
+test_that("RMUreliability prints input summary when verbose = TRUE", {
+  skip_if_not_installed("ggdist")
+  set.seed(3)
+  m <- matrix(rnorm(60 * 4), nrow = 60, ncol = 4)
+  expect_message(RMUreliability(m, verbose = TRUE), regexp = "Subjects")
+})

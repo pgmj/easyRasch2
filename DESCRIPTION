@@ -1,6 +1,6 @@
 Package: easyRasch2
 Title: Psychometric Analysis with Rasch Measurement Theory
-Version: 0.8.0.925
+Version: 0.8.0.928
 Authors@R: c(
     person("Magnus", "Johansson",
            role = c("aut", "cre"),
@@ -67,6 +67,7 @@ Suggests:
     scales,
     mice,
     ggrepel,
-    lavaan
+    lavaan,
+    withr
 Config/testthat/edition: 3
 VignetteBuilder: knitr

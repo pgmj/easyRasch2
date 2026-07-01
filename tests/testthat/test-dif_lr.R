@@ -123,6 +123,14 @@ test_that("RMdifLR output = 'kable' returns a knitr_kable", {
   expect_s3_class(out, "knitr_kable")
 })
 
+test_that("RMdifLR defaults to kable (consistent with other kable/ggplot functions)", {
+  skip_if_not_installed("eRm")
+  skip_if_not_installed("knitr")
+  df  <- make_dichotomous()
+  grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
+  expect_s3_class(RMdifLR(df, dif_var = grp), "knitr_kable")
+})
+
 test_that("RMdifLR output = 'ggplot' returns a ggplot", {
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")

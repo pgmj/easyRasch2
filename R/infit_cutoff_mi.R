@@ -30,7 +30,7 @@
 #'
 #' @return A list with the same structure as \code{\link{RMitemInfitCutoff}}, so
 #'   that the result can be passed directly to \code{\link{RMitemInfit}},
-#'   \code{\link{RMitemInfitMI}}, and \code{\link{RMitemInfitCutoffPlot}}:
+#'   \code{\link{RMitemInfitMI}}, and \code{\link{RMitemInfitPlot}}:
 #' \describe{
 #'   \item{`results`}{data.frame with columns `iteration`, `imputation`,
 #'     `Item`, `InfitMSQ`, `OutfitMSQ` — the stacked simulation results from
@@ -68,7 +68,7 @@
 #' The `mice` package must be installed (it is in Suggests, not Imports).
 #'
 #' @seealso \code{\link{RMitemInfitCutoff}}, \code{\link{RMitemInfitMI}},
-#'   \code{\link{RMitemInfitCutoffPlot}}
+#'   \code{\link{RMitemInfitPlot}}
 #'
 #' @export
 #'

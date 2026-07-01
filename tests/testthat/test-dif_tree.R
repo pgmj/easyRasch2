@@ -258,6 +258,27 @@ test_that("stability = TRUE attaches a stability summary attribute", {
   expect_s3_class(attr(df, "stability_kable"), "knitr_kable")
 })
 
+test_that("stability = TRUE does not clobber a pre-existing message sink", {
+  need_tree_pkgs()
+  skip_if_not_installed("stablelearner")
+  d <- make_dif_dichotomous()
+  # Mimic a front-end (e.g. RStudio) that has redirected the message
+  # stream before the call. The function must leave that sink in place;
+  # resetting it to the default (connection 2) silences console output.
+  con <- file(tempfile(), open = "wt")
+  withr::defer({
+    if (sink.number(type = "message") != 2L) sink(NULL, type = "message")
+    close(con)
+  })
+  sink(con, type = "message")
+  before <- sink.number(type = "message")
+  set.seed(1)
+  invisible(RMdifTree(d$items, covariates = d$covs, minsize = 50,
+                      stability = TRUE, stability_B = 5L,
+                      output = "dataframe"))
+  expect_equal(sink.number(type = "message"), before)
+})
+
 # ---------------------------------------------------------------------
 # Covariate-name propagation
 # ---------------------------------------------------------------------
@@ -287,4 +308,17 @@ test_that("Existing data.frame column names are preserved", {
   df <- RMdifTree(d$items, covariates = d$covs,
                   minsize = 50, output = "dataframe")
   expect_true(all(df$Variable %in% names(d$covs)))
+})
+
+test_that("single covariate passed by numeric index (non-syntactic name) works", {
+  need_tree_pkgs()
+  d <- make_dif_dichotomous()
+  set.seed(1)
+  # d$covs[, 2] drops to a vector whose derived name is the non-syntactic
+  # deparse "d$covs[, 2]"; the formula term must be matched as a literal
+  # column name, not re-evaluated as an expression.
+  df <- RMdifTree(d$items, covariates = d$covs[, 2],
+                  minsize = 50, output = "dataframe")
+  expect_s3_class(df, "data.frame")
+  expect_true("d$covs[, 2]" %in% df$Variable)
 })

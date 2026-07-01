@@ -4,10 +4,10 @@
 \alias{RMdimCFAPlot}
 \title{Plot observed CFA fit and loadings against the simulated null}
 \usage{
-RMdimCFAPlot(cutoff_res, data, percentile = NULL)
+RMdimCFAPlot(simfit, data, percentile = NULL)
 }
 \arguments{
-\item{cutoff_res}{The list returned by \code{\link{RMdimCFACutoff}}.}
+\item{simfit}{The list returned by \code{\link{RMdimCFACutoff}}.}
 
 \item{data}{The item-response data the CFA was run on (the same items used
 for the cutoff). Required: the observed values are computed from it.}
@@ -32,7 +32,7 @@ Returns two figures (in a list) comparing the observed one-factor CFA to
 the simulated null distribution from \code{\link{RMdimCFACutoff}}:
 a per-item standardized-loadings plot (observed marker against each item's
 simulated distribution and expected range, in the style of
-\code{\link{RMitemInfitCutoffPlot}}), and a faceted plot of the CFI / RMSEA
+\code{\link{RMitemInfitPlot}}), and a faceted plot of the CFI / RMSEA
 / SRMR distributions with the observed value overlaid.
 }
 \examples{

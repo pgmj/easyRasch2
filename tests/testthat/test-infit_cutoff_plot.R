@@ -1,4 +1,4 @@
-# Tests for RMitemInfitCutoffPlot()
+# Tests for RMitemInfitPlot() (and its deprecated alias RMitemInfitCutoffPlot())
 
 make_dichotomous <- function(n = 200, k = 8, seed = 1L) {
   set.seed(seed)
@@ -10,43 +10,43 @@ make_dichotomous <- function(n = 200, k = 8, seed = 1L) {
 # ---------------------------------------------------------------------
 # Output structures: simulated-only distribution
 # ---------------------------------------------------------------------
-test_that("RMitemInfitCutoffPlot returns a ggplot from a simfit result (no data overlay)", {
+test_that("RMitemInfitPlot returns a ggplot from a simfit result (no data overlay)", {
   skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   skip_if_not_installed("ggplot2")
   df     <- make_dichotomous()
   simfit <- RMitemInfitCutoff(df, iterations = 10L, parallel = FALSE, seed = 1L)
-  p <- RMitemInfitCutoffPlot(simfit)
+  p <- RMitemInfitPlot(simfit)
   expect_s3_class(p, "ggplot")
 })
 
 # ---------------------------------------------------------------------
 # Output structures: with observed-data overlay
 # ---------------------------------------------------------------------
-test_that("RMitemInfitCutoffPlot with observed data overlay returns a ggplot", {
+test_that("RMitemInfitPlot with observed data overlay returns a ggplot", {
   skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   skip_if_not_installed("ggplot2")
   df     <- make_dichotomous()
   simfit <- RMitemInfitCutoff(df, iterations = 10L, parallel = FALSE, seed = 1L)
-  p <- RMitemInfitCutoffPlot(simfit, df)  # default statistic = "infit"
+  p <- RMitemInfitPlot(simfit, df)  # default statistic = "infit"
   expect_s3_class(p, "ggplot")
 })
 
-test_that("RMitemInfitCutoffPlot statistic = 'outfit' returns a ggplot", {
+test_that("RMitemInfitPlot statistic = 'outfit' returns a ggplot", {
   skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   skip_if_not_installed("ggplot2")
   df     <- make_dichotomous()
   simfit <- RMitemInfitCutoff(df, iterations = 10L, parallel = FALSE, seed = 1L)
-  p <- RMitemInfitCutoffPlot(simfit, df, statistic = "outfit")
+  p <- RMitemInfitPlot(simfit, df, statistic = "outfit")
   expect_s3_class(p, "ggplot")
 })
 
-test_that("RMitemInfitCutoffPlot statistic = 'both' returns a (patchwork) ggplot", {
+test_that("RMitemInfitPlot statistic = 'both' returns a (patchwork) ggplot", {
   skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
@@ -54,7 +54,21 @@ test_that("RMitemInfitCutoffPlot statistic = 'both' returns a (patchwork) ggplot
   skip_if_not_installed("patchwork")
   df     <- make_dichotomous()
   simfit <- RMitemInfitCutoff(df, iterations = 10L, parallel = FALSE, seed = 1L)
-  p <- RMitemInfitCutoffPlot(simfit, df, statistic = "both")
+  p <- RMitemInfitPlot(simfit, df, statistic = "both")
   # patchwork compositions also inherit ggplot
+  expect_s3_class(p, "ggplot")
+})
+
+# ---------------------------------------------------------------------
+# Deprecated alias
+# ---------------------------------------------------------------------
+test_that("RMitemInfitCutoffPlot is a deprecated alias forwarding to RMitemInfitPlot", {
+  skip_if_not_installed("eRm")
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("ggdist")
+  skip_if_not_installed("ggplot2")
+  df     <- make_dichotomous()
+  simfit <- RMitemInfitCutoff(df, iterations = 10L, parallel = FALSE, seed = 1L)
+  expect_snapshot(p <- RMitemInfitCutoffPlot(simfit))
   expect_s3_class(p, "ggplot")
 })

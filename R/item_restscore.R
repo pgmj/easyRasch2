@@ -15,8 +15,9 @@
 #'   by the absolute magnitude of `Difference` in descending order, so that
 #'   both over- and underfitting items appear near the top.
 #' @param p_adj Character string specifying the p-value adjustment method
-#'   passed to `iarm::item_restscore()`. Default `"BH"` (Benjamini-Hochberg).
-#'   See [stats::p.adjust()] for available methods.
+#'   passed to `iarm::item_restscore()`. Default `"BH"` (Benjamini-Hochberg);
+#'   use `"none"` for unadjusted p-values. Run `?stats::p.adjust` for the list
+#'   of available methods.
 #'
 #' @return
 #' * If `output = "kable"`: a `knitr_kable` object (plain text table via
@@ -55,8 +56,8 @@
 #' The `iarm` package must be installed (it is in Suggests, not Imports).
 #'
 #' @references
-#' Kreiner, S. (2011). A Note on Item–Restscore Association in Rasch Models. 
-#' *Applied Psychological Measurement, 35*(7), 557–561. 
+#' Kreiner, S. (2011). A Note on Item–Restscore Association in Rasch Models.
+#' *Applied Psychological Measurement, 35*(7), 557–561.
 #' \doi{10.1177/0146621611410227}
 #'
 #' @export
@@ -80,7 +81,6 @@
 #' df <- RMitemRestscore(sim_data, output = "dataframe")
 #' }
 RMitemRestscore <- function(data, output = "kable", sort, p_adj = "BH") {
-
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
       "Package 'iarm' is required for RMitemRestscore() but is not installed.\n",
@@ -94,8 +94,10 @@ RMitemRestscore <- function(data, output = "kable", sort, p_adj = "BH") {
   validate_response_data(data)
 
   if (nrow(stats::na.omit(data)) == 0L) {
-    stop("No complete cases in data. All rows contain at least one NA.",
-         call. = FALSE)
+    stop(
+      "No complete cases in data. All rows contain at least one NA.",
+      call. = FALSE
+    )
   }
 
   data_mat <- as.matrix(data)
@@ -108,12 +110,17 @@ RMitemRestscore <- function(data, output = "kable", sort, p_adj = "BH") {
   # item-restscore statistic from iarm is conditional and engine-invariant; the
   # relative-location reference shifts only slightly (WLE vs eRm MLE person
   # mean), since item and person locations move together with the scale.
-  fit      <- psychotools::pcmodel(data)
-  thr_list <- .center_thresholds(lapply(psychotools::threshpar(fit), as.numeric))
+  fit <- psychotools::pcmodel(data)
+  thr_list <- .center_thresholds(lapply(
+    psychotools::threshpar(fit),
+    as.numeric
+  ))
   item_avg_locations <- vapply(thr_list, mean, numeric(1L))
   names(item_avg_locations) <- names(data)
   person_avg_location <- mean(
-    .estimate_thetas(data_mat, thr_list, method = "WLE")$theta, na.rm = TRUE)
+    .estimate_thetas(data_mat, thr_list, method = "WLE")$theta,
+    na.rm = TRUE
+  )
 
   relative_item_avg_locations <- item_avg_locations - person_avg_location
 
@@ -126,12 +133,19 @@ RMitemRestscore <- function(data, output = "kable", sort, p_adj = "BH") {
   i1 <- iarm::item_restscore(fit, p.adj = p_adj)
   i1 <- as.data.frame(i1)
 
-  # i1[[1]] is the results matrix: col 1 = observed, col 2 = expected,
-  # col 3 = se, col 4 = z-statistic, col 5 = adjusted p-value, col 6 = significance
-  res_mat  <- i1[[1]]
-  observed  <- round(as.numeric(res_mat[seq_len(n_items), 1L]), 2)
-  expected  <- round(as.numeric(res_mat[seq_len(n_items), 2L]), 2)
-  p_adjusted <- round(as.numeric(res_mat[seq_len(n_items), 5L]), 3)
+  # i1[[1]] is the results matrix. iarm::item_restscore() appends an
+  # adjusted-p column named "padj.<method>" (e.g. "padj.BH") only when
+  # p.adj != "none"; with p.adj = "none" that column is absent and the
+  # fixed position 5 is instead the significance-stars column ("sig"),
+  # whose "***"/"." strings coerce to NA. Select the p-value column by
+  # name: the adjusted column when present, otherwise the raw "pvalue".
+  res_mat <- i1[[1]]
+  cn <- colnames(res_mat)
+  padj_idx <- grep("^padj", cn)
+  p_col <- if (length(padj_idx) == 1L) padj_idx else match("pvalue", cn)
+  observed <- round(as.numeric(res_mat[seq_len(n_items), 1L]), 2)
+  expected <- round(as.numeric(res_mat[seq_len(n_items), 2L]), 2)
+  p_adjusted <- round(as.numeric(res_mat[seq_len(n_items), p_col]), 3)
 
   # Flagged labels the misfit direction (only when adj. p < .05): observed
   # above expected = over-discrimination ("overfit", often local dependence);
@@ -140,21 +154,26 @@ RMitemRestscore <- function(data, output = "kable", sort, p_adj = "BH") {
   # statistic is underfit).
   difference <- round(observed - expected, 3)
   flagged <- ifelse(
-    !is.na(p_adjusted) & p_adjusted < 0.05 & difference > 0, "overfit",
-    ifelse(!is.na(p_adjusted) & p_adjusted < 0.05 & difference < 0, "underfit", "")
+    !is.na(p_adjusted) & p_adjusted < 0.05 & difference > 0,
+    "overfit",
+    ifelse(
+      !is.na(p_adjusted) & p_adjusted < 0.05 & difference < 0,
+      "underfit",
+      ""
+    )
   )
 
   # --- Assemble result data.frame --------------------------------------------
   i2 <- data.frame(
-    Item                = names(data),
-    Observed            = observed,
-    Expected            = expected,
-    Difference          = difference,
-    p_adjusted          = p_adjusted,
-    Flagged             = flagged,
-    Relative_location   = round(relative_item_avg_locations, 2),
-    stringsAsFactors    = FALSE,
-    row.names           = NULL
+    Item = names(data),
+    Observed = observed,
+    Expected = expected,
+    Difference = difference,
+    p_adjusted = p_adjusted,
+    Flagged = flagged,
+    Relative_location = round(relative_item_avg_locations, 2),
+    stringsAsFactors = FALSE,
+    row.names = NULL
   )
 
   # --- Sort if requested -----------------------------------------------------
@@ -170,21 +189,31 @@ RMitemRestscore <- function(data, output = "kable", sort, p_adj = "BH") {
     return(i2)
   }
 
+  p_header <- if (identical(p_adj, "none")) {
+    "p-value"
+  } else {
+    paste0("Adj. p-value (", p_adj, ")")
+  }
+
   knitr::kable(
     i2,
-    format   = "pipe",
+    format = "pipe",
     col.names = c(
       "Item",
       "Observed",
       "Expected",
       "Difference",
-      paste0("Adj. p-value (", p_adj, ")"),
+      p_header,
       "Flagged",
       "Rel. location"
     ),
     caption = paste0(
-      "Item-restscore associations (n = ", n_complete, " complete cases). ",
-      "Flagged (adj. p < .05): overfit = observed above expected ",
+      "Item-restscore associations (n = ",
+      n_complete,
+      " complete cases). ",
+      "Flagged (",
+      if (identical(p_adj, "none")) "p" else "adj. p",
+      " < .05): overfit = observed above expected ",
       "(over-discrimination, often local dependence); underfit = below ",
       "(under-discrimination, often multidimensionality/noise)."
     )

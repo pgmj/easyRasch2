@@ -56,6 +56,25 @@ test_that("RMitemRestscore output = 'dataframe' returns correct structure (dicho
                tolerance = 1e-3)
 })
 
+test_that("RMitemRestscore p_adj = 'none' returns numeric raw p-values without a coercion warning", {
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("eRm")
+  set.seed(42)
+  df <- as.data.frame(
+    matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5)
+  )
+  colnames(df) <- paste0("Item", 1:5)
+
+  # Regression: with p.adj = "none" iarm drops the "padj.*" column, so the
+  # p-value must be read from "pvalue" by name, not from fixed position 5
+  # (which becomes the significance-stars column -> NA + coercion warning).
+  expect_no_warning(
+    result <- RMitemRestscore(df, output = "dataframe", p_adj = "none")
+  )
+  expect_type(result$p_adjusted, "double")
+  expect_equal(sum(is.na(result$p_adjusted)), 0L)
+})
+
 test_that("RMitemRestscore output = 'kable' returns knitr_kable object", {
   skip_if_not_installed("iarm")
   skip_if_not_installed("eRm")

@@ -63,27 +63,26 @@
 #'                             seed = 42)
 #'
 #' # Simulated distribution only (infit + outfit faceted)
-#' RMitemInfitCutoffPlot(cutoff_res)
+#' RMitemInfitPlot(cutoff_res)
 #'
 #' # With observed fit overlaid (infit only, the default)
-#' RMitemInfitCutoffPlot(cutoff_res, data = sim_data)
+#' RMitemInfitPlot(cutoff_res, data = sim_data)
 #'
 #' # Both infit and outfit panels side by side
-#' RMitemInfitCutoffPlot(cutoff_res, data = sim_data, statistic = "both")
+#' RMitemInfitPlot(cutoff_res, data = sim_data, statistic = "both")
 #' }
-RMitemInfitCutoffPlot <- function(simfit, data, statistic = "infit") {
-
+RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
   # --- Check required packages ------------------------------------------------
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop(
-      "Package 'ggplot2' is required for RMitemInfitCutoffPlot() but is not installed.\n",
+      "Package 'ggplot2' is required for RMitemInfitPlot() but is not installed.\n",
       "Install it with: install.packages(\"ggplot2\")",
       call. = FALSE
     )
   }
   if (!requireNamespace("ggdist", quietly = TRUE)) {
     stop(
-      "Package 'ggdist' is required for RMitemInfitCutoffPlot() but is not installed.\n",
+      "Package 'ggdist' is required for RMitemInfitPlot() but is not installed.\n",
       "Install it with: install.packages(\"ggdist\")",
       call. = FALSE
     )
@@ -92,8 +91,13 @@ RMitemInfitCutoffPlot <- function(simfit, data, statistic = "infit") {
   statistic <- match.arg(statistic, c("infit", "outfit", "both"))
 
   # --- Validate simfit --------------------------------------------------------
-  required_names <- c("results", "item_cutoffs", "actual_iterations",
-                      "sample_n", "item_names")
+  required_names <- c(
+    "results",
+    "item_cutoffs",
+    "actual_iterations",
+    "sample_n",
+    "item_names"
+  )
   missing_names <- setdiff(required_names, names(simfit))
   if (length(missing_names) > 0L) {
     stop(
@@ -104,50 +108,52 @@ RMitemInfitCutoffPlot <- function(simfit, data, statistic = "infit") {
     )
   }
 
-  results_df       <- simfit$results
-  item_cutoffs     <- simfit$item_cutoffs
+  results_df <- simfit$results
+  item_cutoffs <- simfit$item_cutoffs
   actual_iterations <- simfit$actual_iterations
-  sample_n         <- simfit$sample_n
-  item_names       <- simfit$item_names
+  sample_n <- simfit$sample_n
+  item_names <- simfit$item_names
 
   # Item factor levels (reversed for plotting top-to-bottom)
   item_levels <- rev(item_names)
 
   # --- Compute per-item summary intervals for segment overlays ----------------
-  lo_hi <- do.call(rbind, lapply(item_names, function(item) {
-    sub <- results_df[results_df$Item == item, ]
-    data.frame(
-      Item              = item,
-      min_infit_msq     = stats::quantile(sub$InfitMSQ,  0.001, na.rm = TRUE),
-      max_infit_msq     = stats::quantile(sub$InfitMSQ,  0.999, na.rm = TRUE),
-      p66lo_infit_msq   = stats::quantile(sub$InfitMSQ,  0.167, na.rm = TRUE),
-      p66hi_infit_msq   = stats::quantile(sub$InfitMSQ,  0.833, na.rm = TRUE),
-      median_infit      = stats::median(sub$InfitMSQ, na.rm = TRUE),
-      min_outfit_msq    = stats::quantile(sub$OutfitMSQ, 0.001, na.rm = TRUE),
-      max_outfit_msq    = stats::quantile(sub$OutfitMSQ, 0.999, na.rm = TRUE),
-      p66lo_outfit_msq  = stats::quantile(sub$OutfitMSQ, 0.167, na.rm = TRUE),
-      p66hi_outfit_msq  = stats::quantile(sub$OutfitMSQ, 0.833, na.rm = TRUE),
-      median_outfit     = stats::median(sub$OutfitMSQ, na.rm = TRUE),
-      stringsAsFactors  = FALSE,
-      row.names         = NULL
-    )
-  }))
+  lo_hi <- do.call(
+    rbind,
+    lapply(item_names, function(item) {
+      sub <- results_df[results_df$Item == item, ]
+      data.frame(
+        Item = item,
+        min_infit_msq = stats::quantile(sub$InfitMSQ, 0.001, na.rm = TRUE),
+        max_infit_msq = stats::quantile(sub$InfitMSQ, 0.999, na.rm = TRUE),
+        p66lo_infit_msq = stats::quantile(sub$InfitMSQ, 0.167, na.rm = TRUE),
+        p66hi_infit_msq = stats::quantile(sub$InfitMSQ, 0.833, na.rm = TRUE),
+        median_infit = stats::median(sub$InfitMSQ, na.rm = TRUE),
+        min_outfit_msq = stats::quantile(sub$OutfitMSQ, 0.001, na.rm = TRUE),
+        max_outfit_msq = stats::quantile(sub$OutfitMSQ, 0.999, na.rm = TRUE),
+        p66lo_outfit_msq = stats::quantile(sub$OutfitMSQ, 0.167, na.rm = TRUE),
+        p66hi_outfit_msq = stats::quantile(sub$OutfitMSQ, 0.833, na.rm = TRUE),
+        median_outfit = stats::median(sub$OutfitMSQ, na.rm = TRUE),
+        stringsAsFactors = FALSE,
+        row.names = NULL
+      )
+    })
+  )
   rownames(lo_hi) <- NULL
 
   # --- Case 1: no observed data, show simulation distribution only ------------
   if (missing(data)) {
-
     # Pivot results to long format
     infit_long <- data.frame(
-      Item      = results_df$Item,
+      Item = results_df$Item,
       statistic = "InfitMSQ",
-      Value     = results_df$InfitMSQ,
+      Value = results_df$InfitMSQ,
       stringsAsFactors = FALSE
     )
     outfit_long <- data.frame(
-      Item      = results_df$Item,
+      Item = results_df$Item,
       statistic = "OutfitMSQ",
-      Value     = results_df$OutfitMSQ,
+      Value = results_df$OutfitMSQ,
       stringsAsFactors = FALSE
     )
     results_long <- rbind(infit_long, outfit_long)
@@ -172,8 +178,11 @@ RMitemInfitCutoffPlot <- function(simfit, data, statistic = "infit") {
         x = "Conditional MSQ",
         y = "Item",
         caption = er2_caption(paste0(
-          "Results from ", actual_iterations,
-          " simulated datasets with ", sample_n, " respondents."
+          "Results from ",
+          actual_iterations,
+          " simulated datasets with ",
+          sample_n,
+          " respondents."
         ))
       ) +
       ggplot2::scale_color_manual(
@@ -221,27 +230,34 @@ RMitemInfitCutoffPlot <- function(simfit, data, statistic = "infit") {
   cfit <- iarm::out_infit(erm_out)
 
   observed_df <- data.frame(
-    Item      = names(data),
-    observed_infit  = cfit$Infit,
+    Item = names(data),
+    observed_infit = cfit$Infit,
     observed_outfit = cfit$Outfit,
     stringsAsFactors = FALSE
   )
 
   # --- Build infit data -------------------------------------------------------
   infit_sim <- data.frame(
-    Item      = results_df$Item,
-    Value     = results_df$InfitMSQ,
+    Item = results_df$Item,
+    Value = results_df$InfitMSQ,
     stringsAsFactors = FALSE
   )
-  infit_sim <- merge(infit_sim, observed_df[, c("Item", "observed_infit")],
-                     by = "Item", sort = FALSE)
+  infit_sim <- merge(
+    infit_sim,
+    observed_df[, c("Item", "observed_infit")],
+    by = "Item",
+    sort = FALSE
+  )
   infit_sim$Item <- factor(infit_sim$Item, levels = item_levels)
 
   lo_hi$Item_f <- factor(lo_hi$Item, levels = item_levels)
 
   caption_text <- er2_caption(paste0(
-    "Results from ", actual_iterations,
-    " simulated datasets with ", sample_n, " respondents.\n",
+    "Results from ",
+    actual_iterations,
+    " simulated datasets with ",
+    sample_n,
+    " respondents.\n",
     "Orange dots indicate observed conditional item fit. ",
     "Black dots indicate median fit from simulations."
   ))
@@ -317,12 +333,16 @@ RMitemInfitCutoffPlot <- function(simfit, data, statistic = "infit") {
 
   # --- Build outfit data ------------------------------------------------------
   outfit_sim <- data.frame(
-    Item      = results_df$Item,
-    Value     = results_df$OutfitMSQ,
+    Item = results_df$Item,
+    Value = results_df$OutfitMSQ,
     stringsAsFactors = FALSE
   )
-  outfit_sim <- merge(outfit_sim, observed_df[, c("Item", "observed_outfit")],
-                      by = "Item", sort = FALSE)
+  outfit_sim <- merge(
+    outfit_sim,
+    observed_df[, c("Item", "observed_outfit")],
+    by = "Item",
+    sort = FALSE
+  )
   outfit_sim$Item <- factor(outfit_sim$Item, levels = item_levels)
 
   outfit_p <- ggplot2::ggplot(
@@ -413,4 +433,16 @@ RMitemInfitCutoffPlot <- function(simfit, data, statistic = "infit") {
       ggplot2::labs(caption = caption_text)
     return(infit_p)
   }
+}
+
+#' @rdname RMitemInfitPlot
+#' @param ... Arguments passed on to \code{RMitemInfitPlot()}.
+#' @details
+#' `RMitemInfitCutoffPlot()` is a deprecated alias for `RMitemInfitPlot()`,
+#' retained for backward compatibility with code written against easyRasch2
+#' 0.8.0. It warns and forwards to `RMitemInfitPlot()`.
+#' @export
+RMitemInfitCutoffPlot <- function(...) {
+  .Deprecated("RMitemInfitPlot")
+  RMitemInfitPlot(...)
 }

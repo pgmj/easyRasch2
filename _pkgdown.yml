@@ -30,7 +30,7 @@ reference:
     contents:
       - RMitemInfit
       - RMitemInfitCutoff
-      - RMitemInfitCutoffPlot
+      - RMitemInfitPlot
       - RMitemInfitMI
       - RMitemInfitCutoffMI
       - RMitemICCPlot
