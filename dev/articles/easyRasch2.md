@@ -179,7 +179,7 @@ overfit = infit below range (more predictable); underfit = above range
 
 You can also get a plot summarizing simulated and observed item infit,
 using
-[`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffPlot.md).
+[`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md).
 Since conditional infit needs complete data, there is a sibling function
 that uses multiple imputation with infit that is useful if you have
 partial missingness in your data -
@@ -525,7 +525,7 @@ gender_g <- droplevels(gender[keep])
 
 ``` r
 
-RMdifLR(items_g, dif_var = gender_g, level = "threshold")
+RMdifLR(items_g, dif_var = gender_g, level = "threshold", output = "ggplot")
 ```
 
 ![\*\*Figure 10.\*\* \*Andersen LR-test DIF locations by
@@ -603,7 +603,7 @@ RMreliability(items, draws = 200, rmu_iter = 20, parallel = FALSE,
 | Cronbach’s alpha | 0.886 | NA | NA | no bootstrap |
 | PSI | 0.838 | NA | NA | no bootstrap |
 | Marginal | 0.862 | NA | NA | no bootstrap |
-| RMU (WLE) | 0.883 | 0.868 | 0.897 | 200 PVs, 20 RMU iterations |
+| RMU (WLE) | 0.882 | 0.868 | 0.898 | 200 PVs, 20 RMU iterations |
 
 Reliability for 9 items, n = 600. PSI is the WLE-based separation
 reliability and excludes min/max scoring respondents. {.table}

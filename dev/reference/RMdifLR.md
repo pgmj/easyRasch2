@@ -18,7 +18,7 @@ RMdifLR(
   dif_var,
   model = c("auto", "PCM", "RM"),
   level = c("item", "threshold"),
-  output = c("ggplot", "kable", "dataframe"),
+  output = c("kable", "dataframe", "ggplot"),
   cutoff = 0.5,
   conf = 0.95,
   sort = FALSE
@@ -58,7 +58,7 @@ RMdifLR(
 
 - output:
 
-  One of `"ggplot"` (default), `"kable"`, or `"dataframe"`. The
+  One of `"kable"` (default), `"dataframe"`, or `"ggplot"`. The
   data.frame view always carries a `Flagged` logical column; the kable
   view bolds flagged rows; the ggplot view shows confidence intervals.
 
@@ -122,13 +122,25 @@ set.seed(1)
 data("pcmdat2", package = "eRm")
 grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
 
-# Default: ggplot panel of item locations with 95% CIs
+# Default: kable of per-group item locations
 RMdifLR(pcmdat2, dif_var = grp)
+#> 
+#> 
+#> Table: Partial Credit Model split by DIF variable (2 groups). Andersen LR chi^2 = 4.064, df = 7, p = 0.772. n = 300 complete cases, 4 items. **Bold** = MaxDiff > 0.5 logits.
+#> 
+#> |Item |      A|      B|    All| MaxDiff|Flagged |  SE_A|  SE_B| SE_All|
+#> |:----|------:|------:|------:|-------:|:-------|-----:|-----:|------:|
+#> |I1   |  1.047|  1.010|  1.038|   0.037|no      | 0.251| 0.251|  0.177|
+#> |I2   |  1.305|  1.275|  1.283|   0.030|no      | 0.260| 0.251|  0.180|
+#> |I3   | -0.876| -0.843| -0.859|   0.034|no      | 0.365| 0.338|  0.247|
+#> |I4   | -0.050| -0.038| -0.047|   0.012|no      | 0.264| 0.258|  0.184|
+
+# ggplot panel of item locations with 95% CIs
+RMdifLR(pcmdat2, dif_var = grp, output = "ggplot")
 
 
 # Threshold-level kable, sorted by MaxDiff
-RMdifLR(pcmdat2, dif_var = grp,
-        level = "threshold", output = "kable", sort = TRUE)
+RMdifLR(pcmdat2, dif_var = grp, level = "threshold", sort = TRUE)
 #> 
 #> 
 #> Table: Partial Credit Model split by DIF variable (2 groups). Andersen LR chi^2 = 4.064, df = 7, p = 0.772. n = 300 complete cases, 4 items. **Bold** = MaxDiff > 0.5 logits.

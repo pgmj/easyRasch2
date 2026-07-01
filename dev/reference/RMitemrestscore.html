@@ -13,7 +13,7 @@ item locations relative to the sample mean person location."><meta name="robots"
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.925</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.928</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,8 +76,9 @@ both over- and underfitting items appear near the top.</p></dd>
 
 <dt id="arg-p-adj">p_adj<a class="anchor" aria-label="anchor" href="#arg-p-adj"></a></dt>
 <dd><p>Character string specifying the p-value adjustment method
-passed to <code><a href="https://rdrr.io/pkg/iarm/man/item_restscore.html" class="external-link">iarm::item_restscore()</a></code>. Default <code>"BH"</code> (Benjamini-Hochberg).
-See <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">stats::p.adjust()</a></code> for available methods.</p></dd>
+passed to <code><a href="https://rdrr.io/pkg/iarm/man/item_restscore.html" class="external-link">iarm::item_restscore()</a></code>. Default <code>"BH"</code> (Benjamini-Hochberg);
+use <code>"none"</code> for unadjusted p-values. Run <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">?stats::p.adjust</a></code> for the list
+of available methods.</p></dd>
 
 </dl></div>
     <div class="section level2">

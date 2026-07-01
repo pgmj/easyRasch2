@@ -87,7 +87,7 @@ remotes::install_github("pgmj/easyRasch2")
   (`p_value = TRUE`) with family-wise (Westfall–Young) or FDR
   multiple-comparison correction
 - [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md) +
-  [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffPlot.md)
+  [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
   — simulation-based cutoffs and plot
 - [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md) +
   [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md)
@@ -315,7 +315,8 @@ Conditional item fit statistics with simulation-based cutoffs
   : Conditional Item Infit MSQ
 - [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
   : Simulation-Based Infit MSQ Cutoff Determination
-- [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffPlot.md)
+- [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
+  [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
   : Plot Distribution of Simulated Infit and Outfit MSQ Values
 - [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
   : Conditional Item Infit MSQ for Multiply Imputed Data

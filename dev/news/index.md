@@ -129,7 +129,7 @@ simulation tools:
   vs the two-sided expected range), as kables (default) or data.frames.
 - `RMdimCFAPlot(cutoff_res, data)` now returns a **list of two ggplots**
   (`$loadings`, in the
-  [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffPlot.md)
+  [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
   style; and `$fit`, the faceted fit-index distributions) and requires
   `data`. **(Breaking: previously a single ggplot.)**
 
@@ -167,8 +167,32 @@ simulation tools:
   [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md));
   [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
   `p.adj` → `p_adj`;
-  [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffPlot.md)
+  [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
   `output` → `statistic`.
+- [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
+  renamed to
+  [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md),
+  matching the `<base>Plot` form of the other bootstrap-cutoff plot
+  functions
+  ([`RMdifGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaPlot.md),
+  [`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaPlot.md),
+  [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md),
+  [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFAPlot.md)).
+  Because the old name shipped in the 0.8.0 CRAN release, it is kept as
+  a **deprecated alias** that warns and forwards (unlike the 0.8.0
+  renames, which dropped old names outright). Separately,
+  [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFAPlot.md)’s
+  first argument `cutoff_res` was renamed to `simfit` to match the other
+  plot functions (no alias).
+- [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
+  now defaults to `output = "kable"` (was `"ggplot"`), matching every
+  other function that offers both a `kable` and a `ggplot` output
+  ([`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md),
+  [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md),
+  [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonFit.md),
+  [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md),
+  [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md)).
+  Pass `output = "ggplot"` for the previous default.
 - The `Flagged` column now labels misfit **direction** (`"overfit"` /
   `"underfit"` / `""`) instead of logical TRUE/FALSE in
   [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
@@ -219,6 +243,25 @@ simulation tools:
   corrected the `$direction2` caption / `@return` wording to “total -
   Item2” (with a note that direction 2 lists pairs in reverse order);
   computations unchanged (labelling fix).
+- [`RMdifTree()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md):
+  fixed a “variable lengths differ” error when a single covariate was
+  passed by index or expression (e.g. `covariates = phq9[, 10]`). The
+  derived non-syntactic column name is now matched as a literal column
+  rather than re-evaluated as an R expression against the original
+  (pre-NA-drop) data.
+- `RMdifTree(stability = TRUE)` no longer silences the console in
+  front-ends (e.g. RStudio) that redirect the message stream. The
+  internal stderr capture used to muffle resample-fit noise reset the
+  message sink to the default, clobbering the front-end’s sink; it now
+  only redirects when no foreign message sink is active.
+- `RMitemRestscore(p_adj = "none")` now returns the unadjusted p-values
+  instead of `NA` with a “NAs introduced by coercion” warning. With no
+  adjustment
+  [`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html)
+  omits the adjusted-p column, so the p-value is now selected by name
+  rather than by a fixed column position (which had picked up the
+  significance-stars column). The table header reads “p-value” in this
+  case.
 
 ## easyRasch2 0.8.0
 
@@ -287,7 +330,7 @@ short version:
 |----|----|----|
 | DIF | `RMdif` | [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md), [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md), [`RMdifGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaPlot.md), [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md), [`RMdifTree()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md) |
 | Local dependence | `RMlocdep` | [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md), [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md), [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md), [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md), [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md), [`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaPlot.md) |
-| Item statistics | `RMitem` | [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md), [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md), [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffPlot.md), [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md), [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md), [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md), [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md), [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md), [`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemHierarchy.md) |
+| Item statistics | `RMitem` | [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md), [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md), [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md), [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md), [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md), [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md), [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md), [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md), [`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemHierarchy.md) |
 | Dimensionality | `RMdim` | [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md), [`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md), [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md), [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFAPlot.md), [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md), [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLofResiduals.md) |
 | Descriptive plot | `RMplot` | [`RMplotTile()`](https://pgmj.github.io/easyRasch2/dev/reference/RMplotTile.md), [`RMplotBar()`](https://pgmj.github.io/easyRasch2/dev/reference/RMplotBar.md), [`RMplotStackedbar()`](https://pgmj.github.io/easyRasch2/dev/reference/RMplotStackedbar.md) |
 

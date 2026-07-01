@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.925</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.928</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,7 +70,7 @@
 <li>
 <code><a href="../reference/RMdimCFA.html">RMdimCFA()</a></code> <em>(new)</em> takes <code>data</code> + a required cutoff object and returns a list of two tables, <code>$fit</code> (CFI/RMSEA/SRMR) and <code>$loadings</code> (observed loading vs the two-sided expected range), as kables (default) or data.frames.</li>
 <li>
-<code>RMdimCFAPlot(cutoff_res, data)</code> now returns a <strong>list of two ggplots</strong> (<code>$loadings</code>, in the <code><a href="../reference/RMitemInfitCutoffPlot.html">RMitemInfitCutoffPlot()</a></code> style; and <code>$fit</code>, the faceted fit-index distributions) and requires <code>data</code>. <strong>(Breaking: previously a single ggplot.)</strong>
+<code>RMdimCFAPlot(cutoff_res, data)</code> now returns a <strong>list of two ggplots</strong> (<code>$loadings</code>, in the <code><a href="../reference/RMitemInfitPlot.html">RMitemInfitCutoffPlot()</a></code> style; and <code>$fit</code>, the faceted fit-index distributions) and requires <code>data</code>. <strong>(Breaking: previously a single ggplot.)</strong>
 </li>
 </ul></div>
 <div class="section level3">
@@ -84,7 +84,11 @@
 </ul></div>
 <div class="section level3">
 <h3 id="output-and-argument-consistency-development-version">Output and argument consistency<a class="anchor" aria-label="anchor" href="#output-and-argument-consistency-development-version"></a></h3>
-<ul><li>Naming aligned across functions (no deprecation aliases): <code><a href="../reference/RMdimResidualPCA.html">RMdimResidualPCA()</a></code> plot output is now <code>output = "ggplot"</code> (<code>"loadings"</code> kept as a backward-compatible alias); <code><a href="../reference/RMtargeting.html">RMtargeting()</a></code> <code>output = "figure"</code> → <code>"patchwork"</code> (matching <code><a href="../reference/RMitemICCPlot.html">RMitemICCPlot()</a></code>); <code><a href="../reference/RMitemrestscore.html">RMitemRestscore()</a></code> <code>p.adj</code> → <code>p_adj</code>; <code><a href="../reference/RMitemInfitCutoffPlot.html">RMitemInfitCutoffPlot()</a></code> <code>output</code> → <code>statistic</code>.</li>
+<ul><li>Naming aligned across functions (no deprecation aliases): <code><a href="../reference/RMdimResidualPCA.html">RMdimResidualPCA()</a></code> plot output is now <code>output = "ggplot"</code> (<code>"loadings"</code> kept as a backward-compatible alias); <code><a href="../reference/RMtargeting.html">RMtargeting()</a></code> <code>output = "figure"</code> → <code>"patchwork"</code> (matching <code><a href="../reference/RMitemICCPlot.html">RMitemICCPlot()</a></code>); <code><a href="../reference/RMitemrestscore.html">RMitemRestscore()</a></code> <code>p.adj</code> → <code>p_adj</code>; <code><a href="../reference/RMitemInfitPlot.html">RMitemInfitPlot()</a></code> <code>output</code> → <code>statistic</code>.</li>
+<li>
+<code><a href="../reference/RMitemInfitPlot.html">RMitemInfitCutoffPlot()</a></code> renamed to <code><a href="../reference/RMitemInfitPlot.html">RMitemInfitPlot()</a></code>, matching the <code>&lt;base&gt;Plot</code> form of the other bootstrap-cutoff plot functions (<code><a href="../reference/RMdifGammaPlot.html">RMdifGammaPlot()</a></code>, <code><a href="../reference/RMlocdepGammaPlot.html">RMlocdepGammaPlot()</a></code>, <code><a href="../reference/RMlocdepQ3plot.html">RMlocdepQ3Plot()</a></code>, <code><a href="../reference/RMdimCFAPlot.html">RMdimCFAPlot()</a></code>). Because the old name shipped in the 0.8.0 CRAN release, it is kept as a <strong>deprecated alias</strong> that warns and forwards (unlike the 0.8.0 renames, which dropped old names outright). Separately, <code><a href="../reference/RMdimCFAPlot.html">RMdimCFAPlot()</a></code>’s first argument <code>cutoff_res</code> was renamed to <code>simfit</code> to match the other plot functions (no alias).</li>
+<li>
+<code><a href="../reference/RMdifLR.html">RMdifLR()</a></code> now defaults to <code>output = "kable"</code> (was <code>"ggplot"</code>), matching every other function that offers both a <code>kable</code> and a <code>ggplot</code> output (<code><a href="../reference/RMscoreSE.html">RMscoreSE()</a></code>, <code><a href="../reference/RMdimMartinLof.html">RMdimMartinLof()</a></code>, <code><a href="../reference/RMpersonFit.html">RMpersonFit()</a></code>, <code><a href="../reference/RMpersonParameters.html">RMpersonParameters()</a></code>, <code><a href="../reference/RMdimResidualPCA.html">RMdimResidualPCA()</a></code>). Pass <code>output = "ggplot"</code> for the previous default.</li>
 <li>The <code>Flagged</code> column now labels misfit <strong>direction</strong> (<code>"overfit"</code> / <code>"underfit"</code> / <code>""</code>) instead of logical TRUE/FALSE in <code><a href="../reference/RMiteminfit.html">RMitemInfit()</a></code> / <code><a href="../reference/RMitemInfitMI.html">RMitemInfitMI()</a></code> (column type changes from logical to character). <code><a href="../reference/RMitemrestscore.html">RMitemRestscore()</a></code> gains a <code>Flagged</code> column and drops the redundant significance-star and <code>Location</code> columns (trimmed headers + explanatory caption). Note the value direction differs: a <em>high</em> infit is underfit, a <em>high</em> restscore correlation is overfit.</li>
 </ul></div>
 <div class="section level3">
@@ -96,6 +100,12 @@
 <code><a href="../reference/RMitemICCPlot.html">RMitemICCPlot()</a></code> is reimplemented on the CML engine, replacing the <code><a href="https://rdrr.io/pkg/iarm/man/ICCplot.html" class="external-link">iarm::ICCplot()</a></code> wrapper. The conditional item curve and its variance now come from <code>psychotools</code> CML thresholds + the exact conditional distribution given the total score. It draws <strong>confidence intervals</strong> on the observed class-interval means (<code>ci</code>, default on) and an optional model band (<code>error_band</code>); in DIF mode it shows per-group CIs and annotates each panel with the <strong>partial-gamma DIF magnitude</strong> (<code><a href="https://rdrr.io/pkg/iarm/man/partgam_DIF.html" class="external-link">iarm::partgam_DIF</a></code>, as in <code><a href="../reference/RMdifGamma.html">RMdifGamma()</a></code>), with the full table attached as <code>attr(., "dif_gamma")</code>. New arguments <code>ci</code>, <code>error_band</code>, <code>conf_level</code>, <code>min_n</code> (per-cell floor, 8), <code>items</code>; <code>method</code> / <code>class_intervals</code> / <code>dif_var</code> / <code>output</code> are unchanged. The conditional-ICC approach follows Buchardt, Christensen &amp; Jensen (2023) and their <code>RASCHplot</code> package.</li>
 <li>
 <code><a href="../reference/RMlocdepGamma.html">RMlocdepGamma()</a></code>: corrected the <code>$direction2</code> caption / <code>@return</code> wording to “total - Item2” (with a note that direction 2 lists pairs in reverse order); computations unchanged (labelling fix).</li>
+<li>
+<code><a href="../reference/RMdifTree.html">RMdifTree()</a></code>: fixed a “variable lengths differ” error when a single covariate was passed by index or expression (e.g. <code>covariates = phq9[, 10]</code>). The derived non-syntactic column name is now matched as a literal column rather than re-evaluated as an R expression against the original (pre-NA-drop) data.</li>
+<li>
+<code>RMdifTree(stability = TRUE)</code> no longer silences the console in front-ends (e.g. RStudio) that redirect the message stream. The internal stderr capture used to muffle resample-fit noise reset the message sink to the default, clobbering the front-end’s sink; it now only redirects when no foreign message sink is active.</li>
+<li>
+<code>RMitemRestscore(p_adj = "none")</code> now returns the unadjusted p-values instead of <code>NA</code> with a “NAs introduced by coercion” warning. With no adjustment <code><a href="https://rdrr.io/pkg/iarm/man/item_restscore.html" class="external-link">iarm::item_restscore()</a></code> omits the adjusted-p column, so the p-value is now selected by name rather than by a fixed column position (which had picked up the significance-stars column). The table header reads “p-value” in this case.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -142,7 +152,7 @@
 </tr><tr><td>Item statistics</td>
 <td><code>RMitem</code></td>
 <td>
-<code><a href="../reference/RMiteminfit.html">RMitemInfit()</a></code>, <code><a href="../reference/RMitemInfitCutoff.html">RMitemInfitCutoff()</a></code>, <code><a href="../reference/RMitemInfitCutoffPlot.html">RMitemInfitCutoffPlot()</a></code>, <code><a href="../reference/RMitemInfitMI.html">RMitemInfitMI()</a></code>, <code><a href="../reference/RMitemInfitCutoffMI.html">RMitemInfitCutoffMI()</a></code>, <code><a href="../reference/RMitemrestscore.html">RMitemRestscore()</a></code>, <code><a href="../reference/RMitemRestscoreBoot.html">RMitemRestscoreBoot()</a></code>, <code><a href="../reference/RMitemICCPlot.html">RMitemICCPlot()</a></code>, <code><a href="../reference/RMitemHierarchy.html">RMitemHierarchy()</a></code>
+<code><a href="../reference/RMiteminfit.html">RMitemInfit()</a></code>, <code><a href="../reference/RMitemInfitCutoff.html">RMitemInfitCutoff()</a></code>, <code><a href="../reference/RMitemInfitPlot.html">RMitemInfitCutoffPlot()</a></code>, <code><a href="../reference/RMitemInfitMI.html">RMitemInfitMI()</a></code>, <code><a href="../reference/RMitemInfitCutoffMI.html">RMitemInfitCutoffMI()</a></code>, <code><a href="../reference/RMitemrestscore.html">RMitemRestscore()</a></code>, <code><a href="../reference/RMitemRestscoreBoot.html">RMitemRestscoreBoot()</a></code>, <code><a href="../reference/RMitemICCPlot.html">RMitemICCPlot()</a></code>, <code><a href="../reference/RMitemHierarchy.html">RMitemHierarchy()</a></code>
 </td>
 </tr><tr><td>Dimensionality</td>
 <td><code>RMdim</code></td>

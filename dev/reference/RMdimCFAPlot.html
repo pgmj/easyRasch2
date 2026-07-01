@@ -3,12 +3,12 @@
 the simulated null distribution from RMdimCFACutoff:
 a per-item standardized-loadings plot (observed marker against each item's
 simulated distribution and expected range, in the style of
-RMitemInfitCutoffPlot), and a faceted plot of the CFI / RMSEA
+RMitemInfitPlot), and a faceted plot of the CFI / RMSEA
 / SRMR distributions with the observed value overlaid."><meta property="og:description" content="Returns two figures (in a list) comparing the observed one-factor CFA to
 the simulated null distribution from RMdimCFACutoff:
 a per-item standardized-loadings plot (observed marker against each item's
 simulated distribution and expected range, in the style of
-RMitemInfitCutoffPlot), and a faceted plot of the CFI / RMSEA
+RMitemInfitPlot), and a faceted plot of the CFI / RMSEA
 / SRMR distributions with the observed value overlaid."><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -17,7 +17,7 @@ RMitemInfitCutoffPlot), and a faceted plot of the CFI / RMSEA
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.925</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.928</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,20 +49,20 @@ RMitemInfitCutoffPlot), and a faceted plot of the CFI / RMSEA
 the simulated null distribution from <code><a href="RMdimCFACutoff.html">RMdimCFACutoff</a></code>:
 a per-item standardized-loadings plot (observed marker against each item's
 simulated distribution and expected range, in the style of
-<code><a href="RMitemInfitCutoffPlot.html">RMitemInfitCutoffPlot</a></code>), and a faceted plot of the CFI / RMSEA
+<code><a href="RMitemInfitPlot.html">RMitemInfitPlot</a></code>), and a faceted plot of the CFI / RMSEA
 / SRMR distributions with the observed value overlaid.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RMdimCFAPlot</span><span class="op">(</span><span class="va">cutoff_res</span>, <span class="va">data</span>, percentile <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RMdimCFAPlot</span><span class="op">(</span><span class="va">simfit</span>, <span class="va">data</span>, percentile <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-cutoff-res">cutoff_res<a class="anchor" aria-label="anchor" href="#arg-cutoff-res"></a></dt>
+<dl><dt id="arg-simfit">simfit<a class="anchor" aria-label="anchor" href="#arg-simfit"></a></dt>
 <dd><p>The list returned by <code><a href="RMdimCFACutoff.html">RMdimCFACutoff</a></code>.</p></dd>
 
 

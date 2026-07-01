@@ -80,7 +80,7 @@ so that the result can be passed directly to
 [`RMitemInfit`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
 [`RMitemInfitMI`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md),
 and
-[`RMitemInfitCutoffPlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffPlot.md):
+[`RMitemInfitPlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md):
 
 - `results`:
 
@@ -153,7 +153,7 @@ The `mice` package must be installed (it is in Suggests, not Imports).
 
 [`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md),
 [`RMitemInfitMI`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md),
-[`RMitemInfitCutoffPlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffPlot.md)
+[`RMitemInfitPlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
 
 ## Examples
 

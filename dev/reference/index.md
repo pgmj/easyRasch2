@@ -8,7 +8,8 @@ Conditional item fit statistics with simulation-based cutoffs
   : Conditional Item Infit MSQ
 - [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
   : Simulation-Based Infit MSQ Cutoff Determination
-- [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffPlot.md)
+- [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
+  [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
   : Plot Distribution of Simulated Infit and Outfit MSQ Values
 - [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
   : Conditional Item Infit MSQ for Multiply Imputed Data

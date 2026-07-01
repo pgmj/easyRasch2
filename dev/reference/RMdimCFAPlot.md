@@ -5,19 +5,19 @@ the simulated null distribution from
 [`RMdimCFACutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md):
 a per-item standardized-loadings plot (observed marker against each
 item's simulated distribution and expected range, in the style of
-[`RMitemInfitCutoffPlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffPlot.md)),
+[`RMitemInfitPlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)),
 and a faceted plot of the CFI / RMSEA / SRMR distributions with the
 observed value overlaid.
 
 ## Usage
 
 ``` r
-RMdimCFAPlot(cutoff_res, data, percentile = NULL)
+RMdimCFAPlot(simfit, data, percentile = NULL)
 ```
 
 ## Arguments
 
-- cutoff_res:
+- simfit:
 
   The list returned by
   [`RMdimCFACutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md).

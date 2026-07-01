@@ -38,9 +38,10 @@ RMitemRestscore(data, output = "kable", sort, p_adj = "BH")
 
   Character string specifying the p-value adjustment method passed to
   [`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html).
-  Default `"BH"` (Benjamini-Hochberg). See
-  [`stats::p.adjust()`](https://rdrr.io/r/stats/p.adjust.html) for
-  available methods.
+  Default `"BH"` (Benjamini-Hochberg); use `"none"` for unadjusted
+  p-values. Run
+  [`?stats::p.adjust`](https://rdrr.io/r/stats/p.adjust.html) for the
+  list of available methods.
 
 ## Value
 
