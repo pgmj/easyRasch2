@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.928</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.929</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,6 +60,7 @@
 <strong><code><a href="../reference/RMitemParameters.html">RMitemParameters()</a></code></strong> — item difficulty (dichotomous) or Andrich-threshold (polytomous) parameters in long/wide format, with optional SEs and Wald CIs.</li>
 <li>
 <strong><code><a href="../reference/RMpersonParameters.html">RMpersonParameters()</a></code></strong> — per-respondent theta and SEM computed on each response pattern (handles partial missingness), via Warm’s WLE (default) or EAP under a normal prior (SD estimated by marginal ML unless fixed).</li>
+<li>Both <code><a href="../reference/RMitemParameters.html">RMitemParameters()</a></code> and <code><a href="../reference/RMpersonParameters.html">RMpersonParameters()</a></code> support <code>output = "file"</code> to write the result table to a CSV at <code>filename</code> (the data.frame is also returned invisibly).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="cfa-dimensionality-loadings--three-function-split-development-version">CFA dimensionality: loadings + three-function split<a class="anchor" aria-label="anchor" href="#cfa-dimensionality-loadings--three-function-split-development-version"></a></h3>

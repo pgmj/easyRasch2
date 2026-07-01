@@ -17,7 +17,8 @@ RMitemParameters(
   se = TRUE,
   ci_level = 0.95,
   center = TRUE,
-  output = c("kable", "dataframe")
+  output = c("kable", "dataframe", "file"),
+  filename = NULL
 )
 ```
 
@@ -66,8 +67,15 @@ RMitemParameters(
 - output:
 
   Character. `"kable"` (default) for a formatted
-  [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html) table, or
-  `"dataframe"` for the underlying data.frame.
+  [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html) table,
+  `"dataframe"` for the underlying data.frame, or `"file"` to write that
+  data.frame to a CSV at `filename` (the data.frame is also returned
+  invisibly).
+
+- filename:
+
+  Character. Path to the CSV file to write when `output = "file"`.
+  Required in that case; ignored otherwise.
 
 ## Value
 
@@ -163,5 +171,10 @@ RMitemParameters(dich, output = "dataframe")
 #> 4 Item4         1   0.0754 0.1160  -0.1520   0.3028
 #> 5 Item5         1   0.0593 0.1160  -0.1681   0.2867
 #> 6 Item6         1  -0.0215 0.1161  -0.2491   0.2061
+
+# Write the parameter table to a CSV (also returned invisibly)
+RMitemParameters(poly, output = "file",
+                 filename = tempfile(fileext = ".csv"))
+#> Wrote 10 row(s) to '/tmp/Rtmpvzi5fF/file21f2508e7fa.csv'.
 # }
 ```

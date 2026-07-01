@@ -23,7 +23,7 @@ missingness is handled directly."><meta name="robots" content="noindex"></head><
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.928</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.929</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -199,22 +199,32 @@ data. Use <code>flag = "underfit"</code> to flag only the former. lz is one-side
 low (negative) values flag the aberrant (underfit-like) direction.</p>
 <p><strong>lz.</strong> The standardized log-likelihood of the response pattern
 evaluated at the estimated person location (Drasgow, Levine &amp;
-Williams, 1985); small (negative) values indicate misfit. Its
-asymptotic standard-normal null is unreliable when the person location
-is estimated; the resampled p-value is therefore the basis for
-inference, which makes the analytic lz\* standardization (Snijders,
-2001) unnecessary here.</p>
+Williams, 1985); small (negative) values indicate misfit. Because the
+location is estimated rather than known, the variance of lz is below 1
+and its asymptotic standard-normal null is invalid, which makes a
+naive test conservative (Snijders, 2001; Sinharay, 2016). Instead of
+applying the analytic lz\* standardization – derived by Snijders (2001)
+for dichotomous items and extended to polytomous / mixed-format items by
+Sinharay (2016, 2026) – easyRasch2 obtains the reference distribution by
+resampling with the person location <strong>re-estimated for every
+simulated pattern</strong> (see <strong>Resampling</strong>). This reproduces the
+ability-estimation effect and is the resampling analogue of lz\*, so the
+resampled p-value is well calibrated.</p>
 <p><strong>Resampling.</strong> Each statistic is referenced against the null that
 matches it, removing the need to choose a scheme. The conditional MSQ
 statistics use patterns sampled <strong>conditional on the person's total
 score</strong> – the exact Rasch-native null, requiring no person estimate and
 fully consistent with the (conditional) statistic. lz, which is defined at
-the estimated location, uses patterns <strong>simulated at that location</strong>. Both
-are computed per person over the items actually answered, so partial
-missingness is handled by either scheme. The p-value is the proportion of
-the <code>iterations</code> replicates at least as extreme as the observed value. This
-follows the resampling-based person-fit approach (Sinharay, 2016) and the
-bootstrap recommendation of Müller (2020).</p>
+the estimated location, uses patterns <strong>simulated at that location and then
+scored with the location re-estimated from each simulated pattern</strong>, so the
+null carries the same ability-estimation effect as the observed lz (for a
+Rasch / PCM model the location is a function of the total score, so this
+re-estimation is a cheap score-based lookup). Both schemes are computed per
+person over the items actually answered, so partial missingness is handled
+by either. The p-value is the proportion of the <code>iterations</code> replicates at
+least as extreme as the observed value. This follows the resampling-based
+person-fit approach (Sinharay, 2016) and the bootstrap recommendation of
+Müller (2020).</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -231,6 +241,16 @@ trust them? <em>Journal of Statistical Distributions and Applications,
 <p>Sinharay, S. (2016). Assessment of person fit using resampling-based
 approaches. <em>Journal of Educational Measurement, 53</em>(1), 63-85.
 <a href="https://doi.org/10.1111/jedm.12101" class="external-link">doi:10.1111/jedm.12101</a></p>
+<p>Sinharay, S. (2016). Asymptotically correct standardization of
+person-fit statistics beyond dichotomous items. <em>Psychometrika,
+81</em>(4), 992-1013. <a href="https://doi.org/10.1007/s11336-015-9465-x" class="external-link">doi:10.1007/s11336-015-9465-x</a></p>
+<p>Sinharay, S. (2026). Refining the asymptotically correct
+standardization of person-fit statistics for mixed-format tests.
+<em>British Journal of Mathematical and Statistical Psychology</em>.
+<a href="https://doi.org/10.1111/bmsp.70049" class="external-link">doi:10.1111/bmsp.70049</a></p>
+<p>Snijders, T. A. B. (2001). Asymptotic null distribution of person fit
+statistics with estimated person parameter. <em>Psychometrika, 66</em>(3),
+331-342. <a href="https://doi.org/10.1007/BF02294440" class="external-link">doi:10.1007/BF02294440</a></p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -249,12 +269,12 @@ approaches. <em>Journal of Educational Measurement, 53</em>(1), 63-85.
 <span class="r-in"><span><span class="co"># Conditional infit/outfit MSQ + lz with resampled p-values</span></span></span>
 <span class="r-in"><span><span class="fu">RMpersonFit</span><span class="op">(</span><span class="va">dat</span>, iterations <span class="op">=</span> <span class="fl">200</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   id n_answered sum_score infit_msq outfit_msq      lz p_infit p_outfit   p_lz</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1          8         5    1.3900     1.3988  0.0619  0.3284   0.3284 0.5075</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  2          8         6    0.7271     0.7335 -0.0611  0.3483   0.3980 0.4179</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  3          8         2    0.8185     0.8472  0.2747  0.7960   0.7960 0.5473</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  4          8        10    0.7119     0.6872  0.4211  0.2786   0.1990 0.6219</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  5          8         4    1.5137     1.4541  0.3392  0.2289   0.2289 0.6169</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6  6          8         4    1.5322     1.4836  0.2989  0.1692   0.1692 0.6219</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1          8         5    1.3900     1.3988  0.0619  0.3284   0.3284 0.3383</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  2          8         6    0.7271     0.7335 -0.0611  0.3483   0.3980 0.2935</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  3          8         2    0.8185     0.8472  0.2747  0.7960   0.7960 0.4527</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  4          8        10    0.7119     0.6872  0.4211  0.2786   0.1990 0.8209</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  5          8         4    1.5137     1.4541  0.3392  0.2289   0.2289 0.6468</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  6          8         4    1.5322     1.4836  0.2989  0.1692   0.1692 0.5721</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   flagged</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1   FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2   FALSE</span>
@@ -274,12 +294,12 @@ approaches. <em>Journal of Educational Measurement, 53</em>(1), 63-85.
 <span class="r-in"><span><span class="fu">RMpersonFit</span><span class="op">(</span><span class="va">dat</span>, iterations <span class="op">=</span> <span class="fl">200</span>, flag <span class="op">=</span> <span class="st">"underfit"</span>,</span></span>
 <span class="r-in"><span>            output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   id n_answered sum_score infit_msq outfit_msq      lz p_infit p_outfit   p_lz</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1          8         5    1.3900     1.3988  0.0619  0.1443   0.1194 0.4876</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  2          8         6    0.7271     0.7335 -0.0611  0.8209   0.8010 0.4279</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  3          8         2    0.8185     0.8472  0.2747  0.4328   0.4328 0.5721</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  4          8        10    0.7119     0.6872  0.4211  0.8209   0.8458 0.6418</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  5          8         4    1.5137     1.4541  0.3392  0.0995   0.0995 0.6119</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6  6          8         4    1.5322     1.4836  0.2989  0.0746   0.0746 0.5970</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1          8         5    1.3900     1.3988  0.0619  0.1443   0.1194 0.3433</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  2          8         6    0.7271     0.7335 -0.0611  0.8209   0.8010 0.2736</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  3          8         2    0.8185     0.8472  0.2747  0.4328   0.4328 0.4428</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  4          8        10    0.7119     0.6872  0.4211  0.8209   0.8458 0.7960</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  5          8         4    1.5137     1.4541  0.3392  0.0995   0.0995 0.6965</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  6          8         4    1.5322     1.4836  0.2989  0.0746   0.0746 0.6368</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   flagged</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1   FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2   FALSE</span>

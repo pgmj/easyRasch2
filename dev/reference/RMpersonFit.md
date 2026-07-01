@@ -148,23 +148,33 @@ direction.
 
 **lz.** The standardized log-likelihood of the response pattern
 evaluated at the estimated person location (Drasgow, Levine & Williams,
-1985); small (negative) values indicate misfit. Its asymptotic
-standard-normal null is unreliable when the person location is
-estimated; the resampled p-value is therefore the basis for inference,
-which makes the analytic lz\\ standardization (Snijders, 2001)
-unnecessary here.
+1985); small (negative) values indicate misfit. Because the location is
+estimated rather than known, the variance of lz is below 1 and its
+asymptotic standard-normal null is invalid, which makes a naive test
+conservative (Snijders, 2001; Sinharay, 2016). Instead of applying the
+analytic lz\\ standardization – derived by Snijders (2001) for
+dichotomous items and extended to polytomous / mixed-format items by
+Sinharay (2016, 2026) – easyRasch2 obtains the reference distribution by
+resampling with the person location **re-estimated for every simulated
+pattern** (see **Resampling**). This reproduces the ability-estimation
+effect and is the resampling analogue of lz\\, so the resampled p-value
+is well calibrated.
 
 **Resampling.** Each statistic is referenced against the null that
 matches it, removing the need to choose a scheme. The conditional MSQ
 statistics use patterns sampled **conditional on the person's total
 score** – the exact Rasch-native null, requiring no person estimate and
 fully consistent with the (conditional) statistic. lz, which is defined
-at the estimated location, uses patterns **simulated at that location**.
-Both are computed per person over the items actually answered, so
-partial missingness is handled by either scheme. The p-value is the
-proportion of the `iterations` replicates at least as extreme as the
-observed value. This follows the resampling-based person-fit approach
-(Sinharay, 2016) and the bootstrap recommendation of Müller (2020).
+at the estimated location, uses patterns **simulated at that location
+and then scored with the location re-estimated from each simulated
+pattern**, so the null carries the same ability-estimation effect as the
+observed lz (for a Rasch / PCM model the location is a function of the
+total score, so this re-estimation is a cheap score-based lookup). Both
+schemes are computed per person over the items actually answered, so
+partial missingness is handled by either. The p-value is the proportion
+of the `iterations` replicates at least as extreme as the observed
+value. This follows the resampling-based person-fit approach (Sinharay,
+2016) and the bootstrap recommendation of Müller (2020).
 
 ## References
 
@@ -185,6 +195,20 @@ Sinharay, S. (2016). Assessment of person fit using resampling-based
 approaches. *Journal of Educational Measurement, 53*(1), 63-85.
 [doi:10.1111/jedm.12101](https://doi.org/10.1111/jedm.12101)
 
+Sinharay, S. (2016). Asymptotically correct standardization of
+person-fit statistics beyond dichotomous items. *Psychometrika, 81*(4),
+992-1013.
+[doi:10.1007/s11336-015-9465-x](https://doi.org/10.1007/s11336-015-9465-x)
+
+Sinharay, S. (2026). Refining the asymptotically correct standardization
+of person-fit statistics for mixed-format tests. *British Journal of
+Mathematical and Statistical Psychology*.
+[doi:10.1111/bmsp.70049](https://doi.org/10.1111/bmsp.70049)
+
+Snijders, T. A. B. (2001). Asymptotic null distribution of person fit
+statistics with estimated person parameter. *Psychometrika, 66*(3),
+331-342. [doi:10.1007/BF02294440](https://doi.org/10.1007/BF02294440)
+
 ## See also
 
 [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md),
@@ -204,12 +228,12 @@ colnames(dat) <- paste0("Item", 1:8)
 # Conditional infit/outfit MSQ + lz with resampled p-values
 RMpersonFit(dat, iterations = 200, output = "dataframe") |> head()
 #>   id n_answered sum_score infit_msq outfit_msq      lz p_infit p_outfit   p_lz
-#> 1  1          8         5    1.3900     1.3988  0.0619  0.3284   0.3284 0.5075
-#> 2  2          8         6    0.7271     0.7335 -0.0611  0.3483   0.3980 0.4179
-#> 3  3          8         2    0.8185     0.8472  0.2747  0.7960   0.7960 0.5473
-#> 4  4          8        10    0.7119     0.6872  0.4211  0.2786   0.1990 0.6219
-#> 5  5          8         4    1.5137     1.4541  0.3392  0.2289   0.2289 0.6169
-#> 6  6          8         4    1.5322     1.4836  0.2989  0.1692   0.1692 0.6219
+#> 1  1          8         5    1.3900     1.3988  0.0619  0.3284   0.3284 0.3383
+#> 2  2          8         6    0.7271     0.7335 -0.0611  0.3483   0.3980 0.2935
+#> 3  3          8         2    0.8185     0.8472  0.2747  0.7960   0.7960 0.4527
+#> 4  4          8        10    0.7119     0.6872  0.4211  0.2786   0.1990 0.8209
+#> 5  5          8         4    1.5137     1.4541  0.3392  0.2289   0.2289 0.6468
+#> 6  6          8         4    1.5322     1.4836  0.2989  0.1692   0.1692 0.5721
 #>   flagged
 #> 1   FALSE
 #> 2   FALSE
@@ -229,12 +253,12 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
 RMpersonFit(dat, iterations = 200, flag = "underfit",
             output = "dataframe") |> head()
 #>   id n_answered sum_score infit_msq outfit_msq      lz p_infit p_outfit   p_lz
-#> 1  1          8         5    1.3900     1.3988  0.0619  0.1443   0.1194 0.4876
-#> 2  2          8         6    0.7271     0.7335 -0.0611  0.8209   0.8010 0.4279
-#> 3  3          8         2    0.8185     0.8472  0.2747  0.4328   0.4328 0.5721
-#> 4  4          8        10    0.7119     0.6872  0.4211  0.8209   0.8458 0.6418
-#> 5  5          8         4    1.5137     1.4541  0.3392  0.0995   0.0995 0.6119
-#> 6  6          8         4    1.5322     1.4836  0.2989  0.0746   0.0746 0.5970
+#> 1  1          8         5    1.3900     1.3988  0.0619  0.1443   0.1194 0.3433
+#> 2  2          8         6    0.7271     0.7335 -0.0611  0.8209   0.8010 0.2736
+#> 3  3          8         2    0.8185     0.8472  0.2747  0.4328   0.4328 0.4428
+#> 4  4          8        10    0.7119     0.6872  0.4211  0.8209   0.8458 0.7960
+#> 5  5          8         4    1.5137     1.4541  0.3392  0.0995   0.0995 0.6965
+#> 6  6          8         4    1.5322     1.4836  0.2989  0.0746   0.0746 0.6368
 #>   flagged
 #> 1   FALSE
 #> 2   FALSE

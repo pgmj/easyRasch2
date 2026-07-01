@@ -20,7 +20,8 @@ RMpersonParameters(
   theta_range = c(-10, 10),
   prior_mean = 0,
   prior_sd = NULL,
-  output = c("kable", "dataframe", "ggplot")
+  output = c("kable", "dataframe", "ggplot", "file"),
+  filename = NULL
 )
 ```
 
@@ -77,8 +78,15 @@ RMpersonParameters(
 
   Character. `"kable"` (default) for a formatted
   [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html) table,
-  `"dataframe"` for the underlying data.frame, or `"ggplot"` for a
-  histogram of the estimated person locations.
+  `"dataframe"` for the underlying data.frame, `"ggplot"` for a
+  histogram of the estimated person locations, or `"file"` to write the
+  data.frame to a CSV at `filename` (the data.frame is also returned
+  invisibly).
+
+- filename:
+
+  Character. Path to the CSV file to write when `output = "file"`.
+  Required in that case; ignored otherwise.
 
 ## Value
 
@@ -176,5 +184,10 @@ RMpersonParameters(dat, method = "EAP", prior_sd = 1, output = "dataframe") |>
 #> 4  0.2170 0.4679         7          6   FALSE
 #> 5 -1.6175 0.6353         0          6    TRUE
 #> 6 -0.9457 0.5322         2          6   FALSE
+
+# Write the person-location table to a CSV (also returned invisibly)
+RMpersonParameters(dat, output = "file",
+                   filename = tempfile(fileext = ".csv"))
+#> Wrote 200 row(s) to '/tmp/Rtmpvzi5fF/file21f271869f6f.csv'.
 # }
 ```
