@@ -124,3 +124,150 @@ test_that("RMdimMartinLofResiduals output = 'ggplot' returns a ggplot", {
   )
   expect_s3_class(p, "ggplot")
 })
+
+# ---------------------------------------------------------------------
+# stopping = "none" Monte Carlo runner (the default; existing tests above
+# all use stopping = "sequential")
+# ---------------------------------------------------------------------
+test_that("RMdimMartinLof stopping = 'none' returns a valid p-value", {
+  skip_if_not_installed("psychotools")
+  df <- make_dichotomous()
+  res <- RMdimMartinLof(df, partition = c(1,1,1,1,2,2,2,2),
+                        iterations = 20L, stopping = "none",
+                        parallel = FALSE, seed = 1L)
+  expect_equal(res$stopping, "none")
+  expect_equal(res$actual_iterations, 20L)
+  expect_true(res$p_value > 0 && res$p_value <= 1)
+})
+
+test_that("RMdimMartinLof verbose = TRUE runs the sequential progress path", {
+  skip_if_not_installed("psychotools")
+  df <- make_dichotomous()
+  suppressMessages(invisible(utils::capture.output(
+    res <- RMdimMartinLof(df, partition = c(1,1,1,1,2,2,2,2),
+                          iterations = 10L, stopping = "none",
+                          parallel = FALSE, seed = 1L, verbose = TRUE)
+  )))
+  expect_true(res$p_value <= 1)
+})
+
+test_that("RMdimMartinLof parallel path returns a valid result", {
+  skip_if_not_installed("psychotools")
+  skip_if_not_installed("mirai")
+  df <- make_dichotomous()
+  res <- suppressMessages(
+    RMdimMartinLof(df, partition = c(1,1,1,1,2,2,2,2),
+                   iterations = 8L, stopping = "none",
+                   parallel = TRUE, n_cores = 2L, seed = 1L)
+  )
+  expect_true(res$p_value > 0 && res$p_value <= 1)
+})
+
+test_that("RMdimMartinLof parallel without n_cores/mc.cores warns and falls back", {
+  skip_if_not_installed("psychotools")
+  skip_if_not_installed("mirai")
+  withr::local_options(mc.cores = NULL)
+  df <- make_dichotomous()
+  expect_warning(
+    res <- RMdimMartinLof(df, partition = c(1,1,1,1,2,2,2,2),
+                          iterations = 6L, stopping = "none",
+                          parallel = TRUE, seed = 1L),
+    regexp = "Falling back to sequential"
+  )
+  expect_true(res$p_value <= 1)
+})
+
+test_that("RMdimMartinLof errors with fewer than 30 complete cases", {
+  skip_if_not_installed("psychotools")
+  df <- make_dichotomous()[1:20, ]
+  expect_error(
+    RMdimMartinLof(df, partition = c(1,1,1,1,2,2,2,2),
+                   iterations = 5L, parallel = FALSE),
+    regexp = "at least 30 complete cases"
+  )
+})
+
+# ---------------------------------------------------------------------
+# Partition normalisation branches
+# ---------------------------------------------------------------------
+test_that("RMdimMartinLof warns and drops items not assigned to a subscale", {
+  skip_if_not_installed("psychotools")
+  df <- make_dichotomous()  # 8 items
+  expect_warning(
+    res <- RMdimMartinLof(df, partition = list(c(1, 2, 3), c(4, 5, 6)),
+                          iterations = 10L, parallel = FALSE, seed = 1L),
+    regexp = "not assigned"
+  )
+  expect_equal(res$n_items, 6L)
+})
+
+test_that("RMdimMartinLof errors on overlapping partition", {
+  skip_if_not_installed("psychotools")
+  df <- make_dichotomous()
+  expect_error(
+    RMdimMartinLof(df, partition = list(c(1, 2, 3), c(3, 4, 5)),
+                   iterations = 5L, parallel = FALSE),
+    regexp = "overlapping"
+  )
+})
+
+test_that("RMdimMartinLof errors on an invalid partition format", {
+  skip_if_not_installed("psychotools")
+  df <- make_dichotomous()
+  expect_error(
+    RMdimMartinLof(df, partition = TRUE, iterations = 5L, parallel = FALSE),
+    regexp = "Invalid partition format"
+  )
+})
+
+# ---------------------------------------------------------------------
+# RMdimMartinLofResiduals: option branches
+# ---------------------------------------------------------------------
+test_that("RMdimMartinLofResiduals min_expected blanks sparse cells", {
+  skip_if_not_installed("psychotools")
+  df  <- make_polytomous()
+  res <- RMdimMartinLofResiduals(df, partition = c(1,1,1,1,2,2,2,2),
+                                 output = "dataframe", min_expected = 1)
+  expect_true(all(is.na(res$residual[res$expected < 1])))
+})
+
+test_that("RMdimMartinLofResiduals ggplot color_by = 'n' returns a ggplot", {
+  skip_if_not_installed("psychotools")
+  skip_if_not_installed("ggplot2")
+  df <- make_polytomous()
+  p  <- RMdimMartinLofResiduals(df, partition = c(1,1,1,1,2,2,2,2),
+                                output = "ggplot", color_by = "n",
+                                color_limits = c(0, 50))
+  expect_s3_class(p, "ggplot")
+})
+
+test_that("RMdimMartinLofResiduals supports D = 3 for kable and ggplot", {
+  skip_if_not_installed("psychotools")
+  skip_if_not_installed("knitr")
+  df <- make_polytomous(k = 6)
+  k  <- RMdimMartinLofResiduals(df, partition = c(1,1,2,2,3,3), output = "kable")
+  expect_true(inherits(k, "knitr_kable") || inherits(k, "knit_asis"))
+  skip_if_not_installed("ggplot2")
+  p <- RMdimMartinLofResiduals(df, partition = c(1,1,2,2,3,3), output = "ggplot")
+  expect_s3_class(p, "ggplot")
+})
+
+test_that("RMdimMartinLofResiduals rejects bad min_expected / color_limits / D>3 ggplot", {
+  skip_if_not_installed("psychotools")
+  df <- make_polytomous()
+  expect_error(
+    RMdimMartinLofResiduals(df, partition = c(1,1,1,1,2,2,2,2),
+                            min_expected = -1),
+    regexp = "min_expected"
+  )
+  expect_error(
+    RMdimMartinLofResiduals(df, partition = c(1,1,1,1,2,2,2,2),
+                            color_limits = c(5, 1)),
+    regexp = "color_limits"
+  )
+  expect_error(
+    RMdimMartinLofResiduals(df, partition = c(1,1,2,2,3,3,4,4),
+                            output = "ggplot"),
+    regexp = "D = 2 or 3"
+  )
+})

@@ -89,6 +89,28 @@ test_that("kable output returns knitr_kable", {
   expect_s3_class(RMitemParameters(make_polytomous()), "knitr_kable")
 })
 
+test_that("output = 'file' writes the dataframe to CSV and returns it invisibly", {
+  skip_if_not_installed("eRm")
+  path <- withr::local_tempfile(fileext = ".csv")
+  df  <- RMitemParameters(make_polytomous(), output = "dataframe")
+  ret <- suppressMessages(
+    RMitemParameters(make_polytomous(), output = "file", filename = path)
+  )
+  expect_equal(ret, df)
+  back <- read.csv(path)
+  expect_equal(names(back), names(df))
+  expect_equal(nrow(back), nrow(df))
+  expect_equal(back$location, df$location, tolerance = 1e-6)
+})
+
+test_that("output = 'file' errors early when filename is missing", {
+  skip_if_not_installed("eRm")
+  expect_snapshot(
+    RMitemParameters(make_polytomous(), output = "file"),
+    error = TRUE
+  )
+})
+
 test_that("wider ci_level gives wider intervals", {
   skip_if_not_installed("eRm")
   narrow <- RMitemParameters(make_polytomous(), ci_level = 0.90,
@@ -252,4 +274,18 @@ test_that("kable and ggplot outputs return the right classes", {
   expect_s3_class(RMpersonParameters(df), "knitr_kable")
   skip_if_not_installed("ggplot2")
   expect_s3_class(RMpersonParameters(df, output = "ggplot"), "ggplot")
+})
+
+test_that("RMpersonParameters output = 'file' writes a CSV with one row per person", {
+  skip_if_not_installed("eRm")
+  df   <- make_polytomous(n = 150)
+  path <- withr::local_tempfile(fileext = ".csv")
+  ddf  <- RMpersonParameters(df, output = "dataframe")
+  ret  <- suppressMessages(
+    RMpersonParameters(df, output = "file", filename = path)
+  )
+  expect_equal(ret, ddf)
+  back <- read.csv(path)
+  expect_equal(nrow(back), nrow(df))
+  expect_equal(back$theta, ddf$theta, tolerance = 1e-6)
 })

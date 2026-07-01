@@ -322,3 +322,104 @@ test_that("single covariate passed by numeric index (non-syntactic name) works",
   expect_s3_class(df, "data.frame")
   expect_true("d$covs[, 2]" %in% df$Variable)
 })
+
+# ---------------------------------------------------------------------
+# Iterative purification, kable/plot output, pruning
+# ---------------------------------------------------------------------
+
+# Polytomous data with strong group DIF on I1/I2 so pctree() splits on the
+# group and the partial-gamma effect sizes flag those items (exercising the
+# purification loop).
+make_dif_poly <- function(n = 400, seed = 11L) {
+  set.seed(seed)
+  grp   <- factor(rep(c("A", "B"), length.out = n))
+  theta <- stats::rnorm(n)
+  mk <- function(shift) {
+    lin <- theta + ifelse(grp == "B", shift, 0)
+    pmax(0L, pmin(2L, as.integer(round(lin + stats::rnorm(n, 0, 0.4) + 1))))
+  }
+  list(
+    items = data.frame(I1 = mk(1.6), I2 = mk(1.6), I3 = mk(0),
+                       I4 = mk(0), I5 = mk(0), I6 = mk(0)),
+    covs  = data.frame(grp = grp)
+  )
+}
+
+test_that("purification = 'iterative' (MH) runs on dichotomous DIF data", {
+  need_tree_pkgs()
+  d <- make_dif_dichotomous()
+  set.seed(1)
+  df <- RMdifTree(d$items, covariates = d$covs, minsize = 50,
+                  purification = "iterative", output = "dataframe")
+  expect_s3_class(df, "data.frame")
+  expect_equal(attr(df, "effect_size"), "MH")
+  expect_true(all(df$Class %in% c("A", "B", "C")))
+  expect_true(any(df$Flagged))
+})
+
+test_that("purification = 'iterative' (partial gamma) with p_adj on polytomous data", {
+  need_tree_pkgs()
+  d <- make_dif_poly()
+  set.seed(1)
+  df <- RMdifTree(d$items, covariates = d$covs, minsize = 50,
+                  purification = "iterative", p_adj = "fdr",
+                  output = "dataframe")
+  expect_s3_class(df, "data.frame")
+  expect_equal(attr(df, "effect_size"), "pgamma")
+  expect_true(all(df$Class %in% c("A", "B", "C")))
+})
+
+test_that("default kable output renders per-split effect sizes", {
+  need_tree_pkgs()
+  d <- make_dif_dichotomous()
+  set.seed(1)
+  kbl <- RMdifTree(d$items, covariates = d$covs, minsize = 50,
+                   p_adj = "bonferroni")
+  expect_s3_class(kbl, "knitr_kable")
+})
+
+test_that("output = 'plot' draws the tree without error", {
+  need_tree_pkgs()
+  d <- make_dif_dichotomous()
+  set.seed(1)
+  grDevices::pdf(tempfile(fileext = ".pdf"))
+  on.exit(grDevices::dev.off(), add = TRUE)
+  expect_no_error(
+    RMdifTree(d$items, covariates = d$covs, minsize = 50, output = "plot")
+  )
+})
+
+test_that("prune_negligible = TRUE runs and returns a tree", {
+  need_tree_pkgs()
+  d <- make_dif_dichotomous()
+  set.seed(1)
+  tr <- RMdifTree(d$items, covariates = d$covs, minsize = 50,
+                  prune_negligible = TRUE, output = "tree")
+  expect_s3_class(tr, "RMdifTree")
+})
+
+test_that("effect_size = 'MH' errors on polytomous data", {
+  need_tree_pkgs()
+  d <- make_dif_poly()
+  expect_error(
+    RMdifTree(d$items, covariates = d$covs, effect_size = "MH", minsize = 50),
+    regexp = "dichotomous"
+  )
+})
+
+test_that("invalid thresholds, alpha, and stability_B are rejected", {
+  need_tree_pkgs()
+  d <- make_dif_dichotomous()
+  expect_error(
+    RMdifTree(d$items, covariates = d$covs, thresholds = 0.5),
+    regexp = "thresholds"
+  )
+  expect_error(
+    RMdifTree(d$items, covariates = d$covs, alpha = 1.5),
+    regexp = "alpha"
+  )
+  expect_error(
+    RMdifTree(d$items, covariates = d$covs, stability_B = 0),
+    regexp = "stability_B"
+  )
+})

@@ -74,6 +74,9 @@ scores, so extreme-score cases are now retained rather than dropped).
 - **`RMpersonParameters()`** — per-respondent theta and SEM computed on each
   response pattern (handles partial missingness), via Warm's WLE (default) or
   EAP under a normal prior (SD estimated by marginal ML unless fixed).
+- Both `RMitemParameters()` and `RMpersonParameters()` support
+  `output = "file"` to write the result table to a CSV at `filename` (the
+  data.frame is also returned invisibly).
 
 ## CFA dimensionality: loadings + three-function split
 

@@ -46,6 +46,38 @@ test_that("RMitemInfitCutoffMI is reproducible with the same seed", {
   expect_equal(r1$item_cutoffs, r2$item_cutoffs)
 })
 
+test_that("RMitemInfitCutoffMI cutoff_method = 'quantile' aggregates without ggdist", {
+  skip_if_not_installed("mice")
+  skip_if_not_installed("iarm")
+
+  imp <- make_mids()
+  res <- RMitemInfitCutoffMI(imp, iterations = 6L, parallel = FALSE, seed = 1L,
+                             cutoff_method = "quantile")
+  expect_equal(res$cutoff_method, "quantile")
+  expect_equal(nrow(res$item_cutoffs), 5L)
+  expect_true(all(res$item_cutoffs$infit_low < res$item_cutoffs$infit_high))
+})
+
+test_that("RMitemInfitCutoffMI verbose = TRUE runs the per-imputation progress path", {
+  skip_if_not_installed("mice")
+  skip_if_not_installed("iarm")
+
+  imp <- make_mids()
+  suppressMessages(invisible(utils::capture.output(
+    res <- RMitemInfitCutoffMI(imp, iterations = 6L, parallel = FALSE, seed = 1L,
+                               cutoff_method = "quantile", verbose = TRUE)
+  )))
+  expect_equal(res$n_imputations, 3L)
+})
+
+test_that("RMitemInfitCutoffMI errors on a non-mids object", {
+  skip_if_not_installed("mice")
+  expect_snapshot(
+    RMitemInfitCutoffMI(data.frame(a = 0:1, b = 1:0)),
+    error = TRUE
+  )
+})
+
 # ---------------------------------------------------------------------
 # RMitemInfitMI
 # ---------------------------------------------------------------------

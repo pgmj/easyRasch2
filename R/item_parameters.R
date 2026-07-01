@@ -30,8 +30,11 @@
 #'   estimates are already centred; the shift mainly affects the MML
 #'   path, keeping the two estimators on a common scale.
 #' @param output Character. `"kable"` (default) for a formatted
-#'   [knitr::kable()] table, or `"dataframe"` for the underlying
-#'   data.frame.
+#'   [knitr::kable()] table, `"dataframe"` for the underlying
+#'   data.frame, or `"file"` to write that data.frame to a CSV at
+#'   `filename` (the data.frame is also returned invisibly).
+#' @param filename Character. Path to the CSV file to write when
+#'   `output = "file"`. Required in that case; ignored otherwise.
 #'
 #' @return
 #' For `output = "dataframe"`, a data.frame. In **long** format the
@@ -91,23 +94,37 @@
 #' )
 #' colnames(dich) <- paste0("Item", 1:6)
 #' RMitemParameters(dich, output = "dataframe")
+#'
+#' # Write the parameter table to a CSV (also returned invisibly)
+#' RMitemParameters(poly, output = "file",
+#'                  filename = tempfile(fileext = ".csv"))
 #' }
-RMitemParameters <- function(data,
-                             estimator = c("CML", "MML"),
-                             format    = c("long", "wide"),
-                             se        = TRUE,
-                             ci_level  = 0.95,
-                             center    = TRUE,
-                             output    = c("kable", "dataframe")) {
-
+RMitemParameters <- function(
+  data,
+  estimator = c("CML", "MML"),
+  format = c("long", "wide"),
+  se = TRUE,
+  ci_level = 0.95,
+  center = TRUE,
+  output = c("kable", "dataframe", "file"),
+  filename = NULL
+) {
   estimator <- match.arg(estimator)
-  format    <- match.arg(format)
-  output    <- match.arg(output)
+  format <- match.arg(format)
+  output <- match.arg(output)
+
+  if (output == "file") {
+    .validate_filename(filename)
+  }
 
   validate_response_data(data)
 
-  if (!is.numeric(ci_level) || length(ci_level) != 1L ||
-      ci_level <= 0 || ci_level >= 1) {
+  if (
+    !is.numeric(ci_level) ||
+      length(ci_level) != 1L ||
+      ci_level <= 0 ||
+      ci_level >= 1
+  ) {
     stop("`ci_level` must be a single number in (0, 1).", call. = FALSE)
   }
 
@@ -127,17 +144,17 @@ RMitemParameters <- function(data,
   # --- Long table -------------------------------------------------------------
   long_rows <- list()
   for (i in seq_along(fit$items)) {
-    thr    <- fit$thr_list[[i]]
+    thr <- fit$thr_list[[i]]
     se_thr <- if (se) fit$se_list[[i]] else rep(NA_real_, length(thr))
     for (k in seq_along(thr)) {
       row <- data.frame(
-        item      = fit$items[i],
+        item = fit$items[i],
         threshold = as.integer(k),
-        location  = thr[k],
+        location = thr[k],
         stringsAsFactors = FALSE
       )
       if (se) {
-        row$se       <- se_thr[k]
+        row$se <- se_thr[k]
         row$ci_lower <- thr[k] - z * se_thr[k]
         row$ci_upper <- thr[k] + z * se_thr[k]
       }
@@ -154,17 +171,36 @@ RMitemParameters <- function(data,
   }
 
   # --- Output -----------------------------------------------------------------
-  if (output == "dataframe") {
+  if (output %in% c("dataframe", "file")) {
     num <- vapply(result, is.numeric, logical(1))
     result[num] <- lapply(result[num], round, 4)
+    if (output == "file") {
+      return(.write_output_csv(result, filename, row.names = FALSE))
+    }
     return(result)
   }
 
   caption <- paste0(
-    "Item ", if (fit$is_polytomous) "thresholds" else "difficulties",
-    " via ", estimator,
-    if (fit$is_polytomous) " (Andrich thresholds, logit scale)." else " (logit scale).",
-    if (se) paste0(" SE and ", round(ci_level * 100), "% Wald CI shown.") else ""
+    "Item ",
+    if (fit$is_polytomous) "thresholds" else "difficulties",
+    " via ",
+    estimator,
+    if (fit$is_polytomous) {
+      " (Andrich thresholds, logit scale)."
+    } else {
+      " (logit scale)."
+    },
+    if (se) {
+      # Wide format shows only SE columns (se_t*); the Wald CI columns are
+      # long-format only.
+      if (format == "long") {
+        paste0(" SE and ", round(ci_level * 100), "% Wald CI shown.")
+      } else {
+        " SE shown."
+      }
+    } else {
+      ""
+    }
   )
   display <- result
   num <- vapply(display, is.numeric, logical(1))
@@ -182,7 +218,7 @@ RMitemParameters <- function(data,
   max_thr <- max(vapply(fit$thr_list, length, integer(1)))
   rows <- list()
   for (i in seq_along(fit$items)) {
-    thr    <- fit$thr_list[[i]]
+    thr <- fit$thr_list[[i]]
     se_thr <- if (se) fit$se_list[[i]] else NULL
     row <- list(item = fit$items[i])
 
@@ -205,7 +241,7 @@ RMitemParameters <- function(data,
   }
   out <- do.call(rbind, rows)
   rownames(out) <- NULL
-  out[, , drop = FALSE]
+  out[,, drop = FALSE]
 }
 
 # ---------------------------------------------------------------------
@@ -234,26 +270,34 @@ RMitemParameters <- function(data,
   fit <- tryCatch(
     psychotools::pcmodel(data),
     error = function(e) {
-      stop("CML estimation failed (", conditionMessage(e), "). ",
-           "This often indicates sparse data; try estimator = \"MML\".",
-           call. = FALSE)
+      stop(
+        "CML estimation failed (",
+        conditionMessage(e),
+        "). ",
+        "This often indicates sparse data; try estimator = \"MML\".",
+        call. = FALSE
+      )
     }
   )
 
-  items    <- colnames(data)
-  tp       <- psychotools::threshpar(fit, vcov = se)
+  items <- colnames(data)
+  tp <- psychotools::threshpar(fit, vcov = se)
   thr_list <- stats::setNames(lapply(tp, as.numeric), items)
 
   se_list <- NULL
   if (se) {
-    se_all  <- sqrt(diag(attr(tp, "vcov")))
+    se_all <- sqrt(diag(attr(tp, "vcov")))
     se_list <- split(se_all, rep.int(seq_along(thr_list), lengths(thr_list)))
     se_list <- stats::setNames(lapply(se_list, as.numeric), items)
   }
 
-  list(model = if (is_poly) "PCM" else "RM",
-       items = items, is_polytomous = is_poly,
-       thr_list = thr_list, se_list = se_list)
+  list(
+    model = if (is_poly) "PCM" else "RM",
+    items = items,
+    is_polytomous = is_poly,
+    thr_list = thr_list,
+    se_list = se_list
+  )
 }
 
 # ---------------------------------------------------------------------
@@ -268,20 +312,29 @@ RMitemParameters <- function(data,
 #' @noRd
 .rasch_fit_mml <- function(data, se = TRUE) {
   if (!requireNamespace("mirt", quietly = TRUE)) {
-    stop("Package 'mirt' is required for estimator = \"MML\". ",
-         "Install it with: install.packages(\"mirt\")", call. = FALSE)
+    stop(
+      "Package 'mirt' is required for estimator = \"MML\". ",
+      "Install it with: install.packages(\"mirt\")",
+      call. = FALSE
+    )
   }
   data <- as.data.frame(data)
   is_poly <- max(as.matrix(data), na.rm = TRUE) > 1L
-  items   <- colnames(data)
+  items <- colnames(data)
 
   fit <- suppressMessages(
-    mirt::mirt(data, model = 1, itemtype = "Rasch",
-               SE = se, verbose = FALSE, accelerate = "squarem")
+    mirt::mirt(
+      data,
+      model = 1,
+      itemtype = "Rasch",
+      SE = se,
+      verbose = FALSE,
+      accelerate = "squarem"
+    )
   )
 
   cf <- mirt::coef(fit, simplify = FALSE)
-  V  <- if (se) {
+  V <- if (se) {
     tryCatch(mirt::extract.mirt(fit, "vcov"), error = function(e) NULL)
   } else {
     NULL
@@ -294,10 +347,10 @@ RMitemParameters <- function(data,
   names(thr_list) <- items
   steps <- integer(length(items))
   for (i in seq_along(items)) {
-    pars   <- cf[[items[i]]]
+    pars <- cf[[items[i]]]
     d_cols <- grep("^d([0-9]+)?$", colnames(pars), value = TRUE)
-    d      <- as.numeric(pars[1L, d_cols])        # poly: d0, d1, ...; dich: d
-    tau    <- if (length(d_cols) == 1L) -d else -diff(d)
+    d <- as.numeric(pars[1L, d_cols]) # poly: d0, d1, ...; dich: d
+    tau <- if (length(d_cols) == 1L) -d else -diff(d)
     thr_list[[i]] <- tau
     steps[i] <- length(tau)
   }
@@ -307,9 +360,13 @@ RMitemParameters <- function(data,
     se_list <- .mml_threshold_se(V, steps)
   }
 
-  list(model = if (is_poly) "PCM" else "RM",
-       items = items, is_polytomous = is_poly,
-       thr_list = thr_list, se_list = se_list)
+  list(
+    model = if (is_poly) "PCM" else "RM",
+    items = items,
+    is_polytomous = is_poly,
+    thr_list = thr_list,
+    se_list = se_list
+  )
 }
 
 #' Delta-method threshold SEs from a mirt parameter covariance
@@ -327,15 +384,19 @@ RMitemParameters <- function(data,
 #' @noRd
 .mml_threshold_se <- function(V, steps) {
   na_out <- lapply(steps, function(m) rep(NA_real_, m))
-  if (is.null(V)) return(na_out)
+  if (is.null(V)) {
+    return(na_out)
+  }
 
   d_rows <- grep("^d[0-9]*\\.", rownames(V))
-  if (length(d_rows) != sum(steps)) return(na_out)
+  if (length(d_rows) != sum(steps)) {
+    return(na_out)
+  }
 
   out <- vector("list", length(steps))
   off <- 0L
   for (i in seq_along(steps)) {
-    m   <- steps[i]
+    m <- steps[i]
     idx <- d_rows[(off + 1L):(off + m)]
     v_d <- V[idx, idx, drop = FALSE]
 
@@ -346,7 +407,7 @@ RMitemParameters <- function(data,
         J[1L, 1L] <- -1
       } else {
         J[k, k - 1L] <- 1
-        J[k, k]      <- -1
+        J[k, k] <- -1
       }
     }
     out[[i]] <- sqrt(pmax(diag(J %*% v_d %*% t(J)), 0))
@@ -382,10 +443,14 @@ RMitemParameters <- function(data,
     }
   }
   if (length(flagged) > 0L) {
-    warning("Sparse or zero-variance response categories detected in ",
-            "item(s): ", paste(unique(flagged), collapse = ", "), ". ",
-            "CML estimates may be unstable; consider estimator = \"MML\".",
-            call. = FALSE)
+    warning(
+      "Sparse or zero-variance response categories detected in ",
+      "item(s): ",
+      paste(unique(flagged), collapse = ", "),
+      ". ",
+      "CML estimates may be unstable; consider estimator = \"MML\".",
+      call. = FALSE
+    )
   }
   invisible(NULL)
 }

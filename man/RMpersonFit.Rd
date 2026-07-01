@@ -125,23 +125,33 @@ low (negative) values flag the aberrant (underfit-like) direction.
 
 \strong{lz.} The standardized log-likelihood of the response pattern
 evaluated at the estimated person location (Drasgow, Levine &
-Williams, 1985); small (negative) values indicate misfit. Its
-asymptotic standard-normal null is unreliable when the person location
-is estimated; the resampled p-value is therefore the basis for
-inference, which makes the analytic lz\* standardization (Snijders,
-2001) unnecessary here.
+Williams, 1985); small (negative) values indicate misfit. Because the
+location is estimated rather than known, the variance of lz is below 1
+and its asymptotic standard-normal null is invalid, which makes a
+naive test conservative (Snijders, 2001; Sinharay, 2016). Instead of
+applying the analytic lz\* standardization -- derived by Snijders (2001)
+for dichotomous items and extended to polytomous / mixed-format items by
+Sinharay (2016, 2026) -- easyRasch2 obtains the reference distribution by
+resampling with the person location \strong{re-estimated for every
+simulated pattern} (see \strong{Resampling}). This reproduces the
+ability-estimation effect and is the resampling analogue of lz\*, so the
+resampled p-value is well calibrated.
 
 \strong{Resampling.} Each statistic is referenced against the null that
 matches it, removing the need to choose a scheme. The conditional MSQ
 statistics use patterns sampled \strong{conditional on the person's total
 score} -- the exact Rasch-native null, requiring no person estimate and
 fully consistent with the (conditional) statistic. lz, which is defined at
-the estimated location, uses patterns \strong{simulated at that location}. Both
-are computed per person over the items actually answered, so partial
-missingness is handled by either scheme. The p-value is the proportion of
-the \code{iterations} replicates at least as extreme as the observed value. This
-follows the resampling-based person-fit approach (Sinharay, 2016) and the
-bootstrap recommendation of Müller (2020).
+the estimated location, uses patterns \strong{simulated at that location and then
+scored with the location re-estimated from each simulated pattern}, so the
+null carries the same ability-estimation effect as the observed lz (for a
+Rasch / PCM model the location is a function of the total score, so this
+re-estimation is a cheap score-based lookup). Both schemes are computed per
+person over the items actually answered, so partial missingness is handled
+by either. The p-value is the proportion of the \code{iterations} replicates at
+least as extreme as the observed value. This follows the resampling-based
+person-fit approach (Sinharay, 2016) and the bootstrap recommendation of
+Müller (2020).
 }
 \examples{
 \donttest{
@@ -182,6 +192,19 @@ trust them? \emph{Journal of Statistical Distributions and Applications,
 Sinharay, S. (2016). Assessment of person fit using resampling-based
 approaches. \emph{Journal of Educational Measurement, 53}(1), 63-85.
 \doi{10.1111/jedm.12101}
+
+Sinharay, S. (2016). Asymptotically correct standardization of
+person-fit statistics beyond dichotomous items. \emph{Psychometrika,
+81}(4), 992-1013. \doi{10.1007/s11336-015-9465-x}
+
+Sinharay, S. (2026). Refining the asymptotically correct
+standardization of person-fit statistics for mixed-format tests.
+\emph{British Journal of Mathematical and Statistical Psychology}.
+\doi{10.1111/bmsp.70049}
+
+Snijders, T. A. B. (2001). Asymptotic null distribution of person fit
+statistics with estimated person parameter. \emph{Psychometrika, 66}(3),
+331-342. \doi{10.1007/BF02294440}
 }
 \seealso{
 \code{\link[=RMpersonParameters]{RMpersonParameters()}}, \code{\link[=RMitemInfit]{RMitemInfit()}}, \code{\link[=RMitemParameters]{RMitemParameters()}}

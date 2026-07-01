@@ -11,7 +11,8 @@ RMitemParameters(
   se = TRUE,
   ci_level = 0.95,
   center = TRUE,
-  output = c("kable", "dataframe")
+  output = c("kable", "dataframe", "file"),
+  filename = NULL
 )
 }
 \arguments{
@@ -44,8 +45,12 @@ estimates are already centred; the shift mainly affects the MML
 path, keeping the two estimators on a common scale.}
 
 \item{output}{Character. \code{"kable"} (default) for a formatted
-\code{\link[knitr:kable]{knitr::kable()}} table, or \code{"dataframe"} for the underlying
-data.frame.}
+\code{\link[knitr:kable]{knitr::kable()}} table, \code{"dataframe"} for the underlying
+data.frame, or \code{"file"} to write that data.frame to a CSV at
+\code{filename} (the data.frame is also returned invisibly).}
+
+\item{filename}{Character. Path to the CSV file to write when
+\code{output = "file"}. Required in that case; ignored otherwise.}
 }
 \value{
 For \code{output = "dataframe"}, a data.frame. In \strong{long} format the
@@ -100,6 +105,10 @@ dich <- as.data.frame(
 )
 colnames(dich) <- paste0("Item", 1:6)
 RMitemParameters(dich, output = "dataframe")
+
+# Write the parameter table to a CSV (also returned invisibly)
+RMitemParameters(poly, output = "file",
+                 filename = tempfile(fileext = ".csv"))
 }
 }
 \references{

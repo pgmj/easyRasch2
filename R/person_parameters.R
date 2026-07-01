@@ -36,8 +36,11 @@
 #'   for equating) to fix it. Ignored for WLE.
 #' @param output Character. `"kable"` (default) for a formatted
 #'   [knitr::kable()] table, `"dataframe"` for the underlying
-#'   data.frame, or `"ggplot"` for a histogram of the estimated person
-#'   locations.
+#'   data.frame, `"ggplot"` for a histogram of the estimated person
+#'   locations, or `"file"` to write the data.frame to a CSV at
+#'   `filename` (the data.frame is also returned invisibly).
+#' @param filename Character. Path to the CSV file to write when
+#'   `output = "file"`. Required in that case; ignored otherwise.
 #'
 #' @return
 #' For `output = "dataframe"`, a data.frame with one row per respondent
@@ -112,26 +115,42 @@
 #' # EAP with a fixed N(0, 1) prior
 #' RMpersonParameters(dat, method = "EAP", prior_sd = 1, output = "dataframe") |>
 #'   head()
+#'
+#' # Write the person-location table to a CSV (also returned invisibly)
+#' RMpersonParameters(dat, output = "file",
+#'                    filename = tempfile(fileext = ".csv"))
 #' }
-RMpersonParameters <- function(data,
-                               method      = c("WLE", "EAP"),
-                               item_params = NULL,
-                               estimator   = c("CML", "MML"),
-                               theta_range = c(-10, 10),
-                               prior_mean  = 0,
-                               prior_sd    = NULL,
-                               output      = c("kable", "dataframe", "ggplot")) {
-
-  method    <- match.arg(method)
+RMpersonParameters <- function(
+  data,
+  method = c("WLE", "EAP"),
+  item_params = NULL,
+  estimator = c("CML", "MML"),
+  theta_range = c(-10, 10),
+  prior_mean = 0,
+  prior_sd = NULL,
+  output = c("kable", "dataframe", "ggplot", "file"),
+  filename = NULL
+) {
+  method <- match.arg(method)
   estimator <- match.arg(estimator)
-  output    <- match.arg(output)
+  output <- match.arg(output)
+
+  if (output == "file") {
+    .validate_filename(filename)
+  }
 
   validate_response_data(data)
 
-  if (!is.numeric(theta_range) || length(theta_range) != 2L ||
-      theta_range[1L] >= theta_range[2L]) {
-    stop("`theta_range` must be a numeric vector of length 2 with ",
-         "theta_range[1] < theta_range[2].", call. = FALSE)
+  if (
+    !is.numeric(theta_range) ||
+      length(theta_range) != 2L ||
+      theta_range[1L] >= theta_range[2L]
+  ) {
+    stop(
+      "`theta_range` must be a numeric vector of length 2 with ",
+      "theta_range[1] < theta_range[2].",
+      call. = FALSE
+    )
   }
 
   data <- as.data.frame(data)
@@ -155,57 +174,87 @@ RMpersonParameters <- function(data,
 
   # --- Person-level bookkeeping -----------------------------------------------
   n_answered <- rowSums(!is.na(data_mat))
-  sum_score  <- rowSums(data_mat, na.rm = TRUE)
-  max_score  <- vapply(seq_len(nrow(data_mat)), function(p) {
-    ans <- !is.na(data_mat[p, ])
-    sum(vapply(thr_list[ans], length, integer(1)))
-  }, numeric(1))
+  sum_score <- rowSums(data_mat, na.rm = TRUE)
+  max_score <- vapply(
+    seq_len(nrow(data_mat)),
+    function(p) {
+      ans <- !is.na(data_mat[p, ])
+      sum(vapply(thr_list[ans], length, integer(1)))
+    },
+    numeric(1)
+  )
   extreme <- n_answered > 0L & (sum_score == 0 | sum_score == max_score)
 
   # --- Estimation (shared engine: see .estimate_thetas() in utils-theta.R) -----
   prior_used <- NULL
   if (method == "WLE") {
-    est   <- .estimate_thetas(data_mat, thr_list, method = "WLE",
-                              theta_range = theta_range)
+    est <- .estimate_thetas(
+      data_mat,
+      thr_list,
+      method = "WLE",
+      theta_range = theta_range
+    )
     theta <- est$theta
-    sem   <- est$sem
+    sem <- est$sem
   } else {
-    if (!is.null(prior_sd) &&
-        (!is.numeric(prior_sd) || length(prior_sd) != 1L || prior_sd <= 0)) {
-      stop("`prior_sd` must be a single positive number or NULL.",
-           call. = FALSE)
+    if (
+      !is.null(prior_sd) &&
+        (!is.numeric(prior_sd) || length(prior_sd) != 1L || prior_sd <= 0)
+    ) {
+      stop(
+        "`prior_sd` must be a single positive number or NULL.",
+        call. = FALSE
+      )
     }
-    est   <- .estimate_thetas(data_mat, thr_list, method = "EAP",
-                              theta_range = theta_range, prior_mean = prior_mean,
-                              prior_sd = prior_sd)
+    est <- .estimate_thetas(
+      data_mat,
+      thr_list,
+      method = "EAP",
+      theta_range = theta_range,
+      prior_mean = prior_mean,
+      prior_sd = prior_sd
+    )
     theta <- est$theta
-    sem   <- est$sem
-    prior_used <- c(mean = prior_mean, sd = attr(est, "prior_sd"),
-                    estimated = as.numeric(is.null(prior_sd)))
+    sem <- est$sem
+    prior_used <- c(
+      mean = prior_mean,
+      sd = attr(est, "prior_sd"),
+      estimated = as.numeric(is.null(prior_sd))
+    )
   }
 
   out <- data.frame(
-    theta      = theta,
-    sem        = sem,
-    sum_score  = sum_score,
+    theta = theta,
+    sem = sem,
+    sum_score = sum_score,
     n_answered = n_answered,
-    extreme    = extreme,
+    extreme = extreme,
     stringsAsFactors = FALSE
   )
   rownames(out) <- rownames(data)
-  if (!is.null(prior_used)) attr(out, "prior") <- prior_used
+  if (!is.null(prior_used)) {
+    attr(out, "prior") <- prior_used
+  }
 
   # --- Output -----------------------------------------------------------------
-  if (output == "dataframe") {
+  if (output %in% c("dataframe", "file")) {
     out$theta <- round(out$theta, 4)
-    out$sem   <- round(out$sem, 4)
+    out$sem <- round(out$sem, 4)
+    if (output == "file") {
+      # row.names = TRUE preserves respondent identifiers (the person kable
+      # also shows them), which live in the data.frame's row names.
+      return(.write_output_csv(out, filename, row.names = TRUE))
+    }
     return(out)
   }
 
   if (output == "ggplot") {
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
-      stop("Package 'ggplot2' is required for output = \"ggplot\". ",
-           "Install it with: install.packages(\"ggplot2\")", call. = FALSE)
+      stop(
+        "Package 'ggplot2' is required for output = \"ggplot\". ",
+        "Install it with: install.packages(\"ggplot2\")",
+        call. = FALSE
+      )
     }
     plot_df <- out[is.finite(out$theta), , drop = FALSE]
     return(
@@ -219,18 +268,25 @@ RMpersonParameters <- function(data,
 
   display <- out
   display$theta <- round(display$theta, 3)
-  display$sem   <- round(display$sem, 3)
+  display$sem <- round(display$sem, 3)
   caption <- if (method == "WLE") {
-    paste0("Person locations via Warm's WLE (", estimator,
-           " item parameters). Extreme scores receive finite extrapolated ",
-           "estimates (flagged in the extreme column).")
+    paste0(
+      "Person locations via Warm's WLE (",
+      estimator,
+      " item parameters). Extreme scores receive finite extrapolated ",
+      "estimates (flagged in the extreme column)."
+    )
   } else {
-    paste0("Person locations via EAP (", estimator,
-           " item parameters; normal prior mean = ",
-           round(prior_used[["mean"]], 3), ", sd = ",
-           round(prior_used[["sd"]], 3),
-           if (prior_used[["estimated"]] == 1) " [estimated]" else " [fixed]",
-           ").")
+    paste0(
+      "Person locations via EAP (",
+      estimator,
+      " item parameters; normal prior mean = ",
+      round(prior_used[["mean"]], 3),
+      ", sd = ",
+      round(prior_used[["sd"]], 3),
+      if (prior_used[["estimated"]] == 1) " [estimated]" else " [fixed]",
+      ")."
+    )
   }
   knitr::kable(display, format = "pipe", caption = caption, row.names = TRUE)
 }
@@ -245,23 +301,32 @@ RMpersonParameters <- function(data,
   if (is.list(item_params) && !is.data.frame(item_params)) {
     thr_list <- lapply(item_params, function(x) as.numeric(x))
     if (is.null(names(thr_list))) {
-      stop("When `item_params` is a list it must be named by item.",
-           call. = FALSE)
+      stop(
+        "When `item_params` is a list it must be named by item.",
+        call. = FALSE
+      )
     }
     return(thr_list)
   }
   if (is.data.frame(item_params)) {
     if (!all(c("item", "location") %in% names(item_params))) {
-      stop("`item_params` data.frame must have `item` and `location` ",
-           "columns (as returned by RMitemParameters(format = \"long\")).",
-           call. = FALSE)
+      stop(
+        "`item_params` data.frame must have `item` and `location` ",
+        "columns (as returned by RMitemParameters(format = \"long\")).",
+        call. = FALSE
+      )
     }
-    sp <- split(item_params$location, factor(item_params$item,
-                                             levels = unique(item_params$item)))
+    sp <- split(
+      item_params$location,
+      factor(item_params$item, levels = unique(item_params$item))
+    )
     return(lapply(sp, as.numeric))
   }
-  stop("`item_params` must be a named list of threshold vectors or a ",
-       "data.frame from RMitemParameters().", call. = FALSE)
+  stop(
+    "`item_params` must be a named list of threshold vectors or a ",
+    "data.frame from RMitemParameters().",
+    call. = FALSE
+  )
 }
 
 #' Align response-data columns with the item-parameter list
@@ -276,9 +341,14 @@ RMpersonParameters <- function(data,
     return(data[, names(thr_list), drop = FALSE])
   }
   if (length(thr_list) != ncol(data)) {
-    stop("Number of items in `item_params` (", length(thr_list),
-         ") does not match the number of columns in `data` (",
-         ncol(data), "), and names do not align.", call. = FALSE)
+    stop(
+      "Number of items in `item_params` (",
+      length(thr_list),
+      ") does not match the number of columns in `data` (",
+      ncol(data),
+      "), and names do not align.",
+      call. = FALSE
+    )
   }
   data
 }

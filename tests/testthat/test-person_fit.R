@@ -33,7 +33,6 @@ test_that("RMpersonFit errors on non-zero minimum", {
 })
 
 test_that("dataframe has expected columns with all statistics", {
-  skip_if_not_installed("eRm")
   res <- RMpersonFit(sim_pcm_null(n = 120), iterations = 100, seed = 1,
                      output = "dataframe")
   expect_s3_class(res, "data.frame")
@@ -44,7 +43,6 @@ test_that("dataframe has expected columns with all statistics", {
 })
 
 test_that("iterations = 0 returns statistics without p-values", {
-  skip_if_not_installed("eRm")
   res <- RMpersonFit(sim_pcm_null(n = 100), iterations = 0, output = "dataframe")
   expect_false(any(grepl("^p_", names(res))))
   expect_false("flagged" %in% names(res))
@@ -52,7 +50,6 @@ test_that("iterations = 0 returns statistics without p-values", {
 })
 
 test_that("statistics argument subsets the output", {
-  skip_if_not_installed("eRm")
   res <- RMpersonFit(sim_pcm_null(n = 100), statistics = "outfit",
                      iterations = 50, seed = 1, output = "dataframe")
   expect_true("outfit_msq" %in% names(res))
@@ -60,7 +57,6 @@ test_that("statistics argument subsets the output", {
 })
 
 test_that("p-values lie in [0, 1]", {
-  skip_if_not_installed("eRm")
   res <- RMpersonFit(sim_pcm_null(n = 120), iterations = 100, seed = 2,
                      output = "dataframe")
   for (col in c("p_infit", "p_outfit", "p_lz")) {
@@ -74,21 +70,32 @@ test_that("p-values lie in [0, 1]", {
 # ---------------------------------------------------------------------
 
 test_that("conditional MSQ means are near 1 under the null", {
-  skip_if_not_installed("eRm")
   res <- RMpersonFit(sim_pcm_null(n = 400), iterations = 0, output = "dataframe")
   expect_equal(mean(res$infit_msq,  na.rm = TRUE), 1, tolerance = 0.05)
   expect_equal(mean(res$outfit_msq, na.rm = TRUE), 1, tolerance = 0.05)
 })
 
 test_that("Type I error is near nominal under the null", {
-  skip_if_not_installed("eRm")
   res <- RMpersonFit(sim_pcm_null(n = 400),
                      iterations = 400, seed = 4, output = "dataframe")
   expect_lt(mean(res$flagged, na.rm = TRUE), 0.12)
 })
 
+test_that("lz p-values are calibrated (not conservative) under the null", {
+  # The lz resampling re-estimates the person location for each simulated
+  # pattern, reproducing the ability-estimation effect (Snijders 2001;
+  # Sinharay 2016) that otherwise makes the test conservative. With a fixed
+  # location the rejection rate here would be roughly half nominal.
+  res <- RMpersonFit(sim_rasch_null(n = 400, J = 10, seed = 3),
+                     statistics = "lz", iterations = 300, seed = 7,
+                     output = "dataframe")
+  p <- res$p_lz[!is.na(res$p_lz)]
+  expect_gt(mean(p), 0.45)
+  expect_lt(mean(p), 0.55)
+  expect_gt(mean(p < 0.10), 0.06)   # near nominal 0.10, not the conservative ~0.04
+})
+
 test_that("aberrant responders are detected (power)", {
-  skip_if_not_installed("eRm")
   dat <- sim_rasch_null(n = 300, J = 10, seed = 3)
   ab  <- 1:15
   dat[ab, ] <- dat[ab, rev(seq_len(ncol(dat)))]   # reverse -> aberrant
@@ -102,7 +109,6 @@ test_that("aberrant responders are detected (power)", {
 # ---------------------------------------------------------------------
 
 test_that("partial missingness is handled (rows kept, estimates finite)", {
-  skip_if_not_installed("eRm")
   dat <- sim_pcm_null(n = 200)
   dat[cbind(sample(200, 40), sample(8, 40, replace = TRUE))] <- NA
   res <- RMpersonFit(dat, iterations = 0, output = "dataframe")
@@ -115,7 +121,6 @@ test_that("partial missingness is handled (rows kept, estimates finite)", {
 })
 
 test_that("extreme scorers receive NA statistics", {
-  skip_if_not_installed("eRm")
   dat <- sim_rasch_null(n = 200, J = 8, seed = 9)
   dat[1, ] <- 0L; dat[2, ] <- 1L
   res <- RMpersonFit(dat, iterations = 50, seed = 1, output = "dataframe")
@@ -123,7 +128,6 @@ test_that("extreme scorers receive NA statistics", {
 })
 
 test_that("all three statistics get valid p-values (per-statistic schemes)", {
-  skip_if_not_installed("eRm")
   res <- RMpersonFit(sim_pcm_null(n = 150), iterations = 200, seed = 7,
                      output = "dataframe")
   for (col in c("p_infit", "p_outfit", "p_lz")) {
@@ -133,7 +137,6 @@ test_that("all three statistics get valid p-values (per-statistic schemes)", {
 })
 
 test_that("MSQ-only run needs no person estimate but still yields p-values", {
-  skip_if_not_installed("eRm")
   dat <- sim_pcm_null(n = 150)
   dat[cbind(sample(150, 25), sample(8, 25, replace = TRUE))] <- NA
   res <- RMpersonFit(dat, statistics = c("infit", "outfit"),
@@ -149,21 +152,18 @@ test_that("conditional sampler produces patterns with the fixed total", {
 })
 
 test_that("zstd adds non-inferential ZSTD columns", {
-  skip_if_not_installed("eRm")
   res <- RMpersonFit(sim_pcm_null(n = 100), iterations = 50, zstd = TRUE,
                      seed = 1, output = "dataframe")
   expect_true(all(c("infit_zstd", "outfit_zstd") %in% names(res)))
 })
 
 test_that("kable output returns knitr_kable", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("knitr")
   dat <- sim_pcm_null(n = 100)
   expect_s3_class(RMpersonFit(dat, iterations = 50), "knitr_kable")
 })
 
 test_that("ggplot output returns a named list of plots, one per statistic", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
   dat <- sim_pcm_null(n = 120)
   g <- RMpersonFit(dat, iterations = 100, seed = 1, output = "ggplot")
@@ -175,7 +175,6 @@ test_that("ggplot output returns a named list of plots, one per statistic", {
 })
 
 test_that("ggplot with a single statistic is a one-element list and not blank", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
   dat <- sim_pcm_null(n = 120)
   gi <- RMpersonFit(dat, statistics = "infit", iterations = 100, seed = 1,
@@ -187,7 +186,6 @@ test_that("ggplot with a single statistic is a one-element list and not blank", 
 })
 
 test_that("MSQ plot captions split flagged into underfit/overfit; lz does not", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
   set.seed(2); n <- 400; J <- 8
   theta <- rnorm(n, 0, 1.3); beta <- seq(-1.5, 1.5, length.out = J)
@@ -203,7 +201,6 @@ test_that("MSQ plot captions split flagged into underfit/overfit; lz does not", 
 })
 
 test_that("flag = 'underfit' flags only the upper (MSQ > 1) direction", {
-  skip_if_not_installed("eRm")
   set.seed(2); n <- 400; J <- 8
   theta <- rnorm(n, 0, 1.3); beta <- seq(-1.5, 1.5, length.out = J)
   m <- sapply(seq_len(J), function(j) rbinom(n, 1, plogis(theta - beta[j])))
@@ -216,7 +213,6 @@ test_that("flag = 'underfit' flags only the upper (MSQ > 1) direction", {
 })
 
 test_that("flag = 'underfit' uses a one-sided MSQ p-value (differs from both)", {
-  skip_if_not_installed("eRm")
   dat <- sim_pcm_null(n = 200)
   a <- RMpersonFit(dat, statistics = "infit", iterations = 400, seed = 1,
                    flag = "both",     output = "dataframe")
@@ -226,7 +222,6 @@ test_that("flag = 'underfit' uses a one-sided MSQ p-value (differs from both)", 
 })
 
 test_that("plot status colours respondents by direction", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
   dat <- sim_pcm_null(n = 150)
   g <- RMpersonFit(dat, iterations = 300, seed = 1, output = "ggplot")
@@ -237,7 +232,6 @@ test_that("plot status colours respondents by direction", {
 })
 
 test_that("RMpersonFit Monte-Carlo p-values are never exactly 0", {
-  skip_if_not_installed("eRm")
   dat <- sim_pcm_null()
   res <- RMpersonFit(dat, iterations = 50, seed = 1, output = "dataframe")
   p_cols <- grep("^p_", names(res), value = TRUE)

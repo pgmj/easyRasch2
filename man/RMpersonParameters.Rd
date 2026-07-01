@@ -12,7 +12,8 @@ RMpersonParameters(
   theta_range = c(-10, 10),
   prior_mean = 0,
   prior_sd = NULL,
-  output = c("kable", "dataframe", "ggplot")
+  output = c("kable", "dataframe", "ggplot", "file"),
+  filename = NULL
 )
 }
 \arguments{
@@ -51,8 +52,12 @@ for equating) to fix it. Ignored for WLE.}
 
 \item{output}{Character. \code{"kable"} (default) for a formatted
 \code{\link[knitr:kable]{knitr::kable()}} table, \code{"dataframe"} for the underlying
-data.frame, or \code{"ggplot"} for a histogram of the estimated person
-locations.}
+data.frame, \code{"ggplot"} for a histogram of the estimated person
+locations, or \code{"file"} to write the data.frame to a CSV at
+\code{filename} (the data.frame is also returned invisibly).}
+
+\item{filename}{Character. Path to the CSV file to write when
+\code{output = "file"}. Required in that case; ignored otherwise.}
 }
 \value{
 For \code{output = "dataframe"}, a data.frame with one row per respondent
@@ -118,6 +123,10 @@ attr(eap, "prior")
 # EAP with a fixed N(0, 1) prior
 RMpersonParameters(dat, method = "EAP", prior_sd = 1, output = "dataframe") |>
   head()
+
+# Write the person-location table to a CSV (also returned invisibly)
+RMpersonParameters(dat, output = "file",
+                   filename = tempfile(fileext = ".csv"))
 }
 }
 \references{
