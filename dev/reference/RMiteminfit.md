@@ -196,72 +196,36 @@ Testing*. Wiley.
 
 ``` r
 # \donttest{
-# Simulate binary item response data (5 items, 40 persons)
-set.seed(42)
-sim_data <- as.data.frame(
-  matrix(sample(0:1, 40 * 5, replace = TRUE), nrow = 40, ncol = 5)
-)
-colnames(sim_data) <- paste0("Item", 1:5)
+if (requireNamespace("iarm", quietly = TRUE)) {
+  # Simulate binary item response data (5 items, 40 persons)
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:1, 40 * 5, replace = TRUE), nrow = 40, ncol = 5)
+  )
+  colnames(sim_data) <- paste0("Item", 1:5)
 
-# Default kable output
-RMitemInfit(sim_data)
-#> 
-#> 
-#> Table: MSQ values based on conditional estimation (n = 40 complete cases).
-#> 
-#> |Item  | Infit MSQ| Relative location|
-#> |:-----|---------:|-----------------:|
-#> |Item1 |     1.049|              0.04|
-#> |Item2 |     0.929|             -0.48|
-#> |Item3 |     0.828|             -0.16|
-#> |Item4 |     1.216|              0.33|
-#> |Item5 |     0.931|             -0.70|
+  # Default kable output
+  RMitemInfit(sim_data)
 
-# Sorted by infit MSQ descending
-RMitemInfit(sim_data, sort = "infit")
-#> 
-#> 
-#> Table: MSQ values based on conditional estimation (n = 40 complete cases).
-#> 
-#> |Item  | Infit MSQ| Relative location|
-#> |:-----|---------:|-----------------:|
-#> |Item4 |     1.216|              0.33|
-#> |Item1 |     1.049|              0.04|
-#> |Item5 |     0.931|             -0.70|
-#> |Item2 |     0.929|             -0.48|
-#> |Item3 |     0.828|             -0.16|
+  # Sorted by infit MSQ descending
+  RMitemInfit(sim_data, sort = "infit")
 
-# Return as data.frame for further processing
-df <- RMitemInfit(sim_data, output = "dataframe")
-# }
-# \donttest{
-# Simulation-based cutoffs (100 Monte-Carlo iterations)
-cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100, parallel = FALSE,
-                            seed = 42)
-RMitemInfit(sim_data, cutoff = cutoff_res)
-#> 
-#> 
-#> Table: MSQ values based on conditional estimation (n = 40 complete cases). Cutoff values based on 100 simulation iterations (99.9% HDCI). Flagged: overfit = infit below range (more predictable); underfit = above range (noisier).
-#> 
-#> |Item  | Infit MSQ| Infit low| Infit high|Flagged | Relative location|
-#> |:-----|---------:|---------:|----------:|:-------|-----------------:|
-#> |Item1 |     1.049|     0.607|      1.577|        |              0.04|
-#> |Item2 |     0.929|     0.625|      1.519|        |             -0.48|
-#> |Item3 |     0.828|     0.674|      1.354|        |             -0.16|
-#> |Item4 |     1.216|     0.643|      1.434|        |              0.33|
-#> |Item5 |     0.931|     0.648|      1.353|        |             -0.70|
-RMitemInfit(sim_data, cutoff = cutoff_res, output = "dataframe")
-#>    Item Infit_MSQ Infit_low Infit_high Flagged Relative_location
-#> 1 Item1     1.049     0.607      1.577                      0.04
-#> 2 Item2     0.929     0.625      1.519                     -0.48
-#> 3 Item3     0.828     0.674      1.354                     -0.16
-#> 4 Item4     1.216     0.643      1.434                      0.33
-#> 5 Item5     0.931     0.648      1.353                     -0.70
+  # Return as data.frame for further processing
+  df <- RMitemInfit(sim_data, output = "dataframe")
 
-# Bootstrap p-values with family-wise (Westfall-Young) correction
-# (use iterations >= 1000 in real analyses for stable p-values)
-RMitemInfit(sim_data, cutoff = cutoff_res, p_value = TRUE,
-            output = "dataframe")
+  # Simulation-based cutoffs (100 Monte-Carlo iterations)
+  if (requireNamespace("ggdist", quietly = TRUE)) {
+    cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100,
+                                    parallel = FALSE, seed = 42)
+    RMitemInfit(sim_data, cutoff = cutoff_res)
+    RMitemInfit(sim_data, cutoff = cutoff_res, output = "dataframe")
+
+    # Bootstrap p-values with family-wise (Westfall-Young) correction
+    # (use iterations >= 1000 in real analyses for stable p-values)
+    RMitemInfit(sim_data, cutoff = cutoff_res, p_value = TRUE,
+                output = "dataframe")
+  }
+}
 #> Warning: Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations >= 1000 in RMitemInfitCutoff() for reliable p-values.
 #>    Item Infit_MSQ Infit_low Infit_high p_infit padj_infit Flagged
 #> 1 Item1     1.049     0.607      1.577  0.5842     0.9208        

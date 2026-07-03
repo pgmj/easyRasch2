@@ -11,7 +11,7 @@ from the original data."><meta name="robots" content="noindex"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.929</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.939</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -94,9 +94,10 @@ and <code>data</code> is supplied).</p>
 distributions as dot-interval plots using <code><a href="https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html" class="external-link">ggdist::stat_dotsinterval()</a></code> with
 median and Highest Density Continuous Interval (HDCI) summaries, faceted by
 statistic (InfitMSQ / OutfitMSQ).</p>
-<p>When <code>data</code> <strong>is</strong> supplied, the function:</p><ol><li><p>Fits a Rasch model (<code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code> for dichotomous data or
-<code><a href="https://rdrr.io/pkg/eRm/man/PCM.html" class="external-link">eRm::PCM()</a></code> for polytomous data) and computes observed conditional
-infit and outfit MSQ via <code><a href="https://rdrr.io/pkg/iarm/man/out_infit.html" class="external-link">iarm::out_infit()</a></code>.</p></li>
+<p>When <code>data</code> <strong>is</strong> supplied, the function:</p><ol><li><p>Fits a Rasch / Partial Credit model by CML via
+<code><a href="https://rdrr.io/pkg/psychotools/man/pcmodel.html" class="external-link">psychotools::pcmodel()</a></code> (a dichotomous item is a 2-category PCM)
+and computes observed conditional infit and outfit MSQ via
+<code><a href="https://rdrr.io/pkg/iarm/man/out_infit.html" class="external-link">iarm::out_infit()</a></code>.</p></li>
 <li><p>Overlays observed fit values as orange diamond markers on the
 simulated distributions.</p></li>
 <li><p>Shows per-item cutoff intervals (from <code>simfit$item_cutoffs</code>) as
@@ -116,27 +117,31 @@ retained for backward compatibility with code written against easyRasch2
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">sim_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">1</span>, <span class="fl">200</span> <span class="op">*</span> <span class="fl">10</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">200</span>, ncol <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">sim_data</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Item"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"iarm"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">&amp;&amp;</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggdist"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">&amp;&amp;</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">sim_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">1</span>, <span class="fl">200</span> <span class="op">*</span> <span class="fl">10</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">200</span>, ncol <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">sim_data</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Item"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Run simulation</span></span></span>
-<span class="r-in"><span><span class="va">cutoff_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="RMitemInfitCutoff.html">RMitemInfitCutoff</a></span><span class="op">(</span><span class="va">sim_data</span>, iterations <span class="op">=</span> <span class="fl">100</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
-<span class="r-in"><span>                            seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># Run simulation</span></span></span>
+<span class="r-in"><span>  <span class="va">cutoff_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="RMitemInfitCutoff.html">RMitemInfitCutoff</a></span><span class="op">(</span><span class="va">sim_data</span>, iterations <span class="op">=</span> <span class="fl">100</span>,</span></span>
+<span class="r-in"><span>                                  parallel <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Simulated distribution only (infit + outfit faceted)</span></span></span>
-<span class="r-in"><span><span class="fu">RMitemInfitPlot</span><span class="op">(</span><span class="va">cutoff_res</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># Simulated distribution only (infit + outfit faceted)</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMitemInfitPlot</span><span class="op">(</span><span class="va">cutoff_res</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># With observed fit overlaid (infit only, the default)</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMitemInfitPlot</span><span class="op">(</span><span class="va">cutoff_res</span>, data <span class="op">=</span> <span class="va">sim_data</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Both infit and outfit panels side by side</span></span></span>
+<span class="r-in"><span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"patchwork"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="fu">RMitemInfitPlot</span><span class="op">(</span><span class="va">cutoff_res</span>, data <span class="op">=</span> <span class="va">sim_data</span>, statistic <span class="op">=</span> <span class="st">"both"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">}</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-plt img"><img src="RMitemInfitPlot-1.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># With observed fit overlaid (infit only, the default)</span></span></span>
-<span class="r-in"><span><span class="fu">RMitemInfitPlot</span><span class="op">(</span><span class="va">cutoff_res</span>, data <span class="op">=</span> <span class="va">sim_data</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="RMitemInfitPlot-2.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Both infit and outfit panels side by side</span></span></span>
-<span class="r-in"><span><span class="fu">RMitemInfitPlot</span><span class="op">(</span><span class="va">cutoff_res</span>, data <span class="op">=</span> <span class="va">sim_data</span>, statistic <span class="op">=</span> <span class="st">"both"</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="RMitemInfitPlot-3.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

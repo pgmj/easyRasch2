@@ -101,6 +101,15 @@ A list with components:
 
   Number of complete cases used.
 
+- `sample_n_total`:
+
+  Number of respondents in the raw input data, before the complete-case
+  filter.
+
+- `sample_has_na`:
+
+  Logical. Whether the raw input data contained any missing values.
+
 - `sample_summary`:
 
   Summary statistics of estimated person parameters.
@@ -147,33 +156,25 @@ The `iarm` package must be installed (it is in Suggests, not Imports).
 
 ``` r
 # \donttest{
-set.seed(42)
-sim_data <- as.data.frame(
-  matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-)
-colnames(sim_data) <- paste0("Item", 1:10)
+if (requireNamespace("iarm", quietly = TRUE) &&
+    requireNamespace("ggdist", quietly = TRUE)) {
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+  )
+  colnames(sim_data) <- paste0("Item", 1:10)
 
-# Run 100 iterations sequentially for a quick demo
-cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100, parallel = FALSE,
-                            seed = 42)
-cutoff_res$item_cutoffs
-#>      Item infit_low infit_high outfit_low outfit_high
-#> 1   Item1     0.819      1.180      0.787       1.360
-#> 2   Item2     0.873      1.133      0.813       1.229
-#> 3   Item3     0.872      1.139      0.819       1.210
-#> 4   Item4     0.865      1.122      0.814       1.180
-#> 5   Item5     0.868      1.125      0.835       1.165
-#> 6   Item6     0.837      1.121      0.786       1.185
-#> 7   Item7     0.883      1.147      0.828       1.248
-#> 8   Item8     0.873      1.117      0.836       1.205
-#> 9   Item9     0.890      1.157      0.829       1.270
-#> 10 Item10     0.873      1.112      0.788       1.233
+  # Run 100 iterations sequentially for a quick demo
+  cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100,
+                                  parallel = FALSE, seed = 42)
+  cutoff_res$item_cutoffs
 
-# Use the cutoffs in RMitemInfit()
-RMitemInfit(sim_data)
+  # Use the cutoffs in RMitemInfit()
+  RMitemInfit(sim_data)
+}
 #> 
 #> 
-#> Table: MSQ values based on conditional estimation (n = 200 complete cases).
+#> Table: MSQ values based on conditional estimation. n = 200 respondents.
 #> 
 #> |Item   | Infit MSQ| Relative location|
 #> |:------|---------:|-----------------:|

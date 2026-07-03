@@ -139,32 +139,33 @@ Wright, B. D. & Stone, M. H. (1979). *Best Test Design*. MESA Press.
 
 ``` r
 # \donttest{
-# Polytomous example
-set.seed(42)
-sim_data <- as.data.frame(
-  matrix(sample(0:3, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
-)
-colnames(sim_data) <- paste0("Item", 1:8)
+if (requireNamespace("ggplot2", quietly = TRUE) &&
+    requireNamespace("patchwork", quietly = TRUE)) {
+  # Polytomous example
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:3, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
+  )
+  colnames(sim_data) <- paste0("Item", 1:8)
 
-# Default: mean/SD, data order, 95% CI
-RMtargeting(sim_data)
+  # Default: mean/SD, data order, 95% CI
+  RMtargeting(sim_data)
 
+  # Robust (median/MAD), sorted by location, 84% CI
+  RMtargeting(sim_data, robust = TRUE, sort_items = "location",
+              ci_level = 0.84)
 
-# Robust (median/MAD), sorted by location, 84% CI
-RMtargeting(sim_data, robust = TRUE, sort_items = "location", ci_level = 0.84)
+  # Get list of sub-plots for customisation
+  plots <- RMtargeting(sim_data, output = "list")
+  plots$p1 + ggplot2::ggtitle("My custom title")
 
-
-# Get list of sub-plots for customisation
-plots <- RMtargeting(sim_data, output = "list")
-plots$p1 + ggplot2::ggtitle("My custom title")
-
-
-# Dichotomous example
-sim_bin <- as.data.frame(
-  matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-)
-colnames(sim_bin) <- paste0("Item", 1:10)
-RMtargeting(sim_bin)
+  # Dichotomous example
+  sim_bin <- as.data.frame(
+    matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+  )
+  colnames(sim_bin) <- paste0("Item", 1:10)
+  RMtargeting(sim_bin)
+}
 
 # }
 ```

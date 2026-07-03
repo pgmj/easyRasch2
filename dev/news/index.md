@@ -12,7 +12,16 @@ functions for person+item parameters and person fit, bootstrap p-values
 with multiplicity correction, and a round of naming/output consistency
 fixes. After this release `eRm` is used only by
 [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
-(Andersen’s LR test) and `mirt` only for the RMU plausible values.
+(Andersen’s LR test) and `mirt` only for the RMU plausible values
+([`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)’s
+observed-fit overlay moved from an `eRm` fit to
+[`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html),
+matching
+[`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md);
+values agree to ~1e-6). Accordingly, **`eRm` has moved from Imports to
+Suggests**:
+[`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
+errors with an install hint when it is absent.
 
 Many items below shift reported numbers slightly: the underlying
 statistics are unchanged, only the estimation engine (WLE locations are
@@ -141,29 +150,102 @@ simulation tools:
 
 ### Bootstrap p-values and multiplicity correction
 
-- [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
-  gains `p_value`: per-item bootstrap p-values from the simulated null
-  (needs the full
-  [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
-  object), studentised by the bootstrap SD, with Westfall-Young
-  studentised-max FWER (default) or Benjamini-Hochberg /
-  Benjamini-Yekutieli FDR. ≥1000 cutoff iterations recommended (warning
-  otherwise); default (`p_value = FALSE`) unchanged. (Ferreira 2024;
-  Westfall & Young 1993.)
-- [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
-  with the full cutoff object now returns `$matrix` plus a per-pair
-  `$pairs` table (observed Q3 vs simulated low/high band, directional
-  flag, sorted by departure from the per-pair median, optional `n_pairs`
-  cap). An optional `p_value` layer folds one-sided bootstrap p-values
-  for excess local dependence (same FWER/FDR `correction`) into
-  `$pairs`.
-- [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
-  and
-  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
-  share a “Multiple comparisons” help section.
+Six simulation-based diagnostics gain optional bootstrap p-values
+computed against their simulated null distributions (`p_value = TRUE`;
+the default `FALSE` leaves existing output unchanged). Shared mechanics:
+each statistic is studentised by its bootstrap mean/SD; marginal
+Monte-Carlo p-values have floor `1/(B+1)`; `correction` offers
+Westfall-Young studentised-max step-down FWER (default),
+Benjamini-Hochberg or Benjamini-Yekutieli FDR, or `"none"`; `Flagged`
+then reflects `padj < alpha` while the simulated effect-size bands stay
+in the tables. The full `*Cutoff()` object is required, and \>= 1000
+cutoff iterations are recommended (warning below that). (Ferreira 2024;
+Westfall & Young 1993.) Per function:
+
+- [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md):
+  two-sided per item. The asymptotic BH-adjusted p-value and star
+  columns from `iarm` are dropped in this mode (one p-value family per
+  table); `p_gamma` / `padj_gamma` replace them.
+- [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md):
+  one-sided in the unfavourable direction for CFI / RMSEA / SRMR,
+  two-sided for the per-item loadings, corrected as two separate
+  families.
+- [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md):
+  a single one-sided test of the first-contrast eigenvalue, so no
+  multiplicity correction is involved.
+- [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md):
+  two-sided per item.
+- [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md):
+  one-sided per pair for excess positive LD (matching
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)),
+  computed once per pair in the canonical direction (rest score = total
+  − Item2, the simulated direction) and repeated in the direction-2
+  table; correction runs over the full pair family before any `n_pairs`
+  display filter; the `iarm` BH columns are dropped as in
+  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md).
+- [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md):
+  one-sided per pair, folded into the new per-pair `$pairs` table
+  returned alongside `$matrix` (observed Q3 vs simulated band,
+  directional flag, sorted by departure from the per-pair median,
+  optional `n_pairs` cap).
+
+[`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
+[`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md),
+and the newly extended functions share a “Multiple comparisons” help
+section.
 
 ### Output and argument consistency
 
+- All table and plot captions now report the estimation sample size in a
+  common form: `n = X of Y respondents (<policy>)`, where `of Y` appears
+  only when respondents were excluded and the policy note
+  (`complete cases` / `incomplete responses retained` /
+  `missing values imputed`) only when the input contained missing values
+  — complete data reads simply `n = X respondents`. Terminology is
+  “respondents” throughout (previously a mix of “persons” / “complete
+  cases”). Sample size is newly reported by
+  [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemParameters.md),
+  [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md),
+  [`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemHierarchy.md),
+  [`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatProb.md),
+  [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md),
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md),
+  [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md),
+  [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonFit.md)’s
+  kable, and the descriptive plots
+  ([`RMplotBar()`](https://pgmj.github.io/easyRasch2/dev/reference/RMplotBar.md),
+  [`RMplotStackedbar()`](https://pgmj.github.io/easyRasch2/dev/reference/RMplotStackedbar.md),
+  [`RMplotTile()`](https://pgmj.github.io/easyRasch2/dev/reference/RMplotTile.md));
+  all other captions are reworded to the common form. The bootstrap-null
+  plots
+  ([`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md),
+  [`RMdifGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaPlot.md),
+  [`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaPlot.md),
+  [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md),
+  [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFAPlot.md))
+  report the simulation sample the same way, suffixed `per dataset`;
+  their `*Cutoff()` objects store `sample_n_total` / `sample_has_na`,
+  with a graceful fallback for cutoff objects from older versions.
+  Respondents with no responses (all-NA rows) are dropped with a
+  one-time message rather than triggering a CML fitting error, and
+  [`RMplotTile()`](https://pgmj.github.io/easyRasch2/dev/reference/RMplotTile.md)
+  likewise messages when rows with `NA` in `group` are dropped
+  (previously silent; item-level `NA`s are retained in the descriptive
+  plots).
+- [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+  no longer prints an
+  [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html)
+  result table on every iteration in sequential (`parallel = FALSE`)
+  runs; the silencing sink is now also restored safely on iteration
+  failure (hardened in
+  [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md)
+  too).
+- [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
+  captions now report the Andersen LR p-value as a plain number (exact
+  to three decimals, `p < 0.001` below that) instead of the
+  [`format.pval()`](https://rdrr.io/r/base/format.pval.html) scientific
+  notation (`<1e-04`), and the test statistic is shown as χ² instead of
+  `chi^2`.
 - Naming aligned across functions (no deprecation aliases):
   [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md)
   plot output is now `output = "ggplot"` (`"loadings"` kept as a
@@ -213,6 +295,13 @@ simulation tools:
 
 ### Other changes and fixes
 
+- [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
+  and
+  [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md)
+  now accept `mids` objects whose items were imputed as ordered factors
+  (as required by mice’s `polr` method): the completed data are coerced
+  back to numeric responses internally, rather than erroring on the
+  factor columns.
 - [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
   and
   [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)

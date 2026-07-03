@@ -178,6 +178,11 @@ value. This follows the resampling-based person-fit approach (Sinharay,
 
 ## References
 
+de la Torre, J., & Deng, W. (2008). Improving person-fit assessment by
+correcting the ability estimate and its reference distribution. *Journal
+of Educational Measurement, 45*(2), 159-177.
+[doi:10.1111/j.1745-3984.2008.00058.x](https://doi.org/10.1111/j.1745-3984.2008.00058.x)
+
 Drasgow, F., Levine, M. V., & Williams, E. A. (1985). Appropriateness
 measurement with polychotomous item response models and standardized
 indices. *British Journal of Mathematical and Statistical Psychology,

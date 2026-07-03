@@ -139,8 +139,7 @@ bound$suggested_cutoff
 RMdimResidualPCA(dat, cutoff = bound)
 #> 
 #> 
-#> Table: Rasch model (200 complete cases, 12 items). Total observed variance: 8.3% explained by measures, 91.7% unexplained
-#> (basis for PCA; n = 200 non-extreme cases). First-contrast cutoff = 1.623 based on 50 simulation iterations (99th percentile).
+#> Table: Rasch model (12 items), n = 200 respondents. Total observed variance: 8.3% explained by measures, 91.7% unexplained. First-contrast cutoff = 1.623 based on 50 simulation iterations (99th percentile).
 #> 
 #> |Component | Eigenvalue| Proportion of variance|Flagged |
 #> |:---------|----------:|----------------------:|:-------|

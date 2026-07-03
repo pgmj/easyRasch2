@@ -91,8 +91,9 @@ RMpersonParameters(
 ## Value
 
 For `output = "dataframe"`, a data.frame with one row per respondent (in
-input order) and columns `theta` (the person location), `sem` (standard
-error of measurement), `sum_score`, `n_answered` (number of non-missing
+input order; respondents with no responses are dropped with a message)
+and columns `theta` (the person location), `sem` (standard error of
+measurement), `sum_score`, `n_answered` (number of non-missing
 responses), and `extreme` (logical: a minimum or maximum possible score
 given the items answered). For `output = "kable"`, the same content as a
 `knitr_kable` object. For `output = "ggplot"`, a histogram of `theta`.
@@ -188,6 +189,6 @@ RMpersonParameters(dat, method = "EAP", prior_sd = 1, output = "dataframe") |>
 # Write the person-location table to a CSV (also returned invisibly)
 RMpersonParameters(dat, output = "file",
                    filename = tempfile(fileext = ".csv"))
-#> Wrote 200 row(s) to '/tmp/Rtmpvzi5fF/file21f271869f6f.csv'.
+#> Wrote 200 row(s) to '/tmp/Rtmpu4iS3P/file21be692bf39d.csv'.
 # }
 ```

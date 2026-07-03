@@ -19,7 +19,7 @@ a simulation-based bound from RMdimResidualPCACutoff."><meta name="robots" conte
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.929</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.939</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,13 @@ a simulation-based bound from <code><a href="RMdimResidualPCACutoff.html">RMdimR
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RMdimResidualPCA</span><span class="op">(</span><span class="va">data</span>, cutoff <span class="op">=</span> <span class="cn">NULL</span>, n_components <span class="op">=</span> <span class="fl">5L</span>, output <span class="op">=</span> <span class="st">"kable"</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RMdimResidualPCA</span><span class="op">(</span></span>
+<span>  <span class="va">data</span>,</span>
+<span>  cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  p_value <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  n_components <span class="op">=</span> <span class="fl">5L</span>,</span>
+<span>  output <span class="op">=</span> <span class="st">"kable"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -79,6 +85,19 @@ cutoff directly. When provided, the result includes a <code>Flagged</code> colum
 caption notes the cutoff.</p></dd>
 
 
+<dt id="arg-p-value">p_value<a class="anchor" aria-label="anchor" href="#arg-p-value"></a></dt>
+<dd><p>Logical. When <code>TRUE</code>, adds a one-sided bootstrap p-value for
+the first-contrast eigenvalue: the proportion of simulated first-contrast
+eigenvalues at least as large as the observed one,
+<code>(1 + #\{lambda* &gt;= lambda\}) / (B + 1)</code>. Requires the <strong>full</strong>
+<code><a href="RMdimResidualPCACutoff.html">RMdimResidualPCACutoff</a></code> object as <code>cutoff</code> (it carries the
+simulated eigenvalues in <code>$results</code>); a bare numeric cutoff is not
+sufficient. The simulated null is the distribution of the <em>largest</em>
+eigenvalue, so the p-value applies to PC1 only (<code>NA</code> for the other
+components). This is a single test — no multiplicity correction is
+involved. Default <code>FALSE</code>.</p></dd>
+
+
 <dt id="arg-n-components">n_components<a class="anchor" aria-label="anchor" href="#arg-n-components"></a></dt>
 <dd><p>Integer. Number of eigenvalues to report. Capped at the
 number of items. Default <code>5</code>.</p></dd>
@@ -96,12 +115,14 @@ number of items. Default <code>5</code>.</p></dd>
 
 <ul><li><p>If <code>output = "kable"</code>: a <code>knitr_kable</code> object with columns Component,
 Eigenvalue, Proportion of variance (and <code>Flagged</code> when <code>cutoff</code> is
-provided). The caption gives the variance partition (% of total observed
-variance explained by measures vs. unexplained), the model fitted,
-sample size, and cutoff metadata if applicable.</p></li>
+provided; <code>p</code> when <code>p_value = TRUE</code>). The caption gives the variance
+partition (% of total observed variance explained by measures vs.
+unexplained), the model fitted, sample size, and cutoff/p-value metadata
+if applicable.</p></li>
 <li><p>If <code>output = "dataframe"</code>: a data.frame with columns <code>Component</code>,
 <code>Eigenvalue</code>, <code>Proportion_of_variance</code> (and <code>Flagged</code> when <code>cutoff</code> is
-provided). The variance partition is attached as the
+provided; <code>p</code> when <code>p_value = TRUE</code>, non-<code>NA</code> for PC1 only). The
+variance partition is attached as the
 <code>"variance_partition"</code> attribute — a list with elements <code>total</code>,
 <code>explained</code>, <code>unexplained</code>, <code>pct_explained</code>, <code>pct_unexplained</code>,
 <code>n_persons</code>. Access via
@@ -136,6 +157,14 @@ model, summed across items. Expected scores are computed from the CML item
 parameters and WLE person locations. WLE is finite at extreme scores, so
 all persons are retained (the previous MLE partition dropped extreme-score
 cases).</p>
+<p><strong>Bootstrap p-value.</strong> When <code>p_value = TRUE</code>, the observed
+first-contrast eigenvalue is compared against the simulated null
+distribution of largest eigenvalues (from <code>cutoff$results</code>), giving the
+one-sided Monte-Carlo p-value <code>(1 + #\{lambda* &gt;= lambda\}) / (B + 1)</code>.
+Because the maximum eigenvalue is a single family-wise statistic, no
+multiplicity correction applies. The p-value is model-conditional and
+sample-size-sensitive; it is reported alongside the simulated cutoff, not
+in place of it, and can be no smaller than <code>1 / (B + 1)</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -162,8 +191,7 @@ residuals. <em>Educational and Psychological Measurement, 70</em>(5), 717-731.
 <span class="r-in"><span><span class="fu">RMdimResidualPCA</span><span class="op">(</span><span class="va">dat</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Rasch model (200 complete cases, 12 items). Total observed variance: 8.3% explained by measures, 91.7% unexplained</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (basis for PCA; n = 200 non-extreme cases).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Rasch model (12 items), n = 200 respondents. Total observed variance: 8.3% explained by measures, 91.7% unexplained.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |Component | Eigenvalue| Proportion of variance|</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |:---------|----------:|----------------------:|</span>
@@ -174,7 +202,10 @@ residuals. <em>Educational and Psychological Measurement, 70</em>(5), 717-731.
 <span class="r-out co"><span class="r-pr">#&gt;</span> |PC5       |      1.105|                  0.093|</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># PC1 loadings vs item location plot</span></span></span>
-<span class="r-in"><span><span class="fu">RMdimResidualPCA</span><span class="op">(</span><span class="va">dat</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">&amp;&amp;</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggrepel"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMdimResidualPCA</span><span class="op">(</span><span class="va">dat</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-plt img"><img src="RMdimResidualPCA-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Simulation-based cutoff (use 250+ iterations in real analyses)</span></span></span>
@@ -182,8 +213,7 @@ residuals. <em>Educational and Psychological Measurement, 70</em>(5), 717-731.
 <span class="r-in"><span><span class="fu">RMdimResidualPCA</span><span class="op">(</span><span class="va">dat</span>, cutoff <span class="op">=</span> <span class="va">bound</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Rasch model (200 complete cases, 12 items). Total observed variance: 8.3% explained by measures, 91.7% unexplained</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> (basis for PCA; n = 200 non-extreme cases). First-contrast cutoff = 1.623 based on 50 simulation iterations (99th percentile).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Rasch model (12 items), n = 200 respondents. Total observed variance: 8.3% explained by measures, 91.7% unexplained. First-contrast cutoff = 1.623 based on 50 simulation iterations (99th percentile).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |Component | Eigenvalue| Proportion of variance|Flagged |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |:---------|----------:|----------------------:|:-------|</span>
@@ -192,6 +222,20 @@ residuals. <em>Educational and Psychological Measurement, 70</em>(5), 717-731.
 <span class="r-out co"><span class="r-pr">#&gt;</span> |PC3       |      1.254|                  0.106|FALSE   |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |PC4       |      1.132|                  0.096|FALSE   |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |PC5       |      1.105|                  0.093|FALSE   |</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># With the one-sided bootstrap p-value for the first contrast</span></span></span>
+<span class="r-in"><span><span class="fu">RMdimResidualPCA</span><span class="op">(</span><span class="va">dat</span>, cutoff <span class="op">=</span> <span class="va">bound</span>, p_value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Rasch model (12 items), n = 200 respondents. Total observed variance: 8.3% explained by measures, 91.7% unexplained. First-contrast cutoff = 1.623 based on 50 simulation iterations (99th percentile). One-sided bootstrap p-value for the first contrast (single test, no multiplicity correction); it cannot be smaller than 1/(50+1) = 0.0196.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Component | Eigenvalue| Proportion of variance|Flagged |      p|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |:---------|----------:|----------------------:|:-------|------:|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |PC1       |      1.431|                  0.121|FALSE   | 0.7451|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |PC2       |      1.407|                  0.119|FALSE   |     NA|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |PC3       |      1.254|                  0.106|FALSE   |     NA|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |PC4       |      1.132|                  0.096|FALSE   |     NA|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |PC5       |      1.105|                  0.093|FALSE   |     NA|</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

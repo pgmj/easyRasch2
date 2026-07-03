@@ -121,6 +121,15 @@ A list (the simulation object), with components:
 
   Number of complete cases used.
 
+- `sample_n_total`:
+
+  Number of respondents in the raw input data, before the complete-case
+  filter.
+
+- `sample_has_na`:
+
+  Logical. Whether the raw input data contained any missing values.
+
 - `n_items`:
 
   Number of items.
@@ -195,7 +204,8 @@ Modeling. *Journal of Statistical Software, 48*(2), 1-36.
 
 ``` r
 # \donttest{
-if (requireNamespace("lavaan", quietly = TRUE)) {
+if (requireNamespace("lavaan", quietly = TRUE) &&
+    requireNamespace("eRm", quietly = TRUE)) {
   data("raschdat1", package = "eRm")
 
   # Few iterations for a fast example; use 250+ in real analyses

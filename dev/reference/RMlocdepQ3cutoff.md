@@ -122,6 +122,16 @@ A list with components:
 
   Number of persons in the original data.
 
+- `sample_n_total`:
+
+  Equal to `sample_n`: no respondents are dropped (incomplete responses
+  are retained). Stored for consistency with the other `*Cutoff()`
+  objects.
+
+- `sample_has_na`:
+
+  Logical. Whether the data contained any missing values.
+
 - `sample_summary`:
 
   Summary statistics of estimated person parameters.
@@ -207,7 +217,7 @@ if (requireNamespace("ggdist", quietly = TRUE)) {
 }
 #> 
 #> 
-#> Table: Dynamic cut-off: 0.112 (mean Q3 -0.11 + 0.222). Correlations exceeding the cut-off may indicate local dependence; see the per-pair table for detail.
+#> Table: Dynamic cut-off: 0.112 (mean Q3 -0.11 + 0.222). Correlations exceeding the cut-off may indicate local dependence; see the per-pair table for detail. n = 200 respondents.
 #> 
 #> |       |Item1 |Item2 |Item3 |Item4 |Item5 |Item6 |Item7 |Item8 |Item9 |Item10 |above_cutoff |
 #> |:------|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:------|:------------|

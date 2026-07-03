@@ -131,7 +131,7 @@ colnames(sim_data) <- paste0("Item", 1:6)
 RMscoreSE(sim_data)
 #> 
 #> 
-#> Table: Person locations via Warm's WLE (CML item parameters).
+#> Table: Person locations via Warm's WLE (CML item parameters). n = 200 respondents.
 #> 
 #> | Ordinal sum score| Logit score| Logit std.error|
 #> |-----------------:|-----------:|---------------:|
@@ -179,14 +179,16 @@ RMscoreSE(sim_data, output = "dataframe")
 #> 19        18  2.472059396 1.2591152
 
 # ggplot figure
-RMscoreSE(sim_data, output = "ggplot")
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  RMscoreSE(sim_data, output = "ggplot")
+}
 
 
 # EAP via mirt
 RMscoreSE(sim_data, method = "EAP")
 #> 
 #> 
-#> Table: Person locations via EAPsum (MML item parameters from mirt; depends on a normal theta prior).
+#> Table: Person locations via EAPsum (MML item parameters from mirt; depends on a normal theta prior). n = 200 respondents.
 #> 
 #> | Ordinal sum score| Logit score| Logit std.error|
 #> |-----------------:|-----------:|---------------:|

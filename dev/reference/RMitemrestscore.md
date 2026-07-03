@@ -97,51 +97,25 @@ Models. *Applied Psychological Measurement, 35*(7), 557–561.
 
 ``` r
 # \donttest{
-# Simulate binary item response data (8 items, 200 persons)
-set.seed(42)
-sim_data <- as.data.frame(
-  matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
-)
-colnames(sim_data) <- paste0("Item", 1:8)
+if (requireNamespace("iarm", quietly = TRUE)) {
+  # Simulate binary item response data (8 items, 200 persons)
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
+  )
+  colnames(sim_data) <- paste0("Item", 1:8)
 
-# Default kable output
-RMitemRestscore(sim_data)
-#> 
-#> 
-#> 
-#> Table: Item-restscore associations (n = 200 complete cases). Flagged (adj. p < .05): overfit = observed above expected (over-discrimination, often local dependence); underfit = below (under-discrimination, often multidimensionality/noise).
-#> 
-#> |Item  | Observed| Expected| Difference| Adj. p-value (BH)|Flagged | Rel. location|
-#> |:-----|--------:|--------:|----------:|-----------------:|:-------|-------------:|
-#> |Item1 |     0.00|     0.01|      -0.01|             0.955|        |         -0.23|
-#> |Item2 |     0.00|     0.01|      -0.01|             0.955|        |          0.13|
-#> |Item3 |    -0.01|     0.01|      -0.02|             0.955|        |         -0.01|
-#> |Item4 |    -0.05|     0.01|      -0.06|             0.955|        |         -0.05|
-#> |Item5 |     0.07|     0.01|       0.06|             0.955|        |          0.09|
-#> |Item6 |    -0.04|     0.01|      -0.05|             0.955|        |         -0.09|
-#> |Item7 |     0.15|     0.01|       0.14|             0.955|        |         -0.05|
-#> |Item8 |    -0.01|     0.01|      -0.02|             0.955|        |         -0.03|
+  # Default kable output
+  RMitemRestscore(sim_data)
 
-# Sorted by absolute difference
-RMitemRestscore(sim_data, sort = "diff")
-#> 
-#> 
-#> 
-#> Table: Item-restscore associations (n = 200 complete cases). Flagged (adj. p < .05): overfit = observed above expected (over-discrimination, often local dependence); underfit = below (under-discrimination, often multidimensionality/noise).
-#> 
-#> |Item  | Observed| Expected| Difference| Adj. p-value (BH)|Flagged | Rel. location|
-#> |:-----|--------:|--------:|----------:|-----------------:|:-------|-------------:|
-#> |Item7 |     0.15|     0.01|       0.14|             0.955|        |         -0.05|
-#> |Item4 |    -0.05|     0.01|      -0.06|             0.955|        |         -0.05|
-#> |Item5 |     0.07|     0.01|       0.06|             0.955|        |          0.09|
-#> |Item6 |    -0.04|     0.01|      -0.05|             0.955|        |         -0.09|
-#> |Item3 |    -0.01|     0.01|      -0.02|             0.955|        |         -0.01|
-#> |Item8 |    -0.01|     0.01|      -0.02|             0.955|        |         -0.03|
-#> |Item1 |     0.00|     0.01|      -0.01|             0.955|        |         -0.23|
-#> |Item2 |     0.00|     0.01|      -0.01|             0.955|        |          0.13|
+  # Sorted by absolute difference
+  RMitemRestscore(sim_data, sort = "diff")
 
-# Return as data.frame for further processing
-df <- RMitemRestscore(sim_data, output = "dataframe")
+  # Return as data.frame for further processing
+  df <- RMitemRestscore(sim_data, output = "dataframe")
+}
+#> 
+#> 
 #> 
 # }
 ```

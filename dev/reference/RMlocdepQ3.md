@@ -212,7 +212,7 @@ colnames(sim_data) <- paste0("Item", 1:10)
 RMlocdepQ3(sim_data)
 #> 
 #> 
-#> Table: Raw Q3 residual correlations (lower triangle). Use RMlocdepQ3Cutoff() to derive a cutoff.
+#> Table: Raw Q3 residual correlations (lower triangle). Use RMlocdepQ3Cutoff() to derive a cutoff. n = 200 respondents.
 #> 
 #> |       |Item1 |Item2 |Item3 |Item4 |Item5 |Item6 |Item7 |Item8 |Item9 |Item10 |
 #> |:------|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:------|

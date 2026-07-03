@@ -118,72 +118,25 @@ HTML, LaTeX, and pipe/markdown.
 
 ``` r
 # \donttest{
-set.seed(1)
-data("pcmdat2", package = "eRm")
-grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
+if (requireNamespace("eRm", quietly = TRUE)) {
+  set.seed(1)
+  data("pcmdat2", package = "eRm")
+  grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
 
-# Default: kable of per-group item locations
-RMdifLR(pcmdat2, dif_var = grp)
-#> 
-#> 
-#> Table: Partial Credit Model split by DIF variable (2 groups). Andersen LR chi^2 = 4.064, df = 7, p = 0.772. n = 300 complete cases, 4 items. **Bold** = MaxDiff > 0.5 logits.
-#> 
-#> |Item |      A|      B|    All| MaxDiff|Flagged |  SE_A|  SE_B| SE_All|
-#> |:----|------:|------:|------:|-------:|:-------|-----:|-----:|------:|
-#> |I1   |  1.047|  1.010|  1.038|   0.037|no      | 0.251| 0.251|  0.177|
-#> |I2   |  1.305|  1.275|  1.283|   0.030|no      | 0.260| 0.251|  0.180|
-#> |I3   | -0.876| -0.843| -0.859|   0.034|no      | 0.365| 0.338|  0.247|
-#> |I4   | -0.050| -0.038| -0.047|   0.012|no      | 0.264| 0.258|  0.184|
+  # Default: kable of per-group item locations
+  RMdifLR(pcmdat2, dif_var = grp)
 
-# ggplot panel of item locations with 95% CIs
-RMdifLR(pcmdat2, dif_var = grp, output = "ggplot")
+  # ggplot panel of item locations with 95% CIs
+  RMdifLR(pcmdat2, dif_var = grp, output = "ggplot")
 
+  # Threshold-level kable, sorted by MaxDiff
+  RMdifLR(pcmdat2, dif_var = grp, level = "threshold", sort = TRUE)
 
-# Threshold-level kable, sorted by MaxDiff
-RMdifLR(pcmdat2, dif_var = grp, level = "threshold", sort = TRUE)
-#> 
-#> 
-#> Table: Partial Credit Model split by DIF variable (2 groups). Andersen LR chi^2 = 4.064, df = 7, p = 0.772. n = 300 complete cases, 4 items. **Bold** = MaxDiff > 0.5 logits.
-#> 
-#> |Item |Threshold |      A|      B|    All| MaxDiff|Flagged |  SE_A|  SE_B| SE_All|
-#> |:----|:---------|------:|------:|------:|-------:|:-------|-----:|-----:|------:|
-#> |I1   |c1        |  0.130| -0.346| -0.104|   0.476|no      | 0.214| 0.219|  0.152|
-#> |I1   |c2        |  1.965|  2.367|  2.180|   0.402|no      | 0.288| 0.282|  0.201|
-#> |I4   |c1        | -1.096| -0.865| -0.983|   0.231|no      | 0.294| 0.282|  0.203|
-#> |I4   |c2        |  0.996|  0.789|  0.889|   0.206|no      | 0.234| 0.235|  0.165|
-#> |I3   |c1        | -2.409| -2.228| -2.315|   0.182|no      | 0.506| 0.452|  0.336|
-#> |I2   |c2        |  2.086|  1.922|  1.996|   0.164|no      | 0.309| 0.291|  0.211|
-#> |I3   |c2        |  0.657|  0.543|  0.597|   0.114|no      | 0.225| 0.224|  0.158|
-#> |I2   |c1        |  0.524|  0.629|  0.571|   0.104|no      | 0.210| 0.211|  0.148|
-
-# Tidy data.frame for downstream use
-df <- RMdifLR(pcmdat2, dif_var = grp, output = "dataframe")
-attr(df, "lr_test")
-#> $LR
-#> [1] 4.063775
-#> 
-#> $df
-#> [1] 7
-#> 
-#> $p_value
-#> [1] 0.7724031
-#> 
-#> $n_groups
-#> [1] 2
-#> 
-#> $groups
-#> [1] "A" "B"
-#> 
-#> $model
-#> [1] "PCM"
-#> 
-#> $n_persons
-#> [1] 300
-#> 
-#> $n_items
-#> [1] 4
-#> 
-df[df$Flagged, ]
+  # Tidy data.frame for downstream use
+  df <- RMdifLR(pcmdat2, dif_var = grp, output = "dataframe")
+  attr(df, "lr_test")
+  df[df$Flagged, ]
+}
 #> [1] Item    A       B       All     MaxDiff Flagged SE_A    SE_B    SE_All 
 #> <0 rows> (or 0-length row.names)
 # }

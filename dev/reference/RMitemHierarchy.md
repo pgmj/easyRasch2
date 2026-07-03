@@ -101,16 +101,16 @@ terms of statistical significance? *Journal of Insect Science, 3*(34),
 
 ``` r
 # \donttest{
-data("pcmdat2", package = "eRm")
-RMitemHierarchy(pcmdat2)
+if (requireNamespace("eRm", quietly = TRUE)) {
+  data("pcmdat2", package = "eRm")
+  RMitemHierarchy(pcmdat2)
 
+  # 95% CI instead of 84%
+  RMitemHierarchy(pcmdat2, sem_multiplier = 1.96)
 
-# 95% CI instead of 84%
-RMitemHierarchy(pcmdat2, sem_multiplier = 1.96)
-
-
-# Underlying data.frame
-RMitemHierarchy(pcmdat2, output = "dataframe")
+  # Underlying data.frame
+  RMitemHierarchy(pcmdat2, output = "dataframe")
+}
 #>   Item ItemLabel Threshold ThresholdLocation ThresholdSE ItemLocation
 #> 1   I1        I1        T1        -0.4581328   0.1545659    0.6840543
 #> 2   I1        I1        T2         1.8262414   0.1815586    0.6840543

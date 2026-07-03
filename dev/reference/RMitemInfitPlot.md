@@ -64,11 +64,10 @@ faceted by statistic (InfitMSQ / OutfitMSQ).
 
 When `data` **is** supplied, the function:
 
-1.  Fits a Rasch model
-    ([`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html) for dichotomous
-    data or [`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html) for
-    polytomous data) and computes observed conditional infit and outfit
-    MSQ via
+1.  Fits a Rasch / Partial Credit model by CML via
+    [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
+    (a dichotomous item is a 2-category PCM) and computes observed
+    conditional infit and outfit MSQ via
     [`iarm::out_infit()`](https://rdrr.io/pkg/iarm/man/out_infit.html).
 
 2.  Overlays observed fit values as orange diamond markers on the
@@ -94,26 +93,30 @@ retained for backward compatibility with code written against easyRasch2
 
 ``` r
 # \donttest{
-set.seed(42)
-sim_data <- as.data.frame(
-  matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-)
-colnames(sim_data) <- paste0("Item", 1:10)
+if (requireNamespace("iarm", quietly = TRUE) &&
+    requireNamespace("ggdist", quietly = TRUE) &&
+    requireNamespace("ggplot2", quietly = TRUE)) {
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+  )
+  colnames(sim_data) <- paste0("Item", 1:10)
 
-# Run simulation
-cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100, parallel = FALSE,
-                            seed = 42)
+  # Run simulation
+  cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100,
+                                  parallel = FALSE, seed = 42)
 
-# Simulated distribution only (infit + outfit faceted)
-RMitemInfitPlot(cutoff_res)
+  # Simulated distribution only (infit + outfit faceted)
+  RMitemInfitPlot(cutoff_res)
 
+  # With observed fit overlaid (infit only, the default)
+  RMitemInfitPlot(cutoff_res, data = sim_data)
 
-# With observed fit overlaid (infit only, the default)
-RMitemInfitPlot(cutoff_res, data = sim_data)
-
-
-# Both infit and outfit panels side by side
-RMitemInfitPlot(cutoff_res, data = sim_data, statistic = "both")
+  # Both infit and outfit panels side by side
+  if (requireNamespace("patchwork", quietly = TRUE)) {
+    RMitemInfitPlot(cutoff_res, data = sim_data, statistic = "both")
+  }
+}
 
 # }
 ```

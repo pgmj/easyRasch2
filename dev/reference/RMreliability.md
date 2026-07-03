@@ -179,7 +179,8 @@ Adams, R. J. (2005). Reliability as a measurement design effect.
 
 ``` r
 # \donttest{
-if (requireNamespace("ggdist", quietly = TRUE)) {
+if (requireNamespace("ggdist", quietly = TRUE) &&
+    requireNamespace("eRm", quietly = TRUE)) {
   set.seed(1)
   RMreliability(eRm::raschdat1[, 1:20], draws = 1000)
 
@@ -197,6 +198,6 @@ if (requireNamespace("ggdist", quietly = TRUE)) {
 #> |Cronbach's alpha |    0.754|            0.701|            0.813|25 bootstrap resamples      |
 #> |PSI              |    0.725|            0.673|            0.768|25 bootstrap resamples      |
 #> |Marginal         |    0.695|            0.602|            0.769|25 bootstrap resamples      |
-#> |RMU (WLE)        |    0.753|            0.684|            0.818|1000 PVs, 50 RMU iterations |
+#> |RMU (WLE)        |    0.753|            0.684|            0.817|1000 PVs, 50 RMU iterations |
 # }
 ```

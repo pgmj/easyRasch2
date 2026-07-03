@@ -9,7 +9,15 @@ variable, controlling for the total score.
 ## Usage
 
 ``` r
-RMdifGamma(data, dif_var, cutoff = NULL, output = "kable")
+RMdifGamma(
+  data,
+  dif_var,
+  cutoff = NULL,
+  p_value = FALSE,
+  correction = c("fwer", "fdr_bh", "fdr_by", "none"),
+  alpha = 0.05,
+  output = "kable"
+)
 ```
 
 ## Arguments
@@ -43,6 +51,32 @@ RMdifGamma(data, dif_var, cutoff = NULL, output = "kable")
     (logical; `TRUE` when the observed partial gamma falls outside the
     credible range) to the result.
 
+- p_value:
+
+  Logical. When `TRUE`, adds two-sided bootstrap p-values (`p_gamma`,
+  `padj_gamma`) comparing each item's observed partial gamma against its
+  simulated null distribution, and `flagged` reflects
+  `padj_gamma < alpha` instead of the credible range. The asymptotic
+  BH-adjusted p-value and star columns from
+  [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html)
+  are **dropped** in this mode (two p-value families in one table would
+  invite double-reading); the simulated `gamma_low` / `gamma_high` band
+  is kept as the effect-size reference. Requires the **full**
+  [`RMdifGammaCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+  object as `cutoff` (it carries the simulated distributions in
+  `$results`). Default `FALSE`.
+
+- correction:
+
+  Character. Multiplicity correction for the bootstrap p-values:
+  `"fwer"` (default; Westfall-Young studentised-max step-down),
+  `"fdr_bh"`, `"fdr_by"`, or `"none"`. Ignored when `p_value = FALSE`.
+
+- alpha:
+
+  Numeric in (0, 1). Significance level used to flag items on the
+  corrected p-value. Default `0.05`. Ignored when `p_value = FALSE`.
+
 - output:
 
   Character string controlling the return value. Either `"kable"`
@@ -57,12 +91,15 @@ RMdifGamma(data, dif_var, cutoff = NULL, output = "kable")
   and "p-value sign." (a star-string indicator from
   [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html)).
   When `cutoff` is provided, additional columns "Gamma low", "Gamma
-  high", and "Flagged" are included.
+  high", and "Flagged" are included. With `p_value = TRUE`, the
+  asymptotic p-value columns are replaced by bootstrap "p" and "p
+  (adj)".
 
 - If `output = "dataframe"`: a data.frame with columns `Item`, `gamma`,
   `se`, `lower`, `upper`, `padj_bh`, `Significance`. When `cutoff` is
   provided, columns `gamma_low`, `gamma_high`, and `flagged` are also
-  included.
+  included. With `p_value = TRUE`, `padj_bh` and `Significance` are
+  replaced by `p_gamma` and `padj_gamma`.
 
 ## Details
 
@@ -83,12 +120,55 @@ thresholds (Bjorner et al., 1998):
 
 The `iarm` package must be installed (it is in Suggests, not Imports).
 
+**Bootstrap p-values.** When `p_value = TRUE`, each item's observed
+partial gamma is compared against its simulated null distribution (from
+`cutoff$results`, where the DIF variable is random by construction). The
+per-item statistic is the residual studentised by the bootstrap mean and
+SD; the marginal p-value is the two-sided Monte-Carlo p-value
+`(1 + #\{|t*| >= |t|\}) / (B + 1)`, so it can be no smaller than
+`1 / (B + 1)`. `correction = "fwer"` uses the Westfall-Young
+studentised-max step-down, which exploits the bootstrap dependence among
+items (Ferreira, 2024); it is liberal when the simulation is small, so
+at least 1000 `iterations` in
+[`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+are recommended (a warning is issued below that). Unlike the asymptotic
+p-values from
+[`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html),
+these are calibrated against the *simulated Rasch null* rather than the
+asymptotic SE; they are model-conditional and sample-size-sensitive, and
+are reported alongside the simulated effect-size band, not in place of
+it.
+
+## Multiple comparisons
+
+The marginal p-value controls the error rate of a *single* comparison:
+for one item (or item pair) decided on in advance it is the relevant
+value. But scanning all *k* comparisons and flagging whichever fall
+below `alpha` tests *k* hypotheses at once, so the chance of at least
+one false flag inflates to roughly \\1 - (1 - \alpha)^k\\ (e.g. about
+34% for *k* = 8 at `alpha = 0.05`) – even when every marginal p-value is
+correctly calibrated. The corrected (adjusted) p-value controls this:
+`correction = "fwer"` bounds the probability of *any* false flag
+(strict, lower power), while `"fdr_bh"` / `"fdr_by"` bound the expected
+*proportion* of false flags among those raised (a more lenient middle
+ground). Rule of thumb: use the marginal p-value for a single
+pre-specified comparison, and a corrected p-value when screening the
+whole table – the usual workflow.
+
 ## References
 
 Bjorner, J. B., Kreiner, S., Ware, J. E., Damsgaard, M. T., & Bech, P.
 (1998). Differential item functioning in the Danish translation of the
 SF-36. *Journal of Clinical Epidemiology, 51*(11), 1189–1202.
 [doi:10.1016/S0895-4356(98)00111-5](https://doi.org/10.1016/S0895-4356%2898%2900111-5)
+
+Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate'
+number of hypotheses simultaneously. *Journal of Statistical Theory and
+Practice, 19*(6).
+[doi:10.1007/s42519-024-00412-4](https://doi.org/10.1007/s42519-024-00412-4)
+
+Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple
+Testing*. Wiley.
 
 ## See also
 
@@ -98,1167 +178,55 @@ SF-36. *Journal of Clinical Epidemiology, 51*(11), 1189–1202.
 
 ``` r
 # \donttest{
-set.seed(42)
-sim_data <- as.data.frame(
-  matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-)
-colnames(sim_data) <- paste0("Item", 1:10)
-dif_group <- factor(sample(c("A", "B"), 200, replace = TRUE))
+if (requireNamespace("iarm", quietly = TRUE)) {
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+  )
+  colnames(sim_data) <- paste0("Item", 1:10)
+  dif_group <- factor(sample(c("A", "B"), 200, replace = TRUE))
 
-# Default kable output
-RMdifGamma(sim_data, dif_group)
-#> 
-#> 
-#> Table: Partial gamma DIF analysis (n = 200 complete cases). Positive gamma indicates higher scores in higher DIF group levels.
-#> 
-#> |Item   | Partial gamma|    SE| Lower CI| Upper CI| Adj. p-value (BH)|p-value sign. |
-#> |:------|-------------:|-----:|--------:|--------:|-----------------:|:-------------|
-#> |Item1  |         0.029| 0.161|   -0.287|    0.345|                 1|              |
-#> |Item2  |        -0.168| 0.156|   -0.474|    0.138|                 1|              |
-#> |Item3  |         0.111| 0.168|   -0.219|    0.441|                 1|              |
-#> |Item4  |        -0.030| 0.155|   -0.333|    0.273|                 1|              |
-#> |Item5  |         0.076| 0.159|   -0.235|    0.387|                 1|              |
-#> |Item6  |         0.042| 0.156|   -0.264|    0.349|                 1|              |
-#> |Item7  |        -0.146| 0.160|   -0.460|    0.169|                 1|              |
-#> |Item8  |         0.019| 0.162|   -0.298|    0.336|                 1|              |
-#> |Item9  |        -0.141| 0.161|   -0.457|    0.175|                 1|              |
-#> |Item10 |         0.178| 0.156|   -0.127|    0.483|                 1|              |
+  # Default kable output
+  RMdifGamma(sim_data, dif_group)
 
-# Return as data.frame
-RMdifGamma(sim_data, dif_group, output = "dataframe")
-#>      Item  gamma    se  lower upper padj_bh Significance
-#> 1   Item1  0.029 0.161 -0.287 0.345       1             
-#> 2   Item2 -0.168 0.156 -0.474 0.138       1             
-#> 3   Item3  0.111 0.168 -0.219 0.441       1             
-#> 4   Item4 -0.030 0.155 -0.333 0.273       1             
-#> 5   Item5  0.076 0.159 -0.235 0.387       1             
-#> 6   Item6  0.042 0.156 -0.264 0.349       1             
-#> 7   Item7 -0.146 0.160 -0.460 0.169       1             
-#> 8   Item8  0.019 0.162 -0.298 0.336       1             
-#> 9   Item9 -0.141 0.161 -0.457 0.175       1             
-#> 10 Item10  0.178 0.156 -0.127 0.483       1             
-# }
-# \donttest{
-# Simulation-based cutoffs (100 Monte-Carlo iterations)
-cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_group,
-                                  iterations = 100, parallel = FALSE,
-                                  seed = 42)
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.1298 0.1745 0.4571  1.0000     -0.2123  0.4718
-#> 2   Item2 random_dif  0.1160 0.1651 0.4821  1.0000     -0.2075  0.4396
-#> 3   Item3 random_dif -0.1935 0.1584 0.2216  1.0000     -0.5039  0.1168
-#> 4   Item4 random_dif  0.2428 0.1674 0.1471  1.0000     -0.0854  0.5709
-#> 5   Item5 random_dif  0.2049 0.1658 0.2165  1.0000     -0.1200  0.5297
-#> 6   Item6 random_dif -0.3467 0.1501 0.0208  0.2085     -0.6408 -0.0526
-#> 7   Item7 random_dif -0.1003 0.1707 0.5566  1.0000     -0.4349  0.2342
-#> 8   Item8 random_dif  0.0845 0.1640 0.6063  1.0000     -0.2370  0.4060
-#> 9   Item9 random_dif -0.0487 0.1809 0.7878  1.0000     -0.4033  0.3059
-#> 10 Item10 random_dif -0.0514 0.1721 0.7653  1.0000     -0.3887  0.2859
-#>      Item        Var   gamma     se pvalue padj.BH  sig   lower   upper
-#> 1   Item1 random_dif  0.2632 0.1589 0.0977  0.9766      -0.0482  0.5746
-#> 2   Item2 random_dif -0.1141 0.1670 0.4945  1.0000      -0.4413  0.2132
-#> 3   Item3 random_dif  0.6088 0.1114 0.0000  0.0000  ***  0.3905  0.8272
-#> 4   Item4 random_dif -0.2176 0.1655 0.1886  1.0000      -0.5419  0.1068
-#> 5   Item5 random_dif -0.1780 0.1620 0.2719  1.0000      -0.4956  0.1395
-#> 6   Item6 random_dif  0.1446 0.1702 0.3956  1.0000      -0.1891  0.4783
-#> 7   Item7 random_dif -0.4585 0.1360 0.0007  0.0075   ** -0.7251 -0.1920
-#> 8   Item8 random_dif -0.2355 0.1591 0.1387  1.0000      -0.5473  0.0763
-#> 9   Item9 random_dif  0.1544 0.1572 0.3262  1.0000      -0.1538  0.4626
-#> 10 Item10 random_dif -0.0246 0.1657 0.8821  1.0000      -0.3493  0.3002
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.1791 0.1591 0.2603       1     -0.1327 0.4909
-#> 2   Item2 random_dif -0.1227 0.1573 0.4355       1     -0.4311 0.1857
-#> 3   Item3 random_dif  0.1212 0.1641 0.4601       1     -0.2004 0.4428
-#> 4   Item4 random_dif  0.0574 0.1644 0.7269       1     -0.2648 0.3797
-#> 5   Item5 random_dif  0.0183 0.1662 0.9123       1     -0.3075 0.3441
-#> 6   Item6 random_dif  0.1720 0.1626 0.2904       1     -0.1468 0.4907
-#> 7   Item7 random_dif -0.0758 0.1696 0.6549       1     -0.4083 0.2567
-#> 8   Item8 random_dif -0.1516 0.1615 0.3478       1     -0.4681 0.1649
-#> 9   Item9 random_dif -0.0087 0.1716 0.9596       1     -0.3450 0.3276
-#> 10 Item10 random_dif -0.1867 0.1595 0.2420       1     -0.4994 0.1260
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.2186 0.1643 0.1833  1.0000     -0.1034 0.5405
-#> 2   Item2 random_dif -0.1705 0.1617 0.2919  1.0000     -0.4875 0.1465
-#> 3   Item3 random_dif -0.1500 0.1796 0.4037  1.0000     -0.5021 0.2021
-#> 4   Item4 random_dif -0.0780 0.1633 0.6329  1.0000     -0.3980 0.2420
-#> 5   Item5 random_dif  0.0133 0.1704 0.9376  1.0000     -0.3207 0.3474
-#> 6   Item6 random_dif  0.0247 0.1665 0.8819  1.0000     -0.3017 0.3512
-#> 7   Item7 random_dif  0.2727 0.1552 0.0788  0.7881     -0.0314 0.5769
-#> 8   Item8 random_dif  0.1111 0.1735 0.5220  1.0000     -0.2290 0.4512
-#> 9   Item9 random_dif -0.0076 0.1685 0.9639  1.0000     -0.3379 0.3226
-#> 10 Item10 random_dif -0.2570 0.1652 0.1197  1.0000     -0.5808 0.0667
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0109 0.1650 0.9476  1.0000     -0.3342 0.3125
-#> 2   Item2 random_dif  0.0767 0.1735 0.6586  1.0000     -0.2635 0.4168
-#> 3   Item3 random_dif -0.2355 0.1638 0.1506  1.0000     -0.5566 0.0856
-#> 4   Item4 random_dif -0.0092 0.1637 0.9553  1.0000     -0.3301 0.3117
-#> 5   Item5 random_dif  0.3191 0.1593 0.0452  0.4519      0.0068 0.6315
-#> 6   Item6 random_dif  0.1014 0.1758 0.5642  1.0000     -0.2432 0.4459
-#> 7   Item7 random_dif -0.1948 0.1626 0.2308  1.0000     -0.5135 0.1238
-#> 8   Item8 random_dif  0.0141 0.1709 0.9341  1.0000     -0.3208 0.3491
-#> 9   Item9 random_dif -0.1516 0.1629 0.3519  1.0000     -0.4708 0.1676
-#> 10 Item10 random_dif  0.1119 0.1751 0.5227  1.0000     -0.2312 0.4550
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.0397 0.1728 0.8183  1.0000     -0.2990 0.3784
-#> 2   Item2 random_dif -0.0870 0.1832 0.6346  1.0000     -0.4460 0.2719
-#> 3   Item3 random_dif -0.0864 0.1627 0.5954  1.0000     -0.4052 0.2325
-#> 4   Item4 random_dif  0.3638 0.1500 0.0153  0.1531      0.0697 0.6578
-#> 5   Item5 random_dif -0.0295 0.1770 0.8675  1.0000     -0.3763 0.3173
-#> 6   Item6 random_dif  0.1090 0.1623 0.5018  1.0000     -0.2092 0.4272
-#> 7   Item7 random_dif -0.1056 0.1562 0.4992  1.0000     -0.4118 0.2006
-#> 8   Item8 random_dif -0.1745 0.1549 0.2600  1.0000     -0.4781 0.1291
-#> 9   Item9 random_dif  0.0664 0.1676 0.6918  1.0000     -0.2620 0.3949
-#> 10 Item10 random_dif -0.0981 0.1715 0.5673  1.0000     -0.4343 0.2380
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.0493 0.1706 0.7726  1.0000     -0.2851 0.3838
-#> 2   Item2 random_dif -0.2491 0.1606 0.1210  1.0000     -0.5639 0.0658
-#> 3   Item3 random_dif  0.1314 0.1678 0.4336  1.0000     -0.1975 0.4602
-#> 4   Item4 random_dif -0.2623 0.1518 0.0840  0.8395     -0.5597 0.0352
-#> 5   Item5 random_dif -0.0018 0.1666 0.9914  1.0000     -0.3283 0.3247
-#> 6   Item6 random_dif -0.0037 0.1727 0.9828  1.0000     -0.3421 0.3347
-#> 7   Item7 random_dif  0.1965 0.1579 0.2133  1.0000     -0.1129 0.5059
-#> 8   Item8 random_dif  0.0600 0.1709 0.7256  1.0000     -0.2749 0.3949
-#> 9   Item9 random_dif  0.0551 0.1629 0.7354  1.0000     -0.2643 0.3744
-#> 10 Item10 random_dif  0.0400 0.1722 0.8163  1.0000     -0.2975 0.3775
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.0669 0.1776 0.7063  1.0000     -0.2811  0.4150
-#> 2   Item2 random_dif  0.0346 0.1690 0.8378  1.0000     -0.2967  0.3659
-#> 3   Item3 random_dif -0.1196 0.1734 0.4906  1.0000     -0.4595  0.2204
-#> 4   Item4 random_dif -0.0345 0.1716 0.8407  1.0000     -0.3708  0.3018
-#> 5   Item5 random_dif  0.0510 0.1734 0.7685  1.0000     -0.2888  0.3909
-#> 6   Item6 random_dif  0.2224 0.1628 0.1718  1.0000     -0.0966  0.5414
-#> 7   Item7 random_dif  0.2036 0.1698 0.2305  1.0000     -0.1292  0.5364
-#> 8   Item8 random_dif -0.3209 0.1598 0.0446  0.4460     -0.6341 -0.0077
-#> 9   Item9 random_dif  0.1561 0.1684 0.3539  1.0000     -0.1740  0.4862
-#> 10 Item10 random_dif -0.2918 0.1651 0.0772  0.7715     -0.6154  0.0318
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.0444 0.1667 0.7898       1     -0.2824 0.3713
-#> 2   Item2 random_dif -0.0709 0.1719 0.6802       1     -0.4078 0.2661
-#> 3   Item3 random_dif -0.0982 0.1633 0.5474       1     -0.4182 0.2218
-#> 4   Item4 random_dif -0.0860 0.1641 0.6000       1     -0.4076 0.2356
-#> 5   Item5 random_dif  0.0731 0.1670 0.6615       1     -0.2542 0.4004
-#> 6   Item6 random_dif -0.0315 0.1651 0.8487       1     -0.3550 0.2920
-#> 7   Item7 random_dif -0.0750 0.1698 0.6588       1     -0.4077 0.2578
-#> 8   Item8 random_dif -0.0107 0.1814 0.9531       1     -0.3663 0.3449
-#> 9   Item9 random_dif  0.1022 0.1692 0.5457       1     -0.2293 0.4338
-#> 10 Item10 random_dif  0.1669 0.1708 0.3285       1     -0.1679 0.5018
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.1528 0.1639 0.3512       1     -0.1684 0.4740
-#> 2   Item2 random_dif  0.0875 0.1707 0.6080       1     -0.2470 0.4220
-#> 3   Item3 random_dif  0.0132 0.1667 0.9367       1     -0.3134 0.3399
-#> 4   Item4 random_dif -0.0729 0.1681 0.6644       1     -0.4023 0.2565
-#> 5   Item5 random_dif -0.1148 0.1713 0.5030       1     -0.4506 0.2211
-#> 6   Item6 random_dif -0.0775 0.1696 0.6478       1     -0.4099 0.2550
-#> 7   Item7 random_dif  0.0148 0.1654 0.9286       1     -0.3094 0.3390
-#> 8   Item8 random_dif  0.1387 0.1681 0.4092       1     -0.1907 0.4682
-#> 9   Item9 random_dif -0.1410 0.1580 0.3721       1     -0.4507 0.1687
-#> 10 Item10 random_dif  0.0088 0.1725 0.9595       1     -0.3294 0.3469
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.2023 0.1689 0.2310  1.0000     -0.1287  0.5333
-#> 2   Item2 random_dif -0.3076 0.1532 0.0447  0.4473     -0.6079 -0.0072
-#> 3   Item3 random_dif -0.2136 0.1559 0.1708  1.0000     -0.5192  0.0921
-#> 4   Item4 random_dif -0.1180 0.1760 0.5025  1.0000     -0.4630  0.2269
-#> 5   Item5 random_dif -0.0080 0.1703 0.9627  1.0000     -0.3417  0.3258
-#> 6   Item6 random_dif  0.0980 0.1676 0.5589  1.0000     -0.2305  0.4265
-#> 7   Item7 random_dif  0.1243 0.1638 0.4479  1.0000     -0.1967  0.4453
-#> 8   Item8 random_dif  0.0435 0.1769 0.8059  1.0000     -0.3033  0.3902
-#> 9   Item9 random_dif  0.2207 0.1637 0.1776  1.0000     -0.1002  0.5417
-#> 10 Item10 random_dif  0.0018 0.1647 0.9913  1.0000     -0.3211  0.3247
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.0469 0.1643 0.7752  1.0000     -0.2752  0.3690
-#> 2   Item2 random_dif  0.1563 0.1617 0.3337  1.0000     -0.1606  0.4732
-#> 3   Item3 random_dif  0.0063 0.1801 0.9721  1.0000     -0.3466  0.3592
-#> 4   Item4 random_dif -0.0111 0.1654 0.9464  1.0000     -0.3352  0.3130
-#> 5   Item5 random_dif -0.3797 0.1486 0.0106  0.1062     -0.6710 -0.0884
-#> 6   Item6 random_dif  0.0237 0.1631 0.8846  1.0000     -0.2961  0.3434
-#> 7   Item7 random_dif -0.0018 0.1642 0.9912  1.0000     -0.3237  0.3201
-#> 8   Item8 random_dif  0.1357 0.1706 0.4264  1.0000     -0.1987  0.4700
-#> 9   Item9 random_dif -0.0241 0.1768 0.8916  1.0000     -0.3706  0.3224
-#> 10 Item10 random_dif  0.0471 0.1611 0.7700  1.0000     -0.2686  0.3628
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1604 0.1692 0.3428  1.0000     -0.4920 0.1711
-#> 2   Item2 random_dif -0.0940 0.1730 0.5869  1.0000     -0.4330 0.2451
-#> 3   Item3 random_dif -0.2805 0.1654 0.0900  0.8999     -0.6047 0.0438
-#> 4   Item4 random_dif  0.1018 0.1663 0.5406  1.0000     -0.2242 0.4277
-#> 5   Item5 random_dif  0.1681 0.1687 0.3189  1.0000     -0.1625 0.4988
-#> 6   Item6 random_dif  0.2872 0.1531 0.0606  0.6059     -0.0128 0.5872
-#> 7   Item7 random_dif  0.0352 0.1695 0.8354  1.0000     -0.2969 0.3674
-#> 8   Item8 random_dif -0.0314 0.1669 0.8509  1.0000     -0.3584 0.2957
-#> 9   Item9 random_dif -0.1479 0.1590 0.3522  1.0000     -0.4595 0.1637
-#> 10 Item10 random_dif  0.0949 0.1700 0.5768  1.0000     -0.2384 0.4282
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.0446 0.1696 0.7926       1     -0.2879 0.3771
-#> 2   Item2 random_dif  0.0559 0.1645 0.7342       1     -0.2666 0.3783
-#> 3   Item3 random_dif -0.1027 0.1594 0.5193       1     -0.4152 0.2098
-#> 4   Item4 random_dif -0.1672 0.1595 0.2944       1     -0.4798 0.1453
-#> 5   Item5 random_dif  0.1527 0.1613 0.3437       1     -0.1634 0.4689
-#> 6   Item6 random_dif -0.2185 0.1713 0.2020       1     -0.5542 0.1172
-#> 7   Item7 random_dif  0.1560 0.1644 0.3426       1     -0.1662 0.4783
-#> 8   Item8 random_dif  0.2059 0.1604 0.1993       1     -0.1085 0.5202
-#> 9   Item9 random_dif -0.1781 0.1718 0.2998       1     -0.5147 0.1585
-#> 10 Item10 random_dif  0.0538 0.1687 0.7500       1     -0.2769 0.3845
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.0517 0.1666 0.7563  1.0000     -0.2748 0.3782
-#> 2   Item2 random_dif  0.0505 0.1734 0.7707  1.0000     -0.2893 0.3904
-#> 3   Item3 random_dif  0.2444 0.1624 0.1323  1.0000     -0.0738 0.5627
-#> 4   Item4 random_dif  0.1986 0.1663 0.2325  1.0000     -0.1274 0.5245
-#> 5   Item5 random_dif -0.1610 0.1621 0.3206  1.0000     -0.4786 0.1567
-#> 6   Item6 random_dif -0.0293 0.1686 0.8622  1.0000     -0.3598 0.3012
-#> 7   Item7 random_dif -0.0866 0.1646 0.5989  1.0000     -0.4092 0.2360
-#> 8   Item8 random_dif -0.2923 0.1568 0.0624  0.6235     -0.5997 0.0151
-#> 9   Item9 random_dif  0.1261 0.1705 0.4594  1.0000     -0.2080 0.4603
-#> 10 Item10 random_dif -0.0687 0.1712 0.6882  1.0000     -0.4043 0.2669
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1627 0.1678 0.3323  1.0000     -0.4916 0.1662
-#> 2   Item2 random_dif  0.1601 0.1603 0.3180  1.0000     -0.1541 0.4742
-#> 3   Item3 random_dif  0.0632 0.1701 0.7102  1.0000     -0.2702 0.3966
-#> 4   Item4 random_dif -0.1417 0.1753 0.4186  1.0000     -0.4853 0.2018
-#> 5   Item5 random_dif -0.1275 0.1637 0.4360  1.0000     -0.4482 0.1933
-#> 6   Item6 random_dif -0.1581 0.1647 0.3371  1.0000     -0.4809 0.1647
-#> 7   Item7 random_dif  0.1345 0.1793 0.4533  1.0000     -0.2169 0.4858
-#> 8   Item8 random_dif  0.1368 0.1778 0.4415  1.0000     -0.2116 0.4853
-#> 9   Item9 random_dif  0.2965 0.1551 0.0560  0.5599     -0.0076 0.6006
-#> 10 Item10 random_dif -0.1856 0.1683 0.2701  1.0000     -0.5155 0.1443
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.1352 0.1648 0.4118  1.0000     -0.1877 0.4582
-#> 2   Item2 random_dif -0.0017 0.1744 0.9921  1.0000     -0.3435 0.3400
-#> 3   Item3 random_dif -0.2869 0.1586 0.0705  0.7052     -0.5978 0.0240
-#> 4   Item4 random_dif -0.0079 0.1642 0.9615  1.0000     -0.3298 0.3139
-#> 5   Item5 random_dif -0.0078 0.1657 0.9625  1.0000     -0.3326 0.3170
-#> 6   Item6 random_dif  0.0693 0.1781 0.6974  1.0000     -0.2799 0.4184
-#> 7   Item7 random_dif -0.0865 0.1684 0.6076  1.0000     -0.4165 0.2435
-#> 8   Item8 random_dif  0.0017 0.1763 0.9921  1.0000     -0.3437 0.3472
-#> 9   Item9 random_dif -0.0600 0.1688 0.7224  1.0000     -0.3908 0.2709
-#> 10 Item10 random_dif  0.2747 0.1631 0.0922  0.9224     -0.0451 0.5944
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.3121 0.1532 0.0416  0.4164      0.0118 0.6125
-#> 2   Item2 random_dif  0.1261 0.1613 0.4342  1.0000     -0.1900 0.4423
-#> 3   Item3 random_dif -0.0982 0.1640 0.5490  1.0000     -0.4196 0.2231
-#> 4   Item4 random_dif  0.0619 0.1653 0.7079  1.0000     -0.2620 0.3858
-#> 5   Item5 random_dif -0.1792 0.1616 0.2673  1.0000     -0.4959 0.1374
-#> 6   Item6 random_dif -0.1751 0.1675 0.2958  1.0000     -0.5033 0.1531
-#> 7   Item7 random_dif  0.1889 0.1690 0.2638  1.0000     -0.1424 0.5201
-#> 8   Item8 random_dif -0.1975 0.1700 0.2454  1.0000     -0.5308 0.1357
-#> 9   Item9 random_dif -0.0659 0.1714 0.7007  1.0000     -0.4017 0.2700
-#> 10 Item10 random_dif  0.0200 0.1660 0.9043  1.0000     -0.3055 0.3454
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.0058 0.1765 0.9737       1     -0.3401 0.3518
-#> 2   Item2 random_dif  0.1259 0.1733 0.4677       1     -0.2138 0.4656
-#> 3   Item3 random_dif -0.0164 0.1654 0.9210       1     -0.3406 0.3078
-#> 4   Item4 random_dif -0.1088 0.1648 0.5089       1     -0.4318 0.2141
-#> 5   Item5 random_dif -0.0710 0.1748 0.6846       1     -0.4137 0.2716
-#> 6   Item6 random_dif  0.0252 0.1679 0.8808       1     -0.3040 0.3543
-#> 7   Item7 random_dif  0.1204 0.1697 0.4780       1     -0.2121 0.4529
-#> 8   Item8 random_dif -0.1848 0.1675 0.2699       1     -0.5130 0.1435
-#> 9   Item9 random_dif  0.1798 0.1704 0.2914       1     -0.1542 0.5137
-#> 10 Item10 random_dif -0.0938 0.1745 0.5909       1     -0.4359 0.2483
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.0151 0.1687 0.9286  1.0000     -0.3156 0.3458
-#> 2   Item2 random_dif -0.0962 0.1605 0.5491  1.0000     -0.4107 0.2184
-#> 3   Item3 random_dif  0.2655 0.1473 0.0714  0.7142     -0.0231 0.5541
-#> 4   Item4 random_dif  0.0124 0.1632 0.9395  1.0000     -0.3075 0.3322
-#> 5   Item5 random_dif -0.0626 0.1604 0.6963  1.0000     -0.3770 0.2518
-#> 6   Item6 random_dif  0.3076 0.1617 0.0572  0.5716     -0.0094 0.6245
-#> 7   Item7 random_dif  0.0115 0.1706 0.9465  1.0000     -0.3229 0.3459
-#> 8   Item8 random_dif -0.2810 0.1545 0.0688  0.6883     -0.5838 0.0217
-#> 9   Item9 random_dif -0.1411 0.1619 0.3836  1.0000     -0.4584 0.1763
-#> 10 Item10 random_dif -0.0256 0.1715 0.8812  1.0000     -0.3618 0.3106
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif -0.3344 0.1581 0.0344  0.3442     -0.6443 -0.0245
-#> 2   Item2 random_dif  0.1655 0.1627 0.3092  1.0000     -0.1534  0.4844
-#> 3   Item3 random_dif -0.0508 0.1638 0.7562  1.0000     -0.3718  0.2701
-#> 4   Item4 random_dif  0.0954 0.1611 0.5538  1.0000     -0.2203  0.4111
-#> 5   Item5 random_dif  0.0482 0.1708 0.7776  1.0000     -0.2865  0.3830
-#> 6   Item6 random_dif  0.1879 0.1554 0.2267  1.0000     -0.1167  0.4925
-#> 7   Item7 random_dif  0.0016 0.1664 0.9922  1.0000     -0.3245  0.3278
-#> 8   Item8 random_dif  0.1362 0.1564 0.3838  1.0000     -0.1703  0.4428
-#> 9   Item9 random_dif -0.1328 0.1664 0.4248  1.0000     -0.4589  0.1933
-#> 10 Item10 random_dif -0.1688 0.1682 0.3154  1.0000     -0.4985  0.1608
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0633 0.1774 0.7213  1.0000     -0.4110 0.2844
-#> 2   Item2 random_dif -0.0176 0.1706 0.9178  1.0000     -0.3521 0.3168
-#> 3   Item3 random_dif  0.3641 0.1547 0.0186  0.1857      0.0610 0.6672
-#> 4   Item4 random_dif  0.0423 0.1729 0.8070  1.0000     -0.2967 0.3812
-#> 5   Item5 random_dif  0.2032 0.1591 0.2016  1.0000     -0.1087 0.5150
-#> 6   Item6 random_dif -0.1458 0.1674 0.3836  1.0000     -0.4739 0.1823
-#> 7   Item7 random_dif -0.1847 0.1641 0.2603  1.0000     -0.5062 0.1369
-#> 8   Item8 random_dif -0.0550 0.1716 0.7486  1.0000     -0.3912 0.2813
-#> 9   Item9 random_dif -0.0070 0.1687 0.9670  1.0000     -0.3376 0.3237
-#> 10 Item10 random_dif -0.1641 0.1722 0.3404  1.0000     -0.5016 0.1733
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1693 0.1598 0.2895       1     -0.4826 0.1440
-#> 2   Item2 random_dif  0.0968 0.1594 0.5437       1     -0.2156 0.4091
-#> 3   Item3 random_dif  0.0850 0.1647 0.6060       1     -0.2379 0.4078
-#> 4   Item4 random_dif -0.1517 0.1573 0.3349       1     -0.4601 0.1566
-#> 5   Item5 random_dif -0.0245 0.1679 0.8838       1     -0.3536 0.3046
-#> 6   Item6 random_dif  0.1828 0.1599 0.2529       1     -0.1305 0.4961
-#> 7   Item7 random_dif  0.0000 0.1606 1.0000       1     -0.3148 0.3148
-#> 8   Item8 random_dif  0.0046 0.1608 0.9773       1     -0.3107 0.3198
-#> 9   Item9 random_dif  0.1748 0.1605 0.2761       1     -0.1397 0.4892
-#> 10 Item10 random_dif -0.1975 0.1572 0.2090       1     -0.5055 0.1106
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.2508 0.1687 0.1372       1     -0.0799 0.5815
-#> 2   Item2 random_dif -0.1124 0.1689 0.5059       1     -0.4435 0.2187
-#> 3   Item3 random_dif -0.0247 0.1725 0.8862       1     -0.3629 0.3135
-#> 4   Item4 random_dif -0.0163 0.1682 0.9226       1     -0.3460 0.3133
-#> 5   Item5 random_dif -0.0330 0.1759 0.8513       1     -0.3777 0.3118
-#> 6   Item6 random_dif  0.0548 0.1765 0.7561       1     -0.2912 0.4009
-#> 7   Item7 random_dif  0.0396 0.1717 0.8174       1     -0.2968 0.3761
-#> 8   Item8 random_dif -0.0311 0.1642 0.8499       1     -0.3530 0.2908
-#> 9   Item9 random_dif -0.1711 0.1728 0.3223       1     -0.5098 0.1677
-#> 10 Item10 random_dif  0.0667 0.1825 0.7149       1     -0.2910 0.4243
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.1638 0.1812 0.3661  1.0000     -0.1914 0.5190
-#> 2   Item2 random_dif  0.1082 0.1720 0.5290  1.0000     -0.2288 0.4453
-#> 3   Item3 random_dif -0.1572 0.1781 0.3775  1.0000     -0.5062 0.1919
-#> 4   Item4 random_dif -0.0184 0.1774 0.9176  1.0000     -0.3661 0.3293
-#> 5   Item5 random_dif -0.2751 0.1607 0.0869  0.8694     -0.5901 0.0399
-#> 6   Item6 random_dif  0.1603 0.1691 0.3432  1.0000     -0.1711 0.4916
-#> 7   Item7 random_dif -0.0061 0.1684 0.9709  1.0000     -0.3361 0.3239
-#> 8   Item8 random_dif  0.0762 0.1742 0.6621  1.0000     -0.2654 0.4177
-#> 9   Item9 random_dif -0.1916 0.1615 0.2355  1.0000     -0.5082 0.1250
-#> 10 Item10 random_dif  0.1622 0.1695 0.3386  1.0000     -0.1700 0.4945
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0512 0.1790 0.7749  1.0000     -0.4020 0.2997
-#> 2   Item2 random_dif  0.0051 0.1605 0.9749  1.0000     -0.3095 0.3196
-#> 3   Item3 random_dif  0.3301 0.1478 0.0256  0.2557      0.0403 0.6199
-#> 4   Item4 random_dif  0.1248 0.1622 0.4417  1.0000     -0.1931 0.4427
-#> 5   Item5 random_dif  0.0113 0.1622 0.9446  1.0000     -0.3065 0.3291
-#> 6   Item6 random_dif -0.0645 0.1777 0.7166  1.0000     -0.4128 0.2838
-#> 7   Item7 random_dif -0.1950 0.1611 0.2262  1.0000     -0.5109 0.1208
-#> 8   Item8 random_dif -0.0050 0.1618 0.9753  1.0000     -0.3221 0.3121
-#> 9   Item9 random_dif -0.1863 0.1690 0.2704  1.0000     -0.5176 0.1450
-#> 10 Item10 random_dif -0.0360 0.1676 0.8301  1.0000     -0.3645 0.2925
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0232 0.1792 0.8972       1     -0.3745 0.3282
-#> 2   Item2 random_dif  0.0840 0.1726 0.6264       1     -0.2543 0.4223
-#> 3   Item3 random_dif -0.0288 0.1718 0.8668       1     -0.3654 0.3078
-#> 4   Item4 random_dif -0.0146 0.1727 0.9326       1     -0.3531 0.3239
-#> 5   Item5 random_dif -0.0561 0.1658 0.7352       1     -0.3811 0.2689
-#> 6   Item6 random_dif  0.0797 0.1586 0.6152       1     -0.2311 0.3905
-#> 7   Item7 random_dif -0.2272 0.1658 0.1706       1     -0.5521 0.0977
-#> 8   Item8 random_dif -0.1326 0.1614 0.4114       1     -0.4489 0.1838
-#> 9   Item9 random_dif  0.1230 0.1676 0.4631       1     -0.2055 0.4514
-#> 10 Item10 random_dif  0.1767 0.1604 0.2707       1     -0.1377 0.4911
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.1788 0.1573 0.2554  1.0000     -0.1294  0.4871
-#> 2   Item2 random_dif -0.1204 0.1685 0.4749  1.0000     -0.4507  0.2099
-#> 3   Item3 random_dif -0.4043 0.1429 0.0047  0.0467   * -0.6844 -0.1242
-#> 4   Item4 random_dif  0.1005 0.1667 0.5466  1.0000     -0.2263  0.4273
-#> 5   Item5 random_dif  0.0093 0.1613 0.9538  1.0000     -0.3068  0.3255
-#> 6   Item6 random_dif -0.1129 0.1666 0.4979  1.0000     -0.4394  0.2136
-#> 7   Item7 random_dif -0.1401 0.1615 0.3857  1.0000     -0.4566  0.1764
-#> 8   Item8 random_dif  0.2045 0.1528 0.1807  1.0000     -0.0950  0.5041
-#> 9   Item9 random_dif  0.3056 0.1475 0.0383  0.3832      0.0164  0.5947
-#> 10 Item10 random_dif -0.0556 0.1685 0.7416  1.0000     -0.3858  0.2747
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.1144 0.1653 0.4887       1     -0.2095 0.4383
-#> 2   Item2 random_dif -0.2610 0.1688 0.1220       1     -0.5918 0.0698
-#> 3   Item3 random_dif  0.1993 0.1629 0.2210       1     -0.1199 0.5186
-#> 4   Item4 random_dif  0.1786 0.1598 0.2638       1     -0.1346 0.4918
-#> 5   Item5 random_dif  0.0137 0.1836 0.9405       1     -0.3462 0.3736
-#> 6   Item6 random_dif -0.1804 0.1638 0.2708       1     -0.5014 0.1406
-#> 7   Item7 random_dif -0.0909 0.1750 0.6034       1     -0.4339 0.2520
-#> 8   Item8 random_dif  0.0270 0.1757 0.8778       1     -0.3174 0.3714
-#> 9   Item9 random_dif  0.1471 0.1698 0.3862       1     -0.1856 0.4798
-#> 10 Item10 random_dif -0.1696 0.1716 0.3231       1     -0.5060 0.1668
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.2189 0.1666 0.1888  1.0000     -0.1076 0.5453
-#> 2   Item2 random_dif -0.1915 0.1657 0.2477  1.0000     -0.5162 0.1332
-#> 3   Item3 random_dif -0.1155 0.1611 0.4733  1.0000     -0.4312 0.2002
-#> 4   Item4 random_dif -0.0386 0.1654 0.8155  1.0000     -0.3627 0.2855
-#> 5   Item5 random_dif -0.0175 0.1668 0.9162  1.0000     -0.3444 0.3093
-#> 6   Item6 random_dif  0.0782 0.1690 0.6434  1.0000     -0.2530 0.4095
-#> 7   Item7 random_dif -0.1325 0.1643 0.4203  1.0000     -0.4546 0.1897
-#> 8   Item8 random_dif  0.2712 0.1522 0.0747  0.7467     -0.0270 0.5695
-#> 9   Item9 random_dif -0.1639 0.1606 0.3074  1.0000     -0.4786 0.1508
-#> 10 Item10 random_dif  0.1280 0.1714 0.4553  1.0000     -0.2080 0.4640
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1326 0.1684 0.4312  1.0000     -0.4627 0.1975
-#> 2   Item2 random_dif  0.2870 0.1619 0.0763  0.7626     -0.0303 0.6043
-#> 3   Item3 random_dif -0.1965 0.1611 0.2225  1.0000     -0.5122 0.1192
-#> 4   Item4 random_dif -0.0207 0.1644 0.8998  1.0000     -0.3428 0.3014
-#> 5   Item5 random_dif  0.1640 0.1621 0.3117  1.0000     -0.1538 0.4818
-#> 6   Item6 random_dif -0.0310 0.1679 0.8537  1.0000     -0.3601 0.2982
-#> 7   Item7 random_dif -0.0684 0.1637 0.6759  1.0000     -0.3893 0.2524
-#> 8   Item8 random_dif  0.2743 0.1551 0.0769  0.7693     -0.0297 0.5783
-#> 9   Item9 random_dif -0.0676 0.1640 0.6801  1.0000     -0.3890 0.2538
-#> 10 Item10 random_dif -0.2305 0.1696 0.1743  1.0000     -0.5630 0.1020
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.0146 0.1714 0.9320  1.0000     -0.3213 0.3506
-#> 2   Item2 random_dif -0.0855 0.1723 0.6197  1.0000     -0.4233 0.2522
-#> 3   Item3 random_dif  0.3248 0.1532 0.0340  0.3399      0.0245 0.6251
-#> 4   Item4 random_dif  0.0627 0.1704 0.7130  1.0000     -0.2713 0.3967
-#> 5   Item5 random_dif  0.1217 0.1679 0.4686  1.0000     -0.2074 0.4508
-#> 6   Item6 random_dif  0.1918 0.1677 0.2528  1.0000     -0.1369 0.5205
-#> 7   Item7 random_dif -0.2727 0.1542 0.0770  0.7699     -0.5750 0.0295
-#> 8   Item8 random_dif  0.0616 0.1694 0.7163  1.0000     -0.2705 0.3936
-#> 9   Item9 random_dif -0.1070 0.1699 0.5290  1.0000     -0.4400 0.2261
-#> 10 Item10 random_dif -0.3109 0.1623 0.0554  0.5536     -0.6290 0.0071
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif -0.3431 0.1594 0.0313  0.3134     -0.6554 -0.0307
-#> 2   Item2 random_dif  0.0243 0.1765 0.8905  1.0000     -0.3216  0.3702
-#> 3   Item3 random_dif  0.1727 0.1726 0.3172  1.0000     -0.1657  0.5110
-#> 4   Item4 random_dif -0.1680 0.1740 0.3342  1.0000     -0.5089  0.1730
-#> 5   Item5 random_dif  0.2087 0.1738 0.2298  1.0000     -0.1319  0.5492
-#> 6   Item6 random_dif  0.1721 0.1784 0.3345  1.0000     -0.1774  0.5217
-#> 7   Item7 random_dif -0.0137 0.1653 0.9337  1.0000     -0.3377  0.3102
-#> 8   Item8 random_dif  0.0833 0.1780 0.6396  1.0000     -0.2655  0.4321
-#> 9   Item9 random_dif -0.1429 0.1752 0.4147  1.0000     -0.4862  0.2004
-#> 10 Item10 random_dif  0.0187 0.1733 0.9139  1.0000     -0.3209  0.3583
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.1254 0.1668 0.4522  1.0000     -0.2016 0.4524
-#> 2   Item2 random_dif  0.2970 0.1610 0.0652  0.6517     -0.0187 0.6126
-#> 3   Item3 random_dif -0.1144 0.1683 0.4968  1.0000     -0.4443 0.2155
-#> 4   Item4 random_dif -0.0859 0.1710 0.6153  1.0000     -0.4210 0.2492
-#> 5   Item5 random_dif -0.2565 0.1673 0.1251  1.0000     -0.5844 0.0713
-#> 6   Item6 random_dif -0.0341 0.1706 0.8414  1.0000     -0.3685 0.3002
-#> 7   Item7 random_dif -0.0017 0.1714 0.9919  1.0000     -0.3377 0.3342
-#> 8   Item8 random_dif -0.0523 0.1781 0.7692  1.0000     -0.4014 0.2968
-#> 9   Item9 random_dif  0.0052 0.1775 0.9767  1.0000     -0.3428 0.3532
-#> 10 Item10 random_dif  0.0933 0.1703 0.5837  1.0000     -0.2405 0.4272
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif -0.0578 0.1682 0.7314  1.0000     -0.3875  0.2720
-#> 2   Item2 random_dif -0.3384 0.1617 0.0364  0.3641     -0.6554 -0.0214
-#> 3   Item3 random_dif  0.0671 0.1706 0.6942  1.0000     -0.2673  0.4015
-#> 4   Item4 random_dif  0.0934 0.1661 0.5740  1.0000     -0.2322  0.4190
-#> 5   Item5 random_dif  0.2526 0.1584 0.1107  1.0000     -0.0578  0.5631
-#> 6   Item6 random_dif -0.2241 0.1638 0.1713  1.0000     -0.5451  0.0969
-#> 7   Item7 random_dif -0.1895 0.1696 0.2640  1.0000     -0.5219  0.1430
-#> 8   Item8 random_dif -0.0303 0.1721 0.8603  1.0000     -0.3677  0.3071
-#> 9   Item9 random_dif -0.0060 0.1662 0.9713  1.0000     -0.3316  0.3197
-#> 10 Item10 random_dif  0.3901 0.1444 0.0069  0.0692   .  0.1070  0.6732
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0107 0.1631 0.9476  1.0000     -0.3305 0.3090
-#> 2   Item2 random_dif -0.2844 0.1621 0.0793  0.7933     -0.6020 0.0333
-#> 3   Item3 random_dif -0.0983 0.1669 0.5558  1.0000     -0.4255 0.2288
-#> 4   Item4 random_dif -0.0261 0.1684 0.8767  1.0000     -0.3561 0.3039
-#> 5   Item5 random_dif  0.1079 0.1612 0.5031  1.0000     -0.2080 0.4238
-#> 6   Item6 random_dif  0.1134 0.1815 0.5320  1.0000     -0.2423 0.4692
-#> 7   Item7 random_dif  0.1061 0.1580 0.5018  1.0000     -0.2035 0.4157
-#> 8   Item8 random_dif -0.0766 0.1611 0.6341  1.0000     -0.3923 0.2390
-#> 9   Item9 random_dif  0.0438 0.1641 0.7896  1.0000     -0.2779 0.3655
-#> 10 Item10 random_dif  0.1241 0.1674 0.4585  1.0000     -0.2040 0.4522
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif -0.0897 0.1600 0.5749  1.0000     -0.4033  0.2238
-#> 2   Item2 random_dif  0.2534 0.1626 0.1192  1.0000     -0.0653  0.5722
-#> 3   Item3 random_dif  0.0929 0.1586 0.5578  1.0000     -0.2179  0.4038
-#> 4   Item4 random_dif -0.3058 0.1523 0.0447  0.4466     -0.6043 -0.0073
-#> 5   Item5 random_dif  0.0904 0.1601 0.5724  1.0000     -0.2234  0.4041
-#> 6   Item6 random_dif -0.3443 0.1463 0.0186  0.1862     -0.6311 -0.0575
-#> 7   Item7 random_dif  0.0948 0.1623 0.5590  1.0000     -0.2233  0.4129
-#> 8   Item8 random_dif  0.0883 0.1718 0.6074  1.0000     -0.2485  0.4251
-#> 9   Item9 random_dif  0.3101 0.1453 0.0328  0.3280      0.0254  0.5949
-#> 10 Item10 random_dif -0.1809 0.1656 0.2747  1.0000     -0.5055  0.1437
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.1607 0.1640 0.3271       1     -0.1607 0.4820
-#> 2   Item2 random_dif  0.2442 0.1558 0.1169       1     -0.0611 0.5495
-#> 3   Item3 random_dif -0.0571 0.1600 0.7212       1     -0.3707 0.2565
-#> 4   Item4 random_dif -0.1331 0.1655 0.4214       1     -0.4575 0.1913
-#> 5   Item5 random_dif -0.0841 0.1747 0.6300       1     -0.4265 0.2582
-#> 6   Item6 random_dif  0.1140 0.1612 0.4793       1     -0.2019 0.4299
-#> 7   Item7 random_dif -0.0420 0.1691 0.8041       1     -0.3734 0.2895
-#> 8   Item8 random_dif -0.0989 0.1772 0.5768       1     -0.4463 0.2485
-#> 9   Item9 random_dif -0.1619 0.1674 0.3332       1     -0.4900 0.1661
-#> 10 Item10 random_dif  0.0273 0.1689 0.8714       1     -0.3036 0.3583
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.0073 0.1696 0.9656  1.0000     -0.3252  0.3398
-#> 2   Item2 random_dif -0.0588 0.1633 0.7186  1.0000     -0.3788  0.2612
-#> 3   Item3 random_dif -0.2027 0.1669 0.2245  1.0000     -0.5298  0.1244
-#> 4   Item4 random_dif  0.1936 0.1550 0.2116  1.0000     -0.1101  0.4973
-#> 5   Item5 random_dif  0.1897 0.1660 0.2533  1.0000     -0.1357  0.5151
-#> 6   Item6 random_dif -0.3245 0.1509 0.0315  0.3152     -0.6203 -0.0287
-#> 7   Item7 random_dif -0.0305 0.1726 0.8596  1.0000     -0.3688  0.3078
-#> 8   Item8 random_dif  0.0203 0.1625 0.9008  1.0000     -0.2983  0.3388
-#> 9   Item9 random_dif  0.0312 0.1629 0.8481  1.0000     -0.2881  0.3505
-#> 10 Item10 random_dif  0.1712 0.1608 0.2870  1.0000     -0.1440  0.4864
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.1176 0.1637 0.4722   1.000     -0.2031 0.4384
-#> 2   Item2 random_dif  0.1776 0.1670 0.2877   1.000     -0.1498 0.5050
-#> 3   Item3 random_dif  0.1490 0.1615 0.3561   1.000     -0.1675 0.4655
-#> 4   Item4 random_dif -0.1544 0.1542 0.3166   1.000     -0.4566 0.1478
-#> 5   Item5 random_dif  0.1910 0.1684 0.2566   1.000     -0.1390 0.5211
-#> 6   Item6 random_dif -0.2679 0.1511 0.0761   0.761     -0.5640 0.0281
-#> 7   Item7 random_dif  0.0381 0.1625 0.8148   1.000     -0.2803 0.3565
-#> 8   Item8 random_dif -0.0250 0.1622 0.8773   1.000     -0.3429 0.2928
-#> 9   Item9 random_dif -0.1913 0.1570 0.2232   1.000     -0.4991 0.1165
-#> 10 Item10 random_dif  0.0196 0.1676 0.9069   1.000     -0.3089 0.3481
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1244 0.1666 0.4555       1     -0.4510 0.2023
-#> 2   Item2 random_dif  0.2133 0.1640 0.1934       1     -0.1081 0.5347
-#> 3   Item3 random_dif  0.0093 0.1751 0.9578       1     -0.3340 0.3525
-#> 4   Item4 random_dif -0.0368 0.1711 0.8298       1     -0.3721 0.2986
-#> 5   Item5 random_dif -0.1541 0.1607 0.3376       1     -0.4691 0.1609
-#> 6   Item6 random_dif  0.1652 0.1690 0.3282       1     -0.1660 0.4963
-#> 7   Item7 random_dif -0.0657 0.1676 0.6949       1     -0.3943 0.2628
-#> 8   Item8 random_dif  0.0017 0.1682 0.9918       1     -0.3279 0.3313
-#> 9   Item9 random_dif -0.1664 0.1631 0.3076       1     -0.4860 0.1532
-#> 10 Item10 random_dif  0.2015 0.1699 0.2357       1     -0.1315 0.5345
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.1129 0.1774 0.5246       1     -0.2349 0.4607
-#> 2   Item2 random_dif  0.1179 0.1605 0.4623       1     -0.1965 0.4324
-#> 3   Item3 random_dif  0.0542 0.1676 0.7463       1     -0.2742 0.3826
-#> 4   Item4 random_dif -0.2036 0.1655 0.2186       1     -0.5281 0.1208
-#> 5   Item5 random_dif  0.0316 0.1640 0.8473       1     -0.2898 0.3530
-#> 6   Item6 random_dif -0.1135 0.1637 0.4882       1     -0.4344 0.2074
-#> 7   Item7 random_dif  0.0441 0.1676 0.7923       1     -0.2843 0.3726
-#> 8   Item8 random_dif  0.0273 0.1672 0.8702       1     -0.3004 0.3550
-#> 9   Item9 random_dif -0.0267 0.1670 0.8728       1     -0.3541 0.3006
-#> 10 Item10 random_dif -0.0389 0.1720 0.8210       1     -0.3760 0.2982
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1092 0.1643 0.5064       1     -0.4312 0.2129
-#> 2   Item2 random_dif -0.0669 0.1655 0.6861       1     -0.3913 0.2575
-#> 3   Item3 random_dif -0.0937 0.1717 0.5854       1     -0.4303 0.2429
-#> 4   Item4 random_dif  0.1812 0.1637 0.2684       1     -0.1396 0.5020
-#> 5   Item5 random_dif  0.1856 0.1653 0.2616       1     -0.1384 0.5096
-#> 6   Item6 random_dif -0.2567 0.1622 0.1136       1     -0.5747 0.0613
-#> 7   Item7 random_dif -0.0073 0.1691 0.9654       1     -0.3387 0.3240
-#> 8   Item8 random_dif  0.2444 0.1633 0.1346       1     -0.0758 0.5645
-#> 9   Item9 random_dif -0.0588 0.1654 0.7220       1     -0.3829 0.2653
-#> 10 Item10 random_dif -0.0196 0.1661 0.9060       1     -0.3451 0.3059
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0970 0.1633 0.5525  1.0000     -0.4170 0.2230
-#> 2   Item2 random_dif  0.0185 0.1637 0.9101  1.0000     -0.3024 0.3394
-#> 3   Item3 random_dif -0.1184 0.1659 0.4753  1.0000     -0.4435 0.2067
-#> 4   Item4 random_dif -0.2383 0.1570 0.1291  1.0000     -0.5459 0.0694
-#> 5   Item5 random_dif  0.2751 0.1534 0.0729  0.7292     -0.0256 0.5758
-#> 6   Item6 random_dif  0.4007 0.1463 0.0062  0.0616   .  0.1139 0.6874
-#> 7   Item7 random_dif -0.0162 0.1598 0.9193  1.0000     -0.3294 0.2970
-#> 8   Item8 random_dif -0.0556 0.1705 0.7445  1.0000     -0.3897 0.2785
-#> 9   Item9 random_dif -0.2884 0.1556 0.0638  0.6377     -0.5934 0.0165
-#> 10 Item10 random_dif  0.0903 0.1660 0.5866  1.0000     -0.2351 0.4156
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1492 0.1778 0.4014       1     -0.4976 0.1992
-#> 2   Item2 random_dif -0.1115 0.1630 0.4940       1     -0.4309 0.2080
-#> 3   Item3 random_dif  0.1519 0.1674 0.3642       1     -0.1762 0.4801
-#> 4   Item4 random_dif  0.1359 0.1579 0.3894       1     -0.1736 0.4454
-#> 5   Item5 random_dif -0.1184 0.1635 0.4689       1     -0.4389 0.2021
-#> 6   Item6 random_dif -0.0476 0.1708 0.7804       1     -0.3823 0.2871
-#> 7   Item7 random_dif  0.1329 0.1684 0.4301       1     -0.1972 0.4629
-#> 8   Item8 random_dif  0.0364 0.1655 0.8258       1     -0.2880 0.3608
-#> 9   Item9 random_dif -0.0458 0.1665 0.7831       1     -0.3722 0.2806
-#> 10 Item10 random_dif  0.0017 0.1734 0.9921       1     -0.3381 0.3415
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0753 0.1821 0.6794       1     -0.4322 0.2817
-#> 2   Item2 random_dif  0.2292 0.1695 0.1762       1     -0.1029 0.5613
-#> 3   Item3 random_dif  0.0310 0.1654 0.8515       1     -0.2933 0.3552
-#> 4   Item4 random_dif  0.1667 0.1667 0.3175       1     -0.1601 0.4935
-#> 5   Item5 random_dif -0.2042 0.1675 0.2230       1     -0.5325 0.1242
-#> 6   Item6 random_dif -0.1094 0.1672 0.5132       1     -0.4371 0.2184
-#> 7   Item7 random_dif -0.1184 0.1738 0.4959       1     -0.4590 0.2223
-#> 8   Item8 random_dif  0.1832 0.1730 0.2896       1     -0.1559 0.5224
-#> 9   Item9 random_dif -0.0280 0.1738 0.8720       1     -0.3686 0.3126
-#> 10 Item10 random_dif -0.0970 0.1903 0.6102       1     -0.4701 0.2760
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.1130 0.1725 0.5126       1     -0.2252 0.4511
-#> 2   Item2 random_dif  0.1185 0.1666 0.4768       1     -0.2080 0.4451
-#> 3   Item3 random_dif  0.0167 0.1673 0.9205       1     -0.3112 0.3446
-#> 4   Item4 random_dif  0.0793 0.1696 0.6403       1     -0.2532 0.4117
-#> 5   Item5 random_dif -0.1200 0.1688 0.4771       1     -0.4508 0.2108
-#> 6   Item6 random_dif -0.2526 0.1617 0.1183       1     -0.5695 0.0643
-#> 7   Item7 random_dif  0.0808 0.1782 0.6503       1     -0.2685 0.4302
-#> 8   Item8 random_dif  0.0225 0.1652 0.8917       1     -0.3014 0.3464
-#> 9   Item9 random_dif -0.0150 0.1751 0.9319       1     -0.3582 0.3283
-#> 10 Item10 random_dif -0.0239 0.1730 0.8902       1     -0.3631 0.3153
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.1321 0.1632 0.4181  1.0000     -0.1877  0.4520
-#> 2   Item2 random_dif -0.3299 0.1562 0.0347  0.3473     -0.6361 -0.0237
-#> 3   Item3 random_dif  0.2178 0.1628 0.1810  1.0000     -0.1013  0.5370
-#> 4   Item4 random_dif  0.3046 0.1557 0.0504  0.5042     -0.0006  0.6098
-#> 5   Item5 random_dif  0.0063 0.1615 0.9691  1.0000     -0.3102  0.3227
-#> 6   Item6 random_dif -0.1155 0.1604 0.4714  1.0000     -0.4298  0.1988
-#> 7   Item7 random_dif -0.0781 0.1616 0.6289  1.0000     -0.3948  0.2386
-#> 8   Item8 random_dif -0.1328 0.1685 0.4307  1.0000     -0.4630  0.1975
-#> 9   Item9 random_dif  0.2032 0.1617 0.2088  1.0000     -0.1137  0.5201
-#> 10 Item10 random_dif -0.2105 0.1594 0.1865  1.0000     -0.5229  0.1018
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.1801 0.1669 0.2803  1.0000     -0.1469  0.5072
-#> 2   Item2 random_dif -0.0079 0.1633 0.9613  1.0000     -0.3281  0.3122
-#> 3   Item3 random_dif  0.1256 0.1675 0.4531  1.0000     -0.2026  0.4539
-#> 4   Item4 random_dif  0.1165 0.1668 0.4848  1.0000     -0.2103  0.4433
-#> 5   Item5 random_dif -0.1009 0.1641 0.5387  1.0000     -0.4224  0.2207
-#> 6   Item6 random_dif -0.0307 0.1669 0.8540  1.0000     -0.3579  0.2965
-#> 7   Item7 random_dif -0.3228 0.1486 0.0298  0.2978     -0.6140 -0.0317
-#> 8   Item8 random_dif -0.0559 0.1692 0.7411  1.0000     -0.3876  0.2758
-#> 9   Item9 random_dif  0.3629 0.1486 0.0146  0.1458      0.0717  0.6541
-#> 10 Item10 random_dif -0.2420 0.1596 0.1296  1.0000     -0.5549  0.0709
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.1569 0.1750 0.3699  1.0000     -0.1860  0.4998
-#> 2   Item2 random_dif -0.1231 0.1692 0.4671  1.0000     -0.4547  0.2086
-#> 3   Item3 random_dif  0.0833 0.1803 0.6439  1.0000     -0.2701  0.4367
-#> 4   Item4 random_dif -0.0365 0.1678 0.8280  1.0000     -0.3653  0.2924
-#> 5   Item5 random_dif  0.0604 0.1668 0.7174  1.0000     -0.2665  0.3872
-#> 6   Item6 random_dif  0.0778 0.1785 0.6630  1.0000     -0.2721  0.4276
-#> 7   Item7 random_dif -0.0405 0.1668 0.8080  1.0000     -0.3674  0.2863
-#> 8   Item8 random_dif  0.1210 0.1646 0.4621  1.0000     -0.2015  0.4436
-#> 9   Item9 random_dif -0.3724 0.1500 0.0130  0.1302     -0.6664 -0.0785
-#> 10 Item10 random_dif  0.1314 0.1739 0.4498  1.0000     -0.2094  0.4721
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif -0.2127 0.1597 0.1829  1.0000     -0.5256  0.1003
-#> 2   Item2 random_dif  0.0676 0.1675 0.6865  1.0000     -0.2606  0.3958
-#> 3   Item3 random_dif  0.1214 0.1725 0.4817  1.0000     -0.2167  0.4595
-#> 4   Item4 random_dif  0.0510 0.1695 0.7633  1.0000     -0.2811  0.3832
-#> 5   Item5 random_dif  0.0530 0.1684 0.7528  1.0000     -0.2770  0.3830
-#> 6   Item6 random_dif  0.1694 0.1748 0.3327  1.0000     -0.1733  0.5120
-#> 7   Item7 random_dif -0.1875 0.1669 0.2612  1.0000     -0.5146  0.1396
-#> 8   Item8 random_dif -0.3344 0.1479 0.0237  0.2375     -0.6243 -0.0446
-#> 9   Item9 random_dif  0.3391 0.1471 0.0211  0.2114      0.0508  0.6274
-#> 10 Item10 random_dif -0.0366 0.1728 0.8322  1.0000     -0.3752  0.3020
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.0430 0.1656 0.7953  1.0000     -0.2816 0.3675
-#> 2   Item2 random_dif  0.0974 0.1679 0.5618  1.0000     -0.2317 0.4266
-#> 3   Item3 random_dif -0.0578 0.1627 0.7224  1.0000     -0.3767 0.2611
-#> 4   Item4 random_dif  0.1908 0.1637 0.2437  1.0000     -0.1300 0.5117
-#> 5   Item5 random_dif  0.0276 0.1717 0.8723  1.0000     -0.3090 0.3642
-#> 6   Item6 random_dif  0.2432 0.1542 0.1146  1.0000     -0.0589 0.5454
-#> 7   Item7 random_dif -0.2676 0.1571 0.0885  0.8845     -0.5756 0.0403
-#> 8   Item8 random_dif -0.2277 0.1609 0.1571  1.0000     -0.5430 0.0877
-#> 9   Item9 random_dif -0.0300 0.1638 0.8549  1.0000     -0.3510 0.2911
-#> 10 Item10 random_dif -0.0273 0.1645 0.8684  1.0000     -0.3498 0.2952
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0412 0.1710 0.8096       1     -0.3763 0.2939
-#> 2   Item2 random_dif -0.0444 0.1699 0.7939       1     -0.3773 0.2885
-#> 3   Item3 random_dif  0.0099 0.1684 0.9530       1     -0.3202 0.3400
-#> 4   Item4 random_dif -0.2389 0.1661 0.1504       1     -0.5645 0.0867
-#> 5   Item5 random_dif -0.1891 0.1691 0.2634       1     -0.5205 0.1423
-#> 6   Item6 random_dif  0.1640 0.1758 0.3508       1     -0.1805 0.5086
-#> 7   Item7 random_dif -0.0438 0.1716 0.7988       1     -0.3802 0.2927
-#> 8   Item8 random_dif  0.1548 0.1643 0.3461       1     -0.1672 0.4769
-#> 9   Item9 random_dif  0.0265 0.1755 0.8802       1     -0.3176 0.3705
-#> 10 Item10 random_dif  0.2582 0.1741 0.1382       1     -0.0831 0.5995
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0033 0.1717 0.9845  1.0000     -0.3399 0.3332
-#> 2   Item2 random_dif  0.0081 0.1685 0.9618  1.0000     -0.3221 0.3383
-#> 3   Item3 random_dif  0.0744 0.1704 0.6625  1.0000     -0.2597 0.4084
-#> 4   Item4 random_dif -0.2067 0.1707 0.2259  1.0000     -0.5411 0.1278
-#> 5   Item5 random_dif -0.1974 0.1641 0.2289  1.0000     -0.5190 0.1242
-#> 6   Item6 random_dif  0.2995 0.1671 0.0732  0.7316     -0.0281 0.6271
-#> 7   Item7 random_dif -0.0605 0.1660 0.7157  1.0000     -0.3859 0.2650
-#> 8   Item8 random_dif  0.1012 0.1758 0.5648  1.0000     -0.2434 0.4458
-#> 9   Item9 random_dif -0.0032 0.1683 0.9847  1.0000     -0.3331 0.3266
-#> 10 Item10 random_dif  0.0051 0.1735 0.9767  1.0000     -0.3349 0.3451
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0360 0.1719 0.8342       1     -0.3729 0.3009
-#> 2   Item2 random_dif  0.0924 0.1629 0.5707       1     -0.2270 0.4117
-#> 3   Item3 random_dif -0.0420 0.1747 0.8098       1     -0.3844 0.3003
-#> 4   Item4 random_dif  0.0137 0.1685 0.9350       1     -0.3165 0.3440
-#> 5   Item5 random_dif  0.2128 0.1626 0.1907       1     -0.1059 0.5316
-#> 6   Item6 random_dif  0.0205 0.1672 0.9022       1     -0.3071 0.3482
-#> 7   Item7 random_dif -0.0249 0.1716 0.8846       1     -0.3613 0.3114
-#> 8   Item8 random_dif -0.1256 0.1627 0.4401       1     -0.4446 0.1933
-#> 9   Item9 random_dif -0.1319 0.1674 0.4307       1     -0.4599 0.1961
-#> 10 Item10 random_dif  0.0141 0.1704 0.9339       1     -0.3199 0.3482
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.0000 0.1651 1.0000       1     -0.3236 0.3236
-#> 2   Item2 random_dif -0.0604 0.1789 0.7356       1     -0.4110 0.2902
-#> 3   Item3 random_dif  0.0361 0.1692 0.8311       1     -0.2956 0.3677
-#> 4   Item4 random_dif  0.1132 0.1624 0.4857       1     -0.2051 0.4316
-#> 5   Item5 random_dif  0.0524 0.1672 0.7540       1     -0.2754 0.3802
-#> 6   Item6 random_dif  0.1784 0.1657 0.2817       1     -0.1464 0.5033
-#> 7   Item7 random_dif  0.0902 0.1617 0.5769       1     -0.2268 0.4072
-#> 8   Item8 random_dif -0.0437 0.1675 0.7944       1     -0.3720 0.2847
-#> 9   Item9 random_dif -0.1749 0.1602 0.2750       1     -0.4889 0.1391
-#> 10 Item10 random_dif -0.1967 0.1807 0.2763       1     -0.5508 0.1575
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.2455 0.1608 0.1268       1     -0.5606 0.0696
-#> 2   Item2 random_dif  0.2238 0.1615 0.1658       1     -0.0927 0.5402
-#> 3   Item3 random_dif -0.0903 0.1649 0.5840       1     -0.4134 0.2328
-#> 4   Item4 random_dif -0.1525 0.1642 0.3529       1     -0.4742 0.1692
-#> 5   Item5 random_dif  0.2500 0.1594 0.1168       1     -0.0624 0.5624
-#> 6   Item6 random_dif  0.0348 0.1638 0.8316       1     -0.2863 0.3560
-#> 7   Item7 random_dif -0.0838 0.1632 0.6076       1     -0.4036 0.2360
-#> 8   Item8 random_dif  0.0916 0.1716 0.5935       1     -0.2448 0.4280
-#> 9   Item9 random_dif -0.1699 0.1640 0.3002       1     -0.4913 0.1515
-#> 10 Item10 random_dif  0.1517 0.1683 0.3672       1     -0.1781 0.4815
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0094 0.1810 0.9587       1     -0.3641 0.3454
-#> 2   Item2 random_dif  0.2122 0.1702 0.2125       1     -0.1214 0.5458
-#> 3   Item3 random_dif  0.0968 0.1730 0.5760       1     -0.2424 0.4359
-#> 4   Item4 random_dif -0.0820 0.1635 0.6161       1     -0.4023 0.2384
-#> 5   Item5 random_dif  0.0699 0.1625 0.6671       1     -0.2486 0.3885
-#> 6   Item6 random_dif  0.0915 0.1638 0.5765       1     -0.2296 0.4126
-#> 7   Item7 random_dif -0.2043 0.1574 0.1943       1     -0.5127 0.1042
-#> 8   Item8 random_dif  0.1973 0.1638 0.2285       1     -0.1238 0.5184
-#> 9   Item9 random_dif -0.2267 0.1626 0.1632       1     -0.5453 0.0919
-#> 10 Item10 random_dif -0.1268 0.1696 0.4547       1     -0.4591 0.2056
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1882 0.1699 0.2680       1     -0.5211 0.1448
-#> 2   Item2 random_dif  0.1387 0.1661 0.4035       1     -0.1868 0.4642
-#> 3   Item3 random_dif -0.1138 0.1731 0.5110       1     -0.4530 0.2255
-#> 4   Item4 random_dif -0.2426 0.1615 0.1330       1     -0.5592 0.0739
-#> 5   Item5 random_dif -0.0181 0.1826 0.9210       1     -0.3759 0.3397
-#> 6   Item6 random_dif  0.1242 0.1683 0.4607       1     -0.2057 0.4541
-#> 7   Item7 random_dif  0.2036 0.1743 0.2429       1     -0.1381 0.5452
-#> 8   Item8 random_dif  0.1144 0.1700 0.5008       1     -0.2187 0.4476
-#> 9   Item9 random_dif  0.0158 0.1761 0.9287       1     -0.3294 0.3610
-#> 10 Item10 random_dif -0.0369 0.1736 0.8316       1     -0.3771 0.3033
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.3313 0.1533 0.0307  0.3070      0.0308  0.6318
-#> 2   Item2 random_dif -0.0735 0.1590 0.6437  1.0000     -0.3851  0.2380
-#> 3   Item3 random_dif -0.0108 0.1641 0.9474  1.0000     -0.3324  0.3107
-#> 4   Item4 random_dif -0.3365 0.1539 0.0288  0.2876     -0.6381 -0.0349
-#> 5   Item5 random_dif  0.1060 0.1682 0.5285  1.0000     -0.2237  0.4358
-#> 6   Item6 random_dif  0.0693 0.1693 0.6823  1.0000     -0.2625  0.4011
-#> 7   Item7 random_dif  0.0808 0.1631 0.6203  1.0000     -0.2389  0.4006
-#> 8   Item8 random_dif -0.0252 0.1601 0.8750  1.0000     -0.3390  0.2886
-#> 9   Item9 random_dif -0.2989 0.1661 0.0720  0.7205     -0.6245  0.0268
-#> 10 Item10 random_dif  0.1563 0.1659 0.3461  1.0000     -0.1688  0.4814
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0228 0.1710 0.8941       1     -0.3580 0.3125
-#> 2   Item2 random_dif  0.1973 0.1635 0.2276       1     -0.1232 0.5177
-#> 3   Item3 random_dif -0.1536 0.1630 0.3461       1     -0.4731 0.1659
-#> 4   Item4 random_dif -0.1115 0.1699 0.5118       1     -0.4445 0.2216
-#> 5   Item5 random_dif  0.1149 0.1676 0.4931       1     -0.2136 0.4433
-#> 6   Item6 random_dif  0.0903 0.1669 0.5885       1     -0.2368 0.4174
-#> 7   Item7 random_dif  0.0673 0.1651 0.6835       1     -0.2563 0.3909
-#> 8   Item8 random_dif -0.1217 0.1657 0.4626       1     -0.4465 0.2030
-#> 9   Item9 random_dif -0.0695 0.1691 0.6809       1     -0.4009 0.2618
-#> 10 Item10 random_dif  0.0175 0.1717 0.9189       1     -0.3190 0.3540
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.3424 0.1572 0.0293  0.2935      0.0344  0.6504
-#> 2   Item2 random_dif -0.0380 0.1827 0.8353  1.0000     -0.3960  0.3200
-#> 3   Item3 random_dif -0.0578 0.1658 0.7275  1.0000     -0.3828  0.2672
-#> 4   Item4 random_dif  0.2155 0.1719 0.2100  1.0000     -0.1215  0.5525
-#> 5   Item5 random_dif -0.0428 0.1701 0.8012  1.0000     -0.3762  0.2905
-#> 6   Item6 random_dif -0.1315 0.1634 0.4208  1.0000     -0.4517  0.1887
-#> 7   Item7 random_dif  0.0810 0.1764 0.6462  1.0000     -0.2647  0.4267
-#> 8   Item8 random_dif -0.0963 0.1745 0.5810  1.0000     -0.4382  0.2457
-#> 9   Item9 random_dif  0.0752 0.1699 0.6579  1.0000     -0.2577  0.4082
-#> 10 Item10 random_dif -0.3183 0.1574 0.0432  0.4318     -0.6268 -0.0098
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1279 0.1669 0.4435  1.0000     -0.4549 0.1992
-#> 2   Item2 random_dif -0.0349 0.1702 0.8375  1.0000     -0.3684 0.2986
-#> 3   Item3 random_dif  0.1083 0.1635 0.5076  1.0000     -0.2121 0.4287
-#> 4   Item4 random_dif  0.0959 0.1714 0.5758  1.0000     -0.2400 0.4318
-#> 5   Item5 random_dif -0.1537 0.1633 0.3465  1.0000     -0.4738 0.1663
-#> 6   Item6 random_dif  0.1266 0.1650 0.4428  1.0000     -0.1967 0.4500
-#> 7   Item7 random_dif -0.2197 0.1667 0.1874  1.0000     -0.5463 0.1070
-#> 8   Item8 random_dif -0.1018 0.1701 0.5495  1.0000     -0.4353 0.2316
-#> 9   Item9 random_dif  0.4521 0.1408 0.0013  0.0133   *  0.1761 0.7282
-#> 10 Item10 random_dif -0.1647 0.1675 0.3255  1.0000     -0.4929 0.1636
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.3365 0.1537 0.0285  0.2854      0.0353 0.6378
-#> 2   Item2 random_dif -0.0601 0.1752 0.7316  1.0000     -0.4035 0.2833
-#> 3   Item3 random_dif  0.3534 0.1479 0.0169  0.1689      0.0635 0.6433
-#> 4   Item4 random_dif -0.2924 0.1593 0.0665  0.6647     -0.6046 0.0199
-#> 5   Item5 random_dif  0.0120 0.1732 0.9447  1.0000     -0.3274 0.3514
-#> 6   Item6 random_dif -0.2742 0.1612 0.0889  0.8889     -0.5901 0.0417
-#> 7   Item7 random_dif -0.1630 0.1623 0.3151  1.0000     -0.4810 0.1550
-#> 8   Item8 random_dif  0.0518 0.1717 0.7630  1.0000     -0.2848 0.3884
-#> 9   Item9 random_dif  0.0497 0.1764 0.7780  1.0000     -0.2960 0.3955
-#> 10 Item10 random_dif -0.0363 0.1757 0.8364  1.0000     -0.3806 0.3081
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.4190 0.1378 0.0024  0.0236   *  0.1489 0.6892
-#> 2   Item2 random_dif  0.1250 0.1625 0.4418  1.0000     -0.1935 0.4435
-#> 3   Item3 random_dif -0.1131 0.1709 0.5079  1.0000     -0.4480 0.2218
-#> 4   Item4 random_dif  0.1689 0.1598 0.2906  1.0000     -0.1443 0.4821
-#> 5   Item5 random_dif  0.0748 0.1645 0.6492  1.0000     -0.2476 0.3972
-#> 6   Item6 random_dif -0.2447 0.1639 0.1355  1.0000     -0.5660 0.0766
-#> 7   Item7 random_dif -0.1075 0.1631 0.5099  1.0000     -0.4272 0.2122
-#> 8   Item8 random_dif  0.0234 0.1575 0.8819  1.0000     -0.2853 0.3321
-#> 9   Item9 random_dif -0.1486 0.1600 0.3529  1.0000     -0.4621 0.1649
-#> 10 Item10 random_dif -0.2231 0.1538 0.1469  1.0000     -0.5245 0.0783
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.2132 0.1594 0.1811  1.0000     -0.0993  0.5257
-#> 2   Item2 random_dif -0.3288 0.1559 0.0350  0.3497     -0.6343 -0.0232
-#> 3   Item3 random_dif -0.0164 0.1677 0.9221  1.0000     -0.3450  0.3122
-#> 4   Item4 random_dif  0.2021 0.1661 0.2235  1.0000     -0.1234  0.5276
-#> 5   Item5 random_dif  0.2049 0.1762 0.2448  1.0000     -0.1404  0.5503
-#> 6   Item6 random_dif -0.2445 0.1542 0.1127  1.0000     -0.5467  0.0576
-#> 7   Item7 random_dif -0.1978 0.1664 0.2343  1.0000     -0.5239  0.1282
-#> 8   Item8 random_dif  0.0036 0.1674 0.9827  1.0000     -0.3245  0.3317
-#> 9   Item9 random_dif -0.0698 0.1659 0.6737  1.0000     -0.3949  0.2552
-#> 10 Item10 random_dif  0.3140 0.1676 0.0610  0.6098     -0.0145  0.6426
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1357 0.1780 0.4460  1.0000     -0.4846 0.2132
-#> 2   Item2 random_dif  0.0272 0.1668 0.8704  1.0000     -0.2997 0.3541
-#> 3   Item3 random_dif  0.1084 0.1873 0.5628  1.0000     -0.2587 0.4755
-#> 4   Item4 random_dif -0.0377 0.1745 0.8290  1.0000     -0.3798 0.3044
-#> 5   Item5 random_dif  0.3787 0.1485 0.0108  0.1077      0.0876 0.6698
-#> 6   Item6 random_dif  0.1511 0.1781 0.3963  1.0000     -0.1980 0.5001
-#> 7   Item7 random_dif -0.2521 0.1615 0.1185  1.0000     -0.5686 0.0644
-#> 8   Item8 random_dif  0.1048 0.1775 0.5551  1.0000     -0.2432 0.4527
-#> 9   Item9 random_dif -0.1069 0.1695 0.5283  1.0000     -0.4391 0.2253
-#> 10 Item10 random_dif -0.1980 0.1620 0.2218  1.0000     -0.5155 0.1196
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1141 0.1706 0.5037  1.0000     -0.4484 0.2203
-#> 2   Item2 random_dif -0.0734 0.1727 0.6707  1.0000     -0.4119 0.2651
-#> 3   Item3 random_dif  0.1027 0.1665 0.5374  1.0000     -0.2236 0.4291
-#> 4   Item4 random_dif -0.0977 0.1684 0.5617  1.0000     -0.4279 0.2324
-#> 5   Item5 random_dif  0.0712 0.1662 0.6685  1.0000     -0.2546 0.3969
-#> 6   Item6 random_dif -0.1514 0.1670 0.3647  1.0000     -0.4788 0.1760
-#> 7   Item7 random_dif -0.1076 0.1611 0.5041  1.0000     -0.4234 0.2082
-#> 8   Item8 random_dif  0.2172 0.1639 0.1849  1.0000     -0.1039 0.5384
-#> 9   Item9 random_dif -0.1451 0.1776 0.4139  1.0000     -0.4933 0.2030
-#> 10 Item10 random_dif  0.3180 0.1715 0.0637  0.6366     -0.0181 0.6541
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.0891 0.1656 0.5906  1.0000     -0.2355  0.4137
-#> 2   Item2 random_dif -0.0756 0.1718 0.6600  1.0000     -0.4122  0.2611
-#> 3   Item3 random_dif  0.0774 0.1681 0.6451  1.0000     -0.2521  0.4070
-#> 4   Item4 random_dif -0.0468 0.1709 0.7842  1.0000     -0.3818  0.2882
-#> 5   Item5 random_dif -0.3571 0.1570 0.0229  0.2288     -0.6648 -0.0495
-#> 6   Item6 random_dif  0.0558 0.1617 0.7299  1.0000     -0.2610  0.3727
-#> 7   Item7 random_dif  0.0333 0.1678 0.8425  1.0000     -0.2955  0.3622
-#> 8   Item8 random_dif  0.1363 0.1689 0.4198  1.0000     -0.1948  0.4674
-#> 9   Item9 random_dif -0.1738 0.1627 0.2852  1.0000     -0.4927  0.1450
-#> 10 Item10 random_dif  0.2417 0.1626 0.1372  1.0000     -0.0770  0.5604
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.2463 0.1552 0.1125  1.0000     -0.5505 0.0579
-#> 2   Item2 random_dif  0.1835 0.1686 0.2764  1.0000     -0.1470 0.5140
-#> 3   Item3 random_dif -0.0094 0.1768 0.9575  1.0000     -0.3559 0.3371
-#> 4   Item4 random_dif -0.1424 0.1662 0.3918  1.0000     -0.4682 0.1834
-#> 5   Item5 random_dif -0.0915 0.1639 0.5764  1.0000     -0.4128 0.2297
-#> 6   Item6 random_dif  0.1012 0.1672 0.5450  1.0000     -0.2265 0.4289
-#> 7   Item7 random_dif  0.1339 0.1680 0.4253  1.0000     -0.1953 0.4632
-#> 8   Item8 random_dif  0.1128 0.1749 0.5189  1.0000     -0.2300 0.4557
-#> 9   Item9 random_dif  0.2680 0.1626 0.0993  0.9933     -0.0507 0.5866
-#> 10 Item10 random_dif -0.2860 0.1582 0.0706  0.7064     -0.5960 0.0241
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.4028 0.1408 0.0042  0.0424   *  0.1267 0.6788
-#> 2   Item2 random_dif -0.1429 0.1684 0.3961  1.0000     -0.4728 0.1871
-#> 3   Item3 random_dif  0.1085 0.1714 0.5267  1.0000     -0.2274 0.4445
-#> 4   Item4 random_dif  0.0083 0.1737 0.9619  1.0000     -0.3321 0.3487
-#> 5   Item5 random_dif -0.0146 0.1702 0.9315  1.0000     -0.3481 0.3189
-#> 6   Item6 random_dif  0.0915 0.1718 0.5944  1.0000     -0.2453 0.4283
-#> 7   Item7 random_dif  0.1647 0.1684 0.3281  1.0000     -0.1654 0.4948
-#> 8   Item8 random_dif -0.2852 0.1680 0.0896  0.8964     -0.6146 0.0441
-#> 9   Item9 random_dif -0.2421 0.1714 0.1578  1.0000     -0.5781 0.0938
-#> 10 Item10 random_dif -0.1693 0.1671 0.3109  1.0000     -0.4967 0.1582
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.2812 0.1607 0.0801  0.8008     -0.0337 0.5962
-#> 2   Item2 random_dif  0.0098 0.1661 0.9528  1.0000     -0.3157 0.3354
-#> 3   Item3 random_dif -0.2424 0.1622 0.1350  1.0000     -0.5602 0.0754
-#> 4   Item4 random_dif -0.0305 0.1685 0.8563  1.0000     -0.3607 0.2997
-#> 5   Item5 random_dif -0.1641 0.1683 0.3297  1.0000     -0.4940 0.1658
-#> 6   Item6 random_dif  0.0333 0.1660 0.8408  1.0000     -0.2919 0.3586
-#> 7   Item7 random_dif  0.0206 0.1691 0.9030  1.0000     -0.3108 0.3521
-#> 8   Item8 random_dif  0.0052 0.1703 0.9756  1.0000     -0.3285 0.3390
-#> 9   Item9 random_dif -0.0172 0.1706 0.9195  1.0000     -0.3516 0.3171
-#> 10 Item10 random_dif  0.1239 0.1685 0.4621  1.0000     -0.2064 0.4542
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.1384 0.1696 0.4143       1     -0.1939 0.4707
-#> 2   Item2 random_dif  0.0878 0.1732 0.6123       1     -0.2517 0.4273
-#> 3   Item3 random_dif -0.0069 0.1699 0.9677       1     -0.3398 0.3261
-#> 4   Item4 random_dif  0.0184 0.1711 0.9145       1     -0.3171 0.3538
-#> 5   Item5 random_dif -0.0045 0.1644 0.9784       1     -0.3266 0.3177
-#> 6   Item6 random_dif  0.0643 0.1688 0.7033       1     -0.2666 0.3952
-#> 7   Item7 random_dif -0.0874 0.1681 0.6029       1     -0.4169 0.2420
-#> 8   Item8 random_dif -0.0334 0.1746 0.8483       1     -0.3756 0.3088
-#> 9   Item9 random_dif -0.0304 0.1702 0.8582       1     -0.3641 0.3032
-#> 10 Item10 random_dif -0.1341 0.1639 0.4132       1     -0.4553 0.1871
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.0350 0.1676 0.8344  1.0000     -0.2934  0.3635
-#> 2   Item2 random_dif -0.1063 0.1738 0.5407  1.0000     -0.4469  0.2343
-#> 3   Item3 random_dif  0.0227 0.1675 0.8921  1.0000     -0.3056  0.3510
-#> 4   Item4 random_dif  0.4271 0.1482 0.0040  0.0396   *  0.1366  0.7176
-#> 5   Item5 random_dif  0.0084 0.1681 0.9601  1.0000     -0.3211  0.3379
-#> 6   Item6 random_dif  0.1259 0.1699 0.4587  1.0000     -0.2071  0.4588
-#> 7   Item7 random_dif  0.0525 0.1631 0.7477  1.0000     -0.2672  0.3722
-#> 8   Item8 random_dif  0.0016 0.1666 0.9925  1.0000     -0.3250  0.3281
-#> 9   Item9 random_dif -0.2174 0.1670 0.1931  1.0000     -0.5447  0.1100
-#> 10 Item10 random_dif -0.3863 0.1625 0.0174  0.1745     -0.7048 -0.0678
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif -0.4407 0.1483 0.0030  0.0296   * -0.7313 -0.1501
-#> 2   Item2 random_dif -0.0671 0.1636 0.6817  1.0000     -0.3878  0.2536
-#> 3   Item3 random_dif -0.0433 0.1774 0.8070  1.0000     -0.3910  0.3043
-#> 4   Item4 random_dif  0.2682 0.1544 0.0823  0.8228     -0.0343  0.5707
-#> 5   Item5 random_dif  0.3787 0.1499 0.0115  0.1149      0.0850  0.6724
-#> 6   Item6 random_dif -0.2791 0.1563 0.0743  0.7425     -0.5855  0.0273
-#> 7   Item7 random_dif  0.0144 0.1727 0.9334  1.0000     -0.3241  0.3530
-#> 8   Item8 random_dif -0.0840 0.1689 0.6188  1.0000     -0.4150  0.2470
-#> 9   Item9 random_dif  0.1617 0.1593 0.3101  1.0000     -0.1506  0.4740
-#> 10 Item10 random_dif  0.0742 0.1784 0.6774  1.0000     -0.2754  0.4239
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1325 0.1549 0.3926       1     -0.4361 0.1712
-#> 2   Item2 random_dif -0.0032 0.1575 0.9837       1     -0.3119 0.3054
-#> 3   Item3 random_dif  0.1791 0.1664 0.2819       1     -0.1471 0.5053
-#> 4   Item4 random_dif -0.2356 0.1612 0.1437       1     -0.5515 0.0803
-#> 5   Item5 random_dif  0.0739 0.1640 0.6520       1     -0.2475 0.3953
-#> 6   Item6 random_dif  0.0638 0.1800 0.7228       1     -0.2889 0.4166
-#> 7   Item7 random_dif  0.0553 0.1732 0.7493       1     -0.2841 0.3948
-#> 8   Item8 random_dif  0.2462 0.1534 0.1086       1     -0.0546 0.5469
-#> 9   Item9 random_dif -0.2067 0.1578 0.1901       1     -0.5159 0.1025
-#> 10 Item10 random_dif -0.0019 0.1689 0.9909       1     -0.3330 0.3292
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0253 0.1652 0.8783  1.0000     -0.3491 0.2986
-#> 2   Item2 random_dif -0.0733 0.1807 0.6852  1.0000     -0.4275 0.2809
-#> 3   Item3 random_dif  0.0110 0.1747 0.9497  1.0000     -0.3314 0.3535
-#> 4   Item4 random_dif -0.1386 0.1604 0.3875  1.0000     -0.4530 0.1758
-#> 5   Item5 random_dif -0.2430 0.1591 0.1267  1.0000     -0.5548 0.0689
-#> 6   Item6 random_dif -0.0104 0.1739 0.9522  1.0000     -0.3512 0.3304
-#> 7   Item7 random_dif  0.1080 0.1695 0.5241  1.0000     -0.2243 0.4403
-#> 8   Item8 random_dif  0.2771 0.1641 0.0913  0.9135     -0.0446 0.5988
-#> 9   Item9 random_dif  0.0667 0.1719 0.6981  1.0000     -0.2702 0.4036
-#> 10 Item10 random_dif  0.0405 0.1787 0.8209  1.0000     -0.3098 0.3907
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.3046 0.1515 0.0443  0.4433      0.0077  0.6016
-#> 2   Item2 random_dif  0.2384 0.1599 0.1360  1.0000     -0.0750  0.5519
-#> 3   Item3 random_dif -0.0948 0.1633 0.5613  1.0000     -0.4148  0.2251
-#> 4   Item4 random_dif -0.3377 0.1478 0.0223  0.2229     -0.6274 -0.0481
-#> 5   Item5 random_dif -0.3094 0.1458 0.0338  0.3382     -0.5951 -0.0237
-#> 6   Item6 random_dif  0.0473 0.1651 0.7746  1.0000     -0.2763  0.3709
-#> 7   Item7 random_dif -0.0680 0.1608 0.6723  1.0000     -0.3833  0.2472
-#> 8   Item8 random_dif  0.0526 0.1670 0.7526  1.0000     -0.2746  0.3799
-#> 9   Item9 random_dif  0.0388 0.1578 0.8056  1.0000     -0.2705  0.3481
-#> 10 Item10 random_dif  0.2215 0.1768 0.2102  1.0000     -0.1250  0.5680
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1164 0.1666 0.4848       1     -0.4428 0.2101
-#> 2   Item2 random_dif  0.1300 0.1675 0.4375       1     -0.1982 0.4583
-#> 3   Item3 random_dif -0.2066 0.1566 0.1871       1     -0.5137 0.1004
-#> 4   Item4 random_dif -0.0403 0.1761 0.8190       1     -0.3854 0.3048
-#> 5   Item5 random_dif -0.0030 0.1647 0.9854       1     -0.3259 0.3198
-#> 6   Item6 random_dif -0.0955 0.1736 0.5822       1     -0.4357 0.2447
-#> 7   Item7 random_dif  0.1555 0.1558 0.3181       1     -0.1498 0.4608
-#> 8   Item8 random_dif  0.0427 0.1606 0.7906       1     -0.2721 0.3574
-#> 9   Item9 random_dif  0.0558 0.1586 0.7249       1     -0.2550 0.3667
-#> 10 Item10 random_dif  0.0401 0.1631 0.8056       1     -0.2795 0.3597
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0875 0.1670 0.6002  1.0000     -0.4149 0.2398
-#> 2   Item2 random_dif  0.2895 0.1567 0.0647  0.6473     -0.0177 0.5967
-#> 3   Item3 random_dif  0.1339 0.1590 0.3999  1.0000     -0.1778 0.4455
-#> 4   Item4 random_dif -0.0332 0.1682 0.8434  1.0000     -0.3629 0.2964
-#> 5   Item5 random_dif -0.1051 0.1709 0.5386  1.0000     -0.4401 0.2299
-#> 6   Item6 random_dif  0.0681 0.1757 0.6983  1.0000     -0.2762 0.4124
-#> 7   Item7 random_dif -0.0101 0.1695 0.9523  1.0000     -0.3423 0.3220
-#> 8   Item8 random_dif -0.1761 0.1662 0.2895  1.0000     -0.5019 0.1497
-#> 9   Item9 random_dif  0.0175 0.1721 0.9188  1.0000     -0.3199 0.3549
-#> 10 Item10 random_dif -0.1429 0.1789 0.4246  1.0000     -0.4935 0.2078
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0215 0.1698 0.8992       1     -0.3544 0.3114
-#> 2   Item2 random_dif -0.0435 0.1723 0.8008       1     -0.3812 0.2942
-#> 3   Item3 random_dif -0.0083 0.1778 0.9626       1     -0.3567 0.3401
-#> 4   Item4 random_dif -0.1024 0.1678 0.5417       1     -0.4313 0.2265
-#> 5   Item5 random_dif -0.0591 0.1758 0.7370       1     -0.4037 0.2856
-#> 6   Item6 random_dif -0.0531 0.1732 0.7593       1     -0.3925 0.2864
-#> 7   Item7 random_dif  0.2073 0.1577 0.1886       1     -0.1017 0.5163
-#> 8   Item8 random_dif  0.0609 0.1838 0.7405       1     -0.2993 0.4210
-#> 9   Item9 random_dif  0.0056 0.1674 0.9731       1     -0.3225 0.3338
-#> 10 Item10 random_dif  0.0040 0.1710 0.9816       1     -0.3313 0.3392
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1286 0.1591 0.4188  1.0000     -0.4405 0.1832
-#> 2   Item2 random_dif  0.1691 0.1549 0.2750  1.0000     -0.1345 0.4728
-#> 3   Item3 random_dif  0.1542 0.1661 0.3533  1.0000     -0.1714 0.4797
-#> 4   Item4 random_dif  0.2655 0.1561 0.0889  0.8888     -0.0404 0.5714
-#> 5   Item5 random_dif -0.0821 0.1635 0.6157  1.0000     -0.4025 0.2384
-#> 6   Item6 random_dif  0.1252 0.1637 0.4443  1.0000     -0.1956 0.4459
-#> 7   Item7 random_dif -0.2759 0.1616 0.0879  0.8789     -0.5927 0.0410
-#> 8   Item8 random_dif  0.1070 0.1606 0.5052  1.0000     -0.2077 0.4217
-#> 9   Item9 random_dif -0.1739 0.1603 0.2782  1.0000     -0.4881 0.1404
-#> 10 Item10 random_dif -0.1766 0.1593 0.2676  1.0000     -0.4889 0.1357
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.2238 0.1622 0.1677  1.0000     -0.0941 0.5416
-#> 2   Item2 random_dif -0.1103 0.1698 0.5159  1.0000     -0.4431 0.2225
-#> 3   Item3 random_dif -0.0241 0.1662 0.8849  1.0000     -0.3498 0.3016
-#> 4   Item4 random_dif -0.0397 0.1687 0.8139  1.0000     -0.3704 0.2910
-#> 5   Item5 random_dif  0.2846 0.1705 0.0952  0.9519     -0.0497 0.6188
-#> 6   Item6 random_dif  0.1277 0.1713 0.4558  1.0000     -0.2080 0.4634
-#> 7   Item7 random_dif -0.2184 0.1559 0.1613  1.0000     -0.5239 0.0872
-#> 8   Item8 random_dif -0.0622 0.1742 0.7211  1.0000     -0.4035 0.2792
-#> 9   Item9 random_dif -0.1186 0.1690 0.4828  1.0000     -0.4497 0.2126
-#> 10 Item10 random_dif -0.0090 0.1803 0.9603  1.0000     -0.3624 0.3444
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.0256 0.1672 0.8781       1     -0.3021 0.3534
-#> 2   Item2 random_dif  0.0673 0.1837 0.7140       1     -0.2927 0.4273
-#> 3   Item3 random_dif -0.0913 0.1887 0.6284       1     -0.4612 0.2785
-#> 4   Item4 random_dif -0.1864 0.1667 0.2635       1     -0.5132 0.1403
-#> 5   Item5 random_dif  0.0021 0.1795 0.9908       1     -0.3497 0.3538
-#> 6   Item6 random_dif  0.0640 0.1722 0.7101       1     -0.2735 0.4015
-#> 7   Item7 random_dif -0.2383 0.1749 0.1730       1     -0.5812 0.1045
-#> 8   Item8 random_dif  0.1486 0.1623 0.3598       1     -0.1694 0.4666
-#> 9   Item9 random_dif  0.1494 0.1712 0.3830       1     -0.1862 0.4850
-#> 10 Item10 random_dif  0.0109 0.1784 0.9511       1     -0.3387 0.3606
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0455 0.1712 0.7906  1.0000     -0.3810 0.2901
-#> 2   Item2 random_dif -0.0856 0.1700 0.6146  1.0000     -0.4189 0.2477
-#> 3   Item3 random_dif  0.0036 0.1715 0.9833  1.0000     -0.3326 0.3397
-#> 4   Item4 random_dif  0.0537 0.1679 0.7490  1.0000     -0.2754 0.3829
-#> 5   Item5 random_dif  0.2326 0.1626 0.1525  1.0000     -0.0860 0.5513
-#> 6   Item6 random_dif -0.2023 0.1755 0.2491  1.0000     -0.5462 0.1417
-#> 7   Item7 random_dif -0.0571 0.1756 0.7451  1.0000     -0.4012 0.2871
-#> 8   Item8 random_dif  0.2872 0.1584 0.0698  0.6978     -0.0232 0.5975
-#> 9   Item9 random_dif -0.1765 0.1701 0.2994  1.0000     -0.5098 0.1568
-#> 10 Item10 random_dif -0.0545 0.1694 0.7474  1.0000     -0.3865 0.2774
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.0975 0.1638 0.5519  1.0000     -0.2236  0.4186
-#> 2   Item2 random_dif  0.0718 0.1698 0.6722  1.0000     -0.2610  0.4047
-#> 3   Item3 random_dif -0.0825 0.1664 0.6202  1.0000     -0.4086  0.2437
-#> 4   Item4 random_dif -0.0241 0.1716 0.8883  1.0000     -0.3605  0.3123
-#> 5   Item5 random_dif -0.2976 0.1509 0.0486  0.4865     -0.5934 -0.0018
-#> 6   Item6 random_dif -0.1577 0.1667 0.3440  1.0000     -0.4844  0.1690
-#> 7   Item7 random_dif  0.1875 0.1586 0.2370  1.0000     -0.1233  0.4983
-#> 8   Item8 random_dif -0.0204 0.1800 0.9098  1.0000     -0.3733  0.3325
-#> 9   Item9 random_dif  0.2040 0.1546 0.1869  1.0000     -0.0990  0.5071
-#> 10 Item10 random_dif  0.0232 0.1610 0.8856  1.0000     -0.2925  0.3388
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.0937 0.1658 0.5719  1.0000     -0.2312 0.4186
-#> 2   Item2 random_dif  0.1961 0.1567 0.2107  1.0000     -0.1110 0.5033
-#> 3   Item3 random_dif -0.1092 0.1713 0.5239  1.0000     -0.4449 0.2266
-#> 4   Item4 random_dif  0.1565 0.1671 0.3492  1.0000     -0.1711 0.4840
-#> 5   Item5 random_dif -0.0799 0.1718 0.6420  1.0000     -0.4166 0.2568
-#> 6   Item6 random_dif  0.1357 0.1669 0.4162  1.0000     -0.1914 0.4627
-#> 7   Item7 random_dif  0.2588 0.1734 0.1355  1.0000     -0.0810 0.5986
-#> 8   Item8 random_dif -0.2777 0.1574 0.0777  0.7773     -0.5862 0.0308
-#> 9   Item9 random_dif -0.2133 0.1651 0.1965  1.0000     -0.5369 0.1104
-#> 10 Item10 random_dif -0.1636 0.1718 0.3410  1.0000     -0.5002 0.1731
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1926 0.1624 0.2358       1     -0.5109 0.1258
-#> 2   Item2 random_dif  0.1898 0.1662 0.2534       1     -0.1359 0.5155
-#> 3   Item3 random_dif  0.1189 0.1651 0.4715       1     -0.2047 0.4425
-#> 4   Item4 random_dif  0.0674 0.1750 0.7001       1     -0.2756 0.4104
-#> 5   Item5 random_dif  0.0989 0.1679 0.5558       1     -0.2302 0.4281
-#> 6   Item6 random_dif -0.0652 0.1735 0.7072       1     -0.4053 0.2749
-#> 7   Item7 random_dif -0.1456 0.1725 0.3987       1     -0.4837 0.1926
-#> 8   Item8 random_dif -0.0341 0.1716 0.8424       1     -0.3705 0.3022
-#> 9   Item9 random_dif -0.0512 0.1770 0.7723       1     -0.3982 0.2958
-#> 10 Item10 random_dif  0.0125 0.1684 0.9409       1     -0.3176 0.3425
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1780 0.1602 0.2664       1     -0.4919 0.1359
-#> 2   Item2 random_dif  0.0332 0.1698 0.8451       1     -0.2996 0.3659
-#> 3   Item3 random_dif -0.0137 0.1637 0.9331       1     -0.3345 0.3071
-#> 4   Item4 random_dif -0.0776 0.1683 0.6445       1     -0.4075 0.2522
-#> 5   Item5 random_dif  0.0562 0.1683 0.7386       1     -0.2738 0.3861
-#> 6   Item6 random_dif  0.0536 0.1681 0.7497       1     -0.2758 0.3831
-#> 7   Item7 random_dif  0.0836 0.1637 0.6096       1     -0.2372 0.4044
-#> 8   Item8 random_dif  0.1056 0.1763 0.5491       1     -0.2400 0.4512
-#> 9   Item9 random_dif -0.0872 0.1737 0.6157       1     -0.4276 0.2532
-#> 10 Item10 random_dif  0.0454 0.1699 0.7894       1     -0.2876 0.3784
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.0333 0.1652 0.8401       1     -0.2905 0.3571
-#> 2   Item2 random_dif -0.0270 0.1736 0.8763       1     -0.3674 0.3133
-#> 3   Item3 random_dif -0.0889 0.1696 0.6000       1     -0.4213 0.2434
-#> 4   Item4 random_dif  0.0084 0.1802 0.9628       1     -0.3449 0.3617
-#> 5   Item5 random_dif -0.1626 0.1764 0.3567       1     -0.5084 0.1832
-#> 6   Item6 random_dif -0.0325 0.1709 0.8492       1     -0.3675 0.3025
-#> 7   Item7 random_dif  0.0440 0.1674 0.7929       1     -0.2842 0.3721
-#> 8   Item8 random_dif -0.0307 0.1742 0.8604       1     -0.3721 0.3108
-#> 9   Item9 random_dif  0.1061 0.1656 0.5216       1     -0.2185 0.4308
-#> 10 Item10 random_dif  0.1389 0.1652 0.4004       1     -0.1849 0.4626
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.2740 0.1581 0.0832  0.8317     -0.5840 0.0360
-#> 2   Item2 random_dif  0.0959 0.1734 0.5802  1.0000     -0.2440 0.4357
-#> 3   Item3 random_dif -0.0621 0.1631 0.7035  1.0000     -0.3817 0.2576
-#> 4   Item4 random_dif  0.0581 0.1754 0.7404  1.0000     -0.2856 0.4018
-#> 5   Item5 random_dif -0.1892 0.1669 0.2570  1.0000     -0.5163 0.1379
-#> 6   Item6 random_dif  0.0111 0.1722 0.9486  1.0000     -0.3265 0.3487
-#> 7   Item7 random_dif -0.0221 0.1780 0.9010  1.0000     -0.3709 0.3267
-#> 8   Item8 random_dif  0.2332 0.1658 0.1597  1.0000     -0.0918 0.5581
-#> 9   Item9 random_dif -0.0956 0.1682 0.5697  1.0000     -0.4252 0.2340
-#> 10 Item10 random_dif  0.2667 0.1620 0.0998  0.9979     -0.0509 0.5842
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.0783 0.1723 0.6497  1.0000     -0.4160 0.2594
-#> 2   Item2 random_dif  0.0368 0.1794 0.8377  1.0000     -0.3149 0.3884
-#> 3   Item3 random_dif  0.0669 0.1717 0.6968  1.0000     -0.2696 0.4034
-#> 4   Item4 random_dif  0.0714 0.1776 0.6876  1.0000     -0.2767 0.4195
-#> 5   Item5 random_dif -0.0303 0.1703 0.8587  1.0000     -0.3640 0.3034
-#> 6   Item6 random_dif  0.0000 0.1775 1.0000  1.0000     -0.3478 0.3478
-#> 7   Item7 random_dif -0.0730 0.1732 0.6734  1.0000     -0.4125 0.2665
-#> 8   Item8 random_dif  0.1178 0.1661 0.4784  1.0000     -0.2078 0.4433
-#> 9   Item9 random_dif -0.3243 0.1666 0.0516  0.5159     -0.6508 0.0022
-#> 10 Item10 random_dif  0.2598 0.1858 0.1621  1.0000     -0.1044 0.6239
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.0051 0.1685 0.9761       1     -0.3253 0.3354
-#> 2   Item2 random_dif -0.0461 0.1692 0.7852       1     -0.3777 0.2855
-#> 3   Item3 random_dif -0.0033 0.1643 0.9840       1     -0.3254 0.3188
-#> 4   Item4 random_dif -0.0870 0.1634 0.5942       1     -0.4072 0.2331
-#> 5   Item5 random_dif  0.1208 0.1612 0.4539       1     -0.1953 0.4368
-#> 6   Item6 random_dif  0.1582 0.1632 0.3322       1     -0.1616 0.4781
-#> 7   Item7 random_dif -0.1627 0.1639 0.3209       1     -0.4840 0.1585
-#> 8   Item8 random_dif -0.0035 0.1731 0.9840       1     -0.3428 0.3358
-#> 9   Item9 random_dif  0.1649 0.1684 0.3273       1     -0.1651 0.4949
-#> 10 Item10 random_dif -0.1391 0.1631 0.3937       1     -0.4586 0.1805
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.2076 0.1636 0.2045  1.0000     -0.1131 0.5283
-#> 2   Item2 random_dif -0.0968 0.1611 0.5481  1.0000     -0.4125 0.2190
-#> 3   Item3 random_dif  0.0732 0.1729 0.6721  1.0000     -0.2657 0.4120
-#> 4   Item4 random_dif  0.0016 0.1683 0.9925  1.0000     -0.3282 0.3314
-#> 5   Item5 random_dif -0.2257 0.1579 0.1528  1.0000     -0.5351 0.0837
-#> 6   Item6 random_dif  0.0793 0.1714 0.6437  1.0000     -0.2566 0.4151
-#> 7   Item7 random_dif -0.1889 0.1671 0.2583  1.0000     -0.5164 0.1386
-#> 8   Item8 random_dif -0.1339 0.1697 0.4301  1.0000     -0.4664 0.1987
-#> 9   Item9 random_dif  0.3855 0.1395 0.0057  0.0572   .  0.1121 0.6589
-#> 10 Item10 random_dif -0.1246 0.1677 0.4574  1.0000     -0.4532 0.2040
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.0794 0.1659 0.6322       1     -0.2458 0.4046
-#> 2   Item2 random_dif -0.1679 0.1557 0.2807       1     -0.4730 0.1372
-#> 3   Item3 random_dif -0.0915 0.1656 0.5807       1     -0.4161 0.2332
-#> 4   Item4 random_dif -0.1155 0.1686 0.4932       1     -0.4459 0.2149
-#> 5   Item5 random_dif -0.0312 0.1686 0.8532       1     -0.3616 0.2992
-#> 6   Item6 random_dif -0.1131 0.1622 0.4857       1     -0.4311 0.2049
-#> 7   Item7 random_dif  0.1691 0.1717 0.3247       1     -0.1674 0.5055
-#> 8   Item8 random_dif -0.0108 0.1683 0.9491       1     -0.3406 0.3191
-#> 9   Item9 random_dif  0.0701 0.1671 0.6746       1     -0.2574 0.3977
-#> 10 Item10 random_dif  0.2626 0.1604 0.1015       1     -0.0517 0.5770
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif -0.1057 0.1739 0.5434   1.000     -0.4466 0.2352
-#> 2   Item2 random_dif -0.1032 0.1614 0.5225   1.000     -0.4195 0.2131
-#> 3   Item3 random_dif  0.3382 0.1569 0.0311   0.311      0.0307 0.6457
-#> 4   Item4 random_dif -0.0315 0.1709 0.8535   1.000     -0.3664 0.3033
-#> 5   Item5 random_dif  0.0957 0.1650 0.5621   1.000     -0.2278 0.4191
-#> 6   Item6 random_dif -0.0672 0.1744 0.7001   1.000     -0.4091 0.2747
-#> 7   Item7 random_dif -0.0088 0.1692 0.9584   1.000     -0.3404 0.3228
-#> 8   Item8 random_dif  0.0281 0.1825 0.8777   1.000     -0.3296 0.3857
-#> 9   Item9 random_dif -0.1090 0.1730 0.5286   1.000     -0.4480 0.2300
-#> 10 Item10 random_dif -0.0549 0.1674 0.7427   1.000     -0.3831 0.2732
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.2590 0.1543 0.0933  0.9330     -0.0435  0.5615
-#> 2   Item2 random_dif -0.0458 0.1801 0.7993  1.0000     -0.3988  0.3072
-#> 3   Item3 random_dif -0.0754 0.1653 0.6482  1.0000     -0.3995  0.2486
-#> 4   Item4 random_dif -0.2308 0.1589 0.1464  1.0000     -0.5422  0.0807
-#> 5   Item5 random_dif  0.0155 0.1711 0.9276  1.0000     -0.3199  0.3510
-#> 6   Item6 random_dif  0.1376 0.1664 0.4083  1.0000     -0.1886  0.4639
-#> 7   Item7 random_dif  0.1510 0.1686 0.3704  1.0000     -0.1794  0.4815
-#> 8   Item8 random_dif -0.3626 0.1489 0.0148  0.1485     -0.6544 -0.0709
-#> 9   Item9 random_dif  0.2441 0.1628 0.1337  1.0000     -0.0749  0.5632
-#> 10 Item10 random_dif -0.0764 0.1758 0.6640  1.0000     -0.4208  0.2681
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.1381 0.1968 0.4828  1.0000     -0.2475 0.5237
-#> 2   Item2 random_dif  0.0307 0.1667 0.8538  1.0000     -0.2959 0.3574
-#> 3   Item3 random_dif -0.1150 0.1641 0.4834  1.0000     -0.4365 0.2066
-#> 4   Item4 random_dif  0.1645 0.1707 0.3351  1.0000     -0.1700 0.4991
-#> 5   Item5 random_dif  0.0201 0.1724 0.9071  1.0000     -0.3177 0.3579
-#> 6   Item6 random_dif -0.2954 0.1585 0.0624  0.6241     -0.6061 0.0153
-#> 7   Item7 random_dif  0.2138 0.1583 0.1770  1.0000     -0.0966 0.5241
-#> 8   Item8 random_dif -0.0415 0.1750 0.8125  1.0000     -0.3844 0.3014
-#> 9   Item9 random_dif  0.1123 0.1691 0.5066  1.0000     -0.2191 0.4437
-#> 10 Item10 random_dif -0.1986 0.1633 0.2240  1.0000     -0.5187 0.1215
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower  upper
-#> 1   Item1 random_dif  0.0511 0.1783 0.7744       1     -0.2983 0.4005
-#> 2   Item2 random_dif  0.0204 0.1691 0.9040       1     -0.3111 0.3519
-#> 3   Item3 random_dif  0.1611 0.1692 0.3410       1     -0.1705 0.4926
-#> 4   Item4 random_dif -0.0870 0.1670 0.6025       1     -0.4142 0.2403
-#> 5   Item5 random_dif  0.0293 0.1764 0.8681       1     -0.3164 0.3750
-#> 6   Item6 random_dif  0.0761 0.1728 0.6596       1     -0.2625 0.4147
-#> 7   Item7 random_dif  0.0849 0.1641 0.6049       1     -0.2367 0.4065
-#> 8   Item8 random_dif -0.1978 0.1753 0.2592       1     -0.5413 0.1458
-#> 9   Item9 random_dif -0.0049 0.1685 0.9769       1     -0.3351 0.3254
-#> 10 Item10 random_dif -0.1477 0.1673 0.3776       1     -0.4756 0.1803
-#>      Item        Var   gamma     se pvalue padj.BH sig   lower   upper
-#> 1   Item1 random_dif  0.2377 0.1604 0.1384  1.0000     -0.0767  0.5522
-#> 2   Item2 random_dif -0.0365 0.1642 0.8240  1.0000     -0.3583  0.2853
-#> 3   Item3 random_dif -0.2207 0.1573 0.1607  1.0000     -0.5290  0.0876
-#> 4   Item4 random_dif  0.0843 0.1742 0.6284  1.0000     -0.2571  0.4256
-#> 5   Item5 random_dif -0.3165 0.1535 0.0392  0.3924     -0.6173 -0.0156
-#> 6   Item6 random_dif  0.1815 0.1621 0.2628  1.0000     -0.1362  0.4991
-#> 7   Item7 random_dif -0.0812 0.1738 0.6404  1.0000     -0.4218  0.2594
-#> 8   Item8 random_dif  0.3626 0.1495 0.0153  0.1528      0.0696  0.6557
-#> 9   Item9 random_dif -0.1839 0.1619 0.2559  1.0000     -0.5012  0.1333
-#> 10 Item10 random_dif  0.0084 0.1729 0.9611  1.0000     -0.3305  0.3473
-RMdifGamma(sim_data, dif_group, cutoff = cutoff_res)
-#> 
-#> 
-#> Table: Partial gamma DIF analysis (n = 200 complete cases). Cutoff values based on 100 simulation iterations (99% HDCI).
-#> 
-#> |Item   | Partial gamma|    SE| Lower CI| Upper CI| Adj. p-value (BH)|p-value sign. | Gamma low| Gamma high|Flagged |
-#> |:------|-------------:|-----:|--------:|--------:|-----------------:|:-------------|---------:|----------:|:-------|
-#> |Item1  |         0.029| 0.161|   -0.287|    0.345|                 1|              |    -0.392|      0.419|FALSE   |
-#> |Item2  |        -0.168| 0.156|   -0.474|    0.138|                 1|              |    -0.334|      0.297|FALSE   |
-#> |Item3  |         0.111| 0.168|   -0.219|    0.441|                 1|              |    -0.404|      0.486|FALSE   |
-#> |Item4  |        -0.030| 0.155|   -0.333|    0.273|                 1|              |    -0.338|      0.395|FALSE   |
-#> |Item5  |         0.076| 0.159|   -0.235|    0.387|                 1|              |    -0.368|      0.379|FALSE   |
-#> |Item6  |         0.042| 0.156|   -0.264|    0.349|                 1|              |    -0.347|      0.354|FALSE   |
-#> |Item7  |        -0.146| 0.160|   -0.460|    0.169|                 1|              |    -0.391|      0.273|FALSE   |
-#> |Item8  |         0.019| 0.162|   -0.298|    0.336|                 1|              |    -0.363|      0.325|FALSE   |
-#> |Item9  |        -0.141| 0.161|   -0.457|    0.175|                 1|              |    -0.372|      0.419|FALSE   |
-#> |Item10 |         0.178| 0.156|   -0.127|    0.483|                 1|              |    -0.386|      0.354|FALSE   |
+  # Return as data.frame
+  RMdifGamma(sim_data, dif_group, output = "dataframe")
+
+  # Simulation-based cutoffs (100 Monte-Carlo iterations)
+  if (requireNamespace("ggdist", quietly = TRUE)) {
+    cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_group,
+                                   iterations = 100, parallel = FALSE,
+                                   seed = 42)
+    RMdifGamma(sim_data, dif_group, cutoff = cutoff_res)
+
+    # Bootstrap p-values with family-wise (Westfall-Young) correction
+    # (use iterations >= 1000 in real analyses for stable p-values)
+    RMdifGamma(sim_data, dif_group, cutoff = cutoff_res, p_value = TRUE,
+               output = "dataframe")
+  }
+}
+#> Warning: Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations >= 1000 in RMdifGammaCutoff() for reliable p-values.
+#>      Item  gamma    se  lower upper gamma_low gamma_high p_gamma padj_gamma
+#> 1   Item1  0.029 0.161 -0.287 0.345    -0.392      0.419  1.0000     1.0000
+#> 2   Item2 -0.168 0.156 -0.474 0.138    -0.334      0.297  0.2376     0.9010
+#> 3   Item3  0.111 0.168 -0.219 0.441    -0.404      0.486  0.4554     0.9802
+#> 4   Item4 -0.030 0.155 -0.333 0.273    -0.338      0.395  0.9010     1.0000
+#> 5   Item5  0.076 0.159 -0.235 0.387    -0.368      0.379  0.5743     1.0000
+#> 6   Item6  0.042 0.156 -0.264 0.349    -0.347      0.354  0.9010     1.0000
+#> 7   Item7 -0.146 0.160 -0.460 0.169    -0.391      0.273  0.4158     0.9802
+#> 8   Item8  0.019 0.162 -0.298 0.336    -0.363      0.325  0.9208     1.0000
+#> 9   Item9 -0.141 0.161 -0.457 0.175    -0.372      0.419  0.5347     0.9802
+#> 10 Item10  0.178 0.156 -0.127 0.483    -0.386      0.354  0.2178     0.9010
+#>    flagged
+#> 1    FALSE
+#> 2    FALSE
+#> 3    FALSE
+#> 4    FALSE
+#> 5    FALSE
+#> 6    FALSE
+#> 7    FALSE
+#> 8    FALSE
+#> 9    FALSE
+#> 10   FALSE
 # }
 ```

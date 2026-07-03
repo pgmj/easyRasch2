@@ -15,7 +15,7 @@ rather than just whether it does (which RMdimMartinLof() answers)."><meta name="
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.929</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.939</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -176,7 +176,7 @@ Testing unidimensionality in polytomous Rasch models. <em>Psychometrika,
 <span class="r-in"><span>                                      <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"I5"</span>,<span class="st">"I6"</span>,<span class="st">"I7"</span>,<span class="st">"I8"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Standardised residuals (Christensen et al. 2002, eq. 13). Rows = subscale 1 score, columns = subscale 2 score. **Bold** = |residual| &gt; 2. -- = uncomputable. n = 400 complete cases.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Standardised residuals (Christensen et al. 2002, eq. 13). Rows = subscale 1 score, columns = subscale 2 score. **Bold** = |residual| &gt; 2. -- = uncomputable. n = 400 respondents.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |t1\t2 |0     |1         |2        |3     |4     |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |:-----|:-----|:---------|:--------|:-----|:-----|</span>
@@ -187,9 +187,11 @@ Testing unidimensionality in polytomous Rasch models. <em>Psychometrika,
 <span class="r-out co"><span class="r-pr">#&gt;</span> |4     |1.01  |0.21      |-0.26    |1.59  |--    |</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Heatmap</span></span></span>
-<span class="r-in"><span><span class="fu">RMdimMartinLofResiduals</span><span class="op">(</span><span class="va">dat</span>,</span></span>
-<span class="r-in"><span>                     partition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">2</span>,<span class="fl">2</span>,<span class="fl">2</span>,<span class="fl">2</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>                     output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMdimMartinLofResiduals</span><span class="op">(</span><span class="va">dat</span>,</span></span>
+<span class="r-in"><span>                       partition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">2</span>,<span class="fl">2</span>,<span class="fl">2</span>,<span class="fl">2</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                       output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-plt img"><img src="RMdimMartinLofResiduals-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Underlying data.frame for custom analysis</span></span></span>

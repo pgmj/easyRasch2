@@ -13,7 +13,7 @@ converting raw totals to interval-scaled scores for downstream analysis."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.929</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.939</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -161,7 +161,7 @@ in a microcomputer environment. <em>Applied Psychological Measurement, 6</em>(4)
 <span class="r-in"><span><span class="fu">RMscoreSE</span><span class="op">(</span><span class="va">sim_data</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Person locations via Warm's WLE (CML item parameters).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Person locations via Warm's WLE (CML item parameters). n = 200 respondents.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | Ordinal sum score| Logit score| Logit std.error|</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |-----------------:|-----------:|---------------:|</span>
@@ -209,14 +209,16 @@ in a microcomputer environment. <em>Applied Psychological Measurement, 6</em>(4)
 <span class="r-out co"><span class="r-pr">#&gt;</span> 19        18  2.472059396 1.2591152</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># ggplot figure</span></span></span>
-<span class="r-in"><span><span class="fu">RMscoreSE</span><span class="op">(</span><span class="va">sim_data</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMscoreSE</span><span class="op">(</span><span class="va">sim_data</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-plt img"><img src="RMscoreSE-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># EAP via mirt</span></span></span>
 <span class="r-in"><span><span class="fu">RMscoreSE</span><span class="op">(</span><span class="va">sim_data</span>, method <span class="op">=</span> <span class="st">"EAP"</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Person locations via EAPsum (MML item parameters from mirt; depends on a normal theta prior).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Person locations via EAPsum (MML item parameters from mirt; depends on a normal theta prior). n = 200 respondents.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> | Ordinal sum score| Logit score| Logit std.error|</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |-----------------:|-----------:|---------------:|</span>

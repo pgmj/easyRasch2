@@ -159,15 +159,20 @@ The `mice` package must be installed (it is in Suggests, not Imports).
 
 ``` r
 # \donttest{
-if (requireNamespace("mice", quietly = TRUE)) {
-  # Create example data with missing values
+if (requireNamespace("mice", quietly = TRUE) &&
+    requireNamespace("iarm", quietly = TRUE) &&
+    requireNamespace("ggdist", quietly = TRUE)) {
+  # Create example data with ~10% MCAR missingness
   set.seed(42)
-  sim_data <- as.data.frame(
-    matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
-  )
+  mat <- matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
+  mat[sample(length(mat), round(0.10 * length(mat)))] <- NA
+  sim_data <- as.data.frame(mat)
   colnames(sim_data) <- paste0("Item", 1:8)
-  # Introduce ~10% MCAR missingness
-  sim_data[sample(length(sim_data), 0.10 * length(sim_data))] <- NA
+
+  # mice's ordinal method (`polr`) requires the items to be ordered
+  # factors, so code them as such before imputing. RMitemInfitCutoffMI()
+  # converts the completed factors back to numeric internally.
+  sim_data[] <- lapply(sim_data, function(x) factor(x, ordered = TRUE))
 
   # Impute (use more imputations, e.g. m = 5+, in real analyses)
   imp <- mice::mice(sim_data, m = 2, method = "polr", seed = 123,
@@ -184,17 +189,17 @@ if (requireNamespace("mice", quietly = TRUE)) {
 }
 #> 
 #> 
-#> Table: Pooled MSQ values from 2 imputations (Rubin's rules). n = 200 per imputed dataset. Cutoff values based on 50 total simulation iterations across 2 imputations (99.9% HDCI). Flagged: overfit = infit below range (more predictable); underfit = above range (noisier).
+#> Table: Pooled MSQ values from 2 imputations (Rubin's rules). n = 200 respondents (missing values imputed, m = 2) per imputed dataset. Cutoff values based on 50 total simulation iterations across 2 imputations (99.9% HDCI). Flagged: overfit = infit below range (more predictable); underfit = above range (noisier).
 #> 
 #> |Item  | Infit MSQ| Infit SE| Infit low| Infit high|Flagged | Relative location|
 #> |:-----|---------:|--------:|---------:|----------:|:-------|-----------------:|
-#> |Item1 |     1.015|    0.049|     0.886|      1.132|        |             -0.23|
-#> |Item2 |     1.000|    0.048|     0.903|      1.115|        |              0.13|
-#> |Item3 |     1.009|    0.047|     0.838|      1.192|        |             -0.01|
-#> |Item4 |     1.038|    0.047|     0.882|      1.145|        |             -0.05|
-#> |Item5 |     0.973|    0.048|     0.898|      1.116|        |              0.09|
-#> |Item6 |     1.026|    0.047|     0.848|      1.138|        |             -0.09|
-#> |Item7 |     0.929|    0.047|     0.856|      1.178|        |             -0.05|
-#> |Item8 |     1.009|    0.047|     0.824|      1.109|        |             -0.03|
+#> |Item1 |     0.950|    0.063|     0.889|      1.160|        |             -0.25|
+#> |Item2 |     1.022|    0.050|     0.889|      1.094|        |              0.05|
+#> |Item3 |     1.008|    0.055|     0.835|      1.138|        |             -0.01|
+#> |Item4 |     1.034|    0.058|     0.880|      1.144|        |             -0.01|
+#> |Item5 |     0.995|    0.059|     0.873|      1.160|        |              0.10|
+#> |Item6 |     1.016|    0.053|     0.825|      1.124|        |             -0.08|
+#> |Item7 |     0.942|    0.050|     0.858|      1.190|        |             -0.08|
+#> |Item8 |     1.030|    0.050|     0.869|      1.132|        |              0.02|
 # }
 ```

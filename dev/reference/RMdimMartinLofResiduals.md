@@ -139,7 +139,7 @@ RMdimMartinLofResiduals(dat,
                                       c("I5","I6","I7","I8")))
 #> 
 #> 
-#> Table: Standardised residuals (Christensen et al. 2002, eq. 13). Rows = subscale 1 score, columns = subscale 2 score. **Bold** = |residual| > 2. -- = uncomputable. n = 400 complete cases.
+#> Table: Standardised residuals (Christensen et al. 2002, eq. 13). Rows = subscale 1 score, columns = subscale 2 score. **Bold** = |residual| > 2. -- = uncomputable. n = 400 respondents.
 #> 
 #> |t1\t2 |0     |1         |2        |3     |4     |
 #> |:-----|:-----|:---------|:--------|:-----|:-----|
@@ -150,9 +150,11 @@ RMdimMartinLofResiduals(dat,
 #> |4     |1.01  |0.21      |-0.26    |1.59  |--    |
 
 # Heatmap
-RMdimMartinLofResiduals(dat,
-                     partition = c(1,1,1,1,2,2,2,2),
-                     output = "ggplot")
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  RMdimMartinLofResiduals(dat,
+                       partition = c(1,1,1,1,2,2,2,2),
+                       output = "ggplot")
+}
 
 
 # Underlying data.frame for custom analysis

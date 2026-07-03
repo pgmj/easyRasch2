@@ -134,7 +134,7 @@ colnames(poly) <- paste0("Item", 1:5)
 RMitemParameters(poly)
 #> 
 #> 
-#> Table: Item thresholds via CML (Andrich thresholds, logit scale). SE and 95% Wald CI shown.
+#> Table: Item thresholds via CML (Andrich thresholds, logit scale). SE and 95% Wald CI shown. n = 250 respondents.
 #> 
 #> |item  | threshold| location|    se| ci_lower| ci_upper|
 #> |:-----|---------:|--------:|-----:|--------:|--------:|
@@ -175,6 +175,6 @@ RMitemParameters(dich, output = "dataframe")
 # Write the parameter table to a CSV (also returned invisibly)
 RMitemParameters(poly, output = "file",
                  filename = tempfile(fileext = ".csv"))
-#> Wrote 10 row(s) to '/tmp/Rtmpvzi5fF/file21f2508e7fa.csv'.
+#> Wrote 10 row(s) to '/tmp/Rtmpu4iS3P/file21be246a9a18.csv'.
 # }
 ```

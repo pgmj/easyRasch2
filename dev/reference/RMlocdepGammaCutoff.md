@@ -92,6 +92,15 @@ A list with components:
 
   Number of complete cases used.
 
+- `sample_n_total`:
+
+  Number of respondents in the raw input data, before the complete-case
+  filter.
+
+- `sample_has_na`:
+
+  Logical. Whether the raw input data contained any missing values.
+
 - `sample_summary`:
 
   Summary statistics of estimated person parameters.
@@ -159,16 +168,19 @@ Models in Health*, pp. 133–135. ISTE & Wiley.
 
 ``` r
 # \donttest{
-set.seed(42)
-sim_data <- as.data.frame(
-  matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-)
-colnames(sim_data) <- paste0("Item", 1:10)
+if (requireNamespace("iarm", quietly = TRUE) &&
+    requireNamespace("ggdist", quietly = TRUE)) {
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+  )
+  colnames(sim_data) <- paste0("Item", 1:10)
 
-# Run 100 iterations sequentially for a quick demo
-cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100, parallel = FALSE,
-                           seed = 42)
-cutoff_res$pair_cutoffs
+  # Run 100 iterations sequentially for a quick demo
+  cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100,
+                                    parallel = FALSE, seed = 42)
+  cutoff_res$pair_cutoffs
+}
 #>    Item1  Item2  gamma_low gamma_high
 #> 1  Item1  Item2 -0.4246238  0.3198758
 #> 2  Item1  Item3 -0.4725291  0.4400000
