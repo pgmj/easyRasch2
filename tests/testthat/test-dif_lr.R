@@ -14,16 +14,22 @@
 # ---------------------------------------------------------------------
 make_dichotomous <- function(n = 80, k = 5, seed = 1L) {
   set.seed(seed)
-  df <- as.data.frame(matrix(sample(0:1, n * k, replace = TRUE),
-                             nrow = n, ncol = k))
+  df <- as.data.frame(matrix(
+    sample(0:1, n * k, replace = TRUE),
+    nrow = n,
+    ncol = k
+  ))
   colnames(df) <- paste0("I", seq_len(k))
   df
 }
 
 make_polytomous <- function(n = 80, k = 5, seed = 1L) {
   set.seed(seed)
-  df <- as.data.frame(matrix(sample(0:2, n * k, replace = TRUE),
-                             nrow = n, ncol = k))
+  df <- as.data.frame(matrix(
+    sample(0:2, n * k, replace = TRUE),
+    nrow = n,
+    ncol = k
+  ))
   colnames(df) <- paste0("I", seq_len(k))
   df
 }
@@ -32,7 +38,7 @@ make_polytomous <- function(n = 80, k = 5, seed = 1L) {
 # Input validation
 # ---------------------------------------------------------------------
 test_that("RMdifLR errors when data has non-zero minimum", {
-  df <- make_dichotomous() + 1L  # min = 1
+  df <- make_dichotomous() + 1L # min = 1
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
   expect_error(RMdifLR(df, dif_var = grp), regexp = "scored starting at 0")
 })
@@ -40,15 +46,13 @@ test_that("RMdifLR errors when data has non-zero minimum", {
 test_that("RMdifLR errors when dif_var length does not match nrow(data)", {
   df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df) - 1L))
-  expect_error(RMdifLR(df, dif_var = grp),
-               regexp = "same length as nrow")
+  expect_error(RMdifLR(df, dif_var = grp), regexp = "same length as nrow")
 })
 
 test_that("RMdifLR errors when dif_var has fewer than 2 distinct levels", {
   df <- make_dichotomous()
   grp <- factor(rep("A", nrow(df)))
-  expect_error(RMdifLR(df, dif_var = grp),
-               regexp = "at least 2 distinct")
+  expect_error(RMdifLR(df, dif_var = grp), regexp = "at least 2 distinct")
 })
 
 test_that("RMdifLR errors when model = 'RM' on polytomous data", {
@@ -61,16 +65,15 @@ test_that("RMdifLR errors when model = 'RM' on polytomous data", {
 })
 
 test_that("RMdifLR errors on invalid cutoff or conf", {
-  df  <- make_dichotomous()
+  df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
-  expect_error(RMdifLR(df, dif_var = grp, cutoff = -1),
-               regexp = "non-negative")
-  expect_error(RMdifLR(df, dif_var = grp, cutoff = c(0.1, 0.2)),
-               regexp = "non-negative")
-  expect_error(RMdifLR(df, dif_var = grp, conf = 0),
-               regexp = "in \\(0, 1\\)")
-  expect_error(RMdifLR(df, dif_var = grp, conf = 1),
-               regexp = "in \\(0, 1\\)")
+  expect_error(RMdifLR(df, dif_var = grp, cutoff = -1), regexp = "non-negative")
+  expect_error(
+    RMdifLR(df, dif_var = grp, cutoff = c(0.1, 0.2)),
+    regexp = "non-negative"
+  )
+  expect_error(RMdifLR(df, dif_var = grp, conf = 0), regexp = "in \\(0, 1\\)")
+  expect_error(RMdifLR(df, dif_var = grp, conf = 1), regexp = "in \\(0, 1\\)")
 })
 
 # ---------------------------------------------------------------------
@@ -78,37 +81,39 @@ test_that("RMdifLR errors on invalid cutoff or conf", {
 # ---------------------------------------------------------------------
 test_that("RMdifLR output = 'dataframe' on dichotomous data picks RM and returns one row per item", {
   skip_if_not_installed("eRm")
-  df  <- make_dichotomous()
+  df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
 
   out <- RMdifLR(df, dif_var = grp, output = "dataframe")
 
   expect_s3_class(out, "data.frame")
-  expect_equal(nrow(out), ncol(df))                    # one row per item
-  expect_true(all(c("Item", "A", "B", "All", "MaxDiff",
-                    "SE_A", "SE_B", "SE_All") %in% names(out)))
+  expect_equal(nrow(out), ncol(df)) # one row per item
+  expect_true(all(
+    c("Item", "A", "B", "All", "MaxDiff", "SE_A", "SE_B", "SE_All") %in%
+      names(out)
+  ))
   expect_equal(as.character(out$Item), names(df))
 
   lr <- attr(out, "lr_test")
   expect_type(lr, "list")
   expect_true(all(c("LR", "df", "p_value", "model") %in% names(lr)))
-  expect_equal(lr$model, "RM")                          # auto-picked
+  expect_equal(lr$model, "RM") # auto-picked
 })
 
 test_that("RMdifLR level = 'threshold' on polytomous data returns one row per item × threshold", {
   skip_if_not_installed("eRm")
-  df  <- make_polytomous()
+  df <- make_polytomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
 
-  out <- RMdifLR(df, dif_var = grp, level = "threshold",
-                 output = "dataframe")
+  out <- RMdifLR(df, dif_var = grp, level = "threshold", output = "dataframe")
 
   expect_s3_class(out, "data.frame")
-  expect_true(all(c("Item", "Threshold", "A", "B", "All",
-                    "MaxDiff") %in% names(out)))
+  expect_true(all(
+    c("Item", "Threshold", "A", "B", "All", "MaxDiff") %in% names(out)
+  ))
   # 0/1/2 data → 2 thresholds per item
   expect_equal(nrow(out), ncol(df) * 2L)
-  expect_equal(attr(out, "lr_test")$model, "PCM")       # auto-picked
+  expect_equal(attr(out, "lr_test")$model, "PCM") # auto-picked
 })
 
 # ---------------------------------------------------------------------
@@ -117,7 +122,7 @@ test_that("RMdifLR level = 'threshold' on polytomous data returns one row per it
 test_that("RMdifLR output = 'kable' returns a knitr_kable", {
   skip_if_not_installed("eRm")
   skip_if_not_installed("knitr")
-  df  <- make_dichotomous()
+  df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
   out <- RMdifLR(df, dif_var = grp, output = "kable")
   expect_s3_class(out, "knitr_kable")
@@ -126,7 +131,7 @@ test_that("RMdifLR output = 'kable' returns a knitr_kable", {
 test_that("RMdifLR defaults to kable (consistent with other kable/ggplot functions)", {
   skip_if_not_installed("eRm")
   skip_if_not_installed("knitr")
-  df  <- make_dichotomous()
+  df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
   expect_s3_class(RMdifLR(df, dif_var = grp), "knitr_kable")
 })
@@ -134,7 +139,7 @@ test_that("RMdifLR defaults to kable (consistent with other kable/ggplot functio
 test_that("RMdifLR output = 'ggplot' returns a ggplot", {
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
-  df  <- make_dichotomous()
+  df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
   out <- RMdifLR(df, dif_var = grp, output = "ggplot")
   expect_s3_class(out, "ggplot")
@@ -145,18 +150,15 @@ test_that("RMdifLR output = 'ggplot' returns a ggplot", {
 # ---------------------------------------------------------------------
 test_that("Flagged column is logical and absent when cutoff = NULL", {
   skip_if_not_installed("eRm")
-  df  <- make_dichotomous()
+  df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
 
-  with_cutoff <- RMdifLR(df, dif_var = grp, output = "dataframe",
-                         cutoff = 0.5)
+  with_cutoff <- RMdifLR(df, dif_var = grp, output = "dataframe", cutoff = 0.5)
   expect_true("Flagged" %in% names(with_cutoff))
   expect_type(with_cutoff$Flagged, "logical")
-  expect_true(all(with_cutoff$MaxDiff[with_cutoff$Flagged] > 0.5,
-                  na.rm = TRUE))
+  expect_true(all(with_cutoff$MaxDiff[with_cutoff$Flagged] > 0.5, na.rm = TRUE))
 
-  no_cutoff <- RMdifLR(df, dif_var = grp, output = "dataframe",
-                       cutoff = NULL)
+  no_cutoff <- RMdifLR(df, dif_var = grp, output = "dataframe", cutoff = NULL)
   expect_false("Flagged" %in% names(no_cutoff))
 })
 
@@ -165,7 +167,7 @@ test_that("Flagged column is logical and absent when cutoff = NULL", {
 # ---------------------------------------------------------------------
 test_that("RMdifLR drops NA rows in dif_var with a message", {
   skip_if_not_installed("eRm")
-  df  <- make_dichotomous()
+  df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
   grp[c(1L, 5L, 9L)] <- NA
 
@@ -181,8 +183,34 @@ test_that("RMdifLR drops NA rows in dif_var with a message", {
 # ---------------------------------------------------------------------
 test_that("sort = TRUE in dataframe output sorts by MaxDiff descending", {
   skip_if_not_installed("eRm")
-  df  <- make_dichotomous()
+  df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
   out <- RMdifLR(df, dif_var = grp, output = "dataframe", sort = TRUE)
   expect_true(all(diff(out$MaxDiff) <= 0))
+})
+
+# ---------------------------------------------------------------------
+# p-value formatting in captions
+# ---------------------------------------------------------------------
+test_that("captions format p as plain numbers, never scientific notation", {
+  skip_if_not_installed("eRm")
+  skip_if_not_installed("ggplot2")
+  df <- make_dichotomous()
+  grp <- rep(c("A", "B"), length.out = nrow(df))
+
+  p <- RMdifLR(df, dif_var = grp, output = "ggplot")
+  expect_match(p$labels$caption, "p (=|<) 0?\\.\\d{3}")
+  expect_no_match(p$labels$caption, "e-0")
+
+  kbl <- RMdifLR(df, dif_var = grp)
+  expect_match(paste(kbl, collapse = "\n"), "p (=|<) 0?\\.\\d{3}")
+  expect_no_match(paste(kbl, collapse = "\n"), "e-0")
+})
+
+test_that(".format_p follows APA-style thresholds", {
+  expect_equal(.format_p(0.0000497), "p < 0.001")
+  expect_equal(.format_p(0.001), "p = 0.001")
+  expect_equal(.format_p(0.004975), "p = 0.005")
+  expect_equal(.format_p(0.71638), "p = 0.716")
+  expect_equal(.format_p(NA_real_), "p = NA")
 })

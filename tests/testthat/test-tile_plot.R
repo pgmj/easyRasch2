@@ -33,29 +33,29 @@ test_that("RMplotTile errors when all values are NA", {
 })
 
 test_that("RMplotTile errors when non-numeric column present", {
-  df <- data.frame(I1 = sample(0:1, 20, replace = TRUE),
-                   I2 = letters[1:20])
+  df <- data.frame(I1 = sample(0:1, 20, replace = TRUE), I2 = letters[1:20])
   expect_error(RMplotTile(df), regexp = "numeric")
 })
 
 test_that("RMplotTile errors when group length mismatches nrow(data)", {
-  df  <- make_dichotomous()
+  df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df) - 1L))
-  expect_error(RMplotTile(df, group = grp),
-               regexp = "same length as nrow")
+  expect_error(RMplotTile(df, group = grp), regexp = "same length as nrow")
 })
 
 test_that("RMplotTile errors when item_labels length mismatches ncol(data)", {
   df <- make_dichotomous()
-  expect_error(RMplotTile(df, item_labels = c("a", "b")),
-               regexp = "same length as the number of")
+  expect_error(
+    RMplotTile(df, item_labels = c("a", "b")),
+    regexp = "same length as the number of"
+  )
 })
 
 # ---------------------------------------------------------------------
 # Output: dataframe
 # ---------------------------------------------------------------------
 test_that("RMplotTile output = 'dataframe' returns one row per item x category", {
-  df <- make_polytomous()  # values 0..3 -> 4 categories
+  df <- make_polytomous() # values 0..3 -> 4 categories
   out <- RMplotTile(df, output = "dataframe")
   expect_s3_class(out, "data.frame")
   expect_equal(nrow(out), ncol(df) * 4L)
@@ -65,7 +65,7 @@ test_that("RMplotTile output = 'dataframe' returns one row per item x category",
 })
 
 test_that("RMplotTile dataframe has group column when group is supplied", {
-  df  <- make_polytomous()
+  df <- make_polytomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
   out <- RMplotTile(df, group = grp, output = "dataframe")
   expect_true("group" %in% names(out))
@@ -79,14 +79,60 @@ test_that("RMplotTile dataframe has group column when group is supplied", {
 test_that("RMplotTile output = 'ggplot' returns a ggplot", {
   skip_if_not_installed("ggplot2")
   df <- make_dichotomous()
-  p  <- RMplotTile(df)  # default output
+  p <- RMplotTile(df) # default output
   expect_s3_class(p, "ggplot")
 })
 
 test_that("RMplotTile with group + percent + custom cutoff returns ggplot", {
   skip_if_not_installed("ggplot2")
-  df  <- make_polytomous()
+  df <- make_polytomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
-  p   <- RMplotTile(df, group = grp, percent = TRUE, cutoff = 5)
+  p <- RMplotTile(df, group = grp, percent = TRUE, cutoff = 5)
   expect_s3_class(p, "ggplot")
+})
+
+# ---------------------------------------------------------------------
+# Missingness reporting (message + caption)
+# ---------------------------------------------------------------------
+test_that("RMplotTile messages when group has NA and reports n in caption", {
+  skip_if_not_installed("ggplot2")
+  df <- make_polytomous()
+  grp <- rep(c("A", "B"), length.out = nrow(df))
+  grp[1:5] <- NA
+
+  expect_message(
+    p <- RMplotTile(df, group = grp),
+    regexp = "5 row\\(s\\) with NA in `group` dropped"
+  )
+  expect_match(p$labels$caption, "n = 75 of 80 respondents")
+  expect_match(p$labels$caption, "complete group data")
+})
+
+test_that("RMplotTile is silent with complete group and plain caption", {
+  skip_if_not_installed("ggplot2")
+  df <- make_polytomous()
+  grp <- rep(c("A", "B"), length.out = nrow(df))
+
+  expect_no_message(p <- RMplotTile(df, group = grp))
+  expect_match(p$labels$caption, "n = 80 respondents")
+  expect_no_match(p$labels$caption, "of 80")
+})
+
+test_that("RMplotTile caption notes retained incomplete responses", {
+  skip_if_not_installed("ggplot2")
+  df <- make_polytomous()
+  df[1:3, 1] <- NA
+  p <- RMplotTile(df)
+  expect_match(p$labels$caption, "n = 80 respondents")
+  expect_match(p$labels$caption, "incomplete responses retained")
+})
+
+test_that("RMplotTile group-NA message also fires for dataframe output", {
+  df <- make_polytomous()
+  grp <- rep(c("A", "B"), length.out = nrow(df))
+  grp[1L] <- NA
+  expect_message(
+    RMplotTile(df, group = grp, output = "dataframe"),
+    regexp = "1 row\\(s\\) with NA in `group` dropped"
+  )
 })

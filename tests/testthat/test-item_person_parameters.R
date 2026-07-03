@@ -18,14 +18,16 @@ make_dichotomous <- function(n = 250, k = 6, seed = 2L) {
 make_pcm_signal <- function(n = 600, k = 6, person_sd = 1.4, seed = 7L) {
   set.seed(seed)
   theta <- rnorm(n, 0, person_sd)
-  thr   <- lapply(seq_len(k), function(j) sort(rnorm(2, 0, 1)))
+  thr <- lapply(seq_len(k), function(j) sort(rnorm(2, 0, 1)))
   pcm_p <- function(th, t) {
-    ce <- c(0, cumsum(th - t)); exp(ce - max(ce)) / sum(exp(ce - max(ce)))
+    ce <- c(0, cumsum(th - t))
+    exp(ce - max(ce)) / sum(exp(ce - max(ce)))
   }
   m <- sapply(seq_len(k), function(j) {
     sapply(theta, function(th) sample(0:2, 1, prob = pcm_p(th, thr[[j]])))
   })
-  df <- as.data.frame(m); colnames(df) <- paste0("I", seq_len(k))
+  df <- as.data.frame(m)
+  colnames(df) <- paste0("I", seq_len(k))
   list(data = df, theta = theta, person_sd = person_sd)
 }
 
@@ -34,22 +36,28 @@ make_pcm_signal <- function(n = 600, k = 6, person_sd = 1.4, seed = 7L) {
 # =====================================================================
 
 test_that("RMitemParameters errors on non-zero minimum", {
-  expect_error(RMitemParameters(make_dichotomous() + 1L),
-               regexp = "scored starting at 0")
+  expect_error(
+    RMitemParameters(make_dichotomous() + 1L),
+    regexp = "scored starting at 0"
+  )
 })
 
 test_that("RMitemParameters errors on invalid ci_level", {
   skip_if_not_installed("eRm")
-  expect_error(RMitemParameters(make_dichotomous(), ci_level = 1.2),
-               regexp = "ci_level")
+  expect_error(
+    RMitemParameters(make_dichotomous(), ci_level = 1.2),
+    regexp = "ci_level"
+  )
 })
 
 test_that("long format has expected columns and rows (polytomous)", {
   skip_if_not_installed("eRm")
   res <- RMitemParameters(make_polytomous(), output = "dataframe")
   expect_s3_class(res, "data.frame")
-  expect_named(res, c("item", "threshold", "location",
-                      "se", "ci_lower", "ci_upper"))
+  expect_named(
+    res,
+    c("item", "threshold", "location", "se", "ci_lower", "ci_upper")
+  )
   # 5 items x 2 thresholds
   expect_equal(nrow(res), 10L)
   expect_true(all(res$ci_lower < res$location & res$location < res$ci_upper))
@@ -63,16 +71,24 @@ test_that("se = FALSE drops SE/CI columns", {
 
 test_that("wide format returns one row per item with threshold columns", {
   skip_if_not_installed("eRm")
-  res <- RMitemParameters(make_polytomous(), format = "wide",
-                          se = FALSE, output = "dataframe")
+  res <- RMitemParameters(
+    make_polytomous(),
+    format = "wide",
+    se = FALSE,
+    output = "dataframe"
+  )
   expect_equal(nrow(res), 5L)
   expect_true(all(c("item", "t1", "t2", "location") %in% names(res)))
 })
 
 test_that("wide format with SE appends se_t* columns", {
   skip_if_not_installed("eRm")
-  res <- RMitemParameters(make_polytomous(), format = "wide",
-                          se = TRUE, output = "dataframe")
+  res <- RMitemParameters(
+    make_polytomous(),
+    format = "wide",
+    se = TRUE,
+    output = "dataframe"
+  )
   expect_true(all(c("se_t1", "se_t2") %in% names(res)))
 })
 
@@ -89,10 +105,48 @@ test_that("kable output returns knitr_kable", {
   expect_s3_class(RMitemParameters(make_polytomous()), "knitr_kable")
 })
 
+test_that("all-NA respondents are dropped with a message and n is reported", {
+  skip_if_not_installed("knitr")
+  df <- make_polytomous(n = 100)
+  df[100, ] <- NA
+  # message + drop (also prevents the CML fit from erroring on the all-NA row)
+  expect_message(
+    kbl <- RMitemParameters(df),
+    "1 respondent\\(s\\) with no responses dropped"
+  )
+  out <- paste(capture.output(print(kbl)), collapse = " ")
+  expect_match(
+    out,
+    "n = 99 of 100 respondents \\(incomplete responses retained\\)"
+  )
+  # RMpersonParameters drops the row from its per-respondent output
+  pp <- suppressMessages(RMpersonParameters(df, output = "dataframe"))
+  expect_equal(nrow(pp), 99L)
+})
+
+test_that("caption qualifiers are conditional on missingness", {
+  skip_if_not_installed("knitr")
+  # Complete data: no "of Y", no parenthetical.
+  complete <- paste(
+    capture.output(print(RMitemParameters(make_polytomous(n = 100)))),
+    collapse = " "
+  )
+  expect_match(complete, "n = 100 respondents\\.")
+  expect_no_match(complete, "incomplete responses retained")
+  # Partial (retained) missingness: parenthetical, but still no "of Y".
+  df <- make_polytomous(n = 100)
+  df[1, 1] <- NA
+  partial <- paste(capture.output(print(RMitemParameters(df))), collapse = " ")
+  expect_match(
+    partial,
+    "n = 100 respondents \\(incomplete responses retained\\)"
+  )
+})
+
 test_that("output = 'file' writes the dataframe to CSV and returns it invisibly", {
   skip_if_not_installed("eRm")
   path <- withr::local_tempfile(fileext = ".csv")
-  df  <- RMitemParameters(make_polytomous(), output = "dataframe")
+  df <- RMitemParameters(make_polytomous(), output = "dataframe")
   ret <- suppressMessages(
     RMitemParameters(make_polytomous(), output = "file", filename = path)
   )
@@ -113,12 +167,19 @@ test_that("output = 'file' errors early when filename is missing", {
 
 test_that("wider ci_level gives wider intervals", {
   skip_if_not_installed("eRm")
-  narrow <- RMitemParameters(make_polytomous(), ci_level = 0.90,
-                             output = "dataframe")
-  wide   <- RMitemParameters(make_polytomous(), ci_level = 0.99,
-                             output = "dataframe")
-  expect_true(all((wide$ci_upper - wide$ci_lower) >
-                    (narrow$ci_upper - narrow$ci_lower)))
+  narrow <- RMitemParameters(
+    make_polytomous(),
+    ci_level = 0.90,
+    output = "dataframe"
+  )
+  wide <- RMitemParameters(
+    make_polytomous(),
+    ci_level = 0.99,
+    output = "dataframe"
+  )
+  expect_true(all(
+    (wide$ci_upper - wide$ci_lower) > (narrow$ci_upper - narrow$ci_lower)
+  ))
 })
 
 test_that("MML estimator agrees with CML on item locations", {
@@ -127,8 +188,7 @@ test_that("MML estimator agrees with CML on item locations", {
   sim <- make_pcm_signal()
   cml <- RMitemParameters(sim$data, estimator = "CML", output = "dataframe")
   mml <- RMitemParameters(sim$data, estimator = "MML", output = "dataframe")
-  ord <- match(paste(cml$item, cml$threshold),
-               paste(mml$item, mml$threshold))
+  ord <- match(paste(cml$item, cml$threshold), paste(mml$item, mml$threshold))
   expect_gt(cor(cml$location, mml$location[ord]), 0.98)
   expect_true(all(is.finite(mml$se)))
 })
@@ -144,13 +204,15 @@ test_that("CML threshold SEs are recovered (delta method sane)", {
 # =====================================================================
 
 test_that("RMpersonParameters errors on bad theta_range", {
-  expect_error(RMpersonParameters(make_polytomous(), theta_range = c(5, -5)),
-               regexp = "theta_range")
+  expect_error(
+    RMpersonParameters(make_polytomous(), theta_range = c(5, -5)),
+    regexp = "theta_range"
+  )
 })
 
 test_that("WLE dataframe has one row per person and expected columns", {
   skip_if_not_installed("eRm")
-  df  <- make_polytomous(n = 200)
+  df <- make_polytomous(n = 200)
   res <- RMpersonParameters(df, output = "dataframe")
   expect_s3_class(res, "data.frame")
   expect_equal(nrow(res), 200L)
@@ -160,35 +222,35 @@ test_that("WLE dataframe has one row per person and expected columns", {
 test_that("WLE gives finite extrapolated estimates for extreme scores", {
   skip_if_not_installed("eRm")
   df <- make_dichotomous(n = 200, k = 6)
-  df[1, ] <- 0L            # minimum score
-  df[2, ] <- 1L            # maximum score
+  df[1, ] <- 0L # minimum score
+  df[2, ] <- 1L # maximum score
   res <- RMpersonParameters(df, output = "dataframe")
   expect_true(res$extreme[1] && res$extreme[2])
   # WLE is finite at the boundaries (Warm), well inside theta_range,
   # and a sensible step beyond the next-most-extreme estimate.
   expect_true(is.finite(res$theta[1]) && is.finite(res$theta[2]))
   expect_true(res$theta[1] > -10 && res$theta[2] < 10)
-  second_low  <- min(res$theta[res$sum_score == 1])
+  second_low <- min(res$theta[res$sum_score == 1])
   second_high <- max(res$theta[res$sum_score == 5])
-  expect_lt(res$theta[1], second_low)    # zero score below the 1-score
-  expect_gt(res$theta[2], second_high)   # perfect score above the 5-score
+  expect_lt(res$theta[1], second_low) # zero score below the 1-score
+  expect_gt(res$theta[2], second_high) # perfect score above the 5-score
 })
 
 test_that("WLE satisfies Warm's weighted-likelihood score equation", {
   beta <- c(-1.5, -0.8, -0.2, 0.3, 0.9, 1.6)
-  thr  <- as.list(beta)
+  thr <- as.list(beta)
   # Warm score: l'(theta) + J(theta) / (2 I(theta)); zero at the WLE.
   warm_score <- function(theta, x) {
-    p   <- plogis(theta - beta)
+    p <- plogis(theta - beta)
     dll <- sum(x) - sum(p)
-    I   <- sum(p * (1 - p))
-    J   <- sum(p * (1 - p) * (1 - 2 * p))
+    I <- sum(p * (1 - p))
+    J <- sum(p * (1 - p) * (1 - 2 * p))
     dll + J / (2 * I)
   }
   for (r in 0:length(beta)) {
-    x  <- c(rep(1L, r), rep(0L, length(beta) - r))
+    x <- c(rep(1L, r), rep(0L, length(beta) - r))
     th <- easyRasch2:::.theta_wle(x, thr, c(-10, 10))[["theta"]]
-    expect_lt(abs(warm_score(th, x)), 1e-4)   # solves the equation
+    expect_lt(abs(warm_score(th, x)), 1e-4) # solves the equation
   }
 })
 
@@ -206,7 +268,8 @@ test_that("partial missingness is handled per-pattern", {
 test_that("EAP returns finite estimates at extreme scores", {
   skip_if_not_installed("eRm")
   df <- make_dichotomous(n = 200, k = 6)
-  df[1, ] <- 0L; df[2, ] <- 1L
+  df[1, ] <- 0L
+  df[2, ] <- 1L
   res <- RMpersonParameters(df, method = "EAP", output = "dataframe")
   expect_true(all(is.finite(res$theta)))
   expect_true(all(is.finite(res$sem)))
@@ -214,21 +277,25 @@ test_that("EAP returns finite estimates at extreme scores", {
 
 test_that("EAP attaches the prior used; WLE does not", {
   skip_if_not_installed("eRm")
-  df  <- make_pcm_signal()$data
+  df <- make_pcm_signal()$data
   eap <- RMpersonParameters(df, method = "EAP", output = "dataframe")
   wle <- RMpersonParameters(df, method = "WLE", output = "dataframe")
-  pr  <- attr(eap, "prior")
+  pr <- attr(eap, "prior")
   expect_false(is.null(pr))
-  expect_identical(unname(pr["estimated"]), 1)  # estimated
+  expect_identical(unname(pr["estimated"]), 1) # estimated
   expect_null(attr(wle, "prior"))
 })
 
 test_that("fixed prior_sd is respected and reported as not estimated", {
   skip_if_not_installed("eRm")
-  df  <- make_pcm_signal()$data
-  eap <- RMpersonParameters(df, method = "EAP", prior_sd = 1,
-                            output = "dataframe")
-  pr  <- attr(eap, "prior")
+  df <- make_pcm_signal()$data
+  eap <- RMpersonParameters(
+    df,
+    method = "EAP",
+    prior_sd = 1,
+    output = "dataframe"
+  )
+  pr <- attr(eap, "prior")
   expect_equal(unname(pr["sd"]), 1)
   expect_equal(unname(pr["estimated"]), 0)
 })
@@ -251,8 +318,8 @@ test_that("invalid prior_sd is rejected", {
 
 test_that("supplied item_params (list) bypasses model fitting", {
   skip_if_not_installed("eRm")
-  df  <- make_dichotomous(n = 150, k = 4)
-  ip  <- list(I1 = 0.2, I2 = -0.3, I3 = 0.1, I4 = 0.0)
+  df <- make_dichotomous(n = 150, k = 4)
+  ip <- list(I1 = 0.2, I2 = -0.3, I3 = 0.1, I4 = 0.0)
   res <- RMpersonParameters(df, item_params = ip, output = "dataframe")
   expect_equal(nrow(res), 150L)
   expect_true(all(is.finite(res$theta[!res$extreme])))
@@ -261,8 +328,11 @@ test_that("supplied item_params (list) bypasses model fitting", {
 test_that("supplied item_params (data.frame from RMitemParameters) works", {
   skip_if_not_installed("eRm")
   df <- make_polytomous(n = 150)
-  ip <- RMitemParameters(df, output = "dataframe")[, c("item", "threshold",
-                                                       "location")]
+  ip <- RMitemParameters(df, output = "dataframe")[, c(
+    "item",
+    "threshold",
+    "location"
+  )]
   res <- RMpersonParameters(df, item_params = ip, output = "dataframe")
   expect_equal(nrow(res), 150L)
 })
@@ -278,10 +348,10 @@ test_that("kable and ggplot outputs return the right classes", {
 
 test_that("RMpersonParameters output = 'file' writes a CSV with one row per person", {
   skip_if_not_installed("eRm")
-  df   <- make_polytomous(n = 150)
+  df <- make_polytomous(n = 150)
   path <- withr::local_tempfile(fileext = ".csv")
-  ddf  <- RMpersonParameters(df, output = "dataframe")
-  ret  <- suppressMessages(
+  ddf <- RMpersonParameters(df, output = "dataframe")
+  ret <- suppressMessages(
     RMpersonParameters(df, output = "file", filename = path)
   )
   expect_equal(ret, ddf)

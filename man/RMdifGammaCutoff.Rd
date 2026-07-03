@@ -61,6 +61,10 @@ A list with components:
 specified by \code{cutoff_method}.}
 \item{\code{actual_iterations}}{Number of successful iterations.}
 \item{\code{sample_n}}{Number of complete cases used.}
+\item{\code{sample_n_total}}{Number of respondents in the raw input data,
+before removing rows with \code{NA} in \code{data} or \code{dif_var}.}
+\item{\code{sample_has_na}}{Logical. Whether \code{data} or \code{dif_var} contained
+any missing values.}
 \item{\code{sample_summary}}{Summary statistics of estimated person
 parameters.}
 \item{\code{item_names}}{Character vector of item names from data.}
@@ -114,18 +118,21 @@ The \code{iarm} package must be installed (it is in Suggests, not Imports).
 }
 \examples{
 \donttest{
-set.seed(42)
-sim_data <- as.data.frame(
-  matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-)
-colnames(sim_data) <- paste0("Item", 1:10)
-dif_sex <- sample(c("male", "female"), 200, replace = TRUE)
+if (requireNamespace("iarm", quietly = TRUE) &&
+    requireNamespace("ggdist", quietly = TRUE)) {
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+  )
+  colnames(sim_data) <- paste0("Item", 1:10)
+  dif_sex <- sample(c("male", "female"), 200, replace = TRUE)
 
-# Run 100 iterations sequentially for a quick demo
-cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_sex,
-                                  iterations = 100, parallel = FALSE,
-                                  seed = 42)
-cutoff_res$item_cutoffs
+  # Run 100 iterations sequentially for a quick demo
+  cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_sex,
+                                 iterations = 100, parallel = FALSE,
+                                 seed = 42)
+  cutoff_res$item_cutoffs
+}
 }
 }
 \references{

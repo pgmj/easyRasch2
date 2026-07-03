@@ -30,7 +30,7 @@ variable separately via \code{group}.}
 or numeric) defining a grouping variable. When provided, the plot is
 faceted by group and counts / percentages are computed within each
 group. Default \code{NULL} (no faceting). Persons with \code{NA} group are
-excluded.}
+excluded, with a \code{message()} reporting how many rows were dropped.}
 
 \item{cutoff}{Integer. Cells with counts below this value are
 highlighted (when \code{highlight = TRUE}). Default \code{10}.}
@@ -95,31 +95,38 @@ fitting on that subgroup.
 When \code{group} is supplied, percentages and the highlight cutoff are
 applied within each group, so a cell labelled "5" in the group-A
 facet contains the count for group A only.
+
+The plot caption reports the sample in the standard
+\verb{n = X of Y respondents (policy)} form: rows with \code{NA} group are
+dropped (and counted in \code{Y} only), while item-level \code{NA}s are retained
+-- each cell simply counts the non-missing responses for that item.
 }
 \examples{
 \donttest{
-data("pcmdat2", package = "eRm")
+if (requireNamespace("eRm", quietly = TRUE)) {
+  data("pcmdat2", package = "eRm")
 
-# Basic tile plot
-RMplotTile(pcmdat2)
+  # Basic tile plot
+  RMplotTile(pcmdat2)
 
-# With percentages
-RMplotTile(pcmdat2, percent = TRUE)
+  # With percentages
+  RMplotTile(pcmdat2, percent = TRUE)
 
-# Faceted by an external grouping variable
-set.seed(1)
-grp <- sample(c("A", "B"), nrow(pcmdat2), replace = TRUE)
-RMplotTile(pcmdat2, group = grp)
+  # Faceted by an external grouping variable
+  set.seed(1)
+  grp <- sample(c("A", "B"), nrow(pcmdat2), replace = TRUE)
+  RMplotTile(pcmdat2, group = grp)
 
-# With custom labels and tighter cutoff
-RMplotTile(pcmdat2,
-           group = grp,
-           group_labels = c("Female", "Male"),
-           cutoff = 5,
-           facet_ncol = 2)
+  # With custom labels and tighter cutoff
+  RMplotTile(pcmdat2,
+             group = grp,
+             group_labels = c("Female", "Male"),
+             cutoff = 5,
+             facet_ncol = 2)
 
-# Underlying counts as a data.frame
-RMplotTile(pcmdat2, group = grp, output = "dataframe")
+  # Underlying counts as a data.frame
+  RMplotTile(pcmdat2, group = grp, output = "dataframe")
+}
 }
 
 }

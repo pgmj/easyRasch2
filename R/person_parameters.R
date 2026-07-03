@@ -44,7 +44,8 @@
 #'
 #' @return
 #' For `output = "dataframe"`, a data.frame with one row per respondent
-#' (in input order) and columns `theta` (the person location), `sem`
+#' (in input order; respondents with no responses are dropped with a
+#' message) and columns `theta` (the person location), `sem`
 #' (standard error of measurement), `sum_score`, `n_answered` (number of
 #' non-missing responses), and `extreme` (logical: a minimum or maximum
 #' possible score given the items answered). For `output = "kable"`, the
@@ -154,6 +155,19 @@ RMpersonParameters <- function(
   }
 
   data <- as.data.frame(data)
+  n_total <- nrow(data)
+  has_na <- anyNA(data)
+  data <- .drop_empty_respondents(data)
+  n_used <- nrow(data)
+  n_clause <- paste0(
+    " ",
+    .n_caption(
+      n_used,
+      n_total,
+      if (has_na) "incomplete responses retained" else character()
+    ),
+    "."
+  )
 
   # --- Item parameters (estimated or supplied) --------------------------------
   if (is.null(item_params)) {
@@ -260,9 +274,14 @@ RMpersonParameters <- function(
     return(
       ggplot2::ggplot(plot_df, ggplot2::aes(x = .data$theta)) +
         ggplot2::geom_histogram(bins = 30, fill = "grey70", colour = "white") +
-        ggplot2::labs(x = "Person location (logits)", y = "Count") +
+        ggplot2::labs(
+          x = "Person location (logits)",
+          y = "Count",
+          caption = er2_caption(trimws(n_clause))
+        ) +
         ggplot2::theme_bw() +
-        er2_axis_margins()
+        er2_axis_margins() +
+        er2_plot_caption()
     )
   }
 
@@ -274,7 +293,8 @@ RMpersonParameters <- function(
       "Person locations via Warm's WLE (",
       estimator,
       " item parameters). Extreme scores receive finite extrapolated ",
-      "estimates (flagged in the extreme column)."
+      "estimates (flagged in the extreme column).",
+      n_clause
     )
   } else {
     paste0(
@@ -285,7 +305,8 @@ RMpersonParameters <- function(
       ", sd = ",
       round(prior_used[["sd"]], 3),
       if (prior_used[["estimated"]] == 1) " [estimated]" else " [fixed]",
-      ")."
+      ").",
+      n_clause
     )
   }
   knitr::kable(display, format = "pipe", caption = caption, row.names = TRUE)

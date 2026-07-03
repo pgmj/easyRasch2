@@ -68,25 +68,29 @@ The \code{ggplot2}, \code{ggdist}, and optionally \code{iarm} packages must be i
 }
 \examples{
 \donttest{
-set.seed(42)
-sim_data <- as.data.frame(
-  matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-)
-colnames(sim_data) <- paste0("Item", 1:10)
+if (requireNamespace("iarm", quietly = TRUE) &&
+    requireNamespace("ggdist", quietly = TRUE) &&
+    requireNamespace("ggplot2", quietly = TRUE)) {
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+  )
+  colnames(sim_data) <- paste0("Item", 1:10)
 
-# Run simulation
-cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100, parallel = FALSE,
-                           seed = 42)
+  # Run simulation
+  cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100,
+                                    parallel = FALSE, seed = 42)
 
-# Simulated distribution only
-RMlocdepGammaPlot(cutoff_res)
+  # Simulated distribution only
+  RMlocdepGammaPlot(cutoff_res)
 
-# With observed partial gamma overlaid
-RMlocdepGammaPlot(cutoff_res, data = sim_data)
+  # With observed partial gamma overlaid
+  RMlocdepGammaPlot(cutoff_res, data = sim_data)
 
-# Plot only a subset of items
-RMlocdepGammaPlot(cutoff_res, data = sim_data,
-           items = c("Item1", "Item2", "Item3"))
+  # Plot only a subset of items
+  RMlocdepGammaPlot(cutoff_res, data = sim_data,
+                    items = c("Item1", "Item2", "Item3"))
+}
 }
 }
 \seealso{

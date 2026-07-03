@@ -42,6 +42,10 @@
 #' in the strip on the left side. Bars are coloured by response category
 #' using the viridis palette. Each bar shows the count (`n = X`) as text.
 #'
+#' The plot caption reports the sample in the standard
+#' `n = X respondents (policy)` form; item-level `NA`s are retained --
+#' each bar counts the non-missing responses for that item.
+#'
 #' **Input requirements:**
 #' \itemize{
 #'   \item All columns must be numeric (integer-valued).
@@ -87,45 +91,54 @@
 #' @importFrom rlang .data
 #' @export
 RMplotBar <- function(
-    data,
-    item_labels     = NULL,
-    category_labels = NULL,
-    ncol            = 1L,
-    label_wrap      = 25L,
-    text_y          = 6,
-    viridis_option  = "A",
-    viridis_end     = 0.9,
-    font            = "sans"
+  data,
+  item_labels = NULL,
+  category_labels = NULL,
+  ncol = 1L,
+  label_wrap = 25L,
+  text_y = 6,
+  viridis_option = "A",
+  viridis_end = 0.9,
+  font = "sans"
 ) {
-
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Package 'ggplot2' is required for RMplotBar().",
-         call. = FALSE)
+    stop("Package 'ggplot2' is required for RMplotBar().", call. = FALSE)
   }
 
   # ---------------------------------------------------------------------
   # Input validation
   # ---------------------------------------------------------------------
   if (!is.data.frame(data)) {
-    stop("`data` must be a data.frame in wide format ",
-         "(one column per item, one row per person).", call. = FALSE)
+    stop(
+      "`data` must be a data.frame in wide format ",
+      "(one column per item, one row per person).",
+      call. = FALSE
+    )
   }
   if (ncol(data) < 2L) {
-    stop("`data` must contain at least 2 columns (items). Found ",
-         ncol(data), " column(s).", call. = FALSE)
+    stop(
+      "`data` must contain at least 2 columns (items). Found ",
+      ncol(data),
+      " column(s).",
+      call. = FALSE
+    )
   }
   if (nrow(data) < 1L) {
-    stop("`data` must contain at least 1 row (person). Found 0 rows.",
-         call. = FALSE)
+    stop(
+      "`data` must contain at least 1 row (person). Found 0 rows.",
+      call. = FALSE
+    )
   }
 
   non_numeric <- names(data)[!vapply(data, is.numeric, logical(1L))]
   if (length(non_numeric) > 0L) {
-    stop("All columns must be numeric. Non-numeric column(s): ",
-         paste(non_numeric, collapse = ", "),
-         ". Remove non-item columns (e.g., person IDs, grouping ",
-         "variables) before passing to RMplotBar().",
-         call. = FALSE)
+    stop(
+      "All columns must be numeric. Non-numeric column(s): ",
+      paste(non_numeric, collapse = ", "),
+      ". Remove non-item columns (e.g., person IDs, grouping ",
+      "variables) before passing to RMplotBar().",
+      call. = FALSE
+    )
   }
 
   all_vals <- unlist(data, use.names = FALSE)
@@ -134,29 +147,48 @@ RMplotBar <- function(
     stop("`data` contains only NA values.", call. = FALSE)
   }
   if (!all(all_vals == round(all_vals))) {
-    stop("All response values must be integers. Found non-integer values.",
-         call. = FALSE)
+    stop(
+      "All response values must be integers. Found non-integer values.",
+      call. = FALSE
+    )
   }
 
   item_names <- names(data)
 
   if (!is.null(item_labels) && length(item_labels) != length(item_names)) {
-    stop("`item_labels` must have the same length as the number of ",
-         "columns in `data`. Expected ", length(item_names),
-         ", got ", length(item_labels), ".", call. = FALSE)
+    stop(
+      "`item_labels` must have the same length as the number of ",
+      "columns in `data`. Expected ",
+      length(item_names),
+      ", got ",
+      length(item_labels),
+      ".",
+      call. = FALSE
+    )
   }
 
-  min_val        <- min(all_vals)
-  max_val        <- max(all_vals)
+  min_val <- min(all_vals)
+  max_val <- max(all_vals)
   all_categories <- seq(min_val, max_val)
-  n_categories   <- length(all_categories)
+  n_categories <- length(all_categories)
 
-  if (!is.null(category_labels) &&
-      length(category_labels) != n_categories) {
-    stop("`category_labels` must have the same length as the number of ",
-         "response categories (", min_val, " to ", max_val, " = ",
-         n_categories, " categories). Got ", length(category_labels), ".",
-         call. = FALSE)
+  if (
+    !is.null(category_labels) &&
+      length(category_labels) != n_categories
+  ) {
+    stop(
+      "`category_labels` must have the same length as the number of ",
+      "response categories (",
+      min_val,
+      " to ",
+      max_val,
+      " = ",
+      n_categories,
+      " categories). Got ",
+      length(category_labels),
+      ".",
+      call. = FALSE
+    )
   }
 
   # ---------------------------------------------------------------------
@@ -173,15 +205,15 @@ RMplotBar <- function(
     item <- item_names[i]
     item_vals <- data[[item]]
     item_vals <- item_vals[!is.na(item_vals)]
-    tab   <- table(factor(item_vals, levels = all_categories))
+    tab <- table(factor(item_vals, levels = all_categories))
     total <- sum(tab)
 
     count_list[[i]] <- data.frame(
-      item_name   = item,
+      item_name = item,
       facet_label = facet_labels[i],
-      category    = as.integer(names(tab)),
-      n           = as.integer(tab),
-      percent     = if (total > 0L) {
+      category = as.integer(names(tab)),
+      n = as.integer(tab),
+      percent = if (total > 0L) {
         round(as.integer(tab) / total * 100, 1)
       } else {
         rep(0, length(tab))
@@ -192,8 +224,8 @@ RMplotBar <- function(
   plot_df <- do.call(rbind, count_list)
   rownames(plot_df) <- NULL
 
-  plot_df$facet_label  <- factor(plot_df$facet_label, levels = facet_labels)
-  plot_df$category_fct <- factor(plot_df$category,    levels = all_categories)
+  plot_df$facet_label <- factor(plot_df$facet_label, levels = facet_labels)
+  plot_df$category_fct <- factor(plot_df$category, levels = all_categories)
 
   if (!is.null(category_labels)) {
     levels(plot_df$category_fct) <- category_labels
@@ -202,6 +234,17 @@ RMplotBar <- function(
   # ---------------------------------------------------------------------
   # Build plot
   # ---------------------------------------------------------------------
+  # Standard sample-size caption; item-level NAs are retained -- each bar
+  # counts the non-missing responses for that item.
+  caption_text <- er2_caption(paste0(
+    .n_caption(
+      nrow(data),
+      nrow(data),
+      if (anyNA(data)) "incomplete responses retained" else character()
+    ),
+    "."
+  ))
+
   ggplot2::ggplot(
     plot_df,
     ggplot2::aes(x = .data$category_fct, y = .data$percent)
@@ -217,31 +260,33 @@ RMplotBar <- function(
       y = text_y
     ) +
     ggplot2::facet_wrap(
-      ~ facet_label,
-      ncol           = ncol,
+      ~facet_label,
+      ncol = ncol,
       strip.position = "left",
-      labeller       = ggplot2::labeller(
+      labeller = ggplot2::labeller(
         facet_label = ggplot2::label_wrap_gen(label_wrap)
       )
     ) +
     ggplot2::scale_fill_viridis_d(guide = "none") +
     ggplot2::scale_color_viridis_d(
-      guide     = "none",
+      guide = "none",
       direction = -1,
-      option    = viridis_option,
-      end       = viridis_end
+      option = viridis_option,
+      end = viridis_end
     ) +
     ggplot2::scale_y_continuous(position = "right") +
     ggplot2::labs(
       x = "Response category",
-      y = "% of responses"
+      y = "% of responses",
+      caption = caption_text
     ) +
     ggplot2::theme_bw(base_family = font) +
     ggplot2::theme(
-      legend.position   = "none",
+      legend.position = "none",
       strip.text.y.left = ggplot2::element_text(angle = 0)
     ) +
-    er2_axis_margins()
+    er2_axis_margins() +
+    er2_plot_caption()
 }
 
 
@@ -297,6 +342,10 @@ RMplotBar <- function(
 #' no visible bar segment, which helps identify gaps in the response
 #' distribution.
 #'
+#' The plot caption reports the sample in the standard
+#' `n = X respondents (policy)` form; item-level `NA`s are retained --
+#' each bar counts the non-missing responses for that item.
+#'
 #' **Input requirements:**
 #' \itemize{
 #'   \item All columns must be numeric (integer-valued).
@@ -333,47 +382,56 @@ RMplotBar <- function(
 #' @importFrom rlang .data
 #' @export
 RMplotStackedbar <- function(
-    data,
-    item_labels     = NULL,
-    category_labels = NULL,
-    show_n          = TRUE,
-    show_percent    = FALSE,
-    text_color      = "sienna1",
-    text_size       = 3,
-    min_label_n     = 0L,
-    viridis_option  = "D",
-    viridis_end     = 0.99,
-    title           = "Item responses"
+  data,
+  item_labels = NULL,
+  category_labels = NULL,
+  show_n = TRUE,
+  show_percent = FALSE,
+  text_color = "sienna1",
+  text_size = 3,
+  min_label_n = 0L,
+  viridis_option = "D",
+  viridis_end = 0.99,
+  title = "Item responses"
 ) {
-
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Package 'ggplot2' is required for RMplotStackedbar().",
-         call. = FALSE)
+    stop("Package 'ggplot2' is required for RMplotStackedbar().", call. = FALSE)
   }
 
   # ---------------------------------------------------------------------
   # Input validation
   # ---------------------------------------------------------------------
   if (!is.data.frame(data)) {
-    stop("`data` must be a data.frame in wide format ",
-         "(one column per item, one row per person).", call. = FALSE)
+    stop(
+      "`data` must be a data.frame in wide format ",
+      "(one column per item, one row per person).",
+      call. = FALSE
+    )
   }
   if (ncol(data) < 2L) {
-    stop("`data` must contain at least 2 columns (items). Found ",
-         ncol(data), " column(s).", call. = FALSE)
+    stop(
+      "`data` must contain at least 2 columns (items). Found ",
+      ncol(data),
+      " column(s).",
+      call. = FALSE
+    )
   }
   if (nrow(data) < 1L) {
-    stop("`data` must contain at least 1 row (person). Found 0 rows.",
-         call. = FALSE)
+    stop(
+      "`data` must contain at least 1 row (person). Found 0 rows.",
+      call. = FALSE
+    )
   }
 
   non_numeric <- names(data)[!vapply(data, is.numeric, logical(1L))]
   if (length(non_numeric) > 0L) {
-    stop("All columns must be numeric. Non-numeric column(s): ",
-         paste(non_numeric, collapse = ", "),
-         ". Remove non-item columns (e.g., person IDs, grouping ",
-         "variables) before passing to RMplotStackedbar().",
-         call. = FALSE)
+    stop(
+      "All columns must be numeric. Non-numeric column(s): ",
+      paste(non_numeric, collapse = ", "),
+      ". Remove non-item columns (e.g., person IDs, grouping ",
+      "variables) before passing to RMplotStackedbar().",
+      call. = FALSE
+    )
   }
 
   all_vals <- unlist(data, use.names = FALSE)
@@ -382,29 +440,48 @@ RMplotStackedbar <- function(
     stop("`data` contains only NA values.", call. = FALSE)
   }
   if (!all(all_vals == round(all_vals))) {
-    stop("All response values must be integers. Found non-integer values.",
-         call. = FALSE)
+    stop(
+      "All response values must be integers. Found non-integer values.",
+      call. = FALSE
+    )
   }
 
   item_names <- names(data)
 
   if (!is.null(item_labels) && length(item_labels) != length(item_names)) {
-    stop("`item_labels` must have the same length as the number of ",
-         "columns in `data`. Expected ", length(item_names),
-         ", got ", length(item_labels), ".", call. = FALSE)
+    stop(
+      "`item_labels` must have the same length as the number of ",
+      "columns in `data`. Expected ",
+      length(item_names),
+      ", got ",
+      length(item_labels),
+      ".",
+      call. = FALSE
+    )
   }
 
-  min_val        <- min(all_vals)
-  max_val        <- max(all_vals)
+  min_val <- min(all_vals)
+  max_val <- max(all_vals)
   all_categories <- seq(min_val, max_val)
-  n_categories   <- length(all_categories)
+  n_categories <- length(all_categories)
 
-  if (!is.null(category_labels) &&
-      length(category_labels) != n_categories) {
-    stop("`category_labels` must have the same length as the number of ",
-         "response categories (", min_val, " to ", max_val, " = ",
-         n_categories, " categories). Got ", length(category_labels), ".",
-         call. = FALSE)
+  if (
+    !is.null(category_labels) &&
+      length(category_labels) != n_categories
+  ) {
+    stop(
+      "`category_labels` must have the same length as the number of ",
+      "response categories (",
+      min_val,
+      " to ",
+      max_val,
+      " = ",
+      n_categories,
+      " categories). Got ",
+      length(category_labels),
+      ".",
+      call. = FALSE
+    )
   }
 
   # ---------------------------------------------------------------------
@@ -421,14 +498,14 @@ RMplotStackedbar <- function(
     item <- item_names[i]
     item_vals <- data[[item]]
     item_vals <- item_vals[!is.na(item_vals)]
-    tab   <- table(factor(item_vals, levels = all_categories))
+    tab <- table(factor(item_vals, levels = all_categories))
     total <- sum(tab)
 
     count_list[[i]] <- data.frame(
       item_name = item,
-      category  = as.integer(names(tab)),
-      n         = as.integer(tab),
-      percent   = if (total > 0L) {
+      category = as.integer(names(tab)),
+      n = as.integer(tab),
+      percent = if (total > 0L) {
         round(as.integer(tab) / total * 100, 1)
       } else {
         rep(0, length(tab))
@@ -458,7 +535,10 @@ RMplotStackedbar <- function(
 
   if (show_n && show_percent) {
     plot_df$label[show_mask] <- paste0(
-      plot_df$n[show_mask], " (", plot_df$percent[show_mask], "%)"
+      plot_df$n[show_mask],
+      " (",
+      plot_df$percent[show_mask],
+      "%)"
     )
   } else if (show_n) {
     plot_df$label[show_mask] <- as.character(plot_df$n[show_mask])
@@ -471,21 +551,33 @@ RMplotStackedbar <- function(
 
   # Legend labels: lowest -> highest (reverse of stacking factor)
   legend_labels <- if (!is.null(category_labels)) {
-    stats::setNames(rev(category_labels),
-                    rev(as.character(all_categories)))
+    stats::setNames(rev(category_labels), rev(as.character(all_categories)))
   } else {
-    stats::setNames(rev(as.character(all_categories)),
-                    rev(as.character(all_categories)))
+    stats::setNames(
+      rev(as.character(all_categories)),
+      rev(as.character(all_categories))
+    )
   }
 
   # ---------------------------------------------------------------------
   # Build plot
   # ---------------------------------------------------------------------
+  # Standard sample-size caption; item-level NAs are retained -- each bar
+  # counts the non-missing responses for that item.
+  caption_text <- er2_caption(paste0(
+    .n_caption(
+      nrow(data),
+      nrow(data),
+      if (anyNA(data)) "incomplete responses retained" else character()
+    ),
+    "."
+  ))
+
   p <- ggplot2::ggplot(
     plot_df,
     ggplot2::aes(
-      x    = .data$n,
-      y    = .data$item_fct,
+      x = .data$n,
+      y = .data$item_fct,
       fill = .data$category_fct
     )
   ) +
@@ -493,25 +585,27 @@ RMplotStackedbar <- function(
     ggplot2::scale_fill_viridis_d(
       "Response\ncategory",
       direction = -1,
-      option    = viridis_option,
-      end       = viridis_end,
-      labels    = legend_labels
+      option = viridis_option,
+      end = viridis_end,
+      labels = legend_labels
     ) +
     ggplot2::labs(
       title = title,
-      x     = "Number of responses",
-      y     = NULL
+      x = "Number of responses",
+      y = NULL,
+      caption = caption_text
     ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(legend.position = "right") +
-    er2_axis_margins()
+    er2_axis_margins() +
+    er2_plot_caption()
 
   if (show_n || show_percent) {
     p <- p +
       ggplot2::geom_text(
         ggplot2::aes(label = .data$label),
-        color    = text_color,
-        size     = text_size,
+        color = text_color,
+        size = text_size,
         position = ggplot2::position_stack(vjust = 0.5)
       )
   }

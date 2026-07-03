@@ -69,6 +69,10 @@ Each item is displayed as a separate facet panel with the item label
 in the strip on the left side. Bars are coloured by response category
 using the viridis palette. Each bar shows the count (\code{n = X}) as text.
 
+The plot caption reports the sample in the standard
+\verb{n = X respondents (policy)} form; item-level \code{NA}s are retained --
+each bar counts the non-missing responses for that item.
+
 \strong{Input requirements:}
 \itemize{
 \item All columns must be numeric (integer-valued).

@@ -72,11 +72,13 @@ make_polytomous_with_rescale <- function(n = 300, seed = 7L) {
 # Input validation
 # ---------------------------------------------------------------------
 test_that("RMdifTree errors when covariates is missing", {
+  need_tree_pkgs()
   d <- make_dif_dichotomous()
   expect_error(RMdifTree(d$items), regexp = "covariates")
 })
 
 test_that("RMdifTree errors when covariates row count mismatches data", {
+  need_tree_pkgs()
   d <- make_dif_dichotomous()
   expect_error(
     RMdifTree(d$items, covariates = d$covs[seq_len(nrow(d$items) - 1L), ]),
@@ -85,6 +87,7 @@ test_that("RMdifTree errors when covariates row count mismatches data", {
 })
 
 test_that("RMdifTree errors when factor covariate has tiny levels", {
+  need_tree_pkgs()
   d <- make_dif_dichotomous()
   d$covs$tiny <- factor(c(rep("a", nrow(d$items) - 2L),
                           rep("b", 2L)))
@@ -95,6 +98,7 @@ test_that("RMdifTree errors when factor covariate has tiny levels", {
 })
 
 test_that("RMdifTree errors when model = 'RM' on polytomous data", {
+  need_tree_pkgs()
   d <- make_polytomous_with_rescale()
   expect_error(
     suppressMessages(

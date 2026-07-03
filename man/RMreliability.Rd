@@ -114,7 +114,8 @@ Bootstrap iterations that fail to converge are silently dropped.
 }
 \examples{
 \donttest{
-if (requireNamespace("ggdist", quietly = TRUE)) {
+if (requireNamespace("ggdist", quietly = TRUE) &&
+    requireNamespace("eRm", quietly = TRUE)) {
   set.seed(1)
   RMreliability(eRm::raschdat1[, 1:20], draws = 1000)
 

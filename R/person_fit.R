@@ -123,6 +123,11 @@
 #' Müller (2020).
 #'
 #' @references
+#' de la Torre, J., & Deng, W. (2008). Improving person-fit assessment by
+#' correcting the ability estimate and its reference distribution.
+#' *Journal of Educational Measurement, 45*(2), 159-177.
+#' \doi{10.1111/j.1745-3984.2008.00058.x}
+#'
 #' Drasgow, F., Levine, M. V., & Williams, E. A. (1985). Appropriateness
 #' measurement with polychotomous item response models and standardized
 #' indices. *British Journal of Mathematical and Statistical Psychology,
@@ -220,6 +225,9 @@ RMpersonFit <- function(
   }
 
   data <- as.data.frame(data)
+  n_total <- nrow(data)
+  has_na <- anyNA(data)
+  data <- .drop_empty_respondents(data)
 
   # --- Item parameters --------------------------------------------------------
   fit <- if (estimator == "CML") {
@@ -351,7 +359,9 @@ RMpersonFit <- function(
     output,
     flag_alpha,
     iterations,
-    flag
+    flag,
+    n_total = n_total,
+    has_na = has_na
   )
 }
 
@@ -784,8 +794,24 @@ RMpersonFit <- function(
   output,
   flag_alpha,
   iterations,
-  flag = "both"
+  flag = "both",
+  n_total = nrow(out),
+  has_na = FALSE
 ) {
+  # Assessed = respondents that received a fit statistic (extreme scorers get
+  # NA). n_total is the raw supplied row count (before all-NA rows were
+  # dropped), so the caption anchors to the full sample. Each parenthetical
+  # qualifier appears only when it applies (missingness / extreme scorers).
+  n_assessed <- sum(!extreme)
+  pf_quals <- c(
+    if (has_na) "incomplete responses retained",
+    if (any(extreme)) "extreme scores excluded"
+  )
+  n_clause <- paste0(
+    " ",
+    .n_caption(n_assessed, n_total, pf_quals, noun = "respondents assessed"),
+    "."
+  )
   if (output == "dataframe") {
     num <- vapply(out, is.numeric, logical(1))
     out[num] <- lapply(out[num], function(x) round(x, 4))
@@ -830,7 +856,9 @@ RMpersonFit <- function(
         m$split,
         flag_alpha,
         iterations,
-        flag
+        flag,
+        n_total = n_total,
+        qualifiers = pf_quals
       )
     })
     names(plots) <- statistics
@@ -860,7 +888,8 @@ RMpersonFit <- function(
       )
     } else {
       "No resampling (iterations = 0)."
-    }
+    },
+    n_clause
   )
   knitr::kable(display, format = "pipe", caption = caption, row.names = FALSE)
 }
@@ -893,7 +922,9 @@ RMpersonFit <- function(
   split,
   flag_alpha,
   iterations,
-  flag = "both"
+  flag = "both",
+  n_total = NULL,
+  qualifiers = character()
 ) {
   has_p <- iterations > 0L && pcol %in% names(out)
   df <- data.frame(
@@ -903,6 +934,12 @@ RMpersonFit <- function(
   )
   df <- df[is.finite(df$theta) & is.finite(df$y), , drop = FALSE]
   n_assessed <- nrow(df)
+  n_lead <- .n_caption(
+    n_assessed,
+    if (is.null(n_total)) n_assessed else n_total,
+    qualifiers,
+    noun = "respondents assessed"
+  )
 
   # Classify each respondent for colouring.
   df$status <- "Not flagged"
@@ -933,9 +970,8 @@ RMpersonFit <- function(
       n_over <- sum(df$flagged & df$y < ref, na.rm = TRUE) # MSQ < 1: muted
       caption <- if (flag == "underfit") {
         paste0(
-          "n = ",
-          n_assessed,
-          " assessed; ",
+          n_lead,
+          "; ",
           n_flag,
           " (",
           pct,
@@ -947,9 +983,8 @@ RMpersonFit <- function(
         )
       } else {
         paste0(
-          "n = ",
-          n_assessed,
-          " assessed; ",
+          n_lead,
+          "; ",
           n_flag,
           " (",
           pct,
@@ -968,9 +1003,8 @@ RMpersonFit <- function(
       }
     } else {
       caption <- paste0(
-        "n = ",
-        n_assessed,
-        " assessed; ",
+        n_lead,
+        "; ",
         n_flag,
         " (",
         pct,
@@ -981,9 +1015,8 @@ RMpersonFit <- function(
     }
   } else {
     caption <- paste0(
-      "n = ",
-      n_assessed,
-      " assessed (no resampling; iterations = 0)."
+      n_lead,
+      " (no resampling; iterations = 0)."
     )
   }
 

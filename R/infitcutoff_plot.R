@@ -32,9 +32,10 @@
 #'
 #' When `data` **is** supplied, the function:
 #' \enumerate{
-#'   \item Fits a Rasch model (`eRm::RM()` for dichotomous data or
-#'     `eRm::PCM()` for polytomous data) and computes observed conditional
-#'     infit and outfit MSQ via `iarm::out_infit()`.
+#'   \item Fits a Rasch / Partial Credit model by CML via
+#'     `psychotools::pcmodel()` (a dichotomous item is a 2-category PCM)
+#'     and computes observed conditional infit and outfit MSQ via
+#'     `iarm::out_infit()`.
 #'   \item Overlays observed fit values as orange diamond markers on the
 #'     simulated distributions.
 #'   \item Shows per-item cutoff intervals (from `simfit$item_cutoffs`) as
@@ -52,24 +53,30 @@
 #'
 #' @examples
 #' \donttest{
-#' set.seed(42)
-#' sim_data <- as.data.frame(
-#'   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-#' )
-#' colnames(sim_data) <- paste0("Item", 1:10)
+#' if (requireNamespace("iarm", quietly = TRUE) &&
+#'     requireNamespace("ggdist", quietly = TRUE) &&
+#'     requireNamespace("ggplot2", quietly = TRUE)) {
+#'   set.seed(42)
+#'   sim_data <- as.data.frame(
+#'     matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+#'   )
+#'   colnames(sim_data) <- paste0("Item", 1:10)
 #'
-#' # Run simulation
-#' cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100, parallel = FALSE,
-#'                             seed = 42)
+#'   # Run simulation
+#'   cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100,
+#'                                   parallel = FALSE, seed = 42)
 #'
-#' # Simulated distribution only (infit + outfit faceted)
-#' RMitemInfitPlot(cutoff_res)
+#'   # Simulated distribution only (infit + outfit faceted)
+#'   RMitemInfitPlot(cutoff_res)
 #'
-#' # With observed fit overlaid (infit only, the default)
-#' RMitemInfitPlot(cutoff_res, data = sim_data)
+#'   # With observed fit overlaid (infit only, the default)
+#'   RMitemInfitPlot(cutoff_res, data = sim_data)
 #'
-#' # Both infit and outfit panels side by side
-#' RMitemInfitPlot(cutoff_res, data = sim_data, statistic = "both")
+#'   # Both infit and outfit panels side by side
+#'   if (requireNamespace("patchwork", quietly = TRUE)) {
+#'     RMitemInfitPlot(cutoff_res, data = sim_data, statistic = "both")
+#'   }
+#' }
 #' }
 RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
   # --- Check required packages ------------------------------------------------
@@ -113,6 +120,15 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
   actual_iterations <- simfit$actual_iterations
   sample_n <- simfit$sample_n
   item_names <- simfit$item_names
+
+  # Standard sample-size clause for the (complete-case) simulation sample.
+  # `sample_n_total` / `sample_has_na` are absent in cutoff objects made by
+  # older versions, so fall back to the plain count.
+  sample_clause <- .n_caption(
+    sample_n,
+    if (is.null(simfit$sample_n_total)) sample_n else simfit$sample_n_total,
+    if (isTRUE(simfit$sample_has_na)) "complete cases" else character()
+  )
 
   # Item factor levels (reversed for plotting top-to-bottom)
   item_levels <- rev(item_names)
@@ -180,9 +196,9 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
         caption = er2_caption(paste0(
           "Results from ",
           actual_iterations,
-          " simulated datasets with ",
-          sample_n,
-          " respondents."
+          " simulated datasets. ",
+          sample_clause,
+          " per dataset."
         ))
       ) +
       ggplot2::scale_color_manual(
@@ -211,23 +227,18 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
       call. = FALSE
     )
   }
-
   validate_response_data(data)
-
-  data_mat <- as.matrix(data)
-
-  if (max(data_mat, na.rm = TRUE) == 1L) {
-    erm_out <- eRm::RM(data)
-  } else {
-    erm_out <- eRm::PCM(data)
-  }
 
   # rgl workaround
   old_rgl <- getOption("rgl.useNULL")
   options(rgl.useNULL = TRUE)
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
 
-  cfit <- iarm::out_infit(erm_out)
+  # CML fit via psychotools (a dichotomous item is a 2-category PCM);
+  # iarm::out_infit() accepts pcmodel objects and matches the former
+  # eRm::RM()/PCM() route to ~1e-6 (same pairing as RMitemInfitCutoff()).
+  model_fit <- psychotools::pcmodel(data)
+  cfit <- iarm::out_infit(model_fit)
 
   observed_df <- data.frame(
     Item = names(data),
@@ -255,9 +266,9 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
   caption_text <- er2_caption(paste0(
     "Results from ",
     actual_iterations,
-    " simulated datasets with ",
-    sample_n,
-    " respondents.\n",
+    " simulated datasets. ",
+    sample_clause,
+    " per dataset.\n",
     "Orange dots indicate observed conditional item fit. ",
     "Black dots indicate median fit from simulations."
   ))

@@ -106,9 +106,11 @@ RMdimMartinLofResiduals(dat,
                                       c("I5","I6","I7","I8")))
 
 # Heatmap
-RMdimMartinLofResiduals(dat,
-                     partition = c(1,1,1,1,2,2,2,2),
-                     output = "ggplot")
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  RMdimMartinLofResiduals(dat,
+                       partition = c(1,1,1,1,2,2,2,2),
+                       output = "ggplot")
+}
 
 # Underlying data.frame for custom analysis
 df <- RMdimMartinLofResiduals(dat,

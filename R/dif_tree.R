@@ -268,61 +268,70 @@
 #' }
 #'
 #' @export
-RMdifTree <- function(data,
-                      covariates,
-                      model             = c("auto", "PCM", "RM"),
-                      effect_size       = c("auto", "MH", "pgamma"),
-                      purification      = c("none", "iterative"),
-                      p_adj             = c("none", "fdr", "bonferroni"),
-                      thresholds        = c(0.21, 0.31),
-                      alpha             = 0.05,
-                      prune_negligible  = FALSE,
-                      stability         = FALSE,
-                      stability_B       = 100L,
-                      stability_sampler = c("subsampling", "bootstrap"),
-                      min_n_per_level   = 20L,
-                      on_rescale        = c("message", "warning", "stop"),
-                      output            = c("kable", "dataframe", "tree", "plot"),
-                      ...) {
-
+RMdifTree <- function(
+  data,
+  covariates,
+  model = c("auto", "PCM", "RM"),
+  effect_size = c("auto", "MH", "pgamma"),
+  purification = c("none", "iterative"),
+  p_adj = c("none", "fdr", "bonferroni"),
+  thresholds = c(0.21, 0.31),
+  alpha = 0.05,
+  prune_negligible = FALSE,
+  stability = FALSE,
+  stability_B = 100L,
+  stability_sampler = c("subsampling", "bootstrap"),
+  min_n_per_level = 20L,
+  on_rescale = c("message", "warning", "stop"),
+  output = c("kable", "dataframe", "tree", "plot"),
+  ...
+) {
   # Capture the unevaluated `covariates` expression so we can recover a
   # readable column name when the user passes a single vector like
   # RMdifTree(d, dif$age) instead of a data.frame.
   covariates_expr <- substitute(covariates)
 
-  model             <- match.arg(model)
-  effect_size       <- match.arg(effect_size)
-  purification      <- match.arg(purification)
-  p_adj             <- match.arg(p_adj)
+  model <- match.arg(model)
+  effect_size <- match.arg(effect_size)
+  purification <- match.arg(purification)
+  p_adj <- match.arg(p_adj)
   stability_sampler <- match.arg(stability_sampler)
-  on_rescale        <- match.arg(on_rescale)
-  output            <- match.arg(output)
+  on_rescale <- match.arg(on_rescale)
+  output <- match.arg(output)
 
   # ---------------------------------------------------------------------
   # Package availability
   # ---------------------------------------------------------------------
   if (!requireNamespace("psychotree", quietly = TRUE)) {
-    stop("Package 'psychotree' is required for RMdifTree(). ",
-         "Install it with: install.packages(\"psychotree\")",
-         call. = FALSE)
+    stop(
+      "Package 'psychotree' is required for RMdifTree(). ",
+      "Install it with: install.packages(\"psychotree\")",
+      call. = FALSE
+    )
   }
   if (!requireNamespace("partykit", quietly = TRUE)) {
     stop("Package 'partykit' is required for RMdifTree().", call. = FALSE)
   }
   if (!requireNamespace("difR", quietly = TRUE)) {
-    stop("Package 'difR' is required for RMdifTree() (Mantel-Haenszel ",
-         "effect size). Install it with: install.packages(\"difR\")",
-         call. = FALSE)
+    stop(
+      "Package 'difR' is required for RMdifTree() (Mantel-Haenszel ",
+      "effect size). Install it with: install.packages(\"difR\")",
+      call. = FALSE
+    )
   }
   if (!requireNamespace("iarm", quietly = TRUE)) {
-    stop("Package 'iarm' is required for RMdifTree() (partial-gamma ",
-         "effect size). Install it with: install.packages(\"iarm\")",
-         call. = FALSE)
+    stop(
+      "Package 'iarm' is required for RMdifTree() (partial-gamma ",
+      "effect size). Install it with: install.packages(\"iarm\")",
+      call. = FALSE
+    )
   }
   if (stability && !requireNamespace("stablelearner", quietly = TRUE)) {
-    stop("Package 'stablelearner' is required for stability = TRUE. ",
-         "Install it with: install.packages(\"stablelearner\")",
-         call. = FALSE)
+    stop(
+      "Package 'stablelearner' is required for stability = TRUE. ",
+      "Install it with: install.packages(\"stablelearner\")",
+      call. = FALSE
+    )
   }
 
   # ---------------------------------------------------------------------
@@ -330,13 +339,17 @@ RMdifTree <- function(data,
   # ---------------------------------------------------------------------
   validate_response_data(data)
   data <- as.data.frame(data)
+  n_total_dt <- nrow(data)
 
   # ---------------------------------------------------------------------
   # Validate covariates
   # ---------------------------------------------------------------------
   if (missing(covariates) || is.null(covariates)) {
-    stop("`covariates` is required: a data.frame of one or more DIF ",
-         "covariates with nrow(data) rows.", call. = FALSE)
+    stop(
+      "`covariates` is required: a data.frame of one or more DIF ",
+      "covariates with nrow(data) rows.",
+      call. = FALSE
+    )
   }
   if (!is.data.frame(covariates)) {
     if (is.atomic(covariates) || is.list(covariates)) {
@@ -348,8 +361,14 @@ RMdifTree <- function(data,
     }
   }
   if (nrow(covariates) != nrow(data)) {
-    stop("`covariates` must have the same number of rows as `data` (",
-         nrow(data), "). Got ", nrow(covariates), ".", call. = FALSE)
+    stop(
+      "`covariates` must have the same number of rows as `data` (",
+      nrow(data),
+      "). Got ",
+      nrow(covariates),
+      ".",
+      call. = FALSE
+    )
   }
   if (ncol(covariates) < 1L) {
     stop("`covariates` must contain at least one column.", call. = FALSE)
@@ -365,8 +384,11 @@ RMdifTree <- function(data,
     if (is_polytomous) "PCM" else "RM"
   } else {
     if (model == "RM" && is_polytomous) {
-      stop("`model = \"RM\"` requires dichotomous data; use \"PCM\" or ",
-           "\"auto\".", call. = FALSE)
+      stop(
+        "`model = \"RM\"` requires dichotomous data; use \"PCM\" or ",
+        "\"auto\".",
+        call. = FALSE
+      )
     }
     model
   }
@@ -375,8 +397,11 @@ RMdifTree <- function(data,
     if (resolved_model == "RM") "MH" else "pgamma"
   } else {
     if (effect_size == "MH" && resolved_model == "PCM") {
-      stop("`effect_size = \"MH\"` is only defined for dichotomous data ",
-           "(model = \"RM\"). Use \"pgamma\" or \"auto\".", call. = FALSE)
+      stop(
+        "`effect_size = \"MH\"` is only defined for dichotomous data ",
+        "(model = \"RM\"). Use \"pgamma\" or \"auto\".",
+        call. = FALSE
+      )
     }
     effect_size
   }
@@ -384,18 +409,25 @@ RMdifTree <- function(data,
   # ---------------------------------------------------------------------
   # Validate effect-size args
   # ---------------------------------------------------------------------
-  if (!is.numeric(thresholds) || length(thresholds) != 2L ||
-      any(!is.finite(thresholds)) || thresholds[1L] >= thresholds[2L] ||
-      thresholds[1L] <= 0) {
-    stop("`thresholds` must be a length-2 numeric vector with ",
-         "0 < thresholds[1] < thresholds[2].", call. = FALSE)
+  if (
+    !is.numeric(thresholds) ||
+      length(thresholds) != 2L ||
+      any(!is.finite(thresholds)) ||
+      thresholds[1L] >= thresholds[2L] ||
+      thresholds[1L] <= 0
+  ) {
+    stop(
+      "`thresholds` must be a length-2 numeric vector with ",
+      "0 < thresholds[1] < thresholds[2].",
+      call. = FALSE
+    )
   }
-  if (!is.numeric(alpha) || length(alpha) != 1L || alpha <= 0 ||
-      alpha >= 1) {
+  if (!is.numeric(alpha) || length(alpha) != 1L || alpha <= 0 || alpha >= 1) {
     stop("`alpha` must be a single numeric in (0, 1).", call. = FALSE)
   }
-  if (!is.numeric(stability_B) || length(stability_B) != 1L ||
-      stability_B < 1) {
+  if (
+    !is.numeric(stability_B) || length(stability_B) != 1L || stability_B < 1
+  ) {
     stop("`stability_B` must be a positive integer.", call. = FALSE)
   }
   stability_B <- as.integer(stability_B)
@@ -409,17 +441,21 @@ RMdifTree <- function(data,
   na_cov <- !stats::complete.cases(covariates)
   if (any(na_cov)) {
     message(sum(na_cov), " row(s) with NA in `covariates` dropped.")
-    data       <- data[!na_cov, , drop = FALSE]
+    data <- data[!na_cov, , drop = FALSE]
     covariates <- covariates[!na_cov, , drop = FALSE]
   }
   if (nrow(data) < 30L) {
-    stop("Need at least 30 complete cases after NA handling. Got ",
-         nrow(data), ".", call. = FALSE)
+    stop(
+      "Need at least 30 complete cases after NA handling. Got ",
+      nrow(data),
+      ".",
+      call. = FALSE
+    )
   }
 
   items_mat <- as.matrix(data)
   storage.mode(items_mat) <- "integer"
-  combined  <- covariates
+  combined <- covariates
   combined$.items <- items_mat
 
   # Backtick-protect the covariate names so they are matched as literal
@@ -430,7 +466,7 @@ RMdifTree <- function(data,
   # model.frame(), triggering a "variable lengths differ" error.
   fmla <- stats::reformulate(
     termlabels = sprintf("`%s`", names(covariates)),
-    response   = ".items"
+    response = ".items"
   )
 
   # ---------------------------------------------------------------------
@@ -444,11 +480,15 @@ RMdifTree <- function(data,
   }
 
   tree_call <- as.call(c(
-    list(if (resolved_model == "RM")
-      quote(psychotree::raschtree)
-    else
-      quote(psychotree::pctree),
-      fmla, quote(combined)),
+    list(
+      if (resolved_model == "RM") {
+        quote(psychotree::raschtree)
+      } else {
+        quote(psychotree::pctree)
+      },
+      fmla,
+      quote(combined)
+    ),
     list(...)
   ))
   names(tree_call)[2:3] <- c("formula", "data")
@@ -460,8 +500,9 @@ RMdifTree <- function(data,
   tree <- withCallingHandlers(
     eval(tree_call, envir = list(combined = combined)),
     warning = function(w) {
-      if (grepl("Minimum score is not zero",
-                conditionMessage(w), fixed = TRUE)) {
+      if (
+        grepl("Minimum score is not zero", conditionMessage(w), fixed = TRUE)
+      ) {
         invokeRestart("muffleWarning")
       }
       # Non-matching warnings: let them propagate normally.
@@ -472,13 +513,13 @@ RMdifTree <- function(data,
   # Compute per-split effect sizes
   # ---------------------------------------------------------------------
   effect_info <- compute_tree_effectsize(
-    tree         = tree,
-    items        = items_mat,
-    es_method    = resolved_es,
+    tree = tree,
+    items = items_mat,
+    es_method = resolved_es,
     purification = purification,
-    p_adj        = p_adj,
-    thresholds   = thresholds,
-    alpha        = alpha
+    p_adj = p_adj,
+    thresholds = thresholds,
+    alpha = alpha
   )
 
   tree$info$effectsize <- effect_info
@@ -487,21 +528,25 @@ RMdifTree <- function(data,
   # Optional pruning of negligible (all-A) splits
   # ---------------------------------------------------------------------
   if (prune_negligible && length(effect_info$nodes) > 0L) {
-    to_prune <- vapply(effect_info$nodes, function(nd) {
-      all(nd$Class == "A", na.rm = TRUE)
-    }, logical(1L))
+    to_prune <- vapply(
+      effect_info$nodes,
+      function(nd) {
+        all(nd$Class == "A", na.rm = TRUE)
+      },
+      logical(1L)
+    )
     prune_ids <- as.integer(names(effect_info$nodes)[to_prune])
     if (length(prune_ids) > 0L) {
       tree <- partykit::nodeprune(tree, ids = prune_ids)
       # Recompute on the pruned tree -- splits and ids may have shifted
       effect_info <- compute_tree_effectsize(
-        tree         = tree,
-        items        = items_mat,
-        es_method    = resolved_es,
+        tree = tree,
+        items = items_mat,
+        es_method = resolved_es,
         purification = purification,
-        p_adj        = p_adj,
-        thresholds   = thresholds,
-        alpha        = alpha
+        p_adj = p_adj,
+        thresholds = thresholds,
+        alpha = alpha
       )
       tree$info$effectsize <- effect_info
     }
@@ -513,10 +558,12 @@ RMdifTree <- function(data,
   rescale_info <- detect_rescaled_items(tree, items_mat)
   if (rescale_info$n_terminal_cells > 0L) {
     msg <- format_rescale_message(rescale_info)
-    switch(on_rescale,
-           message = message(msg),
-           warning = warning(msg, call. = FALSE),
-           stop    = stop(msg, call. = FALSE))
+    switch(
+      on_rescale,
+      message = message(msg),
+      warning = warning(msg, call. = FALSE),
+      stop = stop(msg, call. = FALSE)
+    )
   }
 
   # ---------------------------------------------------------------------
@@ -556,15 +603,15 @@ RMdifTree <- function(data,
       stablelearner::bootstrap
     }
 
-    n_min_zero  <- 0L
-    n_null_cat  <- 0L
+    n_min_zero <- 0L
+    n_null_cat <- 0L
 
     capture_stderr <- sink.number(type = "message") == 2L
     err_file <- NULL
-    err_con  <- NULL
+    err_con <- NULL
     if (capture_stderr) {
       err_file <- tempfile(fileext = ".log")
-      err_con  <- file(err_file, open = "wt")
+      err_con <- file(err_file, open = "wt")
       sink(err_con, type = "message")
     }
 
@@ -592,8 +639,10 @@ RMdifTree <- function(data,
 
     n_resample_errors <- 0L
     if (capture_stderr) {
-      err_lines <- tryCatch(readLines(err_file, warn = FALSE),
-                            error = function(e) character())
+      err_lines <- tryCatch(
+        readLines(err_file, warn = FALSE),
+        error = function(e) character()
+      )
       unlink(err_file)
       n_resample_errors <- sum(grepl("^Error", err_lines))
     }
@@ -601,19 +650,27 @@ RMdifTree <- function(data,
     # Single user-facing summary, only if anything noteworthy happened.
     summary_parts <- character()
     if (n_min_zero > 0L) {
-      summary_parts <- c(summary_parts,
-        paste0(n_min_zero, " 'minimum score not zero' rescaling warning(s)"))
+      summary_parts <- c(
+        summary_parts,
+        paste0(n_min_zero, " 'minimum score not zero' rescaling warning(s)")
+      )
     }
     if (n_null_cat > 0L) {
-      summary_parts <- c(summary_parts,
-        paste0(n_null_cat, " 'items with null categories' warning(s)"))
+      summary_parts <- c(
+        summary_parts,
+        paste0(n_null_cat, " 'items with null categories' warning(s)")
+      )
     }
     if (n_resample_errors > 0L) {
-      summary_parts <- c(summary_parts,
-        paste0(n_resample_errors,
-               " resample fit(s) errored out (rank-deficient score ",
-               "covariance in the M-fluctuation test); affected splits ",
-               "skipped"))
+      summary_parts <- c(
+        summary_parts,
+        paste0(
+          n_resample_errors,
+          " resample fit(s) errored out (rank-deficient score ",
+          "covariance in the M-fluctuation test); affected splits ",
+          "skipped"
+        )
+      )
     }
     if (length(summary_parts) > 0L) {
       message(
@@ -635,22 +692,26 @@ RMdifTree <- function(data,
   # ---------------------------------------------------------------------
   df <- effectsize_to_dataframe(
     effect_info,
-    item_names         = colnames(items_mat),
-    tree               = tree,
+    item_names = colnames(items_mat),
+    tree = tree,
     rescaled_terminals = rescale_info$per_terminal
   )
 
   stab_df <- NULL
   stab_kbl <- NULL
   if (!is.null(stability_result)) {
-    stab_df  <- stabletree_summary_df(stability_result, covariates)
+    stab_df <- stabletree_summary_df(stability_result, covariates)
     stab_kbl <- stabletree_summary_kable(stab_df)
   }
 
-  attr(df, "model")       <- resolved_model
+  attr(df, "model") <- resolved_model
   attr(df, "effect_size") <- resolved_es
-  if (!is.null(stab_df))   attr(df, "stability")              <- stab_df
-  if (!is.null(stab_kbl))  attr(df, "stability_kable")        <- stab_kbl
+  if (!is.null(stab_df)) {
+    attr(df, "stability") <- stab_df
+  }
+  if (!is.null(stab_kbl)) {
+    attr(df, "stability_kable") <- stab_kbl
+  }
   if (rescale_info$n_terminal_cells > 0L) {
     attr(df, "rescaled_terminal_items") <- rescale_info$per_terminal
   }
@@ -659,8 +720,12 @@ RMdifTree <- function(data,
   # Dispatch on output
   # ---------------------------------------------------------------------
   if (output == "tree") {
-    if (!is.null(stab_df))  attr(tree, "stability")       <- stab_df
-    if (!is.null(stab_kbl)) attr(tree, "stability_kable") <- stab_kbl
+    if (!is.null(stab_df)) {
+      attr(tree, "stability") <- stab_df
+    }
+    if (!is.null(stab_kbl)) {
+      attr(tree, "stability_kable") <- stab_kbl
+    }
     if (rescale_info$n_terminal_cells > 0L) {
       attr(tree, "rescaled_terminal_items") <- rescale_info$per_terminal
     }
@@ -680,23 +745,28 @@ RMdifTree <- function(data,
   # output == "kable"
   kbl <- render_effectsize_kable(
     df,
-    n_persons        = nrow(combined),
-    n_items          = ncol(items_mat),
-    es_method        = resolved_es,
-    purification     = purification,
-    p_adj            = p_adj,
-    thresholds       = thresholds,
-    alpha            = alpha,
-    is_polytomous    = is_polytomous,
-    has_stability    = !is.null(stab_df),
+    n_persons = nrow(combined),
+    n_total = n_total_dt,
+    n_items = ncol(items_mat),
+    es_method = resolved_es,
+    purification = purification,
+    p_adj = p_adj,
+    thresholds = thresholds,
+    alpha = alpha,
+    is_polytomous = is_polytomous,
+    has_stability = !is.null(stab_df),
     n_rescaled_items = length(unique(rescale_info$per_terminal$Item))
   )
-  if (!is.null(stab_df))  attr(kbl, "stability")       <- stab_df
-  if (!is.null(stab_kbl)) attr(kbl, "stability_kable") <- stab_kbl
+  if (!is.null(stab_df)) {
+    attr(kbl, "stability") <- stab_df
+  }
+  if (!is.null(stab_kbl)) {
+    attr(kbl, "stability_kable") <- stab_kbl
+  }
   if (rescale_info$n_terminal_cells > 0L) {
     attr(kbl, "rescaled_terminal_items") <- rescale_info$per_terminal
   }
-  attr(kbl, "model")       <- resolved_model
+  attr(kbl, "model") <- resolved_model
   attr(kbl, "effect_size") <- resolved_es
   kbl
 }
@@ -737,20 +807,25 @@ derive_covariate_name <- function(expr) {
     # x[["name"]] or x[[i]]
     if (identical(op, as.name("[["))) {
       key <- expr[[3L]]
-      if (is.character(key)) return(key)
-      if (is.symbol(key))    return(as.character(key))
+      if (is.character(key)) {
+        return(key)
+      }
+      if (is.symbol(key)) return(as.character(key))
     }
     # x[, "name"] or x[i]
     if (identical(op, as.name("["))) {
       # Last index argument is the column selector
       n <- length(expr)
       key <- expr[[n]]
-      if (is.character(key)) return(key)
-      if (is.symbol(key))    return(as.character(key))
+      if (is.character(key)) {
+        return(key)
+      }
+      if (is.symbol(key)) return(as.character(key))
     }
   }
-  out <- tryCatch(deparse(expr, width.cutoff = 60L)[1L],
-                  error = function(e) bad_fallback)
+  out <- tryCatch(deparse(expr, width.cutoff = 60L)[1L], error = function(e) {
+    bad_fallback
+  })
   if (is.null(out) || !nzchar(out)) bad_fallback else out
 }
 
@@ -779,28 +854,44 @@ validate_covariates <- function(covariates, min_n_per_level) {
       col <- droplevels(col)
       tab <- table(col, useNA = "no")
       if (length(tab) < 2L) {
-        stop("Covariate `", nm, "` has fewer than 2 non-NA levels.",
-             call. = FALSE)
+        stop(
+          "Covariate `",
+          nm,
+          "` has fewer than 2 non-NA levels.",
+          call. = FALSE
+        )
       }
       if (min_n_per_level > 0L && any(tab < min_n_per_level)) {
         small <- names(tab)[tab < min_n_per_level]
-        stop("Covariate `", nm, "` has level(s) with fewer than ",
-             min_n_per_level, " cases: ",
-             paste(sprintf("%s (n = %d)", small, tab[small]),
-                   collapse = ", "),
-             ". Combine sparse levels or set `min_n_per_level = 0`.",
-             call. = FALSE)
+        stop(
+          "Covariate `",
+          nm,
+          "` has level(s) with fewer than ",
+          min_n_per_level,
+          " cases: ",
+          paste(sprintf("%s (n = %d)", small, tab[small]), collapse = ", "),
+          ". Combine sparse levels or set `min_n_per_level = 0`.",
+          call. = FALSE
+        )
       }
     } else if (is.numeric(col)) {
       if (length(unique(stats::na.omit(col))) < 2L) {
-        stop("Covariate `", nm, "` has fewer than 2 unique values.",
-             call. = FALSE)
+        stop(
+          "Covariate `",
+          nm,
+          "` has fewer than 2 unique values.",
+          call. = FALSE
+        )
       }
     } else {
-      stop("Covariate `", nm, "` has unsupported type ",
-           paste(class(col), collapse = "/"),
-           ". Use numeric, factor, ordered factor, or logical.",
-           call. = FALSE)
+      stop(
+        "Covariate `",
+        nm,
+        "` has unsupported type ",
+        paste(class(col), collapse = "/"),
+        ". Use numeric, factor, ordered factor, or logical.",
+        call. = FALSE
+      )
     }
   }
   invisible(TRUE)
@@ -819,9 +910,15 @@ validate_covariates <- function(covariates, min_n_per_level) {
 #'
 #' @keywords internal
 #' @noRd
-compute_tree_effectsize <- function(tree, items, es_method, purification,
-                                    p_adj, thresholds, alpha) {
-
+compute_tree_effectsize <- function(
+  tree,
+  items,
+  es_method,
+  purification,
+  p_adj,
+  thresholds,
+  alpha
+) {
   inner_ids <- setdiff(
     partykit::nodeids(tree, terminal = FALSE),
     partykit::nodeids(tree, terminal = TRUE)
@@ -829,31 +926,30 @@ compute_tree_effectsize <- function(tree, items, es_method, purification,
 
   if (length(inner_ids) == 0L) {
     return(list(
-      es_method    = es_method,
+      es_method = es_method,
       purification = purification,
-      p_adj        = p_adj,
-      thresholds   = thresholds,
-      alpha        = alpha,
-      nodes        = list(),
-      n_splits     = 0L
+      p_adj = p_adj,
+      thresholds = thresholds,
+      alpha = alpha,
+      nodes = list(),
+      n_splits = 0L
     ))
   }
 
   dat_fitted <- partykit::data_party(tree)
-  fitted_id  <- dat_fitted[["(fitted)"]]
-  root_node  <- partykit::node_party(tree)
+  fitted_id <- dat_fitted[["(fitted)"]]
+  root_node <- partykit::node_party(tree)
 
   split_groups <- lapply(inner_ids, function(id) {
     nd <- find_node_by_id(root_node, id)
     if (is.null(nd)) {
-      stop("Internal: could not locate node ", id, " in tree.",
-           call. = FALSE)
+      stop("Internal: could not locate node ", id, " in tree.", call. = FALSE)
     }
     children <- partykit::kids_node(nd)
-    left_terminals  <- collect_terminal_ids(children[[1L]])
+    left_terminals <- collect_terminal_ids(children[[1L]])
     right_terminals <- collect_terminal_ids(children[[2L]])
     grp <- rep(NA_integer_, length(fitted_id))
-    grp[fitted_id %in% left_terminals]  <- 0L
+    grp[fitted_id %in% left_terminals] <- 0L
     grp[fitted_id %in% right_terminals] <- 1L
     grp
   })
@@ -867,38 +963,47 @@ compute_tree_effectsize <- function(tree, items, es_method, purification,
     split_meta <- describe_split(tree, nid)
 
     result <- if (es_method == "MH") {
-      one_split_mh(items = items, group = grp, sums = sums,
-                   purification = purification, alpha = alpha)
+      one_split_mh(
+        items = items,
+        group = grp,
+        sums = sums,
+        purification = purification,
+        alpha = alpha
+      )
     } else {
-      one_split_pgamma(items = items, group = grp,
-                       purification = purification,
-                       p_adj = p_adj, thresholds = thresholds,
-                       alpha = alpha)
+      one_split_pgamma(
+        items = items,
+        group = grp,
+        purification = purification,
+        p_adj = p_adj,
+        thresholds = thresholds,
+        alpha = alpha
+      )
     }
 
     list(
-      NodeID     = nid,
-      Variable   = split_meta$variable,
-      Direction  = split_meta$direction,
-      Split      = split_meta$split,
+      NodeID = nid,
+      Variable = split_meta$variable,
+      Direction = split_meta$direction,
+      Split = split_meta$split,
       EffectSize = result$es,
-      SE         = result$se,
-      Class      = result$class,
-      n_left     = sum(grp == 0L, na.rm = TRUE),
-      n_right    = sum(grp == 1L, na.rm = TRUE),
+      SE = result$se,
+      Class = result$class,
+      n_left = sum(grp == 0L, na.rm = TRUE),
+      n_right = sum(grp == 1L, na.rm = TRUE),
       purification_iterations = result$purification_iterations
     )
   })
   names(per_node) <- as.character(inner_ids)
 
   list(
-    es_method    = es_method,
+    es_method = es_method,
     purification = purification,
-    p_adj        = p_adj,
-    thresholds   = thresholds,
-    alpha        = alpha,
-    nodes        = per_node,
-    n_splits     = length(per_node)
+    p_adj = p_adj,
+    thresholds = thresholds,
+    alpha = alpha,
+    nodes = per_node,
+    n_splits = length(per_node)
   )
 }
 
@@ -910,7 +1015,9 @@ compute_tree_effectsize <- function(tree, items, es_method, purification,
 #' @noRd
 collect_terminal_ids <- function(node) {
   kids <- partykit::kids_node(node)
-  if (is.null(kids)) return(partykit::id_node(node))
+  if (is.null(kids)) {
+    return(partykit::id_node(node))
+  }
   unlist(lapply(kids, collect_terminal_ids), use.names = FALSE)
 }
 
@@ -934,15 +1041,19 @@ collect_terminal_ids <- function(node) {
 #' @noRd
 detect_rescaled_items <- function(tree, items_mat) {
   dat_fitted <- partykit::data_party(tree)
-  fitted_id  <- dat_fitted[["(fitted)"]]
+  fitted_id <- dat_fitted[["(fitted)"]]
   terminal_ids <- partykit::nodeids(tree, terminal = TRUE)
   item_names <- colnames(items_mat)
-  if (is.null(item_names)) item_names <- paste0("V", seq_len(ncol(items_mat)))
+  if (is.null(item_names)) {
+    item_names <- paste0("V", seq_len(ncol(items_mat)))
+  }
 
   affected_rows <- list()
   for (tid in terminal_ids) {
     rows <- which(fitted_id == tid)
-    if (length(rows) == 0L) next
+    if (length(rows) == 0L) {
+      next
+    }
     sub <- items_mat[rows, , drop = FALSE]
     item_min <- apply(sub, 2L, function(x) {
       x <- x[!is.na(x)]
@@ -952,7 +1063,7 @@ detect_rescaled_items <- function(tree, items_mat) {
     if (length(bad_items) > 0L) {
       affected_rows[[length(affected_rows) + 1L]] <- data.frame(
         NodeID = rep(tid, length(bad_items)),
-        Item   = bad_items,
+        Item = bad_items,
         stringsAsFactors = FALSE
       )
     }
@@ -960,9 +1071,12 @@ detect_rescaled_items <- function(tree, items_mat) {
 
   if (length(affected_rows) == 0L) {
     return(list(
-      per_terminal     = data.frame(NodeID = integer(), Item = character(),
-                                    stringsAsFactors = FALSE),
-      per_item         = integer(0),
+      per_terminal = data.frame(
+        NodeID = integer(),
+        Item = character(),
+        stringsAsFactors = FALSE
+      ),
+      per_item = integer(0),
       n_terminal_cells = 0L
     ))
   }
@@ -972,8 +1086,8 @@ detect_rescaled_items <- function(tree, items_mat) {
   per_item <- table(per_terminal$Item)
 
   list(
-    per_terminal     = per_terminal,
-    per_item         = stats::setNames(as.integer(per_item), names(per_item)),
+    per_terminal = per_terminal,
+    per_item = stats::setNames(as.integer(per_item), names(per_item)),
     n_terminal_cells = nrow(per_terminal)
   )
 }
@@ -985,14 +1099,23 @@ detect_rescaled_items <- function(tree, items_mat) {
 #' @keywords internal
 #' @noRd
 format_rescale_message <- function(rescale_info) {
-  pi  <- rescale_info$per_item
+  pi <- rescale_info$per_item
   T_n <- length(unique(rescale_info$per_terminal$NodeID))
   n_aff_terms <- length(unique(rescale_info$per_terminal$NodeID))
-  per_item_lines <- vapply(seq_along(pi), function(i) {
-    paste0("  - ", names(pi)[i],
-           ": rescaled in ", pi[i], " terminal node",
-           if (pi[i] != 1L) "s" else "")
-  }, character(1L))
+  per_item_lines <- vapply(
+    seq_along(pi),
+    function(i) {
+      paste0(
+        "  - ",
+        names(pi)[i],
+        ": rescaled in ",
+        pi[i],
+        " terminal node",
+        if (pi[i] != 1L) "s" else ""
+      )
+    },
+    character(1L)
+  )
 
   paste0(
     "Some items have no responses in their lowest category within ",
@@ -1023,9 +1146,13 @@ format_rescale_message <- function(rescale_info) {
 #' @keywords internal
 #' @noRd
 find_node_by_id <- function(node, id) {
-  if (partykit::id_node(node) == id) return(node)
+  if (partykit::id_node(node) == id) {
+    return(node)
+  }
   kids <- partykit::kids_node(node)
-  if (is.null(kids)) return(NULL)
+  if (is.null(kids)) {
+    return(NULL)
+  }
   for (kid in kids) {
     found <- find_node_by_id(kid, id)
     if (!is.null(found)) return(found)
@@ -1038,43 +1165,59 @@ find_node_by_id <- function(node, id) {
 #' @keywords internal
 #' @noRd
 describe_split <- function(tree, node_id) {
-  na_out <- list(variable = NA_character_, direction = NA_character_,
-                 split = NA_character_)
+  na_out <- list(
+    variable = NA_character_,
+    direction = NA_character_,
+    split = NA_character_
+  )
   nd <- find_node_by_id(partykit::node_party(tree), node_id)
-  if (is.null(nd)) return(na_out)
+  if (is.null(nd)) {
+    return(na_out)
+  }
   sp <- partykit::split_node(nd)
-  if (is.null(sp)) return(na_out)
+  if (is.null(sp)) {
+    return(na_out)
+  }
 
-  varid   <- sp$varid
+  varid <- sp$varid
   varname <- names(partykit::data_party(tree))[varid]
-  bp      <- sp$breaks
-  idx     <- sp$index
+  bp <- sp$breaks
+  idx <- sp$index
 
   if (!is.null(bp)) {
     cut_str <- signif(bp, 4)
     return(list(
-      variable  = varname,
+      variable = varname,
       direction = paste0("<= ", cut_str),
-      split     = paste0(varname, " <= ", cut_str)
+      split = paste0(varname, " <= ", cut_str)
     ))
   }
   if (!is.null(idx)) {
     var_col <- partykit::data_party(tree)[[varid]]
-    levs    <- levels(var_col)
+    levs <- levels(var_col)
     if (is.null(levs)) {
-      return(list(variable = varname, direction = "split",
-                  split = paste0(varname, ": split")))
+      return(list(
+        variable = varname,
+        direction = "split",
+        split = paste0(varname, ": split")
+      ))
     }
-    left  <- levs[idx == 1L]
+    left <- levs[idx == 1L]
     right <- levs[idx == 2L]
-    left_str  <- if (length(left)  == 1L) left
-                 else paste0("{", paste(left,  collapse = ", "), "}")
-    right_str <- if (length(right) == 1L) right
-                 else paste0("{", paste(right, collapse = ", "), "}")
+    left_str <- if (length(left) == 1L) {
+      left
+    } else {
+      paste0("{", paste(left, collapse = ", "), "}")
+    }
+    right_str <- if (length(right) == 1L) {
+      right
+    } else {
+      paste0("{", paste(right, collapse = ", "), "}")
+    }
     return(list(
-      variable  = varname,
+      variable = varname,
       direction = paste0("= ", left_str),
-      split     = paste0(varname, ": ", left_str, " vs ", right_str)
+      split = paste0(varname, ": ", left_str, " vs ", right_str)
     ))
   }
   na_out
@@ -1088,15 +1231,15 @@ describe_split <- function(tree, node_id) {
 #' @keywords internal
 #' @noRd
 one_split_mh <- function(items, group, sums, purification, alpha) {
-  keep  <- !is.na(group)
-  dat   <- as.data.frame(items[keep, , drop = FALSE])
-  grp   <- group[keep]
-  smm   <- sums[keep]
+  keep <- !is.na(group)
+  dat <- as.data.frame(items[keep, , drop = FALSE])
+  grp <- group[keep]
+  smm <- sums[keep]
 
-  res     <- difR::mantelHaenszel(data = dat, member = grp, match = smm)
-  delta   <- -2.35 * log(res$resAlpha)
-  delta_sd<- 2.35 * sqrt(res$varLambda)
-  iters   <- 0L
+  res <- difR::mantelHaenszel(data = dat, member = grp, match = smm)
+  delta <- -2.35 * log(res$resAlpha)
+  delta_sd <- 2.35 * sqrt(res$varLambda)
+  iters <- 0L
 
   if (purification == "iterative") {
     which_dif <- which(abs(delta) >= 1)
@@ -1104,20 +1247,24 @@ one_split_mh <- function(items, group, sums, purification, alpha) {
       repeat {
         iters <- iters + 1L
         pur <- purify_mh_step(dat, grp, delta)
-        delta    <- pur$delta
+        delta <- pur$delta
         delta_sd <- pur$delta_sd
-        new_dif  <- which(abs(delta) >= 1)
-        if (setequal(which_dif, new_dif) || iters >= ncol(dat)) break
+        new_dif <- which(abs(delta) >= 1)
+        if (setequal(which_dif, new_dif) || iters >= ncol(dat)) {
+          break
+        }
         which_dif <- new_dif
       }
     }
   }
 
   cls <- ets_classify(delta, delta_sd, alpha = alpha)
-  list(es                       = unname(delta),
-       se                       = unname(delta_sd),
-       class                    = cls,
-       purification_iterations  = iters)
+  list(
+    es = unname(delta),
+    se = unname(delta_sd),
+    class = cls,
+    purification_iterations = iters
+  )
 }
 
 #' One step of Holland-Thayer iterative purification for MH
@@ -1132,27 +1279,28 @@ one_split_mh <- function(items, group, sums, purification, alpha) {
 #' @keywords internal
 #' @noRd
 purify_mh_step <- function(dat, group, delta) {
-  no_dif  <- which(abs(delta) < 1)
+  no_dif <- which(abs(delta) < 1)
   dif_set <- which(abs(delta) >= 1)
 
   if (length(no_dif) < 2L) {
-    return(list(delta = delta,
-                delta_sd = rep(NA_real_, length(delta))))
+    return(list(delta = delta, delta_sd = rep(NA_real_, length(delta))))
   }
 
   base_match <- rowSums(dat[, no_dif, drop = FALSE], na.rm = TRUE)
-  res        <- difR::mantelHaenszel(data = dat, member = group,
-                                     match = base_match)
-  new_delta  <- -2.35 * log(res$resAlpha)
-  new_sd     <- 2.35 * sqrt(res$varLambda)
+  res <- difR::mantelHaenszel(data = dat, member = group, match = base_match)
+  new_delta <- -2.35 * log(res$resAlpha)
+  new_sd <- 2.35 * sqrt(res$varLambda)
 
   # Recompute DIF items adding their own score back in
   for (i in dif_set) {
-    smm  <- dat[, i] + base_match
-    res_i <- difR::mantelHaenszel(data = dat[, i, drop = FALSE],
-                                  member = group, match = smm)
+    smm <- dat[, i] + base_match
+    res_i <- difR::mantelHaenszel(
+      data = dat[, i, drop = FALSE],
+      member = group,
+      match = smm
+    )
     new_delta[i] <- -2.35 * log(res_i$resAlpha)
-    new_sd[i]    <- 2.35 * sqrt(res_i$varLambda)
+    new_sd[i] <- 2.35 * sqrt(res_i$varLambda)
   }
 
   list(delta = new_delta, delta_sd = new_sd)
@@ -1171,13 +1319,16 @@ purify_mh_step <- function(dat, group, delta) {
 ets_classify <- function(delta, delta_sd, alpha = 0.05) {
   pval_at <- function(d, sd, tau) {
     lambda <- (tau / sd)^2
-    psi    <- (d / sd)^2
+    psi <- (d / sd)^2
     1 - stats::pchisq(psi, df = 1, ncp = lambda)
   }
   p_A <- pval_at(delta, delta_sd, tau = 0)
   p_C <- pval_at(delta, delta_sd, tau = 1)
-  ifelse(abs(delta) < 1 | p_A >= alpha, "A",
-         ifelse(abs(delta) >= 1.5 & p_C < alpha, "C", "B"))
+  ifelse(
+    abs(delta) < 1 | p_A >= alpha,
+    "A",
+    ifelse(abs(delta) >= 1.5 & p_C < alpha, "C", "B")
+  )
 }
 
 #' Partial-gamma effect size for one binary split
@@ -1186,15 +1337,21 @@ ets_classify <- function(delta, delta_sd, alpha = 0.05) {
 #'
 #' @keywords internal
 #' @noRd
-one_split_pgamma <- function(items, group, purification, p_adj,
-                             thresholds, alpha) {
+one_split_pgamma <- function(
+  items,
+  group,
+  purification,
+  p_adj,
+  thresholds,
+  alpha
+) {
   keep <- !is.na(group)
-  dat  <- as.data.frame(items[keep, , drop = FALSE])
-  grp  <- group[keep]
+  dat <- as.data.frame(items[keep, , drop = FALSE])
+  grp <- group[keep]
 
-  res   <- quiet_call(iarm::partgam_DIF(dat.items = dat, dat.exo = grp))
-  gam   <- res$gamma
-  sse   <- res$se
+  res <- quiet_call(iarm::partgam_DIF(dat.items = dat, dat.exo = grp))
+  gam <- res$gamma
+  sse <- res$se
   iters <- 0L
 
   if (purification == "iterative") {
@@ -1203,22 +1360,33 @@ one_split_pgamma <- function(items, group, purification, p_adj,
       repeat {
         iters <- iters + 1L
         pur <- purify_pgamma_step(dat, grp, gam, sse, thresholds)
-        if (is.null(pur)) break
+        if (is.null(pur)) {
+          break
+        }
         gam <- pur$gamma
         sse <- pur$se
         new_dif <- which(abs(gam) >= thresholds[1L])
-        if (setequal(which_dif, new_dif) || iters >= ncol(dat)) break
+        if (setequal(which_dif, new_dif) || iters >= ncol(dat)) {
+          break
+        }
         which_dif <- new_dif
       }
     }
   }
 
-  cls <- pgamma_classify(gam, sse, p_adj = p_adj,
-                         thresholds = thresholds, alpha = alpha)
-  list(es                      = unname(gam),
-       se                      = unname(sse),
-       class                   = cls,
-       purification_iterations = iters)
+  cls <- pgamma_classify(
+    gam,
+    sse,
+    p_adj = p_adj,
+    thresholds = thresholds,
+    alpha = alpha
+  )
+  list(
+    es = unname(gam),
+    se = unname(sse),
+    class = cls,
+    purification_iterations = iters
+  )
 }
 
 #' One step of iterative purification for partial gamma
@@ -1229,9 +1397,11 @@ one_split_pgamma <- function(items, group, purification, p_adj,
 #' @keywords internal
 #' @noRd
 purify_pgamma_step <- function(dat, group, gam, sse, thresholds) {
-  no_dif  <- which(abs(gam) < thresholds[1L])
+  no_dif <- which(abs(gam) < thresholds[1L])
   dif_set <- which(abs(gam) >= thresholds[1L])
-  if (length(no_dif) < 2L) return(NULL)
+  if (length(no_dif) < 2L) {
+    return(NULL)
+  }
 
   new_gam <- gam
   new_sse <- sse
@@ -1244,7 +1414,7 @@ purify_pgamma_step <- function(dat, group, gam, sse, thresholds) {
 
   for (i in dif_set) {
     cols <- sort(unique(c(i, no_dif)))
-    pos  <- match(i, cols)
+    pos <- match(i, cols)
     res_i <- quiet_call(iarm::partgam_DIF(dat[, cols, drop = FALSE], group))
     new_gam[i] <- res_i$gamma[pos]
     new_sse[i] <- res_i$se[pos]
@@ -1261,22 +1431,19 @@ purify_pgamma_step <- function(dat, group, gam, sse, thresholds) {
 #' @noRd
 pgamma_classify <- function(gam, sse, p_adj, thresholds, alpha = 0.05) {
   z_A <- gam / sse
-  p_A <- ifelse(gam > 0,
-                2 * (1 - stats::pnorm(z_A)),
-                2 * stats::pnorm(z_A))
-  shifted <- ifelse(gam >= 0,
-                    gam - thresholds[1L],
-                    gam + thresholds[1L])
+  p_A <- ifelse(gam > 0, 2 * (1 - stats::pnorm(z_A)), 2 * stats::pnorm(z_A))
+  shifted <- ifelse(gam >= 0, gam - thresholds[1L], gam + thresholds[1L])
   z_C <- shifted / sse
-  p_C <- ifelse(shifted > 0,
-                2 * (1 - stats::pnorm(z_C)),
-                2 * stats::pnorm(z_C))
+  p_C <- ifelse(shifted > 0, 2 * (1 - stats::pnorm(z_C)), 2 * stats::pnorm(z_C))
   if (p_adj != "none") {
     p_A <- stats::p.adjust(p_A, method = p_adj)
     p_C <- stats::p.adjust(p_C, method = p_adj)
   }
-  ifelse(abs(gam) < thresholds[1L] | p_A >= alpha, "A",
-         ifelse(abs(gam) > thresholds[2L] & p_C < alpha, "C", "B"))
+  ifelse(
+    abs(gam) < thresholds[1L] | p_A >= alpha,
+    "A",
+    ifelse(abs(gam) > thresholds[2L] & p_C < alpha, "C", "B")
+  )
 }
 
 #' Convert per-node effect-size results to a tidy data.frame
@@ -1285,11 +1452,26 @@ pgamma_classify <- function(gam, sse, p_adj, thresholds, alpha = 0.05) {
 #'
 #' @keywords internal
 #' @noRd
-effectsize_to_dataframe <- function(effect_info, item_names, tree = NULL,
-                                    rescaled_terminals = NULL) {
-  empty_cols <- c("NodeID","Split","Variable","Direction","Item",
-                  "EffectSize","SE","Class","Flagged","Rescaled",
-                  "n_left","n_right")
+effectsize_to_dataframe <- function(
+  effect_info,
+  item_names,
+  tree = NULL,
+  rescaled_terminals = NULL
+) {
+  empty_cols <- c(
+    "NodeID",
+    "Split",
+    "Variable",
+    "Direction",
+    "Item",
+    "EffectSize",
+    "SE",
+    "Class",
+    "Flagged",
+    "Rescaled",
+    "n_left",
+    "n_right"
+  )
   if (effect_info$n_splits == 0L) {
     out <- data.frame(matrix(ncol = length(empty_cols), nrow = 0L))
     names(out) <- empty_cols
@@ -1303,8 +1485,11 @@ effectsize_to_dataframe <- function(effect_info, item_names, tree = NULL,
     # in any terminal node descended from EITHER child of this inner
     # node. Computed only when we have the tree + per-terminal table.
     rescaled <- rep(FALSE, n_items)
-    if (!is.null(tree) && !is.null(rescaled_terminals) &&
-        nrow(rescaled_terminals) > 0L) {
+    if (
+      !is.null(tree) &&
+        !is.null(rescaled_terminals) &&
+        nrow(rescaled_terminals) > 0L
+    ) {
       nd_obj <- find_node_by_id(partykit::node_party(tree), nd$NodeID)
       if (!is.null(nd_obj)) {
         descend_terms <- collect_terminal_ids(nd_obj)
@@ -1316,18 +1501,18 @@ effectsize_to_dataframe <- function(effect_info, item_names, tree = NULL,
     }
 
     data.frame(
-      NodeID     = rep(nd$NodeID, n_items),
-      Split      = rep(nd$Split, n_items),
-      Variable   = rep(nd$Variable, n_items),
-      Direction  = rep(nd$Direction, n_items),
-      Item       = item_names,
+      NodeID = rep(nd$NodeID, n_items),
+      Split = rep(nd$Split, n_items),
+      Variable = rep(nd$Variable, n_items),
+      Direction = rep(nd$Direction, n_items),
+      Item = item_names,
       EffectSize = round(nd$EffectSize, 4),
-      SE         = round(nd$SE, 4),
-      Class      = nd$Class,
-      Flagged    = nd$Class %in% c("B", "C"),
-      Rescaled   = rescaled,
-      n_left     = rep(nd$n_left, n_items),
-      n_right    = rep(nd$n_right, n_items),
+      SE = round(nd$SE, 4),
+      Class = nd$Class,
+      Flagged = nd$Class %in% c("B", "C"),
+      Rescaled = rescaled,
+      n_left = rep(nd$n_left, n_items),
+      n_right = rep(nd$n_right, n_items),
       stringsAsFactors = FALSE
     )
   })
@@ -1344,42 +1529,59 @@ effectsize_to_dataframe <- function(effect_info, item_names, tree = NULL,
 #'
 #' @keywords internal
 #' @noRd
-render_effectsize_kable <- function(df, n_persons, n_items, es_method,
-                                    purification, p_adj, thresholds,
-                                    alpha, is_polytomous, has_stability,
-                                    n_rescaled_items = 0L) {
-
+render_effectsize_kable <- function(
+  df,
+  n_persons,
+  n_items,
+  es_method,
+  purification,
+  p_adj,
+  thresholds,
+  alpha,
+  is_polytomous,
+  has_stability,
+  n_rescaled_items = 0L,
+  n_total = n_persons
+) {
   caption <- build_es_caption(
-    df               = df,
-    n_persons        = n_persons,
-    n_items          = n_items,
-    es_method        = es_method,
-    purification     = purification,
-    p_adj            = p_adj,
-    thresholds       = thresholds,
-    alpha            = alpha,
-    is_polytomous    = is_polytomous,
-    has_stability    = has_stability,
+    df = df,
+    n_persons = n_persons,
+    n_total = n_total,
+    n_items = n_items,
+    es_method = es_method,
+    purification = purification,
+    p_adj = p_adj,
+    thresholds = thresholds,
+    alpha = alpha,
+    is_polytomous = is_polytomous,
+    has_stability = has_stability,
     n_rescaled_items = n_rescaled_items
   )
 
   if (nrow(df) == 0L) {
-    empty <- data.frame(Note = "No splits -- model is invariant across covariates.",
-                        stringsAsFactors = FALSE)
-    return(knitr::kable(empty, format = "pipe", row.names = FALSE,
-                        caption = caption))
+    empty <- data.frame(
+      Note = "No splits -- model is invariant across covariates.",
+      stringsAsFactors = FALSE
+    )
+    return(knitr::kable(
+      empty,
+      format = "pipe",
+      row.names = FALSE,
+      caption = caption
+    ))
   }
 
   display <- df
-  flag    <- isTRUE_logical(display$Flagged)
+  flag <- isTRUE_logical(display$Flagged)
   display$Flagged <- ifelse(flag, "yes", "no")
   body_cols <- c("Item", "EffectSize", "SE", "Class", "Flagged")
   if (any(flag)) {
     for (cc in body_cols) {
       col <- display[[cc]]
-      if (is.numeric(col)) col <- format(col, nsmall = 3, trim = TRUE)
-      display[[cc]] <- ifelse(flag, paste0("**", col, "**"),
-                              as.character(col))
+      if (is.numeric(col)) {
+        col <- format(col, nsmall = 3, trim = TRUE)
+      }
+      display[[cc]] <- ifelse(flag, paste0("**", col, "**"), as.character(col))
     }
   }
 
@@ -1390,9 +1592,19 @@ render_effectsize_kable <- function(df, n_persons, n_items, es_method,
   parts <- lapply(ids, function(nid) {
     raw <- df[df$NodeID == nid, , drop = FALSE]
     split_lbl <- raw$Split[1L]
-    n_l <- raw$n_left[1L]; n_r <- raw$n_right[1L]
-    header <- paste0("Node ", nid, " -- ", split_lbl,
-                     "  (n left = ", n_l, ", n right = ", n_r, ")")
+    n_l <- raw$n_left[1L]
+    n_r <- raw$n_right[1L]
+    header <- paste0(
+      "Node ",
+      nid,
+      " -- ",
+      split_lbl,
+      "  (n left = ",
+      n_l,
+      ", n right = ",
+      n_r,
+      ")"
+    )
     body <- display[display$NodeID == nid, body_cols, drop = FALSE]
     list(header = header, body = body)
   })
@@ -1400,7 +1612,7 @@ render_effectsize_kable <- function(df, n_persons, n_items, es_method,
   # Concatenate as a single kable by interleaving header lines using
   # pipe-format manually.
   header_line <- "| Item | EffectSize | SE | Class | Flagged |"
-  divider     <- "|:-----|-----------:|---:|:------|:--------|"
+  divider <- "|:-----|-----------:|---:|:------|:--------|"
 
   body_chunks <- lapply(parts, function(p) {
     bl <- knitr::kable(p$body, format = "pipe", row.names = FALSE)
@@ -1415,53 +1627,103 @@ render_effectsize_kable <- function(df, n_persons, n_items, es_method,
     c(paste0("**", p$header, "**"), "", header_line, divider, data_lines, "")
   })
 
-  out_lines <- c(unlist(body_chunks, use.names = FALSE),
-                 "", paste0(": ", caption))
+  out_lines <- c(
+    unlist(body_chunks, use.names = FALSE),
+    "",
+    paste0(": ", caption)
+  )
 
-  structure(out_lines,
-            format = "pipe",
-            class  = "knitr_kable")
+  structure(out_lines, format = "pipe", class = "knitr_kable")
 }
 
 #' Build the caption string for the effect-size kable
 #'
 #' @keywords internal
 #' @noRd
-build_es_caption <- function(df, n_persons, n_items, es_method,
-                             purification, p_adj, thresholds, alpha,
-                             is_polytomous, has_stability,
-                             n_rescaled_items = 0L) {
+build_es_caption <- function(
+  df,
+  n_persons,
+  n_items,
+  es_method,
+  purification,
+  p_adj,
+  thresholds,
+  alpha,
+  is_polytomous,
+  has_stability,
+  n_rescaled_items = 0L,
+  n_total = n_persons
+) {
   model_name <- if (is_polytomous) "Partial Credit Tree" else "Rasch Tree"
-  es_name    <- if (es_method == "MH")
-                  "Mantel-Haenszel effect size (ETS Delta scale)"
-                else
-                  paste0("partial gamma (B/C thresholds = ",
-                         thresholds[1L], " / ", thresholds[2L], ")")
-  pur_part   <- if (purification == "iterative")
-                  " Iterative purification applied (Bjorner et al. 1998)."
-                else ""
-  padj_part  <- if (es_method == "pgamma" && p_adj != "none")
-                  paste0(" p-values adjusted by ", p_adj, ".")
-                else ""
-  flag_part  <- if (nrow(df) > 0L)
-                  paste0(" Flagged (Class B or C): ",
-                         sum(df$Flagged), " / ", nrow(df),
-                         " (item x split combinations).",
-                         " **Bold** rows are flagged.")
-                else ""
-  stab_part  <- if (has_stability)
-                  " Stability summary attached as `attr(result, \"stability\")`."
-                else ""
-  rescale_part <- if (n_rescaled_items > 0L)
-                    paste0(" ", n_rescaled_items,
-                           " item(s) were rescaled in at least one terminal ",
-                           "node -- see `attr(result, \"rescaled_terminal_items\")`. ",
-                           "Effect sizes are unaffected.")
-                  else ""
+  es_name <- if (es_method == "MH") {
+    "Mantel-Haenszel effect size (ETS Delta scale)"
+  } else {
+    paste0(
+      "partial gamma (B/C thresholds = ",
+      thresholds[1L],
+      " / ",
+      thresholds[2L],
+      ")"
+    )
+  }
+  pur_part <- if (purification == "iterative") {
+    " Iterative purification applied (Bjorner et al. 1998)."
+  } else {
+    ""
+  }
+  padj_part <- if (es_method == "pgamma" && p_adj != "none") {
+    paste0(" p-values adjusted by ", p_adj, ".")
+  } else {
+    ""
+  }
+  flag_part <- if (nrow(df) > 0L) {
+    paste0(
+      " Flagged (Class B or C): ",
+      sum(df$Flagged),
+      " / ",
+      nrow(df),
+      " (item x split combinations).",
+      " **Bold** rows are flagged."
+    )
+  } else {
+    ""
+  }
+  stab_part <- if (has_stability) {
+    " Stability summary attached as `attr(result, \"stability\")`."
+  } else {
+    ""
+  }
+  rescale_part <- if (n_rescaled_items > 0L) {
+    paste0(
+      " ",
+      n_rescaled_items,
+      " item(s) were rescaled in at least one terminal ",
+      "node -- see `attr(result, \"rescaled_terminal_items\")`. ",
+      "Effect sizes are unaffected."
+    )
+  } else {
+    ""
+  }
   paste0(
-    model_name, " (n = ", n_persons, " persons, ", n_items, " items). ",
-    "Effect size: ", es_name, ". alpha = ", alpha, ".",
-    pur_part, padj_part, flag_part, stab_part, rescale_part
+    model_name,
+    " (",
+    n_items,
+    " items). ",
+    .n_caption(
+      n_persons,
+      n_total,
+      if (n_persons < n_total) "complete DIF covariates" else character()
+    ),
+    ". Effect size: ",
+    es_name,
+    ". alpha = ",
+    alpha,
+    ".",
+    pur_part,
+    padj_part,
+    flag_part,
+    stab_part,
+    rescale_part
   )
 }
 
@@ -1470,7 +1732,9 @@ build_es_caption <- function(df, n_persons, n_items, es_method,
 #' @keywords internal
 #' @noRd
 isTRUE_logical <- function(x) {
-  if (is.logical(x)) return(!is.na(x) & x)
+  if (is.logical(x)) {
+    return(!is.na(x) & x)
+  }
   vapply(x, isTRUE, logical(1L))
 }
 
@@ -1486,15 +1750,15 @@ stabletree_summary_df <- function(stb, covariates) {
   vsel <- stb$vs
   if (is.null(vsel)) {
     out <- data.frame(
-      Variable           = character(),
-      Type               = character(),
-      Selected_orig      = logical(),
+      Variable = character(),
+      Type = character(),
+      Selected_orig = logical(),
       Selection_freq_pct = numeric(),
-      Cutpoint_mean      = numeric(),
-      Cutpoint_sd        = numeric(),
+      Cutpoint_mean = numeric(),
+      Cutpoint_sd = numeric(),
       stringsAsFactors = FALSE
     )
-    attr(out, "B")       <- if (!is.null(stb$B)) stb$B else NA_integer_
+    attr(out, "B") <- if (!is.null(stb$B)) stb$B else NA_integer_
     attr(out, "sampler") <- "unknown"
     attr(out, "caption") <- "No variables available for stability assessment."
     return(out)
@@ -1502,57 +1766,74 @@ stabletree_summary_df <- function(stb, covariates) {
 
   vars <- colnames(vsel)
   freq <- colMeans(vsel > 0)
-  vs0  <- if (!is.null(stb$vs0)) stb$vs0[vars] > 0 else rep(NA, length(vars))
+  vs0 <- if (!is.null(stb$vs0)) stb$vs0[vars] > 0 else rep(NA, length(vars))
 
   # Per-variable cutpoint summary across resamples (numeric covariates only;
   # for factors the "cutpoint" is a level-index pair that does not have a
   # meaningful mean/SD interpretation, so we report NA).
   cp_mean <- rep(NA_real_, length(vars))
-  cp_sd   <- rep(NA_real_, length(vars))
+  cp_sd <- rep(NA_real_, length(vars))
   br_list <- stb$br
   if (!is.null(br_list)) {
     for (i in seq_along(vars)) {
       v <- vars[i]
-      if (!is.numeric(covariates[[v]]) || is.factor(covariates[[v]])) next
+      if (!is.numeric(covariates[[v]]) || is.factor(covariates[[v]])) {
+        next
+      }
       brks <- br_list[[v]]
-      if (is.null(brks) || length(brks) == 0L) next
+      if (is.null(brks) || length(brks) == 0L) {
+        next
+      }
       if (is.list(brks)) {
-        all_breaks <- unlist(lapply(brks, function(rec) {
-          if (is.list(rec) && !is.null(rec$breaks) && is.numeric(rec$breaks)) {
-            as.numeric(rec$breaks)
-          } else if (is.numeric(rec)) {
-            as.numeric(rec)
-          } else {
-            numeric(0)
-          }
-        }), use.names = FALSE)
+        all_breaks <- unlist(
+          lapply(brks, function(rec) {
+            if (
+              is.list(rec) && !is.null(rec$breaks) && is.numeric(rec$breaks)
+            ) {
+              as.numeric(rec$breaks)
+            } else if (is.numeric(rec)) {
+              as.numeric(rec)
+            } else {
+              numeric(0)
+            }
+          }),
+          use.names = FALSE
+        )
       } else if (is.numeric(brks)) {
         all_breaks <- as.numeric(brks)
       } else {
         all_breaks <- numeric(0)
       }
       all_breaks <- all_breaks[is.finite(all_breaks)]
-      if (length(all_breaks) > 0L) cp_mean[i] <- mean(all_breaks)
-      if (length(all_breaks) >= 2L) cp_sd[i]   <- stats::sd(all_breaks)
+      if (length(all_breaks) > 0L) {
+        cp_mean[i] <- mean(all_breaks)
+      }
+      if (length(all_breaks) >= 2L) cp_sd[i] <- stats::sd(all_breaks)
     }
   }
 
   type_of <- function(v) {
     col <- covariates[[v]]
-    if (is.ordered(col)) "ordered"
-    else if (is.factor(col)) "factor"
-    else if (is.logical(col)) "logical"
-    else if (is.numeric(col)) "numeric"
-    else class(col)[1L]
+    if (is.ordered(col)) {
+      "ordered"
+    } else if (is.factor(col)) {
+      "factor"
+    } else if (is.logical(col)) {
+      "logical"
+    } else if (is.numeric(col)) {
+      "numeric"
+    } else {
+      class(col)[1L]
+    }
   }
 
   out <- data.frame(
-    Variable           = vars,
-    Type               = vapply(vars, type_of, character(1L)),
-    Selected_orig      = unname(vs0),
+    Variable = vars,
+    Type = vapply(vars, type_of, character(1L)),
+    Selected_orig = unname(vs0),
     Selection_freq_pct = round(unname(freq) * 100, 1),
-    Cutpoint_mean      = round(cp_mean, 4),
-    Cutpoint_sd        = round(cp_sd, 4),
+    Cutpoint_mean = round(cp_mean, 4),
+    Cutpoint_sd = round(cp_sd, 4),
     stringsAsFactors = FALSE,
     row.names = NULL
   )
@@ -1560,13 +1841,18 @@ stabletree_summary_df <- function(stb, covariates) {
   out <- out[order(!out$Selected_orig, -out$Selection_freq_pct), , drop = FALSE]
   rownames(out) <- NULL
 
-  attr(out, "B")       <- nrow(vsel)
-  attr(out, "sampler") <- if (!is.null(stb$sampler))
-                            attr(stb$sampler, "method") %||% "subsampling"
-                          else "subsampling"
+  attr(out, "B") <- nrow(vsel)
+  attr(out, "sampler") <- if (!is.null(stb$sampler)) {
+    attr(stb$sampler, "method") %||% "subsampling"
+  } else {
+    "subsampling"
+  }
   attr(out, "caption") <- paste0(
-    "Tree-stability assessment across ", nrow(vsel),
-    " resamples (", attr(out, "sampler"), "). ",
+    "Tree-stability assessment across ",
+    nrow(vsel),
+    " resamples (",
+    attr(out, "sampler"),
+    "). ",
     "Selection_freq_pct: percent of resamples in which the covariate was ",
     "selected at any split. Selected_orig: TRUE if selected in the original tree. ",
     "Cutpoint_mean / Cutpoint_sd: mean and SD of the chosen cutpoint across ",
@@ -1581,10 +1867,11 @@ stabletree_summary_df <- function(stb, covariates) {
 #' @keywords internal
 #' @noRd
 stabletree_summary_kable <- function(stab_df) {
-  if (nrow(stab_df) == 0L) return(NULL)
+  if (nrow(stab_df) == 0L) {
+    return(NULL)
+  }
   cap <- attr(stab_df, "caption")
-  knitr::kable(stab_df, format = "pipe", row.names = FALSE,
-               caption = cap)
+  knitr::kable(stab_df, format = "pipe", row.names = FALSE, caption = cap)
 }
 
 # null-coalesce helper
@@ -1597,8 +1884,11 @@ stabletree_summary_kable <- function(stab_df) {
 #' @keywords internal
 #' @noRd
 quiet_call <- function(expr) {
-  utils::capture.output({
-    val <- suppressMessages(suppressWarnings(force(expr)))
-  }, file = nullfile())
+  utils::capture.output(
+    {
+      val <- suppressMessages(suppressWarnings(force(expr)))
+    },
+    file = nullfile()
+  )
   val
 }

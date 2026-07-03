@@ -128,6 +128,12 @@ RMitemParameters <- function(
     stop("`ci_level` must be a single number in (0, 1).", call. = FALSE)
   }
 
+  data <- as.data.frame(data)
+  n_total <- nrow(data)
+  has_na <- anyNA(data)
+  data <- .drop_empty_respondents(data)
+  n_used <- nrow(data)
+
   fit <- if (estimator == "CML") {
     .rasch_fit_cml(data, se = se)
   } else {
@@ -200,7 +206,14 @@ RMitemParameters <- function(
       }
     } else {
       ""
-    }
+    },
+    " ",
+    .n_caption(
+      n_used,
+      n_total,
+      if (has_na) "incomplete responses retained" else character()
+    ),
+    "."
   )
   display <- result
   num <- vapply(display, is.numeric, logical(1))

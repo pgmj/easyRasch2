@@ -86,29 +86,53 @@
 #' RMscoreSE(sim_data, output = "dataframe")
 #'
 #' # ggplot figure
-#' RMscoreSE(sim_data, output = "ggplot")
+#' if (requireNamespace("ggplot2", quietly = TRUE)) {
+#'   RMscoreSE(sim_data, output = "ggplot")
+#' }
 #'
 #' # EAP via mirt
 #' RMscoreSE(sim_data, method = "EAP")
 #' }
-RMscoreSE <- function(data,
-                      method        = "WLE",
-                      output        = "kable",
-                      ci_multiplier = 1.96,
-                      point_size    = 3,
-                      error_width   = 0.5,
-                      theta_range   = c(-10, 10)) {
-
+RMscoreSE <- function(
+  data,
+  method = "WLE",
+  output = "kable",
+  ci_multiplier = 1.96,
+  point_size = 3,
+  error_width = 0.5,
+  theta_range = c(-10, 10)
+) {
   method <- match.arg(method, c("WLE", "EAP"))
   output <- match.arg(output, c("kable", "dataframe", "ggplot"))
 
   validate_response_data(data)
 
-  if (!is.numeric(theta_range) || length(theta_range) != 2L ||
-      theta_range[1L] >= theta_range[2L]) {
-    stop("`theta_range` must be a numeric vector of length 2 with ",
-         "theta_range[1] < theta_range[2].", call. = FALSE)
+  if (
+    !is.numeric(theta_range) ||
+      length(theta_range) != 2L ||
+      theta_range[1L] >= theta_range[2L]
+  ) {
+    stop(
+      "`theta_range` must be a numeric vector of length 2 with ",
+      "theta_range[1] < theta_range[2].",
+      call. = FALSE
+    )
   }
+
+  data <- as.data.frame(data)
+  n_total <- nrow(data)
+  has_na <- anyNA(data)
+  data <- .drop_empty_respondents(data)
+  n_used <- nrow(data)
+  n_clause <- paste0(
+    " ",
+    .n_caption(
+      n_used,
+      n_total,
+      if (has_na) "incomplete responses retained" else character()
+    ),
+    "."
+  )
 
   # --- Compute the score-to-theta table ---------------------------------------
   score_table <- if (method == "WLE") {
@@ -125,9 +149,9 @@ RMscoreSE <- function(data,
   # --- Return: kable ----------------------------------------------------------
   if (output == "kable") {
     display <- data.frame(
-      raw_score    = score_table$raw_score,
-      logit_score  = round(score_table$logit_score, 3),
-      logit_se     = round(score_table$logit_se,    3),
+      raw_score = score_table$raw_score,
+      logit_score = round(score_table$logit_score, 3),
+      logit_se = round(score_table$logit_se, 3),
       stringsAsFactors = FALSE,
       row.names = NULL
     )
@@ -136,43 +160,55 @@ RMscoreSE <- function(data,
         "Person locations via Warm's WLE (CML item parameters)."
       } else {
         "Person locations via EAPsum (MML item parameters from mirt; depends on a normal theta prior)."
-      }
+      },
+      n_clause
     )
     return(knitr::kable(
       display,
-      format    = "pipe",
+      format = "pipe",
       col.names = c("Ordinal sum score", "Logit score", "Logit std.error"),
-      caption   = caption
+      caption = caption
     ))
   }
 
   # --- Return: ggplot ---------------------------------------------------------
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Package 'ggplot2' is required for output = \"ggplot\". ",
-         "Install it with: install.packages(\"ggplot2\")", call. = FALSE)
+    stop(
+      "Package 'ggplot2' is required for output = \"ggplot\". ",
+      "Install it with: install.packages(\"ggplot2\")",
+      call. = FALSE
+    )
   }
 
   fig_df <- score_table
   fig_df$lower <- fig_df$logit_score - ci_multiplier * fig_df$logit_se
   fig_df$upper <- fig_df$logit_score + ci_multiplier * fig_df$logit_se
   # Drop boundary rows where the SE is NA so the figure stays clean
-  fig_df <- fig_df[is.finite(fig_df$logit_score) & !is.na(fig_df$logit_se), ,
-                   drop = FALSE]
+  fig_df <- fig_df[
+    is.finite(fig_df$logit_score) & !is.na(fig_df$logit_se),
+    ,
+    drop = FALSE
+  ]
 
-  ggplot2::ggplot(fig_df,
-                  ggplot2::aes(x = .data$logit_score, y = .data$raw_score)) +
+  ggplot2::ggplot(
+    fig_df,
+    ggplot2::aes(x = .data$logit_score, y = .data$raw_score)
+  ) +
     ggplot2::geom_errorbar(
       ggplot2::aes(xmin = .data$lower, xmax = .data$upper),
-      width = error_width, colour = "darkgrey",
+      width = error_width,
+      colour = "darkgrey",
       orientation = "y"
     ) +
     ggplot2::geom_point(size = point_size, shape = 18) +
     ggplot2::labs(
       x = "Logit interval score",
-      y = "Ordinal sum score"
+      y = "Ordinal sum score",
+      caption = er2_caption(trimws(n_clause))
     ) +
     ggplot2::theme_bw() +
-    er2_axis_margins()
+    er2_axis_margins() +
+    er2_plot_caption()
 }
 
 # ---------------------------------------------------------------------------
@@ -192,19 +228,23 @@ RMscoreSE <- function(data,
 #' @keywords internal
 #' @noRd
 .scoreSE_wle <- function(data, theta_range) {
-  fit       <- .rasch_fit_cml(data, se = FALSE)
-  thr_list  <- .center_thresholds(fit$thr_list)
-  steps     <- vapply(thr_list, length, integer(1))
+  fit <- .rasch_fit_cml(data, se = FALSE)
+  thr_list <- .center_thresholds(fit$thr_list)
+  steps <- vapply(thr_list, length, integer(1))
   max_score <- sum(steps)
 
-  est <- vapply(0:max_score, function(r) {
-    .theta_wle(.score_pattern(r, steps), thr_list, theta_range)
-  }, numeric(2))
+  est <- vapply(
+    0:max_score,
+    function(r) {
+      .theta_wle(.score_pattern(r, steps), thr_list, theta_range)
+    },
+    numeric(2)
+  )
 
   data.frame(
-    raw_score   = 0:max_score,
+    raw_score = 0:max_score,
     logit_score = est[1L, ],
-    logit_se    = est[2L, ],
+    logit_se = est[2L, ],
     stringsAsFactors = FALSE,
     row.names = NULL
   )
@@ -223,11 +263,11 @@ RMscoreSE <- function(data,
 #' @noRd
 .score_pattern <- function(r, steps) {
   resp <- integer(length(steps))
-  rem  <- r
+  rem <- r
   for (i in seq_along(steps)) {
-    take    <- min(steps[i], rem)
+    take <- min(steps[i], rem)
     resp[i] <- take
-    rem     <- rem - take
+    rem <- rem - take
   }
   resp
 }
@@ -244,42 +284,48 @@ RMscoreSE <- function(data,
 #' @noRd
 .scoreSE_eap <- function(data) {
   if (!requireNamespace("mirt", quietly = TRUE)) {
-    stop("Package 'mirt' is required for method = \"EAP\". ",
-         "Install it with: install.packages(\"mirt\")", call. = FALSE)
+    stop(
+      "Package 'mirt' is required for method = \"EAP\". ",
+      "Install it with: install.packages(\"mirt\")",
+      call. = FALSE
+    )
   }
 
   mirt_fit <- suppressMessages(
     mirt::mirt(
-      data       = as.data.frame(data),
-      model      = 1,
-      itemtype   = "Rasch",
-      verbose    = FALSE,
+      data = as.data.frame(data),
+      model = 1,
+      itemtype = "Rasch",
+      verbose = FALSE,
       accelerate = "squarem"
     )
   )
 
   sscores <- mirt::fscores(
     mirt_fit,
-    method         = "EAPsum",
-    full.scores    = FALSE,
+    method = "EAPsum",
+    full.scores = FALSE,
     full.scores.SE = TRUE,
-    verbose        = FALSE
+    verbose = FALSE
   )
   sscores <- as.data.frame(sscores)
 
-  raw_col   <- intersect(c("Sum.Scores", "Sum.Score"), names(sscores))[1L]
-  theta_col <- intersect(c("F1", "Theta", "EAP"),       names(sscores))[1L]
-  se_col    <- intersect(c("SE_F1", "SE", "SE_Theta"),  names(sscores))[1L]
+  raw_col <- intersect(c("Sum.Scores", "Sum.Score"), names(sscores))[1L]
+  theta_col <- intersect(c("F1", "Theta", "EAP"), names(sscores))[1L]
+  se_col <- intersect(c("SE_F1", "SE", "SE_Theta"), names(sscores))[1L]
 
   if (is.na(raw_col) || is.na(theta_col) || is.na(se_col)) {
-    stop("Unexpected mirt::fscores() output structure; cannot locate ",
-         "score / theta / SE columns.", call. = FALSE)
+    stop(
+      "Unexpected mirt::fscores() output structure; cannot locate ",
+      "score / theta / SE columns.",
+      call. = FALSE
+    )
   }
 
   data.frame(
-    raw_score   = as.integer(sscores[[raw_col]]),
+    raw_score = as.integer(sscores[[raw_col]]),
     logit_score = as.numeric(sscores[[theta_col]]),
-    logit_se    = as.numeric(sscores[[se_col]]),
+    logit_se = as.numeric(sscores[[se_col]]),
     stringsAsFactors = FALSE,
     row.names = NULL
   )

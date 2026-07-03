@@ -150,65 +150,100 @@
 #'              output = "dataframe")$pairs
 #' }
 #' }
-RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
-                       n_pairs    = NULL,
-                       p_value    = FALSE,
-                       correction = c("fwer", "fdr_bh", "fdr_by", "none"),
-                       alpha      = 0.05,
-                       estimator  = c("CML", "MML")) {
+RMlocdepQ3 <- function(
+  data,
+  cutoff = NULL,
+  output = "kable",
+  n_pairs = NULL,
+  p_value = FALSE,
+  correction = c("fwer", "fdr_bh", "fdr_by", "none"),
+  alpha = 0.05,
+  estimator = c("CML", "MML")
+) {
   # --- Input validation -------------------------------------------------------
-  cutoff_full <- NULL   # full object (carries simulated $pair_results)
+  cutoff_full <- NULL # full object (carries simulated $pair_results)
   if (!is.null(cutoff)) {
     # Accept the full RMlocdepQ3Cutoff() return list as well as a bare numeric.
-    if (is.list(cutoff) && !is.data.frame(cutoff) &&
-        "suggested_cutoff" %in% names(cutoff)) {
+    if (
+      is.list(cutoff) &&
+        !is.data.frame(cutoff) &&
+        "suggested_cutoff" %in% names(cutoff)
+    ) {
       cutoff_full <- cutoff
       cutoff <- as.numeric(cutoff$suggested_cutoff)
     }
     if (!is.numeric(cutoff) || length(cutoff) != 1L || is.na(cutoff)) {
-      stop("`cutoff` must be a single numeric value, NULL, or the list ",
-           "returned by RMlocdepQ3Cutoff().", call. = FALSE)
+      stop(
+        "`cutoff` must be a single numeric value, NULL, or the list ",
+        "returned by RMlocdepQ3Cutoff().",
+        call. = FALSE
+      )
     }
   }
 
-  output     <- match.arg(output, c("kable", "dataframe"))
+  output <- match.arg(output, c("kable", "dataframe"))
   correction <- match.arg(correction)
-  estimator  <- match.arg(estimator)
+  estimator <- match.arg(estimator)
   # The observed Q3 must use the same estimator as the simulated cut-off, so
   # the estimator stored in the cutoff object takes precedence over the arg.
-  if (!is.null(cutoff_full) && !is.null(cutoff_full$estimator) &&
-      !identical(cutoff_full$estimator, estimator)) {
-    warning("Using estimator \"", cutoff_full$estimator, "\" from the ",
-            "RMlocdepQ3Cutoff() object (overriding estimator = \"", estimator,
-            "\") so the observed Q3 matches the simulated cut-off.",
-            call. = FALSE)
+  if (
+    !is.null(cutoff_full) &&
+      !is.null(cutoff_full$estimator) &&
+      !identical(cutoff_full$estimator, estimator)
+  ) {
+    warning(
+      "Using estimator \"",
+      cutoff_full$estimator,
+      "\" from the ",
+      "RMlocdepQ3Cutoff() object (overriding estimator = \"",
+      estimator,
+      "\") so the observed Q3 matches the simulated cut-off.",
+      call. = FALSE
+    )
     estimator <- cutoff_full$estimator
   }
   if (!is.numeric(alpha) || length(alpha) != 1L || alpha <= 0 || alpha >= 1) {
     stop("`alpha` must be a single number in (0, 1).", call. = FALSE)
   }
-  if (!is.null(n_pairs) &&
-      (!is.numeric(n_pairs) || length(n_pairs) != 1L || n_pairs < 1)) {
+  if (
+    !is.null(n_pairs) &&
+      (!is.numeric(n_pairs) || length(n_pairs) != 1L || n_pairs < 1)
+  ) {
     stop("`n_pairs` must be NULL or a single positive integer.", call. = FALSE)
   }
 
   if (p_value) {
     if (is.null(cutoff_full) || is.null(cutoff_full$pair_results)) {
-      stop("`p_value = TRUE` requires the full RMlocdepQ3Cutoff() object (it ",
-           "carries the simulated per-pair distributions in $pair_results); a ",
-           "numeric cutoff or NULL is not sufficient.", call. = FALSE)
+      stop(
+        "`p_value = TRUE` requires the full RMlocdepQ3Cutoff() object (it ",
+        "carries the simulated per-pair distributions in $pair_results); a ",
+        "numeric cutoff or NULL is not sufficient.",
+        call. = FALSE
+      )
     }
-    if (!is.null(cutoff_full$actual_iterations) &&
-        cutoff_full$actual_iterations < 1000L) {
-      warning("Bootstrap p-values are based on only ",
-              cutoff_full$actual_iterations, " simulation iterations. With few ",
-              "iterations the studentised-max (FWER) correction is liberal and ",
-              "small p-values are imprecise; use iterations >= 1000 in ",
-              "RMlocdepQ3Cutoff() for reliable p-values.", call. = FALSE)
+    if (
+      !is.null(cutoff_full$actual_iterations) &&
+        cutoff_full$actual_iterations < 1000L
+    ) {
+      warning(
+        "Bootstrap p-values are based on only ",
+        cutoff_full$actual_iterations,
+        " simulation iterations. With few ",
+        "iterations the studentised-max (FWER) correction is liberal and ",
+        "small p-values are imprecise; use iterations >= 1000 in ",
+        "RMlocdepQ3Cutoff() for reliable p-values.",
+        call. = FALSE
+      )
     }
   }
 
   validate_response_data(data)
+
+  data <- as.data.frame(data)
+  n_total <- nrow(data)
+  has_na <- anyNA(data)
+  data <- .drop_empty_respondents(data)
+  n_used <- nrow(data)
 
   # The CML engine (psychotools) can choke or destabilise on sparse / zero-
   # variance response categories; warn (and point to estimator = "MML") before
@@ -228,8 +263,16 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
   mean_resid <- mean(resid_mat, na.rm = TRUE)
 
   # Matrix view (global dynamic cutoff = mean + cutoff, or raw when NULL).
-  matrix_out <- .q3_matrix_output(resid_mat, mean_resid, cutoff, output,
-                                  cutoff_full)
+  matrix_out <- .q3_matrix_output(
+    resid_mat,
+    mean_resid,
+    cutoff,
+    output,
+    cutoff_full,
+    n_used = n_used,
+    n_total = n_total,
+    has_na = has_na
+  )
 
   # NULL or bare-numeric cutoff: just the matrix (single object).
   if (is.null(cutoff_full)) {
@@ -240,8 +283,15 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
   # The Q3 tile heatmap now lives in RMlocdepQ3Plot()$matrix, so this table
   # function no longer emits a plot (consistent with the other *Cutoff/table
   # functions, which return data and leave rendering to the *Plot functions).
-  pairs_out <- .q3_pairs_table(resid_mat, cutoff_full, n_pairs, p_value,
-                               correction, alpha, output)
+  pairs_out <- .q3_pairs_table(
+    resid_mat,
+    cutoff_full,
+    n_pairs,
+    p_value,
+    correction,
+    alpha,
+    output
+  )
   list(matrix = matrix_out, pairs = pairs_out)
 }
 
@@ -261,25 +311,33 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 #' @return A `ggplot` object, or `NULL`.
 #' @keywords internal
 #' @noRd
-.q3_tile_plot <- function(resid_mat, dyn_cutoff = NULL, estimator = "CML",
-                          actual_iterations = NULL) {
+.q3_tile_plot <- function(
+  resid_mat,
+  dyn_cutoff = NULL,
+  estimator = "CML",
+  actual_iterations = NULL
+) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    message("Package 'ggplot2' is required for the Q3 heatmap ($plot); ",
-            "returning NULL. Install it with: install.packages(\"ggplot2\")")
+    message(
+      "Package 'ggplot2' is required for the Q3 heatmap ($plot); ",
+      "returning NULL. Install it with: install.packages(\"ggplot2\")"
+    )
     return(NULL)
   }
 
   items <- colnames(resid_mat)
-  if (is.null(items)) items <- as.character(seq_len(ncol(resid_mat)))
+  if (is.null(items)) {
+    items <- as.character(seq_len(ncol(resid_mat)))
+  }
   lt <- which(lower.tri(resid_mat), arr.ind = TRUE)
   df <- data.frame(
     row = factor(items[lt[, "row"]], levels = items),
     col = factor(items[lt[, "col"]], levels = items),
-    Q3  = resid_mat[lt],
+    Q3 = resid_mat[lt],
     stringsAsFactors = FALSE
   )
   df$flagged <- if (!is.null(dyn_cutoff)) df$Q3 > dyn_cutoff else FALSE
-  df$label   <- formatC(df$Q3, format = "f", digits = 2)
+  df$label <- formatC(df$Q3, format = "f", digits = 2)
 
   # Diverging fill centred on the mean off-diagonal Q3 (the value expected
   # under local independence), following RASCHplot's ggQ3star(): the neutral
@@ -292,48 +350,68 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
   # where floating-point rounding could clip it to NA (grey).
   max_dev <- ceiling(max(abs(df$Q3 - mean_resid), na.rm = TRUE) * 100) / 100
 
-  est_label <- switch(estimator,
-                      CML = "CML item / WLE person",
-                      MML = "MML item / EAP person",
-                      estimator)
+  est_label <- switch(
+    estimator,
+    CML = "CML item / WLE person",
+    MML = "MML item / EAP person",
+    estimator
+  )
   cap <- paste0(
-    "Yen's Q3 residual correlations (lower triangle; ", est_label,
+    "Yen's Q3 residual correlations (lower triangle; ",
+    est_label,
     "). Diverging fill centred on the mean off-diagonal Q3 (",
     formatC(mean_resid, format = "f", digits = 3),
     "), the value expected under local independence.",
-    if (!is.null(dyn_cutoff))
-      paste0(" Dynamic cut-off ", formatC(dyn_cutoff, format = "f", digits = 3),
-             "; ", sum(df$flagged, na.rm = TRUE),
-             " pair(s) above it outlined in black.") else "",
-    if (!is.null(actual_iterations))
+    if (!is.null(dyn_cutoff)) {
+      paste0(
+        " Dynamic cut-off ",
+        formatC(dyn_cutoff, format = "f", digits = 3),
+        "; ",
+        sum(df$flagged, na.rm = TRUE),
+        " pair(s) above it outlined in black."
+      )
+    } else {
+      ""
+    },
+    if (!is.null(actual_iterations)) {
       paste0(" Cut-off from ", actual_iterations, " simulation iterations.")
-    else ""
+    } else {
+      ""
+    }
   )
 
   p <- ggplot2::ggplot(
-    df, ggplot2::aes(x = .data$col, y = .data$row, fill = .data$Q3)
+    df,
+    ggplot2::aes(x = .data$col, y = .data$row, fill = .data$Q3)
   ) +
     ggplot2::geom_tile(color = "white", linewidth = 0.5)
   if (any(df$flagged, na.rm = TRUE)) {
     # Black outline (the RdYlBu high end is red, so a red outline would clash).
-    p <- p + ggplot2::geom_tile(
-      data = df[df$flagged %in% TRUE, , drop = FALSE],
-      color = "black", linewidth = 1.1, fill = NA, width = 0.92, height = 0.92
-    )
+    p <- p +
+      ggplot2::geom_tile(
+        data = df[df$flagged %in% TRUE, , drop = FALSE],
+        color = "black",
+        linewidth = 1.1,
+        fill = NA,
+        width = 0.92,
+        height = 0.92
+      )
   }
   p +
     ggplot2::geom_text(
-      ggplot2::aes(label = .data$label), color = "grey15", size = 3
+      ggplot2::aes(label = .data$label),
+      color = "grey15",
+      size = 3
     ) +
     # RdYlBu anchor colours, diverging about the local-independence baseline.
     # high Q3 -> red (potential local dependence), low -> blue.
     ggplot2::scale_fill_gradient2(
-      name     = "Q3",
-      low      = "#4575b4",
-      mid      = "#ffffbf",
-      high     = "#d73027",
+      name = "Q3",
+      low = "#4575b4",
+      mid = "#ffffbf",
+      high = "#d73027",
       midpoint = mean_resid,
-      limits   = mean_resid + c(-1, 1) * max_dev
+      limits = mean_resid + c(-1, 1) * max_dev
     ) +
     ggplot2::scale_x_discrete(limits = utils::head(items, -1L)) +
     ggplot2::scale_y_discrete(limits = rev(items[-1L])) +
@@ -341,7 +419,7 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
     ggplot2::labs(x = NULL, y = NULL, caption = er2_caption(cap)) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
-      panel.grid  = ggplot2::element_blank(),
+      panel.grid = ggplot2::element_blank(),
       axis.text.x = ggplot2::element_text(angle = 45, hjust = 1)
     ) +
     er2_axis_margins() +
@@ -367,24 +445,41 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 #' @return Symmetric Q3 matrix with `NA` diagonal.
 #' @keywords internal
 #' @noRd
-.q3_residual_matrix <- function(data, estimator = c("CML", "MML"),
-                                fast = FALSE) {
+.q3_residual_matrix <- function(
+  data,
+  estimator = c("CML", "MML"),
+  fast = FALSE
+) {
   estimator <- match.arg(estimator)
   if (estimator == "MML") {
     mirt_fit <- if (fast) {
-      mirt::mirt(data, model = 1, itemtype = "Rasch", verbose = FALSE,
-                 accelerate = "squarem", quadpts = 29, TOL = 0.005)
+      mirt::mirt(
+        data,
+        model = 1,
+        itemtype = "Rasch",
+        verbose = FALSE,
+        accelerate = "squarem",
+        quadpts = 29,
+        TOL = 0.005
+      )
     } else {
-      mirt::mirt(data, model = 1, itemtype = "Rasch", verbose = FALSE,
-                 accelerate = "squarem")
+      mirt::mirt(
+        data,
+        model = 1,
+        itemtype = "Rasch",
+        verbose = FALSE,
+        accelerate = "squarem"
+      )
     }
     m <- mirt::residuals(mirt_fit, type = "Q3", digits = 4, verbose = FALSE)
     diag(m) <- NA
     return(m)
   }
   # CML/WLE: Q3 is the column-wise correlation of standardized residuals.
-  m <- stats::cor(.rasch_std_residuals(data, method = "WLE"),
-                  use = "pairwise.complete.obs")
+  m <- stats::cor(
+    .rasch_std_residuals(data, method = "WLE"),
+    use = "pairwise.complete.obs"
+  )
   diag(m) <- NA
   m
 }
@@ -398,8 +493,16 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 #' @param cutoff_full Optional full cutoff object, used to enrich the caption.
 #' @keywords internal
 #' @noRd
-.q3_matrix_output <- function(resid_mat, mean_resid, cutoff, output,
-                              cutoff_full = NULL) {
+.q3_matrix_output <- function(
+  resid_mat,
+  mean_resid,
+  cutoff,
+  output,
+  cutoff_full = NULL,
+  n_used = NULL,
+  n_total = NULL,
+  has_na = FALSE
+) {
   resid_df <- as.data.frame(resid_mat)
   resid_df[upper.tri(resid_df)] <- NA
   diag(resid_df) <- NA
@@ -407,7 +510,9 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
   if (!is.null(cutoff)) {
     dyn_cutoff <- mean_resid + cutoff
     resid_df$above_cutoff <- apply(
-      resid_df, 1L, function(row) any(row > dyn_cutoff, na.rm = TRUE)
+      resid_df,
+      1L,
+      function(row) any(row > dyn_cutoff, na.rm = TRUE)
     )
   }
 
@@ -415,21 +520,46 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
     return(resid_df)
   }
 
+  n_clause <- if (!is.null(n_used) && !is.null(n_total)) {
+    paste0(
+      " ",
+      .n_caption(
+        n_used,
+        n_total,
+        if (has_na) "incomplete responses retained" else character()
+      ),
+      "."
+    )
+  } else {
+    ""
+  }
   if (!is.null(cutoff)) {
     caption_text <- paste0(
-      "Dynamic cut-off: ", round(dyn_cutoff, 3),
-      " (mean Q3 ", round(mean_resid, 3), " + ", round(cutoff, 3), ").",
+      "Dynamic cut-off: ",
+      round(dyn_cutoff, 3),
+      " (mean Q3 ",
+      round(mean_resid, 3),
+      " + ",
+      round(cutoff, 3),
+      ").",
       if (!is.null(cutoff_full)) {
-        paste0(" Global simulation cutoff (99th pctl of max-mean Q3) from ",
-               cutoff_full$actual_iterations, " iterations.")
-      } else "",
+        paste0(
+          " Global simulation cutoff (99th pctl of max-mean Q3) from ",
+          cutoff_full$actual_iterations,
+          " iterations."
+        )
+      } else {
+        ""
+      },
       " Correlations exceeding the cut-off may indicate local dependence; ",
-      "see the per-pair table for detail."
+      "see the per-pair table for detail.",
+      n_clause
     )
   } else {
     caption_text <- paste0(
       "Raw Q3 residual correlations (lower triangle). Use RMlocdepQ3Cutoff() ",
-      "to derive a cutoff."
+      "to derive a cutoff.",
+      n_clause
     )
   }
 
@@ -467,24 +597,31 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 #' @return A per-pair table (kable or data.frame).
 #' @keywords internal
 #' @noRd
-.q3_pairs_table <- function(resid_mat, cutoff_full, n_pairs, p_value,
-                            correction, alpha, output) {
-  pc <- cutoff_full$pair_cutoffs                 # Item1, Item2, Q3_low, Q3_high
-  pr <- cutoff_full$pair_results                 # Item1, Item2, Q3, iteration
+.q3_pairs_table <- function(
+  resid_mat,
+  cutoff_full,
+  n_pairs,
+  p_value,
+  correction,
+  alpha,
+  output
+) {
+  pc <- cutoff_full$pair_cutoffs # Item1, Item2, Q3_low, Q3_high
+  pr <- cutoff_full$pair_results # Item1, Item2, Q3, iteration
   pr$key <- paste(pr$Item1, pr$Item2, sep = "___")
-  keys   <- paste(pc$Item1, pc$Item2, sep = "___")
+  keys <- paste(pc$Item1, pc$Item2, sep = "___")
 
   observed <- mapply(function(a, b) resid_mat[a, b], pc$Item1, pc$Item2)
-  median_q3 <- tapply(pr$Q3, pr$key, stats::median)[keys]   # expected (sort/dir)
-  low  <- pc$Q3_low
+  median_q3 <- tapply(pr$Q3, pr$key, stats::median)[keys] # expected (sort/dir)
+  low <- pc$Q3_low
   high <- pc$Q3_high
 
   tbl <- data.frame(
-    Item1    = pc$Item1,
-    Item2    = pc$Item2,
+    Item1 = pc$Item1,
+    Item2 = pc$Item2,
     Observed = round(as.numeric(observed), 3),
-    Low      = round(as.numeric(low), 3),
-    High     = round(as.numeric(high), 3),
+    Low = round(as.numeric(low), 3),
+    High = round(as.numeric(high), 3),
     stringsAsFactors = FALSE,
     row.names = NULL
   )
@@ -492,19 +629,26 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
   if (p_value) {
     sim_mat <- tapply(pr$Q3, list(pr$iteration, pr$key), function(x) x[1L])
     obs_named <- stats::setNames(as.numeric(observed), keys)
-    pv  <- .bootstrap_pvalues(obs_named, sim_mat, correction = correction,
-                              tail = "upper")
+    pv <- .bootstrap_pvalues(
+      obs_named,
+      sim_mat,
+      correction = correction,
+      tail = "upper"
+    )
     idx <- match(keys, pv$name)
-    tbl$p_q3    <- round(pv$p[idx],    4)
+    tbl$p_q3 <- round(pv$p[idx], 4)
     tbl$padj_q3 <- round(pv$padj[idx], 4)
-    is_flagged  <- !is.na(tbl$padj_q3) & tbl$padj_q3 < alpha
+    is_flagged <- !is.na(tbl$padj_q3) & tbl$padj_q3 < alpha
   } else {
-    is_flagged  <- observed > high | observed < low
+    is_flagged <- observed > high | observed < low
   }
 
   # Direction relative to the per-pair simulated median.
-  tbl$Flagged <- ifelse(!is_flagged, "",
-                        ifelse(observed > median_q3, "above", "below"))
+  tbl$Flagged <- ifelse(
+    !is_flagged,
+    "",
+    ifelse(observed > median_q3, "above", "below")
+  )
 
   # Sort by absolute departure from expected, then keep the top n_pairs.
   ord <- order(abs(observed - median_q3), decreasing = TRUE)
@@ -514,33 +658,57 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
     tbl <- tbl[seq_len(min(as.integer(n_pairs), nrow(tbl))), , drop = FALSE]
   }
 
-  if (output == "dataframe") return(tbl)
+  if (output == "dataframe") {
+    return(tbl)
+  }
 
   width_pct <- round(100 * cutoff_full$hdci_width, 1)
   caption <- paste0(
     "Q3 by item pair, sorted by departure from the expected range. ",
-    "Expected range = ", width_pct, "% interval of the simulated Q3 per pair (",
-    cutoff_full$actual_iterations, " iterations). Flagged: above = Q3 above ",
+    "Expected range = ",
+    width_pct,
+    "% interval of the simulated Q3 per pair (",
+    cutoff_full$actual_iterations,
+    " iterations). Flagged: above = Q3 above ",
     "the upper bound (local dependence); below = below the lower bound."
   )
   if (p_value) {
-    corr_label <- switch(
-      correction,
-      fwer   = "Westfall-Young step-down (FWER)",
-      fdr_bh = "Benjamini-Hochberg (FDR)",
-      fdr_by = "Benjamini-Yekutieli (FDR)",
-      none   = "uncorrected"
+    corr_label <- .correction_label(correction)
+    caption <- paste0(
+      caption,
+      " p_q3/padj_q3: one-sided bootstrap p-values, ",
+      corr_label,
+      "; flagged at padj < ",
+      alpha,
+      "."
     )
-    caption <- paste0(caption, " p_q3/padj_q3: one-sided bootstrap p-values, ",
-                      corr_label, "; flagged at padj < ", alpha, ".")
-    col.names <- c("Item 1", "Item 2", "Observed Q3", "Exp. low", "Exp. high",
-                   "p", "p (adj)", "Flagged")
+    col.names <- c(
+      "Item 1",
+      "Item 2",
+      "Observed Q3",
+      "Exp. low",
+      "Exp. high",
+      "p",
+      "p (adj)",
+      "Flagged"
+    )
   } else {
-    col.names <- c("Item 1", "Item 2", "Observed Q3", "Exp. low", "Exp. high",
-                   "Flagged")
+    col.names <- c(
+      "Item 1",
+      "Item 2",
+      "Observed Q3",
+      "Exp. low",
+      "Exp. high",
+      "Flagged"
+    )
   }
-  knitr::kable(tbl, format = "pipe", col.names = col.names, caption = caption,
-               row.names = FALSE)
+  knitr::kable(
+    tbl,
+    format = "pipe",
+    col.names = col.names,
+    caption = caption,
+    row.names = FALSE
+  )
 }
 
 #' Simulation-Based \eqn{Q_3} Cutoff Determination
@@ -599,6 +767,11 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 #'     the method specified by `cutoff_method`.}
 #'   \item{`actual_iterations`}{Number of successful iterations.}
 #'   \item{`sample_n`}{Number of persons in the original data.}
+#'   \item{`sample_n_total`}{Equal to `sample_n`: no respondents are dropped
+#'     (incomplete responses are retained). Stored for consistency with the
+#'     other `*Cutoff()` objects.}
+#'   \item{`sample_has_na`}{Logical. Whether the data contained any missing
+#'     values.}
 #'   \item{`sample_summary`}{Summary statistics of estimated person parameters.}
 #'   \item{`item_names`}{Character vector of item names from `data`.}
 #'   \item{`max_diff`, `sd_diff`}{Max and SD of the `diff` distribution.}
@@ -653,15 +826,22 @@ RMlocdepQ3 <- function(data, cutoff = NULL, output = "kable",
 #'   RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
 #' }
 #' }
-RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
-                              n_cores = NULL, verbose = FALSE, seed = NULL,
-                              cutoff_method = "hdci", hdci_width = 0.99,
-                              estimator = c("CML", "MML"),
-                              dgp = c("resample", "conditional")) {
+RMlocdepQ3Cutoff <- function(
+  data,
+  iterations = 500,
+  parallel = TRUE,
+  n_cores = NULL,
+  verbose = FALSE,
+  seed = NULL,
+  cutoff_method = "hdci",
+  hdci_width = 0.99,
+  estimator = c("CML", "MML"),
+  dgp = c("resample", "conditional")
+) {
   validate_response_data(data)
 
-  estimator     <- match.arg(estimator)
-  dgp           <- match.arg(dgp)
+  estimator <- match.arg(estimator)
+  dgp <- match.arg(dgp)
   cutoff_method <- match.arg(cutoff_method, c("hdci", "quantile"))
   if (cutoff_method == "hdci" && !requireNamespace("ggdist", quietly = TRUE)) {
     stop(
@@ -671,15 +851,22 @@ RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
       call. = FALSE
     )
   }
-  if (!is.numeric(hdci_width) || length(hdci_width) != 1L ||
-      !is.finite(hdci_width) || hdci_width <= 0 || hdci_width >= 1) {
+  if (
+    !is.numeric(hdci_width) ||
+      length(hdci_width) != 1L ||
+      !is.finite(hdci_width) ||
+      hdci_width <= 0 ||
+      hdci_width >= 1
+  ) {
     stop("`hdci_width` must be a single number in (0, 1).", call. = FALSE)
   }
 
   use_parallel <- parallel && requireNamespace("mirai", quietly = TRUE)
 
   if (parallel && !use_parallel) {
-    message("Install 'mirai' package for parallel processing: install.packages(\"mirai\")")
+    message(
+      "Install 'mirai' package for parallel processing: install.packages(\"mirai\")"
+    )
     message("Running sequentially...")
   }
 
@@ -713,6 +900,12 @@ RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
   sample_n <- nrow(data_mat)
   is_polytomous <- max(data_mat, na.rm = TRUE) > 1L
 
+  # No rows are dropped here (incomplete responses feed the per-pattern WLE
+  # pool and the conditional DGP), so the raw total equals `sample_n`; record
+  # the missingness flag so callers (e.g. RMlocdepQ3Plot) can report the
+  # sample in the standard `n = X respondents (policy)` form.
+  sample_has_na <- anyNA(data_mat)
+
   # Preserve item names so the per-iteration pair_q3 frames use the user's
   # labels (e.g., "q1", "q2") rather than psychotools / mirt's auto-generated
   # "V1", "V2", ... .
@@ -724,18 +917,18 @@ RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
   # Generating model: CML item thresholds (psychotools), computed once. WLE
   # person locations are computed for the sample summary and, under the
   # "resample" DGP, as the generating theta pool.
-  pool       <- .wle_theta_pool(data_mat)
-  thr_list   <- pool$thr_list
+  pool <- .wle_theta_pool(data_mat)
+  thr_list <- pool$thr_list
   wle_thetas <- pool$thetas
 
   sim_data_list <- list(
-    dgp        = dgp,
-    type       = if (is_polytomous) "polytomous" else "dichotomous",
-    thr_list   = thr_list,
-    n_items    = ncol(data_mat),
-    sample_n   = sample_n,
+    dgp = dgp,
+    type = if (is_polytomous) "polytomous" else "dichotomous",
+    thr_list = thr_list,
+    n_items = ncol(data_mat),
+    sample_n = sample_n,
     item_names = item_names_sim,
-    estimator  = estimator
+    estimator = estimator
   )
   if (dgp == "resample") {
     # Marginal DGP: resample WLE thetas with replacement, then simulate data
@@ -757,9 +950,20 @@ RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
   }
 
   if (use_parallel) {
-    results_raw <- run_q3_sim_parallel(iterations, sim_seeds, sim_data_list, n_cores, verbose)
+    results_raw <- run_q3_sim_parallel(
+      iterations,
+      sim_seeds,
+      sim_data_list,
+      n_cores,
+      verbose
+    )
   } else {
-    results_raw <- run_q3_sim_sequential(iterations, sim_seeds, sim_data_list, verbose)
+    results_raw <- run_q3_sim_sequential(
+      iterations,
+      sim_seeds,
+      sim_data_list,
+      verbose
+    )
   }
 
   # Filter out failures (character strings indicate errors)
@@ -772,12 +976,12 @@ RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
 
   actual_iterations <- length(successful)
   mean_q3 <- vapply(successful, function(x) x$mean, numeric(1L))
-  max_q3  <- vapply(successful, function(x) x$max,  numeric(1L))
+  max_q3 <- vapply(successful, function(x) x$max, numeric(1L))
   diff_q3 <- max_q3 - mean_q3
 
   results <- data.frame(
     mean = mean_q3,
-    max  = max_q3,
+    max = max_q3,
     diff = diff_q3
   )
 
@@ -797,54 +1001,64 @@ RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
   rownames(pair_results) <- NULL
 
   # Per-pair cutoff intervals
-  pair_keys <- unique(paste(pair_results$Item1, pair_results$Item2,
-                            sep = "___"))
-  pair_cutoffs <- do.call(rbind, lapply(pair_keys, function(pk) {
-    parts <- strsplit(pk, "___", fixed = TRUE)[[1L]]
-    sub   <- pair_results[pair_results$Item1 == parts[1L] &
-                            pair_results$Item2 == parts[2L], ]
-    if (cutoff_method == "hdci") {
-      q3_interval <- ggdist::hdci(sub$Q3, .width = hdci_width)
-      data.frame(
-        Item1   = parts[1L],
-        Item2   = parts[2L],
-        Q3_low  = q3_interval[1L, 1L],
-        Q3_high = q3_interval[1L, 2L],
-        stringsAsFactors = FALSE,
-        row.names = NULL
-      )
-    } else {
-      data.frame(
-        Item1   = parts[1L],
-        Item2   = parts[2L],
-        Q3_low  = stats::quantile(sub$Q3, 0.025, na.rm = TRUE),
-        Q3_high = stats::quantile(sub$Q3, 0.975, na.rm = TRUE),
-        stringsAsFactors = FALSE,
-        row.names = NULL
-      )
-    }
-  }))
+  pair_keys <- unique(paste(
+    pair_results$Item1,
+    pair_results$Item2,
+    sep = "___"
+  ))
+  pair_cutoffs <- do.call(
+    rbind,
+    lapply(pair_keys, function(pk) {
+      parts <- strsplit(pk, "___", fixed = TRUE)[[1L]]
+      sub <- pair_results[
+        pair_results$Item1 == parts[1L] &
+          pair_results$Item2 == parts[2L],
+      ]
+      if (cutoff_method == "hdci") {
+        q3_interval <- ggdist::hdci(sub$Q3, .width = hdci_width)
+        data.frame(
+          Item1 = parts[1L],
+          Item2 = parts[2L],
+          Q3_low = q3_interval[1L, 1L],
+          Q3_high = q3_interval[1L, 2L],
+          stringsAsFactors = FALSE,
+          row.names = NULL
+        )
+      } else {
+        data.frame(
+          Item1 = parts[1L],
+          Item2 = parts[2L],
+          Q3_low = stats::quantile(sub$Q3, 0.025, na.rm = TRUE),
+          Q3_high = stats::quantile(sub$Q3, 0.975, na.rm = TRUE),
+          stringsAsFactors = FALSE,
+          row.names = NULL
+        )
+      }
+    })
+  )
   rownames(pair_cutoffs) <- NULL
 
   out <- list()
-  out$results           <- results
-  out$pair_results      <- pair_results
-  out$pair_cutoffs      <- pair_cutoffs
+  out$results <- results
+  out$pair_results <- pair_results
+  out$pair_cutoffs <- pair_cutoffs
   out$actual_iterations <- actual_iterations
-  out$sample_n          <- sample_n
-  out$sample_summary    <- summary(wle_thetas)
-  out$item_names        <- item_names_vec
-  out$max_diff          <- max(results$diff)
-  out$sd_diff           <- stats::sd(results$diff)
-  out$p95               <- stats::quantile(results$diff, 0.95)
-  out$p99               <- stats::quantile(results$diff, 0.99)
-  out$p995              <- stats::quantile(results$diff, 0.995)
-  out$p999              <- stats::quantile(results$diff, 0.999)
-  out$suggested_cutoff  <- out$p99
-  out$cutoff_method     <- cutoff_method
-  out$hdci_width        <- hdci_width
-  out$estimator         <- estimator
-  out$dgp               <- dgp
+  out$sample_n <- sample_n
+  out$sample_n_total <- sample_n
+  out$sample_has_na <- sample_has_na
+  out$sample_summary <- summary(wle_thetas)
+  out$item_names <- item_names_vec
+  out$max_diff <- max(results$diff)
+  out$sd_diff <- stats::sd(results$diff)
+  out$p95 <- stats::quantile(results$diff, 0.95)
+  out$p99 <- stats::quantile(results$diff, 0.99)
+  out$p995 <- stats::quantile(results$diff, 0.995)
+  out$p999 <- stats::quantile(results$diff, 0.999)
+  out$suggested_cutoff <- out$p99
+  out$cutoff_method <- cutoff_method
+  out$hdci_width <- hdci_width
+  out$estimator <- estimator
+  out$dgp <- dgp
   out
 }
 
@@ -865,10 +1079,12 @@ RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
 #' @keywords internal
 #' @noRd
 .cond_groups <- function(data_mat, thr_list) {
-  n       <- nrow(data_mat)
-  ans_key <- apply(!is.na(data_mat), 1L, function(z) paste0(which(z), collapse = ","))
-  score   <- rowSums(data_mat, na.rm = TRUE)
-  key     <- paste(ans_key, score, sep = "|")
+  n <- nrow(data_mat)
+  ans_key <- apply(!is.na(data_mat), 1L, function(z) {
+    paste0(which(z), collapse = ",")
+  })
+  score <- rowSums(data_mat, na.rm = TRUE)
+  key <- paste(ans_key, score, sep = "|")
   unname(lapply(split(seq_len(n), key), function(rows) {
     ans <- which(!is.na(data_mat[rows[1L], ]))
     list(rows = rows, ans = ans, score = sum(data_mat[rows[1L], ans]))
@@ -890,17 +1106,17 @@ RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
 #' @keywords internal
 #' @noRd
 .sim_cond_dataset <- function(data_list) {
-  N   <- data_list$sample_n
-  K   <- data_list$n_items
+  N <- data_list$sample_n
+  K <- data_list$n_items
   out <- matrix(NA_integer_, N, K)
   for (g in data_list$cond_groups) {
     thr_sub <- data_list$thr_list[g$ans]
-    m       <- length(g$rows)
-    pat     <- .sim_conditional(thr_sub, g$score, m)
+    m <- length(g$rows)
+    pat <- .sim_conditional(thr_sub, g$score, m)
     if (is.null(pat)) {
       # Extreme score: deterministic pattern (all-0 or all-maximum-category).
       steps <- vapply(thr_sub, length, integer(1L))
-      pat   <- if (g$score <= 0L) {
+      pat <- if (g$score <= 0L) {
         matrix(0L, m, length(g$ans))
       } else {
         matrix(steps, nrow = m, ncol = length(g$ans), byrow = TRUE)
@@ -920,72 +1136,98 @@ RMlocdepQ3Cutoff <- function(data, iterations = 500, parallel = TRUE,
 run_single_q3_sim <- function(seed, data_list) {
   set.seed(seed)
 
-  tryCatch({
-    # --- Generate one simulated dataset under the chosen DGP -----------------
-    if (identical(data_list$dgp, "conditional")) {
-      sim_df <- .sim_cond_dataset(data_list)
-    } else if (data_list$type == "dichotomous") {
-      thetas_res <- sample(data_list$thetas, size = data_list$sample_n,
-                           replace = TRUE)
-      sim_df <- as.data.frame(
-        psychotools::rrm(theta = thetas_res, beta = data_list$item_params)$data
-      )
-    } else {
-      thetas_res <- sample(data_list$thetas, size = data_list$sample_n,
-                           replace = TRUE)
-      sim_df <- as.data.frame(sim_partial_score(data_list$deltaslist, thetas_res))
-    }
-
-    # --- Validate the simulated dataset (estimable refit) --------------------
-    if (data_list$type == "dichotomous") {
-      # Every item must have at least 8 positive responses (numerical stability).
-      if (any(colSums(sim_df, na.rm = TRUE) < 8L)) {
-        return("validation_failed: fewer than 8 positive responses in at least one item")
+  tryCatch(
+    {
+      # --- Generate one simulated dataset under the chosen DGP -----------------
+      if (identical(data_list$dgp, "conditional")) {
+        sim_df <- .sim_cond_dataset(data_list)
+      } else if (data_list$type == "dichotomous") {
+        thetas_res <- sample(
+          data_list$thetas,
+          size = data_list$sample_n,
+          replace = TRUE
+        )
+        sim_df <- as.data.frame(
+          psychotools::rrm(
+            theta = thetas_res,
+            beta = data_list$item_params
+          )$data
+        )
+      } else {
+        thetas_res <- sample(
+          data_list$thetas,
+          size = data_list$sample_n,
+          replace = TRUE
+        )
+        sim_df <- as.data.frame(sim_partial_score(
+          data_list$deltaslist,
+          thetas_res
+        ))
       }
-    } else {
-      # Every item must show all categories.
-      n_cats <- vapply(data_list$thr_list, function(d) length(d) + 1L, integer(1L))
-      for (j in seq_len(ncol(sim_df))) {
-        tab <- tabulate(sim_df[[j]] + 1L, nbins = n_cats[j])
-        if (any(tab == 0L)) {
-          return("validation_failed: not all categories represented")
+
+      # --- Validate the simulated dataset (estimable refit) --------------------
+      if (data_list$type == "dichotomous") {
+        # Every item must have at least 8 positive responses (numerical stability).
+        if (any(colSums(sim_df, na.rm = TRUE) < 8L)) {
+          return(
+            "validation_failed: fewer than 8 positive responses in at least one item"
+          )
+        }
+      } else {
+        # Every item must show all categories.
+        n_cats <- vapply(
+          data_list$thr_list,
+          function(d) length(d) + 1L,
+          integer(1L)
+        )
+        for (j in seq_len(ncol(sim_df))) {
+          tab <- tabulate(sim_df[[j]] + 1L, nbins = n_cats[j])
+          if (any(tab == 0L)) {
+            return("validation_failed: not all categories represented")
+          }
         }
       }
+
+      # Preserve the user's item labels so the Q3 matrix below uses them
+      if (
+        !is.null(data_list$item_names) &&
+          length(data_list$item_names) == ncol(sim_df)
+      ) {
+        colnames(sim_df) <- data_list$item_names
+      }
+
+      # Q3 matrix under the same estimator as the observed analysis. For "MML"
+      # the faster (lower-precision) mirt settings are used in the loop.
+      q3_mat <- .q3_residual_matrix(
+        sim_df,
+        estimator = data_list$estimator,
+        fast = TRUE
+      )
+
+      mean_q3 <- mean(q3_mat, na.rm = TRUE)
+      max_q3 <- max(q3_mat, na.rm = TRUE)
+
+      # Extract upper triangle as a long vector for per-pair retention.
+      # mirt::residuals returns a symmetric matrix with item names on rows/cols.
+      item_names_q3 <- colnames(q3_mat)
+      if (is.null(item_names_q3)) {
+        item_names_q3 <- as.character(seq_len(ncol(q3_mat)))
+      }
+      upper_idx <- which(upper.tri(q3_mat), arr.ind = TRUE)
+      pair_q3 <- data.frame(
+        Item1 = item_names_q3[upper_idx[, "row"]],
+        Item2 = item_names_q3[upper_idx[, "col"]],
+        Q3 = q3_mat[upper_idx],
+        stringsAsFactors = FALSE,
+        row.names = NULL
+      )
+
+      list(mean = mean_q3, max = max_q3, pair_q3 = pair_q3)
+    },
+    error = function(e) {
+      as.character(conditionMessage(e))
     }
-
-    # Preserve the user's item labels so the Q3 matrix below uses them
-    if (!is.null(data_list$item_names) &&
-        length(data_list$item_names) == ncol(sim_df)) {
-      colnames(sim_df) <- data_list$item_names
-    }
-
-    # Q3 matrix under the same estimator as the observed analysis. For "MML"
-    # the faster (lower-precision) mirt settings are used in the loop.
-    q3_mat <- .q3_residual_matrix(sim_df, estimator = data_list$estimator,
-                                  fast = TRUE)
-
-    mean_q3 <- mean(q3_mat, na.rm = TRUE)
-    max_q3  <- max(q3_mat, na.rm = TRUE)
-
-    # Extract upper triangle as a long vector for per-pair retention.
-    # mirt::residuals returns a symmetric matrix with item names on rows/cols.
-    item_names_q3 <- colnames(q3_mat)
-    if (is.null(item_names_q3)) {
-      item_names_q3 <- as.character(seq_len(ncol(q3_mat)))
-    }
-    upper_idx <- which(upper.tri(q3_mat), arr.ind = TRUE)
-    pair_q3 <- data.frame(
-      Item1 = item_names_q3[upper_idx[, "row"]],
-      Item2 = item_names_q3[upper_idx[, "col"]],
-      Q3    = q3_mat[upper_idx],
-      stringsAsFactors = FALSE,
-      row.names = NULL
-    )
-
-    list(mean = mean_q3, max = max_q3, pair_q3 = pair_q3)
-  }, error = function(e) {
-    as.character(conditionMessage(e))
-  })
+  )
 }
 
 # ---------------------------------------------------------------------------
@@ -1001,8 +1243,13 @@ run_single_q3_sim <- function(seed, data_list) {
 #' @param verbose Show progress bar.
 #' @return List of raw results (one element per iteration).
 #' @keywords internal
-run_q3_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
-                                n_cores, verbose = FALSE) {
+run_q3_sim_parallel <- function(
+  iterations,
+  sim_seeds,
+  sim_data_list,
+  n_cores,
+  verbose = FALSE
+) {
   mirai::daemons(n_cores)
   on.exit(mirai::daemons(0), add = TRUE)
 
@@ -1020,22 +1267,22 @@ run_q3_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
       },
       seed = sim_seeds[sim],
       data_list = sim_data_list,
-      run_single_q3_sim   = run_single_q3_sim,
-      sim_partial_score   = sim_partial_score,
-      sim_poly_item       = sim_poly_item,
+      run_single_q3_sim = run_single_q3_sim,
+      sim_partial_score = sim_partial_score,
+      sim_poly_item = sim_poly_item,
       # Conditional-DGP generators.
       .sim_cond_dataset = .sim_cond_dataset,
-      .sim_conditional    = .sim_conditional,
-      .esf_convolve       = .esf_convolve,
+      .sim_conditional = .sim_conditional,
+      .esf_convolve = .esf_convolve,
       # Engine helpers needed by .q3_residual_matrix() inside the daemon
       # (the CML/WLE path; the MML path uses namespaced mirt::).
       .q3_residual_matrix = .q3_residual_matrix,
       .rasch_std_residuals = .rasch_std_residuals,
       .fit_cml_thresholds = .fit_cml_thresholds,
-      .estimate_thetas    = .estimate_thetas,
-      .theta_wle          = .theta_wle,
-      .pcm_cat_probs      = .pcm_cat_probs,
-      .center_thresholds  = .center_thresholds
+      .estimate_thetas = .estimate_thetas,
+      .theta_wle = .theta_wle,
+      .pcm_cat_probs = .pcm_cat_probs,
+      .center_thresholds = .center_thresholds
     )
   })
 
@@ -1074,8 +1321,12 @@ run_q3_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
 #' @param verbose Show progress bar.
 #' @return List of raw results (one element per iteration).
 #' @keywords internal
-run_q3_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
-                                  verbose = FALSE) {
+run_q3_sim_sequential <- function(
+  iterations,
+  sim_seeds,
+  sim_data_list,
+  verbose = FALSE
+) {
   if (verbose) {
     pb <- utils::txtProgressBar(min = 0, max = iterations, style = 3)
   }

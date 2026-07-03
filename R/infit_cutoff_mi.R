@@ -74,15 +74,20 @@
 #'
 #' @examples
 #' \donttest{
-#' if (requireNamespace("mice", quietly = TRUE)) {
-#'   # Create example data with missing values
+#' if (requireNamespace("mice", quietly = TRUE) &&
+#'     requireNamespace("iarm", quietly = TRUE) &&
+#'     requireNamespace("ggdist", quietly = TRUE)) {
+#'   # Create example data with ~10% MCAR missingness
 #'   set.seed(42)
-#'   sim_data <- as.data.frame(
-#'     matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
-#'   )
+#'   mat <- matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
+#'   mat[sample(length(mat), round(0.10 * length(mat)))] <- NA
+#'   sim_data <- as.data.frame(mat)
 #'   colnames(sim_data) <- paste0("Item", 1:8)
-#'   # Introduce ~10% MCAR missingness
-#'   sim_data[sample(length(sim_data), 0.10 * length(sim_data))] <- NA
+#'
+#'   # mice's ordinal method (`polr`) requires the items to be ordered
+#'   # factors, so code them as such before imputing. RMitemInfitCutoffMI()
+#'   # converts the completed factors back to numeric internally.
+#'   sim_data[] <- lapply(sim_data, function(x) factor(x, ordered = TRUE))
 #'
 #'   # Impute (use more imputations, e.g. m = 5+, in real analyses)
 #'   imp <- mice::mice(sim_data, m = 2, method = "polr", seed = 123,
@@ -98,10 +103,16 @@
 #'   RMitemInfitMI(imp, cutoff = cutoff_mi)
 #' }
 #' }
-RMitemInfitCutoffMI <- function(mids_object, iterations = 500, parallel = TRUE,
-                             n_cores = NULL, verbose = FALSE, seed = NULL,
-                             cutoff_method = "hdci", hdci_width = 0.999) {
-
+RMitemInfitCutoffMI <- function(
+  mids_object,
+  iterations = 500,
+  parallel = TRUE,
+  n_cores = NULL,
+  verbose = FALSE,
+  seed = NULL,
+  cutoff_method = "hdci",
+  hdci_width = 0.999
+) {
   # --- Check mice -----------------------------------------------------------
 
   if (!requireNamespace("mice", quietly = TRUE)) {
@@ -113,8 +124,10 @@ RMitemInfitCutoffMI <- function(mids_object, iterations = 500, parallel = TRUE,
   }
 
   if (!inherits(mids_object, "mids")) {
-    stop("`mids_object` must be a 'mids' object as returned by mice::mice().",
-         call. = FALSE)
+    stop(
+      "`mids_object` must be a 'mids' object as returned by mice::mice().",
+      call. = FALSE
+    )
   }
 
   cutoff_method <- match.arg(cutoff_method, c("hdci", "quantile"))
@@ -145,41 +158,52 @@ RMitemInfitCutoffMI <- function(mids_object, iterations = 500, parallel = TRUE,
   imp_seeds <- sample.int(.Machine$integer.max, m)
 
   # --- Run RMitemInfitCutoff on each imputed dataset ------------------------------
-  all_results   <- vector("list", m)
+  all_results <- vector("list", m)
   actual_per_imp <- integer(m)
   sample_summary_first <- NULL
-  sample_n       <- NULL
-  item_names     <- NULL
-  n_failed       <- 0L
-
+  sample_n <- NULL
+  item_names <- NULL
+  n_failed <- 0L
 
   for (i in seq_len(m)) {
-    completed_data <- mice::complete(mids_object, action = i)
+    completed_data <- .mi_completed_to_numeric(
+      mice::complete(mids_object, action = i)
+    )
 
     if (verbose) {
-      message(sprintf("Processing imputation %d/%d (%d iterations)...",
-                      i, m, iters_per_imp[i]))
+      message(sprintf(
+        "Processing imputation %d/%d (%d iterations)...",
+        i,
+        m,
+        iters_per_imp[i]
+      ))
     }
 
-    result_i <- tryCatch({
-      RMitemInfitCutoff(
-        data          = completed_data,
-        iterations    = iters_per_imp[i],
-        parallel      = parallel,
-        n_cores       = n_cores,
-        verbose       = verbose,
-        seed          = imp_seeds[i],
-        cutoff_method = "quantile",
-        hdci_width    = hdci_width
-      )
-    }, error = function(e) {
-      warning(
-        sprintf("RMitemInfitCutoff() failed for imputation %d: %s", i,
-                conditionMessage(e)),
-        call. = FALSE
-      )
-      NULL
-    })
+    result_i <- tryCatch(
+      {
+        RMitemInfitCutoff(
+          data = completed_data,
+          iterations = iters_per_imp[i],
+          parallel = parallel,
+          n_cores = n_cores,
+          verbose = verbose,
+          seed = imp_seeds[i],
+          cutoff_method = "quantile",
+          hdci_width = hdci_width
+        )
+      },
+      error = function(e) {
+        warning(
+          sprintf(
+            "RMitemInfitCutoff() failed for imputation %d: %s",
+            i,
+            conditionMessage(e)
+          ),
+          call. = FALSE
+        )
+        NULL
+      }
+    )
 
     if (is.null(result_i)) {
       n_failed <- n_failed + 1L
@@ -194,26 +218,38 @@ RMitemInfitCutoffMI <- function(mids_object, iterations = 500, parallel = TRUE,
 
     # Capture metadata from first successful imputation
     if (is.null(item_names)) {
-      item_names     <- result_i$item_names
-      sample_n       <- result_i$sample_n
+      item_names <- result_i$item_names
+      sample_n <- result_i$sample_n
       sample_summary_first <- result_i$sample_summary
     }
   }
 
   if (n_failed == m) {
-    stop("RMitemInfitCutoff() failed for all ", m, " imputed datasets. ",
-         "Check your data.", call. = FALSE)
+    stop(
+      "RMitemInfitCutoff() failed for all ",
+      m,
+      " imputed datasets. ",
+      "Check your data.",
+      call. = FALSE
+    )
   }
 
   if (n_failed > 0L) {
     warning(
-      sprintf("%d of %d imputed datasets failed and were excluded.", n_failed, m),
+      sprintf(
+        "%d of %d imputed datasets failed and were excluded.",
+        n_failed,
+        m
+      ),
       call. = FALSE
     )
   }
 
   # --- Stack results ----------------------------------------------------------
-  stacked_df <- do.call(rbind, all_results[!vapply(all_results, is.null, logical(1L))])
+  stacked_df <- do.call(
+    rbind,
+    all_results[!vapply(all_results, is.null, logical(1L))]
+  )
   rownames(stacked_df) <- NULL
 
   # Re-number iterations sequentially across imputations
@@ -228,46 +264,49 @@ RMitemInfitCutoffMI <- function(mids_object, iterations = 500, parallel = TRUE,
 
   # --- Compute cutoffs from stacked distribution ------------------------------
   unique_items <- unique(stacked_df$Item)
-  item_cutoffs <- do.call(rbind, lapply(unique_items, function(item) {
-    sub <- stacked_df[stacked_df$Item == item, ]
-    if (cutoff_method == "hdci") {
-      infit_interval  <- ggdist::hdci(sub$InfitMSQ,  .width = hdci_width)
-      outfit_interval <- ggdist::hdci(sub$OutfitMSQ, .width = hdci_width)
-      data.frame(
-        Item        = item,
-        infit_low   = infit_interval[1L, 1L],
-        infit_high  = infit_interval[1L, 2L],
-        outfit_low  = outfit_interval[1L, 1L],
-        outfit_high = outfit_interval[1L, 2L],
-        stringsAsFactors = FALSE,
-        row.names = NULL
-      )
-    } else {
-      data.frame(
-        Item        = item,
-        infit_low   = stats::quantile(sub$InfitMSQ,  0.025, na.rm = TRUE),
-        infit_high  = stats::quantile(sub$InfitMSQ,  0.975, na.rm = TRUE),
-        outfit_low  = stats::quantile(sub$OutfitMSQ, 0.025, na.rm = TRUE),
-        outfit_high = stats::quantile(sub$OutfitMSQ, 0.975, na.rm = TRUE),
-        stringsAsFactors = FALSE,
-        row.names = NULL
-      )
-    }
-  }))
+  item_cutoffs <- do.call(
+    rbind,
+    lapply(unique_items, function(item) {
+      sub <- stacked_df[stacked_df$Item == item, ]
+      if (cutoff_method == "hdci") {
+        infit_interval <- ggdist::hdci(sub$InfitMSQ, .width = hdci_width)
+        outfit_interval <- ggdist::hdci(sub$OutfitMSQ, .width = hdci_width)
+        data.frame(
+          Item = item,
+          infit_low = infit_interval[1L, 1L],
+          infit_high = infit_interval[1L, 2L],
+          outfit_low = outfit_interval[1L, 1L],
+          outfit_high = outfit_interval[1L, 2L],
+          stringsAsFactors = FALSE,
+          row.names = NULL
+        )
+      } else {
+        data.frame(
+          Item = item,
+          infit_low = stats::quantile(sub$InfitMSQ, 0.025, na.rm = TRUE),
+          infit_high = stats::quantile(sub$InfitMSQ, 0.975, na.rm = TRUE),
+          outfit_low = stats::quantile(sub$OutfitMSQ, 0.025, na.rm = TRUE),
+          outfit_high = stats::quantile(sub$OutfitMSQ, 0.975, na.rm = TRUE),
+          stringsAsFactors = FALSE,
+          row.names = NULL
+        )
+      }
+    })
+  )
   rownames(item_cutoffs) <- NULL
 
   # --- Return -----------------------------------------------------------------
   list(
-    results                       = stacked_df,
-    item_cutoffs                  = item_cutoffs,
-    actual_iterations             = total_actual,
-    sample_n                      = sample_n,
-    sample_summary                = sample_summary_first,
-    item_names                    = item_names,
-    cutoff_method                 = cutoff_method,
-    hdci_width                    = hdci_width,
-    n_imputations                 = m - n_failed,
-    iterations_per_imputation     = iters_per_imp,
+    results = stacked_df,
+    item_cutoffs = item_cutoffs,
+    actual_iterations = total_actual,
+    sample_n = sample_n,
+    sample_summary = sample_summary_first,
+    item_names = item_names,
+    cutoff_method = cutoff_method,
+    hdci_width = hdci_width,
+    n_imputations = m - n_failed,
+    iterations_per_imputation = iters_per_imp,
     actual_iterations_per_imputation = actual_per_imp
   )
 }

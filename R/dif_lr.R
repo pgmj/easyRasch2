@@ -76,94 +76,119 @@
 #'
 #' @examples
 #' \donttest{
-#' set.seed(1)
-#' data("pcmdat2", package = "eRm")
-#' grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
+#' if (requireNamespace("eRm", quietly = TRUE)) {
+#'   set.seed(1)
+#'   data("pcmdat2", package = "eRm")
+#'   grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
 #'
-#' # Default: kable of per-group item locations
-#' RMdifLR(pcmdat2, dif_var = grp)
+#'   # Default: kable of per-group item locations
+#'   RMdifLR(pcmdat2, dif_var = grp)
 #'
-#' # ggplot panel of item locations with 95% CIs
-#' RMdifLR(pcmdat2, dif_var = grp, output = "ggplot")
+#'   # ggplot panel of item locations with 95% CIs
+#'   RMdifLR(pcmdat2, dif_var = grp, output = "ggplot")
 #'
-#' # Threshold-level kable, sorted by MaxDiff
-#' RMdifLR(pcmdat2, dif_var = grp, level = "threshold", sort = TRUE)
+#'   # Threshold-level kable, sorted by MaxDiff
+#'   RMdifLR(pcmdat2, dif_var = grp, level = "threshold", sort = TRUE)
 #'
-#' # Tidy data.frame for downstream use
-#' df <- RMdifLR(pcmdat2, dif_var = grp, output = "dataframe")
-#' attr(df, "lr_test")
-#' df[df$Flagged, ]
+#'   # Tidy data.frame for downstream use
+#'   df <- RMdifLR(pcmdat2, dif_var = grp, output = "dataframe")
+#'   attr(df, "lr_test")
+#'   df[df$Flagged, ]
+#' }
 #' }
 #'
 #' @importFrom rlang .data
 #' @export
-RMdifLR <- function(data,
-                    dif_var,
-                    model  = c("auto", "PCM", "RM"),
-                    level  = c("item", "threshold"),
-                    output = c("kable", "dataframe", "ggplot"),
-                    cutoff = 0.5,
-                    conf   = 0.95,
-                    sort   = FALSE) {
-
-  model  <- match.arg(model)
-  level  <- match.arg(level)
+RMdifLR <- function(
+  data,
+  dif_var,
+  model = c("auto", "PCM", "RM"),
+  level = c("item", "threshold"),
+  output = c("kable", "dataframe", "ggplot"),
+  cutoff = 0.5,
+  conf = 0.95,
+  sort = FALSE
+) {
+  model <- match.arg(model)
+  level <- match.arg(level)
   output <- match.arg(output)
 
   if (output == "ggplot" && !requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Package 'ggplot2' is required for output = \"ggplot\".",
-         call. = FALSE)
+    stop(
+      "Package 'ggplot2' is required for output = \"ggplot\".",
+      call. = FALSE
+    )
   }
   if (output == "kable" && !requireNamespace("knitr", quietly = TRUE)) {
-    stop("Package 'knitr' is required for output = \"kable\".",
-         call. = FALSE)
+    stop("Package 'knitr' is required for output = \"kable\".", call. = FALSE)
   }
   if (!requireNamespace("eRm", quietly = TRUE)) {
     stop("Package 'eRm' is required for RMdifLR().", call. = FALSE)
   }
 
   if (!is.null(cutoff)) {
-    if (!is.numeric(cutoff) || length(cutoff) != 1L || !is.finite(cutoff) ||
-        cutoff < 0) {
-      stop("`cutoff` must be a single non-negative numeric value, or NULL.",
-           call. = FALSE)
+    if (
+      !is.numeric(cutoff) ||
+        length(cutoff) != 1L ||
+        !is.finite(cutoff) ||
+        cutoff < 0
+    ) {
+      stop(
+        "`cutoff` must be a single non-negative numeric value, or NULL.",
+        call. = FALSE
+      )
     }
   }
-  if (!is.numeric(conf) || length(conf) != 1L || !is.finite(conf) ||
-      conf <= 0 || conf >= 1) {
+  if (
+    !is.numeric(conf) ||
+      length(conf) != 1L ||
+      !is.finite(conf) ||
+      conf <= 0 ||
+      conf >= 1
+  ) {
     stop("`conf` must be a single numeric in (0, 1).", call. = FALSE)
   }
 
   validate_response_data(data)
   data <- as.data.frame(data)
+  n_total_lr <- nrow(data)
+  has_na_lr <- anyNA(data) || anyNA(dif_var)
 
   # ---------------------------------------------------------------------
   # Resolve dif_var and drop NAs (jointly with `data`)
   # ---------------------------------------------------------------------
   if (length(dif_var) != nrow(data)) {
-    stop("`dif_var` must have the same length as nrow(data) (",
-         nrow(data), "). Got ", length(dif_var), ".", call. = FALSE)
+    stop(
+      "`dif_var` must have the same length as nrow(data) (",
+      nrow(data),
+      "). Got ",
+      length(dif_var),
+      ".",
+      call. = FALSE
+    )
   }
   dif_factor <- droplevels(as.factor(dif_var))
 
   na_mask <- is.na(dif_factor)
   if (any(na_mask)) {
     message(sum(na_mask), " row(s) with NA in `dif_var` dropped.")
-    data       <- data[!na_mask, , drop = FALSE]
+    data <- data[!na_mask, , drop = FALSE]
     dif_factor <- droplevels(dif_factor[!na_mask])
   }
 
   if (nlevels(dif_factor) < 2L) {
-    stop("`dif_var` must have at least 2 distinct non-missing levels.",
-         call. = FALSE)
+    stop(
+      "`dif_var` must have at least 2 distinct non-missing levels.",
+      call. = FALSE
+    )
   }
-  groups    <- levels(dif_factor)
+  groups <- levels(dif_factor)
   nr_groups <- length(groups)
 
   # ---------------------------------------------------------------------
   # Pick the model
   # ---------------------------------------------------------------------
-  data_mat      <- as.matrix(data)
+  data_mat <- as.matrix(data)
   storage.mode(data_mat) <- "integer"
   is_polytomous <- max(data_mat, na.rm = TRUE) > 1L
 
@@ -171,8 +196,11 @@ RMdifLR <- function(data,
     if (is_polytomous) "PCM" else "RM"
   } else {
     if (model == "RM" && is_polytomous) {
-      stop("`model = \"RM\"` requires dichotomous (0/1) data; use ",
-           "\"PCM\" or \"auto\" for polytomous responses.", call. = FALSE)
+      stop(
+        "`model = \"RM\"` requires dichotomous (0/1) data; use ",
+        "\"PCM\" or \"auto\" for polytomous responses.",
+        call. = FALSE
+      )
     }
     model
   }
@@ -185,15 +213,18 @@ RMdifLR <- function(data,
   lrt <- tryCatch(
     eRm::LRtest(fit_full, splitcr = dif_factor),
     error = function(e) {
-      stop("eRm::LRtest() failed: ", conditionMessage(e),
-           "\nThis often indicates an empty response category in one ",
-           "subgroup. Inspect with RMplotTile(data, group = dif_var).",
-           call. = FALSE)
+      stop(
+        "eRm::LRtest() failed: ",
+        conditionMessage(e),
+        "\nThis often indicates an empty response category in one ",
+        "subgroup. Inspect with RMplotTile(data, group = dif_var).",
+        call. = FALSE
+      )
     }
   )
 
   per_group <- extract_lr_locations(lrt, groups, names(data))
-  overall   <- extract_overall_locations(fit_full, names(data))
+  overall <- extract_overall_locations(fit_full, names(data))
 
   # Combine into a long-form table: Item, Threshold, DIFgroup, Location, SE
   long_df <- rbind(per_group, overall)
@@ -205,16 +236,16 @@ RMdifLR <- function(data,
   if (level == "item") {
     agg <- stats::aggregate(
       cbind(Location = long_df$Location, SE = long_df$SE),
-      by  = list(Item = long_df$Item, DIFgroup = long_df$DIFgroup),
+      by = list(Item = long_df$Item, DIFgroup = long_df$DIFgroup),
       FUN = function(x) mean(x, na.rm = TRUE)
     )
     agg$Item <- factor(agg$Item, levels = names(data))
     table_df <- build_wide_table(agg, groups, level = "item")
-    plot_df  <- agg
+    plot_df <- agg
     plot_df$Threshold <- NA_character_
   } else {
     table_df <- build_wide_table(long_df, groups, level = "threshold")
-    plot_df  <- long_df
+    plot_df <- long_df
   }
 
   # ---------------------------------------------------------------------
@@ -228,10 +259,14 @@ RMdifLR <- function(data,
   # ---------------------------------------------------------------------
   # Reorder columns: Item [Threshold] groups All MaxDiff [Flagged] SE_*
   # ---------------------------------------------------------------------
-  id_cols  <- if (level == "item") "Item" else c("Item", "Threshold")
-  loc_cols <- c(groups, "All", "MaxDiff",
-                if (!is.null(cutoff)) "Flagged" else NULL)
-  se_cols  <- paste0("SE_", c(groups, "All"))
+  id_cols <- if (level == "item") "Item" else c("Item", "Threshold")
+  loc_cols <- c(
+    groups,
+    "All",
+    "MaxDiff",
+    if (!is.null(cutoff)) "Flagged" else NULL
+  )
+  se_cols <- paste0("SE_", c(groups, "All"))
   table_df <- table_df[, c(id_cols, loc_cols, se_cols), drop = FALSE]
   rownames(table_df) <- NULL
 
@@ -249,14 +284,14 @@ RMdifLR <- function(data,
   # LR test summary (Andersen)
   # ---------------------------------------------------------------------
   lr_summary <- list(
-    LR        = unname(lrt$LR),
-    df        = unname(lrt$df),
-    p_value   = unname(lrt$pvalue),
-    n_groups  = nr_groups,
-    groups    = groups,
-    model     = resolved_model,
+    LR = unname(lrt$LR),
+    df = unname(lrt$df),
+    p_value = unname(lrt$pvalue),
+    n_groups = nr_groups,
+    groups = groups,
+    model = resolved_model,
     n_persons = nrow(data),
-    n_items   = ncol(data)
+    n_items = ncol(data)
   )
   attr(table_df, "lr_test") <- lr_summary
 
@@ -272,15 +307,31 @@ RMdifLR <- function(data,
   }
 
   if (output == "kable") {
-    return(render_lr_kable(table_df, lr_summary, level = level,
-                           cutoff = cutoff, sort = sort,
-                           is_polytomous = is_polytomous))
+    n_clause <- .n_caption(
+      lr_summary$n_persons,
+      n_total_lr,
+      if (has_na_lr) "complete cases" else character()
+    )
+    return(render_lr_kable(
+      table_df,
+      lr_summary,
+      level = level,
+      cutoff = cutoff,
+      sort = sort,
+      is_polytomous = is_polytomous,
+      n_clause = n_clause
+    ))
   }
 
   # output == "ggplot"
-  render_lr_ggplot(plot_df, lr_summary, level = level,
-                   groups = groups, conf = conf,
-                   is_polytomous = is_polytomous)
+  render_lr_ggplot(
+    plot_df,
+    lr_summary,
+    level = level,
+    groups = groups,
+    conf = conf,
+    is_polytomous = is_polytomous
+  )
 }
 
 # =====================================================================
@@ -327,38 +378,43 @@ one_fit_long <- function(fit, dif_group, item_names) {
     # eRm::thresholds() is polytomous-only. For RM the "threshold" is
     # the item difficulty, available as -betapar with matching se.beta.
     beta <- fit$betapar
-    se   <- fit$se.beta
+    se <- fit$se.beta
     raw_names <- sub("^beta\\s+", "", names(beta))
     if (!all(raw_names %in% item_names)) {
-      stop("Could not match RM item parameter names to data columns: ",
-           paste(utils::head(setdiff(raw_names, item_names), 5L),
-                 collapse = ", "),
-           call. = FALSE)
+      stop(
+        "Could not match RM item parameter names to data columns: ",
+        paste(utils::head(setdiff(raw_names, item_names), 5L), collapse = ", "),
+        call. = FALSE
+      )
     }
     return(data.frame(
-      Item      = raw_names,
+      Item = raw_names,
       Threshold = "1",
-      DIFgroup  = dif_group,
-      Location  = unname(-as.numeric(beta)),
-      SE        = unname(as.numeric(se)),
+      DIFgroup = dif_group,
+      Location = unname(-as.numeric(beta)),
+      SE = unname(as.numeric(se)),
       stringsAsFactors = FALSE
     ))
   }
 
   thr <- eRm::thresholds(fit)
   loc <- thr$threshpar
-  se  <- thr$se.thresh
-  if (is.list(loc)) loc <- unlist(loc, use.names = TRUE)
-  if (is.list(se))  se  <- unlist(se,  use.names = TRUE)
+  se <- thr$se.thresh
+  if (is.list(loc)) {
+    loc <- unlist(loc, use.names = TRUE)
+  }
+  if (is.list(se)) {
+    se <- unlist(se, use.names = TRUE)
+  }
 
   parsed <- parse_threshold_names(names(loc), item_names)
 
   data.frame(
-    Item      = parsed$Item,
+    Item = parsed$Item,
     Threshold = parsed$Threshold,
-    DIFgroup  = dif_group,
-    Location  = unname(as.numeric(loc)),
-    SE        = unname(as.numeric(se)),
+    DIFgroup = dif_group,
+    Location = unname(as.numeric(loc)),
+    SE = unname(as.numeric(se)),
     stringsAsFactors = FALSE
   )
 }
@@ -375,26 +431,44 @@ parse_threshold_names <- function(nm, item_names) {
 
   # Match the longest item name as a prefix -- needed because item names
   # themselves may legitimately contain dots ("Q1.a").
-  matched_item <- vapply(bare, function(b) {
-    hits <- item_names[startsWith(b, item_names) |
-                         startsWith(b, paste0(item_names, "."))]
-    if (length(hits) == 0L) NA_character_
-    else hits[which.max(nchar(hits))]
-  }, character(1L))
+  matched_item <- vapply(
+    bare,
+    function(b) {
+      hits <- item_names[
+        startsWith(b, item_names) |
+          startsWith(b, paste0(item_names, "."))
+      ]
+      if (length(hits) == 0L) {
+        NA_character_
+      } else {
+        hits[which.max(nchar(hits))]
+      }
+    },
+    character(1L)
+  )
 
-  thr_part <- mapply(function(b, it) {
-    if (is.na(it)) return(NA_character_)
-    rest <- substr(b, nchar(it) + 1L, nchar(b))
-    rest <- sub("^\\.", "", rest)
-    if (!nzchar(rest)) "1" else rest
-  }, bare, matched_item, USE.NAMES = FALSE)
+  thr_part <- mapply(
+    function(b, it) {
+      if (is.na(it)) {
+        return(NA_character_)
+      }
+      rest <- substr(b, nchar(it) + 1L, nchar(b))
+      rest <- sub("^\\.", "", rest)
+      if (!nzchar(rest)) "1" else rest
+    },
+    bare,
+    matched_item,
+    USE.NAMES = FALSE
+  )
 
   if (any(is.na(matched_item))) {
     bad <- nm[is.na(matched_item)]
-    stop("Could not match threshold parameter name(s) to items: ",
-         paste(utils::head(bad, 5L), collapse = ", "),
-         if (length(bad) > 5L) ", ..." else "",
-         call. = FALSE)
+    stop(
+      "Could not match threshold parameter name(s) to items: ",
+      paste(utils::head(bad, 5L), collapse = ", "),
+      if (length(bad) > 5L) ", ..." else "",
+      call. = FALSE
+    )
   }
 
   list(Item = unname(matched_item), Threshold = unname(thr_part))
@@ -409,16 +483,16 @@ build_wide_table <- function(long_df, groups, level) {
 
   loc_wide <- stats::reshape(
     long_df[, c(id_cols, "DIFgroup", "Location"), drop = FALSE],
-    idvar     = id_cols,
-    timevar   = "DIFgroup",
+    idvar = id_cols,
+    timevar = "DIFgroup",
     direction = "wide"
   )
   names(loc_wide) <- sub("^Location\\.", "", names(loc_wide))
 
   se_wide <- stats::reshape(
     long_df[, c(id_cols, "DIFgroup", "SE"), drop = FALSE],
-    idvar     = id_cols,
-    timevar   = "DIFgroup",
+    idvar = id_cols,
+    timevar = "DIFgroup",
     direction = "wide"
   )
   names(se_wide) <- sub("^SE\\.", "SE_", names(se_wide))
@@ -446,9 +520,15 @@ build_wide_table <- function(long_df, groups, level) {
 #'
 #' @keywords internal
 #' @noRd
-render_lr_kable <- function(table_df, lr_summary, level, cutoff, sort,
-                            is_polytomous) {
-
+render_lr_kable <- function(
+  table_df,
+  lr_summary,
+  level,
+  cutoff,
+  sort,
+  is_polytomous,
+  n_clause = NULL
+) {
   if (sort) {
     table_df <- table_df[order(-table_df$MaxDiff), , drop = FALSE]
     rownames(table_df) <- NULL
@@ -461,31 +541,48 @@ render_lr_kable <- function(table_df, lr_summary, level, cutoff, sort,
     flag <- isTRUE_vec(display$Flagged)
     display$Flagged <- ifelse(flag, "yes", "no")
     if (any(flag)) {
-      data_cols <- setdiff(names(display),
-                           if (level == "item") "Item" else c("Item", "Threshold"))
+      data_cols <- setdiff(
+        names(display),
+        if (level == "item") "Item" else c("Item", "Threshold")
+      )
       for (cc in data_cols) {
         col <- display[[cc]]
-        if (is.numeric(col)) col <- format(col, nsmall = 3, trim = TRUE)
-        display[[cc]] <- ifelse(flag, paste0("**", col, "**"), as.character(col))
+        if (is.numeric(col)) {
+          col <- format(col, nsmall = 3, trim = TRUE)
+        }
+        display[[cc]] <- ifelse(
+          flag,
+          paste0("**", col, "**"),
+          as.character(col)
+        )
       }
     }
   }
 
   caption <- paste0(
     if (is_polytomous) "Partial Credit Model" else "Rasch Model",
-    " split by DIF variable (", lr_summary$n_groups, " groups). ",
-    "Andersen LR chi^2 = ", round(lr_summary$LR, 3),
-    ", df = ", lr_summary$df,
-    ", p = ", format.pval(lr_summary$p_value, digits = 3, eps = 1e-4),
-    ". n = ", lr_summary$n_persons, " complete cases, ",
-    lr_summary$n_items, " items.",
-    if (!is.null(cutoff))
+    " split by DIF variable (",
+    lr_summary$n_groups,
+    " groups). ",
+    "Andersen LR \u03c7\u00b2 = ",
+    round(lr_summary$LR, 3),
+    ", df = ",
+    lr_summary$df,
+    ", ",
+    .format_p(lr_summary$p_value),
+    ". ",
+    n_clause,
+    ", ",
+    lr_summary$n_items,
+    " items.",
+    if (!is.null(cutoff)) {
       paste0(" **Bold** = MaxDiff > ", cutoff, " logits.")
-    else ""
+    } else {
+      ""
+    }
   )
 
-  knitr::kable(display, format = "pipe", row.names = FALSE,
-               caption = caption)
+  knitr::kable(display, format = "pipe", row.names = FALSE, caption = caption)
 }
 
 #' Coerce maybe-character flag column back to logical for rendering
@@ -493,7 +590,9 @@ render_lr_kable <- function(table_df, lr_summary, level, cutoff, sort,
 #' @keywords internal
 #' @noRd
 isTRUE_vec <- function(x) {
-  if (is.logical(x)) return(!is.na(x) & x)
+  if (is.logical(x)) {
+    return(!is.na(x) & x)
+  }
   vapply(x, isTRUE, logical(1L))
 }
 
@@ -501,57 +600,77 @@ isTRUE_vec <- function(x) {
 #'
 #' @keywords internal
 #' @noRd
-render_lr_ggplot <- function(plot_df, lr_summary, level, groups, conf,
-                             is_polytomous) {
+render_lr_ggplot <- function(
+  plot_df,
+  lr_summary,
+  level,
+  groups,
+  conf,
+  is_polytomous
+) {
   z <- stats::qnorm(1 - (1 - conf) / 2)
 
   plot_df$DIFgroup <- factor(plot_df$DIFgroup, levels = c(groups, "All"))
   group_only <- plot_df[plot_df$DIFgroup %in% groups, , drop = FALSE]
-  all_only   <- plot_df[plot_df$DIFgroup == "All",  , drop = FALSE]
+  all_only <- plot_df[plot_df$DIFgroup == "All", , drop = FALSE]
 
   group_only$DIFgroup <- droplevels(group_only$DIFgroup)
   diamond_x <- (length(groups) + 1) / 2 + 0.15
 
   caption <- er2_caption(paste0(
-    "Andersen LR chi^2 = ", round(lr_summary$LR, 3),
-    ", df = ", lr_summary$df,
-    ", p = ", format.pval(lr_summary$p_value, digits = 3, eps = 1e-4),
-    ". Error bars: ", round(conf * 100), "% CI. ",
+    "Andersen LR \u03c7\u00b2 = ",
+    round(lr_summary$LR, 3),
+    ", df = ",
+    lr_summary$df,
+    ", ",
+    .format_p(lr_summary$p_value),
+    ". Error bars: ",
+    round(conf * 100),
+    "% CI. ",
     "Black diamond = whole-sample location."
   ))
 
   if (level == "item") {
     p <- ggplot2::ggplot(
       group_only,
-      ggplot2::aes(x = .data$DIFgroup,
-                   y = .data$Location,
-                   group = .data$Item,
-                   colour = .data$Item)
+      ggplot2::aes(
+        x = .data$DIFgroup,
+        y = .data$Location,
+        group = .data$Item,
+        colour = .data$Item
+      )
     ) +
       ggplot2::geom_line() +
       ggplot2::geom_point() +
       ggplot2::geom_errorbar(
-        ggplot2::aes(ymin = .data$Location - z * .data$SE,
-                     ymax = .data$Location + z * .data$SE),
+        ggplot2::aes(
+          ymin = .data$Location - z * .data$SE,
+          ymax = .data$Location + z * .data$SE
+        ),
         width = 0.1
       ) +
       ggplot2::geom_point(
         data = all_only,
         ggplot2::aes(x = diamond_x, y = .data$Location),
-        shape = 18, colour = "black", size = 3, alpha = 0.6,
+        shape = 18,
+        colour = "black",
+        size = 3,
+        alpha = 0.6,
         inherit.aes = FALSE
       ) +
-      ggplot2::facet_wrap(~ Item) +
+      ggplot2::facet_wrap(~Item) +
       ggplot2::labs(
-        title    = "DIF: item locations by group",
+        title = "DIF: item locations by group",
         subtitle = "Item locations are means of threshold locations",
-        x        = "DIF group",
-        y        = "Item location (logits)",
-        caption  = caption
+        x = "DIF group",
+        y = "Item location (logits)",
+        caption = caption
       ) +
       ggplot2::theme_bw() +
-      ggplot2::theme(legend.position = "none",
-                     panel.spacing   = ggplot2::unit(0.7, "cm")) +
+      ggplot2::theme(
+        legend.position = "none",
+        panel.spacing = ggplot2::unit(0.7, "cm")
+      ) +
       er2_axis_margins() +
       er2_plot_caption()
     return(p)
@@ -560,42 +679,54 @@ render_lr_ggplot <- function(plot_df, lr_summary, level, groups, conf,
   # level == "threshold"
   p <- ggplot2::ggplot(
     group_only,
-    ggplot2::aes(x = .data$DIFgroup,
-                 y = .data$Location,
-                 group = .data$Threshold,
-                 colour = .data$Threshold)
+    ggplot2::aes(
+      x = .data$DIFgroup,
+      y = .data$Location,
+      group = .data$Threshold,
+      colour = .data$Threshold
+    )
   ) +
     ggplot2::geom_line() +
     ggplot2::geom_point(alpha = 0.9) +
     ggplot2::geom_errorbar(
-      ggplot2::aes(ymin = .data$Location - z * .data$SE,
-                   ymax = .data$Location + z * .data$SE),
+      ggplot2::aes(
+        ymin = .data$Location - z * .data$SE,
+        ymax = .data$Location + z * .data$SE
+      ),
       width = 0.1
     ) +
     ggplot2::geom_errorbar(
       data = all_only,
-      ggplot2::aes(x = diamond_x,
-                   ymin = .data$Location - z * .data$SE,
-                   ymax = .data$Location + z * .data$SE),
-      width = 0.1, colour = "darkgrey",
+      ggplot2::aes(
+        x = diamond_x,
+        ymin = .data$Location - z * .data$SE,
+        ymax = .data$Location + z * .data$SE
+      ),
+      width = 0.1,
+      colour = "darkgrey",
       inherit.aes = FALSE
     ) +
     ggplot2::geom_point(
       data = all_only,
       ggplot2::aes(x = diamond_x, y = .data$Location),
-      shape = 18, colour = "black", size = 3, alpha = 0.6,
+      shape = 18,
+      colour = "black",
+      size = 3,
+      alpha = 0.6,
       inherit.aes = FALSE
     ) +
-    ggplot2::facet_wrap(~ Item) +
+    ggplot2::facet_wrap(~Item) +
     ggplot2::labs(
-      title   = "DIF: threshold locations by group",
-      x       = "DIF group",
-      y       = "Threshold location (logits)",
+      title = "DIF: threshold locations by group",
+      x = "DIF group",
+      y = "Threshold location (logits)",
       caption = caption
     ) +
     ggplot2::theme_bw() +
-    ggplot2::theme(legend.position = "none",
-                   panel.spacing   = ggplot2::unit(0.7, "cm")) +
+    ggplot2::theme(
+      legend.position = "none",
+      panel.spacing = ggplot2::unit(0.7, "cm")
+    ) +
     er2_axis_margins() +
     er2_plot_caption()
 

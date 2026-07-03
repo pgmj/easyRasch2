@@ -176,6 +176,11 @@ RMpersonFit(dat, iterations = 200, flag = "underfit",
 }
 }
 \references{
+de la Torre, J., & Deng, W. (2008). Improving person-fit assessment by
+correcting the ability estimate and its reference distribution.
+\emph{Journal of Educational Measurement, 45}(2), 159-177.
+\doi{10.1111/j.1745-3984.2008.00058.x}
+
 Drasgow, F., Levine, M. V., & Williams, E. A. (1985). Appropriateness
 measurement with polychotomous item response models and standardized
 indices. \emph{British Journal of Mathematical and Statistical Psychology,

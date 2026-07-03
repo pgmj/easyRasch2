@@ -9,11 +9,13 @@ test_that("RMitemRestscore errors when iarm is not installed", {
 })
 
 test_that("RMitemRestscore errors when data does not start at 0", {
+  skip_if_not_installed("iarm")
   df <- as.data.frame(matrix(sample(1:3, 200, replace = TRUE), nrow = 40, ncol = 5))
   expect_error(RMitemRestscore(df), regexp = "scored starting at 0")
 })
 
 test_that("RMitemRestscore errors when data is all NA", {
+  skip_if_not_installed("iarm")
   df <- as.data.frame(matrix(NA_integer_, nrow = 10, ncol = 4))
   expect_error(RMitemRestscore(df), regexp = "no non-missing|No complete|non-missing")
 })

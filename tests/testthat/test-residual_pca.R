@@ -121,6 +121,37 @@ test_that("RMdimResidualPCA accepts an RMdimResidualPCACutoff result for cutoff 
   expect_true("Flagged" %in% names(res))
 })
 
+test_that("RMdimResidualPCA p_value requires the full cutoff object", {
+  skip_if_not_installed("eRm")
+  df <- make_dichotomous()
+  expect_error(
+    RMdimResidualPCA(df, cutoff = 1.8, p_value = TRUE),
+    regexp = "full RMdimResidualPCACutoff"
+  )
+  expect_error(
+    RMdimResidualPCA(df, p_value = TRUE),
+    regexp = "full RMdimResidualPCACutoff"
+  )
+})
+
+test_that("RMdimResidualPCA p_value adds a one-sided p for PC1 only", {
+  skip_if_not_installed("eRm")
+  df <- make_dichotomous()
+  bound <- RMdimResidualPCACutoff(df, iterations = 10L, parallel = FALSE,
+                                  seed = 1L)
+  res <- RMdimResidualPCA(df, cutoff = bound, p_value = TRUE,
+                          output = "dataframe")
+  expect_true("p" %in% names(res))
+  # p is rounded to 4 dp in the table, so compare against the rounded floor
+  B <- bound$actual_iterations
+  expect_gte(res$p[1L], round(1 / (B + 1), 4))
+  expect_lte(res$p[1L], 1)
+  expect_true(all(is.na(res$p[-1L])))
+  # kable output carries the extra column without erroring
+  kbl <- RMdimResidualPCA(df, cutoff = bound, p_value = TRUE)
+  expect_s3_class(kbl, "knitr_kable")
+})
+
 test_that("RMdimResidualPCACutoff is reproducible with the same seed", {
   skip_if_not_installed("eRm")
   df <- make_dichotomous()

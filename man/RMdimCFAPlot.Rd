@@ -38,7 +38,8 @@ simulated distribution and expected range, in the style of
 \examples{
 \donttest{
 if (requireNamespace("lavaan", quietly = TRUE) &&
-    requireNamespace("ggplot2", quietly = TRUE)) {
+    requireNamespace("ggplot2", quietly = TRUE) &&
+    requireNamespace("eRm", quietly = TRUE)) {
   data("raschdat1", package = "eRm")
   sim <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
                         parallel = FALSE, seed = 1)

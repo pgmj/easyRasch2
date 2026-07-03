@@ -55,22 +55,27 @@ The \code{ggplot2}, \code{ggdist}, and optionally \code{iarm} packages must be i
 }
 \examples{
 \donttest{
-set.seed(42)
-sim_data <- as.data.frame(
-  matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-)
-colnames(sim_data) <- paste0("Item", 1:10)
-dif_group <- factor(sample(c("A", "B"), 200, replace = TRUE))
+if (requireNamespace("iarm", quietly = TRUE) &&
+    requireNamespace("ggdist", quietly = TRUE) &&
+    requireNamespace("ggplot2", quietly = TRUE)) {
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+  )
+  colnames(sim_data) <- paste0("Item", 1:10)
+  dif_group <- factor(sample(c("A", "B"), 200, replace = TRUE))
 
-# Run simulation
-cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_group,
-                             iterations = 100, parallel = FALSE, seed = 42)
+  # Run simulation
+  cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_group,
+                                 iterations = 100, parallel = FALSE,
+                                 seed = 42)
 
-# Simulated distribution only
-RMdifGammaPlot(cutoff_res)
+  # Simulated distribution only
+  RMdifGammaPlot(cutoff_res)
 
-# With observed partial gamma overlaid
-RMdifGammaPlot(cutoff_res, data = sim_data, dif_var = dif_group)
+  # With observed partial gamma overlaid
+  RMdifGammaPlot(cutoff_res, data = sim_data, dif_var = dif_group)
+}
 }
 }
 \seealso{

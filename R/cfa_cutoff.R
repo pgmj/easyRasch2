@@ -58,6 +58,10 @@
 #'     two-sided expected loading interval per item.}
 #'   \item{`actual_iterations`}{Number of successful MC iterations.}
 #'   \item{`sample_n`}{Number of complete cases used.}
+#'   \item{`sample_n_total`}{Number of respondents in the raw input data,
+#'     before the complete-case filter.}
+#'   \item{`sample_has_na`}{Logical. Whether the raw input data contained
+#'     any missing values.}
 #'   \item{`n_items`}{Number of items.}
 #'   \item{`item_names`}{Character vector of item names.}
 #'   \item{`is_polytomous`}{Logical: was a PCM (vs RM) fitted?}
@@ -108,7 +112,8 @@
 #'
 #' @examples
 #' \donttest{
-#' if (requireNamespace("lavaan", quietly = TRUE)) {
+#' if (requireNamespace("lavaan", quietly = TRUE) &&
+#'     requireNamespace("eRm", quietly = TRUE)) {
 #'   data("raschdat1", package = "eRm")
 #'
 #'   # Few iterations for a fast example; use 250+ in real analyses
@@ -189,6 +194,11 @@ RMdimCFACutoff <- function(
   options(rgl.useNULL = TRUE)
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
 
+  # Only complete cases. Record the raw total and whether anything was
+  # dropped so callers (e.g. RMdimCFAPlot) can report the sample in the
+  # standard `n = X of Y respondents` form.
+  n_total <- nrow(as.data.frame(data))
+  has_na <- anyNA(data)
   data <- stats::na.omit(as.data.frame(data))
   if (nrow(data) == 0L) {
     stop("No complete cases in `data`.", call. = FALSE)
@@ -331,6 +341,8 @@ RMdimCFACutoff <- function(
     loading_cutoffs = loading_cutoffs,
     actual_iterations = actual_iterations,
     sample_n = sample_n,
+    sample_n_total = n_total,
+    sample_has_na = has_na,
     n_items = ncol(data_mat),
     item_names = item_names_vec,
     is_polytomous = is_polytomous,
@@ -453,6 +465,19 @@ compute_cfa_loading_flagged <- function(observed_loadings, loading_cutoffs) {
 #' @param cutoff The list returned by \code{\link{RMdimCFACutoff}}. Required:
 #'   observed CFA fit indices are not interpretable without the simulated
 #'   reference, so the function errors if it is missing.
+#' @param p_value Logical. When `TRUE`, adds bootstrap p-values from the
+#'   simulated null distributions: one-sided in the unfavourable direction
+#'   for the fit indices (CFI low; RMSEA / SRMR high), two-sided for the
+#'   per-item loadings. The `Flagged` columns then reflect
+#'   `padj < alpha` instead of the percentile cutoffs. The fit indices and
+#'   the loadings are corrected as two separate families. Default `FALSE`.
+#' @param correction Character. Multiplicity correction for the p-values:
+#'   `"fwer"` (default; Westfall-Young studentised-max step-down), `"fdr_bh"`
+#'   (Benjamini-Hochberg), `"fdr_by"` (Benjamini-Yekutieli), or `"none"`.
+#'   Ignored when `p_value = FALSE`.
+#' @param alpha Numeric in (0, 1). Significance level used to flag
+#'   comparisons on the corrected p-value. Default `0.05`. Ignored when
+#'   `p_value = FALSE`.
 #' @param output Character. `"kable"` (default) returns each table as a
 #'   `knitr::kable()`; `"dataframe"` returns plain data.frames.
 #'
@@ -460,31 +485,72 @@ compute_cfa_loading_flagged <- function(observed_loadings, loading_cutoffs) {
 #' \describe{
 #'   \item{`fit`}{CFI / RMSEA / SRMR with columns `Index`, `Observed`,
 #'     `Cutoff`, `Direction`, `Flagged` (one-sided, in the unfavourable
-#'     direction).}
+#'     direction). With `p_value = TRUE`, columns `p` and `padj` are added
+#'     and `Flagged` reflects `padj < alpha`.}
 #'   \item{`loadings`}{One row per item with columns `Item`, `Observed`,
 #'     `Expected_low`, `Expected_high`, `Flagged` (`"below"` / `"above"` /
-#'     `""`).}
+#'     `""`). With `p_value = TRUE`, columns `p_loading` and `padj_loading`
+#'     are added and `Flagged` reflects `padj_loading < alpha` (direction
+#'     from the sign of the deviation from the simulated mean).}
 #' }
 #' Each element is a `knitr_kable` (when `output = "kable"`) or a data.frame
 #' (when `output = "dataframe"`).
+#'
+#' @details
+#' \strong{Bootstrap p-values.} The per-comparison statistic is the residual
+#' studentised by the bootstrap mean and SD. Marginal p-values are Monte-Carlo,
+#' `(1 + count) / (B + 1)`, so they can be no smaller than `1 / (B + 1)`.
+#' `correction = "fwer"` uses the Westfall-Young studentised-max step-down,
+#' which exploits the bootstrap dependence among the statistics (Ferreira,
+#' 2024); it is liberal when the simulation is small, so at least 1000
+#' `iterations` in [RMdimCFACutoff()] are recommended (a warning is issued
+#' below that). These p-values are model-conditional and sample-size-sensitive
+#' and are reported alongside the simulated expected ranges, not in place of
+#' them.
+#'
+#' @inheritSection RMitemInfit Multiple comparisons
+#'
+#' @references
+#' Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
+#' of hypotheses simultaneously. *Journal of Statistical Theory and Practice,
+#' 19*(6). \doi{10.1007/s42519-024-00412-4}
+#'
+#' Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple Testing*.
+#' Wiley.
 #'
 #' @seealso \code{\link{RMdimCFACutoff}}, \code{\link{RMdimCFAPlot}}
 #'
 #' @examples
 #' \donttest{
-#' if (requireNamespace("lavaan", quietly = TRUE)) {
+#' if (requireNamespace("lavaan", quietly = TRUE) &&
+#'     requireNamespace("eRm", quietly = TRUE)) {
 #'   data("raschdat1", package = "eRm")
 #'   sim <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
 #'                         parallel = FALSE, seed = 1)
 #'   tabs <- RMdimCFA(raschdat1[, 1:8], cutoff = sim)
 #'   tabs$fit
 #'   tabs$loadings
+#'
+#'   # Bootstrap p-values with family-wise (Westfall-Young) correction
+#'   # (use iterations >= 1000 in real analyses for stable p-values)
+#'   RMdimCFA(raschdat1[, 1:8], cutoff = sim, p_value = TRUE)
 #' }
 #' }
 #'
 #' @export
-RMdimCFA <- function(data, cutoff, output = c("kable", "dataframe")) {
+RMdimCFA <- function(
+  data,
+  cutoff,
+  p_value = FALSE,
+  correction = c("fwer", "fdr_bh", "fdr_by", "none"),
+  alpha = 0.05,
+  output = c("kable", "dataframe")
+) {
   output <- match.arg(output)
+  correction <- match.arg(correction)
+  if (!is.numeric(alpha) || length(alpha) != 1L || alpha <= 0 || alpha >= 1) {
+    stop("`alpha` must be a single number in (0, 1).", call. = FALSE)
+  }
 
   if (missing(cutoff) || is.null(cutoff)) {
     stop(
@@ -510,6 +576,24 @@ RMdimCFA <- function(data, cutoff, output = c("kable", "dataframe")) {
     )
   }
 
+  # --- p-value prerequisites --------------------------------------------------
+  # The full cutoff object always carries $simulated / $simulated_loadings
+  # (checked above), so only the iteration count needs a warning.
+  if (
+    p_value &&
+      !is.null(cutoff$actual_iterations) &&
+      cutoff$actual_iterations < 1000L
+  ) {
+    warning(
+      "Bootstrap p-values are based on only ",
+      cutoff$actual_iterations,
+      " simulation iterations. With few iterations the studentised-max ",
+      "(FWER) correction is liberal and small p-values are imprecise; ",
+      "use iterations >= 1000 in RMdimCFACutoff() for reliable p-values.",
+      call. = FALSE
+    )
+  }
+
   if (!requireNamespace("lavaan", quietly = TRUE)) {
     stop(
       "Package 'lavaan' is required for RMdimCFA(). ",
@@ -527,10 +611,18 @@ RMdimCFA <- function(data, cutoff, output = c("kable", "dataframe")) {
   options(rgl.useNULL = TRUE)
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
 
-  data <- stats::na.omit(as.data.frame(data))
+  data <- as.data.frame(data)
+  n_total_cfa <- nrow(data)
+  has_na_cfa <- anyNA(data)
+  data <- stats::na.omit(data)
   if (nrow(data) == 0L) {
     stop("No complete cases in `data`.", call. = FALSE)
   }
+  n_clause_cfa <- .n_caption(
+    nrow(data),
+    n_total_cfa,
+    if (has_na_cfa) "complete cases" else character()
+  )
 
   item_names <- cutoff$item_names
   if (!setequal(names(data), item_names)) {
@@ -576,13 +668,101 @@ RMdimCFA <- function(data, cutoff, output = c("kable", "dataframe")) {
     loading_flagged
   )
 
+  # --- Bootstrap p-values (two separate families: fit indices, loadings) ------
+  if (p_value) {
+    # Fit indices: one-sided in the unfavourable direction. CFI is negated so
+    # "large = bad" holds for all three; RMSEA can be Inf on a degenerate
+    # simulated dataset, so non-finite simulated values are dropped to NA.
+    sim_fit <- cbind(
+      CFI = -cutoff$simulated$cfi,
+      RMSEA = cutoff$simulated$rmsea,
+      SRMR = cutoff$simulated$srmr
+    )
+    sim_fit[!is.finite(sim_fit)] <- NA_real_
+    obs_fit_stat <- c(
+      CFI = -observed_fit[["cfi"]],
+      RMSEA = observed_fit[["rmsea"]],
+      SRMR = observed_fit[["srmr"]]
+    )
+    pv_fit <- .bootstrap_pvalues(
+      obs_fit_stat,
+      sim_fit,
+      correction = correction,
+      tail = "upper"
+    )
+    fit_df$p <- round(pv_fit$p, 4)
+    fit_df$padj <- round(pv_fit$padj, 4)
+    fit_df$Flagged <- ifelse(
+      !is.na(fit_df$padj) & fit_df$padj < alpha,
+      "TRUE",
+      ""
+    )
+    fit_df <- fit_df[, c(
+      "Index",
+      "Observed",
+      "Cutoff",
+      "Direction",
+      "p",
+      "padj",
+      "Flagged"
+    )]
+
+    # Loadings: two-sided per item; the flag direction comes from the sign of
+    # the deviation from the simulated mean loading.
+    sim_load <- as.matrix(cutoff$simulated_loadings[, item_names, drop = FALSE])
+    sim_load[!is.finite(sim_load)] <- NA_real_
+    obs_load_vec <- stats::setNames(
+      as.numeric(observed_load[item_names]),
+      item_names
+    )
+    pv_load <- .bootstrap_pvalues(
+      obs_load_vec,
+      sim_load,
+      correction = correction,
+      tail = "two.sided"
+    )
+    idx <- match(load_df$Item, pv_load$name)
+    load_df$p_loading <- round(pv_load$p[idx], 4)
+    load_df$padj_loading <- round(pv_load$padj[idx], 4)
+    sim_mean <- colMeans(sim_load, na.rm = TRUE)[load_df$Item]
+    sig <- !is.na(load_df$padj_loading) & load_df$padj_loading < alpha
+    load_df$Flagged <- ifelse(
+      sig,
+      ifelse(load_df$Observed < sim_mean, "below", "above"),
+      ""
+    )
+    load_df <- load_df[, c(
+      "Item",
+      "Observed",
+      "Expected_low",
+      "Expected_high",
+      "p_loading",
+      "padj_loading",
+      "Flagged"
+    )]
+  }
+
   if (output == "dataframe") {
     return(list(fit = fit_df, loadings = load_df))
   }
 
   list(
-    fit = render_cfa_fit_kable(fit_df, cutoff, nrow(data)),
-    loadings = render_cfa_loadings_kable(load_df, cutoff, nrow(data))
+    fit = render_cfa_fit_kable(
+      fit_df,
+      cutoff,
+      n_clause_cfa,
+      p_value = p_value,
+      correction = correction,
+      alpha = alpha
+    ),
+    loadings = render_cfa_loadings_kable(
+      load_df,
+      cutoff,
+      n_clause_cfa,
+      p_value = p_value,
+      correction = correction,
+      alpha = alpha
+    )
   )
 }
 
@@ -637,62 +817,131 @@ build_cfa_loadings_df <- function(
 
 #' @keywords internal
 #' @noRd
-render_cfa_fit_kable <- function(fit_df, cutoff, observed_n) {
+render_cfa_fit_kable <- function(
+  fit_df,
+  cutoff,
+  n_clause,
+  p_value = FALSE,
+  correction = "fwer",
+  alpha = 0.05
+) {
   pct_label <- cutoff$percentile
   caption <- paste0(
     if (cutoff$is_polytomous) "Partial Credit Model" else "Rasch Model",
     " posterior-predictive CFA fit-index check. ",
     "Observed CFA fit (one-factor, lavaan ",
     cutoff$estimator,
-    ", ordered = TRUE; n = ",
-    observed_n,
-    ") vs simulated null under ",
+    ", ordered = TRUE) vs simulated null under ",
     if (cutoff$is_polytomous) "PCM" else "RM",
     " unidimensionality (",
     cutoff$actual_iterations,
     " iterations at n = ",
     cutoff$sample_n,
-    "). ",
-    "Cutoffs one-sided at the ",
-    pct_label,
-    "th percentile; flagged when the observed value lies in the worst ",
-    100 - pct_label,
-    "% of the null in the unfavourable direction."
+    " simulees). ",
+    n_clause,
+    if (p_value) {
+      paste0(
+        ". Cutoffs shown at the ",
+        pct_label,
+        "th percentile for reference. One-sided bootstrap p-values in the ",
+        "unfavourable direction (CFI low; RMSEA/SRMR high); multiplicity ",
+        "correction: ",
+        .correction_label(correction),
+        "; flagged at padj < ",
+        alpha,
+        ". p-values cannot be smaller than 1/(",
+        cutoff$actual_iterations,
+        "+1) = ",
+        round(1 / (cutoff$actual_iterations + 1), 4),
+        "."
+      )
+    } else {
+      paste0(
+        ". Cutoffs one-sided at the ",
+        pct_label,
+        "th percentile; flagged when the observed value lies in the worst ",
+        100 - pct_label,
+        "% of the null in the unfavourable direction."
+      )
+    }
   )
-  knitr::kable(fit_df, format = "pipe", caption = caption, row.names = FALSE)
+  knitr::kable(
+    fit_df,
+    format = "pipe",
+    caption = caption,
+    row.names = FALSE,
+    col.names = if (p_value) {
+      c("Index", "Observed", "Cutoff", "Direction", "p", "p (adj)", "Flagged")
+    } else {
+      names(fit_df)
+    }
+  )
 }
 
 #' @keywords internal
 #' @noRd
-render_cfa_loadings_kable <- function(load_df, cutoff, observed_n) {
+render_cfa_loadings_kable <- function(
+  load_df,
+  cutoff,
+  n_clause,
+  p_value = FALSE,
+  correction = "fwer",
+  alpha = 0.05
+) {
   pct_label <- cutoff$percentile
   caption <- paste0(
     "Standardized factor loadings (one-factor, lavaan ",
     cutoff$estimator,
-    "; n = ",
-    observed_n,
     ") vs the simulated expected range under ",
     if (cutoff$is_polytomous) "PCM" else "RM",
     " unidimensionality (",
     cutoff$actual_iterations,
     " iterations at n = ",
     cutoff$sample_n,
-    "). ",
-    "Expected range is the two-sided central ",
-    pct_label,
-    "% interval of the simulated loadings; Flagged = below / above that range."
+    " simulees). ",
+    n_clause,
+    if (p_value) {
+      paste0(
+        ". Expected range shown for reference (two-sided central ",
+        pct_label,
+        "% interval). p/p (adj): two-sided bootstrap p-values; multiplicity ",
+        "correction: ",
+        .correction_label(correction),
+        "; flagged at padj < ",
+        alpha,
+        " (below / above = direction of the deviation)."
+      )
+    } else {
+      paste0(
+        ". Expected range is the two-sided central ",
+        pct_label,
+        "% interval of the simulated loadings; Flagged = below / above that range."
+      )
+    }
   )
   knitr::kable(
     load_df,
     format = "pipe",
     row.names = FALSE,
-    col.names = c(
-      "Item",
-      "Observed",
-      "Expected low",
-      "Expected high",
-      "Flagged"
-    ),
+    col.names = if (p_value) {
+      c(
+        "Item",
+        "Observed",
+        "Expected low",
+        "Expected high",
+        "p",
+        "p (adj)",
+        "Flagged"
+      )
+    } else {
+      c(
+        "Item",
+        "Observed",
+        "Expected low",
+        "Expected high",
+        "Flagged"
+      )
+    },
     caption = caption
   )
 }
@@ -732,7 +981,8 @@ render_cfa_loadings_kable <- function(load_df, cutoff, observed_n) {
 #' @examples
 #' \donttest{
 #' if (requireNamespace("lavaan", quietly = TRUE) &&
-#'     requireNamespace("ggplot2", quietly = TRUE)) {
+#'     requireNamespace("ggplot2", quietly = TRUE) &&
+#'     requireNamespace("eRm", quietly = TRUE)) {
 #'   data("raschdat1", package = "eRm")
 #'   sim <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
 #'                         parallel = FALSE, seed = 1)
@@ -845,6 +1095,27 @@ RMdimCFAPlot <- function(simfit, data, percentile = NULL) {
   )
 }
 
+#' Standard sample-size clause for the CFA plot captions
+#'
+#' Reports the (complete-case) simulation sample in the standard
+#' `n = X of Y respondents (policy)` form. `sample_n_total` /
+#' `sample_has_na` are absent in cutoff objects made by older versions,
+#' so fall back to the plain count.
+#'
+#' @keywords internal
+#' @noRd
+.cfa_sample_clause <- function(simfit) {
+  .n_caption(
+    simfit$sample_n,
+    if (is.null(simfit$sample_n_total)) {
+      simfit$sample_n
+    } else {
+      simfit$sample_n_total
+    },
+    if (isTRUE(simfit$sample_has_na)) "complete cases" else character()
+  )
+}
+
 #' Per-item standardized-loadings plot (RMitemInfitPlot style)
 #'
 #' @keywords internal
@@ -908,9 +1179,9 @@ cfa_loadings_plot <- function(
     simfit$actual_iterations,
     " datasets simulated under ",
     if (simfit$is_polytomous) "PCM" else "RM",
-    " unidimensionality at n = ",
-    simfit$sample_n,
-    ", refitted with lavaan::cfa(ordered = TRUE, estimator = \"",
+    " unidimensionality at ",
+    .cfa_sample_clause(simfit),
+    " per dataset, refitted with lavaan::cfa(ordered = TRUE, estimator = \"",
     simfit$estimator,
     "\").\n",
     "Diamonds: observed loading (red = outside the two-sided ",
@@ -1019,9 +1290,9 @@ cfa_fit_plot <- function(simfit, observed_fit, cutoffs, percentile) {
     simfit$actual_iterations,
     " datasets simulated under ",
     if (simfit$is_polytomous) "PCM" else "RM",
-    " unidimensionality at n = ",
-    simfit$sample_n,
-    ",\nrefitted with lavaan::cfa(ordered = TRUE, estimator = \"",
+    " unidimensionality at ",
+    .cfa_sample_clause(simfit),
+    " per dataset,\nrefitted with lavaan::cfa(ordered = TRUE, estimator = \"",
     simfit$estimator,
     "\").\n",
     "Diamond: observed value (red = flagged at the ",

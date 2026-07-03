@@ -11,6 +11,7 @@ make_dichotomous <- function(n = 200, k = 8, seed = 1L) {
 # Input validation
 # ---------------------------------------------------------------------
 test_that("RMitemRestscoreBoot errors when data has non-zero minimum", {
+  skip_if_not_installed("iarm")
   df <- make_dichotomous() + 1L
   expect_error(RMitemRestscoreBoot(df), regexp = "scored starting at 0")
 })

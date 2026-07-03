@@ -7,30 +7,81 @@ make_mids <- function(n = 200, k = 5, prop_na = 0.05, seed = 1L) {
   mat[sample(length(mat), round(prop_na * length(mat)))] <- NA
   df <- as.data.frame(mat)
   colnames(df) <- paste0("I", seq_len(k))
-  suppressWarnings(mice::mice(df, m = 3L, method = "pmm",
-                               seed = seed, printFlag = FALSE))
+  suppressWarnings(mice::mice(
+    df,
+    m = 3L,
+    method = "pmm",
+    seed = seed,
+    printFlag = FALSE
+  ))
+}
+
+# A `mids` built from ordered factors + mice's `polr` method, as recommended
+# for ordinal items. mice::complete() then returns ordered factors, which the
+# MI functions must coerce back to numeric internally.
+make_mids_polr <- function(n = 200, k = 5, prop_na = 0.05, seed = 1L) {
+  set.seed(seed)
+  mat <- matrix(sample(0:1, n * k, replace = TRUE), n, k)
+  mat[sample(length(mat), round(prop_na * length(mat)))] <- NA
+  df <- as.data.frame(mat)
+  colnames(df) <- paste0("I", seq_len(k))
+  df[] <- lapply(df, function(x) factor(x, ordered = TRUE))
+  suppressWarnings(mice::mice(
+    df,
+    m = 3L,
+    method = "polr",
+    seed = seed,
+    printFlag = FALSE
+  ))
 }
 
 # ---------------------------------------------------------------------
 # RMitemInfitCutoffMI
 # ---------------------------------------------------------------------
+test_that("RMitemInfitCutoffMI accepts a polr/ordered-factor mids (coerced to numeric)", {
+  skip_if_not_installed("mice")
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("MASS")
+  imp <- make_mids_polr()
+  res <- RMitemInfitCutoffMI(
+    imp,
+    iterations = 5L,
+    parallel = FALSE,
+    seed = 1L,
+    cutoff_method = "quantile"
+  )
+  expect_equal(res$n_imputations, 3L)
+  expect_equal(nrow(res$item_cutoffs), 5L)
+})
+
 test_that("RMitemInfitCutoffMI returns the expected list structure", {
   skip_if_not_installed("mice")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
 
   imp <- make_mids()
-  res <- RMitemInfitCutoffMI(imp, iterations = 5L,
-                          parallel = FALSE, seed = 1L)
+  res <- RMitemInfitCutoffMI(imp, iterations = 5L, parallel = FALSE, seed = 1L)
   expect_type(res, "list")
-  expect_true(all(c("results", "item_cutoffs", "actual_iterations",
-                    "sample_n", "item_names", "cutoff_method",
-                    "hdci_width", "n_imputations") %in% names(res)))
+  expect_true(all(
+    c(
+      "results",
+      "item_cutoffs",
+      "actual_iterations",
+      "sample_n",
+      "item_names",
+      "cutoff_method",
+      "hdci_width",
+      "n_imputations"
+    ) %in%
+      names(res)
+  ))
   expect_equal(res$n_imputations, 3L)
   expect_s3_class(res$item_cutoffs, "data.frame")
   expect_equal(nrow(res$item_cutoffs), 5L)
-  expect_true(all(c("Item", "infit_low", "infit_high") %in%
-                  names(res$item_cutoffs)))
+  expect_true(all(
+    c("Item", "infit_low", "infit_high") %in%
+      names(res$item_cutoffs)
+  ))
 })
 
 test_that("RMitemInfitCutoffMI is reproducible with the same seed", {
@@ -39,10 +90,8 @@ test_that("RMitemInfitCutoffMI is reproducible with the same seed", {
   skip_if_not_installed("ggdist")
 
   imp <- make_mids()
-  r1 <- RMitemInfitCutoffMI(imp, iterations = 5L,
-                         parallel = FALSE, seed = 42L)
-  r2 <- RMitemInfitCutoffMI(imp, iterations = 5L,
-                         parallel = FALSE, seed = 42L)
+  r1 <- RMitemInfitCutoffMI(imp, iterations = 5L, parallel = FALSE, seed = 42L)
+  r2 <- RMitemInfitCutoffMI(imp, iterations = 5L, parallel = FALSE, seed = 42L)
   expect_equal(r1$item_cutoffs, r2$item_cutoffs)
 })
 
@@ -51,8 +100,13 @@ test_that("RMitemInfitCutoffMI cutoff_method = 'quantile' aggregates without ggd
   skip_if_not_installed("iarm")
 
   imp <- make_mids()
-  res <- RMitemInfitCutoffMI(imp, iterations = 6L, parallel = FALSE, seed = 1L,
-                             cutoff_method = "quantile")
+  res <- RMitemInfitCutoffMI(
+    imp,
+    iterations = 6L,
+    parallel = FALSE,
+    seed = 1L,
+    cutoff_method = "quantile"
+  )
   expect_equal(res$cutoff_method, "quantile")
   expect_equal(nrow(res$item_cutoffs), 5L)
   expect_true(all(res$item_cutoffs$infit_low < res$item_cutoffs$infit_high))
@@ -64,8 +118,14 @@ test_that("RMitemInfitCutoffMI verbose = TRUE runs the per-imputation progress p
 
   imp <- make_mids()
   suppressMessages(invisible(utils::capture.output(
-    res <- RMitemInfitCutoffMI(imp, iterations = 6L, parallel = FALSE, seed = 1L,
-                               cutoff_method = "quantile", verbose = TRUE)
+    res <- RMitemInfitCutoffMI(
+      imp,
+      iterations = 6L,
+      parallel = FALSE,
+      seed = 1L,
+      cutoff_method = "quantile",
+      verbose = TRUE
+    )
   )))
   expect_equal(res$n_imputations, 3L)
 })
@@ -97,10 +157,9 @@ test_that("RMitemInfitMI accepts an RMitemInfitCutoffMI result and adds Flagged 
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
 
-  imp  <- make_mids()
-  cuts <- RMitemInfitCutoffMI(imp, iterations = 5L,
-                           parallel = FALSE, seed = 1L)
-  res  <- RMitemInfitMI(imp, cutoff = cuts, output = "dataframe")
+  imp <- make_mids()
+  cuts <- RMitemInfitCutoffMI(imp, iterations = 5L, parallel = FALSE, seed = 1L)
+  res <- RMitemInfitMI(imp, cutoff = cuts, output = "dataframe")
   expect_s3_class(res, "data.frame")
   expect_true("Flagged" %in% names(res))
   expect_type(res$Flagged, "character")

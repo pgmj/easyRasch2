@@ -68,6 +68,10 @@ one-sided fit-index cutoffs at the chosen percentile.}
 two-sided expected loading interval per item.}
 \item{\code{actual_iterations}}{Number of successful MC iterations.}
 \item{\code{sample_n}}{Number of complete cases used.}
+\item{\code{sample_n_total}}{Number of respondents in the raw input data,
+before the complete-case filter.}
+\item{\code{sample_has_na}}{Logical. Whether the raw input data contained
+any missing values.}
 \item{\code{n_items}}{Number of items.}
 \item{\code{item_names}}{Character vector of item names.}
 \item{\code{is_polytomous}}{Logical: was a PCM (vs RM) fitted?}
@@ -122,7 +126,8 @@ reflects the number that succeeded.
 }
 \examples{
 \donttest{
-if (requireNamespace("lavaan", quietly = TRUE)) {
+if (requireNamespace("lavaan", quietly = TRUE) &&
+    requireNamespace("eRm", quietly = TRUE)) {
   data("raschdat1", package = "eRm")
 
   # Few iterations for a fast example; use 250+ in real analyses

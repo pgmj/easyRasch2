@@ -103,6 +103,7 @@ The \code{iarm} package must be installed (it is in Suggests, not Imports).
 }
 \examples{
 \donttest{
+if (requireNamespace("iarm", quietly = TRUE)) {
 set.seed(42)
 sim_data <- as.data.frame(
   matrix(sample(0:1, 400 * 8, replace = TRUE), nrow = 400, ncol = 8)
@@ -138,6 +139,7 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
          colour = NULL) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
 }
 }
 }

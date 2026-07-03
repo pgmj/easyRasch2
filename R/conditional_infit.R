@@ -135,40 +135,46 @@
 #'
 #' @examples
 #' \donttest{
-#' # Simulate binary item response data (5 items, 40 persons)
-#' set.seed(42)
-#' sim_data <- as.data.frame(
-#'   matrix(sample(0:1, 40 * 5, replace = TRUE), nrow = 40, ncol = 5)
-#' )
-#' colnames(sim_data) <- paste0("Item", 1:5)
+#' if (requireNamespace("iarm", quietly = TRUE)) {
+#'   # Simulate binary item response data (5 items, 40 persons)
+#'   set.seed(42)
+#'   sim_data <- as.data.frame(
+#'     matrix(sample(0:1, 40 * 5, replace = TRUE), nrow = 40, ncol = 5)
+#'   )
+#'   colnames(sim_data) <- paste0("Item", 1:5)
 #'
-#' # Default kable output
-#' RMitemInfit(sim_data)
+#'   # Default kable output
+#'   RMitemInfit(sim_data)
 #'
-#' # Sorted by infit MSQ descending
-#' RMitemInfit(sim_data, sort = "infit")
+#'   # Sorted by infit MSQ descending
+#'   RMitemInfit(sim_data, sort = "infit")
 #'
-#' # Return as data.frame for further processing
-#' df <- RMitemInfit(sim_data, output = "dataframe")
+#'   # Return as data.frame for further processing
+#'   df <- RMitemInfit(sim_data, output = "dataframe")
+#'
+#'   # Simulation-based cutoffs (100 Monte-Carlo iterations)
+#'   if (requireNamespace("ggdist", quietly = TRUE)) {
+#'     cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100,
+#'                                     parallel = FALSE, seed = 42)
+#'     RMitemInfit(sim_data, cutoff = cutoff_res)
+#'     RMitemInfit(sim_data, cutoff = cutoff_res, output = "dataframe")
+#'
+#'     # Bootstrap p-values with family-wise (Westfall-Young) correction
+#'     # (use iterations >= 1000 in real analyses for stable p-values)
+#'     RMitemInfit(sim_data, cutoff = cutoff_res, p_value = TRUE,
+#'                 output = "dataframe")
+#'   }
 #' }
-#' \donttest{
-#' # Simulation-based cutoffs (100 Monte-Carlo iterations)
-#' cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100, parallel = FALSE,
-#'                             seed = 42)
-#' RMitemInfit(sim_data, cutoff = cutoff_res)
-#' RMitemInfit(sim_data, cutoff = cutoff_res, output = "dataframe")
-#'
-#' # Bootstrap p-values with family-wise (Westfall-Young) correction
-#' # (use iterations >= 1000 in real analyses for stable p-values)
-#' RMitemInfit(sim_data, cutoff = cutoff_res, p_value = TRUE,
-#'             output = "dataframe")
 #' }
-RMitemInfit <- function(data, cutoff = NULL,
-                        p_value    = FALSE,
-                        correction = c("fwer", "fdr_bh", "fdr_by", "none"),
-                        alpha      = 0.05,
-                        output = "kable", sort) {
-
+RMitemInfit <- function(
+  data,
+  cutoff = NULL,
+  p_value = FALSE,
+  correction = c("fwer", "fdr_bh", "fdr_by", "none"),
+  alpha = 0.05,
+  output = "kable",
+  sort
+) {
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
       "Package 'iarm' is required for RMitemInfit() but is not installed.\n",
@@ -177,58 +183,77 @@ RMitemInfit <- function(data, cutoff = NULL,
     )
   }
 
-  output     <- match.arg(output, c("kable", "dataframe"))
+  output <- match.arg(output, c("kable", "dataframe"))
   correction <- match.arg(correction)
   if (!is.numeric(alpha) || length(alpha) != 1L || alpha <= 0 || alpha >= 1) {
     stop("`alpha` must be a single number in (0, 1).", call. = FALSE)
   }
 
   # --- Validate and normalise cutoff ------------------------------------------
-  cutoff_n_iter  <- NULL
-  cutoff_method  <- NULL
+  cutoff_n_iter <- NULL
+  cutoff_method <- NULL
   cutoff_hdci_width <- NULL
-  cutoff_full    <- NULL   # full object (carries simulated $results for p-values)
+  cutoff_full <- NULL # full object (carries simulated $results for p-values)
   if (!is.null(cutoff)) {
-    if (is.list(cutoff) && !is.data.frame(cutoff) && "item_cutoffs" %in% names(cutoff)) {
-      cutoff_full      <- cutoff
-      cutoff_n_iter    <- cutoff$actual_iterations
-      cutoff_method    <- cutoff$cutoff_method
+    if (
+      is.list(cutoff) &&
+        !is.data.frame(cutoff) &&
+        "item_cutoffs" %in% names(cutoff)
+    ) {
+      cutoff_full <- cutoff
+      cutoff_n_iter <- cutoff$actual_iterations
+      cutoff_method <- cutoff$cutoff_method
       cutoff_hdci_width <- cutoff$hdci_width
       cutoff <- cutoff$item_cutoffs
     }
     if (!is.data.frame(cutoff)) {
-      stop("`cutoff` must be NULL, the return value of RMitemInfitCutoff(), or its ",
-           "$item_cutoffs data.frame.", call. = FALSE)
+      stop(
+        "`cutoff` must be NULL, the return value of RMitemInfitCutoff(), or its ",
+        "$item_cutoffs data.frame.",
+        call. = FALSE
+      )
     }
     required_cols <- c("Item", "infit_low", "infit_high")
     missing_cols <- setdiff(required_cols, names(cutoff))
     if (length(missing_cols) > 0L) {
-      stop("`cutoff` data.frame is missing required columns: ",
-           paste(missing_cols, collapse = ", "), ".", call. = FALSE)
+      stop(
+        "`cutoff` data.frame is missing required columns: ",
+        paste(missing_cols, collapse = ", "),
+        ".",
+        call. = FALSE
+      )
     }
   }
 
   # --- p-value prerequisites --------------------------------------------------
   if (p_value) {
     if (is.null(cutoff_full) || is.null(cutoff_full$results)) {
-      stop("`p_value = TRUE` requires the full RMitemInfitCutoff() object (it ",
-           "carries the simulated distributions in $results); a NULL cutoff or ",
-           "the bare $item_cutoffs data.frame is not sufficient.", call. = FALSE)
+      stop(
+        "`p_value = TRUE` requires the full RMitemInfitCutoff() object (it ",
+        "carries the simulated distributions in $results); a NULL cutoff or ",
+        "the bare $item_cutoffs data.frame is not sufficient.",
+        call. = FALSE
+      )
     }
     if (!is.null(cutoff_n_iter) && cutoff_n_iter < 1000L) {
-      warning("Bootstrap p-values are based on only ", cutoff_n_iter,
-              " simulation iterations. With few iterations the studentised-max ",
-              "(FWER) correction is liberal and small p-values are imprecise; ",
-              "use iterations >= 1000 in RMitemInfitCutoff() for reliable p-values.",
-              call. = FALSE)
+      warning(
+        "Bootstrap p-values are based on only ",
+        cutoff_n_iter,
+        " simulation iterations. With few iterations the studentised-max ",
+        "(FWER) correction is liberal and small p-values are imprecise; ",
+        "use iterations >= 1000 in RMitemInfitCutoff() for reliable p-values.",
+        call. = FALSE
+      )
     }
   }
 
   validate_response_data(data)
 
   if (nrow(stats::na.omit(data)) == 0L) {
-    stop("No complete cases in data. All rows contain at least one NA.",
-         call. = FALSE)
+    stop(
+      "No complete cases in data. All rows contain at least one NA.",
+      call. = FALSE
+    )
   }
 
   data_mat <- as.matrix(data)
@@ -238,12 +263,17 @@ RMitemInfit <- function(data, cutoff = NULL,
   # and WLE person locations, consistent with the rest of the package. The
   # conditional infit/outfit statistic from iarm is engine-invariant; only the
   # relative-location reference shifts slightly (WLE vs eRm MLE person mean).
-  fit      <- psychotools::pcmodel(data)
-  thr_list <- .center_thresholds(lapply(psychotools::threshpar(fit), as.numeric))
+  fit <- psychotools::pcmodel(data)
+  thr_list <- .center_thresholds(lapply(
+    psychotools::threshpar(fit),
+    as.numeric
+  ))
   item_avg_locations <- vapply(thr_list, mean, numeric(1L))
   names(item_avg_locations) <- names(data)
   person_avg_location <- mean(
-    .estimate_thetas(data_mat, thr_list, method = "WLE")$theta, na.rm = TRUE)
+    .estimate_thetas(data_mat, thr_list, method = "WLE")$theta,
+    na.rm = TRUE
+  )
 
   relative_item_avg_locations <- item_avg_locations - person_avg_location
 
@@ -257,80 +287,117 @@ RMitemInfit <- function(data, cutoff = NULL,
 
   # --- Count complete cases ---------------------------------------------------
   n_complete <- nrow(stats::na.omit(data))
+  n_clause <- .n_caption(
+    n_complete,
+    nrow(data),
+    if (anyNA(data)) "complete cases" else character()
+  )
 
   # --- Assemble result data.frame ---------------------------------------------
   item_fit_table <- data.frame(
-    Item              = names(data),
-    Infit_MSQ         = round(cfit$Infit, 3),
+    Item = names(data),
+    Infit_MSQ = round(cfit$Infit, 3),
     Relative_location = round(relative_item_avg_locations, 2),
-    stringsAsFactors  = FALSE,
-    row.names         = NULL
+    stringsAsFactors = FALSE,
+    row.names = NULL
   )
 
   # --- Apply cutoff if provided ------------------------------------------------
   if (!is.null(cutoff)) {
-    data_items   <- item_fit_table$Item
+    data_items <- item_fit_table$Item
     cutoff_items <- cutoff$Item
     if (!setequal(data_items, cutoff_items)) {
       stop(
         "Item names in `cutoff` do not match item names in `data`.\n",
-        "  data items  : ", paste(data_items,   collapse = ", "), "\n",
-        "  cutoff items: ", paste(cutoff_items, collapse = ", "),
+        "  data items  : ",
+        paste(data_items, collapse = ", "),
+        "\n",
+        "  cutoff items: ",
+        paste(cutoff_items, collapse = ", "),
         call. = FALSE
       )
     }
     cutoff_sub <- cutoff[, c("Item", "infit_low", "infit_high")]
-    item_fit_table <- merge(item_fit_table, cutoff_sub, by = "Item", sort = FALSE)
+    item_fit_table <- merge(
+      item_fit_table,
+      cutoff_sub,
+      by = "Item",
+      sort = FALSE
+    )
     # Restore original row order (merge may reorder)
     item_fit_table <- item_fit_table[match(data_items, item_fit_table$Item), ]
     rownames(item_fit_table) <- NULL
-    item_fit_table$Infit_low  <- round(item_fit_table$infit_low,  3)
+    item_fit_table$Infit_low <- round(item_fit_table$infit_low, 3)
     item_fit_table$Infit_high <- round(item_fit_table$infit_high, 3)
-    item_fit_table$infit_low  <- NULL
+    item_fit_table$infit_low <- NULL
     item_fit_table$infit_high <- NULL
     # Flagged labels the misfit direction: infit below the expected range =
     # overfit (more predictable than the model expects), above = underfit
     # (noisier than expected); "" when within range.
     item_fit_table$Flagged <- ifelse(
-      item_fit_table$Infit_MSQ < item_fit_table$Infit_low, "overfit",
-      ifelse(item_fit_table$Infit_MSQ > item_fit_table$Infit_high, "underfit", "")
+      item_fit_table$Infit_MSQ < item_fit_table$Infit_low,
+      "overfit",
+      ifelse(
+        item_fit_table$Infit_MSQ > item_fit_table$Infit_high,
+        "underfit",
+        ""
+      )
     )
 
     if (p_value) {
       # Compare observed infit to its simulated null (cutoff_full$results).
       sim_items <- unique(cutoff_full$results$Item)
       if (!setequal(data_items, sim_items)) {
-        stop("Item names in the cutoff simulations ($results) do not match ",
-             "`data`.", call. = FALSE)
+        stop(
+          "Item names in the cutoff simulations ($results) do not match ",
+          "`data`.",
+          call. = FALSE
+        )
       }
-      sim_mat  <- tapply(cutoff_full$results$InfitMSQ,
-                         list(cutoff_full$results$iteration,
-                              cutoff_full$results$Item),
-                         function(x) x[1L])
+      sim_mat <- tapply(
+        cutoff_full$results$InfitMSQ,
+        list(cutoff_full$results$iteration, cutoff_full$results$Item),
+        function(x) x[1L]
+      )
       observed <- stats::setNames(as.numeric(cfit$Infit), names(data))
-      pv  <- .bootstrap_pvalues(observed, sim_mat, correction = correction)
+      pv <- .bootstrap_pvalues(observed, sim_mat, correction = correction)
       idx <- match(item_fit_table$Item, pv$name)
-      item_fit_table$p_infit    <- round(pv$p[idx],    4)
+      item_fit_table$p_infit <- round(pv$p[idx], 4)
       item_fit_table$padj_infit <- round(pv$padj[idx], 4)
       sig <- item_fit_table$padj_infit < alpha
       item_fit_table$Flagged <- ifelse(
-        is.na(sig) | !sig, "",
+        is.na(sig) | !sig,
+        "",
         ifelse(item_fit_table$Infit_MSQ > 1, "underfit", "overfit")
       )
-      item_fit_table <- item_fit_table[, c("Item", "Infit_MSQ", "Infit_low",
-                                           "Infit_high", "p_infit", "padj_infit",
-                                           "Flagged", "Relative_location")]
+      item_fit_table <- item_fit_table[, c(
+        "Item",
+        "Infit_MSQ",
+        "Infit_low",
+        "Infit_high",
+        "p_infit",
+        "padj_infit",
+        "Flagged",
+        "Relative_location"
+      )]
     } else {
       # Reorder: Item, Infit_MSQ, Infit_low, Infit_high, Flagged, Relative_location
-      item_fit_table <- item_fit_table[, c("Item", "Infit_MSQ", "Infit_low",
-                                           "Infit_high", "Flagged",
-                                           "Relative_location")]
+      item_fit_table <- item_fit_table[, c(
+        "Item",
+        "Infit_MSQ",
+        "Infit_low",
+        "Infit_high",
+        "Flagged",
+        "Relative_location"
+      )]
     }
   }
 
   # --- Sort if requested ------------------------------------------------------
   if (!missing(sort) && identical(sort, "infit")) {
-    item_fit_table <- item_fit_table[order(item_fit_table$Infit_MSQ, decreasing = TRUE), ]
+    item_fit_table <- item_fit_table[
+      order(item_fit_table$Infit_MSQ, decreasing = TRUE),
+    ]
     rownames(item_fit_table) <- NULL
   }
 
@@ -340,38 +407,60 @@ RMitemInfit <- function(data, cutoff = NULL,
   }
 
   if (p_value) {
-    kbl_colnames <- c("Item", "Infit MSQ", "Infit low", "Infit high",
-                      "p", "p (adj)", "Flagged", "Relative location")
-    corr_label <- switch(
-      correction,
-      fwer   = "Westfall-Young step-down (FWER)",
-      fdr_bh = "Benjamini-Hochberg (FDR)",
-      fdr_by = "Benjamini-Yekutieli (FDR)",
-      none   = "uncorrected"
+    kbl_colnames <- c(
+      "Item",
+      "Infit MSQ",
+      "Infit low",
+      "Infit high",
+      "p",
+      "p (adj)",
+      "Flagged",
+      "Relative location"
     )
+    corr_label <- .correction_label(correction)
     kbl_caption <- paste0(
-      "MSQ values based on conditional estimation (n = ", n_complete,
-      " complete cases). Two-sided bootstrap p-values from ", cutoff_n_iter,
-      " iterations; multiplicity correction: ", corr_label,
-      "; flagged at alpha = ", alpha, ". p-values cannot be smaller than ",
-      "1/(", cutoff_n_iter, "+1) = ", round(1 / (cutoff_n_iter + 1), 4), ".",
+      "MSQ values based on conditional estimation. ",
+      n_clause,
+      ". Two-sided bootstrap p-values from ",
+      cutoff_n_iter,
+      " iterations; multiplicity correction: ",
+      corr_label,
+      "; flagged at alpha = ",
+      alpha,
+      ". p-values cannot be smaller than ",
+      "1/(",
+      cutoff_n_iter,
+      "+1) = ",
+      round(1 / (cutoff_n_iter + 1), 4),
+      ".",
       " Flagged: underfit (infit > 1, noisier) / overfit (infit < 1, more predictable)."
     )
   } else if (is.null(cutoff)) {
     kbl_colnames <- c("Item", "Infit MSQ", "Relative location")
-    kbl_caption  <- paste0(
-      "MSQ values based on conditional estimation (n = ", n_complete,
-      " complete cases)."
+    kbl_caption <- paste0(
+      "MSQ values based on conditional estimation. ",
+      n_clause,
+      "."
     )
   } else {
-    kbl_colnames <- c("Item", "Infit MSQ", "Infit low", "Infit high",
-                      "Flagged", "Relative location")
+    kbl_colnames <- c(
+      "Item",
+      "Infit MSQ",
+      "Infit low",
+      "Infit high",
+      "Flagged",
+      "Relative location"
+    )
     if (!is.null(cutoff_n_iter)) {
-      method_label <- .format_cutoff_method_label(cutoff_method, cutoff_hdci_width)
+      method_label <- .format_cutoff_method_label(
+        cutoff_method,
+        cutoff_hdci_width
+      )
       iter_part <- paste0(cutoff_n_iter, " simulation iterations")
       kbl_caption <- paste0(
-        "MSQ values based on conditional estimation (n = ", n_complete,
-        " complete cases). Cutoff values based on ",
+        "MSQ values based on conditional estimation. ",
+        n_clause,
+        ". Cutoff values based on ",
         if (!is.null(method_label)) {
           paste0(iter_part, " (", method_label, ").")
         } else {
@@ -380,17 +469,24 @@ RMitemInfit <- function(data, cutoff = NULL,
       )
     } else {
       kbl_caption <- paste0(
-        "MSQ values based on conditional estimation (n = ", n_complete,
-        " complete cases). Simulation-based cutoff values applied."
+        "MSQ values based on conditional estimation. ",
+        n_clause,
+        ". Simulation-based cutoff values applied."
       )
     }
-    kbl_caption <- paste0(kbl_caption,
+    kbl_caption <- paste0(
+      kbl_caption,
       " Flagged: overfit = infit below range (more predictable); ",
-      "underfit = above range (noisier).")
+      "underfit = above range (noisier)."
+    )
   }
 
-  knitr::kable(item_fit_table, format = "pipe",
-               col.names = kbl_colnames, caption = kbl_caption)
+  knitr::kable(
+    item_fit_table,
+    format = "pipe",
+    col.names = kbl_colnames,
+    caption = kbl_caption
+  )
 }
 
 # ---------------------------------------------------------------------------
@@ -407,9 +503,14 @@ RMitemInfit <- function(data, cutoff = NULL,
   if (is.null(cutoff_method)) {
     return(NULL)
   }
-  switch(cutoff_method,
+  switch(
+    cutoff_method,
     quantile = "2.5th/97.5th percentile",
-    hdci      = if (!is.null(hdci_width)) paste0(hdci_width * 100, "% HDCI") else "HDCI",
+    hdci = if (!is.null(hdci_width)) {
+      paste0(hdci_width * 100, "% HDCI")
+    } else {
+      "HDCI"
+    },
     NULL
   )
 }

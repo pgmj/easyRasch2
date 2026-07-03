@@ -81,6 +81,10 @@ Categories with zero responses still appear in the legend but produce
 no visible bar segment, which helps identify gaps in the response
 distribution.
 
+The plot caption reports the sample in the standard
+\verb{n = X respondents (policy)} form; item-level \code{NA}s are retained --
+each bar counts the non-missing responses for that item.
+
 \strong{Input requirements:}
 \itemize{
 \item All columns must be numeric (integer-valued).

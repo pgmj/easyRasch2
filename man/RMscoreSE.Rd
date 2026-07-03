@@ -97,7 +97,9 @@ RMscoreSE(sim_data)
 RMscoreSE(sim_data, output = "dataframe")
 
 # ggplot figure
-RMscoreSE(sim_data, output = "ggplot")
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  RMscoreSE(sim_data, output = "ggplot")
+}
 
 # EAP via mirt
 RMscoreSE(sim_data, method = "EAP")

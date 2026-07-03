@@ -25,6 +25,16 @@
 #'   cutoff directly. When provided, the result includes a `Flagged` column
 #'   (logical: is the eigenvalue above the simulated bound?) and the kable
 #'   caption notes the cutoff.
+#' @param p_value Logical. When `TRUE`, adds a one-sided bootstrap p-value for
+#'   the first-contrast eigenvalue: the proportion of simulated first-contrast
+#'   eigenvalues at least as large as the observed one,
+#'   `(1 + #\{lambda* >= lambda\}) / (B + 1)`. Requires the **full**
+#'   \code{\link{RMdimResidualPCACutoff}} object as `cutoff` (it carries the
+#'   simulated eigenvalues in `$results`); a bare numeric cutoff is not
+#'   sufficient. The simulated null is the distribution of the *largest*
+#'   eigenvalue, so the p-value applies to PC1 only (`NA` for the other
+#'   components). This is a single test — no multiplicity correction is
+#'   involved. Default `FALSE`.
 #' @param n_components Integer. Number of eigenvalues to report. Capped at the
 #'   number of items. Default `5`.
 #' @param output Character. `"kable"` (default) for a formatted
@@ -35,12 +45,14 @@
 #' @return
 #' * If `output = "kable"`: a `knitr_kable` object with columns Component,
 #'   Eigenvalue, Proportion of variance (and `Flagged` when `cutoff` is
-#'   provided). The caption gives the variance partition (% of total observed
-#'   variance explained by measures vs. unexplained), the model fitted,
-#'   sample size, and cutoff metadata if applicable.
+#'   provided; `p` when `p_value = TRUE`). The caption gives the variance
+#'   partition (% of total observed variance explained by measures vs.
+#'   unexplained), the model fitted, sample size, and cutoff/p-value metadata
+#'   if applicable.
 #' * If `output = "dataframe"`: a data.frame with columns `Component`,
 #'   `Eigenvalue`, `Proportion_of_variance` (and `Flagged` when `cutoff` is
-#'   provided). The variance partition is attached as the
+#'   provided; `p` when `p_value = TRUE`, non-`NA` for PC1 only). The
+#'   variance partition is attached as the
 #'   `"variance_partition"` attribute — a list with elements `total`,
 #'   `explained`, `unexplained`, `pct_explained`, `pct_unexplained`,
 #'   `n_persons`. Access via
@@ -69,6 +81,15 @@
 #' all persons are retained (the previous MLE partition dropped extreme-score
 #' cases).
 #'
+#' \strong{Bootstrap p-value.} When `p_value = TRUE`, the observed
+#' first-contrast eigenvalue is compared against the simulated null
+#' distribution of largest eigenvalues (from `cutoff$results`), giving the
+#' one-sided Monte-Carlo p-value `(1 + #\{lambda* >= lambda\}) / (B + 1)`.
+#' Because the maximum eigenvalue is a single family-wise statistic, no
+#' multiplicity correction applies. The p-value is model-conditional and
+#' sample-size-sensitive; it is reported alongside the simulated cutoff, not
+#' in place of it, and can be no smaller than `1 / (B + 1)`.
+#'
 #' @references
 #' Chou, Y.-T., & Wang, W.-C. (2010). Checking dimensionality in item
 #' response models with principal component analysis on standardized
@@ -91,45 +112,78 @@
 #' RMdimResidualPCA(dat)
 #'
 #' # PC1 loadings vs item location plot
-#' RMdimResidualPCA(dat, output = "ggplot")
+#' if (requireNamespace("ggplot2", quietly = TRUE) &&
+#'     requireNamespace("ggrepel", quietly = TRUE)) {
+#'   RMdimResidualPCA(dat, output = "ggplot")
+#' }
 #'
 #' # Simulation-based cutoff (use 250+ iterations in real analyses)
 #' bound <- RMdimResidualPCACutoff(dat, iterations = 50, parallel = FALSE, seed = 1)
 #' RMdimResidualPCA(dat, cutoff = bound)
+#'
+#' # With the one-sided bootstrap p-value for the first contrast
+#' RMdimResidualPCA(dat, cutoff = bound, p_value = TRUE)
 #' }
-RMdimResidualPCA <- function(data,
-                          cutoff       = NULL,
-                          n_components = 5L,
-                          output       = "kable") {
-
+RMdimResidualPCA <- function(
+  data,
+  cutoff = NULL,
+  p_value = FALSE,
+  n_components = 5L,
+  output = "kable"
+) {
   output <- match.arg(output, c("kable", "dataframe", "ggplot", "loadings"))
   # "loadings" is a backward-compatible alias for "ggplot" (the canonical value,
   # consistent with the other single-ggplot functions).
-  if (output == "loadings") output <- "ggplot"
+  if (output == "loadings") {
+    output <- "ggplot"
+  }
 
   validate_response_data(data)
 
   # Drop incomplete rows (prcomp can't handle NA in standardized residuals)
-  data <- stats::na.omit(as.data.frame(data))
+  data <- as.data.frame(data)
+  n_total <- nrow(data)
+  has_na <- anyNA(data)
+  data <- stats::na.omit(data)
   if (nrow(data) == 0L) {
     stop("No complete cases in `data` after na.omit.", call. = FALSE)
   }
 
   # --- Normalise the cutoff argument -----------------------------------------
-  cutoff_value           <- NULL
-  cutoff_n_iter          <- NULL
-  cutoff_percentile_pct  <- NULL
+  cutoff_value <- NULL
+  cutoff_n_iter <- NULL
+  cutoff_percentile_pct <- NULL
+  cutoff_full <- NULL # full object (carries simulated $results for the p-value)
   if (!is.null(cutoff)) {
-    if (is.list(cutoff) && !is.data.frame(cutoff) &&
-        "suggested_cutoff" %in% names(cutoff)) {
-      cutoff_value           <- cutoff$suggested_cutoff
-      cutoff_n_iter          <- cutoff$actual_iterations
-      cutoff_percentile_pct  <- cutoff$suggested_cutoff_percentile
+    if (
+      is.list(cutoff) &&
+        !is.data.frame(cutoff) &&
+        "suggested_cutoff" %in% names(cutoff)
+    ) {
+      cutoff_full <- cutoff
+      cutoff_value <- cutoff$suggested_cutoff
+      cutoff_n_iter <- cutoff$actual_iterations
+      cutoff_percentile_pct <- cutoff$suggested_cutoff_percentile
     } else if (is.numeric(cutoff) && length(cutoff) == 1L) {
       cutoff_value <- as.numeric(cutoff)
     } else {
-      stop("`cutoff` must be NULL, the return value of RMdimResidualPCACutoff(), or a ",
-           "single numeric value.", call. = FALSE)
+      stop(
+        "`cutoff` must be NULL, the return value of RMdimResidualPCACutoff(), or a ",
+        "single numeric value.",
+        call. = FALSE
+      )
+    }
+  }
+
+  # --- p-value prerequisites --------------------------------------------------
+  if (p_value) {
+    if (is.null(cutoff_full) || is.null(cutoff_full$results)) {
+      stop(
+        "`p_value = TRUE` requires the full RMdimResidualPCACutoff() object ",
+        "(it carries the simulated eigenvalues in $results); a NULL cutoff ",
+        "or a bare numeric cutoff is not sufficient.",
+        call. = FALSE
+      )
     }
   }
 
@@ -139,7 +193,7 @@ RMdimResidualPCA <- function(data,
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
 
   # --- Fit Rasch model and get residuals -------------------------------------
-  data_mat      <- as.matrix(data)
+  data_mat <- as.matrix(data)
   is_polytomous <- max(data_mat, na.rm = TRUE) > 1L
 
   # CML (psychotools) can choke or destabilise on sparse / zero-variance
@@ -150,7 +204,7 @@ RMdimResidualPCA <- function(data,
   # consistent with the rest of the package. Item locations are per-item mean
   # thresholds; the standardized residuals (x - E)/sqrt(Var) come from the
   # shared CML/WLE engine. (Previously eRm CML + eRm::itemfit() MLE residuals.)
-  thr_list       <- .fit_cml_thresholds(data)
+  thr_list <- .fit_cml_thresholds(data)
   item_locations <- vapply(thr_list, mean, numeric(1L))
   names(item_locations) <- names(data)
 
@@ -164,24 +218,35 @@ RMdimResidualPCA <- function(data,
   # Compares Var(observed) to Var(model-expected) per item, summed across
   # items. WLE locations are finite at extreme scores, so all persons are
   # retained (unlike the MLE partition, which dropped extreme-score cases).
-  thetas_all    <- .estimate_thetas(data_mat, thr_list, method = "WLE")$theta
+  thetas_all <- .estimate_thetas(data_mat, thr_list, method = "WLE")$theta
   finite_thetas <- is.finite(thetas_all)
 
   if (sum(finite_thetas) >= 2L) {
     th <- thetas_all[finite_thetas]
-    expected_mat <- vapply(seq_along(thr_list), function(i) {
-      cats <- 0:length(thr_list[[i]])
-      P    <- vapply(th, function(z) .pcm_cat_probs(z, thr_list[[i]]),
-                     numeric(length(cats)))
-      as.numeric(crossprod(cats, P))                 # E[score] per person
-    }, numeric(length(th)))
-    data_finite     <- data_mat[finite_thetas, , drop = FALSE]
-    var_total       <- sum(apply(data_finite,  2L, stats::var, na.rm = TRUE))
-    var_explained   <- sum(apply(expected_mat, 2L, stats::var, na.rm = TRUE))
+    expected_mat <- vapply(
+      seq_along(thr_list),
+      function(i) {
+        cats <- 0:length(thr_list[[i]])
+        P <- vapply(
+          th,
+          function(z) .pcm_cat_probs(z, thr_list[[i]]),
+          numeric(length(cats))
+        )
+        as.numeric(crossprod(cats, P)) # E[score] per person
+      },
+      numeric(length(th))
+    )
+    data_finite <- data_mat[finite_thetas, , drop = FALSE]
+    var_total <- sum(apply(data_finite, 2L, stats::var, na.rm = TRUE))
+    var_explained <- sum(apply(expected_mat, 2L, stats::var, na.rm = TRUE))
     var_unexplained <- max(var_total - var_explained, 0)
-    pct_explained   <- if (var_total > 0) var_explained / var_total else NA_real_
-    pct_unexplained <- if (var_total > 0) var_unexplained / var_total else NA_real_
-    n_partition     <- sum(finite_thetas)
+    pct_explained <- if (var_total > 0) var_explained / var_total else NA_real_
+    pct_unexplained <- if (var_total > 0) {
+      var_unexplained / var_total
+    } else {
+      NA_real_
+    }
+    n_partition <- sum(finite_thetas)
     partition_avail <- TRUE
   } else {
     var_total <- var_explained <- var_unexplained <- NA_real_
@@ -193,54 +258,90 @@ RMdimResidualPCA <- function(data,
   partition_text <- if (partition_avail) {
     paste0(
       "Total observed variance: ",
-      round(pct_explained * 100, 1), "% explained by measures, ",
+      round(pct_explained * 100, 1),
+      "% explained by measures, ",
       round(pct_unexplained * 100, 1),
-      "% unexplained\n(basis for PCA; n = ", n_partition,
-      " non-extreme cases)."
+      "% unexplained.",
+      # The headline n clause already reports the complete-case sample; only
+      # note the partition basis when it is smaller (some non-finite WLE
+      # locations), to avoid restating the same n twice.
+      if (n_partition < nrow(data)) {
+        paste0(
+          " Variance partition based on ",
+          n_partition,
+          " respondents with finite locations."
+        )
+      } else {
+        ""
+      }
     )
   } else {
     "Variance partition unavailable (too few persons with finite theta MLEs)."
   }
 
   # --- Run unrotated PCA -----------------------------------------------------
-  pca_fit  <- stats::prcomp(st_resids)
-  eigvals  <- pca_fit$sdev^2
-  total    <- sum(eigvals)
+  pca_fit <- stats::prcomp(st_resids)
+  eigvals <- pca_fit$sdev^2
+  total <- sum(eigvals)
   prop_var <- eigvals / total
 
   k_show <- min(as.integer(n_components), length(eigvals))
 
   result_df <- data.frame(
-    Component              = paste0("PC", seq_len(k_show)),
-    Eigenvalue             = round(eigvals[seq_len(k_show)], 3),
+    Component = paste0("PC", seq_len(k_show)),
+    Eigenvalue = round(eigvals[seq_len(k_show)], 3),
     Proportion_of_variance = round(prop_var[seq_len(k_show)], 3),
-    stringsAsFactors       = FALSE,
-    row.names              = NULL
+    stringsAsFactors = FALSE,
+    row.names = NULL
   )
 
   if (!is.null(cutoff_value)) {
     result_df$Flagged <- result_df$Eigenvalue > cutoff_value
   }
 
+  # --- One-sided bootstrap p-value for the first contrast ---------------------
+  # The simulated null is the distribution of the *largest* eigenvalue, so the
+  # p-value applies to PC1 only. Reuses the shared helper (studentisation is
+  # monotone per column, so it does not change the single-column p-value);
+  # correction = "none" because the max eigenvalue is one family-wise test.
+  p_pc1 <- NULL
+  if (p_value) {
+    sim_eig <- matrix(
+      cutoff_full$results$eigenvalue,
+      ncol = 1L,
+      dimnames = list(NULL, "PC1")
+    )
+    pv <- .bootstrap_pvalues(
+      c(PC1 = eigvals[1L]),
+      sim_eig,
+      correction = "none",
+      tail = "upper"
+    )
+    p_pc1 <- round(pv$p[1L], 4)
+    result_df$p <- c(p_pc1, rep(NA_real_, nrow(result_df) - 1L))
+  }
+
   # Variance partition is metadata on the dataframe rather than a separate
   # list element. Access via attr(result, "variance_partition").
   attr(result_df, "variance_partition") <- list(
-    total           = var_total,
-    explained       = var_explained,
-    unexplained     = var_unexplained,
-    pct_explained   = pct_explained,
+    total = var_total,
+    explained = var_explained,
+    unexplained = var_unexplained,
+    pct_explained = pct_explained,
     pct_unexplained = pct_unexplained,
-    n_persons       = n_partition
+    n_persons = n_partition
   )
 
   # --- Loadings plot ---------------------------------------------------------
   if (output == "ggplot") {
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
-      stop("Package 'ggplot2' is required for output = \"ggplot\".",
-           call. = FALSE)
+      stop(
+        "Package 'ggplot2' is required for output = \"ggplot\".",
+        call. = FALSE
+      )
     }
     loadings <- as.data.frame(pca_fit$rotation)
-    loadings$Item     <- rownames(loadings)
+    loadings$Item <- rownames(loadings)
     loadings$Location <- as.numeric(item_locations[loadings$Item])
 
     p <- ggplot2::ggplot(
@@ -260,9 +361,18 @@ RMdimResidualPCA <- function(data,
 
     p <- p +
       ggplot2::labs(
-        x       = "Loading on first residual contrast (PC1)",
-        y       = "Item location (logit scale)",
-        caption = er2_caption(partition_text)
+        x = "Loading on first residual contrast (PC1)",
+        y = "Item location (logit scale)",
+        caption = er2_caption(paste0(
+          partition_text,
+          " ",
+          .n_caption(
+            nrow(data),
+            n_total,
+            if (has_na) "complete cases" else character()
+          ),
+          "."
+        ))
       ) +
       ggplot2::theme_bw(base_size = 13) +
       er2_axis_margins() +
@@ -276,10 +386,19 @@ RMdimResidualPCA <- function(data,
   }
 
   # --- kable -----------------------------------------------------------------
+  n_clause <- .n_caption(
+    nrow(data),
+    n_total,
+    if (has_na) "complete cases" else character()
+  )
   caption_parts <- c(
     paste0(
       if (is_polytomous) "Partial Credit Model" else "Rasch model",
-      " (", nrow(data), " complete cases, ", ncol(data), " items)."
+      " (",
+      ncol(data),
+      " items), ",
+      n_clause,
+      "."
     ),
     partition_text
   )
@@ -297,8 +416,24 @@ RMdimResidualPCA <- function(data,
     caption_parts <- c(
       caption_parts,
       paste0(
-        "First-contrast cutoff = ", round(cutoff_value, 3),
-        iter_part, pct_part, "."
+        "First-contrast cutoff = ",
+        round(cutoff_value, 3),
+        iter_part,
+        pct_part,
+        "."
+      )
+    )
+  }
+  if (p_value) {
+    caption_parts <- c(
+      caption_parts,
+      paste0(
+        "One-sided bootstrap p-value for the first contrast (single test, ",
+        "no multiplicity correction); it cannot be smaller than 1/(",
+        cutoff_n_iter,
+        "+1) = ",
+        round(1 / (cutoff_n_iter + 1), 4),
+        "."
       )
     )
   }
@@ -306,8 +441,13 @@ RMdimResidualPCA <- function(data,
   knitr::kable(
     result_df,
     format = "pipe",
-    col.names = c("Component", "Eigenvalue", "Proportion of variance",
-                  if (!is.null(cutoff_value)) "Flagged"),
+    col.names = c(
+      "Component",
+      "Eigenvalue",
+      "Proportion of variance",
+      if (!is.null(cutoff_value)) "Flagged",
+      if (p_value) "p"
+    ),
     caption = paste(caption_parts, collapse = " ")
   )
 }
@@ -393,13 +533,14 @@ RMdimResidualPCA <- function(data,
 #'
 #' RMdimResidualPCA(dat, cutoff = bound)
 #' }
-RMdimResidualPCACutoff <- function(data,
-                        iterations = 250,
-                        parallel   = TRUE,
-                        n_cores    = NULL,
-                        verbose    = FALSE,
-                        seed       = NULL) {
-
+RMdimResidualPCACutoff <- function(
+  data,
+  iterations = 250,
+  parallel = TRUE,
+  n_cores = NULL,
+  verbose = FALSE,
+  seed = NULL
+) {
   validate_response_data(data)
 
   old_rgl <- getOption("rgl.useNULL")
@@ -413,11 +554,15 @@ RMdimResidualPCACutoff <- function(data,
 
   use_parallel <- parallel && requireNamespace("mirai", quietly = TRUE)
   if (parallel && !use_parallel) {
-    message("Install 'mirai' for parallel processing: install.packages(\"mirai\")")
+    message(
+      "Install 'mirai' for parallel processing: install.packages(\"mirai\")"
+    )
     message("Running sequentially...")
   }
   if (use_parallel) {
-    if (is.null(n_cores)) n_cores <- getOption("mc.cores")
+    if (is.null(n_cores)) {
+      n_cores <- getOption("mc.cores")
+    }
     if (is.null(n_cores)) {
       warning(
         "For parallel processing, specify n_cores or set options(mc.cores = N).\n",
@@ -430,26 +575,28 @@ RMdimResidualPCACutoff <- function(data,
     }
   }
 
-  if (!is.null(seed)) set.seed(seed)
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
   sim_seeds <- sample.int(.Machine$integer.max, iterations)
 
-  data_mat       <- as.matrix(data)
-  sample_n       <- nrow(data_mat)
-  is_polytomous  <- max(data_mat, na.rm = TRUE) > 1L
+  data_mat <- as.matrix(data)
+  sample_n <- nrow(data_mat)
+  is_polytomous <- max(data_mat, na.rm = TRUE) > 1L
   item_names_vec <- colnames(data_mat)
 
   # Generating model: CML item thresholds (psychotools) + WLE person locations,
   # consistent with the rest of the package. The DGP is unchanged: thetas are
   # resampled with replacement and data simulated parametrically.
-  pool       <- .wle_theta_pool(data_mat)
-  thr_list   <- pool$thr_list
+  pool <- .wle_theta_pool(data_mat)
+  thr_list <- pool$thr_list
   wle_thetas <- pool$thetas
 
   sim_data_list <- list(
-    type       = if (is_polytomous) "polytomous" else "dichotomous",
-    thetas     = wle_thetas,
-    n_items    = ncol(data_mat),
-    sample_n   = sample_n,
+    type = if (is_polytomous) "polytomous" else "dichotomous",
+    thetas = wle_thetas,
+    n_items = ncol(data_mat),
+    sample_n = sample_n,
     item_names = item_names_vec
   )
   if (is_polytomous) {
@@ -459,11 +606,20 @@ RMdimResidualPCACutoff <- function(data,
   }
 
   if (use_parallel) {
-    results_raw <- run_pca_sim_parallel(iterations, sim_seeds, sim_data_list,
-                                        n_cores, verbose)
+    results_raw <- run_pca_sim_parallel(
+      iterations,
+      sim_seeds,
+      sim_data_list,
+      n_cores,
+      verbose
+    )
   } else {
-    results_raw <- run_pca_sim_sequential(iterations, sim_seeds, sim_data_list,
-                                          verbose)
+    results_raw <- run_pca_sim_sequential(
+      iterations,
+      sim_seeds,
+      sim_data_list,
+      verbose
+    )
   }
 
   ok <- vapply(results_raw, is.numeric, logical(1L))
@@ -476,37 +632,40 @@ RMdimResidualPCACutoff <- function(data,
     } else {
       "(no message captured)"
     }
-    stop("All simulation iterations failed. Example: ", sample_msg,
-         call. = FALSE)
+    stop(
+      "All simulation iterations failed. Example: ",
+      sample_msg,
+      call. = FALSE
+    )
   }
 
   actual_iterations <- length(successful)
   eig_vec <- as.numeric(unlist(successful))
 
   results_df <- data.frame(
-    iteration  = seq_len(actual_iterations),
+    iteration = seq_len(actual_iterations),
     eigenvalue = eig_vec,
     stringsAsFactors = FALSE,
     row.names = NULL
   )
 
-  p95  <- as.numeric(stats::quantile(eig_vec, 0.95,  na.rm = TRUE))
-  p99  <- as.numeric(stats::quantile(eig_vec, 0.99,  na.rm = TRUE))
+  p95 <- as.numeric(stats::quantile(eig_vec, 0.95, na.rm = TRUE))
+  p99 <- as.numeric(stats::quantile(eig_vec, 0.99, na.rm = TRUE))
   p995 <- as.numeric(stats::quantile(eig_vec, 0.995, na.rm = TRUE))
   p999 <- as.numeric(stats::quantile(eig_vec, 0.999, na.rm = TRUE))
 
   list(
-    results                     = results_df,
-    p95                         = p95,
-    p99                         = p99,
-    p995                        = p995,
-    p999                        = p999,
-    max                         = max(eig_vec, na.rm = TRUE),
-    suggested_cutoff            = p99,
+    results = results_df,
+    p95 = p95,
+    p99 = p99,
+    p995 = p995,
+    p999 = p999,
+    max = max(eig_vec, na.rm = TRUE),
+    suggested_cutoff = p99,
     suggested_cutoff_percentile = 99,
-    actual_iterations           = actual_iterations,
-    sample_n                    = sample_n,
-    item_names                  = item_names_vec
+    actual_iterations = actual_iterations,
+    sample_n = sample_n,
+    item_names = item_names_vec
   )
 }
 
@@ -520,53 +679,68 @@ RMdimResidualPCACutoff <- function(data,
 #' @noRd
 run_single_pca_sim <- function(seed, data_list) {
   set.seed(seed)
-  thetas_res <- sample(data_list$thetas, size = data_list$sample_n,
-                       replace = TRUE)
+  thetas_res <- sample(
+    data_list$thetas,
+    size = data_list$sample_n,
+    replace = TRUE
+  )
 
-  tryCatch({
-    if (data_list$type == "dichotomous") {
-      sim_mat <- psychotools::rrm(theta = thetas_res,
-                                  beta  = data_list$item_params)
-      sim_df <- as.data.frame(sim_mat$data)
-      colnames(sim_df) <- data_list$item_names
+  tryCatch(
+    {
+      if (data_list$type == "dichotomous") {
+        sim_mat <- psychotools::rrm(
+          theta = thetas_res,
+          beta = data_list$item_params
+        )
+        sim_df <- as.data.frame(sim_mat$data)
+        colnames(sim_df) <- data_list$item_names
 
-      pos_counts <- colSums(sim_df, na.rm = TRUE)
-      if (any(pos_counts < 8L)) {
-        return("validation_failed: fewer than 8 positive responses in at least one item")
-      }
-      neg_counts <- nrow(sim_df) - pos_counts
-      if (any(neg_counts < 8L)) {
-        return("validation_failed: fewer than 8 negative responses in at least one item")
-      }
-    } else {
-      sim_mat <- sim_partial_score(data_list$deltaslist, thetas_res)
-      sim_df  <- as.data.frame(sim_mat)
-      colnames(sim_df) <- data_list$item_names
+        pos_counts <- colSums(sim_df, na.rm = TRUE)
+        if (any(pos_counts < 8L)) {
+          return(
+            "validation_failed: fewer than 8 positive responses in at least one item"
+          )
+        }
+        neg_counts <- nrow(sim_df) - pos_counts
+        if (any(neg_counts < 8L)) {
+          return(
+            "validation_failed: fewer than 8 negative responses in at least one item"
+          )
+        }
+      } else {
+        sim_mat <- sim_partial_score(data_list$deltaslist, thetas_res)
+        sim_df <- as.data.frame(sim_mat)
+        colnames(sim_df) <- data_list$item_names
 
-      n_cats <- vapply(data_list$deltaslist, function(d) length(d) + 1L,
-                       integer(1L))
-      for (j in seq_len(ncol(sim_df))) {
-        tab <- tabulate(sim_df[[j]] + 1L, nbins = n_cats[j])
-        if (any(tab == 0L)) {
-          return("validation_failed: not all categories represented")
+        n_cats <- vapply(
+          data_list$deltaslist,
+          function(d) length(d) + 1L,
+          integer(1L)
+        )
+        for (j in seq_len(ncol(sim_df))) {
+          tab <- tabulate(sim_df[[j]] + 1L, nbins = n_cats[j])
+          if (any(tab == 0L)) {
+            return("validation_failed: not all categories represented")
+          }
         }
       }
-    }
 
-    # CML/WLE standardized residuals (same engine as the observed analysis).
-    st_resids <- .rasch_std_residuals(sim_df, method = "WLE")
+      # CML/WLE standardized residuals (same engine as the observed analysis).
+      st_resids <- .rasch_std_residuals(sim_df, method = "WLE")
 
-    if (anyNA(st_resids)) {
-      keep <- stats::complete.cases(st_resids)
-      st_resids <- st_resids[keep, , drop = FALSE]
-    }
-    if (nrow(st_resids) < ncol(st_resids)) {
-      return("validation_failed: too few rows in residual matrix for PCA")
-    }
+      if (anyNA(st_resids)) {
+        keep <- stats::complete.cases(st_resids)
+        st_resids <- st_resids[keep, , drop = FALSE]
+      }
+      if (nrow(st_resids) < ncol(st_resids)) {
+        return("validation_failed: too few rows in residual matrix for PCA")
+      }
 
-    pca_fit <- stats::prcomp(st_resids)
-    as.numeric(pca_fit$sdev[1L]^2)
-  }, error = function(e) as.character(conditionMessage(e)))
+      pca_fit <- stats::prcomp(st_resids)
+      as.numeric(pca_fit$sdev[1L]^2)
+    },
+    error = function(e) as.character(conditionMessage(e))
+  )
 }
 
 # ===========================================================================
@@ -575,8 +749,13 @@ run_single_pca_sim <- function(seed, data_list) {
 
 #' @keywords internal
 #' @noRd
-run_pca_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
-                                 n_cores, verbose = FALSE) {
+run_pca_sim_parallel <- function(
+  iterations,
+  sim_seeds,
+  sim_data_list,
+  n_cores,
+  verbose = FALSE
+) {
   mirai::daemons(n_cores)
   on.exit(mirai::daemons(0), add = TRUE)
 
@@ -587,19 +766,21 @@ run_pca_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
 
   tasks <- lapply(seq_len(iterations), function(i) {
     mirai::mirai(
-      { run_single_pca_sim(seed, data_list) },
-      seed                = sim_seeds[i],
-      data_list           = sim_data_list,
-      run_single_pca_sim  = run_single_pca_sim,
-      sim_partial_score   = sim_partial_score,
-      sim_poly_item       = sim_poly_item,
+      {
+        run_single_pca_sim(seed, data_list)
+      },
+      seed = sim_seeds[i],
+      data_list = sim_data_list,
+      run_single_pca_sim = run_single_pca_sim,
+      sim_partial_score = sim_partial_score,
+      sim_poly_item = sim_poly_item,
       # CML/WLE residual engine used by .rasch_std_residuals() in the daemon.
       .rasch_std_residuals = .rasch_std_residuals,
-      .fit_cml_thresholds  = .fit_cml_thresholds,
-      .estimate_thetas     = .estimate_thetas,
-      .theta_wle           = .theta_wle,
-      .pcm_cat_probs       = .pcm_cat_probs,
-      .center_thresholds   = .center_thresholds
+      .fit_cml_thresholds = .fit_cml_thresholds,
+      .estimate_thetas = .estimate_thetas,
+      .theta_wle = .theta_wle,
+      .pcm_cat_probs = .pcm_cat_probs,
+      .center_thresholds = .center_thresholds
     )
   })
 
@@ -642,14 +823,14 @@ run_pca_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
 #' @keywords internal
 #' @noRd
 .pcm_expected_scores <- function(thetas, thresh_mat) {
-  n       <- length(thetas)
+  n <- length(thetas)
   n_items <- nrow(thresh_mat)
   expected <- matrix(NA_real_, nrow = n, ncol = n_items)
 
   for (j in seq_len(n_items)) {
     taus <- thresh_mat[j, !is.na(thresh_mat[j, ])]
-    K_j  <- length(taus)
-    cumsum_taus <- c(0, cumsum(taus))      # length K_j + 1
+    K_j <- length(taus)
+    cumsum_taus <- c(0, cumsum(taus)) # length K_j + 1
     log_num <- outer(thetas, 0:K_j) -
       matrix(cumsum_taus, nrow = n, ncol = K_j + 1L, byrow = TRUE)
     # Numerical-stability shift before exponentiating
@@ -665,9 +846,15 @@ run_pca_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
 
 #' @keywords internal
 #' @noRd
-run_pca_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
-                                   verbose = FALSE) {
-  if (verbose) pb <- utils::txtProgressBar(min = 0, max = iterations, style = 3)
+run_pca_sim_sequential <- function(
+  iterations,
+  sim_seeds,
+  sim_data_list,
+  verbose = FALSE
+) {
+  if (verbose) {
+    pb <- utils::txtProgressBar(min = 0, max = iterations, style = 3)
+  }
 
   results <- vector("list", iterations)
   for (i in seq_len(iterations)) {
@@ -682,4 +869,3 @@ run_pca_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 
   results
 }
-

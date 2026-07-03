@@ -92,14 +92,20 @@
 #'
 #' @examples
 #' \donttest{
-#' if (requireNamespace("mice", quietly = TRUE)) {
-#'   # Create example data with missing values
+#' if (requireNamespace("mice", quietly = TRUE) &&
+#'     requireNamespace("iarm", quietly = TRUE) &&
+#'     requireNamespace("ggdist", quietly = TRUE)) {
+#'   # Create example data with ~10% MCAR missingness
 #'   set.seed(42)
-#'   sim_data <- as.data.frame(
-#'     matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
-#'   )
+#'   mat <- matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
+#'   mat[sample(length(mat), round(0.10 * length(mat)))] <- NA
+#'   sim_data <- as.data.frame(mat)
 #'   colnames(sim_data) <- paste0("Item", 1:8)
-#'   sim_data[sample(length(sim_data), 0.10 * length(sim_data))] <- NA
+#'
+#'   # mice's ordinal method (`polr`) requires the items to be ordered
+#'   # factors, so code them as such before imputing. RMitemInfitMI()
+#'   # converts the completed factors back to numeric internally.
+#'   sim_data[] <- lapply(sim_data, function(x) factor(x, ordered = TRUE))
 #'
 #'   # Impute (use more imputations, e.g. m = 5+, in real analyses)
 #'   imp <- mice::mice(sim_data, m = 2, method = "polr", seed = 123,
@@ -118,9 +124,7 @@
 #'   df <- RMitemInfitMI(imp, cutoff = cutoff_mi, output = "dataframe")
 #' }
 #' }
-RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable",
-                           sort) {
-
+RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable", sort) {
   # --- Check required packages ------------------------------------------------
   if (!requireNamespace("mice", quietly = TRUE)) {
     stop(
@@ -139,24 +143,29 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable",
   }
 
   if (!inherits(mids_object, "mids")) {
-    stop("`mids_object` must be a 'mids' object as returned by mice::mice().",
-         call. = FALSE)
+    stop(
+      "`mids_object` must be a 'mids' object as returned by mice::mice().",
+      call. = FALSE
+    )
   }
 
   output <- match.arg(output, c("kable", "dataframe"))
 
   # --- Validate and normalise cutoff ------------------------------------------
-  cutoff_n_iter     <- NULL
-  cutoff_method     <- NULL
+  cutoff_n_iter <- NULL
+  cutoff_method <- NULL
   cutoff_hdci_width <- NULL
-  cutoff_n_imp      <- NULL
+  cutoff_n_imp <- NULL
   if (!is.null(cutoff)) {
-    if (is.list(cutoff) && !is.data.frame(cutoff) &&
-        "item_cutoffs" %in% names(cutoff)) {
-      cutoff_n_iter     <- cutoff$actual_iterations
-      cutoff_method     <- cutoff$cutoff_method
+    if (
+      is.list(cutoff) &&
+        !is.data.frame(cutoff) &&
+        "item_cutoffs" %in% names(cutoff)
+    ) {
+      cutoff_n_iter <- cutoff$actual_iterations
+      cutoff_method <- cutoff$cutoff_method
       cutoff_hdci_width <- cutoff$hdci_width
-      cutoff_n_imp      <- cutoff$n_imputations
+      cutoff_n_imp <- cutoff$n_imputations
       cutoff <- cutoff$item_cutoffs
     }
     if (!is.data.frame(cutoff)) {
@@ -167,10 +176,14 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable",
       )
     }
     required_cols <- c("Item", "infit_low", "infit_high")
-    missing_cols  <- setdiff(required_cols, names(cutoff))
+    missing_cols <- setdiff(required_cols, names(cutoff))
     if (length(missing_cols) > 0L) {
-      stop("`cutoff` data.frame is missing required columns: ",
-           paste(missing_cols, collapse = ", "), ".", call. = FALSE)
+      stop(
+        "`cutoff` data.frame is missing required columns: ",
+        paste(missing_cols, collapse = ", "),
+        ".",
+        call. = FALSE
+      )
     }
   }
 
@@ -187,47 +200,57 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable",
   n_complete_first <- NULL
 
   for (i in seq_len(m)) {
-    completed_data <- mice::complete(mids_object, action = i)
+    completed_data <- .mi_completed_to_numeric(
+      mice::complete(mids_object, action = i)
+    )
 
-    result_i <- tryCatch({
-      validate_response_data(completed_data)
+    result_i <- tryCatch(
+      {
+        validate_response_data(completed_data)
 
-      data_mat   <- as.matrix(completed_data)
-      n_complete <- nrow(completed_data)
+        data_mat <- as.matrix(completed_data)
+        n_complete <- nrow(completed_data)
 
-      # CML item parameters (psychotools; a dichotomous item is a 2-category
-      # PCM) and WLE person locations, consistent with RMitemInfit() and the
-      # rest of the package. The conditional infit/outfit statistic from iarm
-      # is engine-invariant; only the relative-location reference shifts
-      # slightly (WLE vs eRm MLE person mean).
-      fit      <- psychotools::pcmodel(completed_data)
-      thr_list <- .center_thresholds(lapply(psychotools::threshpar(fit),
-                                            as.numeric))
-      item_avg_locations  <- vapply(thr_list, mean, numeric(1L))
-      person_avg_location <- mean(
-        .estimate_thetas(data_mat, thr_list, method = "WLE")$theta,
-        na.rm = TRUE
-      )
+        # CML item parameters (psychotools; a dichotomous item is a 2-category
+        # PCM) and WLE person locations, consistent with RMitemInfit() and the
+        # rest of the package. The conditional infit/outfit statistic from iarm
+        # is engine-invariant; only the relative-location reference shifts
+        # slightly (WLE vs eRm MLE person mean).
+        fit <- psychotools::pcmodel(completed_data)
+        thr_list <- .center_thresholds(lapply(
+          psychotools::threshpar(fit),
+          as.numeric
+        ))
+        item_avg_locations <- vapply(thr_list, mean, numeric(1L))
+        person_avg_location <- mean(
+          .estimate_thetas(data_mat, thr_list, method = "WLE")$theta,
+          na.rm = TRUE
+        )
 
-      relative_locations <- item_avg_locations - person_avg_location
+        relative_locations <- item_avg_locations - person_avg_location
 
-      # Conditional infit
-      cfit <- iarm::out_infit(fit)
+        # Conditional infit
+        cfit <- iarm::out_infit(fit)
 
-      list(
-        infit_msq         = cfit$Infit,
-        infit_se          = cfit$Infit.se,
-        relative_location = as.numeric(relative_locations),
-        n_complete        = n_complete
-      )
-    }, error = function(e) {
-      warning(
-        sprintf("Model fitting failed for imputation %d: %s", i,
-                conditionMessage(e)),
-        call. = FALSE
-      )
-      NULL
-    })
+        list(
+          infit_msq = cfit$Infit,
+          infit_se = cfit$Infit.se,
+          relative_location = as.numeric(relative_locations),
+          n_complete = n_complete
+        )
+      },
+      error = function(e) {
+        warning(
+          sprintf(
+            "Model fitting failed for imputation %d: %s",
+            i,
+            conditionMessage(e)
+          ),
+          call. = FALSE
+        )
+        NULL
+      }
+    )
 
     if (is.null(result_i)) {
       n_failed <- n_failed + 1L
@@ -242,8 +265,13 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable",
   }
 
   if (n_failed == m) {
-    stop("Model fitting failed for all ", m, " imputed datasets. ",
-         "Check your data.", call. = FALSE)
+    stop(
+      "Model fitting failed for all ",
+      m,
+      " imputed datasets. ",
+      "Check your data.",
+      call. = FALSE
+    )
   }
 
   successful <- per_imp[!vapply(per_imp, is.null, logical(1L))]
@@ -251,7 +279,9 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable",
 
   if (m_ok < 2L) {
     stop(
-      "Only ", m_ok, " imputation(s) succeeded. At least 2 are required ",
+      "Only ",
+      m_ok,
+      " imputation(s) succeeded. At least 2 are required ",
       "to estimate between-imputation variance.",
       call. = FALSE
     )
@@ -259,24 +289,27 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable",
 
   if (n_failed > 0L) {
     warning(
-      sprintf("%d of %d imputed datasets failed and were excluded.",
-              n_failed, m),
+      sprintf(
+        "%d of %d imputed datasets failed and were excluded.",
+        n_failed,
+        m
+      ),
       call. = FALSE
     )
   }
 
   # --- Pool using Rubin's rules -----------------------------------------------
   item_names <- names(mice::complete(mids_object, action = 1L))
-  n_items    <- length(item_names)
+  n_items <- length(item_names)
 
   # Collect per-imputation vectors into matrices (items x imputations)
-  msq_mat  <- matrix(NA_real_, nrow = n_items, ncol = m_ok)
-  se_mat   <- matrix(NA_real_, nrow = n_items, ncol = m_ok)
-  loc_mat  <- matrix(NA_real_, nrow = n_items, ncol = m_ok)
+  msq_mat <- matrix(NA_real_, nrow = n_items, ncol = m_ok)
+  se_mat <- matrix(NA_real_, nrow = n_items, ncol = m_ok)
+  loc_mat <- matrix(NA_real_, nrow = n_items, ncol = m_ok)
 
   for (j in seq_len(m_ok)) {
     msq_mat[, j] <- successful[[j]]$infit_msq
-    se_mat[, j]  <- successful[[j]]$infit_se
+    se_mat[, j] <- successful[[j]]$infit_se
     loc_mat[, j] <- successful[[j]]$relative_location
   }
 
@@ -301,52 +334,71 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable",
 
   # --- Assemble result data.frame ---------------------------------------------
   item_fit_table <- data.frame(
-    Item              = item_names,
-    Infit_MSQ         = round(pooled_msq, 3),
-    Infit_SE          = round(pooled_se, 3),
+    Item = item_names,
+    Infit_MSQ = round(pooled_msq, 3),
+    Infit_SE = round(pooled_se, 3),
     Relative_location = round(pooled_location, 2),
-    stringsAsFactors  = FALSE,
-    row.names         = NULL
+    stringsAsFactors = FALSE,
+    row.names = NULL
   )
 
   # --- Apply cutoff if provided -----------------------------------------------
   if (!is.null(cutoff)) {
-    data_items   <- item_fit_table$Item
+    data_items <- item_fit_table$Item
     cutoff_items <- cutoff$Item
     if (!setequal(data_items, cutoff_items)) {
       stop(
         "Item names in `cutoff` do not match item names in `data`.\n",
-        "  data items  : ", paste(data_items,   collapse = ", "), "\n",
-        "  cutoff items: ", paste(cutoff_items, collapse = ", "),
+        "  data items  : ",
+        paste(data_items, collapse = ", "),
+        "\n",
+        "  cutoff items: ",
+        paste(cutoff_items, collapse = ", "),
         call. = FALSE
       )
     }
     cutoff_sub <- cutoff[, c("Item", "infit_low", "infit_high")]
-    item_fit_table <- merge(item_fit_table, cutoff_sub, by = "Item",
-                            sort = FALSE)
+    item_fit_table <- merge(
+      item_fit_table,
+      cutoff_sub,
+      by = "Item",
+      sort = FALSE
+    )
     # Restore original row order
     item_fit_table <- item_fit_table[match(data_items, item_fit_table$Item), ]
     rownames(item_fit_table) <- NULL
-    item_fit_table$Infit_low  <- round(item_fit_table$infit_low,  3)
+    item_fit_table$Infit_low <- round(item_fit_table$infit_low, 3)
     item_fit_table$Infit_high <- round(item_fit_table$infit_high, 3)
-    item_fit_table$infit_low  <- NULL
+    item_fit_table$infit_low <- NULL
     item_fit_table$infit_high <- NULL
     # Flagged labels the misfit direction: overfit (pooled infit below the
     # range, more predictable), underfit (above, noisier), "" within range.
     item_fit_table$Flagged <- ifelse(
-      item_fit_table$Infit_MSQ < item_fit_table$Infit_low, "overfit",
-      ifelse(item_fit_table$Infit_MSQ > item_fit_table$Infit_high, "underfit", "")
+      item_fit_table$Infit_MSQ < item_fit_table$Infit_low,
+      "overfit",
+      ifelse(
+        item_fit_table$Infit_MSQ > item_fit_table$Infit_high,
+        "underfit",
+        ""
+      )
     )
     # Reorder columns
-    item_fit_table <- item_fit_table[, c("Item", "Infit_MSQ", "Infit_SE",
-                                         "Infit_low", "Infit_high", "Flagged",
-                                         "Relative_location")]
+    item_fit_table <- item_fit_table[, c(
+      "Item",
+      "Infit_MSQ",
+      "Infit_SE",
+      "Infit_low",
+      "Infit_high",
+      "Flagged",
+      "Relative_location"
+    )]
   }
 
   # --- Sort if requested ------------------------------------------------------
   if (!missing(sort) && identical(sort, "infit")) {
-    item_fit_table <- item_fit_table[order(item_fit_table$Infit_MSQ,
-                                           decreasing = TRUE), ]
+    item_fit_table <- item_fit_table[
+      order(item_fit_table$Infit_MSQ, decreasing = TRUE),
+    ]
     rownames(item_fit_table) <- NULL
   }
 
@@ -357,17 +409,26 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable",
 
   # Build caption
   base_caption <- paste0(
-    "Pooled MSQ values from ", m_ok, " imputations (Rubin's rules). ",
-    "n = ", n_complete_first, " per imputed dataset."
+    "Pooled MSQ values from ",
+    m_ok,
+    " imputations (Rubin's rules). ",
+    .n_caption(
+      n_complete_first,
+      n_complete_first,
+      paste0("missing values imputed, m = ", m_ok)
+    ),
+    " per imputed dataset."
   )
 
   cutoff_caption <- NULL
   if (!is.null(cutoff)) {
     if (!is.null(cutoff_n_iter)) {
-      method_label <- .format_cutoff_method_label(cutoff_method,
-                                                  cutoff_hdci_width)
+      method_label <- .format_cutoff_method_label(
+        cutoff_method,
+        cutoff_hdci_width
+      )
       iter_part <- paste0(cutoff_n_iter, " total simulation iterations")
-      imp_part  <- if (!is.null(cutoff_n_imp)) {
+      imp_part <- if (!is.null(cutoff_n_imp)) {
         paste0(" across ", cutoff_n_imp, " imputations")
       } else {
         ""
@@ -387,19 +448,28 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable",
 
   caption <- paste0(base_caption, if (!is.null(cutoff_caption)) cutoff_caption)
   if (!is.null(cutoff)) {
-    caption <- paste0(caption,
+    caption <- paste0(
+      caption,
       " Flagged: overfit = infit below range (more predictable); ",
-      "underfit = above range (noisier).")
+      "underfit = above range (noisier)."
+    )
   }
 
   knitr::kable(
     item_fit_table,
-    format    = "pipe",
+    format = "pipe",
     col.names = if (is.null(cutoff)) {
       c("Item", "Infit MSQ", "Infit SE", "Relative location")
     } else {
-      c("Item", "Infit MSQ", "Infit SE", "Infit low", "Infit high",
-        "Flagged", "Relative location")
+      c(
+        "Item",
+        "Infit MSQ",
+        "Infit SE",
+        "Infit low",
+        "Infit high",
+        "Flagged",
+        "Relative location"
+      )
     },
     caption = caption
   )

@@ -147,33 +147,36 @@ whole table -- the usual workflow.
 
 \examples{
 \donttest{
-# Simulate binary item response data (5 items, 40 persons)
-set.seed(42)
-sim_data <- as.data.frame(
-  matrix(sample(0:1, 40 * 5, replace = TRUE), nrow = 40, ncol = 5)
-)
-colnames(sim_data) <- paste0("Item", 1:5)
+if (requireNamespace("iarm", quietly = TRUE)) {
+  # Simulate binary item response data (5 items, 40 persons)
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:1, 40 * 5, replace = TRUE), nrow = 40, ncol = 5)
+  )
+  colnames(sim_data) <- paste0("Item", 1:5)
 
-# Default kable output
-RMitemInfit(sim_data)
+  # Default kable output
+  RMitemInfit(sim_data)
 
-# Sorted by infit MSQ descending
-RMitemInfit(sim_data, sort = "infit")
+  # Sorted by infit MSQ descending
+  RMitemInfit(sim_data, sort = "infit")
 
-# Return as data.frame for further processing
-df <- RMitemInfit(sim_data, output = "dataframe")
+  # Return as data.frame for further processing
+  df <- RMitemInfit(sim_data, output = "dataframe")
+
+  # Simulation-based cutoffs (100 Monte-Carlo iterations)
+  if (requireNamespace("ggdist", quietly = TRUE)) {
+    cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100,
+                                    parallel = FALSE, seed = 42)
+    RMitemInfit(sim_data, cutoff = cutoff_res)
+    RMitemInfit(sim_data, cutoff = cutoff_res, output = "dataframe")
+
+    # Bootstrap p-values with family-wise (Westfall-Young) correction
+    # (use iterations >= 1000 in real analyses for stable p-values)
+    RMitemInfit(sim_data, cutoff = cutoff_res, p_value = TRUE,
+                output = "dataframe")
+  }
 }
-\donttest{
-# Simulation-based cutoffs (100 Monte-Carlo iterations)
-cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100, parallel = FALSE,
-                            seed = 42)
-RMitemInfit(sim_data, cutoff = cutoff_res)
-RMitemInfit(sim_data, cutoff = cutoff_res, output = "dataframe")
-
-# Bootstrap p-values with family-wise (Westfall-Young) correction
-# (use iterations >= 1000 in real analyses for stable p-values)
-RMitemInfit(sim_data, cutoff = cutoff_res, p_value = TRUE,
-            output = "dataframe")
 }
 }
 \references{

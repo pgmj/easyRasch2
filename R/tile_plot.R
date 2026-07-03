@@ -21,7 +21,7 @@
 #'   or numeric) defining a grouping variable. When provided, the plot is
 #'   faceted by group and counts / percentages are computed within each
 #'   group. Default `NULL` (no faceting). Persons with `NA` group are
-#'   excluded.
+#'   excluded, with a `message()` reporting how many rows were dropped.
 #' @param cutoff Integer. Cells with counts below this value are
 #'   highlighted (when `highlight = TRUE`). Default `10`.
 #' @param highlight Logical. If `TRUE` (default), cell labels with counts
@@ -65,78 +65,98 @@
 #' applied within each group, so a cell labelled "5" in the group-A
 #' facet contains the count for group A only.
 #'
+#' The plot caption reports the sample in the standard
+#' `n = X of Y respondents (policy)` form: rows with `NA` group are
+#' dropped (and counted in `Y` only), while item-level `NA`s are retained
+#' -- each cell simply counts the non-missing responses for that item.
+#'
 #' @examples
 #' \donttest{
-#' data("pcmdat2", package = "eRm")
+#' if (requireNamespace("eRm", quietly = TRUE)) {
+#'   data("pcmdat2", package = "eRm")
 #'
-#' # Basic tile plot
-#' RMplotTile(pcmdat2)
+#'   # Basic tile plot
+#'   RMplotTile(pcmdat2)
 #'
-#' # With percentages
-#' RMplotTile(pcmdat2, percent = TRUE)
+#'   # With percentages
+#'   RMplotTile(pcmdat2, percent = TRUE)
 #'
-#' # Faceted by an external grouping variable
-#' set.seed(1)
-#' grp <- sample(c("A", "B"), nrow(pcmdat2), replace = TRUE)
-#' RMplotTile(pcmdat2, group = grp)
+#'   # Faceted by an external grouping variable
+#'   set.seed(1)
+#'   grp <- sample(c("A", "B"), nrow(pcmdat2), replace = TRUE)
+#'   RMplotTile(pcmdat2, group = grp)
 #'
-#' # With custom labels and tighter cutoff
-#' RMplotTile(pcmdat2,
-#'            group = grp,
-#'            group_labels = c("Female", "Male"),
-#'            cutoff = 5,
-#'            facet_ncol = 2)
+#'   # With custom labels and tighter cutoff
+#'   RMplotTile(pcmdat2,
+#'              group = grp,
+#'              group_labels = c("Female", "Male"),
+#'              cutoff = 5,
+#'              facet_ncol = 2)
 #'
-#' # Underlying counts as a data.frame
-#' RMplotTile(pcmdat2, group = grp, output = "dataframe")
+#'   # Underlying counts as a data.frame
+#'   RMplotTile(pcmdat2, group = grp, output = "dataframe")
+#' }
 #' }
 #'
 #' @importFrom rlang .data
 #' @export
 RMplotTile <- function(
-    data,
-    group           = NULL,
-    cutoff          = 10,
-    highlight       = TRUE,
-    percent         = FALSE,
-    text_color      = "orange",
-    item_labels     = NULL,
-    category_labels = NULL,
-    group_labels    = NULL,
-    facet_ncol      = NULL,
-    output          = c("ggplot", "dataframe")
+  data,
+  group = NULL,
+  cutoff = 10,
+  highlight = TRUE,
+  percent = FALSE,
+  text_color = "orange",
+  item_labels = NULL,
+  category_labels = NULL,
+  group_labels = NULL,
+  facet_ncol = NULL,
+  output = c("ggplot", "dataframe")
 ) {
-
   output <- match.arg(output)
 
   if (output == "ggplot" && !requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Package 'ggplot2' is required for output = \"ggplot\".",
-         call. = FALSE)
+    stop(
+      "Package 'ggplot2' is required for output = \"ggplot\".",
+      call. = FALSE
+    )
   }
 
   # ---------------------------------------------------------------------
   # Input validation
   # ---------------------------------------------------------------------
   if (!is.data.frame(data)) {
-    stop("`data` must be a data.frame in wide format ",
-         "(one column per item, one row per person).", call. = FALSE)
+    stop(
+      "`data` must be a data.frame in wide format ",
+      "(one column per item, one row per person).",
+      call. = FALSE
+    )
   }
   if (ncol(data) < 2L) {
-    stop("`data` must contain at least 2 columns (items). Found ",
-         ncol(data), " column(s).", call. = FALSE)
+    stop(
+      "`data` must contain at least 2 columns (items). Found ",
+      ncol(data),
+      " column(s).",
+      call. = FALSE
+    )
   }
   if (nrow(data) < 1L) {
-    stop("`data` must contain at least 1 row (person). Found 0 rows.",
-         call. = FALSE)
+    stop(
+      "`data` must contain at least 1 row (person). Found 0 rows.",
+      call. = FALSE
+    )
   }
 
   non_numeric <- names(data)[!vapply(data, is.numeric, logical(1L))]
   if (length(non_numeric) > 0L) {
-    stop("All columns must be numeric. Non-numeric column(s): ",
-         paste(non_numeric, collapse = ", "),
-         ". Remove non-item columns (e.g., person IDs, grouping ",
-         "variables) before passing to RMplotTile() -- pass groups via ",
-         "the `group` argument instead.", call. = FALSE)
+    stop(
+      "All columns must be numeric. Non-numeric column(s): ",
+      paste(non_numeric, collapse = ", "),
+      ". Remove non-item columns (e.g., person IDs, grouping ",
+      "variables) before passing to RMplotTile() -- pass groups via ",
+      "the `group` argument instead.",
+      call. = FALSE
+    )
   }
 
   all_vals <- unlist(data, use.names = FALSE)
@@ -145,48 +165,88 @@ RMplotTile <- function(
     stop("`data` contains only NA values.", call. = FALSE)
   }
   if (!all(all_vals == round(all_vals))) {
-    stop("All response values must be integers. Found non-integer values.",
-         call. = FALSE)
+    stop(
+      "All response values must be integers. Found non-integer values.",
+      call. = FALSE
+    )
   }
 
   if (!is.null(item_labels) && length(item_labels) != ncol(data)) {
-    stop("`item_labels` must have the same length as the number of ",
-         "columns in `data`. Expected ", ncol(data), ", got ",
-         length(item_labels), ".", call. = FALSE)
+    stop(
+      "`item_labels` must have the same length as the number of ",
+      "columns in `data`. Expected ",
+      ncol(data),
+      ", got ",
+      length(item_labels),
+      ".",
+      call. = FALSE
+    )
   }
 
-  min_val        <- min(all_vals)
-  max_val        <- max(all_vals)
+  min_val <- min(all_vals)
+  max_val <- max(all_vals)
   all_categories <- seq(min_val, max_val)
-  n_categories   <- length(all_categories)
+  n_categories <- length(all_categories)
 
-  if (!is.null(category_labels) &&
-      length(category_labels) != n_categories) {
-    stop("`category_labels` must have the same length as the number of ",
-         "response categories (", min_val, " to ", max_val, " = ",
-         n_categories, " categories). Got ", length(category_labels), ".",
-         call. = FALSE)
+  if (
+    !is.null(category_labels) &&
+      length(category_labels) != n_categories
+  ) {
+    stop(
+      "`category_labels` must have the same length as the number of ",
+      "response categories (",
+      min_val,
+      " to ",
+      max_val,
+      " = ",
+      n_categories,
+      " categories). Got ",
+      length(category_labels),
+      ".",
+      call. = FALSE
+    )
   }
 
   # Group validation
   group_factor <- NULL
+  n_group_na <- 0L
   if (!is.null(group)) {
     if (length(group) != nrow(data)) {
-      stop("`group` must have the same length as nrow(data) (",
-           nrow(data), "). Got ", length(group), ".", call. = FALSE)
+      stop(
+        "`group` must have the same length as nrow(data) (",
+        nrow(data),
+        "). Got ",
+        length(group),
+        ".",
+        call. = FALSE
+      )
     }
     group_factor <- as.factor(group)
     if (nlevels(droplevels(group_factor)) < 2L) {
-      stop("`group` must have at least 2 distinct non-missing values.",
-           call. = FALSE)
+      stop(
+        "`group` must have at least 2 distinct non-missing values.",
+        call. = FALSE
+      )
     }
     if (!is.null(group_labels)) {
       if (length(group_labels) != nlevels(group_factor)) {
-        stop("`group_labels` must have the same length as the number of ",
-             "group levels (", nlevels(group_factor), "). Got ",
-             length(group_labels), ".", call. = FALSE)
+        stop(
+          "`group_labels` must have the same length as the number of ",
+          "group levels (",
+          nlevels(group_factor),
+          "). Got ",
+          length(group_labels),
+          ".",
+          call. = FALSE
+        )
       }
       levels(group_factor) <- as.character(group_labels)
+    }
+    # Rows with NA group cannot be shown in any facet; surface the drop
+    # (matching the RMdifLR / RMdifTree NA-drop messaging).
+    n_group_na <- sum(is.na(group_factor))
+    if (n_group_na > 0L) {
+      message(n_group_na, " row(s) with NA in `group` dropped.")
     }
   }
 
@@ -205,16 +265,18 @@ RMplotTile <- function(
     rows <- lapply(item_names, function(item) {
       vals <- sub_data[[item]]
       vals <- vals[!is.na(vals)]
-      tab  <- table(factor(vals, levels = all_categories))
+      tab <- table(factor(vals, levels = all_categories))
       data.frame(
-        item     = item,
+        item = item,
         category = as.integer(names(tab)),
-        n        = as.integer(tab),
+        n = as.integer(tab),
         stringsAsFactors = FALSE
       )
     })
     out <- do.call(rbind, rows)
-    if (!is.null(group_label)) out$group <- group_label
+    if (!is.null(group_label)) {
+      out$group <- group_label
+    }
     rownames(out) <- NULL
     out
   }
@@ -237,7 +299,7 @@ RMplotTile <- function(
   # Per-(item [x group]) totals -> percentages
   totals <- stats::aggregate(
     count_df$n,
-    by  = count_df[, agg_keys, drop = FALSE],
+    by = count_df[, agg_keys, drop = FALSE],
     FUN = sum
   )
   colnames(totals)[ncol(totals)] <- "total"
@@ -255,8 +317,14 @@ RMplotTile <- function(
   # Output: dataframe
   # ---------------------------------------------------------------------
   if (output == "dataframe") {
-    keep <- c(if (!is.null(group_factor)) "group" else NULL,
-              "item", "item_label", "category", "n", "percentage")
+    keep <- c(
+      if (!is.null(group_factor)) "group" else NULL,
+      "item",
+      "item_label",
+      "category",
+      "n",
+      "percentage"
+    )
     out_df <- count_df[, keep, drop = FALSE]
     rownames(out_df) <- NULL
     return(out_df)
@@ -265,40 +333,58 @@ RMplotTile <- function(
   # ---------------------------------------------------------------------
   # Output: ggplot
   # ---------------------------------------------------------------------
+  # Standard sample-size caption: rows with NA group are dropped (also
+  # surfaced via message above); item-level NAs are retained -- each cell
+  # counts non-missing responses only.
+  n_total <- nrow(data)
+  n_used <- n_total - n_group_na
+  caption_text <- er2_caption(paste0(
+    .n_caption(
+      n_used,
+      n_total,
+      c(
+        if (anyNA(data)) "incomplete responses retained",
+        if (n_group_na > 0L) "complete group data"
+      )
+    ),
+    "."
+  ))
+
   p <- ggplot2::ggplot(
     count_df,
-    ggplot2::aes(x = .data$category,
-                 y = .data$item_label,
-                 fill = .data$n)
+    ggplot2::aes(x = .data$category, y = .data$item_label, fill = .data$n)
   ) +
     ggplot2::geom_tile() +
     ggplot2::scale_fill_viridis_c(
       expression(italic(n)),
       limits = c(0, NA)
     ) +
-    ggplot2::labs(y = "Items") +
+    ggplot2::labs(y = "Items", caption = caption_text) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
-      axis.text.x   = ggplot2::element_text(size = 8),
-      panel.grid    = ggplot2::element_blank(),
+      axis.text.x = ggplot2::element_text(size = 8),
+      panel.grid = ggplot2::element_blank(),
       panel.spacing = ggplot2::unit(0.7, "cm")
     ) +
-    er2_axis_margins()
+    er2_axis_margins() +
+    er2_plot_caption()
 
   # X-axis: numeric breaks or category labels
   if (!is.null(category_labels)) {
-    p <- p + ggplot2::scale_x_continuous(
-      "Response category",
-      expand = c(0, 0),
-      breaks = all_categories,
-      labels = category_labels
-    )
+    p <- p +
+      ggplot2::scale_x_continuous(
+        "Response category",
+        expand = c(0, 0),
+        breaks = all_categories,
+        labels = category_labels
+      )
   } else {
-    p <- p + ggplot2::scale_x_continuous(
-      "Response category",
-      expand = c(0, 0),
-      breaks = all_categories
-    )
+    p <- p +
+      ggplot2::scale_x_continuous(
+        "Response category",
+        expand = c(0, 0),
+        breaks = all_categories
+      )
   }
 
   # Cell labels (count or percent), with optional <-cutoff highlighting
@@ -342,7 +428,7 @@ RMplotTile <- function(
 
   # Faceting
   if (!is.null(group_factor)) {
-    p <- p + ggplot2::facet_wrap(~ group, ncol = facet_ncol)
+    p <- p + ggplot2::facet_wrap(~group, ncol = facet_ncol)
   }
 
   p

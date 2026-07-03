@@ -23,46 +23,96 @@
 #'   values have no variance return `NA`.
 #' @keywords internal
 #' @noRd
-.bootstrap_pvalues <- function(observed,
-                               sim,
-                               correction = c("fwer", "fdr_bh", "fdr_by", "none"),
-                               tail = c("two.sided", "upper")) {
+.bootstrap_pvalues <- function(
+  observed,
+  sim,
+  correction = c("fwer", "fdr_bh", "fdr_by", "none"),
+  tail = c("two.sided", "upper")
+) {
   correction <- match.arg(correction)
-  tail       <- match.arg(tail)
-  nm  <- names(observed)
+  tail <- match.arg(tail)
+  nm <- names(observed)
   sim <- sim[, nm, drop = FALSE]
-  B   <- nrow(sim)
+  B <- nrow(sim)
 
   m <- colMeans(sim, na.rm = TRUE)
   s <- apply(sim, 2L, stats::sd, na.rm = TRUE)
-  s[!is.finite(s) | s < 1e-8] <- NA_real_   # guard zero-variance comparisons
+  s[!is.finite(s) | s < 1e-8] <- NA_real_ # guard zero-variance comparisons
 
   # Studentise observed and simulated by the bootstrap mean / SD; the test
   # statistic is |t| (two-sided) or t (upper tail).
   t_obs <- (observed - m) / s
   t_sim <- sweep(sweep(sim, 2L, m, `-`), 2L, s, `/`)
   if (tail == "two.sided") {
-    stat_obs <- abs(t_obs); stat_sim <- abs(t_sim)
+    stat_obs <- abs(t_obs)
+    stat_sim <- abs(t_sim)
   } else {
-    stat_obs <- t_obs;      stat_sim <- t_sim
+    stat_obs <- t_obs
+    stat_sim <- t_sim
   }
 
   # Marginal Monte-Carlo p-value, (1 + count) / (B + 1).
-  p_marg <- vapply(seq_along(nm), function(i) {
-    if (is.na(stat_obs[i])) return(NA_real_)
-    (1 + sum(stat_sim[, i] >= stat_obs[i], na.rm = TRUE)) / (B + 1)
-  }, numeric(1))
+  p_marg <- vapply(
+    seq_along(nm),
+    function(i) {
+      if (is.na(stat_obs[i])) {
+        return(NA_real_)
+      }
+      (1 + sum(stat_sim[, i] >= stat_obs[i], na.rm = TRUE)) / (B + 1)
+    },
+    numeric(1)
+  )
 
   padj <- switch(
     correction,
-    none   = p_marg,
+    none = p_marg,
     fdr_bh = stats::p.adjust(p_marg, method = "BH"),
     fdr_by = stats::p.adjust(p_marg, method = "BY"),
-    fwer   = .wy_stepdown(stat_obs, stat_sim, B)
+    fwer = .wy_stepdown(stat_obs, stat_sim, B)
   )
 
-  data.frame(name = nm, p = p_marg, padj = padj,
-             stringsAsFactors = FALSE, row.names = NULL)
+  data.frame(
+    name = nm,
+    p = p_marg,
+    padj = padj,
+    stringsAsFactors = FALSE,
+    row.names = NULL
+  )
+}
+
+#' Format a p-value for prose captions
+#'
+#' Plain-number formatting: exact to three decimals down to 0.001, then the
+#' conventional "p < 0.001". Avoids the scientific notation ("<1e-04") that
+#' `format.pval()` emits, which most readers are not used to.
+#'
+#' @param p Numeric p-value (length 1).
+#' @return A string starting with "p", e.g. "p = 0.043" or "p < 0.001".
+#' @keywords internal
+#' @noRd
+.format_p <- function(p) {
+  if (is.na(p)) {
+    return("p = NA")
+  }
+  if (p < 0.001) "p < 0.001" else paste0("p = ", sprintf("%.3f", p))
+}
+
+#' Human-readable label for a multiplicity-correction method
+#'
+#' Shared by the kable captions of the p-value-reporting functions.
+#'
+#' @param correction One of `"fwer"`, `"fdr_bh"`, `"fdr_by"`, `"none"`.
+#' @return A character label.
+#' @keywords internal
+#' @noRd
+.correction_label <- function(correction) {
+  switch(
+    correction,
+    fwer = "Westfall-Young step-down (FWER)",
+    fdr_bh = "Benjamini-Hochberg (FDR)",
+    fdr_by = "Benjamini-Yekutieli (FDR)",
+    none = "uncorrected"
+  )
 }
 
 #' Westfall-Young studentised-max step-down adjusted p-values
@@ -82,20 +132,27 @@
 #' @keywords internal
 #' @noRd
 .wy_stepdown <- function(stat_obs, stat_sim, B) {
-  k    <- length(stat_obs)
+  k <- length(stat_obs)
   padj <- rep(NA_real_, k)
 
   valid <- which(is.finite(stat_obs))
-  if (length(valid) == 0L) return(padj)
+  if (length(valid) == 0L) {
+    return(padj)
+  }
 
   # Process valid comparisons in order of decreasing observed evidence.
-  ord  <- valid[order(stat_obs[valid], decreasing = TRUE)]
+  ord <- valid[order(stat_obs[valid], decreasing = TRUE)]
   prev <- 0
   for (j in seq_along(ord)) {
     remaining <- ord[j:length(ord)]
-    max_star  <- apply(stat_sim[, remaining, drop = FALSE], 1L, max, na.rm = TRUE)
-    p_j       <- (1 + sum(max_star >= stat_obs[ord[j]], na.rm = TRUE)) / (B + 1)
-    prev      <- max(prev, p_j)             # enforce monotonicity (step-down)
+    max_star <- apply(
+      stat_sim[, remaining, drop = FALSE],
+      1L,
+      max,
+      na.rm = TRUE
+    )
+    p_j <- (1 + sum(max_star >= stat_obs[ord[j]], na.rm = TRUE)) / (B + 1)
+    prev <- max(prev, p_j) # enforce monotonicity (step-down)
     padj[ord[j]] <- min(prev, 1)
   }
   padj

@@ -81,39 +81,46 @@
 #'
 #' @examples
 #' \donttest{
-#' # Polytomous example
-#' set.seed(42)
-#' sim_data <- as.data.frame(
-#'   matrix(sample(0:3, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
-#' )
-#' colnames(sim_data) <- paste0("Item", 1:8)
+#' if (requireNamespace("ggplot2", quietly = TRUE) &&
+#'     requireNamespace("patchwork", quietly = TRUE)) {
+#'   # Polytomous example
+#'   set.seed(42)
+#'   sim_data <- as.data.frame(
+#'     matrix(sample(0:3, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
+#'   )
+#'   colnames(sim_data) <- paste0("Item", 1:8)
 #'
-#' # Default: mean/SD, data order, 95% CI
-#' RMtargeting(sim_data)
+#'   # Default: mean/SD, data order, 95% CI
+#'   RMtargeting(sim_data)
 #'
-#' # Robust (median/MAD), sorted by location, 84% CI
-#' RMtargeting(sim_data, robust = TRUE, sort_items = "location", ci_level = 0.84)
+#'   # Robust (median/MAD), sorted by location, 84% CI
+#'   RMtargeting(sim_data, robust = TRUE, sort_items = "location",
+#'               ci_level = 0.84)
 #'
-#' # Get list of sub-plots for customisation
-#' plots <- RMtargeting(sim_data, output = "list")
-#' plots$p1 + ggplot2::ggtitle("My custom title")
+#'   # Get list of sub-plots for customisation
+#'   plots <- RMtargeting(sim_data, output = "list")
+#'   plots$p1 + ggplot2::ggtitle("My custom title")
 #'
-#' # Dichotomous example
-#' sim_bin <- as.data.frame(
-#'   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-#' )
-#' colnames(sim_bin) <- paste0("Item", 1:10)
-#' RMtargeting(sim_bin)
+#'   # Dichotomous example
+#'   sim_bin <- as.data.frame(
+#'     matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+#'   )
+#'   colnames(sim_bin) <- paste0("Item", 1:10)
+#'   RMtargeting(sim_bin)
 #' }
-RMtargeting <- function(data, robust = FALSE,
-                        sort_items = c("data", "location"),
-                        bins, xlim = c(-4, 4),
-                        ci_level = 0.95,
-                        person_fill = "#0072B2",
-                        threshold_fill = "#D55E00",
-                        height_ratios = c(3, 2, 5),
-                        output = "patchwork") {
-
+#' }
+RMtargeting <- function(
+  data,
+  robust = FALSE,
+  sort_items = c("data", "location"),
+  bins,
+  xlim = c(-4, 4),
+  ci_level = 0.95,
+  person_fill = "#0072B2",
+  threshold_fill = "#D55E00",
+  height_ratios = c(3, 2, 5),
+  output = "patchwork"
+) {
   # --- Check required packages ------------------------------------------------
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop(
@@ -140,15 +147,21 @@ RMtargeting <- function(data, robust = FALSE,
   }
 
   sort_items <- match.arg(sort_items)
-  output     <- match.arg(output, c("patchwork", "list"))
+  output <- match.arg(output, c("patchwork", "list"))
 
   validate_response_data(data)
 
-  data_mat   <- as.matrix(data)
-  max_score  <- max(data_mat, na.rm = TRUE)
-  is_dicho   <- max_score == 1L
+  data <- as.data.frame(data)
+  n_total <- nrow(data)
+  has_na <- anyNA(data)
+  data <- .drop_empty_respondents(data)
+  n_used <- nrow(data)
+
+  data_mat <- as.matrix(data)
+  max_score <- max(data_mat, na.rm = TRUE)
+  is_dicho <- max_score == 1L
   item_names <- names(data)
-  n_items    <- ncol(data)
+  n_items <- ncol(data)
 
   # --- Check for sparse categories -------------------------------------------
   sparse <- .has_sparse_categories(data, min_n = 3L)
@@ -173,19 +186,27 @@ RMtargeting <- function(data, robust = FALSE,
   # package and finite at extreme scores. Persons and items share a scale by
   # construction, so the targeting overlap is unaffected by the centring.
   thr_list <- lapply(
-    split(item_thresholds$Location,
-          factor(item_thresholds$Item, levels = names(data))),
-    as.numeric)
-  person_theta <- .estimate_thetas(as.matrix(data), thr_list,
-                                   method = "WLE")$theta
+    split(
+      item_thresholds$Location,
+      factor(item_thresholds$Item, levels = names(data))
+    ),
+    as.numeric
+  )
+  person_theta <- .estimate_thetas(
+    as.matrix(data),
+    thr_list,
+    method = "WLE"
+  )$theta
   person_theta <- person_theta[is.finite(person_theta)]
 
   # --- Compute CI bounds for thresholds ---------------------------------------
   show_ci <- !is.null(ci_level) && all(!is.na(item_thresholds$SE))
   if (show_ci) {
     z_val <- stats::qnorm(1 - (1 - ci_level) / 2)
-    item_thresholds$CI_low  <- item_thresholds$Location - z_val * item_thresholds$SE
-    item_thresholds$CI_high <- item_thresholds$Location + z_val * item_thresholds$SE
+    item_thresholds$CI_low <- item_thresholds$Location -
+      z_val * item_thresholds$SE
+    item_thresholds$CI_high <- item_thresholds$Location +
+      z_val * item_thresholds$SE
   }
 
   # --- Auto-expand xlim -------------------------------------------------------
@@ -220,7 +241,10 @@ RMtargeting <- function(data, robust = FALSE,
   # --- Item ordering for bottom panel -----------------------------------------
   if (sort_items == "location") {
     item_means <- stats::aggregate(
-      Location ~ Item, data = item_thresholds, FUN = mean, na.rm = TRUE
+      Location ~ Item,
+      data = item_thresholds,
+      FUN = mean,
+      na.rm = TRUE
     )
     # Easiest at top = lowest location at top.
     # ggplot places first factor level at bottom, so reverse.
@@ -237,26 +261,42 @@ RMtargeting <- function(data, robust = FALSE,
 
   p1 <- ggplot2::ggplot(person_df, ggplot2::aes(x = .data$theta)) +
     ggplot2::geom_histogram(
-      bins = bins, fill = person_fill, colour = "white", alpha = 0.85
+      bins = bins,
+      fill = person_fill,
+      colour = "white",
+      alpha = 0.85
     ) +
     ggplot2::annotate(
       "rect",
-      xmin = p_center - p_spread, xmax = p_center + p_spread,
-      ymin = -Inf, ymax = Inf,
-      fill = person_fill, alpha = 0.12
+      xmin = p_center - p_spread,
+      xmax = p_center + p_spread,
+      ymin = -Inf,
+      ymax = Inf,
+      fill = person_fill,
+      alpha = 0.12
     ) +
     ggplot2::geom_vline(
-      xintercept = p_center, linewidth = 0.8,
-      linetype = "dashed", colour = "grey20"
+      xintercept = p_center,
+      linewidth = 0.8,
+      linetype = "dashed",
+      colour = "grey20"
     ) +
     ggplot2::annotate(
       "text",
-      x = p_center, y = Inf, vjust = -0.5,
+      x = p_center,
+      y = Inf,
+      vjust = -0.5,
       label = paste0(
-        center_label, " = ", round(p_center, 2),
-        ", ", spread_label, " = ", round(p_spread, 2)
+        center_label,
+        " = ",
+        round(p_center, 2),
+        ", ",
+        spread_label,
+        " = ",
+        round(p_spread, 2)
       ),
-      size = 3.2, colour = "grey20"
+      size = 3.2,
+      colour = "grey20"
     ) +
     ggplot2::scale_y_continuous(
       breaks = function(lim) {
@@ -267,9 +307,9 @@ RMtargeting <- function(data, robust = FALSE,
     ggplot2::labs(x = NULL, y = "Persons") +
     ggplot2::theme_bw() +
     ggplot2::theme(
-      axis.text.x  = ggplot2::element_blank(),
+      axis.text.x = ggplot2::element_blank(),
       axis.ticks.x = ggplot2::element_blank(),
-      plot.margin  = ggplot2::margin(5, 5, 0, 5)
+      plot.margin = ggplot2::margin(5, 5, 0, 5)
     ) +
     er2_axis_margins()
 
@@ -280,26 +320,42 @@ RMtargeting <- function(data, robust = FALSE,
 
   p2 <- ggplot2::ggplot(thresh_hist_df, ggplot2::aes(x = .data$location)) +
     ggplot2::geom_histogram(
-      bins = bins, fill = threshold_fill, colour = "white", alpha = 0.85
+      bins = bins,
+      fill = threshold_fill,
+      colour = "white",
+      alpha = 0.85
     ) +
     ggplot2::annotate(
       "rect",
-      xmin = t_center - t_spread, xmax = t_center + t_spread,
-      ymin = -Inf, ymax = Inf,
-      fill = threshold_fill, alpha = 0.12
+      xmin = t_center - t_spread,
+      xmax = t_center + t_spread,
+      ymin = -Inf,
+      ymax = Inf,
+      fill = threshold_fill,
+      alpha = 0.12
     ) +
     ggplot2::geom_vline(
-      xintercept = t_center, linewidth = 0.8,
-      linetype = "dashed", colour = "grey20"
+      xintercept = t_center,
+      linewidth = 0.8,
+      linetype = "dashed",
+      colour = "grey20"
     ) +
     ggplot2::annotate(
       "text",
-      x = t_center, y = -Inf, vjust = 1.5,
+      x = t_center,
+      y = -Inf,
+      vjust = 1.5,
       label = paste0(
-        center_label, " = ", round(t_center, 2),
-        ", ", spread_label, " = ", round(t_spread, 2)
+        center_label,
+        " = ",
+        round(t_center, 2),
+        ", ",
+        spread_label,
+        " = ",
+        round(t_spread, 2)
       ),
-      size = 3.2, colour = "grey20"
+      size = 3.2,
+      colour = "grey20"
     ) +
     ggplot2::scale_y_reverse(
       breaks = function(lim) {
@@ -311,10 +367,10 @@ RMtargeting <- function(data, robust = FALSE,
     ggplot2::labs(x = NULL, y = "Thresholds") +
     ggplot2::theme_bw() +
     ggplot2::theme(
-      axis.text.x  = ggplot2::element_blank(),
+      axis.text.x = ggplot2::element_blank(),
       axis.ticks.x = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank(),
-      plot.margin  = ggplot2::margin(0, 5, 0, 5)
+      plot.margin = ggplot2::margin(0, 5, 0, 5)
     ) +
     er2_axis_margins()
 
@@ -327,17 +383,36 @@ RMtargeting <- function(data, robust = FALSE,
   ci_caption <- ""
   if (show_ci) {
     ci_caption <- paste0(
-      "Error bars show ", round(ci_level * 100), "% confidence intervals."
+      "Error bars show ",
+      round(ci_level * 100),
+      "% confidence intervals."
     )
   }
 
   caption_text <- er2_caption(paste0(
-    "Person location ", tolower(center_label), ": ",
-    round(p_center, 2), " (", spread_label, " ",
-    round(p_spread, 2), "). Item threshold location ",
-    tolower(center_label), ": ",
-    round(t_center, 2), " (", spread_label, " ",
-    round(t_spread, 2), "). n = ", nrow(data), ".\n",
+    "Person location ",
+    tolower(center_label),
+    ": ",
+    round(p_center, 2),
+    " (",
+    spread_label,
+    " ",
+    round(p_spread, 2),
+    "). Item threshold location ",
+    tolower(center_label),
+    ": ",
+    round(t_center, 2),
+    " (",
+    spread_label,
+    " ",
+    round(t_spread, 2),
+    "). ",
+    .n_caption(
+      n_used,
+      n_total,
+      if (has_na) "incomplete responses retained" else character()
+    ),
+    ".\n",
     ci_caption
   ))
 
@@ -352,7 +427,9 @@ RMtargeting <- function(data, robust = FALSE,
       p3 <- p3 +
         ggplot2::geom_errorbar(
           ggplot2::aes(xmin = .data$CI_low, xmax = .data$CI_high),
-          width = 0.25, linewidth = 0.5, colour = threshold_fill,
+          width = 0.25,
+          linewidth = 0.5,
+          colour = threshold_fill,
           orientation = "y"
         )
     }
@@ -374,8 +451,8 @@ RMtargeting <- function(data, robust = FALSE,
     p3 <- ggplot2::ggplot(
       item_thresholds,
       ggplot2::aes(
-        x      = .data$Location,
-        y      = .data$Item,
+        x = .data$Location,
+        y = .data$Item,
         colour = .data$Threshold
       )
     )
@@ -384,7 +461,8 @@ RMtargeting <- function(data, robust = FALSE,
       p3 <- p3 +
         ggplot2::geom_errorbar(
           ggplot2::aes(xmin = .data$CI_low, xmax = .data$CI_high),
-          width = 0.25, linewidth = 0.5,
+          width = 0.25,
+          linewidth = 0.5,
           position = ggplot2::position_dodge(width = 0.4),
           orientation = "y"
         )
@@ -398,15 +476,15 @@ RMtargeting <- function(data, robust = FALSE,
       ggplot2::scale_colour_viridis_d(end = 0.9) +
       ggplot2::coord_cartesian(xlim = xlim) +
       ggplot2::labs(
-        x      = "Location (logit scale)",
-        y      = NULL,
+        x = "Location (logit scale)",
+        y = NULL,
         colour = "Threshold",
         caption = caption_text
       ) +
       ggplot2::theme_bw() +
       ggplot2::theme(
         legend.position = "bottom",
-        plot.margin     = ggplot2::margin(0, 5, 5, 5)
+        plot.margin = ggplot2::margin(0, 5, 5, 5)
       ) +
       er2_axis_margins() +
       er2_plot_caption()
@@ -436,9 +514,11 @@ RMtargeting <- function(data, robust = FALSE,
   for (j in seq_len(ncol(data))) {
     col_vals <- data[[j]]
     col_vals <- col_vals[!is.na(col_vals)]
-    if (length(col_vals) == 0L) next
+    if (length(col_vals) == 0L) {
+      next
+    }
     max_cat <- max(col_vals)
-    counts  <- tabulate(col_vals + 1L, nbins = max_cat + 1L)
+    counts <- tabulate(col_vals + 1L, nbins = max_cat + 1L)
     if (any(counts < min_n)) return(TRUE)
   }
   FALSE
@@ -460,17 +540,17 @@ RMtargeting <- function(data, robust = FALSE,
   # 2-category PCM), on the grand-mean-zero scale. Locations match the previous
   # eRm values; SEs differ slightly (psychotools vs eRm vcov). Person locations
   # are estimated downstream by WLE from these thresholds.
-  fit    <- psychotools::pcmodel(data)
-  tp     <- psychotools::threshpar(fit, vcov = TRUE)
+  fit <- psychotools::pcmodel(data)
+  tp <- psychotools::threshpar(fit, vcov = TRUE)
   se_all <- sqrt(diag(attr(tp, "vcov")))
-  loc    <- unlist(lapply(tp, as.numeric), use.names = FALSE)
-  loc    <- loc - mean(loc, na.rm = TRUE)
+  loc <- unlist(lapply(tp, as.numeric), use.names = FALSE)
+  loc <- loc - mean(loc, na.rm = TRUE)
 
   thresh_df <- data.frame(
-    Item      = rep(names(tp), lengths(tp)),
+    Item = rep(names(tp), lengths(tp)),
     Threshold = paste0("T", unlist(lapply(tp, seq_along), use.names = FALSE)),
-    Location  = loc,
-    SE        = as.numeric(se_all),
+    Location = loc,
+    SE = as.numeric(se_all),
     stringsAsFactors = FALSE
   )
   rownames(thresh_df) <- NULL
@@ -489,12 +569,21 @@ RMtargeting <- function(data, robust = FALSE,
 #' @return Named list with `$thresholds` and `$erm_out`.
 #' @noRd
 .estimate_thresholds_mml <- function(data, is_dicho) {
-  mirt_out <- mirt::mirt(data, model = 1, itemtype = "Rasch",
-                         SE = TRUE, verbose = FALSE)
+  mirt_out <- mirt::mirt(
+    data,
+    model = 1,
+    itemtype = "Rasch",
+    SE = TRUE,
+    verbose = FALSE
+  )
 
   # Extract per-item coefficients with SEs in IRT parameterisation
-  item_coefs <- mirt::coef(mirt_out, IRTpars = TRUE, printSE = TRUE,
-                           simplify = FALSE)
+  item_coefs <- mirt::coef(
+    mirt_out,
+    IRTpars = TRUE,
+    printSE = TRUE,
+    simplify = FALSE
+  )
   # item_coefs is a list: one element per item + "GroupPars"
   # Each item element is a matrix with rows: "par", "SE" and cols: "a", "b" (or "b1","b2",...)
   n_items <- ncol(data)
@@ -508,13 +597,13 @@ RMtargeting <- function(data, robust = FALSE,
       b_cols <- "b"
     }
     b_vals <- item_mat["par", b_cols]
-    b_ses  <- item_mat["SE",  b_cols]
+    b_ses <- item_mat["SE", b_cols]
 
     thresh_list[[i]] <- data.frame(
-      Item      = names(data)[i],
+      Item = names(data)[i],
       Threshold = paste0("T", seq_along(b_cols)),
-      Location  = as.numeric(b_vals),
-      SE        = as.numeric(b_ses),
+      Location = as.numeric(b_vals),
+      SE = as.numeric(b_ses),
       stringsAsFactors = FALSE
     )
   }

@@ -4,7 +4,13 @@
 \alias{RMdimResidualPCA}
 \title{PCA of Standardized Rasch Residuals}
 \usage{
-RMdimResidualPCA(data, cutoff = NULL, n_components = 5L, output = "kable")
+RMdimResidualPCA(
+  data,
+  cutoff = NULL,
+  p_value = FALSE,
+  n_components = 5L,
+  output = "kable"
+)
 }
 \arguments{
 \item{data}{A data.frame or matrix of item responses. Items must be scored
@@ -16,6 +22,17 @@ before PCA, since \code{prcomp()} does not accept missing values.}
 cutoff directly. When provided, the result includes a \code{Flagged} column
 (logical: is the eigenvalue above the simulated bound?) and the kable
 caption notes the cutoff.}
+
+\item{p_value}{Logical. When \code{TRUE}, adds a one-sided bootstrap p-value for
+the first-contrast eigenvalue: the proportion of simulated first-contrast
+eigenvalues at least as large as the observed one,
+\verb{(1 + #\\\{lambda* >= lambda\\\}) / (B + 1)}. Requires the \strong{full}
+\code{\link{RMdimResidualPCACutoff}} object as \code{cutoff} (it carries the
+simulated eigenvalues in \verb{$results}); a bare numeric cutoff is not
+sufficient. The simulated null is the distribution of the \emph{largest}
+eigenvalue, so the p-value applies to PC1 only (\code{NA} for the other
+components). This is a single test — no multiplicity correction is
+involved. Default \code{FALSE}.}
 
 \item{n_components}{Integer. Number of eigenvalues to report. Capped at the
 number of items. Default \code{5}.}
@@ -29,12 +46,14 @@ number of items. Default \code{5}.}
 \itemize{
 \item If \code{output = "kable"}: a \code{knitr_kable} object with columns Component,
 Eigenvalue, Proportion of variance (and \code{Flagged} when \code{cutoff} is
-provided). The caption gives the variance partition (\% of total observed
-variance explained by measures vs. unexplained), the model fitted,
-sample size, and cutoff metadata if applicable.
+provided; \code{p} when \code{p_value = TRUE}). The caption gives the variance
+partition (\% of total observed variance explained by measures vs.
+unexplained), the model fitted, sample size, and cutoff/p-value metadata
+if applicable.
 \item If \code{output = "dataframe"}: a data.frame with columns \code{Component},
 \code{Eigenvalue}, \code{Proportion_of_variance} (and \code{Flagged} when \code{cutoff} is
-provided). The variance partition is attached as the
+provided; \code{p} when \code{p_value = TRUE}, non-\code{NA} for PC1 only). The
+variance partition is attached as the
 \code{"variance_partition"} attribute — a list with elements \code{total},
 \code{explained}, \code{unexplained}, \code{pct_explained}, \code{pct_unexplained},
 \code{n_persons}. Access via
@@ -81,6 +100,15 @@ model, summed across items. Expected scores are computed from the CML item
 parameters and WLE person locations. WLE is finite at extreme scores, so
 all persons are retained (the previous MLE partition dropped extreme-score
 cases).
+
+\strong{Bootstrap p-value.} When \code{p_value = TRUE}, the observed
+first-contrast eigenvalue is compared against the simulated null
+distribution of largest eigenvalues (from \code{cutoff$results}), giving the
+one-sided Monte-Carlo p-value \verb{(1 + #\\\{lambda* >= lambda\\\}) / (B + 1)}.
+Because the maximum eigenvalue is a single family-wise statistic, no
+multiplicity correction applies. The p-value is model-conditional and
+sample-size-sensitive; it is reported alongside the simulated cutoff, not
+in place of it, and can be no smaller than \code{1 / (B + 1)}.
 }
 \examples{
 \donttest{
@@ -94,11 +122,17 @@ colnames(dat) <- paste0("I", 1:12)
 RMdimResidualPCA(dat)
 
 # PC1 loadings vs item location plot
-RMdimResidualPCA(dat, output = "ggplot")
+if (requireNamespace("ggplot2", quietly = TRUE) &&
+    requireNamespace("ggrepel", quietly = TRUE)) {
+  RMdimResidualPCA(dat, output = "ggplot")
+}
 
 # Simulation-based cutoff (use 250+ iterations in real analyses)
 bound <- RMdimResidualPCACutoff(dat, iterations = 50, parallel = FALSE, seed = 1)
 RMdimResidualPCA(dat, cutoff = bound)
+
+# With the one-sided bootstrap p-value for the first contrast
+RMdimResidualPCA(dat, cutoff = bound, p_value = TRUE)
 }
 }
 \references{

@@ -73,14 +73,16 @@ i.e., the average threshold across all items.
 }
 \examples{
 \donttest{
-data("pcmdat2", package = "eRm")
-RMitemHierarchy(pcmdat2)
+if (requireNamespace("eRm", quietly = TRUE)) {
+  data("pcmdat2", package = "eRm")
+  RMitemHierarchy(pcmdat2)
 
-# 95\% CI instead of 84\%
-RMitemHierarchy(pcmdat2, sem_multiplier = 1.96)
+  # 95\% CI instead of 84\%
+  RMitemHierarchy(pcmdat2, sem_multiplier = 1.96)
 
-# Underlying data.frame
-RMitemHierarchy(pcmdat2, output = "dataframe")
+  # Underlying data.frame
+  RMitemHierarchy(pcmdat2, output = "dataframe")
+}
 }
 
 }

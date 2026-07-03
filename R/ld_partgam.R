@@ -17,6 +17,26 @@
 #'   When provided, adds columns `Gamma_low`, `Gamma_high`, and `Flagged`
 #'   (logical; `TRUE` when the observed partial gamma falls outside the
 #'   credible range) to the result.
+#' @param p_value Logical. When `TRUE`, adds one-sided bootstrap p-values for
+#'   *excess positive* local dependence (`p_gamma`, `padj_gamma`), matching
+#'   the `p_value` semantics of \code{\link{RMlocdepQ3}}, and `flagged`
+#'   reflects `padj_gamma < alpha` (positive deviations only) instead of the
+#'   credible range. One test per item pair: the p-value is computed in the
+#'   canonical direction (direction 1, rest score = total - Item2, the
+#'   direction that was simulated) and repeated in the direction-2 table for
+#'   the same pair. The asymptotic BH-adjusted p-value and star columns from
+#'   `iarm::partgam_LD()` are **dropped** in this mode; the simulated
+#'   `gamma_low` / `gamma_high` band is kept as the effect-size reference.
+#'   Requires the **full** \code{\link{RMlocdepGammaCutoff}} object as
+#'   `cutoff` (it carries the simulated distributions in `$results`).
+#'   Default `FALSE`.
+#' @param correction Character. Multiplicity correction for the bootstrap
+#'   p-values, applied over the family of all item pairs (before any
+#'   `n_pairs` display filter): `"fwer"` (default; Westfall-Young
+#'   studentised-max step-down), `"fdr_bh"`, `"fdr_by"`, or `"none"`. Ignored
+#'   when `p_value = FALSE`.
+#' @param alpha Numeric in (0, 1). Significance level used to flag pairs on
+#'   the corrected p-value. Default `0.05`. Ignored when `p_value = FALSE`.
 #' @param output Character string controlling the return value. Either
 #'   `"kable"` (default) for a formatted `knitr::kable()` table, or
 #'   `"dataframe"` for the underlying data.frame.
@@ -49,6 +69,8 @@
 #'   (`$direction1`, `$direction2`) with columns `Item1`, `Item2`,
 #'   `gamma`, `padj_bh`, `Significance`. When `cutoff` is provided,
 #'   columns `gamma_low`, `gamma_high`, and `flagged` are also included.
+#'   With `p_value = TRUE`, `padj_bh` and `Significance` are replaced by
+#'   `p_gamma` and `padj_gamma` (identical for a pair in both directions).
 #'
 #' @details
 #' Partial gamma (Christensen, Kreiner & Mesbah, 2013) measures the residual
@@ -63,10 +85,37 @@
 #'
 #' The `iarm` package must be installed (it is in Suggests, not Imports).
 #'
+#' \strong{Bootstrap p-values.} When `p_value = TRUE`, each pair's observed
+#' partial gamma (canonical direction) is compared against its simulated null
+#' distribution (from `cutoff$results`, simulated under local independence).
+#' The per-pair statistic is the residual studentised by the bootstrap mean
+#' and SD; the marginal p-value is the one-sided Monte-Carlo p-value
+#' `(1 + #\{t* >= t\}) / (B + 1)` for excess *positive* LD (redundancy, the
+#' diagnostic target — matching \code{\link{RMlocdepQ3}}), so it can be no
+#' smaller than `1 / (B + 1)`. The band still shows both bounds for
+#' reference. `correction = "fwer"` uses the Westfall-Young studentised-max
+#' step-down over the family of all pairs, which exploits the bootstrap
+#' dependence among them (Ferreira, 2024); it is liberal when the simulation
+#' is small, so at least 1000 `iterations` in [RMlocdepGammaCutoff()] are
+#' recommended (a warning is issued below that). Unlike the asymptotic
+#' p-values from `iarm::partgam_LD()`, these are calibrated against the
+#' *simulated Rasch null* rather than the asymptotic SE; they are
+#' model-conditional and sample-size-sensitive, and are reported alongside
+#' the simulated effect-size band, not in place of it.
+#'
+#' @inheritSection RMitemInfit Multiple comparisons
+#'
 #' @references
 #' Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.) (2013).
 #' \emph{Rasch Models in Health}, pp. 133--135. ISTE & Wiley.
 #' \doi{10.1002/9781118574454}
+#'
+#' Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
+#' of hypotheses simultaneously. *Journal of Statistical Theory and Practice,
+#' 19*(6). \doi{10.1007/s42519-024-00412-4}
+#'
+#' Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple Testing*.
+#' Wiley.
 #'
 #' @seealso \code{\link{RMlocdepGammaCutoff}}, \code{\link{RMlocdepGammaPlot}}
 #'
@@ -74,27 +123,41 @@
 #'
 #' @examples
 #' \donttest{
-#' set.seed(42)
-#' sim_data <- as.data.frame(
-#'   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-#' )
-#' colnames(sim_data) <- paste0("Item", 1:10)
+#' if (requireNamespace("iarm", quietly = TRUE)) {
+#'   set.seed(42)
+#'   sim_data <- as.data.frame(
+#'     matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+#'   )
+#'   colnames(sim_data) <- paste0("Item", 1:10)
 #'
-#' # Default kable output
-#' RMlocdepGamma(sim_data)
+#'   # Default kable output
+#'   RMlocdepGamma(sim_data)
 #'
-#' # Return as data.frame list
-#' RMlocdepGamma(sim_data, output = "dataframe")
+#'   # Return as data.frame list
+#'   RMlocdepGamma(sim_data, output = "dataframe")
+#'
+#'   # Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
+#'   if (requireNamespace("ggdist", quietly = TRUE)) {
+#'     cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100,
+#'                                       parallel = FALSE, seed = 42)
+#'     RMlocdepGamma(sim_data, cutoff = cutoff_res)
+#'
+#'     # Bootstrap p-values with family-wise (Westfall-Young) correction
+#'     # (use iterations >= 1000 in real analyses for stable p-values)
+#'     RMlocdepGamma(sim_data, cutoff = cutoff_res, p_value = TRUE,
+#'                   output = "dataframe")
+#'   }
 #' }
-#' \donttest{
-#' # Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
-#' cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100, parallel = FALSE,
-#'                            seed = 42)
-#' RMlocdepGamma(sim_data, cutoff = cutoff_res)
 #' }
-RMlocdepGamma <- function(data, cutoff = NULL, output = "kable",
-                        n_pairs = NULL) {
-
+RMlocdepGamma <- function(
+  data,
+  cutoff = NULL,
+  p_value = FALSE,
+  correction = c("fwer", "fdr_bh", "fdr_by", "none"),
+  alpha = 0.05,
+  output = "kable",
+  n_pairs = NULL
+) {
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
       "Package 'iarm' is required for RMlocdepGamma() but is not installed.\n",
@@ -104,14 +167,24 @@ RMlocdepGamma <- function(data, cutoff = NULL, output = "kable",
   }
 
   output <- match.arg(output, c("kable", "dataframe"))
+  correction <- match.arg(correction)
+  if (!is.numeric(alpha) || length(alpha) != 1L || alpha <= 0 || alpha >= 1) {
+    stop("`alpha` must be a single number in (0, 1).", call. = FALSE)
+  }
 
   # --- Validate n_pairs -------------------------------------------------------
   if (!is.null(n_pairs)) {
-    if (!is.numeric(n_pairs) || length(n_pairs) != 1L ||
-        !is.finite(n_pairs) || n_pairs < 1 ||
-        n_pairs != as.integer(n_pairs)) {
-      stop("`n_pairs` must be a single positive integer or NULL.",
-           call. = FALSE)
+    if (
+      !is.numeric(n_pairs) ||
+        length(n_pairs) != 1L ||
+        !is.finite(n_pairs) ||
+        n_pairs < 1 ||
+        n_pairs != as.integer(n_pairs)
+    ) {
+      stop(
+        "`n_pairs` must be a single positive integer or NULL.",
+        call. = FALSE
+      )
     }
     n_pairs <- as.integer(n_pairs)
   }
@@ -119,13 +192,19 @@ RMlocdepGamma <- function(data, cutoff = NULL, output = "kable",
   validate_response_data(data)
 
   # --- Validate and normalise cutoff ------------------------------------------
-  cutoff_n_iter     <- NULL
-  cutoff_method     <- NULL
+  cutoff_n_iter <- NULL
+  cutoff_method <- NULL
   cutoff_hdci_width <- NULL
+  cutoff_full <- NULL # full object (carries simulated $results for p-values)
   if (!is.null(cutoff)) {
-    if (is.list(cutoff) && !is.data.frame(cutoff) && "pair_cutoffs" %in% names(cutoff)) {
-      cutoff_n_iter     <- cutoff$actual_iterations
-      cutoff_method     <- cutoff$cutoff_method
+    if (
+      is.list(cutoff) &&
+        !is.data.frame(cutoff) &&
+        "pair_cutoffs" %in% names(cutoff)
+    ) {
+      cutoff_full <- cutoff
+      cutoff_n_iter <- cutoff$actual_iterations
+      cutoff_method <- cutoff$cutoff_method
       cutoff_hdci_width <- cutoff$hdci_width
       cutoff <- cutoff$pair_cutoffs
     }
@@ -141,7 +220,31 @@ RMlocdepGamma <- function(data, cutoff = NULL, output = "kable",
     if (length(missing_cols) > 0L) {
       stop(
         "`cutoff` data.frame is missing required columns: ",
-        paste(missing_cols, collapse = ", "), ".",
+        paste(missing_cols, collapse = ", "),
+        ".",
+        call. = FALSE
+      )
+    }
+  }
+
+  # --- p-value prerequisites --------------------------------------------------
+  if (p_value) {
+    if (is.null(cutoff_full) || is.null(cutoff_full$results)) {
+      stop(
+        "`p_value = TRUE` requires the full RMlocdepGammaCutoff() object (it ",
+        "carries the simulated per-pair distributions in $results); a NULL ",
+        "cutoff or the bare $pair_cutoffs data.frame is not sufficient.",
+        call. = FALSE
+      )
+    }
+    if (!is.null(cutoff_n_iter) && cutoff_n_iter < 1000L) {
+      warning(
+        "Bootstrap p-values are based on only ",
+        cutoff_n_iter,
+        " simulation iterations. With few iterations the studentised-max ",
+        "(FWER) correction is liberal and small p-values are imprecise; ",
+        "use iterations >= 1000 in RMlocdepGammaCutoff() for reliable ",
+        "p-values.",
         call. = FALSE
       )
     }
@@ -164,10 +267,10 @@ RMlocdepGamma <- function(data, cutoff = NULL, output = "kable",
   #   " **" / " *" / "  ." / "    "; we trim whitespace for display.
   process_pgam_df <- function(raw_df) {
     df <- data.frame(
-      Item1        = as.character(raw_df$Item1),
-      Item2        = as.character(raw_df$Item2),
-      gamma        = round(as.numeric(raw_df$gamma), 3),
-      padj_bh      = round(as.numeric(raw_df[[6]]), 3),
+      Item1 = as.character(raw_df$Item1),
+      Item2 = as.character(raw_df$Item2),
+      gamma = round(as.numeric(raw_df$gamma), 3),
+      padj_bh = round(as.numeric(raw_df[[6]]), 3),
       Significance = trimws(as.character(raw_df[[7]])),
       stringsAsFactors = FALSE
     )
@@ -201,12 +304,17 @@ RMlocdepGamma <- function(data, cutoff = NULL, output = "kable",
         sep = "___"
       )
 
-      merged <- merge(result_df, cutoff_sub, by = "canonical_key", all.x = TRUE,
-                      sort = FALSE)
+      merged <- merge(
+        result_df,
+        cutoff_sub,
+        by = "canonical_key",
+        all.x = TRUE,
+        sort = FALSE
+      )
       # Restore original row order
       merged <- merged[match(result_df$canonical_key, merged$canonical_key), ]
       rownames(merged) <- NULL
-      merged$gamma_low  <- round(merged$gamma_low, 3)
+      merged$gamma_low <- round(merged$gamma_low, 3)
       merged$gamma_high <- round(merged$gamma_high, 3)
       merged$flagged <- !is.na(merged$gamma_low) &
         (merged$gamma < merged$gamma_low | merged$gamma > merged$gamma_high)
@@ -214,13 +322,83 @@ RMlocdepGamma <- function(data, cutoff = NULL, output = "kable",
       # Remove helper column
       merged$canonical_key <- NULL
 
-      merged <- merged[, c("Item1", "Item2", "gamma", "padj_bh",
-                           "Significance", "gamma_low", "gamma_high",
-                           "flagged")]
+      merged <- merged[, c(
+        "Item1",
+        "Item2",
+        "gamma",
+        "padj_bh",
+        "Significance",
+        "gamma_low",
+        "gamma_high",
+        "flagged"
+      )]
       result_list[[idx]] <- merged
     }
     # Clean up cutoff helper column
     cutoff$canonical_key <- NULL
+  }
+
+  # --- Bootstrap p-values (one test per pair, canonical direction) ------------
+  # Computed BEFORE the n_pairs display filter so the multiplicity correction
+  # always runs over the full family of pairs. The simulated null holds the
+  # direction-1 gammas only, so the observed statistic is the direction-1
+  # (canonical) gamma; the resulting p-value is keyed by the unordered pair
+  # and repeated in the direction-2 table.
+  if (p_value) {
+    canon_key <- function(a, b) {
+      paste(pmin(a, b), pmax(a, b), sep = "___")
+    }
+    sim_res <- cutoff_full$results
+    sim_key <- canon_key(sim_res$Item1, sim_res$Item2)
+    obs_key <- canon_key(
+      as.character(pgam_raw[[1L]]$Item1),
+      as.character(pgam_raw[[1L]]$Item2)
+    )
+    if (!setequal(obs_key, unique(sim_key))) {
+      stop(
+        "Item pairs in the cutoff simulations ($results) do not match the ",
+        "pairs in `data`.",
+        call. = FALSE
+      )
+    }
+    sim_mat <- tapply(
+      sim_res$gamma,
+      list(sim_res$iteration, sim_key),
+      function(x) x[1L]
+    )
+    observed <- stats::setNames(
+      as.numeric(pgam_raw[[1L]]$gamma),
+      obs_key
+    )
+    # One-sided: excess positive LD (redundancy), matching RMlocdepQ3.
+    pv <- .bootstrap_pvalues(
+      observed,
+      sim_mat,
+      correction = correction,
+      tail = "upper"
+    )
+    p_lookup <- stats::setNames(round(pv$p, 4), pv$name)
+    padj_lookup <- stats::setNames(round(pv$padj, 4), pv$name)
+
+    for (idx in seq_along(result_list)) {
+      df <- result_list[[idx]]
+      key <- canon_key(df$Item1, df$Item2)
+      df$p_gamma <- as.numeric(p_lookup[key])
+      df$padj_gamma <- as.numeric(padj_lookup[key])
+      df$flagged <- !is.na(df$padj_gamma) & df$padj_gamma < alpha
+      # Drop the asymptotic p-value pair; the bootstrap p-values replace it.
+      df <- df[, c(
+        "Item1",
+        "Item2",
+        "gamma",
+        "gamma_low",
+        "gamma_high",
+        "p_gamma",
+        "padj_gamma",
+        "flagged"
+      )]
+      result_list[[idx]] <- df
+    }
   }
 
   # --- Top-N filter by |gamma| per direction ----------------------------------
@@ -231,9 +409,9 @@ RMlocdepGamma <- function(data, cutoff = NULL, output = "kable",
     if (keep_n < total_pairs) {
       filter_applied <- TRUE
       for (idx in seq_along(result_list)) {
-        df  <- result_list[[idx]]
+        df <- result_list[[idx]]
         ord <- order(abs(df$gamma), decreasing = TRUE)
-        df  <- df[ord[seq_len(keep_n)], , drop = FALSE]
+        df <- df[ord[seq_len(keep_n)], , drop = FALSE]
         rownames(df) <- NULL
         result_list[[idx]] <- df
       }
@@ -247,23 +425,52 @@ RMlocdepGamma <- function(data, cutoff = NULL, output = "kable",
 
   # Build caption
   n_complete <- sum(stats::complete.cases(as.data.frame(data)))
+  n_clause <- .n_caption(
+    n_complete,
+    nrow(as.data.frame(data)),
+    if (anyNA(as.data.frame(data))) "complete cases" else character()
+  )
   filter_suffix <- if (filter_applied) {
-    paste0(" Showing top ", n_pairs, " of ", total_pairs,
-           " pairs by |gamma|.")
+    paste0(" Showing top ", n_pairs, " of ", total_pairs, " pairs by |gamma|.")
   } else {
     ""
   }
-  if (is.null(cutoff)) {
+  if (p_value) {
     caption_text <- paste0(
-      "Partial gamma LD analysis (n = ", n_complete, " complete cases). ",
-      "Positive gamma indicates positive local dependence between items.",
+      "Partial gamma LD analysis. ",
+      n_clause,
+      ". One-sided bootstrap p-values for excess positive LD from ",
+      cutoff_n_iter,
+      " iterations, computed in the canonical direction (rest score = ",
+      "total - Item2) and repeated for both directions (replacing the ",
+      "asymptotic BH p-values); multiplicity correction: ",
+      .correction_label(correction),
+      "; flagged at padj < ",
+      alpha,
+      ". p-values cannot be smaller than 1/(",
+      cutoff_n_iter,
+      "+1) = ",
+      round(1 / (cutoff_n_iter + 1), 4),
+      ".",
+      filter_suffix
+    )
+  } else if (is.null(cutoff)) {
+    caption_text <- paste0(
+      "Partial gamma LD analysis. ",
+      n_clause,
+      ". Positive gamma indicates positive local dependence between items.",
       filter_suffix
     )
   } else if (!is.null(cutoff_n_iter)) {
-    method_label <- .format_gamma_cutoff_method_label(cutoff_method, cutoff_hdci_width)
+    method_label <- .format_gamma_cutoff_method_label(
+      cutoff_method,
+      cutoff_hdci_width
+    )
     iter_part <- paste0(cutoff_n_iter, " simulation iterations")
     caption_text <- paste0(
-      "Partial gamma LD analysis (n = ", n_complete, " complete cases). Cutoff values based on ",
+      "Partial gamma LD analysis. ",
+      n_clause,
+      ". Cutoff values based on ",
       if (!is.null(method_label)) {
         paste0(iter_part, " (", method_label, ").")
       } else {
@@ -273,34 +480,65 @@ RMlocdepGamma <- function(data, cutoff = NULL, output = "kable",
     )
   } else {
     caption_text <- paste0(
-      "Partial gamma LD analysis (n = ", n_complete,
-      " complete cases). Simulation-based cutoff values applied.",
+      "Partial gamma LD analysis. ",
+      n_clause,
+      ". Simulation-based cutoff values applied.",
       filter_suffix
     )
   }
 
-  col_names_no_cutoff <- c("Item 1", "Item 2", "Partial gamma",
-                           "Adj. p-value (BH)", "p-value sign.")
-  col_names_cutoff    <- c("Item 1", "Item 2", "Partial gamma",
-                           "Adj. p-value (BH)", "p-value sign.",
-                           "Gamma low", "Gamma high", "Flagged")
+  col_names_no_cutoff <- c(
+    "Item 1",
+    "Item 2",
+    "Partial gamma",
+    "Adj. p-value (BH)",
+    "p-value sign."
+  )
+  col_names_cutoff <- c(
+    "Item 1",
+    "Item 2",
+    "Partial gamma",
+    "Adj. p-value (BH)",
+    "p-value sign.",
+    "Gamma low",
+    "Gamma high",
+    "Flagged"
+  )
+  col_names_pvalue <- c(
+    "Item 1",
+    "Item 2",
+    "Partial gamma",
+    "Gamma low",
+    "Gamma high",
+    "p",
+    "p (adj)",
+    "Flagged"
+  )
+  col_names_used <- if (p_value) {
+    col_names_pvalue
+  } else if (is.null(cutoff)) {
+    col_names_no_cutoff
+  } else {
+    col_names_cutoff
+  }
 
   kable1 <- knitr::kable(
     result_list$direction1,
-    format    = "pipe",
-    col.names = if (is.null(cutoff)) col_names_no_cutoff else col_names_cutoff,
-    caption   = paste0(caption_text,
-                       " Direction 1: rest score = total - Item2.")
+    format = "pipe",
+    col.names = col_names_used,
+    caption = paste0(caption_text, " Direction 1: rest score = total - Item2.")
   )
 
   kable2 <- knitr::kable(
     result_list$direction2,
-    format    = "pipe",
-    col.names = if (is.null(cutoff)) col_names_no_cutoff else col_names_cutoff,
-    caption   = paste0(caption_text,
-                       " Direction 2: rest score = total - Item2 ",
-                       "(item pairs shown in the reverse order to ",
-                       "direction 1).")
+    format = "pipe",
+    col.names = col_names_used,
+    caption = paste0(
+      caption_text,
+      " Direction 2: rest score = total - Item2 ",
+      "(item pairs shown in the reverse order to ",
+      "direction 1)."
+    )
   )
 
   # `knitr::kable(format = "pipe")` returns a multi-line *character vector*
@@ -320,7 +558,7 @@ RMlocdepGamma <- function(data, cutoff = NULL, output = "kable",
   out <- list(
     direction1 = kable1,
     direction2 = kable2,
-    .combined  = combined
+    .combined = combined
   )
   class(out) <- c("RMlocdepGamma", "list")
   out
@@ -401,6 +639,10 @@ knit_print.RMlocdepGamma <- function(x, ...) {
 #'     specified by `cutoff_method`.}
 #'   \item{`actual_iterations`}{Number of successful iterations.}
 #'   \item{`sample_n`}{Number of complete cases used.}
+#'   \item{`sample_n_total`}{Number of respondents in the raw input data,
+#'     before the complete-case filter.}
+#'   \item{`sample_has_na`}{Logical. Whether the raw input data contained
+#'     any missing values.}
 #'   \item{`sample_summary`}{Summary statistics of estimated person
 #'     parameters.}
 #'   \item{`item_names`}{Character vector of item names from data.}
@@ -452,23 +694,30 @@ knit_print.RMlocdepGamma <- function(x, ...) {
 #'
 #' @examples
 #' \donttest{
-#' set.seed(42)
-#' sim_data <- as.data.frame(
-#'   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-#' )
-#' colnames(sim_data) <- paste0("Item", 1:10)
+#' if (requireNamespace("iarm", quietly = TRUE) &&
+#'     requireNamespace("ggdist", quietly = TRUE)) {
+#'   set.seed(42)
+#'   sim_data <- as.data.frame(
+#'     matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+#'   )
+#'   colnames(sim_data) <- paste0("Item", 1:10)
 #'
-#' # Run 100 iterations sequentially for a quick demo
-#' cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100, parallel = FALSE,
-#'                            seed = 42)
-#' cutoff_res$pair_cutoffs
+#'   # Run 100 iterations sequentially for a quick demo
+#'   cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100,
+#'                                     parallel = FALSE, seed = 42)
+#'   cutoff_res$pair_cutoffs
 #' }
-RMlocdepGammaCutoff <- function(data, iterations = 250,
-                         parallel = TRUE, n_cores = NULL,
-                         verbose = FALSE, seed = NULL,
-                         cutoff_method = "hdci",
-                         hdci_width = 0.99) {
-
+#' }
+RMlocdepGammaCutoff <- function(
+  data,
+  iterations = 250,
+  parallel = TRUE,
+  n_cores = NULL,
+  verbose = FALSE,
+  seed = NULL,
+  cutoff_method = "hdci",
+  hdci_width = 0.99
+) {
   cutoff_method <- match.arg(cutoff_method, c("hdci", "quantile"))
 
   if (cutoff_method == "hdci" && !requireNamespace("ggdist", quietly = TRUE)) {
@@ -495,20 +744,28 @@ RMlocdepGammaCutoff <- function(data, iterations = 250,
   options(rgl.useNULL = TRUE)
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
 
-  # Only complete cases
+  # Only complete cases. Record the raw total and whether anything was
+  # dropped so callers (e.g. RMlocdepGammaPlot) can report the sample in the
+  # standard `n = X of Y respondents` form.
+  n_total <- nrow(data)
+  has_na <- anyNA(data)
   complete_idx <- stats::complete.cases(data)
   data <- data[complete_idx, , drop = FALSE]
 
   if (nrow(data) == 0L) {
-    stop("No complete cases in data after removing rows with NA.",
-         call. = FALSE)
+    stop(
+      "No complete cases in data after removing rows with NA.",
+      call. = FALSE
+    )
   }
 
   # --- Parallel setup ---------------------------------------------------------
   use_parallel <- parallel && requireNamespace("mirai", quietly = TRUE)
 
   if (parallel && !use_parallel) {
-    message("Install 'mirai' package for parallel processing: install.packages(\"mirai\")")
+    message(
+      "Install 'mirai' package for parallel processing: install.packages(\"mirai\")"
+    )
     message("Running sequentially...")
   }
 
@@ -549,9 +806,9 @@ RMlocdepGammaCutoff <- function(data, iterations = 250,
   # eRm::person.parameter() (MLE). Thetas form the pool resampled with
   # replacement to build each simulated dataset; a dichotomous item is a
   # 2-category PCM, so its centred threshold is the item difficulty for rrm().
-  pool       <- .wle_theta_pool(data_mat)
-  thr_list   <- pool$thr_list
-  thetas     <- pool$thetas
+  pool <- .wle_theta_pool(data_mat)
+  thr_list <- pool$thr_list
+  thetas <- pool$thetas
 
   if (is_polytomous) {
     sim_data_list <- list(
@@ -574,11 +831,20 @@ RMlocdepGammaCutoff <- function(data, iterations = 250,
   }
 
   if (use_parallel) {
-    results_raw <- run_partgam_LD_sim_parallel(iterations, sim_seeds,
-                                               sim_data_list, n_cores, verbose)
+    results_raw <- run_partgam_LD_sim_parallel(
+      iterations,
+      sim_seeds,
+      sim_data_list,
+      n_cores,
+      verbose
+    )
   } else {
-    results_raw <- run_partgam_LD_sim_sequential(iterations, sim_seeds,
-                                                 sim_data_list, verbose)
+    results_raw <- run_partgam_LD_sim_sequential(
+      iterations,
+      sim_seeds,
+      sim_data_list,
+      verbose
+    )
   }
 
   # Filter out failures (character strings indicate errors)
@@ -602,41 +868,48 @@ RMlocdepGammaCutoff <- function(data, iterations = 250,
 
   # Compute per-pair cutoffs
   pair_keys <- unique(paste(results_df$Item1, results_df$Item2, sep = "___"))
-  pair_cutoffs <- do.call(rbind, lapply(pair_keys, function(pk) {
-    parts <- strsplit(pk, "___", fixed = TRUE)[[1]]
-    sub <- results_df[results_df$Item1 == parts[1] & results_df$Item2 == parts[2], ]
-    if (cutoff_method == "hdci") {
-      gamma_interval <- ggdist::hdci(sub$gamma, .width = hdci_width)
-      data.frame(
-        Item1      = parts[1],
-        Item2      = parts[2],
-        gamma_low  = gamma_interval[1L, 1L],
-        gamma_high = gamma_interval[1L, 2L],
-        stringsAsFactors = FALSE,
-        row.names = NULL
-      )
-    } else {
-      data.frame(
-        Item1      = parts[1],
-        Item2      = parts[2],
-        gamma_low  = stats::quantile(sub$gamma, 0.025, na.rm = TRUE),
-        gamma_high = stats::quantile(sub$gamma, 0.975, na.rm = TRUE),
-        stringsAsFactors = FALSE,
-        row.names = NULL
-      )
-    }
-  }))
+  pair_cutoffs <- do.call(
+    rbind,
+    lapply(pair_keys, function(pk) {
+      parts <- strsplit(pk, "___", fixed = TRUE)[[1]]
+      sub <- results_df[
+        results_df$Item1 == parts[1] & results_df$Item2 == parts[2],
+      ]
+      if (cutoff_method == "hdci") {
+        gamma_interval <- ggdist::hdci(sub$gamma, .width = hdci_width)
+        data.frame(
+          Item1 = parts[1],
+          Item2 = parts[2],
+          gamma_low = gamma_interval[1L, 1L],
+          gamma_high = gamma_interval[1L, 2L],
+          stringsAsFactors = FALSE,
+          row.names = NULL
+        )
+      } else {
+        data.frame(
+          Item1 = parts[1],
+          Item2 = parts[2],
+          gamma_low = stats::quantile(sub$gamma, 0.025, na.rm = TRUE),
+          gamma_high = stats::quantile(sub$gamma, 0.975, na.rm = TRUE),
+          stringsAsFactors = FALSE,
+          row.names = NULL
+        )
+      }
+    })
+  )
   rownames(pair_cutoffs) <- NULL
 
   list(
-    results           = results_df,
-    pair_cutoffs      = pair_cutoffs,
+    results = results_df,
+    pair_cutoffs = pair_cutoffs,
     actual_iterations = actual_iterations,
-    sample_n          = sample_n,
-    sample_summary    = summary(thetas),
-    item_names        = item_names_vec,
-    cutoff_method     = cutoff_method,
-    hdci_width        = hdci_width
+    sample_n = sample_n,
+    sample_n_total = n_total,
+    sample_has_na = has_na,
+    sample_summary = summary(thetas),
+    item_names = item_names_vec,
+    cutoff_method = cutoff_method,
+    hdci_width = hdci_width
   )
 }
 
@@ -654,57 +927,71 @@ RMlocdepGammaCutoff <- function(data, iterations = 250,
 run_single_partgam_LD_sim <- function(seed, data_list) {
   set.seed(seed)
 
-  thetas_res <- sample(data_list$thetas, size = data_list$sample_n,
-                       replace = TRUE)
+  thetas_res <- sample(
+    data_list$thetas,
+    size = data_list$sample_n,
+    replace = TRUE
+  )
 
-  tryCatch({
-    if (data_list$type == "dichotomous") {
-      sim_mat <- psychotools::rrm(
-        theta = thetas_res,
-        beta = data_list$item_params
-      )
-      sim_df <- as.data.frame(sim_mat$data)
-      colnames(sim_df) <- data_list$item_names
+  tryCatch(
+    {
+      if (data_list$type == "dichotomous") {
+        sim_mat <- psychotools::rrm(
+          theta = thetas_res,
+          beta = data_list$item_params
+        )
+        sim_df <- as.data.frame(sim_mat$data)
+        colnames(sim_df) <- data_list$item_names
 
-      pos_counts <- colSums(sim_df, na.rm = TRUE)
-      if (any(pos_counts < 8L)) {
-        return("validation_failed: fewer than 8 positive responses in at least one item")
-      }
-    } else {
-      sim_mat <- sim_partial_score(data_list$deltaslist, thetas_res)
-      sim_df <- as.data.frame(sim_mat)
-      colnames(sim_df) <- data_list$item_names
+        pos_counts <- colSums(sim_df, na.rm = TRUE)
+        if (any(pos_counts < 8L)) {
+          return(
+            "validation_failed: fewer than 8 positive responses in at least one item"
+          )
+        }
+      } else {
+        sim_mat <- sim_partial_score(data_list$deltaslist, thetas_res)
+        sim_df <- as.data.frame(sim_mat)
+        colnames(sim_df) <- data_list$item_names
 
-      n_cats <- vapply(data_list$deltaslist, function(d) length(d) + 1L,
-                       integer(1L))
-      for (j in seq_len(ncol(sim_df))) {
-        tab <- tabulate(sim_df[[j]] + 1L, nbins = n_cats[j])
-        if (any(tab == 0L)) {
-          return("validation_failed: not all categories represented")
+        n_cats <- vapply(
+          data_list$deltaslist,
+          function(d) length(d) + 1L,
+          integer(1L)
+        )
+        for (j in seq_len(ncol(sim_df))) {
+          tab <- tabulate(sim_df[[j]] + 1L, nbins = n_cats[j])
+          if (any(tab == 0L)) {
+            return("validation_failed: not all categories represented")
+          }
         }
       }
+
+      # Compute partial gamma LD via iarm.
+      # iarm::partgam_LD() prints its result tables to stdout on every call;
+      # silence it. `finally` restores the sink even if the call errors (the
+      # outer tryCatch then reports the failure as usual).
+      sink(nullfile())
+      pgam <- tryCatch(
+        iarm::partgam_LD(sim_df),
+        finally = sink()
+      )
+
+      # Use direction 1 (rest score = total - Item2) as the canonical direction
+      pgam_df <- as.data.frame(pgam[[1]])
+
+      data.frame(
+        Item1 = as.character(pgam_df$Item1),
+        Item2 = as.character(pgam_df$Item2),
+        gamma = as.numeric(pgam_df$gamma),
+        stringsAsFactors = FALSE,
+        row.names = NULL
+      )
+    },
+    error = function(e) {
+      as.character(conditionMessage(e))
     }
-
-    # Compute partial gamma LD via iarm
-    # iarm::partgam_LD returns a list of two data.frames;
-    # suppress its console output with sink()
-    sink(nullfile())
-    pgam <- iarm::partgam_LD(sim_df)
-    sink()
-
-    # Use direction 1 (rest score = total - Item2) as the canonical direction
-    pgam_df <- as.data.frame(pgam[[1]])
-
-    data.frame(
-      Item1 = as.character(pgam_df$Item1),
-      Item2 = as.character(pgam_df$Item2),
-      gamma = as.numeric(pgam_df$gamma),
-      stringsAsFactors = FALSE,
-      row.names = NULL
-    )
-  }, error = function(e) {
-    as.character(conditionMessage(e))
-  })
+  )
 }
 
 # ---------------------------------------------------------------------------
@@ -720,8 +1007,13 @@ run_single_partgam_LD_sim <- function(seed, data_list) {
 #' @param verbose Show progress bar.
 #' @return List of raw results (one element per iteration).
 #' @keywords internal
-run_partgam_LD_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
-                                        n_cores, verbose = FALSE) {
+run_partgam_LD_sim_parallel <- function(
+  iterations,
+  sim_seeds,
+  sim_data_list,
+  n_cores,
+  verbose = FALSE
+) {
   mirai::daemons(n_cores)
   on.exit(mirai::daemons(0), add = TRUE)
 
@@ -780,8 +1072,12 @@ run_partgam_LD_sim_parallel <- function(iterations, sim_seeds, sim_data_list,
 #' @param verbose Show progress bar.
 #' @return List of raw results (one element per iteration).
 #' @keywords internal
-run_partgam_LD_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
-                                          verbose = FALSE) {
+run_partgam_LD_sim_sequential <- function(
+  iterations,
+  sim_seeds,
+  sim_data_list,
+  verbose = FALSE
+) {
   if (verbose) {
     pb <- utils::txtProgressBar(min = 0, max = iterations, style = 3)
   }
@@ -865,28 +1161,31 @@ run_partgam_LD_sim_sequential <- function(iterations, sim_seeds, sim_data_list,
 #'
 #' @examples
 #' \donttest{
-#' set.seed(42)
-#' sim_data <- as.data.frame(
-#'   matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-#' )
-#' colnames(sim_data) <- paste0("Item", 1:10)
+#' if (requireNamespace("iarm", quietly = TRUE) &&
+#'     requireNamespace("ggdist", quietly = TRUE) &&
+#'     requireNamespace("ggplot2", quietly = TRUE)) {
+#'   set.seed(42)
+#'   sim_data <- as.data.frame(
+#'     matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+#'   )
+#'   colnames(sim_data) <- paste0("Item", 1:10)
 #'
-#' # Run simulation
-#' cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100, parallel = FALSE,
-#'                            seed = 42)
+#'   # Run simulation
+#'   cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100,
+#'                                     parallel = FALSE, seed = 42)
 #'
-#' # Simulated distribution only
-#' RMlocdepGammaPlot(cutoff_res)
+#'   # Simulated distribution only
+#'   RMlocdepGammaPlot(cutoff_res)
 #'
-#' # With observed partial gamma overlaid
-#' RMlocdepGammaPlot(cutoff_res, data = sim_data)
+#'   # With observed partial gamma overlaid
+#'   RMlocdepGammaPlot(cutoff_res, data = sim_data)
 #'
-#' # Plot only a subset of items
-#' RMlocdepGammaPlot(cutoff_res, data = sim_data,
-#'            items = c("Item1", "Item2", "Item3"))
+#'   # Plot only a subset of items
+#'   RMlocdepGammaPlot(cutoff_res, data = sim_data,
+#'                     items = c("Item1", "Item2", "Item3"))
+#' }
 #' }
 RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
-
   # --- Check required packages ------------------------------------------------
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop(
@@ -904,8 +1203,13 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
   }
 
   # --- Validate simfit --------------------------------------------------------
-  required_names <- c("results", "pair_cutoffs", "actual_iterations",
-                      "sample_n", "item_names")
+  required_names <- c(
+    "results",
+    "pair_cutoffs",
+    "actual_iterations",
+    "sample_n",
+    "item_names"
+  )
   missing_names <- setdiff(required_names, names(simfit))
   if (length(missing_names) > 0L) {
     stop(
@@ -916,11 +1220,20 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     )
   }
 
-  results_df        <- simfit$results
-  pair_cutoffs      <- simfit$pair_cutoffs
+  results_df <- simfit$results
+  pair_cutoffs <- simfit$pair_cutoffs
   actual_iterations <- simfit$actual_iterations
-  sample_n          <- simfit$sample_n
-  item_names        <- simfit$item_names
+  sample_n <- simfit$sample_n
+  item_names <- simfit$item_names
+
+  # Standard sample-size clause for the (complete-case) simulation sample.
+  # `sample_n_total` / `sample_has_na` are absent in cutoff objects made by
+  # older versions, so fall back to the plain count.
+  sample_clause <- .n_caption(
+    sample_n,
+    if (is.null(simfit$sample_n_total)) sample_n else simfit$sample_n_total,
+    if (isTRUE(simfit$sample_has_na)) "complete cases" else character()
+  )
 
   # --- Validate items parameter -----------------------------------------------
   if (!is.null(items)) {
@@ -929,23 +1242,32 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
       stop(
         "Unknown item(s) in `items`: ",
         paste(unknown_items, collapse = ", "),
-        ".\nAvailable items: ", paste(item_names, collapse = ", "),
+        ".\nAvailable items: ",
+        paste(item_names, collapse = ", "),
         call. = FALSE
       )
     }
     if (length(items) < 2L) {
-      stop("`items` must contain at least 2 item names to form a pair.",
-           call. = FALSE)
+      stop(
+        "`items` must contain at least 2 item names to form a pair.",
+        call. = FALSE
+      )
     }
   }
 
   # --- Validate n_pairs parameter ---------------------------------------------
   if (!is.null(n_pairs)) {
-    if (!is.numeric(n_pairs) || length(n_pairs) != 1L ||
-        !is.finite(n_pairs) || n_pairs < 1 ||
-        n_pairs != as.integer(n_pairs)) {
-      stop("`n_pairs` must be a single positive integer or NULL.",
-           call. = FALSE)
+    if (
+      !is.numeric(n_pairs) ||
+        length(n_pairs) != 1L ||
+        !is.finite(n_pairs) ||
+        n_pairs < 1 ||
+        n_pairs != as.integer(n_pairs)
+    ) {
+      stop(
+        "`n_pairs` must be a single positive integer or NULL.",
+        call. = FALSE
+      )
     }
     n_pairs <- as.integer(n_pairs)
   }
@@ -989,8 +1311,8 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     sink()
 
     observed_df <- data.frame(
-      Item1          = as.character(pgam_raw[[1L]]$Item1),
-      Item2          = as.character(pgam_raw[[1L]]$Item2),
+      Item1 = as.character(pgam_raw[[1L]]$Item1),
+      Item2 = as.character(pgam_raw[[1L]]$Item2),
       observed_gamma = as.numeric(pgam_raw[[1L]]$gamma),
       stringsAsFactors = FALSE
     )
@@ -1007,49 +1329,63 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     if (!is.null(observed_df)) {
       # Rank by |observed gamma| — the diamonds the user wants to interpret
       ord <- order(abs(observed_df$observed_gamma), decreasing = TRUE)
-      keep_n     <- min(n_pairs, nrow(observed_df))
+      keep_n <- min(n_pairs, nrow(observed_df))
       keep_pairs <- observed_df$Pair[ord[seq_len(keep_n)]]
-      observed_df <- observed_df[observed_df$Pair %in% keep_pairs, , drop = FALSE]
+      observed_df <- observed_df[
+        observed_df$Pair %in% keep_pairs,
+        ,
+        drop = FALSE
+      ]
     } else {
       # Rank by |median simulated gamma| per pair
       pair_names_all <- unique(results_df$Pair)
-      med_g <- vapply(pair_names_all, function(pp) {
-        stats::median(results_df$gamma[results_df$Pair == pp], na.rm = TRUE)
-      }, numeric(1L))
+      med_g <- vapply(
+        pair_names_all,
+        function(pp) {
+          stats::median(results_df$gamma[results_df$Pair == pp], na.rm = TRUE)
+        },
+        numeric(1L)
+      )
       ord <- order(abs(med_g), decreasing = TRUE)
-      keep_n     <- min(n_pairs, length(pair_names_all))
+      keep_n <- min(n_pairs, length(pair_names_all))
       keep_pairs <- pair_names_all[ord[seq_len(keep_n)]]
     }
-    results_df   <- results_df[results_df$Pair %in% keep_pairs, , drop = FALSE]
-    pair_cutoffs <- pair_cutoffs[pair_cutoffs$Pair %in% keep_pairs, , drop = FALSE]
+    results_df <- results_df[results_df$Pair %in% keep_pairs, , drop = FALSE]
+    pair_cutoffs <- pair_cutoffs[
+      pair_cutoffs$Pair %in% keep_pairs,
+      ,
+      drop = FALSE
+    ]
     # Use the ranked order for y-axis: largest |gamma| at the top
-    pair_levels  <- rev(keep_pairs)
+    pair_levels <- rev(keep_pairs)
   } else {
-    pair_levels  <- rev(unique(results_df$Pair))
+    pair_levels <- rev(unique(results_df$Pair))
   }
 
   # --- Compute per-pair summary intervals for segment overlays ----------------
   pair_names <- unique(results_df$Pair)
-  lo_hi <- do.call(rbind, lapply(pair_names, function(pair) {
-    sub <- results_df[results_df$Pair == pair, ]
-    data.frame(
-      Pair            = pair,
-      min_gamma       = stats::quantile(sub$gamma, 0.005, na.rm = TRUE),
-      max_gamma       = stats::quantile(sub$gamma, 0.995, na.rm = TRUE),
-      p66lo_gamma     = stats::quantile(sub$gamma, 0.167, na.rm = TRUE),
-      p66hi_gamma     = stats::quantile(sub$gamma, 0.833, na.rm = TRUE),
-      median_gamma    = stats::median(sub$gamma, na.rm = TRUE),
-      stringsAsFactors = FALSE,
-      row.names       = NULL
-    )
-  }))
+  lo_hi <- do.call(
+    rbind,
+    lapply(pair_names, function(pair) {
+      sub <- results_df[results_df$Pair == pair, ]
+      data.frame(
+        Pair = pair,
+        min_gamma = stats::quantile(sub$gamma, 0.005, na.rm = TRUE),
+        max_gamma = stats::quantile(sub$gamma, 0.995, na.rm = TRUE),
+        p66lo_gamma = stats::quantile(sub$gamma, 0.167, na.rm = TRUE),
+        p66hi_gamma = stats::quantile(sub$gamma, 0.833, na.rm = TRUE),
+        median_gamma = stats::median(sub$gamma, na.rm = TRUE),
+        stringsAsFactors = FALSE,
+        row.names = NULL
+      )
+    })
+  )
   rownames(lo_hi) <- NULL
 
   # --- Case 1: no observed data, show simulation distribution only ------------
   if (missing(data)) {
-
     results_plot <- data.frame(
-      Pair  = results_df$Pair,
+      Pair = results_df$Pair,
       Value = results_df$gamma,
       stringsAsFactors = FALSE
     )
@@ -1080,9 +1416,11 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
         x = "Partial gamma",
         y = "Item pair",
         caption = er2_caption(paste0(
-          "Results from ", actual_iterations,
-          " simulated datasets with ", sample_n,
-          " respondents (no true local dependence)."
+          "Results from ",
+          actual_iterations,
+          " simulated datasets (no true local dependence). ",
+          sample_clause,
+          " per dataset."
         ))
       ) +
       ggplot2::scale_color_manual(
@@ -1104,19 +1442,26 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
 
   # --- Build plot data --------------------------------------------------------
   gamma_sim <- data.frame(
-    Pair  = results_df$Pair,
+    Pair = results_df$Pair,
     Value = results_df$gamma,
     stringsAsFactors = FALSE
   )
-  gamma_sim <- merge(gamma_sim, observed_df[, c("Pair", "observed_gamma")],
-                     by = "Pair", sort = FALSE)
+  gamma_sim <- merge(
+    gamma_sim,
+    observed_df[, c("Pair", "observed_gamma")],
+    by = "Pair",
+    sort = FALSE
+  )
   gamma_sim$Pair <- factor(gamma_sim$Pair, levels = pair_levels)
 
   lo_hi$Pair_f <- factor(lo_hi$Pair, levels = pair_levels)
 
   caption_text <- er2_caption(paste0(
-    "Results from ", actual_iterations,
-    " simulated datasets with ", sample_n, " respondents.\n",
+    "Results from ",
+    actual_iterations,
+    " simulated datasets. ",
+    sample_clause,
+    " per dataset.\n",
     "Orange diamonds indicate observed partial gamma LD. ",
     "Black dots indicate median gamma from simulations."
   ))
@@ -1138,9 +1483,9 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     ggplot2::geom_segment(
       data = lo_hi,
       ggplot2::aes(
-        x    = .data$min_gamma,
+        x = .data$min_gamma,
         xend = .data$max_gamma,
-        y    = .data$Pair_f,
+        y = .data$Pair_f,
         yend = .data$Pair_f
       ),
       color = "black",
@@ -1149,9 +1494,9 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     ggplot2::geom_segment(
       data = lo_hi,
       ggplot2::aes(
-        x    = .data$p66lo_gamma,
+        x = .data$p66lo_gamma,
         xend = .data$p66hi_gamma,
-        y    = .data$Pair_f,
+        y = .data$Pair_f,
         yend = .data$Pair_f
       ),
       color = "black",

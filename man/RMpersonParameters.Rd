@@ -61,7 +61,8 @@ locations, or \code{"file"} to write the data.frame to a CSV at
 }
 \value{
 For \code{output = "dataframe"}, a data.frame with one row per respondent
-(in input order) and columns \code{theta} (the person location), \code{sem}
+(in input order; respondents with no responses are dropped with a
+message) and columns \code{theta} (the person location), \code{sem}
 (standard error of measurement), \code{sum_score}, \code{n_answered} (number of
 non-missing responses), and \code{extreme} (logical: a minimum or maximum
 possible score given the items answered). For \code{output = "kable"}, the

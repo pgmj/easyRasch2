@@ -17,8 +17,10 @@ test_that("RMplotBar errors on non-data.frame input", {
 
 test_that("RMplotBar errors when fewer than 2 items", {
   skip_if_not_installed("ggplot2")
-  expect_error(RMplotBar(make_polytomous(k = 1L)),
-               regexp = "at least 2 columns")
+  expect_error(
+    RMplotBar(make_polytomous(k = 1L)),
+    regexp = "at least 2 columns"
+  )
 })
 
 test_that("RMplotBar errors on non-numeric columns", {
@@ -37,15 +39,18 @@ test_that("RMplotBar errors on non-integer values", {
 
 test_that("RMplotBar errors when item_labels length mismatches", {
   skip_if_not_installed("ggplot2")
-  expect_error(RMplotBar(make_polytomous(), item_labels = c("a", "b")),
-               regexp = "same length")
+  expect_error(
+    RMplotBar(make_polytomous(), item_labels = c("a", "b")),
+    regexp = "same length"
+  )
 })
 
 test_that("RMplotBar errors when category_labels length mismatches", {
   skip_if_not_installed("ggplot2")
-  expect_error(RMplotBar(make_polytomous(),
-                         category_labels = c("Low", "High")),
-               regexp = "same length")
+  expect_error(
+    RMplotBar(make_polytomous(), category_labels = c("Low", "High")),
+    regexp = "same length"
+  )
 })
 
 # ---------------------------------------------------------------------
@@ -95,8 +100,10 @@ test_that("RMplotStackedbar errors on non-data.frame input", {
 
 test_that("RMplotStackedbar errors when fewer than 2 items", {
   skip_if_not_installed("ggplot2")
-  expect_error(RMplotStackedbar(make_polytomous(k = 1L)),
-               regexp = "at least 2 columns")
+  expect_error(
+    RMplotStackedbar(make_polytomous(k = 1L)),
+    regexp = "at least 2 columns"
+  )
 })
 
 test_that("RMplotStackedbar errors on non-numeric columns", {
@@ -115,16 +122,18 @@ test_that("RMplotStackedbar errors on non-integer values", {
 
 test_that("RMplotStackedbar errors when item_labels length mismatches", {
   skip_if_not_installed("ggplot2")
-  expect_error(RMplotStackedbar(make_polytomous(),
-                                item_labels = c("a", "b")),
-               regexp = "same length")
+  expect_error(
+    RMplotStackedbar(make_polytomous(), item_labels = c("a", "b")),
+    regexp = "same length"
+  )
 })
 
 test_that("RMplotStackedbar errors when category_labels length mismatches", {
   skip_if_not_installed("ggplot2")
-  expect_error(RMplotStackedbar(make_polytomous(),
-                                category_labels = c("Low", "High")),
-               regexp = "same length")
+  expect_error(
+    RMplotStackedbar(make_polytomous(), category_labels = c("Low", "High")),
+    regexp = "same length"
+  )
 })
 
 # ---------------------------------------------------------------------
@@ -140,7 +149,7 @@ test_that("RMplotStackedbar accepts custom item & category labels", {
   df <- make_polytomous()
   p <- RMplotStackedbar(
     df,
-    item_labels     = paste("Item", seq_len(ncol(df))),
+    item_labels = paste("Item", seq_len(ncol(df))),
     category_labels = c("None", "Some", "More", "Most")
   )
   expect_s3_class(p, "ggplot")
@@ -149,8 +158,12 @@ test_that("RMplotStackedbar accepts custom item & category labels", {
 test_that("RMplotStackedbar supports show_percent and min_label_n", {
   skip_if_not_installed("ggplot2")
   df <- make_polytomous()
-  p <- RMplotStackedbar(df, show_percent = TRUE, show_n = FALSE,
-                        min_label_n = 5L)
+  p <- RMplotStackedbar(
+    df,
+    show_percent = TRUE,
+    show_n = FALSE,
+    min_label_n = 5L
+  )
   expect_s3_class(p, "ggplot")
 })
 
@@ -167,4 +180,32 @@ test_that("RMplotStackedbar handles 0/1 dichotomous data", {
   df <- as.data.frame(matrix(sample(0:1, 200 * 5, replace = TRUE), 200, 5))
   colnames(df) <- paste0("I", 1:5)
   expect_s3_class(RMplotStackedbar(df), "ggplot")
+})
+
+# ---------------------------------------------------------------------
+# Sample-size captions
+# ---------------------------------------------------------------------
+test_that("RMplotBar caption reports n, with qualifier only when NAs exist", {
+  skip_if_not_installed("ggplot2")
+  df <- make_polytomous()
+  p <- RMplotBar(df)
+  expect_match(p$labels$caption, "n = 200 respondents")
+  expect_no_match(p$labels$caption, "incomplete responses retained")
+
+  df[1:3, 1] <- NA
+  p_na <- RMplotBar(df)
+  expect_match(p_na$labels$caption, "n = 200 respondents")
+  expect_match(p_na$labels$caption, "incomplete responses retained")
+})
+
+test_that("RMplotStackedbar caption reports n, with qualifier only when NAs exist", {
+  skip_if_not_installed("ggplot2")
+  df <- make_polytomous()
+  p <- RMplotStackedbar(df)
+  expect_match(p$labels$caption, "n = 200 respondents")
+  expect_no_match(p$labels$caption, "incomplete responses retained")
+
+  df[1:3, 1] <- NA
+  p_na <- RMplotStackedbar(df)
+  expect_match(p_na$labels$caption, "incomplete responses retained")
 })

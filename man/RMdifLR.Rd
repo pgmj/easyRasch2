@@ -101,23 +101,25 @@ kable renders correctly in HTML, LaTeX, and pipe/markdown.
 }
 \examples{
 \donttest{
-set.seed(1)
-data("pcmdat2", package = "eRm")
-grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
+if (requireNamespace("eRm", quietly = TRUE)) {
+  set.seed(1)
+  data("pcmdat2", package = "eRm")
+  grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
 
-# Default: kable of per-group item locations
-RMdifLR(pcmdat2, dif_var = grp)
+  # Default: kable of per-group item locations
+  RMdifLR(pcmdat2, dif_var = grp)
 
-# ggplot panel of item locations with 95\% CIs
-RMdifLR(pcmdat2, dif_var = grp, output = "ggplot")
+  # ggplot panel of item locations with 95\% CIs
+  RMdifLR(pcmdat2, dif_var = grp, output = "ggplot")
 
-# Threshold-level kable, sorted by MaxDiff
-RMdifLR(pcmdat2, dif_var = grp, level = "threshold", sort = TRUE)
+  # Threshold-level kable, sorted by MaxDiff
+  RMdifLR(pcmdat2, dif_var = grp, level = "threshold", sort = TRUE)
 
-# Tidy data.frame for downstream use
-df <- RMdifLR(pcmdat2, dif_var = grp, output = "dataframe")
-attr(df, "lr_test")
-df[df$Flagged, ]
+  # Tidy data.frame for downstream use
+  df <- RMdifLR(pcmdat2, dif_var = grp, output = "dataframe")
+  attr(df, "lr_test")
+  df[df$Flagged, ]
+}
 }
 
 }

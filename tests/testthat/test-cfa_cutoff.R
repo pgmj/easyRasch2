@@ -196,6 +196,61 @@ test_that("RMdimCFA output = 'dataframe' returns the two tables as data.frames",
   expect_true(all(tabs$loadings$Flagged %in% c("below", "above", "")))
 })
 
+test_that("RMdimCFA p_value adds p/padj and redefines Flagged at alpha", {
+  skip_if_not_installed("lavaan")
+  skip_if_not_installed("eRm")
+  data("raschdat1", package = "eRm")
+
+  sim <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 20,
+                        parallel = FALSE, seed = 1)
+  expect_warning(
+    tabs <- RMdimCFA(raschdat1[, 1:8], cutoff = sim, p_value = TRUE,
+                     output = "dataframe"),
+    regexp = "only 20 simulation iterations"
+  )
+
+  # p is rounded to 4 dp in the table, so compare against the rounded floor
+  B <- sim$actual_iterations
+  p_floor <- round(1 / (B + 1), 4)
+  expect_named(tabs$fit, c("Index", "Observed", "Cutoff", "Direction",
+                           "p", "padj", "Flagged"))
+  expect_true(all(tabs$fit$p >= p_floor & tabs$fit$p <= 1, na.rm = TRUE))
+  expect_true(all(tabs$fit$padj >= tabs$fit$p, na.rm = TRUE))
+
+  expect_named(tabs$loadings, c("Item", "Observed", "Expected_low",
+                                "Expected_high", "p_loading",
+                                "padj_loading", "Flagged"))
+  expect_true(all(tabs$loadings$p_loading >= p_floor &
+                    tabs$loadings$p_loading <= 1, na.rm = TRUE))
+  expect_true(all(tabs$loadings$Flagged %in% c("below", "above", "")))
+
+  # kable output renders with the extra columns and correction label
+  suppressWarnings(
+    kbls <- RMdimCFA(raschdat1[, 1:8], cutoff = sim, p_value = TRUE)
+  )
+  expect_s3_class(kbls$fit, "knitr_kable")
+  expect_s3_class(kbls$loadings, "knitr_kable")
+  expect_match(paste(kbls$fit, collapse = "\n"), "Westfall-Young")
+})
+
+test_that("RMdimCFA p_value correction variants run and 'none' is marginal", {
+  skip_if_not_installed("lavaan")
+  skip_if_not_installed("eRm")
+  data("raschdat1", package = "eRm")
+
+  sim <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 20,
+                        parallel = FALSE, seed = 1)
+  suppressWarnings({
+    none <- RMdimCFA(raschdat1[, 1:8], cutoff = sim, p_value = TRUE,
+                     correction = "none", output = "dataframe")
+    bh <- RMdimCFA(raschdat1[, 1:8], cutoff = sim, p_value = TRUE,
+                   correction = "fdr_bh", output = "dataframe")
+  })
+  expect_equal(none$fit$p, none$fit$padj)
+  expect_true(all(bh$loadings$padj_loading >= bh$loadings$p_loading,
+                  na.rm = TRUE))
+})
+
 # ---------------------------------------------------------------------
 # RMdimCFAPlot (two-plot list)
 # ---------------------------------------------------------------------

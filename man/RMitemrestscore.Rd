@@ -70,21 +70,23 @@ The \code{iarm} package must be installed (it is in Suggests, not Imports).
 }
 \examples{
 \donttest{
-# Simulate binary item response data (8 items, 200 persons)
-set.seed(42)
-sim_data <- as.data.frame(
-  matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
-)
-colnames(sim_data) <- paste0("Item", 1:8)
+if (requireNamespace("iarm", quietly = TRUE)) {
+  # Simulate binary item response data (8 items, 200 persons)
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
+  )
+  colnames(sim_data) <- paste0("Item", 1:8)
 
-# Default kable output
-RMitemRestscore(sim_data)
+  # Default kable output
+  RMitemRestscore(sim_data)
 
-# Sorted by absolute difference
-RMitemRestscore(sim_data, sort = "diff")
+  # Sorted by absolute difference
+  RMitemRestscore(sim_data, sort = "diff")
 
-# Return as data.frame for further processing
-df <- RMitemRestscore(sim_data, output = "dataframe")
+  # Return as data.frame for further processing
+  df <- RMitemRestscore(sim_data, output = "dataframe")
+}
 }
 }
 \references{

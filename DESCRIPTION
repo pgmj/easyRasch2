@@ -1,6 +1,6 @@
 Package: easyRasch2
 Title: Psychometric Analysis with Rasch Measurement Theory
-Version: 0.8.0.929
+Version: 0.8.0.939
 Authors@R: c(
     person("Magnus", "Johansson",
            role = c("aut", "cre"),
@@ -42,7 +42,6 @@ BugReports: https://github.com/pgmj/easyRasch2/issues
 Depends:
     R (>= 4.1.0)
 Imports:
-    eRm,
     knitr,
     mirt,
     psychotools (>= 0.7-3),
@@ -52,6 +51,7 @@ Imports:
 Suggests:
     difR,
     dplyr,
+    eRm,
     geomtextpath,
     ggdist,
     ggtext,

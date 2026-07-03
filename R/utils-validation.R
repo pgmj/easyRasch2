@@ -54,6 +54,81 @@ validate_response_data <- function(data) {
   invisible(TRUE)
 }
 
+#' Build the standard estimation-sample-size caption clause
+#'
+#' Returns `"n = X respondents"`, appending ` of Y` only when respondents were
+#' excluded (`X < Y`) and a ` (qualifiers)` parenthetical only when there is
+#' something to qualify (both fully conditional, so complete data with no
+#' exclusions reads simply `n = X respondents`). No trailing punctuation, so
+#' callers append `.` or continue the sentence.
+#'
+#' @param n_used Number of respondents contributing to the estimate.
+#' @param n_total Total respondents supplied (raw input rows).
+#' @param qualifiers Character vector of parenthetical notes (e.g.
+#'   `"incomplete responses retained"`, `"complete cases"`, `"extreme scores
+#'   excluded"`); empty for none. Joined with `"; "`.
+#' @param noun Respondent noun (default `"respondents"`; RMpersonFit uses
+#'   `"respondents assessed"`).
+#' @return A single caption-clause string.
+#' @noRd
+.n_caption <- function(
+  n_used,
+  n_total,
+  qualifiers = character(),
+  noun = "respondents"
+) {
+  of_total <- if (n_used < n_total) paste0(" of ", n_total) else ""
+  paren <- if (length(qualifiers) > 0L) {
+    paste0(" (", paste(qualifiers, collapse = "; "), ")")
+  } else {
+    ""
+  }
+  paste0("n = ", n_used, of_total, " ", noun, paren)
+}
+
+#' Coerce a completed multiply-imputed dataset back to numeric responses
+#'
+#' `mice::complete()` returns the item columns in their original type. When the
+#' items were coded as ordered factors for imputation (required by mice's
+#' `method = "polr"`), the completed data are ordered factors, which the
+#' downstream CML routines cannot consume. This converts any factor column back
+#' to its numeric level values (via `as.character()`, so the 0-based coding is
+#' preserved -- not the 1-based integer codes), leaving numeric columns
+#' untouched.
+#'
+#' @param data A completed data.frame from `mice::complete()`.
+#' @return `data` with factor columns coerced to numeric.
+#' @noRd
+.mi_completed_to_numeric <- function(data) {
+  factor_cols <- vapply(data, is.factor, logical(1L))
+  if (any(factor_cols)) {
+    data[factor_cols] <- lapply(
+      data[factor_cols],
+      function(x) as.numeric(as.character(x))
+    )
+  }
+  data
+}
+
+#' Drop respondents with no responses (all-NA rows)
+#'
+#' A row that is `NA` for every item contributes nothing to any estimate and
+#' breaks CML fitting (`psychotools::pcmodel()` errors on all-NA rows). Removes
+#' such rows and, matching the package's existing NA-drop messaging (e.g.
+#' `RMdifTree`, `RMdifLR`), emits a one-time message when any are dropped.
+#'
+#' @param data A data.frame or matrix of item responses.
+#' @return `data` with all-NA rows removed.
+#' @noRd
+.drop_empty_respondents <- function(data) {
+  empty <- rowSums(!is.na(as.matrix(data))) == 0L
+  if (any(empty)) {
+    message(sum(empty), " respondent(s) with no responses dropped.")
+    data <- data[!empty, , drop = FALSE]
+  }
+  data
+}
+
 #' Validate a `filename` supplied for `output = "file"`
 #'
 #' Called early (before any model fitting) so a bad path fails fast.

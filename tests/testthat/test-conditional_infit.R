@@ -9,16 +9,19 @@ test_that("RMitemInfit errors when iarm is not installed", {
 })
 
 test_that("RMitemInfit errors when data does not start at 0", {
+  skip_if_not_installed("iarm")
   df <- as.data.frame(matrix(sample(1:3, 200, replace = TRUE), nrow = 40, ncol = 5))
   expect_error(RMitemInfit(df), regexp = "scored starting at 0")
 })
 
 test_that("RMitemInfit errors when data is all NA", {
+  skip_if_not_installed("iarm")
   df <- as.data.frame(matrix(NA_integer_, nrow = 10, ncol = 4))
   expect_error(RMitemInfit(df), regexp = "No complete|no non-missing")
 })
 
 test_that("RMitemInfit errors when data is not a data.frame or matrix", {
+  skip_if_not_installed("iarm")
   expect_error(RMitemInfit(list(a = 1:5)), regexp = "data.frame or matrix")
 })
 
@@ -57,12 +60,13 @@ test_that("RMitemInfit output = 'kable' returns knitr_kable with complete-cases 
     matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5)
   )
   colnames(df) <- paste0("Item", 1:5)
+  df[1, 1] <- NA # one incomplete row so the caption shows the drop + label
 
   result <- RMitemInfit(df, output = "kable")
   expect_s3_class(result, "knitr_kable")
   cap <- attr(result, "caption")
   if (is.null(cap)) cap <- paste(as.character(result), collapse = "\n")
-  expect_true(grepl("complete cases", cap))
+  expect_true(grepl("of 40 respondents \\(complete cases\\)", cap))
 })
 
 test_that("RMitemInfit sort = 'infit' sorts by Infit_MSQ descending", {
@@ -352,6 +356,7 @@ test_that("RMitemInfit errors when cutoff item names do not match data", {
 })
 
 test_that("RMitemInfit errors when cutoff data.frame has missing required columns", {
+  skip_if_not_installed("iarm")
   set.seed(42)
   df <- as.data.frame(
     matrix(sample(0:1, 200, replace = TRUE), nrow = 40, ncol = 5)

@@ -64,21 +64,23 @@
 #'
 #' @examples
 #' \donttest{
-#' # Simulate binary item response data (8 items, 200 persons)
-#' set.seed(42)
-#' sim_data <- as.data.frame(
-#'   matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
-#' )
-#' colnames(sim_data) <- paste0("Item", 1:8)
+#' if (requireNamespace("iarm", quietly = TRUE)) {
+#'   # Simulate binary item response data (8 items, 200 persons)
+#'   set.seed(42)
+#'   sim_data <- as.data.frame(
+#'     matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
+#'   )
+#'   colnames(sim_data) <- paste0("Item", 1:8)
 #'
-#' # Default kable output
-#' RMitemRestscore(sim_data)
+#'   # Default kable output
+#'   RMitemRestscore(sim_data)
 #'
-#' # Sorted by absolute difference
-#' RMitemRestscore(sim_data, sort = "diff")
+#'   # Sorted by absolute difference
+#'   RMitemRestscore(sim_data, sort = "diff")
 #'
-#' # Return as data.frame for further processing
-#' df <- RMitemRestscore(sim_data, output = "dataframe")
+#'   # Return as data.frame for further processing
+#'   df <- RMitemRestscore(sim_data, output = "dataframe")
+#' }
 #' }
 RMitemRestscore <- function(data, output = "kable", sort, p_adj = "BH") {
   if (!requireNamespace("iarm", quietly = TRUE)) {
@@ -208,10 +210,13 @@ RMitemRestscore <- function(data, output = "kable", sort, p_adj = "BH") {
       "Rel. location"
     ),
     caption = paste0(
-      "Item-restscore associations (n = ",
-      n_complete,
-      " complete cases). ",
-      "Flagged (",
+      "Item-restscore associations. ",
+      .n_caption(
+        n_complete,
+        nrow(data),
+        if (anyNA(data)) "complete cases" else character()
+      ),
+      ". Flagged (",
       if (identical(p_adj, "none")) "p" else "adj. p",
       " < .05): overfit = observed above expected ",
       "(over-discrimination, often local dependence); underfit = below ",

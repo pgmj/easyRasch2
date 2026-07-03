@@ -13,9 +13,13 @@
 cronbach_alpha <- function(data) {
   d <- stats::na.omit(as.data.frame(data))
   k <- ncol(d)
-  if (k < 2L || nrow(d) < 2L) return(NA_real_)
+  if (k < 2L || nrow(d) < 2L) {
+    return(NA_real_)
+  }
   total_var <- stats::var(rowSums(d))
-  if (!is.finite(total_var) || total_var == 0) return(NA_real_)
+  if (!is.finite(total_var) || total_var == 0) {
+    return(NA_real_)
+  }
   item_vars <- vapply(d, stats::var, numeric(1L))
   (k / (k - 1L)) * (1 - sum(item_vars) / total_var)
 }
@@ -58,15 +62,18 @@ cronbach_alpha <- function(data) {
 #'
 #' @export
 RMUreliability <- function(input_draws, level = 0.95, verbose = FALSE) {
-
   if (!requireNamespace("ggdist", quietly = TRUE)) {
-    stop("Package 'ggdist' is required for RMUreliability().\n",
-         "Install it with: install.packages(\"ggdist\")",
-         call. = FALSE)
+    stop(
+      "Package 'ggdist' is required for RMUreliability().\n",
+      "Install it with: install.packages(\"ggdist\")",
+      call. = FALSE
+    )
   }
   if (!is.numeric(level) || level <= 0 || level >= 1) {
-    stop("`level` must be a numeric value strictly between 0 and 1.",
-         call. = FALSE)
+    stop(
+      "`level` must be a numeric value strictly between 0 and 1.",
+      call. = FALSE
+    )
   }
 
   input_draws <- as.matrix(input_draws)
@@ -77,40 +84,51 @@ RMUreliability <- function(input_draws, level = 0.95, verbose = FALSE) {
   sds <- apply(input_draws, 2L, stats::sd, na.rm = TRUE)
   zero_sd_cols <- which(sds == 0)
   if (length(zero_sd_cols) > 0L) {
-    warning(sprintf(
-      "Found %d column(s) with zero standard deviation (columns: %s).",
-      length(zero_sd_cols), paste(zero_sd_cols, collapse = ", ")
-    ), call. = FALSE)
+    warning(
+      sprintf(
+        "Found %d column(s) with zero standard deviation (columns: %s).",
+        length(zero_sd_cols),
+        paste(zero_sd_cols, collapse = ", ")
+      ),
+      call. = FALSE
+    )
   }
 
   na_count <- sum(is.na(input_draws))
   if (na_count > 0L) {
-    warning(sprintf("Found %d NA value(s) in `input_draws`.", na_count),
-            call. = FALSE)
+    warning(
+      sprintf("Found %d NA value(s) in `input_draws`.", na_count),
+      call. = FALSE
+    )
   }
 
   if (verbose) {
-    message("Subjects: ", nrow(input_draws),
-            "; draws: ", ncol(input_draws))
+    message("Subjects: ", nrow(input_draws), "; draws: ", ncol(input_draws))
   }
 
   col_select <- sample.int(ncol(input_draws), replace = FALSE)
-  half       <- floor(length(col_select) / 2)
-  cols_a     <- col_select[seq_len(half)]
-  cols_b     <- col_select[(half + 1L):(2L * half)]
+  half <- floor(length(col_select) / 2)
+  cols_a <- col_select[seq_len(half)]
+  cols_b <- col_select[(half + 1L):(2L * half)]
 
   draws_a <- input_draws[, cols_a, drop = FALSE]
   draws_b <- input_draws[, cols_b, drop = FALSE]
 
-  rel_post <- vapply(seq_len(ncol(draws_a)), function(i) {
-    x <- draws_a[, i]
-    y <- draws_b[, i]
-    if (stats::var(x, na.rm = TRUE) == 0 ||
-        stats::var(y, na.rm = TRUE) == 0) {
-      return(0)
-    }
-    stats::cor(x, y, method = "pearson", use = "complete.obs")
-  }, numeric(1L))
+  rel_post <- vapply(
+    seq_len(ncol(draws_a)),
+    function(i) {
+      x <- draws_a[, i]
+      y <- draws_b[, i]
+      if (
+        stats::var(x, na.rm = TRUE) == 0 ||
+          stats::var(y, na.rm = TRUE) == 0
+      ) {
+        return(0)
+      }
+      stats::cor(x, y, method = "pearson", use = "complete.obs")
+    },
+    numeric(1L)
+  )
 
   hdci <- ggdist::mean_hdci(rel_post, .width = level)
   colnames(hdci)[1:3] <- c("rmu_estimate", "hdci_lowerbound", "hdci_upperbound")
@@ -221,7 +239,8 @@ RMUreliability <- function(input_draws, level = 0.95, verbose = FALSE) {
 #'
 #' @examples
 #' \donttest{
-#' if (requireNamespace("ggdist", quietly = TRUE)) {
+#' if (requireNamespace("ggdist", quietly = TRUE) &&
+#'     requireNamespace("eRm", quietly = TRUE)) {
 #'   set.seed(1)
 #'   RMreliability(eRm::raschdat1[, 1:20], draws = 1000)
 #'
@@ -231,27 +250,30 @@ RMUreliability <- function(input_draws, level = 0.95, verbose = FALSE) {
 #'                 boot = TRUE, boot_iter = 25, parallel = FALSE, seed = 42)
 #' }
 #' }
-RMreliability <- function(data,
-                          conf_int    = 0.95,
-                          draws       = 1000,
-                          rmu_iter    = 50,
-                          estim       = "WLE",
-                          boot        = FALSE,
-                          boot_iter   = 200,
-                          parallel    = TRUE,
-                          n_cores     = NULL,
-                          seed        = NULL,
-                          verbose     = FALSE,
-                          theta_range = c(-10, 10),
-                          output      = "kable") {
-
+RMreliability <- function(
+  data,
+  conf_int = 0.95,
+  draws = 1000,
+  rmu_iter = 50,
+  estim = "WLE",
+  boot = FALSE,
+  boot_iter = 200,
+  parallel = TRUE,
+  n_cores = NULL,
+  seed = NULL,
+  verbose = FALSE,
+  theta_range = c(-10, 10),
+  output = "kable"
+) {
   output <- match.arg(output, c("kable", "dataframe"))
-  estim  <- match.arg(estim,  c("WLE", "EAP", "MAP", "ML"))
+  estim <- match.arg(estim, c("WLE", "EAP", "MAP", "ML"))
 
   if (!requireNamespace("ggdist", quietly = TRUE)) {
-    stop("Package 'ggdist' is required for RMreliability().\n",
-         "Install it with: install.packages(\"ggdist\")",
-         call. = FALSE)
+    stop(
+      "Package 'ggdist' is required for RMreliability().\n",
+      "Install it with: install.packages(\"ggdist\")",
+      call. = FALSE
+    )
   }
 
   validate_response_data(data)
@@ -260,10 +282,10 @@ RMreliability <- function(data,
     stop("No complete cases in `data`.", call. = FALSE)
   }
 
-  data_mat       <- as.matrix(data)
-  is_polytomous  <- max(data_mat, na.rm = TRUE) > 1L
-  n_persons      <- nrow(data)
-  n_items        <- ncol(data)
+  data_mat <- as.matrix(data)
+  is_polytomous <- max(data_mat, na.rm = TRUE) > 1L
+  n_persons <- nrow(data)
+  n_items <- ncol(data)
 
   # rgl workaround for any iarm-related fallout
   old_rgl <- getOption("rgl.useNULL")
@@ -272,10 +294,10 @@ RMreliability <- function(data,
 
   # --- Full-sample fits ------------------------------------------------------
   mirt_fit <- mirt::mirt(
-    data       = data,
-    model      = 1,
-    itemtype   = "Rasch",
-    verbose    = FALSE,
+    data = data,
+    model = 1,
+    itemtype = "Rasch",
+    verbose = FALSE,
     accelerate = "squarem"
   )
   # --- Marginal reliability point estimate (native CML test info) ------------
@@ -288,14 +310,16 @@ RMreliability <- function(data,
   alpha <- cronbach_alpha(data)
 
   # --- Plausible values + RMU ------------------------------------------------
-  if (!is.null(seed)) set.seed(seed)
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
   pvs <- mirt::fscores(
     mirt_fit,
-    method          = estim,
-    theta_lim       = theta_range,
+    method = estim,
+    theta_lim = theta_range,
     plausible.draws = draws,
-    plausible.type  = "MH",
-    verbose         = FALSE
+    plausible.type = "MH",
+    verbose = FALSE
   )
   rmu_input <- do.call(cbind, lapply(pvs, as.numeric))
 
@@ -307,27 +331,31 @@ RMreliability <- function(data,
   )
   rmu_summary <- list(
     estimate = mean(rmu_iter_results$rmu_estimate),
-    lower    = mean(rmu_iter_results$hdci_lowerbound),
-    upper    = mean(rmu_iter_results$hdci_upperbound)
+    lower = mean(rmu_iter_results$hdci_lowerbound),
+    upper = mean(rmu_iter_results$hdci_upperbound)
   )
 
   # --- Bootstrap (optional) --------------------------------------------------
   alpha_lower <- NA_real_
   alpha_upper <- NA_real_
-  psi_lower   <- NA_real_
-  psi_upper   <- NA_real_
-  marg_lower  <- NA_real_
-  marg_upper  <- NA_real_
+  psi_lower <- NA_real_
+  psi_upper <- NA_real_
+  marg_lower <- NA_real_
+  marg_upper <- NA_real_
   actual_boot <- NA_integer_
 
   if (isTRUE(boot)) {
     use_parallel <- parallel && requireNamespace("mirai", quietly = TRUE)
     if (parallel && !use_parallel) {
-      message("Install 'mirai' for parallel processing: install.packages(\"mirai\")")
+      message(
+        "Install 'mirai' for parallel processing: install.packages(\"mirai\")"
+      )
       message("Running sequentially...")
     }
     if (use_parallel) {
-      if (is.null(n_cores)) n_cores <- getOption("mc.cores")
+      if (is.null(n_cores)) {
+        n_cores <- getOption("mc.cores")
+      }
       if (is.null(n_cores)) {
         warning(
           "For parallel processing, specify n_cores or set options(mc.cores = N).\n",
@@ -340,48 +368,59 @@ RMreliability <- function(data,
       }
     }
 
-    if (!is.null(seed)) set.seed(seed + 1L)
+    if (!is.null(seed)) {
+      set.seed(seed + 1L)
+    }
     boot_seeds <- sample.int(.Machine$integer.max, boot_iter)
 
     boot_args <- list(
-      data          = data,
+      data = data,
       is_polytomous = is_polytomous,
-      estim         = estim,
-      theta_range   = theta_range
+      estim = estim,
+      theta_range = theta_range
     )
 
     if (use_parallel) {
       boot_results <- run_reliability_boot_parallel(
-        boot_iter, boot_seeds, boot_args, n_cores, verbose
+        boot_iter,
+        boot_seeds,
+        boot_args,
+        n_cores,
+        verbose
       )
     } else {
       boot_results <- run_reliability_boot_sequential(
-        boot_iter, boot_seeds, boot_args, verbose
+        boot_iter,
+        boot_seeds,
+        boot_args,
+        verbose
       )
     }
 
-    ok          <- vapply(boot_results, is.list, logical(1L))
-    successful  <- boot_results[ok]
+    ok <- vapply(boot_results, is.list, logical(1L))
+    successful <- boot_results[ok]
     actual_boot <- length(successful)
 
     if (actual_boot < 2L) {
-      warning("Fewer than 2 bootstrap iterations succeeded; CI not reported.",
-              call. = FALSE)
+      warning(
+        "Fewer than 2 bootstrap iterations succeeded; CI not reported.",
+        call. = FALSE
+      )
     } else {
-      alpha_vec <- vapply(successful, function(x) x$alpha,    numeric(1L))
-      psi_vec   <- vapply(successful, function(x) x$psi,      numeric(1L))
-      marg_vec  <- vapply(successful, function(x) x$marginal, numeric(1L))
+      alpha_vec <- vapply(successful, function(x) x$alpha, numeric(1L))
+      psi_vec <- vapply(successful, function(x) x$psi, numeric(1L))
+      marg_vec <- vapply(successful, function(x) x$marginal, numeric(1L))
 
       alpha_int <- ggdist::hdci(alpha_vec, .width = conf_int)
-      psi_int   <- ggdist::hdci(psi_vec,   .width = conf_int)
-      marg_int  <- ggdist::hdci(marg_vec,  .width = conf_int)
+      psi_int <- ggdist::hdci(psi_vec, .width = conf_int)
+      marg_int <- ggdist::hdci(marg_vec, .width = conf_int)
 
       alpha_lower <- alpha_int[1L, 1L]
       alpha_upper <- alpha_int[1L, 2L]
-      psi_lower   <- psi_int[1L, 1L]
-      psi_upper   <- psi_int[1L, 2L]
-      marg_lower  <- marg_int[1L, 1L]
-      marg_upper  <- marg_int[1L, 2L]
+      psi_lower <- psi_int[1L, 1L]
+      psi_upper <- psi_int[1L, 2L]
+      marg_lower <- marg_int[1L, 1L]
+      marg_upper <- marg_int[1L, 2L]
     }
   }
 
@@ -399,16 +438,18 @@ RMreliability <- function(data,
   rmu_note <- paste0(draws, " PVs, ", rmu_iter, " RMU iterations")
 
   result_df <- data.frame(
-    metric   = c("Cronbach's alpha",
-                 "PSI",
-                 "Marginal",
-                 paste0("RMU (", estim, ")")),
+    metric = c(
+      "Cronbach's alpha",
+      "PSI",
+      "Marginal",
+      paste0("RMU (", estim, ")")
+    ),
     estimate = round(c(alpha, psi, marg_rel, rmu_summary$estimate), 3),
-    lower    = round(c(alpha_lower, psi_lower, marg_lower, rmu_summary$lower), 3),
-    upper    = round(c(alpha_upper, psi_upper, marg_upper, rmu_summary$upper), 3),
-    notes    = c(boot_note, boot_note, boot_note, rmu_note),
+    lower = round(c(alpha_lower, psi_lower, marg_lower, rmu_summary$lower), 3),
+    upper = round(c(alpha_upper, psi_upper, marg_upper, rmu_summary$upper), 3),
+    notes = c(boot_note, boot_note, boot_note, rmu_note),
     stringsAsFactors = FALSE,
-    row.names        = NULL
+    row.names = NULL
   )
 
   if (output == "dataframe") {
@@ -417,13 +458,19 @@ RMreliability <- function(data,
 
   knitr::kable(
     result_df,
-    format    = "pipe",
-    col.names = c("Metric", "Estimate",
-                  paste0("Lower (", conf_pct, "% HDCI)"),
-                  paste0("Upper (", conf_pct, "% HDCI)"),
-                  "Notes"),
-    caption   = paste0(
-      "Reliability for ", n_items, " items, n = ", n_persons,
+    format = "pipe",
+    col.names = c(
+      "Metric",
+      "Estimate",
+      paste0("Lower (", conf_pct, "% HDCI)"),
+      paste0("Upper (", conf_pct, "% HDCI)"),
+      "Notes"
+    ),
+    caption = paste0(
+      "Reliability for ",
+      n_items,
+      " items, n = ",
+      n_persons,
       ". PSI is the WLE-based separation reliability and excludes min/max ",
       "scoring respondents."
     )
@@ -449,15 +496,23 @@ RMreliability <- function(data,
 #' @noRd
 .wle_psi <- function(data, thr_list = NULL) {
   data_mat <- as.matrix(data)
-  if (is.null(thr_list)) thr_list <- .fit_cml_thresholds(data_mat)
-  est  <- .estimate_thetas(data_mat, thr_list, method = "WLE")
-  rs   <- rowSums(data_mat, na.rm = TRUE)
-  max_p <- vapply(seq_len(nrow(data_mat)), function(i) {
-    ans <- !is.na(data_mat[i, ])
-    sum(vapply(thr_list[ans], length, integer(1L)))
-  }, integer(1L))
+  if (is.null(thr_list)) {
+    thr_list <- .fit_cml_thresholds(data_mat)
+  }
+  est <- .estimate_thetas(data_mat, thr_list, method = "WLE")
+  rs <- rowSums(data_mat, na.rm = TRUE)
+  max_p <- vapply(
+    seq_len(nrow(data_mat)),
+    function(i) {
+      ans <- !is.na(data_mat[i, ])
+      sum(vapply(thr_list[ans], length, integer(1L)))
+    },
+    integer(1L)
+  )
   keep <- is.finite(est$theta) & is.finite(est$sem) & rs > 0L & rs < max_p
-  if (sum(keep) < 2L) return(NA_real_)
+  if (sum(keep) < 2L) {
+    return(NA_real_)
+  }
   1 - mean(est$sem[keep]^2) / stats::var(est$theta[keep])
 }
 
@@ -481,19 +536,37 @@ RMreliability <- function(data,
 #' @noRd
 .marginal_rxx <- function(data, thr_list = NULL, n_nodes = 161L) {
   data_mat <- as.matrix(data)
-  if (is.null(thr_list)) thr_list <- .fit_cml_thresholds(data_mat)
-  ge    <- seq(-6, 6, length.out = 81L)
+  if (is.null(thr_list)) {
+    thr_list <- .fit_cml_thresholds(data_mat)
+  }
+  ge <- seq(-6, 6, length.out = 81L)
   sigma <- .estimate_prior_sd(
-    .grid_loglik(data_mat, .logp_tables(thr_list, ge), ge), ge, 0)
-  if (!is.finite(sigma) || sigma <= 0) return(NA_real_)
+    .grid_loglik(data_mat, .logp_tables(thr_list, ge), ge),
+    ge,
+    0
+  )
+  if (!is.finite(sigma) || sigma <= 0) {
+    return(NA_real_)
+  }
   g <- seq(-6 * sigma, 6 * sigma, length.out = n_nodes)
-  I <- vapply(g, function(th) {
-    sum(vapply(thr_list, function(thr) {
-      cats <- 0:length(thr); P <- .pcm_cat_probs(th, thr); E <- sum(cats * P)
-      sum((cats - E)^2 * P)
-    }, numeric(1L)))
-  }, numeric(1L))
-  w <- stats::dnorm(g, 0, sigma); w <- w / sum(w)
+  I <- vapply(
+    g,
+    function(th) {
+      sum(vapply(
+        thr_list,
+        function(thr) {
+          cats <- 0:length(thr)
+          P <- .pcm_cat_probs(th, thr)
+          E <- sum(cats * P)
+          sum((cats - E)^2 * P)
+        },
+        numeric(1L)
+      ))
+    },
+    numeric(1L)
+  )
+  w <- stats::dnorm(g, 0, sigma)
+  w <- w / sum(w)
   max(1 - sum(w * (1 / I)) / sigma^2, 0)
 }
 
@@ -507,19 +580,24 @@ RMreliability <- function(data,
 #' @noRd
 run_single_reliability_boot <- function(seed, data_list) {
   set.seed(seed)
-  idx   <- sample.int(nrow(data_list$data), nrow(data_list$data), replace = TRUE)
+  idx <- sample.int(nrow(data_list$data), nrow(data_list$data), replace = TRUE)
   dat_b <- data_list$data[idx, , drop = FALSE]
 
-  tryCatch({
-    # All three indices are computed natively (CML/WLE) -- no mirt fit.
-    thr_b   <- .fit_cml_thresholds(dat_b)
-    alpha_b <- cronbach_alpha(dat_b)                       # closed-form
-    psi_b   <- .wle_psi(dat_b, thr_list = thr_b)           # WLE separation
-    if (!is.finite(psi_b)) return("PSI not estimable for this resample")
-    marg_b  <- .marginal_rxx(dat_b, thr_list = thr_b)      # CML marginal
+  tryCatch(
+    {
+      # All three indices are computed natively (CML/WLE) -- no mirt fit.
+      thr_b <- .fit_cml_thresholds(dat_b)
+      alpha_b <- cronbach_alpha(dat_b) # closed-form
+      psi_b <- .wle_psi(dat_b, thr_list = thr_b) # WLE separation
+      if (!is.finite(psi_b)) {
+        return("PSI not estimable for this resample")
+      }
+      marg_b <- .marginal_rxx(dat_b, thr_list = thr_b) # CML marginal
 
-    list(alpha = alpha_b, psi = psi_b, marginal = marg_b)
-  }, error = function(e) as.character(conditionMessage(e)))
+      list(alpha = alpha_b, psi = psi_b, marginal = marg_b)
+    },
+    error = function(e) as.character(conditionMessage(e))
+  )
 }
 
 # ---------------------------------------------------------------------------
@@ -528,8 +606,13 @@ run_single_reliability_boot <- function(seed, data_list) {
 
 #' @keywords internal
 #' @noRd
-run_reliability_boot_parallel <- function(boot_iter, boot_seeds, boot_args,
-                                          n_cores, verbose = FALSE) {
+run_reliability_boot_parallel <- function(
+  boot_iter,
+  boot_seeds,
+  boot_args,
+  n_cores,
+  verbose = FALSE
+) {
   mirai::daemons(n_cores)
   on.exit(mirai::daemons(0), add = TRUE)
 
@@ -540,22 +623,24 @@ run_reliability_boot_parallel <- function(boot_iter, boot_seeds, boot_args,
 
   tasks <- lapply(seq_len(boot_iter), function(i) {
     mirai::mirai(
-      { run_single_reliability_boot(seed, data_list) },
-      seed                        = boot_seeds[i],
-      data_list                   = boot_args,
+      {
+        run_single_reliability_boot(seed, data_list)
+      },
+      seed = boot_seeds[i],
+      data_list = boot_args,
       run_single_reliability_boot = run_single_reliability_boot,
-      cronbach_alpha              = cronbach_alpha,
+      cronbach_alpha = cronbach_alpha,
       # Native engine helpers used by .wle_psi() / .marginal_rxx() in the daemon.
-      .wle_psi             = .wle_psi,
-      .marginal_rxx        = .marginal_rxx,
-      .fit_cml_thresholds  = .fit_cml_thresholds,
-      .estimate_thetas     = .estimate_thetas,
-      .theta_wle           = .theta_wle,
-      .pcm_cat_probs       = .pcm_cat_probs,
-      .center_thresholds   = .center_thresholds,
-      .estimate_prior_sd   = .estimate_prior_sd,
-      .logp_tables         = .logp_tables,
-      .grid_loglik         = .grid_loglik
+      .wle_psi = .wle_psi,
+      .marginal_rxx = .marginal_rxx,
+      .fit_cml_thresholds = .fit_cml_thresholds,
+      .estimate_thetas = .estimate_thetas,
+      .theta_wle = .theta_wle,
+      .pcm_cat_probs = .pcm_cat_probs,
+      .center_thresholds = .center_thresholds,
+      .estimate_prior_sd = .estimate_prior_sd,
+      .logp_tables = .logp_tables,
+      .grid_loglik = .grid_loglik
     )
   })
 
@@ -580,9 +665,15 @@ run_reliability_boot_parallel <- function(boot_iter, boot_seeds, boot_args,
 
 #' @keywords internal
 #' @noRd
-run_reliability_boot_sequential <- function(boot_iter, boot_seeds, boot_args,
-                                            verbose = FALSE) {
-  if (verbose) pb <- utils::txtProgressBar(min = 0, max = boot_iter, style = 3)
+run_reliability_boot_sequential <- function(
+  boot_iter,
+  boot_seeds,
+  boot_args,
+  verbose = FALSE
+) {
+  if (verbose) {
+    pb <- utils::txtProgressBar(min = 0, max = boot_iter, style = 3)
+  }
 
   results <- vector("list", boot_iter)
   for (i in seq_len(boot_iter)) {
