@@ -207,8 +207,8 @@ have partial missingness:
 and
 [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md).
 
-Based on the table, items 3, 8, and 9 are underfit to the Rasch model,
-while items 2 and 4 are overfit. Item 2 is “Feeling down, depressed, or
+Based on the table, items 3, 8, and 9 underfit the Rasch model, while
+items 2 and 4 are overfit. Item 2 is “Feeling down, depressed, or
 hopeless”, which is a very general item in terms of measuring
 depression, so this is expected.
 
@@ -216,11 +216,11 @@ A low item fit value, often referred to as an item being “overfit” to
 the Rasch model, indicates that responses may be too predictable. This
 is often the case for items that are very general/broad in scope in
 relation to the latent variable. You will often find overfitting items
-to also have residual local dependency (residual correlations) issues
-with other items. Overfit may be likened to having a much stronger
-factor loading than other items in a confirmatory factor analysis or a
-higher level of discrimination in an Item Response Theory model with two
-or more parameters.
+to also have local dependence (residual correlations) issues with other
+items. Overfit may be likened to having a much stronger factor loading
+than other items in a confirmatory factor analysis or a higher level of
+discrimination in an Item Response Theory model with two or more
+parameters.
 
 A high item fit value, often referred to as being “underfit” to the
 Rasch model, can indicate several things. Often underfit is due to
@@ -267,12 +267,11 @@ local dependence); underfit = below (under-discrimination, often
 multidimensionality/noise). {.table}
 
 Similarly to infit, item-restscore found items 2 and 4 to be overfit and
-8 to be underfit. It also found item 6 to be overfit. It is usually good
-to use these methods together.
+8 to be underfit. It also found item 6 to be overfit. These methods are
+best used together.
 
 ### CFA-based cutoffs for CFI / RMSEA and item loadings
 
-This is a test of unidimensionality.
 [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md)
 simulates data from a unidimensional PCM and fits a unidimensional
 ordinal CFA to each simulated dataset, building a parametric-bootstrap
@@ -335,11 +334,12 @@ and `$fit` (the simulated fit-index distributions with the observed
 values overlaid).
 
 The table above agrees mostly with earlier findings. The overall model
-fit is bad and item 2 is overfit (higher standardized factor loading
-than expected), with items 3 and 8 underfit (lower loadings).
-Additionally, the CFA flags item 1 as overfit as well. We should however
-take the simulation-based results with a grain of salt since we are
-using too few iterations to get reliable results.
+fit is clearly worse than expected under unidimensionality and item 2 is
+overfit (higher standardized factor loading than expected), with items 3
+and 8 underfit (lower loadings). Additionally, the CFA flags item 1 as
+overfit. We should however take the simulation-based results with a
+grain of salt since we are using too few iterations to get reliable
+results.
 
 ### Residual PCA
 
@@ -400,8 +400,8 @@ In the use case demonstrated below, we have hypothesized that the five
 psychosomatic symptoms are a separate subscale from the other items.
 Looking at the PCA plot above, we can see tendencies of this clustering
 based on the loadings on the first residual contrast factor, with items
-3-5 deviating from 1, 2, 6, and 9. Using the PCA plot to determine item
-partitioning for the M-L test is not recommended, see
+3-5 most clearly deviating from 1, 2, 6, and 9. Using the PCA plot to
+determine item partitioning for the M-L test is not recommended; see
 [`?RMdimMartinLof`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
 for details and references.
 
@@ -420,6 +420,12 @@ mlof$wle_correlation
 #>   subscale_a subscale_b     r ci_lower ci_upper   p_value   n
 #> 1          1          2 0.717    0.676    0.754 5.994e-96 600
 ```
+
+The *p*-value rejects unidimensionality across the partition, while the
+subscale WLE correlation indicates the dimensions are strongly related.
+The M-L test results can be further investigated using the diagnostic
+function
+[`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLofResiduals.md).
 
 ## 2. Local independence
 
@@ -525,12 +531,14 @@ and also to plot the results with
 
 Item pairs flagged by both Q_3 and partial gamma are the strongest
 candidates for further inspection or possible item revision. Some argue
-for creating testlets (also known as superitems) by adding items rather
-than eliminating one in a pair. I suggest looking close at the item
-content before taking any action. Often, one will see very similarly
-worded items, where one in a LD pair is clearly redundant. Another
-solution to LD can be the Graphical Loglinear Rasch Model by Kreiner and
-Christensen, but that is beyond the scope of this vignette.
+for creating testlets by combining a locally dependent pair into a
+single polytomous super-item rather than eliminating one in an LD pair.
+I suggest looking closely at the item content before taking any action.
+Often, one will see very similarly worded items, where one in a LD pair
+is clearly redundant. Another solution to LD can be the Graphical
+Loglinear Rasch Model by Kreiner and Christensen ([Kreiner
+2007](#ref-kreiner_validity_2007)), but that is beyond the scope of this
+vignette.
 
 ## 3. Ordered response category thresholds
 
@@ -557,8 +565,8 @@ response at some part of the latent continuum (x axis). Item category
 thresholds are the points where two adjacent category lines cross each
 other (where they are both equally probable). In the plot above, we can
 see that the second highest category does not work well compared to
-other categories. It is disordered for item 9 and, as made perhaps more
-clear in the plot below, shows very small distances from the adjacent
+other categories. It is disordered for item 9 and, as is perhaps clearer
+in the plot below, shows very small distances from the adjacent
 categories in most items (see T2 and T3 below, which are the lower and
 upper thresholds for “More than half the days”).
 
@@ -588,9 +596,11 @@ locations. The partial gamma approach ([Kreiner
 2007](#ref-kreiner_validity_2007); [Christensen et al.
 2021](#ref-christensen_psychometric_2021)) looks for an association
 between item responses and the external variable *conditional on the
-rest-score*. Both are run on the *gender* variable here, which has some
-missing values that are automatically dropped by the functions (noted in
-a console message and/or table/figure caption output).
+rest-score*, and the Rasch tree (below) searches for DIF across
+covariates without pre-specified groups. All are run on the *gender*
+variable, which has some missing values that are automatically dropped
+by the functions (noted in a console message and/or table/figure caption
+output).
 
 First, it is important to review the response distribution when dividing
 the sample. If there are zero or low (below 8 or so) responses in a
@@ -697,7 +707,7 @@ the Delta scale developed at the Educational Testing Service (ETS) for
 dichotomous data, or the partial gamma coefficient for polytomous data,
 classified into the ETS categories A (negligible), B (slight to
 moderate), and C (moderate to large) ([Holland and Thayer
-1988](#ref-holland_differential_1988); [Zwick
+1986](#ref-holland_differential_1986); [Zwick
 2012](#ref-zwick_review_2012)). For partial gamma the B/C boundaries are
 the familiar 0.21 / 0.31 used by
 [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md),
@@ -955,9 +965,10 @@ Henninger, Mirka, Jan Radek, Rudolf Debelak, and Carolin Strobl. 2025.
 DIF and DSF in Polytomous Items.” *Behaviormetrika* 52: 221–57.
 <https://doi.org/10.1007/s41237-024-00252-3>.
 
-Holland, Paul W., and Dorothy T. Thayer. 1988. “Differential Item
-Performance and the Mantel-Haenszel Procedure.” In *Test Validity*,
-edited by Howard Wainer and Henry I. Braun. Lawrence Erlbaum Associates.
+Holland, Paul W., and Dorothy T. Thayer. 1986. “Differential Item
+Functioning and the Mantel-Haenszel Procedure.” *ETS Research Report
+Series* 1986 (2): i–24.
+<https://doi.org/10.1002/j.2330-8516.1986.tb00186.x>.
 
 Johansson, Magnus. 2025. “Detecting Item Misfit in Rasch Models.”
 *Educational Methods & Psychometrics* 3 (18).

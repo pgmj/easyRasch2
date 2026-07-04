@@ -189,6 +189,6 @@ RMpersonParameters(dat, method = "EAP", prior_sd = 1, output = "dataframe") |>
 # Write the person-location table to a CSV (also returned invisibly)
 RMpersonParameters(dat, output = "file",
                    filename = tempfile(fileext = ".csv"))
-#> Wrote 200 row(s) to '/tmp/Rtmpu4iS3P/file21be692bf39d.csv'.
+#> Wrote 200 row(s) to '/tmp/Rtmpu1s2jm/file21ac4a728015.csv'.
 # }
 ```

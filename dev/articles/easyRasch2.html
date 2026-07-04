@@ -344,19 +344,19 @@ infit, using <code><a href="../reference/RMitemInfitPlot.html">RMitemInfitPlot()
 needs complete data, sibling functions that combine multiple imputation
 with conditional infit are useful when you have partial missingness:
 <code><a href="../reference/RMitemInfitMI.html">RMitemInfitMI()</a></code> and <code><a href="../reference/RMitemInfitCutoffMI.html">RMitemInfitCutoffMI()</a></code>.</p>
-<p>Based on the table, items 3, 8, and 9 are underfit to the Rasch
-model, while items 2 and 4 are overfit. Item 2 is “Feeling down,
-depressed, or hopeless”, which is a very general item in terms of
-measuring depression, so this is expected.</p>
+<p>Based on the table, items 3, 8, and 9 underfit the Rasch model, while
+items 2 and 4 are overfit. Item 2 is “Feeling down, depressed, or
+hopeless”, which is a very general item in terms of measuring
+depression, so this is expected.</p>
 <p>A low item fit value, often referred to as an item being “overfit” to
 the Rasch model, indicates that responses may be too predictable. This
 is often the case for items that are very general/broad in scope in
 relation to the latent variable. You will often find overfitting items
-to also have residual local dependency (residual correlations) issues
-with other items. Overfit may be likened to having a much stronger
-factor loading than other items in a confirmatory factor analysis or a
-higher level of discrimination in an Item Response Theory model with two
-or more parameters.</p>
+to also have local dependence (residual correlations) issues with other
+items. Overfit may be likened to having a much stronger factor loading
+than other items in a confirmatory factor analysis or a higher level of
+discrimination in an Item Response Theory model with two or more
+parameters.</p>
 <p>A high item fit value, often referred to as being “underfit” to the
 Rasch model, can indicate several things. Often underfit is due to
 multidimensionality or a question that is difficult to interpret and
@@ -488,22 +488,21 @@ multidimensionality/noise).</caption>
 </tbody>
 </table>
 <p>Similarly to infit, item-restscore found items 2 and 4 to be overfit
-and 8 to be underfit. It also found item 6 to be overfit. It is usually
-good to use these methods together.</p>
+and 8 to be underfit. It also found item 6 to be overfit. These methods
+are best used together.</p>
 </div>
 <div class="section level3">
 <h3 id="cfa-based-cutoffs-for-cfi-rmsea-and-item-loadings">CFA-based cutoffs for CFI / RMSEA and item loadings<a class="anchor" aria-label="anchor" href="#cfa-based-cutoffs-for-cfi-rmsea-and-item-loadings"></a>
 </h3>
-<p>This is a test of unidimensionality. <code><a href="../reference/RMdimCFACutoff.html">RMdimCFACutoff()</a></code>
-simulates data from a unidimensional PCM and fits a unidimensional
-ordinal CFA to each simulated dataset, building a parametric-bootstrap
-reference distribution for the model fit indices (SRMR, CFI, RMSEA)
-<em>and</em> for the per-item standardized factor loadings. It returns
-this simulation object; <code><a href="../reference/RMdimCFA.html">RMdimCFA()</a></code> then fits the CFA to the
-observed data and tabulates the observed fit indices and loadings
-against the simulated reference. Observed values beyond the simulated
-cutoffs are implausible under a unidimensional data-generating
-process.</p>
+<p><code><a href="../reference/RMdimCFACutoff.html">RMdimCFACutoff()</a></code> simulates data from a unidimensional
+PCM and fits a unidimensional ordinal CFA to each simulated dataset,
+building a parametric-bootstrap reference distribution for the model fit
+indices (SRMR, CFI, RMSEA) <em>and</em> for the per-item standardized
+factor loadings. It returns this simulation object;
+<code><a href="../reference/RMdimCFA.html">RMdimCFA()</a></code> then fits the CFA to the observed data and
+tabulates the observed fit indices and loadings against the simulated
+reference. Observed values beyond the simulated cutoffs are implausible
+under a unidimensional data-generating process.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cfa_cut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMdimCFACutoff.html">RMdimCFACutoff</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>                       seed <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
@@ -633,11 +632,12 @@ two figures: <code>$loadings</code> (observed loadings against their
 simulated expected ranges) and <code>$fit</code> (the simulated
 fit-index distributions with the observed values overlaid).</p>
 <p>The table above agrees mostly with earlier findings. The overall
-model fit is bad and item 2 is overfit (higher standardized factor
-loading than expected), with items 3 and 8 underfit (lower loadings).
-Additionally, the CFA flags item 1 as overfit as well. We should however
-take the simulation-based results with a grain of salt since we are
-using too few iterations to get reliable results.</p>
+model fit is clearly worse than expected under unidimensionality and
+item 2 is overfit (higher standardized factor loading than expected),
+with items 3 and 8 underfit (lower loadings). Additionally, the CFA
+flags item 1 as overfit. We should however take the simulation-based
+results with a grain of salt since we are using too few iterations to
+get reliable results.</p>
 </div>
 <div class="section level3">
 <h3 id="residual-pca">Residual PCA<a class="anchor" aria-label="anchor" href="#residual-pca"></a>
@@ -724,9 +724,9 @@ is not to be considered proof of unidimensionality on its own.</p>
 five psychosomatic symptoms are a separate subscale from the other
 items. Looking at the PCA plot above, we can see tendencies of this
 clustering based on the loadings on the first residual contrast factor,
-with items 3-5 deviating from 1, 2, 6, and 9. Using the PCA plot to
-determine item partitioning for the M-L test is not recommended, see
-<code><a href="../reference/RMdimMartinLof.html">?RMdimMartinLof</a></code> for details and references.</p>
+with items 3-5 most clearly deviating from 1, 2, 6, and 9. Using the PCA
+plot to determine item partitioning for the M-L test is not recommended;
+see <code><a href="../reference/RMdimMartinLof.html">?RMdimMartinLof</a></code> for details and references.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mlof</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMdimMartinLof.html">RMdimMartinLof</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>                       partition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -740,6 +740,10 @@ determine item partitioning for the M-L test is not recommended, see
 <span><span class="va">mlof</span><span class="op">$</span><span class="va">wle_correlation</span></span>
 <span><span class="co">#&gt;   subscale_a subscale_b     r ci_lower ci_upper   p_value   n</span></span>
 <span><span class="co">#&gt; 1          1          2 0.717    0.676    0.754 5.994e-96 600</span></span></code></pre></div>
+<p>The <em>p</em>-value rejects unidimensionality across the partition,
+while the subscale WLE correlation indicates the dimensions are strongly
+related. The M-L test results can be further investigated using the
+diagnostic function <code><a href="../reference/RMdimMartinLofResiduals.html">RMdimMartinLofResiduals()</a></code>.</p>
 </div>
 </div>
 <div class="section level2">
@@ -1054,13 +1058,14 @@ using <code><a href="../reference/RMlocdepGammaCutoff.html">RMlocdepGammaCutoff(
 <code><a href="../reference/RMlocdepGammaPlot.html">RMlocdepGammaPlot()</a></code></p>
 <p>Item pairs flagged by both <span class="math inline">Q_3</span> and
 partial gamma are the strongest candidates for further inspection or
-possible item revision. Some argue for creating testlets (also known as
-superitems) by adding items rather than eliminating one in a pair. I
-suggest looking close at the item content before taking any action.
-Often, one will see very similarly worded items, where one in a LD pair
-is clearly redundant. Another solution to LD can be the Graphical
-Loglinear Rasch Model by Kreiner and Christensen, but that is beyond the
-scope of this vignette.</p>
+possible item revision. Some argue for creating testlets by combining a
+locally dependent pair into a single polytomous super-item rather than
+eliminating one in an LD pair. I suggest looking closely at the item
+content before taking any action. Often, one will see very similarly
+worded items, where one in a LD pair is clearly redundant. Another
+solution to LD can be the Graphical Loglinear Rasch Model by Kreiner and
+Christensen <span class="citation">(<a href="#ref-kreiner_validity_2007">Kreiner 2007</a>)</span>, but that is
+beyond the scope of this vignette.</p>
 </div>
 </div>
 <div class="section level2">
@@ -1084,8 +1089,8 @@ response at some part of the latent continuum (x axis). Item category
 thresholds are the points where two adjacent category lines cross each
 other (where they are both equally probable). In the plot above, we can
 see that the second highest category does not work well compared to
-other categories. It is disordered for item 9 and, as made perhaps more
-clear in the plot below, shows very small distances from the adjacent
+other categories. It is disordered for item 9 and, as is perhaps clearer
+in the plot below, shows very small distances from the adjacent
 categories in most items (see T2 and T3 below, which are the lower and
 upper thresholds for “More than half the days”).</p>
 <p><code><a href="../reference/RMitemHierarchy.html">RMitemHierarchy()</a></code> plots each item’s threshold locations
@@ -1110,10 +1115,11 @@ the sample by an external variable, refits the model in each subgroup,
 and compares item locations. The partial gamma approach <span class="citation">(<a href="#ref-kreiner_validity_2007">Kreiner 2007</a>;
 <a href="#ref-christensen_psychometric_2021">Christensen et al.
 2021</a>)</span> looks for an association between item responses and the
-external variable <em>conditional on the rest-score</em>. Both are run
-on the <em>gender</em> variable here, which has some missing values that
-are automatically dropped by the functions (noted in a console message
-and/or table/figure caption output).</p>
+external variable <em>conditional on the rest-score</em>, and the Rasch
+tree (below) searches for DIF across covariates without pre-specified
+groups. All are run on the <em>gender</em> variable, which has some
+missing values that are automatically dropped by the functions (noted in
+a console message and/or table/figure caption output).</p>
 <p>First, it is important to review the response distribution when
 dividing the sample. If there are zero or low (below 8 or so) responses
 in a category, there may be issues with estimating the model
@@ -1331,7 +1337,7 @@ the Mantel-Haenszel odds ratio on the Delta scale developed at the
 Educational Testing Service (ETS) for dichotomous data, or the partial
 gamma coefficient for polytomous data, classified into the ETS
 categories A (negligible), B (slight to moderate), and C (moderate to
-large) <span class="citation">(<a href="#ref-holland_differential_1988">Holland and Thayer 1988</a>; <a href="#ref-zwick_review_2012">Zwick 2012</a>)</span>. For partial gamma
+large) <span class="citation">(<a href="#ref-holland_differential_1986">Holland and Thayer 1986</a>; <a href="#ref-zwick_review_2012">Zwick 2012</a>)</span>. For partial gamma
 the B/C boundaries are the familiar 0.21 / 0.31 used by
 <code><a href="../reference/RMdifGamma.html">RMdifGamma()</a></code>, so the two functions read on the same scale.
 Note that these boundaries are conventions carried over from large-scale
@@ -1893,11 +1899,12 @@ Henninger, Mirka, Jan Radek, Rudolf Debelak, and Carolin Strobl. 2025.
 Quantifying <span>DIF</span> and <span>DSF</span> in Polytomous
 Items.”</span> <em>Behaviormetrika</em> 52: 221–57. <a href="https://doi.org/10.1007/s41237-024-00252-3" class="external-link">https://doi.org/10.1007/s41237-024-00252-3</a>.
 </div>
-<div id="ref-holland_differential_1988" class="csl-entry">
-Holland, Paul W., and Dorothy T. Thayer. 1988. <span>“Differential Item
-Performance and the <span>Mantel</span>-<span>Haenszel</span>
-Procedure.”</span> In <em>Test Validity</em>, edited by Howard Wainer
-and Henry I. Braun. Lawrence Erlbaum Associates.
+<div id="ref-holland_differential_1986" class="csl-entry">
+Holland, Paul W., and Dorothy T. Thayer. 1986. <span>“Differential
+<span>Item</span> <span>Functioning</span> and the
+<span>Mantel</span>-<span>Haenszel</span>
+<span>Procedure</span>.”</span> <em>ETS Research Report Series</em> 1986
+(2): i–24. <a href="https://doi.org/10.1002/j.2330-8516.1986.tb00186.x" class="external-link">https://doi.org/10.1002/j.2330-8516.1986.tb00186.x</a>.
 </div>
 <div id="ref-johansson_detecting_2025" class="csl-entry">
 Johansson, Magnus. 2025. <span>“Detecting <span>Item</span>

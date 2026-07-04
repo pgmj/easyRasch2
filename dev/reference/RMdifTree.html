@@ -3,21 +3,23 @@
 the sample on one or more covariates using psychotree::raschtree()
 (dichotomous data) or psychotree::pctree() (polytomous data),
 then computes per-split effect-size measures for every item – the
-Mantel-Haenszel odds-ratio (in the ETS Delta scale) for dichotomous
-data, or the partial gamma coefficient for polytomous data – and
-classifies them into ETS A/B/C categories. Optionally, an iterative
-purification step (Holland &amp;amp; Thayer, 1988; Bjorner et al., 1998) is
-applied, and tree stability across resamples can be assessed via
-stablelearner::stabletree()."><meta property="og:description" content="Detects Differential Item Functioning (DIF) by recursively splitting
+Mantel-Haenszel odds-ratio (Holland &amp;amp; Thayer, 1986), on the Delta scale
+developed at the Educational Testing Service (ETS; Zwick, 2012), for
+dichotomous data, or the partial gamma coefficient for polytomous data – and
+classifies them into ETS A/B/C categories (Bjorner et al., 1998). Optionally,
+an iterative purification step (Henninger et al., 2025) is applied, and tree
+stability across resamples can be assessed via
+stablelearner::stabletree() (Philipp et al., 2018)."><meta property="og:description" content="Detects Differential Item Functioning (DIF) by recursively splitting
 the sample on one or more covariates using psychotree::raschtree()
 (dichotomous data) or psychotree::pctree() (polytomous data),
 then computes per-split effect-size measures for every item – the
-Mantel-Haenszel odds-ratio (in the ETS Delta scale) for dichotomous
-data, or the partial gamma coefficient for polytomous data – and
-classifies them into ETS A/B/C categories. Optionally, an iterative
-purification step (Holland &amp;amp; Thayer, 1988; Bjorner et al., 1998) is
-applied, and tree stability across resamples can be assessed via
-stablelearner::stabletree()."><meta name="robots" content="noindex"></head><body>
+Mantel-Haenszel odds-ratio (Holland &amp;amp; Thayer, 1986), on the Delta scale
+developed at the Educational Testing Service (ETS; Zwick, 2012), for
+dichotomous data, or the partial gamma coefficient for polytomous data – and
+classifies them into ETS A/B/C categories (Bjorner et al., 1998). Optionally,
+an iterative purification step (Henninger et al., 2025) is applied, and tree
+stability across resamples can be assessed via
+stablelearner::stabletree() (Philipp et al., 2018)."><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -57,12 +59,13 @@ stablelearner::stabletree()."><meta name="robots" content="noindex"></head><body
 the sample on one or more covariates using <code><a href="https://rdrr.io/pkg/psychotree/man/raschtree.html" class="external-link">psychotree::raschtree()</a></code>
 (dichotomous data) or <code><a href="https://rdrr.io/pkg/psychotree/man/pctree.html" class="external-link">psychotree::pctree()</a></code> (polytomous data),
 then computes per-split effect-size measures for every item – the
-Mantel-Haenszel odds-ratio (in the ETS Delta scale) for dichotomous
-data, or the partial gamma coefficient for polytomous data – and
-classifies them into ETS A/B/C categories. Optionally, an iterative
-purification step (Holland &amp; Thayer, 1988; Bjorner et al., 1998) is
-applied, and tree stability across resamples can be assessed via
-<code><a href="https://rdrr.io/pkg/stablelearner/man/stabletree.html" class="external-link">stablelearner::stabletree()</a></code>.</p>
+Mantel-Haenszel odds-ratio (Holland &amp; Thayer, 1986), on the Delta scale
+developed at the Educational Testing Service (ETS; Zwick, 2012), for
+dichotomous data, or the partial gamma coefficient for polytomous data – and
+classifies them into ETS A/B/C categories (Bjorner et al., 1998). Optionally,
+an iterative purification step (Henninger et al., 2025) is applied, and tree
+stability across resamples can be assessed via
+<code><a href="https://rdrr.io/pkg/stablelearner/man/stabletree.html" class="external-link">stablelearner::stabletree()</a></code> (Philipp et al., 2018).</p>
     </div>
 
     <div class="section level2">
@@ -258,6 +261,14 @@ al. (1998): A if \(|\gamma| &lt; 0.21\) or the test of \(\gamma = 0\)
 is not rejected at <code>alpha</code>; C if \(|\gamma| &gt; 0.31\) and the
 test of \(|\gamma| \le 0.21\) is rejected at <code>alpha</code>; B
 otherwise.</p>
+<p><strong>Rule-of-thumb caveat.</strong> The A/B/C boundaries (Delta 1.0 / 1.5;
+gamma 0.21 / 0.31) are conventions carried over from large-scale
+educational testing, not values calibrated to the sample and items at
+hand – in contrast to the simulation-based cutoffs used elsewhere in
+this package – so the classification is best read as a rough
+magnitude guide rather than a calibrated test. For a sample-calibrated
+partial-gamma DIF test, see <code><a href="RMdifGamma.html">RMdifGamma()</a></code> with an
+<code><a href="RMdifGammaCutoff.html">RMdifGammaCutoff()</a></code> object (optionally with <code>p_value = TRUE</code>).</p>
 <p><strong>Continuous and interaction effects.</strong> The recursive
 partitioning step automatically handles continuous covariates (the
 parameter-instability test searches for the optimal cutpoint) and
@@ -293,14 +304,22 @@ measure for DIF. <em>Educational and Psychological Measurement,
 credit trees meet the partial gamma coefficient for quantifying DIF
 and DSF in polytomous items. <em>Behaviormetrika, 52</em>, 221-257.
 <a href="https://doi.org/10.1007/s41237-024-00252-3" class="external-link">doi:10.1007/s41237-024-00252-3</a></p>
+<p>Holland, P. W., &amp; Thayer, D. T. (1986). Differential item performance
+and the Mantel-Haenszel procedure.
+<em>ETS Research Report Series</em>(2).
+<a href="https://doi.org/10.1002/j.2330-8516.1986.tb00186.x" class="external-link">doi:10.1002/j.2330-8516.1986.tb00186.x</a></p>
 <p>Philipp, M., Rusch, T., Hornik, K., &amp; Strobl, C. (2018). Measuring
 the stability of results from supervised statistical learning.
 <em>Journal of Computational and Graphical Statistics, 27</em>,
 685-700. <a href="https://doi.org/10.1080/10618600.2018.1473779" class="external-link">doi:10.1080/10618600.2018.1473779</a></p>
 <p>Asamoah, N. A. B., Turner, R. C., Lo, W.-J., Crawford, B. L., &amp; Jozkowski,
 K. N. (2025). Impacts of DIF Item Balance and Effect Size Incorporation With
-the Rasch Tree. <em>Educational and Psychological Measurement</em>,
+the Rasch Tree. <em>Educational and Psychological Measurement</em>.
 <a href="https://doi.org/10.1177/00131644251370605" class="external-link">doi:10.1177/00131644251370605</a></p>
+<p>Zwick, R. (2012). A review of ETS differential item functioning
+assessment procedures: Flagging rules, minimum sample size
+requirements, and criterion refinement. <em>ETS Research Report
+Series</em>(1). <a href="https://doi.org/10.1002/j.2333-8504.2012.tb02290.x" class="external-link">doi:10.1002/j.2333-8504.2012.tb02290.x</a></p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

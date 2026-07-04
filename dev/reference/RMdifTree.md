@@ -6,12 +6,15 @@ sample on one or more covariates using
 (dichotomous data) or
 [`psychotree::pctree()`](https://rdrr.io/pkg/psychotree/man/pctree.html)
 (polytomous data), then computes per-split effect-size measures for
-every item – the Mantel-Haenszel odds-ratio (in the ETS Delta scale) for
-dichotomous data, or the partial gamma coefficient for polytomous data –
-and classifies them into ETS A/B/C categories. Optionally, an iterative
-purification step (Holland & Thayer, 1988; Bjorner et al., 1998) is
-applied, and tree stability across resamples can be assessed via
-[`stablelearner::stabletree()`](https://rdrr.io/pkg/stablelearner/man/stabletree.html).
+every item – the Mantel-Haenszel odds-ratio (Holland & Thayer, 1986), on
+the Delta scale developed at the Educational Testing Service (ETS;
+Zwick, 2012), for dichotomous data, or the partial gamma coefficient for
+polytomous data – and classifies them into ETS A/B/C categories (Bjorner
+et al., 1998). Optionally, an iterative purification step (Henninger et
+al., 2025) is applied, and tree stability across resamples can be
+assessed via
+[`stablelearner::stabletree()`](https://rdrr.io/pkg/stablelearner/man/stabletree.html)
+(Philipp et al., 2018).
 
 ## Usage
 
@@ -209,6 +212,18 @@ of \\\gamma = 0\\ is not rejected at `alpha`; C if \\\|\gamma\| \>
 0.31\\ and the test of \\\|\gamma\| \le 0.21\\ is rejected at `alpha`; B
 otherwise.
 
+**Rule-of-thumb caveat.** The A/B/C boundaries (Delta 1.0 / 1.5; gamma
+0.21 / 0.31) are conventions carried over from large-scale educational
+testing, not values calibrated to the sample and items at hand – in
+contrast to the simulation-based cutoffs used elsewhere in this package
+– so the classification is best read as a rough magnitude guide rather
+than a calibrated test. For a sample-calibrated partial-gamma DIF test,
+see
+[`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
+with an
+[`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+object (optionally with `p_value = TRUE`).
+
 **Continuous and interaction effects.** The recursive partitioning step
 automatically handles continuous covariates (the parameter-instability
 test searches for the optimal cutpoint) and multivariate interactions
@@ -250,6 +265,10 @@ credit trees meet the partial gamma coefficient for quantifying DIF and
 DSF in polytomous items. *Behaviormetrika, 52*, 221-257.
 [doi:10.1007/s41237-024-00252-3](https://doi.org/10.1007/s41237-024-00252-3)
 
+Holland, P. W., & Thayer, D. T. (1986). Differential item performance
+and the Mantel-Haenszel procedure. *ETS Research Report Series*(2).
+[doi:10.1002/j.2330-8516.1986.tb00186.x](https://doi.org/10.1002/j.2330-8516.1986.tb00186.x)
+
 Philipp, M., Rusch, T., Hornik, K., & Strobl, C. (2018). Measuring the
 stability of results from supervised statistical learning. *Journal of
 Computational and Graphical Statistics, 27*, 685-700.
@@ -258,8 +277,13 @@ Computational and Graphical Statistics, 27*, 685-700.
 Asamoah, N. A. B., Turner, R. C., Lo, W.-J., Crawford, B. L., &
 Jozkowski, K. N. (2025). Impacts of DIF Item Balance and Effect Size
 Incorporation With the Rasch Tree. *Educational and Psychological
-Measurement*,
+Measurement*.
 [doi:10.1177/00131644251370605](https://doi.org/10.1177/00131644251370605)
+
+Zwick, R. (2012). A review of ETS differential item functioning
+assessment procedures: Flagging rules, minimum sample size requirements,
+and criterion refinement. *ETS Research Report Series*(1).
+[doi:10.1002/j.2333-8504.2012.tb02290.x](https://doi.org/10.1002/j.2333-8504.2012.tb02290.x)
 
 ## See also
 

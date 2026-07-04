@@ -12,8 +12,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Psychometric Analysis with Rasch Measurement Theory">
-<meta name="description" content="Streamlines reproducible Rasch measurement theory analyses for ordinal item-response data, combining estimation routines from eRm, psychotools, mirt, iarm, and lavaan with consistent diagnostic, plotting, and reporting layers. Covers the four basic psychometric criteria summarised by Christensen et al. (2021) &lt;doi:10.1111/sms.13908&gt; -- unidimensionality, local independence, ordered response category thresholds, and invariance across subgroups -- together with item fit, targeting, reliability, category functioning, and descriptive item-response plots. A distinguishing feature is the use of simulation-based critical values to replace rule-of-thumb cutoffs for conditional infit mean-square, Yens Q3 local-dependence statistic, the largest residual-PCA eigenvalue, and ordinal CFA fit indices. Outputs are knitr::kable() tables and ggplot2 figures suitable for direct inclusion in Quarto and R Markdown' reports.">
-<meta property="og:description" content="Streamlines reproducible Rasch measurement theory analyses for ordinal item-response data, combining estimation routines from eRm, psychotools, mirt, iarm, and lavaan with consistent diagnostic, plotting, and reporting layers. Covers the four basic psychometric criteria summarised by Christensen et al. (2021) &lt;doi:10.1111/sms.13908&gt; -- unidimensionality, local independence, ordered response category thresholds, and invariance across subgroups -- together with item fit, targeting, reliability, category functioning, and descriptive item-response plots. A distinguishing feature is the use of simulation-based critical values to replace rule-of-thumb cutoffs for conditional infit mean-square, Yens Q3 local-dependence statistic, the largest residual-PCA eigenvalue, and ordinal CFA fit indices. Outputs are knitr::kable() tables and ggplot2 figures suitable for direct inclusion in Quarto and R Markdown' reports.">
+<meta name="description" content="Streamlines reproducible Rasch measurement theory analyses for ordinal item-response data, combining estimation routines from eRm, psychotools, mirt, iarm, and lavaan with consistent diagnostic, plotting, and reporting layers. Covers the four basic psychometric criteria summarised by Christensen et al. (2021) &lt;doi:10.1111/sms.13908&gt; -- unidimensionality, local independence, ordered response category thresholds, and invariance across subgroups -- together with item fit, targeting, reliability, category functioning, and descriptive item-response plots. A distinguishing feature is the use of simulation-based critical values to replace rule-of-thumb cutoffs for conditional infit mean-square, Yens Q3 local-dependence statistic, the largest residual-PCA eigenvalue, ordinal CFA fit indices, and partial-gamma DIF and local-dependence coefficients, optionally augmented with multiplicity-corrected bootstrap p-values. Outputs are knitr::kable() tables and ggplot2 figures suitable for direct inclusion in Quarto and R Markdown' reports.">
+<meta property="og:description" content="Streamlines reproducible Rasch measurement theory analyses for ordinal item-response data, combining estimation routines from eRm, psychotools, mirt, iarm, and lavaan with consistent diagnostic, plotting, and reporting layers. Covers the four basic psychometric criteria summarised by Christensen et al. (2021) &lt;doi:10.1111/sms.13908&gt; -- unidimensionality, local independence, ordered response category thresholds, and invariance across subgroups -- together with item fit, targeting, reliability, category functioning, and descriptive item-response plots. A distinguishing feature is the use of simulation-based critical values to replace rule-of-thumb cutoffs for conditional infit mean-square, Yens Q3 local-dependence statistic, the largest residual-PCA eigenvalue, ordinal CFA fit indices, and partial-gamma DIF and local-dependence coefficients, optionally augmented with multiplicity-corrected bootstrap p-values. Outputs are knitr::kable() tables and ggplot2 figures suitable for direct inclusion in Quarto and R Markdown' reports.">
 <meta name="robots" content="noindex">
 </head>
 <body>
@@ -79,9 +79,11 @@
 </h2>
 <ul>
 <li>
-<strong>Estimation</strong>: Conditional Maximum Likelihood (CML) via <code>eRm</code>, <code>psychotools</code>, and <code>iarm</code> for item parameters; Weighted Likelihood Estimation (WLE) for person parameters. This now extends to Yen’s Q3 residual correlations (<code><a href="reference/RMlocdepQ3.html">RMlocdepQ3()</a></code>, CML/WLE by default); <code>mirt</code> (MML) is retained as an optional engine (<code>estimator = "MML"</code>) and for the few places without a CML alternative (e.g., some reliability indices).</li>
+<strong>Estimation</strong>: a single engine across the package — Conditional Maximum Likelihood (CML) item parameters via <code>psychotools</code> and Warm’s Weighted Likelihood Estimation (WLE) for person parameters. <code>eRm</code> is used for Andersen’s LR test (<code><a href="reference/RMdifLR.html">RMdifLR()</a></code>); <code>mirt</code> (MML) is available as an optional engine (<code>estimator = "MML"</code> in <code><a href="reference/RMlocdepQ3.html">RMlocdepQ3()</a></code> and <code><a href="reference/RMitemParameters.html">RMitemParameters()</a></code>) and for the plausible values behind the RMU reliability metric.</li>
 <li>
-<strong>Output</strong>: <code><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">knitr::kable()</a></code> for tables (Quarto-friendly), <code>ggplot2</code> for figures, and <code>"dataframe"</code> output options for downstream use.</li>
+<strong>Inference</strong>: simulation-based cutoffs throughout, with optional bootstrap <em>p</em>-values (<code>p_value = TRUE</code>) using Westfall–Young family-wise correction (default) or FDR alternatives (Ferreira, 2024).</li>
+<li>
+<strong>Output</strong>: <code><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">knitr::kable()</a></code> for tables (Quarto-friendly), <code>ggplot2</code> for figures, and <code>"dataframe"</code> output options for downstream use. Every caption reports the estimation sample size and missing-data policy.</li>
 <li>
 <strong>Naming</strong>: Functions use the <code>RM</code> prefix (e.g., <code><a href="reference/RMlocdepQ3.html">RMlocdepQ3()</a></code>).</li>
 </ul>
@@ -94,13 +96,13 @@
 </h3>
 <ul>
 <li>
-<code><a href="reference/RMiteminfit.html">RMitemInfit()</a></code> — conditional infit MSQ; optional bootstrap p-values (<code>p_value = TRUE</code>) with family-wise (Westfall–Young) or FDR multiple-comparison correction</li>
+<code><a href="reference/RMiteminfit.html">RMitemInfit()</a></code> — conditional infit MSQ; optional bootstrap <em>p</em>-values (<code>p_value = TRUE</code>) with family-wise (Westfall–Young) or FDR multiple-comparison correction</li>
 <li>
 <code><a href="reference/RMitemInfitCutoff.html">RMitemInfitCutoff()</a></code> + <code><a href="reference/RMitemInfitPlot.html">RMitemInfitPlot()</a></code> — simulation-based cutoffs and plot</li>
 <li>
 <code><a href="reference/RMitemInfitMI.html">RMitemInfitMI()</a></code> + <code><a href="reference/RMitemInfitCutoffMI.html">RMitemInfitCutoffMI()</a></code> — multiple-imputation variants</li>
 <li>
-<code><a href="reference/RMitemrestscore.html">RMitemRestscore()</a></code> — item-restscore with Goodman-Kruskal’s gamma</li>
+<code><a href="reference/RMitemrestscore.html">RMitemRestscore()</a></code> — item-restscore with Goodman-Kruskal’s <span class="math inline">\gamma</span> (gamma)</li>
 <li>
 <code><a href="reference/RMitemRestscoreBoot.html">RMitemRestscoreBoot()</a></code> — non-parametric bootstrap of item-restscore fit</li>
 <li>
@@ -112,9 +114,9 @@
 </h3>
 <ul>
 <li>
-<code><a href="reference/RMlocdepQ3.html">RMlocdepQ3()</a></code> + <code><a href="reference/RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code> — Yen’s Q3 residual correlations (CML/WLE by default, <code>estimator = "MML"</code> optional); a viridis heatmap of the Q3 matrix in the cut-off list output (<code>$plot</code>); optional per-pair bootstrap p-values (<code>p_value = TRUE</code>) with family-wise (Westfall–Young) or FDR correction across item pairs</li>
+<code><a href="reference/RMlocdepQ3.html">RMlocdepQ3()</a></code> + <code><a href="reference/RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code> + <code><a href="reference/RMlocdepQ3plot.html">RMlocdepQ3Plot()</a></code> — Yen’s <span class="math inline">Q_3</span> residual correlations (CML/WLE by default, <code>estimator = "MML"</code> optional); table and plot share a <code>$matrix</code> (<span class="math inline">Q_3</span> heatmap) / <code>$pairs</code> (per-pair observed-vs-simulated) structure; optional per-pair bootstrap <em>p</em>-values</li>
 <li>
-<code><a href="reference/RMlocdepGamma.html">RMlocdepGamma()</a></code> + <code><a href="reference/RMlocdepGammaCutoff.html">RMlocdepGammaCutoff()</a></code> + <code><a href="reference/RMlocdepGammaPlot.html">RMlocdepGammaPlot()</a></code> — partial-gamma local dependence</li>
+<code><a href="reference/RMlocdepGamma.html">RMlocdepGamma()</a></code> + <code><a href="reference/RMlocdepGammaCutoff.html">RMlocdepGammaCutoff()</a></code> + <code><a href="reference/RMlocdepGammaPlot.html">RMlocdepGammaPlot()</a></code> — partial-<span class="math inline">\gamma</span> local dependence; optional per-pair bootstrap <em>p</em>-values</li>
 </ul>
 </div>
 <div class="section level3">
@@ -122,11 +124,11 @@
 </h3>
 <ul>
 <li>
-<code><a href="reference/RMdimResidualPCA.html">RMdimResidualPCA()</a></code> + <code><a href="reference/RMdimResidualPCACutoff.html">RMdimResidualPCACutoff()</a></code> — PCA of standardized residuals, with simulation-based first-contrast cutoff (Chou &amp; Wang, 2010)</li>
+<code><a href="reference/RMdimResidualPCA.html">RMdimResidualPCA()</a></code> + <code><a href="reference/RMdimResidualPCACutoff.html">RMdimResidualPCACutoff()</a></code> — PCA of standardized residuals, with simulation-based first-contrast cutoff (Chou &amp; Wang, 2010) and an optional bootstrap <em>p</em>-value</li>
 <li>
-<code><a href="reference/RMdimMartinLof.html">RMdimMartinLof()</a></code> + <code><a href="reference/RMdimMartinLofResiduals.html">RMdimMartinLofResiduals()</a></code> — Martin-Löf LR test (Christensen &amp; Kreiner, 2007), supports polytomous data</li>
+<code><a href="reference/RMdimMartinLof.html">RMdimMartinLof()</a></code> + <code><a href="reference/RMdimMartinLofResiduals.html">RMdimMartinLofResiduals()</a></code> — Martin-Löf LR test (Christensen &amp; Kreiner, 2007), supports polytomous data with Monte Carlo <em>p</em>-values</li>
 <li>
-<code><a href="reference/RMdimCFACutoff.html">RMdimCFACutoff()</a></code> + <code><a href="reference/RMdimCFA.html">RMdimCFA()</a></code> + <code><a href="reference/RMdimCFAPlot.html">RMdimCFAPlot()</a></code> — posterior-predictive CFA fit-index and per-item loading checks under PCM unidimensionality (via <code>lavaan</code> WLSMV)</li>
+<code><a href="reference/RMdimCFACutoff.html">RMdimCFACutoff()</a></code> + <code><a href="reference/RMdimCFA.html">RMdimCFA()</a></code> + <code><a href="reference/RMdimCFAPlot.html">RMdimCFAPlot()</a></code> — posterior-predictive CFA fit-index and per-item loading checks under PCM unidimensionality (via <code>lavaan</code> WLSMV) with simulation-based cutoffs and optional bootstrap <em>p</em>-values</li>
 </ul>
 </div>
 <div class="section level3">
@@ -136,9 +138,9 @@
 <li>
 <code><a href="reference/RMdifLR.html">RMdifLR()</a></code> — Andersen’s likelihood-ratio test (<code><a href="https://rdrr.io/pkg/eRm/man/LRtest.html" class="external-link">eRm::LRtest</a></code>)</li>
 <li>
-<code><a href="reference/RMdifTree.html">RMdifTree()</a></code> — Rasch / partial-credit trees (<code>psychotree</code>) with Mantel-Haenszel or partial-gamma effect sizes per split, optional iterative purification, and <code>stablelearner</code>-based stability assessment</li>
+<code><a href="reference/RMdifTree.html">RMdifTree()</a></code> — Rasch / partial-credit trees (<code>psychotree</code>) with Mantel-Haenszel or partial-<span class="math inline">\gamma</span> effect sizes per split, optional iterative purification, and <code>stablelearner</code>-based stability assessment</li>
 <li>
-<code><a href="reference/RMdifGamma.html">RMdifGamma()</a></code> + <code><a href="reference/RMdifGammaCutoff.html">RMdifGammaCutoff()</a></code> + <code><a href="reference/RMdifGammaPlot.html">RMdifGammaPlot()</a></code> — partial-gamma DIF</li>
+<code><a href="reference/RMdifGamma.html">RMdifGamma()</a></code> + <code><a href="reference/RMdifGammaCutoff.html">RMdifGammaCutoff()</a></code> + <code><a href="reference/RMdifGammaPlot.html">RMdifGammaPlot()</a></code> — partial-<span class="math inline">\gamma</span> DIF; optional bootstrap <em>p</em>-values calibrated against the simulated Rasch null</li>
 <li>
 <code><a href="reference/RMitemICCPlot.html">RMitemICCPlot()</a></code> - evaluates DIF across class intervals</li>
 </ul>
@@ -158,7 +160,7 @@
 </h3>
 <ul>
 <li>
-<code><a href="reference/RMreliability.html">RMreliability()</a></code> + <code><a href="reference/RMUreliability.html">RMUreliability()</a></code> — Cronbach’s α, PSI, empirical reliability, and Relative Measurement Uncertainty from plausible values</li>
+<code><a href="reference/RMreliability.html">RMreliability()</a></code> + <code><a href="reference/RMUreliability.html">RMUreliability()</a></code> — Cronbach’s α, PSI, marginal reliability, and Relative Measurement Uncertainty from plausible values</li>
 <li>
 <code><a href="reference/RMtargeting.html">RMtargeting()</a></code> — Wright-map style person-item targeting plot</li>
 <li>
@@ -170,7 +172,7 @@
 </h3>
 <ul>
 <li>
-<code><a href="reference/RMitemParameters.html">RMitemParameters()</a></code> — item difficulty / threshold locations in long or wide format, with optional standard errors and confidence intervals (CML via <code>eRm</code>, or MML via <code>mirt</code> for sparse data)</li>
+<code><a href="reference/RMitemParameters.html">RMitemParameters()</a></code> — item difficulty / threshold locations in long or wide format, with optional standard errors and confidence intervals (CML via <code>psychotools</code>, or MML via <code>mirt</code> for sparse data)</li>
 <li>
 <code><a href="reference/RMpersonParameters.html">RMpersonParameters()</a></code> — per-respondent person locations (WLE or EAP), estimated on each response pattern so partial missingness is handled directly</li>
 </ul>
@@ -180,7 +182,7 @@
 </h3>
 <ul>
 <li>
-<code><a href="reference/RMpersonFit.html">RMpersonFit()</a></code> — per-respondent conditional infit / outfit MSQ and the standardized log-likelihood <code>lz</code>, with resampling-based p-values rather than unreliable asymptotic nulls (Sinharay, 2016; Müller, 2020)</li>
+<code><a href="reference/RMpersonFit.html">RMpersonFit()</a></code> — per-respondent conditional infit / outfit MSQ and the standardized log-likelihood <span class="math inline">\ell_z</span>, with resampling-based <em>p</em>-values rather than unreliable asymptotic nulls (Sinharay, 2016; Müller, 2020)</li>
 </ul>
 </div>
 <div class="section level3">
@@ -266,9 +268,9 @@
 <div class="section level2">
 <h2 id="credits">Credits<a class="anchor" aria-label="anchor" href="#credits"></a>
 </h2>
-<p>As mentioned earlier, this is based on my <code>easyRasch</code> package, and I am using Claude to “transfer” functions to this more properly formatted package. While it uses my earlier code, most of the code in this package is produced by the LLM and bug fixed by me.</p>
+<p>As mentioned earlier, this is based on my <code>easyRasch</code> package, and I am using Claude Opus/Fable to rewrite functions to this more properly formatted package. While it uses my earlier code, most of the code in this package is produced by the LLM and tested and bug fixed by me.</p>
 <p><code><a href="reference/RMdifTree.html">RMdifTree()</a></code> adapts MIT-licensed code from Mirka Henninger and Jan Radek’s <a href="https://github.com/mirka-henninger/raschtreeMH" class="external-link"><code>raschtreeMH</code></a> and <a href="https://github.com/mirka-henninger/effecttree" class="external-link"><code>effecttree</code></a> packages for the effect-size and ETS-classification algorithms.</p>
-<p><a href="https://ki.se/en/people/magnus-johansson-3" class="external-link">Magnus Johansson</a> is a licensed psychologist with a PhD in behavior analysis. He works as a research specialist at <a href="https://ki.se/en/cns/research/centre-for-psychiatry-research" class="external-link">Karolinska Institutet</a>, Department of Clinical Neuroscience, Center for Psychiatry Research.</p>
+<p><a href="https://ki.se/en/people/magnus-johansson-3" class="external-link">Magnus Johansson</a> is a licensed psychologist with a PhD in behavior analysis. He works as a research specialist focused on psychometrics and statistics at <a href="https://ki.se/en/cns/research/centre-for-psychiatry-research" class="external-link">Karolinska Institutet</a>, Department of Clinical Neuroscience, Center for Psychiatry Research.</p>
 <ul>
 <li>ORCID: <a href="https://orcid.org/0000-0003-1669-592X" class="external-link">0000-0003-1669-592X</a>
 </li>
