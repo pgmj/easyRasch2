@@ -60,55 +60,61 @@ remotes::install_github("pgmj/easyRasch2")
 
 ## Key design principles
 
-- **Estimation**: Conditional Maximum Likelihood (CML) via `eRm`,
-  `psychotools`, and `iarm` for item parameters; Weighted Likelihood
-  Estimation (WLE) for person parameters. This now extends to Yen's Q3
-  residual correlations (`RMlocdepQ3()`, CML/WLE by default); `mirt` (MML)
-  is retained as an optional engine (`estimator = "MML"`) and for the few
-  places without a CML alternative (e.g., some reliability indices).
+- **Estimation**: a single engine across the package — Conditional Maximum
+  Likelihood (CML) item parameters via `psychotools` and Warm's Weighted
+  Likelihood Estimation (WLE) for person parameters. `eRm` is used for
+  Andersen's LR test (`RMdifLR()`); `mirt` (MML) is available as an optional
+  engine (`estimator = "MML"` in `RMlocdepQ3()` and `RMitemParameters()`)
+  and for the plausible values behind the RMU reliability metric.
+- **Inference**: simulation-based cutoffs throughout, with optional
+  bootstrap *p*-values (`p_value = TRUE`) using Westfall–Young family-wise
+  correction (default) or FDR alternatives (Ferreira, 2024).
 - **Output**: `knitr::kable()` for tables (Quarto-friendly), `ggplot2`
   for figures, and `"dataframe"` output options for downstream use.
+  Every caption reports the estimation sample size and missing-data policy.
 - **Naming**: Functions use the `RM` prefix (e.g., `RMlocdepQ3()`).
 
 ## Functions by domain
 
 ### Item fit
 
-- `RMitemInfit()` — conditional infit MSQ; optional bootstrap p-values
+- `RMitemInfit()` — conditional infit MSQ; optional bootstrap *p*-values
   (`p_value = TRUE`) with family-wise (Westfall–Young) or FDR multiple-comparison
   correction
 - `RMitemInfitCutoff()` + `RMitemInfitPlot()` — simulation-based cutoffs and plot
 - `RMitemInfitMI()` + `RMitemInfitCutoffMI()` — multiple-imputation variants
-- `RMitemRestscore()` — item-restscore with Goodman-Kruskal's gamma
+- `RMitemRestscore()` — item-restscore with Goodman-Kruskal's $\gamma$ (gamma)
 - `RMitemRestscoreBoot()` — non-parametric bootstrap of item-restscore fit
 - `RMitemICCPlot()` - conditional item characteristic curves
 
 ### Local dependence
 
-- `RMlocdepQ3()` + `RMlocdepQ3Cutoff()` — Yen's Q3 residual correlations
-  (CML/WLE by default, `estimator = "MML"` optional); a viridis heatmap of
-  the Q3 matrix in the cut-off list output (`$plot`); optional per-pair
-  bootstrap p-values (`p_value = TRUE`) with family-wise (Westfall–Young) or
-  FDR correction across item pairs
-- `RMlocdepGamma()` + `RMlocdepGammaCutoff()` + `RMlocdepGammaPlot()` — partial-gamma local dependence
+- `RMlocdepQ3()` + `RMlocdepQ3Cutoff()` + `RMlocdepQ3Plot()` — Yen's $Q_3$
+  residual correlations (CML/WLE by default, `estimator = "MML"` optional);
+  table and plot share a `$matrix` ($Q_3$ heatmap) / `$pairs` (per-pair
+  observed-vs-simulated) structure; optional per-pair bootstrap *p*-values
+- `RMlocdepGamma()` + `RMlocdepGammaCutoff()` + `RMlocdepGammaPlot()` —
+  partial-$\gamma$ local dependence; optional per-pair bootstrap *p*-values
 
 ### Dimensionality / unidimensionality
 
 - `RMdimResidualPCA()` + `RMdimResidualPCACutoff()` — PCA of standardized residuals,
-  with simulation-based first-contrast cutoff (Chou & Wang, 2010)
+  with simulation-based first-contrast cutoff (Chou & Wang, 2010) and an
+  optional bootstrap *p*-value
 - `RMdimMartinLof()` + `RMdimMartinLofResiduals()` — Martin-Löf LR test
-  (Christensen & Kreiner, 2007), supports polytomous data
+  (Christensen & Kreiner, 2007), supports polytomous data with Monte Carlo *p*-values
 - `RMdimCFACutoff()` + `RMdimCFA()` + `RMdimCFAPlot()` — posterior-predictive CFA
   fit-index and per-item loading checks under PCM unidimensionality (via `lavaan`
-  WLSMV)
+  WLSMV) with simulation-based cutoffs and optional bootstrap *p*-values
 
 ### Differential item functioning
 
 - `RMdifLR()` — Andersen's likelihood-ratio test (`eRm::LRtest`)
 - `RMdifTree()` — Rasch / partial-credit trees (`psychotree`) with
-  Mantel-Haenszel or partial-gamma effect sizes per split, optional
+  Mantel-Haenszel or partial-$\gamma$ effect sizes per split, optional
   iterative purification, and `stablelearner`-based stability assessment
-- `RMdifGamma()` + `RMdifGammaCutoff()` + `RMdifGammaPlot()` — partial-gamma DIF
+- `RMdifGamma()` + `RMdifGammaCutoff()` + `RMdifGammaPlot()` — partial-$\gamma$
+  DIF; optional bootstrap *p*-values calibrated against the simulated Rasch null
 - `RMitemICCPlot()` - evaluates DIF across class intervals
 
 ### Item category threshold ordering
@@ -119,7 +125,7 @@ remotes::install_github("pgmj/easyRasch2")
 
 ### Reliability, targeting, score conversion
 
-- `RMreliability()` + `RMUreliability()` — Cronbach's α, PSI, empirical
+- `RMreliability()` + `RMUreliability()` — Cronbach's α, PSI, marginal
   reliability, and Relative Measurement Uncertainty from plausible values
 - `RMtargeting()` — Wright-map style person-item targeting plot
 - `RMscoreSE()` — raw-score → logit transformation table (WLE / EAP)
@@ -128,15 +134,15 @@ remotes::install_github("pgmj/easyRasch2")
 
 - `RMitemParameters()` — item difficulty / threshold locations in long or wide
   format, with optional standard errors and confidence intervals (CML via
-  `eRm`, or MML via `mirt` for sparse data)
+  `psychotools`, or MML via `mirt` for sparse data)
 - `RMpersonParameters()` — per-respondent person locations (WLE or EAP),
   estimated on each response pattern so partial missingness is handled directly
 
 ### Person fit
 
 - `RMpersonFit()` — per-respondent conditional infit / outfit MSQ and the
-  standardized log-likelihood `lz`, with resampling-based p-values rather than
-  unreliable asymptotic nulls (Sinharay, 2016; Müller, 2020)
+  standardized log-likelihood $\ell_z$, with resampling-based *p*-values rather
+  than unreliable asymptotic nulls (Sinharay, 2016; Müller, 2020)
 
 ### Data visualization
 
@@ -235,17 +241,17 @@ RMdifTree(pcmdat2, covariates = covs)
 
 ## Credits
 
-As mentioned earlier, this is based on my `easyRasch` package, and I am using Claude
-to "transfer" functions to this more properly formatted package. While it uses
-my earlier code, most of the code in this package is produced by the LLM and
-bug fixed by me.
+As mentioned earlier, this is based on my `easyRasch` package, and I am using
+Claude Opus/Fable to rewrite functions to this more properly formatted package.
+While it uses my earlier code, most of the code in this package is produced by
+the LLM and tested and bug fixed by me.
 
 `RMdifTree()` adapts MIT-licensed code from Mirka Henninger and Jan Radek's
 [`raschtreeMH`](https://github.com/mirka-henninger/raschtreeMH) and
 [`effecttree`](https://github.com/mirka-henninger/effecttree) packages for
 the effect-size and ETS-classification algorithms.
 
-[Magnus Johansson](https://ki.se/en/people/magnus-johansson-3) is a licensed psychologist with a PhD in behavior analysis. He works as a research specialist at [Karolinska Institutet](https://ki.se/en/cns/research/centre-for-psychiatry-research), Department of Clinical Neuroscience, Center for Psychiatry Research.
+[Magnus Johansson](https://ki.se/en/people/magnus-johansson-3) is a licensed psychologist with a PhD in behavior analysis. He works as a research specialist focused on psychometrics and statistics at [Karolinska Institutet](https://ki.se/en/cns/research/centre-for-psychiatry-research), Department of Clinical Neuroscience, Center for Psychiatry Research.
 
 - ORCID: [0000-0003-1669-592X](https://orcid.org/0000-0003-1669-592X)
 - Bluesky: [@pgmj.bsky.social](https://bsky.app/profile/pgmj.bsky.social) 

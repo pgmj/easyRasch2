@@ -29,7 +29,9 @@ Description: Streamlines reproducible Rasch measurement theory analyses
     distinguishing feature is the use of simulation-based critical
     values to replace rule-of-thumb cutoffs for conditional infit mean-square,
     Yen's Q3 local-dependence statistic, the largest residual-PCA eigenvalue,
-    and ordinal CFA fit indices. Outputs are knitr::kable() tables and
+    ordinal CFA fit indices, and partial-gamma DIF and local-dependence
+    coefficients, optionally augmented with multiplicity-corrected bootstrap
+    p-values. Outputs are knitr::kable() tables and
     'ggplot2' figures suitable for direct inclusion in 'Quarto' and 'R Markdown'
     reports.
 License: GPL (>= 3)
@@ -42,6 +44,7 @@ BugReports: https://github.com/pgmj/easyRasch2/issues
 Depends:
     R (>= 4.1.0)
 Imports:
+    graphics,
     knitr,
     mirt,
     psychotools (>= 0.7-3),
@@ -50,7 +53,6 @@ Imports:
     rlang
 Suggests:
     difR,
-    dplyr,
     eRm,
     geomtextpath,
     ggdist,

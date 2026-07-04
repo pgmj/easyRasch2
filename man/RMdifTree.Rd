@@ -136,12 +136,13 @@ Detects Differential Item Functioning (DIF) by recursively splitting
 the sample on one or more covariates using \code{psychotree::raschtree()}
 (dichotomous data) or \code{psychotree::pctree()} (polytomous data),
 then computes per-split effect-size measures for every item -- the
-Mantel-Haenszel odds-ratio (in the ETS Delta scale) for dichotomous
-data, or the partial gamma coefficient for polytomous data -- and
-classifies them into ETS A/B/C categories. Optionally, an iterative
-purification step (Holland & Thayer, 1988; Bjorner et al., 1998) is
-applied, and tree stability across resamples can be assessed via
-\code{stablelearner::stabletree()}.
+Mantel-Haenszel odds-ratio (Holland & Thayer, 1986), on the Delta scale
+developed at the Educational Testing Service (ETS; Zwick, 2012), for
+dichotomous data, or the partial gamma coefficient for polytomous data -- and
+classifies them into ETS A/B/C categories (Bjorner et al., 1998). Optionally,
+an iterative purification step (Henninger et al., 2025) is applied, and tree
+stability across resamples can be assessed via
+\code{stablelearner::stabletree()} (Philipp et al., 2018).
 }
 \details{
 Continuous covariates (e.g., age in years) and interactions among
@@ -169,6 +170,15 @@ al. (1998): A if \eqn{|\gamma| < 0.21} or the test of \eqn{\gamma = 0}
 is not rejected at \code{alpha}; C if \eqn{|\gamma| > 0.31} and the
 test of \eqn{|\gamma| \le 0.21} is rejected at \code{alpha}; B
 otherwise.
+
+\strong{Rule-of-thumb caveat.} The A/B/C boundaries (Delta 1.0 / 1.5;
+gamma 0.21 / 0.31) are conventions carried over from large-scale
+educational testing, not values calibrated to the sample and items at
+hand -- in contrast to the simulation-based cutoffs used elsewhere in
+this package -- so the classification is best read as a rough
+magnitude guide rather than a calibrated test. For a sample-calibrated
+partial-gamma DIF test, see \code{\link[=RMdifGamma]{RMdifGamma()}} with an
+\code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}} object (optionally with \code{p_value = TRUE}).
 
 \strong{Continuous and interaction effects.} The recursive
 partitioning step automatically handles continuous covariates (the
@@ -245,6 +255,11 @@ credit trees meet the partial gamma coefficient for quantifying DIF
 and DSF in polytomous items. \emph{Behaviormetrika, 52}, 221-257.
 \doi{10.1007/s41237-024-00252-3}
 
+Holland, P. W., & Thayer, D. T. (1986). Differential item performance
+and the Mantel-Haenszel procedure.
+\emph{ETS Research Report Series}(2).
+\doi{10.1002/j.2330-8516.1986.tb00186.x}
+
 Philipp, M., Rusch, T., Hornik, K., & Strobl, C. (2018). Measuring
 the stability of results from supervised statistical learning.
 \emph{Journal of Computational and Graphical Statistics, 27},
@@ -252,8 +267,13 @@ the stability of results from supervised statistical learning.
 
 Asamoah, N. A. B., Turner, R. C., Lo, W.-J., Crawford, B. L., & Jozkowski,
 K. N. (2025). Impacts of DIF Item Balance and Effect Size Incorporation With
-the Rasch Tree. \emph{Educational and Psychological Measurement},
+the Rasch Tree. \emph{Educational and Psychological Measurement}.
 \doi{10.1177/00131644251370605}
+
+Zwick, R. (2012). A review of ETS differential item functioning
+assessment procedures: Flagging rules, minimum sample size
+requirements, and criterion refinement. \emph{ETS Research Report
+Series}(1). \doi{10.1002/j.2333-8504.2012.tb02290.x}
 }
 \seealso{
 \code{\link{RMdifLR}}, \code{\link{RMdifGamma}}
