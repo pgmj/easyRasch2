@@ -247,6 +247,7 @@ test_that("RMitemInfitCutoff errors when cutoff_method = 'hdci' but ggdist is no
 })
 
 test_that("RMitemInfitCutoff cutoff_method = 'quantile' returns valid cutoffs", {
+  skip_on_cran()
   # RMitemInfitCutoff() fits via psychotools (Imports) + iarm; no eRm needed.
   skip_if_not_installed("iarm")
   set.seed(42)
@@ -268,6 +269,7 @@ test_that("RMitemInfitCutoff cutoff_method = 'quantile' returns valid cutoffs", 
 })
 
 test_that("RMitemInfitCutoff cutoff_method = 'hdci' returns valid cutoffs", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   set.seed(42)
@@ -288,6 +290,7 @@ test_that("RMitemInfitCutoff cutoff_method = 'hdci' returns valid cutoffs", {
 })
 
 test_that("RMitemInfitCutoff dgp = 'conditional' runs; default is 'resample'", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   set.seed(6)
   df <- as.data.frame(matrix(sample(0:1, 200 * 6, replace = TRUE), 200, 6))

@@ -18,6 +18,7 @@ make_dich <- function(n = 200, k = 5, seed = 3L) {
 }
 
 test_that("polytomous data (resample DGP) returns per-item cutoffs", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   res <- RMitemInfitCutoff(make_poly(), iterations = 15, parallel = FALSE,
                            seed = 1, cutoff_method = "quantile")
@@ -28,6 +29,7 @@ test_that("polytomous data (resample DGP) returns per-item cutoffs", {
 })
 
 test_that("polytomous data with conditional DGP runs", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   res <- RMitemInfitCutoff(make_poly(), iterations = 15, parallel = FALSE,
                            seed = 1, dgp = "conditional",
@@ -37,6 +39,7 @@ test_that("polytomous data with conditional DGP runs", {
 })
 
 test_that("verbose = TRUE runs the sequential progress path", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   suppressMessages(invisible(utils::capture.output(
     res <- RMitemInfitCutoff(make_dich(), iterations = 5, parallel = FALSE,
@@ -56,6 +59,7 @@ test_that("errors when no complete cases remain after na.omit", {
 })
 
 test_that("parallel runner produces the same-shaped result", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("mirai")
   res <- suppressMessages(
@@ -67,6 +71,7 @@ test_that("parallel runner produces the same-shaped result", {
 })
 
 test_that("parallel = TRUE without n_cores or mc.cores warns and falls back", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("mirai")
   withr::local_options(mc.cores = NULL)

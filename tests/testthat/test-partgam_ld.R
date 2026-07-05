@@ -98,6 +98,7 @@ test_that("RMlocdepGamma print method emits both tables", {
 # RMlocdepGammaCutoff -- small iterations
 # ---------------------------------------------------------------------
 test_that("RMlocdepGammaCutoff returns a list with pair_cutoffs + actual_iterations", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()
@@ -157,6 +158,7 @@ test_that("RMlocdepGamma validates n_pairs", {
 })
 
 test_that("RMlocdepGamma accepts an RMlocdepGammaCutoff result and adds flagged column", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()
@@ -168,6 +170,7 @@ test_that("RMlocdepGamma accepts an RMlocdepGammaCutoff result and adds flagged 
 })
 
 test_that("RMlocdepGammaCutoff is reproducible with the same seed", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()
@@ -180,6 +183,7 @@ test_that("RMlocdepGammaCutoff is reproducible with the same seed", {
 # RMlocdepGammaPlot
 # ---------------------------------------------------------------------
 test_that("RMlocdepGammaPlot returns a ggplot from an RMlocdepGammaCutoff result", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   skip_if_not_installed("ggplot2")
@@ -190,6 +194,7 @@ test_that("RMlocdepGammaPlot returns a ggplot from an RMlocdepGammaCutoff result
 })
 
 test_that("RMlocdepGammaPlot with observed data overlay returns a ggplot", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   skip_if_not_installed("ggplot2")
@@ -213,6 +218,7 @@ test_that("RMlocdepGamma rejects malformed cutoff arguments", {
 })
 
 test_that("RMlocdepGamma band flag matches gamma vs bounds in both directions", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()
@@ -241,6 +247,7 @@ test_that("RMlocdepGamma handles missing values in data", {
 # RMlocdepGamma -- bootstrap p-values
 # ---------------------------------------------------------------------
 test_that("RMlocdepGamma p_value requires the full cutoff object", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()
@@ -256,6 +263,7 @@ test_that("RMlocdepGamma p_value requires the full cutoff object", {
 })
 
 test_that("RMlocdepGamma p_value adds one-sided p per pair, mirrored across directions", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()
@@ -311,6 +319,7 @@ test_that("RMlocdepGamma p_value adds one-sided p per pair, mirrored across dire
 })
 
 test_that("RMlocdepGamma p_value correction runs on the full family before n_pairs", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()
@@ -337,6 +346,7 @@ test_that("RMlocdepGamma p_value correction runs on the full family before n_pai
 })
 
 test_that("RMlocdepGamma p_value correction variants run and 'none' is marginal", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()

@@ -51,6 +51,7 @@ test_that(".bootstrap_pvalues handles zero-variance comparisons as NA", {
 # ---------------------------------------------------------------------
 
 test_that("p_value = TRUE adds p columns and bases Flagged on padj", {
+  skip_on_cran()
   skip_if_not_installed("eRm"); skip_if_not_installed("iarm")
   df  <- sim_rasch_null()
   sim <- RMitemInfitCutoff(df, iterations = 300, parallel = FALSE, seed = 1)
@@ -72,6 +73,7 @@ test_that("p_value = TRUE errors without the full cutoff object", {
 })
 
 test_that("p_value = FALSE leaves the output unchanged (backward compatible)", {
+  skip_on_cran()
   skip_if_not_installed("eRm"); skip_if_not_installed("iarm")
   df  <- sim_rasch_null()
   sim <- RMitemInfitCutoff(df, iterations = 200, parallel = FALSE, seed = 1)
@@ -81,6 +83,7 @@ test_that("p_value = FALSE leaves the output unchanged (backward compatible)", {
 })
 
 test_that("all correction methods run and return the expected columns", {
+  skip_on_cran()
   skip_if_not_installed("eRm"); skip_if_not_installed("iarm")
   df  <- sim_rasch_null()
   sim <- RMitemInfitCutoff(df, iterations = 300, parallel = FALSE, seed = 1)
@@ -94,6 +97,7 @@ test_that("all correction methods run and return the expected columns", {
 })
 
 test_that("low iteration count triggers a warning", {
+  skip_on_cran()
   skip_if_not_installed("eRm"); skip_if_not_installed("iarm")
   df  <- sim_rasch_null()
   sim <- RMitemInfitCutoff(df, iterations = 200, parallel = FALSE, seed = 1)
@@ -109,6 +113,7 @@ test_that("invalid alpha is rejected", {
 })
 
 test_that("kable output works with p-values", {
+  skip_on_cran()
   skip_if_not_installed("eRm"); skip_if_not_installed("iarm")
   skip_if_not_installed("knitr")
   df  <- sim_rasch_null()

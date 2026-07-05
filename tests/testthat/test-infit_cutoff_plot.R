@@ -11,6 +11,7 @@ make_dichotomous <- function(n = 200, k = 8, seed = 1L) {
 # Output structures: simulated-only distribution
 # ---------------------------------------------------------------------
 test_that("RMitemInfitPlot returns a ggplot from a simfit result (no data overlay)", {
+  skip_on_cran()
   skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
@@ -25,6 +26,7 @@ test_that("RMitemInfitPlot returns a ggplot from a simfit result (no data overla
 # Output structures: with observed-data overlay
 # ---------------------------------------------------------------------
 test_that("RMitemInfitPlot with observed data overlay returns a ggplot", {
+  skip_on_cran()
   skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
@@ -36,6 +38,7 @@ test_that("RMitemInfitPlot with observed data overlay returns a ggplot", {
 })
 
 test_that("RMitemInfitPlot statistic = 'outfit' returns a ggplot", {
+  skip_on_cran()
   skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
@@ -47,6 +50,7 @@ test_that("RMitemInfitPlot statistic = 'outfit' returns a ggplot", {
 })
 
 test_that("RMitemInfitPlot statistic = 'both' returns a (patchwork) ggplot", {
+  skip_on_cran()
   skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
@@ -63,6 +67,7 @@ test_that("RMitemInfitPlot statistic = 'both' returns a (patchwork) ggplot", {
 # Deprecated alias
 # ---------------------------------------------------------------------
 test_that("RMitemInfitCutoffPlot is a deprecated alias forwarding to RMitemInfitPlot", {
+  skip_on_cran()
   skip_if_not_installed("eRm")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")

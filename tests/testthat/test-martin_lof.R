@@ -40,6 +40,7 @@ test_that("RMdimMartinLof errors when a subscale has fewer than 2 items", {
 # Output structure (polytomous)
 # ---------------------------------------------------------------------
 test_that("RMdimMartinLof returns expected fields on polytomous data", {
+  skip_on_cran()
   skip_if_not_installed("psychotools")
   df <- make_polytomous()
   res <- RMdimMartinLof(
@@ -62,6 +63,7 @@ test_that("RMdimMartinLof returns expected fields on polytomous data", {
 # Output structure (dichotomous)
 # ---------------------------------------------------------------------
 test_that("RMdimMartinLof works on dichotomous data (Rasch model path)", {
+  skip_on_cran()
   skip_if_not_installed("psychotools")
   df <- make_dichotomous()
   res <- RMdimMartinLof(
@@ -75,6 +77,7 @@ test_that("RMdimMartinLof works on dichotomous data (Rasch model path)", {
 })
 
 test_that("RMdimMartinLof p_value is reproducible with the same seed", {
+  skip_on_cran()
   skip_if_not_installed("psychotools")
   df <- make_polytomous(n = 150)
   r1 <- RMdimMartinLof(df, partition = c(1,1,1,1,2,2,2,2),
@@ -130,6 +133,7 @@ test_that("RMdimMartinLofResiduals output = 'ggplot' returns a ggplot", {
 # all use stopping = "sequential")
 # ---------------------------------------------------------------------
 test_that("RMdimMartinLof stopping = 'none' returns a valid p-value", {
+  skip_on_cran()
   skip_if_not_installed("psychotools")
   df <- make_dichotomous()
   res <- RMdimMartinLof(df, partition = c(1,1,1,1,2,2,2,2),
@@ -141,6 +145,7 @@ test_that("RMdimMartinLof stopping = 'none' returns a valid p-value", {
 })
 
 test_that("RMdimMartinLof verbose = TRUE runs the sequential progress path", {
+  skip_on_cran()
   skip_if_not_installed("psychotools")
   df <- make_dichotomous()
   suppressMessages(invisible(utils::capture.output(
@@ -152,6 +157,7 @@ test_that("RMdimMartinLof verbose = TRUE runs the sequential progress path", {
 })
 
 test_that("RMdimMartinLof parallel path returns a valid result", {
+  skip_on_cran()
   skip_if_not_installed("psychotools")
   skip_if_not_installed("mirai")
   df <- make_dichotomous()
@@ -164,6 +170,7 @@ test_that("RMdimMartinLof parallel path returns a valid result", {
 })
 
 test_that("RMdimMartinLof parallel without n_cores/mc.cores warns and falls back", {
+  skip_on_cran()
   skip_if_not_installed("psychotools")
   skip_if_not_installed("mirai")
   withr::local_options(mc.cores = NULL)
@@ -191,6 +198,7 @@ test_that("RMdimMartinLof errors with fewer than 30 complete cases", {
 # Partition normalisation branches
 # ---------------------------------------------------------------------
 test_that("RMdimMartinLof warns and drops items not assigned to a subscale", {
+  skip_on_cran()
   skip_if_not_installed("psychotools")
   df <- make_dichotomous()  # 8 items
   expect_warning(

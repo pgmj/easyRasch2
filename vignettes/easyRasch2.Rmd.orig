@@ -129,8 +129,8 @@ summary(phq9$age)
 Before fitting any model it is worth eyeballing the response
 distributions:
 
-```{r hist-plot, fig.cap = "Histogram of ordinal sum scores", fig.width = 7, fig.height = 5}
-hist(rowSums(items), col = "lightblue", main = "")
+```{r hist-plot, fig.cap = "Histogram of ordinal sum scores"}
+hist(rowSums(items), col = "lightblue", main = "", xlab = "Ordinal sum scores")
 ```
 
 ```{r bar-plot, fig.cap = "Faceted bar chart of response distributions", fig.height = 9}
@@ -148,7 +148,7 @@ RMplotStackedbar(items, show_percent = TRUE)
 diagnostics that can be combined for a robust conclusion:
 
 - item-level conditional infit MSQ statistics [@muller_item_2020]
-- item-level item-restscore associations with Goodman-Kruskal's gamma [@kreiner_note_2011]
+- item-level item-restscore associations with Goodman-Kruskal's $\gamma$ (gamma) [@kreiner_note_2011]
 - confirmatory factor analysis (CFA) with WLSMV estimator for ordinal data
 - principal components analysis (PCA) of the standardized residuals [@chou_checking_2010]
 - Martin-Löf test with Monte-Carlo *p*-values [@christensenMonteCarloApproach2007]
@@ -189,7 +189,7 @@ can indicate several things. Often underfit is due to multidimensionality or a q
 
 ### Item-restscore
 
-Item-restscore uses Goodman-Kruskal's gamma and shows the expected
+Item-restscore uses Goodman-Kruskal's $\gamma$ (gamma) and shows the expected
 and observed correlation between an item and a score based on the rest of the
 items [@kreiner_note_2011]. Similarly, but inverted, to item infit, a lower
 observed correlation value than expected indicates underfit, that the item may
@@ -309,7 +309,7 @@ You can also get simulation-based thresholds for partial gamma LD, using `RMlocd
 
 Item pairs flagged by both $Q_3$ and partial gamma are
 the strongest candidates for further inspection or possible item
-revision. Some argue for creating testlets by combining a locally dependent pair into a single polytomous super-item rather than eliminating one in an LD pair. I suggest looking closely at the item content before taking any action. Often, one will see very similarly worded items, where one in a LD pair is clearly redundant. Another solution to LD can be the Graphical Loglinear Rasch Model by Kreiner and Christensen [@kreiner_validity_2007], but that is beyond the scope of this vignette.
+revision. Some argue for creating testlets by combining a locally dependent pair into a single polytomous super-item rather than eliminating one in an LD pair. I suggest looking closely at the item content before taking any action. Often, one will see very similarly worded items, where one item in an LD pair is clearly redundant. Another solution to LD can be the Graphical Loglinear Rasch Model by Kreiner and Christensen [@kreiner_validity_2007], but that is beyond the scope of this vignette.
 
 ## 3. Ordered response category thresholds
 
@@ -364,13 +364,13 @@ the corresponding confidence band. The global LR test is also reported in the pl
 
 ### Partial-gamma DIF
 
-This plot annotates each item with its partial-gamma DIF coefficient and shows group differences within class intervals (respondents grouped by their total/latent score).
+This plot annotates each item with its partial-$\gamma$ DIF coefficient and shows group differences within class intervals (respondents grouped by their total/latent score).
 
 ```{r dif-cicc, fig.cap = "Partial Gamma DIF Conditional Item Characteristic Curves", fig.height = 7}
 RMitemICCPlot(items, dif_var = phq9$gender, error_band = TRUE)
 ```
 
-To demonstrate the FWER-adjusted *p*-values, we'll run the partial $\gamma$ DIF analysis with parametric bootstrap (only 100 here for rendering speed).
+To demonstrate the FWER-adjusted *p*-values, we'll run the partial-$\gamma$ DIF analysis with parametric bootstrap (only 100 here for rendering speed, which limits the reliability of the *p*-values).
 
 ```{r dif-partgam}
 difpg <- RMdifGammaCutoff(items, dif_var = phq9$gender, iterations = 100,
@@ -429,6 +429,12 @@ land --- a guard against overinterpreting a single sample's tree
 structure; and output = "plot" draws the tree with per-node item
 parameters.
 
+## Next step
+
+Since we found issues with item misfit, local dependence, and gender DIF, these need to be addressed before the scale is used for measurement. Notably, item 2 recurs across all three criteria — overfit, the strongest local dependence (with item 1), and the largest gender DIF — making it the natural first candidate for closer inspection. The recommended approach is iterative: remove a single item (for instance, an underfit item, or one item from an LD pair after reviewing item content), then re-run the full set of analyses, since fit indications for the remaining items change with every removal. When the sample is large enough, it is good practice to set aside a random holdout subsample before the analysis, so that the final item set can be confirmed in data that played no part in the item-reduction decisions.
+
+The following sections are primarily of interest once an acceptable item set has been established; here we continue with all nine items for demonstration purposes.
+
 ## Targeting
 
 A targeting plot summarizes how well the item-threshold distribution matches
@@ -482,7 +488,7 @@ RMscoreSE(items)
 Conditional person infit/outfit MSQ and the $\ell_z$ statistic are implemented, with Monte-Carlo resampling for *p*-values.
 
 ```{r personfit, fig.cap = "Person fit with the lz statistic", fig.height = 5}
-pfit <- RMpersonFit(items, iterations = 100, output = "ggplot")
+pfit <- RMpersonFit(items, iterations = 100, output = "ggplot", seed = 7)
 pfit$lz
 ```
 

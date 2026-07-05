@@ -100,6 +100,7 @@ test_that("RMdimResidualPCA n_components controls number of rows", {
 # RMdimResidualPCACutoff -- small iterations to keep tests fast
 # ---------------------------------------------------------------------
 test_that("RMdimResidualPCACutoff returns a list with simulated eigenvalues + percentile cutoffs", {
+  skip_on_cran()
   skip_if_not_installed("eRm")
   df  <- make_dichotomous()
   res <- RMdimResidualPCACutoff(df, iterations = 10L, parallel = FALSE, seed = 1L)
@@ -114,6 +115,7 @@ test_that("RMdimResidualPCACutoff returns a list with simulated eigenvalues + pe
 })
 
 test_that("RMdimResidualPCA accepts an RMdimResidualPCACutoff result for cutoff arg", {
+  skip_on_cran()
   skip_if_not_installed("eRm")
   df <- make_dichotomous()
   bound <- RMdimResidualPCACutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
@@ -135,6 +137,7 @@ test_that("RMdimResidualPCA p_value requires the full cutoff object", {
 })
 
 test_that("RMdimResidualPCA p_value adds a one-sided p for PC1 only", {
+  skip_on_cran()
   skip_if_not_installed("eRm")
   df <- make_dichotomous()
   bound <- RMdimResidualPCACutoff(df, iterations = 10L, parallel = FALSE,
@@ -153,6 +156,7 @@ test_that("RMdimResidualPCA p_value adds a one-sided p for PC1 only", {
 })
 
 test_that("RMdimResidualPCACutoff is reproducible with the same seed", {
+  skip_on_cran()
   skip_if_not_installed("eRm")
   df <- make_dichotomous()
   r1 <- RMdimResidualPCACutoff(df, iterations = 5L, parallel = FALSE, seed = 42L)

@@ -39,6 +39,7 @@ make_mids_polr <- function(n = 200, k = 5, prop_na = 0.05, seed = 1L) {
 # RMitemInfitCutoffMI
 # ---------------------------------------------------------------------
 test_that("RMitemInfitCutoffMI accepts a polr/ordered-factor mids (coerced to numeric)", {
+  skip_on_cran()
   skip_if_not_installed("mice")
   skip_if_not_installed("iarm")
   skip_if_not_installed("MASS")
@@ -55,6 +56,7 @@ test_that("RMitemInfitCutoffMI accepts a polr/ordered-factor mids (coerced to nu
 })
 
 test_that("RMitemInfitCutoffMI returns the expected list structure", {
+  skip_on_cran()
   skip_if_not_installed("mice")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
@@ -85,6 +87,7 @@ test_that("RMitemInfitCutoffMI returns the expected list structure", {
 })
 
 test_that("RMitemInfitCutoffMI is reproducible with the same seed", {
+  skip_on_cran()
   skip_if_not_installed("mice")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
@@ -96,6 +99,7 @@ test_that("RMitemInfitCutoffMI is reproducible with the same seed", {
 })
 
 test_that("RMitemInfitCutoffMI cutoff_method = 'quantile' aggregates without ggdist", {
+  skip_on_cran()
   skip_if_not_installed("mice")
   skip_if_not_installed("iarm")
 
@@ -113,6 +117,7 @@ test_that("RMitemInfitCutoffMI cutoff_method = 'quantile' aggregates without ggd
 })
 
 test_that("RMitemInfitCutoffMI verbose = TRUE runs the per-imputation progress path", {
+  skip_on_cran()
   skip_if_not_installed("mice")
   skip_if_not_installed("iarm")
 
@@ -153,6 +158,7 @@ test_that("RMitemInfitMI output = 'dataframe' returns pooled infit per item", {
 })
 
 test_that("RMitemInfitMI accepts an RMitemInfitCutoffMI result and adds Flagged column", {
+  skip_on_cran()
   skip_if_not_installed("mice")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
@@ -200,6 +206,7 @@ test_that("RMitemInfitMI rejects malformed cutoff arguments", {
 })
 
 test_that("RMitemInfitMI errors when cutoff item names do not match", {
+  skip_on_cran()
   skip_if_not_installed("mice")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
@@ -211,6 +218,7 @@ test_that("RMitemInfitMI errors when cutoff item names do not match", {
 })
 
 test_that("RMitemInfitMI accepts the bare $item_cutoffs data.frame", {
+  skip_on_cran()
   skip_if_not_installed("mice")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
@@ -235,6 +243,7 @@ test_that("RMitemInfitMI sort = 'infit' sorts descending", {
 })
 
 test_that("RMitemInfitMI kable captions report pooling and cutoff metadata", {
+  skip_on_cran()
   skip_if_not_installed("mice")
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")

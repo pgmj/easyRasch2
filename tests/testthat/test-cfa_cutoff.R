@@ -68,6 +68,7 @@ test_that("RMdimCFACutoff(output = 'kable') errors with a migration message", {
 # RMdimCFACutoff output structure (simulate-only list)
 # ---------------------------------------------------------------------
 test_that("RMdimCFACutoff returns the simulate-only list on dichotomous data", {
+  skip_on_cran()
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   data("raschdat1", package = "eRm")
@@ -104,6 +105,7 @@ test_that("RMdimCFACutoff returns the simulate-only list on dichotomous data", {
 })
 
 test_that("Cutoffs change with different percentile values, same simulation", {
+  skip_on_cran()
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   data("raschdat1", package = "eRm")
@@ -123,6 +125,7 @@ test_that("Cutoffs change with different percentile values, same simulation", {
 })
 
 test_that("RMdimCFACutoff auto-picks PCM on polytomous data", {
+  skip_on_cran()
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   data("pcmdat2", package = "eRm")
@@ -134,6 +137,7 @@ test_that("RMdimCFACutoff auto-picks PCM on polytomous data", {
 })
 
 test_that("Same seed produces identical simulated distributions", {
+  skip_on_cran()
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   data("raschdat1", package = "eRm")
@@ -159,6 +163,7 @@ test_that("RMdimCFA requires a cutoff object", {
 })
 
 test_that("RMdimCFA returns a list of two kables by default", {
+  skip_on_cran()
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   skip_if_not_installed("knitr")
@@ -175,6 +180,7 @@ test_that("RMdimCFA returns a list of two kables by default", {
 })
 
 test_that("RMdimCFA output = 'dataframe' returns the two tables as data.frames", {
+  skip_on_cran()
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   data("raschdat1", package = "eRm")
@@ -197,6 +203,7 @@ test_that("RMdimCFA output = 'dataframe' returns the two tables as data.frames",
 })
 
 test_that("RMdimCFA p_value adds p/padj and redefines Flagged at alpha", {
+  skip_on_cran()
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   data("raschdat1", package = "eRm")
@@ -234,6 +241,7 @@ test_that("RMdimCFA p_value adds p/padj and redefines Flagged at alpha", {
 })
 
 test_that("RMdimCFA p_value correction variants run and 'none' is marginal", {
+  skip_on_cran()
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   data("raschdat1", package = "eRm")
@@ -255,6 +263,7 @@ test_that("RMdimCFA p_value correction variants run and 'none' is marginal", {
 # RMdimCFAPlot (two-plot list)
 # ---------------------------------------------------------------------
 test_that("RMdimCFAPlot returns a list of two ggplots", {
+  skip_on_cran()
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
@@ -272,6 +281,7 @@ test_that("RMdimCFAPlot returns a list of two ggplots", {
 })
 
 test_that("RMdimCFAPlot requires data", {
+  skip_on_cran()
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
@@ -284,6 +294,7 @@ test_that("RMdimCFAPlot requires data", {
 })
 
 test_that("RMdimCFAPlot percentile override recomputes without re-simulating", {
+  skip_on_cran()
   skip_if_not_installed("lavaan")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")

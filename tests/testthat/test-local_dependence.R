@@ -67,6 +67,7 @@ test_that("RMlocdepQ3 returns a knitr_kable object when output = 'kable'", {
 # RMlocdepQ3Cutoff -- small iterations
 # ---------------------------------------------------------------------
 test_that("RMlocdepQ3Cutoff returns the expected list structure", {
+  skip_on_cran()
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   set.seed(1)
@@ -82,6 +83,7 @@ test_that("RMlocdepQ3Cutoff returns the expected list structure", {
 })
 
 test_that("RMlocdepQ3Cutoff result is consumable by RMlocdepQ3", {
+  skip_on_cran()
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   set.seed(1)
@@ -93,6 +95,7 @@ test_that("RMlocdepQ3Cutoff result is consumable by RMlocdepQ3", {
 })
 
 test_that("RMlocdepQ3Cutoff is reproducible with the same seed", {
+  skip_on_cran()
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   set.seed(1)
@@ -107,6 +110,7 @@ test_that("RMlocdepQ3Cutoff is reproducible with the same seed", {
 # Per-pair additions (pair_results / pair_cutoffs / item_names)
 # ---------------------------------------------------------------------
 test_that("RMlocdepQ3Cutoff returns pair_results / pair_cutoffs / item_names", {
+  skip_on_cran()
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggdist")
@@ -140,6 +144,7 @@ test_that("RMlocdepQ3Cutoff returns pair_results / pair_cutoffs / item_names", {
 })
 
 test_that("RMlocdepQ3Cutoff cutoff_method = 'quantile' works without ggdist", {
+  skip_on_cran()
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   set.seed(1)
@@ -155,6 +160,7 @@ test_that("RMlocdepQ3Cutoff cutoff_method = 'quantile' works without ggdist", {
 # RMlocdepQ3 accepts the full simfit object
 # ---------------------------------------------------------------------
 test_that("full simfit returns list whose $matrix matches the scalar cutoff", {
+  skip_on_cran()
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggdist")
@@ -173,6 +179,7 @@ test_that("full simfit returns list whose $matrix matches the scalar cutoff", {
 # RMlocdepQ3Plot
 # ---------------------------------------------------------------------
 test_that("RMlocdepQ3Plot returns a $matrix/$pairs list", {
+  skip_on_cran()
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggdist")
@@ -197,6 +204,7 @@ test_that("RMlocdepQ3Plot returns a $matrix/$pairs list", {
 })
 
 test_that("RMlocdepQ3Plot n_pairs trims and orders by deviation", {
+  skip_on_cran()
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggdist")
@@ -214,6 +222,7 @@ test_that("RMlocdepQ3Plot n_pairs trims and orders by deviation", {
 })
 
 test_that("RMlocdepQ3Plot validates inputs", {
+  skip_on_cran()
   skip_if_not_installed("mirt")
   skip_if_not_installed("eRm")
   skip_if_not_installed("ggdist")
@@ -247,6 +256,7 @@ q3_null_data <- function(n = 300, J = 7, seed = 11L) {
 }
 
 test_that("full cutoff object returns list($matrix, $pairs, $plot)", {
+  skip_on_cran()
   skip_if_not_installed("mirt"); skip_if_not_installed("ggdist")
   df  <- q3_null_data()
   sim <- RMlocdepQ3Cutoff(df, iterations = 300, parallel = FALSE, seed = 1)
@@ -258,6 +268,7 @@ test_that("full cutoff object returns list($matrix, $pairs, $plot)", {
 })
 
 test_that("n_pairs truncates the $pairs table", {
+  skip_on_cran()
   skip_if_not_installed("mirt"); skip_if_not_installed("ggdist")
   df  <- q3_null_data()
   sim <- RMlocdepQ3Cutoff(df, iterations = 200, parallel = FALSE, seed = 1)
@@ -266,6 +277,7 @@ test_that("n_pairs truncates the $pairs table", {
 })
 
 test_that("p_value = TRUE adds p columns to $pairs and flags on padj", {
+  skip_on_cran()
   skip_if_not_installed("mirt"); skip_if_not_installed("ggdist")
   df  <- q3_null_data()
   sim <- RMlocdepQ3Cutoff(df, iterations = 300, parallel = FALSE, seed = 1)
@@ -295,6 +307,7 @@ test_that("NULL cutoff is unchanged (single square matrix)", {
 })
 
 test_that("RMlocdepQ3 detects an injected locally dependent pair", {
+  skip_on_cran()
   skip_if_not_installed("mirt"); skip_if_not_installed("ggdist")
   set.seed(3); n <- 400; J <- 7
   theta <- rnorm(n, 0, 1.3); beta <- seq(-1.5, 1.5, length.out = J)
@@ -315,6 +328,7 @@ test_that("RMlocdepQ3 detects an injected locally dependent pair", {
 # Estimator engine (CML/WLE default, MML/EAP optional)
 # ---------------------------------------------------------------------
 test_that("CML is the default estimator and MML stays available", {
+  skip_on_cran()
   skip_if_not_installed("psychotools")
   set.seed(3)
   df <- as.data.frame(matrix(sample(0:3, 250 * 6, replace = TRUE), 250, 6))
@@ -334,6 +348,7 @@ test_that("CML is the default estimator and MML stays available", {
 })
 
 test_that("cutoff object stores its estimator and RMlocdepQ3 honours it", {
+  skip_on_cran()
   skip_if_not_installed("psychotools"); skip_if_not_installed("ggdist")
   skip_if_not_installed("mirt")
   set.seed(4)
@@ -367,6 +382,7 @@ test_that("shared person-estimation helper returns theta + sem for WLE and EAP",
 # Conditional DGP option
 # ---------------------------------------------------------------------
 test_that("dgp = 'conditional' runs and is consumable downstream", {
+  skip_on_cran()
   skip_if_not_installed("psychotools"); skip_if_not_installed("ggdist")
   set.seed(6)
   df <- as.data.frame(matrix(sample(0:1, 200 * 6, replace = TRUE), 200, 6))

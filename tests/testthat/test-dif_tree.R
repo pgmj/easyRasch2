@@ -113,6 +113,7 @@ test_that("RMdifTree errors when model = 'RM' on polytomous data", {
 # Output structures
 # ---------------------------------------------------------------------
 test_that("RMdifTree default output is a knitr_kable", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_dif_dichotomous()
   set.seed(1)
@@ -140,6 +141,7 @@ test_that("RMdifTree output = 'dataframe' on dichotomous data picks RM/MH", {
 })
 
 test_that("RMdifTree output = 'dataframe' on polytomous data picks PCM/pgamma", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_polytomous_with_rescale()
   set.seed(1)
@@ -153,6 +155,7 @@ test_that("RMdifTree output = 'dataframe' on polytomous data picks PCM/pgamma", 
 })
 
 test_that("RMdifTree output = 'tree' returns an RMdifTree-classed partykit tree", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_dif_dichotomous()
   set.seed(1)
@@ -168,6 +171,7 @@ test_that("RMdifTree output = 'tree' returns an RMdifTree-classed partykit tree"
 # Flagged + Rescaled columns
 # ---------------------------------------------------------------------
 test_that("Flagged is logical and TRUE only for Class B/C", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_dif_dichotomous()
   set.seed(1)
@@ -184,6 +188,7 @@ test_that("Flagged is logical and TRUE only for Class B/C", {
 })
 
 test_that("Rescaled column flags item × split cells affected by terminal-node rescaling", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_polytomous_with_rescale()
   set.seed(1)
@@ -202,6 +207,7 @@ test_that("Rescaled column flags item × split cells affected by terminal-node r
 # on_rescale modes
 # ---------------------------------------------------------------------
 test_that("on_rescale = 'message' (default) emits message but does not error", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_polytomous_with_rescale()
   set.seed(1)
@@ -214,6 +220,7 @@ test_that("on_rescale = 'message' (default) emits message but does not error", {
 })
 
 test_that("on_rescale = 'warning' raises a warning instead", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_polytomous_with_rescale()
   set.seed(1)
@@ -228,6 +235,7 @@ test_that("on_rescale = 'warning' raises a warning instead", {
 })
 
 test_that("on_rescale = 'stop' raises an error instead", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_polytomous_with_rescale()
   set.seed(1)
@@ -245,6 +253,7 @@ test_that("on_rescale = 'stop' raises an error instead", {
 # Stability assessment
 # ---------------------------------------------------------------------
 test_that("stability = TRUE attaches a stability summary attribute", {
+  skip_on_cran()
   need_tree_pkgs()
   skip_if_not_installed("stablelearner")
   d <- make_dif_dichotomous()
@@ -263,6 +272,7 @@ test_that("stability = TRUE attaches a stability summary attribute", {
 })
 
 test_that("stability = TRUE does not clobber a pre-existing message sink", {
+  skip_on_cran()
   need_tree_pkgs()
   skip_if_not_installed("stablelearner")
   d <- make_dif_dichotomous()
@@ -287,6 +297,7 @@ test_that("stability = TRUE does not clobber a pre-existing message sink", {
 # Covariate-name propagation
 # ---------------------------------------------------------------------
 test_that("Variable column reflects user's expression when covariates is passed as dif$col", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_dif_dichotomous()
   set.seed(1)
@@ -296,6 +307,7 @@ test_that("Variable column reflects user's expression when covariates is passed 
 })
 
 test_that("Variable column reflects user's expression when covariates is a bare symbol", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_dif_dichotomous()
   my_gender <- d$covs$gender
@@ -306,6 +318,7 @@ test_that("Variable column reflects user's expression when covariates is a bare 
 })
 
 test_that("Existing data.frame column names are preserved", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_dif_dichotomous()
   set.seed(1)
@@ -315,6 +328,7 @@ test_that("Existing data.frame column names are preserved", {
 })
 
 test_that("single covariate passed by numeric index (non-syntactic name) works", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_dif_dichotomous()
   set.seed(1)
@@ -350,6 +364,7 @@ make_dif_poly <- function(n = 400, seed = 11L) {
 }
 
 test_that("purification = 'iterative' (MH) runs on dichotomous DIF data", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_dif_dichotomous()
   set.seed(1)
@@ -362,6 +377,7 @@ test_that("purification = 'iterative' (MH) runs on dichotomous DIF data", {
 })
 
 test_that("purification = 'iterative' (partial gamma) with p_adj on polytomous data", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_dif_poly()
   set.seed(1)
@@ -374,6 +390,7 @@ test_that("purification = 'iterative' (partial gamma) with p_adj on polytomous d
 })
 
 test_that("default kable output renders per-split effect sizes", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_dif_dichotomous()
   set.seed(1)
@@ -383,6 +400,7 @@ test_that("default kable output renders per-split effect sizes", {
 })
 
 test_that("output = 'plot' draws the tree without error", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_dif_dichotomous()
   set.seed(1)
@@ -394,6 +412,7 @@ test_that("output = 'plot' draws the tree without error", {
 })
 
 test_that("prune_negligible = TRUE runs and returns a tree", {
+  skip_on_cran()
   need_tree_pkgs()
   d <- make_dif_dichotomous()
   set.seed(1)

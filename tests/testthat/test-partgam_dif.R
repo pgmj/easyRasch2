@@ -64,6 +64,7 @@ test_that("RMdifGamma output = 'kable' returns a knitr_kable", {
 # RMdifGammaCutoff -- small iterations
 # ---------------------------------------------------------------------
 test_that("RMdifGammaCutoff returns a list with item_cutoffs + actual_iterations", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()
@@ -87,6 +88,7 @@ test_that("RMdifGammaCutoff returns a list with item_cutoffs + actual_iterations
 })
 
 test_that("RMdifGamma accepts an RMdifGammaCutoff result and adds Flagged column", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()
@@ -104,6 +106,7 @@ test_that("RMdifGamma accepts an RMdifGammaCutoff result and adds Flagged column
 })
 
 test_that("RMdifGammaCutoff is reproducible with the same seed", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()
@@ -117,6 +120,7 @@ test_that("RMdifGammaCutoff is reproducible with the same seed", {
 # RMdifGammaPlot
 # ---------------------------------------------------------------------
 test_that("RMdifGammaPlot returns a ggplot from an RMdifGammaCutoff result", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   skip_if_not_installed("ggplot2")
@@ -134,6 +138,7 @@ test_that("RMdifGammaPlot returns a ggplot from an RMdifGammaCutoff result", {
 })
 
 test_that("RMdifGammaPlot with observed data overlay returns a ggplot", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   skip_if_not_installed("ggplot2")
@@ -165,6 +170,7 @@ test_that("RMdifGamma rejects malformed cutoff arguments", {
 })
 
 test_that("RMdifGamma errors when cutoff item names do not match data", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()
@@ -182,6 +188,7 @@ test_that("RMdifGamma errors when cutoff item names do not match data", {
 })
 
 test_that("RMdifGamma band flag matches gamma vs bounds", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()
@@ -238,6 +245,7 @@ test_that("RMdifGamma p_value requires the full cutoff object", {
 })
 
 test_that("RMdifGamma p_value replaces asymptotic p columns and flags at alpha", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()
@@ -291,6 +299,7 @@ test_that("RMdifGamma p_value replaces asymptotic p columns and flags at alpha",
 })
 
 test_that("RMdifGamma p_value correction variants run and 'none' is marginal", {
+  skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()

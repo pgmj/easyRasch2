@@ -1,6 +1,6 @@
-# easyRasch2 (development version)
+# easyRasch2 1.0.0
 
-A large consolidation release in preparation for the next CRAN submission. The
+A large consolidation release. The
 headline change is that the whole package now runs on a **single estimation
 engine** — conditional maximum likelihood (CML) item parameters via
 `psychotools` and Warm's weighted-likelihood (WLE) person locations — replacing

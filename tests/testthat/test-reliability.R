@@ -19,6 +19,7 @@ test_that("RMreliability errors when data has non-zero minimum", {
 # RMreliability() -- output structure (no bootstrap path)
 # ---------------------------------------------------------------------
 test_that("RMreliability output = 'dataframe' returns four reliability rows", {
+  skip_on_cran()
   skip_if_not_installed("eRm")
   skip_if_not_installed("mirt")
   skip_if_not_installed("ggdist")
@@ -36,6 +37,7 @@ test_that("RMreliability output = 'dataframe' returns four reliability rows", {
 })
 
 test_that("RMreliability output = 'kable' returns knitr_kable", {
+  skip_on_cran()
   skip_if_not_installed("eRm")
   skip_if_not_installed("mirt")
   skip_if_not_installed("ggdist")
