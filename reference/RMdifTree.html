@@ -50,7 +50,7 @@ stablelearner::stabletree() (Philipp et al., 2018)."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Tree-based DIF analysis with effect-size classification</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/R/dif_tree.R" class="external-link"><code>R/dif_tree.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/v1.0.0/R/dif_tree.R" class="external-link"><code>R/dif_tree.R</code></a></small>
       <div class="d-none name"><code>RMdifTree.Rd</code></div>
     </div>
 
@@ -365,9 +365,11 @@ Series</em>(1). <a href="https://doi.org/10.1002/j.2333-8504.2012.tb02290.x" cla
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Matrix is not positive semidefinite</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error in root.matrix(switch(vcov, opg = chol2inv(chol(meat)), info = bread,  : </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Matrix is not positive semidefinite</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error in root.matrix(switch(vcov, opg = chol2inv(chol(meat)), info = bread,  : </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Matrix is not positive semidefinite</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Stability assessment notes (suppressed during fitting): 169 'minimum score not zero' rescaling warning(s); 21 'items with null categories' warning(s). These reflect sparsity in some resamples and are normal sampling variability; selection-frequency and cutpoint summaries are based on resamples that completed successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     Variable    Type Selected_orig Selection_freq_pct Cutpoint_mean Cutpoint_sd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1        age numeric          TRUE                100       44.7105     10.3973</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        age numeric          TRUE                100       44.1081      9.8454</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2     gender  factor          TRUE                100            NA          NA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 motivation ordered         FALSE                  4            NA          NA</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
