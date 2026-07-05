@@ -25,7 +25,7 @@ with confidence intervals based on threshold standard errors.
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.8.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,7 +74,7 @@ with confidence intervals based on threshold standard errors.</p></li>
 <span>  person_fill <span class="op">=</span> <span class="st">"#0072B2"</span>,</span>
 <span>  threshold_fill <span class="op">=</span> <span class="st">"#D55E00"</span>,</span>
 <span>  height_ratios <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">2</span>, <span class="fl">5</span><span class="op">)</span>,</span>
-<span>  output <span class="op">=</span> <span class="st">"figure"</span></span>
+<span>  output <span class="op">=</span> <span class="st">"patchwork"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -132,7 +132,7 @@ panels. Default <code>c(3, 2, 5)</code>.</p></dd>
 
 
 <dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
-<dd><p>Character string. <code>"figure"</code> (the default) returns the
+<dd><p>Character string. <code>"patchwork"</code> (the default) returns the
 combined patchwork plot. <code>"list"</code> returns a named list of the three
 ggplot objects (<code>p1</code>, <code>p2</code>, <code>p3</code>) for further customisation.</p></dd>
 
@@ -140,7 +140,7 @@ ggplot objects (<code>p1</code>, <code>p2</code>, <code>p3</code>) for further c
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
 
-<ul><li><p>If <code>output = "figure"</code>: a <code>patchwork</code> object (combined <code>ggplot</code>).</p></li>
+<ul><li><p>If <code>output = "patchwork"</code>: a <code>patchwork</code> object (combined <code>ggplot</code>).</p></li>
 <li><p>If <code>output = "list"</code>: a named list with elements <code>p1</code> (person histogram),
 <code>p2</code> (threshold histogram), and <code>p3</code> (item threshold dot-whisker plot).</p></li>
 </ul></div>
@@ -152,19 +152,18 @@ makes it easy to assess whether the test is well-targeted to the sample.</p>
 The function checks whether any item response category has fewer than 3
 observations. If all categories have at least 3 responses, item threshold
 locations and their standard errors are estimated via Conditional Maximum
-Likelihood (CML) using <code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code> (dichotomous) or <code><a href="https://rdrr.io/pkg/eRm/man/PCM.html" class="external-link">eRm::PCM()</a></code>
-(polytomous), with SEs from <code><a href="https://rdrr.io/pkg/eRm/man/thresholds.html" class="external-link">eRm::thresholds()</a></code>. If any category has fewer
-than 3 responses, the function falls back to Marginal Maximum Likelihood
-(MML) estimation via <code><a href="https://philchalmers.github.io/mirt/reference/mirt.html" class="external-link">mirt::mirt()</a></code> with <code>itemtype = "Rasch"</code> and
-<code>SE = TRUE</code>, which is more numerically stable under sparse-category
-conditions. A message is emitted when the MML fallback is used.</p>
+Likelihood (CML) using <code><a href="https://rdrr.io/pkg/psychotools/man/pcmodel.html" class="external-link">psychotools::pcmodel()</a></code> (a dichotomous item is a
+2-category PCM). If any category has fewer than 3 responses, the function
+falls back to Marginal Maximum Likelihood (MML) estimation via
+<code><a href="https://philchalmers.github.io/mirt/reference/mirt.html" class="external-link">mirt::mirt()</a></code> with <code>itemtype = "Rasch"</code> and <code>SE = TRUE</code>, which is more
+numerically stable under sparse-category conditions. A message is emitted
+when the MML fallback is used.</p>
 <p>In both cases, item threshold locations are centered (shifted so the grand
 mean of all thresholds equals zero).</p>
-<p><strong>Person estimates</strong> are obtained via Maximum Likelihood (ML) from
-<code><a href="https://rdrr.io/pkg/eRm/man/person.parameter.html" class="external-link">eRm::person.parameter()</a></code>, which uses spline interpolation to extrapolate
-location estimates for persons with extreme scores (all-zero or perfect).
-Persons for whom the spline interpolation fails receive <code>NA</code> and are
-excluded from the histogram.</p>
+<p><strong>Person estimates</strong> are obtained by Warm's weighted likelihood (WLE)
+from the fitted item thresholds, consistent with the rest of the package.
+WLE is finite at extreme scores, so all-zero and perfect responders are
+located rather than dropped.</p>
 <p><strong>Confidence intervals</strong> for item thresholds are based on Wald-type
 intervals: threshold estimate ± z × SE, where z is the standard normal
 quantile corresponding to <code>ci_level</code>.</p>
@@ -177,40 +176,40 @@ Suggests, not Imports).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="https://rdrr.io/pkg/eRm/man/PCM.html" class="external-link">eRm::PCM()</a></code>, <code><a href="https://rdrr.io/pkg/eRm/man/RM.html" class="external-link">eRm::RM()</a></code>, <code><a href="https://philchalmers.github.io/mirt/reference/mirt.html" class="external-link">mirt::mirt()</a></code>,
-<code><a href="https://rdrr.io/pkg/eRm/man/person.parameter.html" class="external-link">eRm::person.parameter()</a></code>, <code><a href="https://rdrr.io/pkg/eRm/man/thresholds.html" class="external-link">eRm::thresholds()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="https://rdrr.io/pkg/psychotools/man/pcmodel.html" class="external-link">psychotools::pcmodel()</a></code>, <code><a href="https://philchalmers.github.io/mirt/reference/mirt.html" class="external-link">mirt::mirt()</a></code></p></div>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span><span class="co"># Polytomous example</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">sim_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">3</span>, <span class="fl">200</span> <span class="op">*</span> <span class="fl">8</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">200</span>, ncol <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">sim_data</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Item"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">8</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="op">&amp;&amp;</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"patchwork"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="co"># Polytomous example</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">sim_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">3</span>, <span class="fl">200</span> <span class="op">*</span> <span class="fl">8</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">200</span>, ncol <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">sim_data</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Item"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">8</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Default: mean/SD, data order, 95% CI</span></span></span>
-<span class="r-in"><span><span class="fu">RMtargeting</span><span class="op">(</span><span class="va">sim_data</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># Default: mean/SD, data order, 95% CI</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMtargeting</span><span class="op">(</span><span class="va">sim_data</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Robust (median/MAD), sorted by location, 84% CI</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMtargeting</span><span class="op">(</span><span class="va">sim_data</span>, robust <span class="op">=</span> <span class="cn">TRUE</span>, sort_items <span class="op">=</span> <span class="st">"location"</span>,</span></span>
+<span class="r-in"><span>              ci_level <span class="op">=</span> <span class="fl">0.84</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Get list of sub-plots for customisation</span></span></span>
+<span class="r-in"><span>  <span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu">RMtargeting</span><span class="op">(</span><span class="va">sim_data</span>, output <span class="op">=</span> <span class="st">"list"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">plots</span><span class="op">$</span><span class="va">p1</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"My custom title"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Dichotomous example</span></span></span>
+<span class="r-in"><span>  <span class="va">sim_bin</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">1</span>, <span class="fl">200</span> <span class="op">*</span> <span class="fl">10</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">200</span>, ncol <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">sim_bin</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Item"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMtargeting</span><span class="op">(</span><span class="va">sim_bin</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-plt img"><img src="RMtargeting-1.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Robust (median/MAD), sorted by location, 84% CI</span></span></span>
-<span class="r-in"><span><span class="fu">RMtargeting</span><span class="op">(</span><span class="va">sim_data</span>, robust <span class="op">=</span> <span class="cn">TRUE</span>, sort_items <span class="op">=</span> <span class="st">"location"</span>, ci_level <span class="op">=</span> <span class="fl">0.84</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="RMtargeting-2.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Get list of sub-plots for customisation</span></span></span>
-<span class="r-in"><span><span class="va">plots</span> <span class="op">&lt;-</span> <span class="fu">RMtargeting</span><span class="op">(</span><span class="va">sim_data</span>, output <span class="op">=</span> <span class="st">"list"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">plots</span><span class="op">$</span><span class="va">p1</span> <span class="op">+</span> <span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"My custom title"</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="RMtargeting-3.png" alt="" width="700" height="433"></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Dichotomous example</span></span></span>
-<span class="r-in"><span><span class="va">sim_bin</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">1</span>, <span class="fl">200</span> <span class="op">*</span> <span class="fl">10</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">200</span>, ncol <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">sim_bin</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Item"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">RMtargeting</span><span class="op">(</span><span class="va">sim_bin</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="RMtargeting-4.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

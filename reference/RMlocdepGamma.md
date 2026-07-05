@@ -9,7 +9,15 @@ the rest score (total score minus one of the items in the pair).
 ## Usage
 
 ``` r
-RMlocdepGamma(data, cutoff = NULL, output = "kable", n_pairs = NULL)
+RMlocdepGamma(
+  data,
+  cutoff = NULL,
+  p_value = FALSE,
+  correction = c("fwer", "fdr_bh", "fdr_by", "none"),
+  alpha = 0.05,
+  output = "kable",
+  n_pairs = NULL
+)
 ```
 
 ## Arguments
@@ -37,6 +45,37 @@ RMlocdepGamma(data, cutoff = NULL, output = "kable", n_pairs = NULL)
     and `Flagged` (logical; `TRUE` when the observed partial gamma falls
     outside the credible range) to the result.
 
+- p_value:
+
+  Logical. When `TRUE`, adds one-sided bootstrap p-values for *excess
+  positive* local dependence (`p_gamma`, `padj_gamma`), matching the
+  `p_value` semantics of
+  [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md),
+  and `flagged` reflects `padj_gamma < alpha` (positive deviations only)
+  instead of the credible range. One test per item pair: the p-value is
+  computed in the canonical direction (direction 1, rest score = total -
+  Item2, the direction that was simulated) and repeated in the
+  direction-2 table for the same pair. The asymptotic BH-adjusted
+  p-value and star columns from
+  [`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html)
+  are **dropped** in this mode; the simulated `gamma_low` / `gamma_high`
+  band is kept as the effect-size reference. Requires the **full**
+  [`RMlocdepGammaCutoff`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaCutoff.md)
+  object as `cutoff` (it carries the simulated distributions in
+  `$results`). Default `FALSE`.
+
+- correction:
+
+  Character. Multiplicity correction for the bootstrap p-values, applied
+  over the family of all item pairs (before any `n_pairs` display
+  filter): `"fwer"` (default; Westfall-Young studentised-max step-down),
+  `"fdr_bh"`, `"fdr_by"`, or `"none"`. Ignored when `p_value = FALSE`.
+
+- alpha:
+
+  Numeric in (0, 1). Significance level used to flag pairs on the
+  corrected p-value. Default `0.05`. Ignored when `p_value = FALSE`.
+
 - output:
 
   Character string controlling the return value. Either `"kable"`
@@ -56,10 +95,12 @@ RMlocdepGamma(data, cutoff = NULL, output = "kable", n_pairs = NULL)
 ## Value
 
 - If `output = "kable"`: an object of class `"RMlocdepGamma"`.
-  Internally a list with two `knitr_kable` elements — `$direction1`
-  (rest score = total - Item2) and `$direction2` (rest score = total -
-  Item1) — each with columns "Item 1", "Item 2", "Partial gamma", "Adj.
-  p-value (BH)", and "p-value sign." (a star-string indicator from
+  Internally a list with two `knitr_kable` elements, `$direction1` and
+  `$direction2`. In both, the rest score is the total score minus Item 2
+  (the second column); the two elements list each item pair in the two
+  possible orders, so together they cover both rest-score directions for
+  every pair. Each has columns "Item 1", "Item 2", "Partial gamma",
+  "Adj. p-value (BH)", and "p-value sign." (a star-string indicator from
   [`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html)).
   When `cutoff` is provided, additional columns "Gamma low", "Gamma
   high", and "Flagged" are included.
@@ -75,7 +116,9 @@ RMlocdepGamma(data, cutoff = NULL, output = "kable", n_pairs = NULL)
 - If `output = "dataframe"`: a named list of two data.frames
   (`$direction1`, `$direction2`) with columns `Item1`, `Item2`, `gamma`,
   `padj_bh`, `Significance`. When `cutoff` is provided, columns
-  `gamma_low`, `gamma_high`, and `flagged` are also included.
+  `gamma_low`, `gamma_high`, and `flagged` are also included. With
+  `p_value = TRUE`, `padj_bh` and `Significance` are replaced by
+  `p_gamma` and `padj_gamma` (identical for a pair in both directions).
 
 ## Details
 
@@ -91,11 +134,57 @@ while large negative values suggest negative LD.
 
 The `iarm` package must be installed (it is in Suggests, not Imports).
 
+**Bootstrap p-values.** When `p_value = TRUE`, each pair's observed
+partial gamma (canonical direction) is compared against its simulated
+null distribution (from `cutoff$results`, simulated under local
+independence). The per-pair statistic is the residual studentised by the
+bootstrap mean and SD; the marginal p-value is the one-sided Monte-Carlo
+p-value `(1 + #\{t* >= t\}) / (B + 1)` for excess *positive* LD
+(redundancy, the diagnostic target — matching
+[`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md)),
+so it can be no smaller than `1 / (B + 1)`. The band still shows both
+bounds for reference. `correction = "fwer"` uses the Westfall-Young
+studentised-max step-down over the family of all pairs, which exploits
+the bootstrap dependence among them (Ferreira, 2024); it is liberal when
+the simulation is small, so at least 1000 `iterations` in
+[`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaCutoff.md)
+are recommended (a warning is issued below that). Unlike the asymptotic
+p-values from
+[`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html),
+these are calibrated against the *simulated Rasch null* rather than the
+asymptotic SE; they are model-conditional and sample-size-sensitive, and
+are reported alongside the simulated effect-size band, not in place of
+it.
+
+## Multiple comparisons
+
+The marginal p-value controls the error rate of a *single* comparison:
+for one item (or item pair) decided on in advance it is the relevant
+value. But scanning all *k* comparisons and flagging whichever fall
+below `alpha` tests *k* hypotheses at once, so the chance of at least
+one false flag inflates to roughly \\1 - (1 - \alpha)^k\\ (e.g. about
+34% for *k* = 8 at `alpha = 0.05`) – even when every marginal p-value is
+correctly calibrated. The corrected (adjusted) p-value controls this:
+`correction = "fwer"` bounds the probability of *any* false flag
+(strict, lower power), while `"fdr_bh"` / `"fdr_by"` bound the expected
+*proportion* of false flags among those raised (a more lenient middle
+ground). Rule of thumb: use the marginal p-value for a single
+pre-specified comparison, and a corrected p-value when screening the
+whole table – the usual workflow.
+
 ## References
 
 Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.) (2013). *Rasch
 Models in Health*, pp. 133–135. ISTE & Wiley.
 [doi:10.1002/9781118574454](https://doi.org/10.1002/9781118574454)
+
+Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate'
+number of hypotheses simultaneously. *Journal of Statistical Theory and
+Practice, 19*(6).
+[doi:10.1007/s42519-024-00412-4](https://doi.org/10.1007/s42519-024-00412-4)
+
+Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple
+Testing*. Wiley.
 
 ## See also
 
@@ -106,324 +195,127 @@ Models in Health*, pp. 133–135. ISTE & Wiley.
 
 ``` r
 # \donttest{
-set.seed(42)
-sim_data <- as.data.frame(
-  matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-)
-colnames(sim_data) <- paste0("Item", 1:10)
+if (requireNamespace("iarm", quietly = TRUE)) {
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+  )
+  colnames(sim_data) <- paste0("Item", 1:10)
 
-# Default kable output
-RMlocdepGamma(sim_data)
-#> 
-#> 
-#> Table: Partial gamma LD analysis (n = 200 complete cases). Positive gamma indicates positive local dependence between items. Direction 1: rest score = total - Item2.
-#> 
-#> |Item 1 |Item 2 | Partial gamma| Adj. p-value (BH)|p-value sign. |
-#> |:------|:------|-------------:|-----------------:|:-------------|
-#> |Item1  |Item2  |         0.320|             1.000|              |
-#> |Item1  |Item3  |        -0.143|             1.000|              |
-#> |Item1  |Item4  |        -0.069|             1.000|              |
-#> |Item1  |Item5  |        -0.153|             1.000|              |
-#> |Item1  |Item6  |        -0.031|             1.000|              |
-#> |Item1  |Item7  |        -0.163|             1.000|              |
-#> |Item1  |Item8  |         0.191|             1.000|              |
-#> |Item1  |Item9  |         0.124|             1.000|              |
-#> |Item1  |Item10 |        -0.039|             1.000|              |
-#> |Item2  |Item3  |        -0.206|             1.000|              |
-#> |Item2  |Item4  |        -0.202|             1.000|              |
-#> |Item2  |Item5  |         0.058|             1.000|              |
-#> |Item2  |Item6  |         0.025|             1.000|              |
-#> |Item2  |Item7  |        -0.230|             1.000|              |
-#> |Item2  |Item8  |         0.150|             1.000|              |
-#> |Item2  |Item9  |         0.154|             1.000|              |
-#> |Item2  |Item10 |         0.024|             1.000|              |
-#> |Item3  |Item4  |         0.021|             1.000|              |
-#> |Item3  |Item5  |         0.190|             1.000|              |
-#> |Item3  |Item6  |        -0.143|             1.000|              |
-#> |Item3  |Item7  |         0.086|             1.000|              |
-#> |Item3  |Item8  |        -0.042|             1.000|              |
-#> |Item3  |Item9  |        -0.074|             1.000|              |
-#> |Item3  |Item10 |         0.221|             1.000|              |
-#> |Item4  |Item5  |        -0.024|             1.000|              |
-#> |Item4  |Item6  |         0.224|             1.000|              |
-#> |Item4  |Item7  |         0.333|             1.000|              |
-#> |Item4  |Item8  |        -0.406|             0.305|              |
-#> |Item4  |Item9  |        -0.153|             1.000|              |
-#> |Item4  |Item10 |        -0.084|             1.000|              |
-#> |Item5  |Item6  |        -0.136|             1.000|              |
-#> |Item5  |Item7  |         0.157|             1.000|              |
-#> |Item5  |Item8  |         0.130|             1.000|              |
-#> |Item5  |Item9  |        -0.348|             1.000|              |
-#> |Item5  |Item10 |         0.014|             1.000|              |
-#> |Item6  |Item7  |         0.004|             1.000|              |
-#> |Item6  |Item8  |        -0.133|             1.000|              |
-#> |Item6  |Item9  |         0.062|             1.000|              |
-#> |Item6  |Item10 |        -0.243|             1.000|              |
-#> |Item7  |Item8  |        -0.198|             1.000|              |
-#> |Item7  |Item9  |        -0.005|             1.000|              |
-#> |Item7  |Item10 |         0.021|             1.000|              |
-#> |Item8  |Item9  |         0.301|             1.000|              |
-#> |Item8  |Item10 |         0.045|             1.000|              |
-#> |Item9  |Item10 |         0.036|             1.000|              |
-#> 
-#> 
-#> 
-#> Table: Partial gamma LD analysis (n = 200 complete cases). Positive gamma indicates positive local dependence between items. Direction 2: rest score = total - Item1.
-#> 
-#> |Item 1 |Item 2 | Partial gamma| Adj. p-value (BH)|p-value sign. |
-#> |:------|:------|-------------:|-----------------:|:-------------|
-#> |Item2  |Item1  |         0.300|             1.000|              |
-#> |Item3  |Item1  |        -0.158|             1.000|              |
-#> |Item3  |Item2  |        -0.230|             1.000|              |
-#> |Item4  |Item1  |        -0.141|             1.000|              |
-#> |Item4  |Item2  |        -0.263|             1.000|              |
-#> |Item4  |Item3  |        -0.042|             1.000|              |
-#> |Item5  |Item1  |        -0.152|             1.000|              |
-#> |Item5  |Item2  |         0.039|             1.000|              |
-#> |Item5  |Item3  |         0.201|             1.000|              |
-#> |Item5  |Item4  |         0.021|             1.000|              |
-#> |Item6  |Item1  |        -0.102|             1.000|              |
-#> |Item6  |Item2  |        -0.063|             1.000|              |
-#> |Item6  |Item3  |        -0.208|             1.000|              |
-#> |Item6  |Item4  |         0.206|             1.000|              |
-#> |Item6  |Item5  |        -0.201|             1.000|              |
-#> |Item7  |Item1  |        -0.116|             1.000|              |
-#> |Item7  |Item2  |        -0.195|             1.000|              |
-#> |Item7  |Item3  |         0.211|             1.000|              |
-#> |Item7  |Item4  |         0.428|             0.126|              |
-#> |Item7  |Item5  |         0.218|             1.000|              |
-#> |Item7  |Item6  |         0.093|             1.000|              |
-#> |Item8  |Item1  |         0.237|             1.000|              |
-#> |Item8  |Item2  |         0.220|             1.000|              |
-#> |Item8  |Item3  |         0.024|             1.000|              |
-#> |Item8  |Item4  |        -0.319|             1.000|              |
-#> |Item8  |Item5  |         0.152|             1.000|              |
-#> |Item8  |Item6  |        -0.022|             1.000|              |
-#> |Item8  |Item7  |        -0.222|             1.000|              |
-#> |Item9  |Item1  |         0.193|             1.000|              |
-#> |Item9  |Item2  |         0.199|             1.000|              |
-#> |Item9  |Item3  |        -0.008|             1.000|              |
-#> |Item9  |Item4  |        -0.071|             1.000|              |
-#> |Item9  |Item5  |        -0.256|             1.000|              |
-#> |Item9  |Item6  |         0.218|             1.000|              |
-#> |Item9  |Item7  |        -0.001|             1.000|              |
-#> |Item9  |Item8  |         0.357|             1.000|              |
-#> |Item10 |Item1  |        -0.071|             1.000|              |
-#> |Item10 |Item2  |        -0.023|             1.000|              |
-#> |Item10 |Item3  |         0.176|             1.000|              |
-#> |Item10 |Item4  |        -0.088|             1.000|              |
-#> |Item10 |Item5  |        -0.029|             1.000|              |
-#> |Item10 |Item6  |        -0.235|             1.000|              |
-#> |Item10 |Item7  |        -0.040|             1.000|              |
-#> |Item10 |Item8  |        -0.047|             1.000|              |
-#> |Item10 |Item9  |        -0.069|             1.000|              |
+  # Default kable output
+  RMlocdepGamma(sim_data)
 
-# Return as data.frame list
-RMlocdepGamma(sim_data, output = "dataframe")
+  # Return as data.frame list
+  RMlocdepGamma(sim_data, output = "dataframe")
+
+  # Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
+  if (requireNamespace("ggdist", quietly = TRUE)) {
+    cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100,
+                                      parallel = FALSE, seed = 42)
+    RMlocdepGamma(sim_data, cutoff = cutoff_res)
+
+    # Bootstrap p-values with family-wise (Westfall-Young) correction
+    # (use iterations >= 1000 in real analyses for stable p-values)
+    RMlocdepGamma(sim_data, cutoff = cutoff_res, p_value = TRUE,
+                  output = "dataframe")
+  }
+}
+#> Warning: Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations >= 1000 in RMlocdepGammaCutoff() for reliable p-values.
 #> $direction1
-#>    Item1  Item2  gamma padj_bh Significance
-#> 1  Item1  Item2  0.320   1.000             
-#> 2  Item1  Item3 -0.143   1.000             
-#> 3  Item1  Item4 -0.069   1.000             
-#> 4  Item1  Item5 -0.153   1.000             
-#> 5  Item1  Item6 -0.031   1.000             
-#> 6  Item1  Item7 -0.163   1.000             
-#> 7  Item1  Item8  0.191   1.000             
-#> 8  Item1  Item9  0.124   1.000             
-#> 9  Item1 Item10 -0.039   1.000             
-#> 10 Item2  Item3 -0.206   1.000             
-#> 11 Item2  Item4 -0.202   1.000             
-#> 12 Item2  Item5  0.058   1.000             
-#> 13 Item2  Item6  0.025   1.000             
-#> 14 Item2  Item7 -0.230   1.000             
-#> 15 Item2  Item8  0.150   1.000             
-#> 16 Item2  Item9  0.154   1.000             
-#> 17 Item2 Item10  0.024   1.000             
-#> 18 Item3  Item4  0.021   1.000             
-#> 19 Item3  Item5  0.190   1.000             
-#> 20 Item3  Item6 -0.143   1.000             
-#> 21 Item3  Item7  0.086   1.000             
-#> 22 Item3  Item8 -0.042   1.000             
-#> 23 Item3  Item9 -0.074   1.000             
-#> 24 Item3 Item10  0.221   1.000             
-#> 25 Item4  Item5 -0.024   1.000             
-#> 26 Item4  Item6  0.224   1.000             
-#> 27 Item4  Item7  0.333   1.000             
-#> 28 Item4  Item8 -0.406   0.305             
-#> 29 Item4  Item9 -0.153   1.000             
-#> 30 Item4 Item10 -0.084   1.000             
-#> 31 Item5  Item6 -0.136   1.000             
-#> 32 Item5  Item7  0.157   1.000             
-#> 33 Item5  Item8  0.130   1.000             
-#> 34 Item5  Item9 -0.348   1.000             
-#> 35 Item5 Item10  0.014   1.000             
-#> 36 Item6  Item7  0.004   1.000             
-#> 37 Item6  Item8 -0.133   1.000             
-#> 38 Item6  Item9  0.062   1.000             
-#> 39 Item6 Item10 -0.243   1.000             
-#> 40 Item7  Item8 -0.198   1.000             
-#> 41 Item7  Item9 -0.005   1.000             
-#> 42 Item7 Item10  0.021   1.000             
-#> 43 Item8  Item9  0.301   1.000             
-#> 44 Item8 Item10  0.045   1.000             
-#> 45 Item9 Item10  0.036   1.000             
+#>    Item1  Item2  gamma gamma_low gamma_high p_gamma padj_gamma flagged
+#> 1  Item1  Item2  0.320    -0.425      0.320  0.0198     0.6238   FALSE
+#> 2  Item1  Item3 -0.143    -0.473      0.440  0.8119     1.0000   FALSE
+#> 3  Item1  Item4 -0.069    -0.446      0.326  0.7030     1.0000   FALSE
+#> 4  Item1  Item5 -0.153    -0.419      0.446  0.8020     1.0000   FALSE
+#> 5  Item1  Item6 -0.031    -0.389      0.337  0.6238     1.0000   FALSE
+#> 6  Item1  Item7 -0.163    -0.324      0.453  0.9109     1.0000   FALSE
+#> 7  Item1  Item8  0.191    -0.426      0.475  0.1881     1.0000   FALSE
+#> 8  Item1  Item9  0.124    -0.320      0.400  0.1980     1.0000   FALSE
+#> 9  Item1 Item10 -0.039    -0.321      0.317  0.6139     1.0000   FALSE
+#> 10 Item2  Item3 -0.206    -0.342      0.369  0.9109     1.0000   FALSE
+#> 11 Item2  Item4 -0.202    -0.282      0.451  0.9109     1.0000   FALSE
+#> 12 Item2  Item5  0.058    -0.393      0.418  0.4257     1.0000   FALSE
+#> 13 Item2  Item6  0.025    -0.382      0.336  0.5149     1.0000   FALSE
+#> 14 Item2  Item7 -0.230    -0.561      0.398  0.8614     1.0000   FALSE
+#> 15 Item2  Item8  0.150    -0.431      0.390  0.1980     1.0000   FALSE
+#> 16 Item2  Item9  0.154    -0.411      0.375  0.1683     1.0000   FALSE
+#> 17 Item2 Item10  0.024    -0.353      0.361  0.3663     1.0000   FALSE
+#> 18 Item3  Item4  0.021    -0.370      0.317  0.4257     1.0000   FALSE
+#> 19 Item3  Item5  0.190    -0.455      0.434  0.1386     0.9901   FALSE
+#> 20 Item3  Item6 -0.143    -0.417      0.446  0.7327     1.0000   FALSE
+#> 21 Item3  Item7  0.086    -0.414      0.442  0.2970     1.0000   FALSE
+#> 22 Item3  Item8 -0.042    -0.435      0.418  0.5941     1.0000   FALSE
+#> 23 Item3  Item9 -0.074    -0.379      0.347  0.6634     1.0000   FALSE
+#> 24 Item3 Item10  0.221    -0.351      0.458  0.1089     0.9901   FALSE
+#> 25 Item4  Item5 -0.024    -0.360      0.417  0.5248     1.0000   FALSE
+#> 26 Item4  Item6  0.224    -0.334      0.456  0.0990     0.9901   FALSE
+#> 27 Item4  Item7  0.333    -0.397      0.344  0.0198     0.5743   FALSE
+#> 28 Item4  Item8 -0.406    -0.369      0.348  1.0000     1.0000   FALSE
+#> 29 Item4  Item9 -0.153    -0.397      0.334  0.8218     1.0000   FALSE
+#> 30 Item4 Item10 -0.084    -0.364      0.346  0.6931     1.0000   FALSE
+#> 31 Item5  Item6 -0.136    -0.387      0.332  0.7921     1.0000   FALSE
+#> 32 Item5  Item7  0.157    -0.462      0.450  0.1584     1.0000   FALSE
+#> 33 Item5  Item8  0.130    -0.371      0.438  0.1485     1.0000   FALSE
+#> 34 Item5  Item9 -0.348    -0.370      0.407  0.9901     1.0000   FALSE
+#> 35 Item5 Item10  0.014    -0.405      0.320  0.3762     1.0000   FALSE
+#> 36 Item6  Item7  0.004    -0.450      0.375  0.4356     1.0000   FALSE
+#> 37 Item6  Item8 -0.133    -0.250      0.367  0.8812     1.0000   FALSE
+#> 38 Item6  Item9  0.062    -0.382      0.390  0.3465     1.0000   FALSE
+#> 39 Item6 Item10 -0.243    -0.307      0.484  0.9604     1.0000   FALSE
+#> 40 Item7  Item8 -0.198    -0.443      0.366  0.8713     1.0000   FALSE
+#> 41 Item7  Item9 -0.005    -0.365      0.364  0.5446     1.0000   FALSE
+#> 42 Item7 Item10  0.021    -0.377      0.298  0.4653     1.0000   FALSE
+#> 43 Item8  Item9  0.301    -0.410      0.316  0.0297     0.7426   FALSE
+#> 44 Item8 Item10  0.045    -0.417      0.400  0.3861     1.0000   FALSE
+#> 45 Item9 Item10  0.036    -0.358      0.349  0.3762     1.0000   FALSE
 #> 
 #> $direction2
-#>     Item1 Item2  gamma padj_bh Significance
-#> 1   Item2 Item1  0.300   1.000             
-#> 2   Item3 Item1 -0.158   1.000             
-#> 3   Item3 Item2 -0.230   1.000             
-#> 4   Item4 Item1 -0.141   1.000             
-#> 5   Item4 Item2 -0.263   1.000             
-#> 6   Item4 Item3 -0.042   1.000             
-#> 7   Item5 Item1 -0.152   1.000             
-#> 8   Item5 Item2  0.039   1.000             
-#> 9   Item5 Item3  0.201   1.000             
-#> 10  Item5 Item4  0.021   1.000             
-#> 11  Item6 Item1 -0.102   1.000             
-#> 12  Item6 Item2 -0.063   1.000             
-#> 13  Item6 Item3 -0.208   1.000             
-#> 14  Item6 Item4  0.206   1.000             
-#> 15  Item6 Item5 -0.201   1.000             
-#> 16  Item7 Item1 -0.116   1.000             
-#> 17  Item7 Item2 -0.195   1.000             
-#> 18  Item7 Item3  0.211   1.000             
-#> 19  Item7 Item4  0.428   0.126             
-#> 20  Item7 Item5  0.218   1.000             
-#> 21  Item7 Item6  0.093   1.000             
-#> 22  Item8 Item1  0.237   1.000             
-#> 23  Item8 Item2  0.220   1.000             
-#> 24  Item8 Item3  0.024   1.000             
-#> 25  Item8 Item4 -0.319   1.000             
-#> 26  Item8 Item5  0.152   1.000             
-#> 27  Item8 Item6 -0.022   1.000             
-#> 28  Item8 Item7 -0.222   1.000             
-#> 29  Item9 Item1  0.193   1.000             
-#> 30  Item9 Item2  0.199   1.000             
-#> 31  Item9 Item3 -0.008   1.000             
-#> 32  Item9 Item4 -0.071   1.000             
-#> 33  Item9 Item5 -0.256   1.000             
-#> 34  Item9 Item6  0.218   1.000             
-#> 35  Item9 Item7 -0.001   1.000             
-#> 36  Item9 Item8  0.357   1.000             
-#> 37 Item10 Item1 -0.071   1.000             
-#> 38 Item10 Item2 -0.023   1.000             
-#> 39 Item10 Item3  0.176   1.000             
-#> 40 Item10 Item4 -0.088   1.000             
-#> 41 Item10 Item5 -0.029   1.000             
-#> 42 Item10 Item6 -0.235   1.000             
-#> 43 Item10 Item7 -0.040   1.000             
-#> 44 Item10 Item8 -0.047   1.000             
-#> 45 Item10 Item9 -0.069   1.000             
+#>     Item1 Item2  gamma gamma_low gamma_high p_gamma padj_gamma flagged
+#> 1   Item2 Item1  0.300    -0.425      0.320  0.0198     0.6238   FALSE
+#> 2   Item3 Item1 -0.158    -0.473      0.440  0.8119     1.0000   FALSE
+#> 3   Item3 Item2 -0.230    -0.342      0.369  0.9109     1.0000   FALSE
+#> 4   Item4 Item1 -0.141    -0.446      0.326  0.7030     1.0000   FALSE
+#> 5   Item4 Item2 -0.263    -0.282      0.451  0.9109     1.0000   FALSE
+#> 6   Item4 Item3 -0.042    -0.370      0.317  0.4257     1.0000   FALSE
+#> 7   Item5 Item1 -0.152    -0.419      0.446  0.8020     1.0000   FALSE
+#> 8   Item5 Item2  0.039    -0.393      0.418  0.4257     1.0000   FALSE
+#> 9   Item5 Item3  0.201    -0.455      0.434  0.1386     0.9901   FALSE
+#> 10  Item5 Item4  0.021    -0.360      0.417  0.5248     1.0000   FALSE
+#> 11  Item6 Item1 -0.102    -0.389      0.337  0.6238     1.0000   FALSE
+#> 12  Item6 Item2 -0.063    -0.382      0.336  0.5149     1.0000   FALSE
+#> 13  Item6 Item3 -0.208    -0.417      0.446  0.7327     1.0000   FALSE
+#> 14  Item6 Item4  0.206    -0.334      0.456  0.0990     0.9901   FALSE
+#> 15  Item6 Item5 -0.201    -0.387      0.332  0.7921     1.0000   FALSE
+#> 16  Item7 Item1 -0.116    -0.324      0.453  0.9109     1.0000   FALSE
+#> 17  Item7 Item2 -0.195    -0.561      0.398  0.8614     1.0000   FALSE
+#> 18  Item7 Item3  0.211    -0.414      0.442  0.2970     1.0000   FALSE
+#> 19  Item7 Item4  0.428    -0.397      0.344  0.0198     0.5743   FALSE
+#> 20  Item7 Item5  0.218    -0.462      0.450  0.1584     1.0000   FALSE
+#> 21  Item7 Item6  0.093    -0.450      0.375  0.4356     1.0000   FALSE
+#> 22  Item8 Item1  0.237    -0.426      0.475  0.1881     1.0000   FALSE
+#> 23  Item8 Item2  0.220    -0.431      0.390  0.1980     1.0000   FALSE
+#> 24  Item8 Item3  0.024    -0.435      0.418  0.5941     1.0000   FALSE
+#> 25  Item8 Item4 -0.319    -0.369      0.348  1.0000     1.0000   FALSE
+#> 26  Item8 Item5  0.152    -0.371      0.438  0.1485     1.0000   FALSE
+#> 27  Item8 Item6 -0.022    -0.250      0.367  0.8812     1.0000   FALSE
+#> 28  Item8 Item7 -0.222    -0.443      0.366  0.8713     1.0000   FALSE
+#> 29  Item9 Item1  0.193    -0.320      0.400  0.1980     1.0000   FALSE
+#> 30  Item9 Item2  0.199    -0.411      0.375  0.1683     1.0000   FALSE
+#> 31  Item9 Item3 -0.008    -0.379      0.347  0.6634     1.0000   FALSE
+#> 32  Item9 Item4 -0.071    -0.397      0.334  0.8218     1.0000   FALSE
+#> 33  Item9 Item5 -0.256    -0.370      0.407  0.9901     1.0000   FALSE
+#> 34  Item9 Item6  0.218    -0.382      0.390  0.3465     1.0000   FALSE
+#> 35  Item9 Item7 -0.001    -0.365      0.364  0.5446     1.0000   FALSE
+#> 36  Item9 Item8  0.357    -0.410      0.316  0.0297     0.7426   FALSE
+#> 37 Item10 Item1 -0.071    -0.321      0.317  0.6139     1.0000   FALSE
+#> 38 Item10 Item2 -0.023    -0.353      0.361  0.3663     1.0000   FALSE
+#> 39 Item10 Item3  0.176    -0.351      0.458  0.1089     0.9901   FALSE
+#> 40 Item10 Item4 -0.088    -0.364      0.346  0.6931     1.0000   FALSE
+#> 41 Item10 Item5 -0.029    -0.405      0.320  0.3762     1.0000   FALSE
+#> 42 Item10 Item6 -0.235    -0.307      0.484  0.9604     1.0000   FALSE
+#> 43 Item10 Item7 -0.040    -0.377      0.298  0.4653     1.0000   FALSE
+#> 44 Item10 Item8 -0.047    -0.417      0.400  0.3861     1.0000   FALSE
+#> 45 Item10 Item9 -0.069    -0.358      0.349  0.3762     1.0000   FALSE
 #> 
-# }
-# \donttest{
-# Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
-cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100, parallel = FALSE,
-                           seed = 42)
-RMlocdepGamma(sim_data, cutoff = cutoff_res)
-#> 
-#> 
-#> Table: Partial gamma LD analysis (n = 200 complete cases). Cutoff values based on 100 simulation iterations (99% HDCI). Direction 1: rest score = total - Item2.
-#> 
-#> |Item 1 |Item 2 | Partial gamma| Adj. p-value (BH)|p-value sign. | Gamma low| Gamma high|Flagged |
-#> |:------|:------|-------------:|-----------------:|:-------------|---------:|----------:|:-------|
-#> |Item1  |Item2  |         0.320|             1.000|              |    -0.431|      0.431|FALSE   |
-#> |Item1  |Item3  |        -0.143|             1.000|              |    -0.358|      0.325|FALSE   |
-#> |Item1  |Item4  |        -0.069|             1.000|              |    -0.509|      0.430|FALSE   |
-#> |Item1  |Item5  |        -0.153|             1.000|              |    -0.395|      0.307|FALSE   |
-#> |Item1  |Item6  |        -0.031|             1.000|              |    -0.464|      0.524|FALSE   |
-#> |Item1  |Item7  |        -0.163|             1.000|              |    -0.473|      0.415|FALSE   |
-#> |Item1  |Item8  |         0.191|             1.000|              |    -0.502|      0.339|FALSE   |
-#> |Item1  |Item9  |         0.124|             1.000|              |    -0.525|      0.382|FALSE   |
-#> |Item1  |Item10 |        -0.039|             1.000|              |    -0.376|      0.370|FALSE   |
-#> |Item2  |Item3  |        -0.206|             1.000|              |    -0.420|      0.399|FALSE   |
-#> |Item2  |Item4  |        -0.202|             1.000|              |    -0.364|      0.353|FALSE   |
-#> |Item2  |Item5  |         0.058|             1.000|              |    -0.447|      0.488|FALSE   |
-#> |Item2  |Item6  |         0.025|             1.000|              |    -0.373|      0.373|FALSE   |
-#> |Item2  |Item7  |        -0.230|             1.000|              |    -0.438|      0.409|FALSE   |
-#> |Item2  |Item8  |         0.150|             1.000|              |    -0.402|      0.459|FALSE   |
-#> |Item2  |Item9  |         0.154|             1.000|              |    -0.339|      0.394|FALSE   |
-#> |Item2  |Item10 |         0.024|             1.000|              |    -0.354|      0.309|FALSE   |
-#> |Item3  |Item4  |         0.021|             1.000|              |    -0.393|      0.411|FALSE   |
-#> |Item3  |Item5  |         0.190|             1.000|              |    -0.414|      0.330|FALSE   |
-#> |Item3  |Item6  |        -0.143|             1.000|              |    -0.382|      0.430|FALSE   |
-#> |Item3  |Item7  |         0.086|             1.000|              |    -0.435|      0.384|FALSE   |
-#> |Item3  |Item8  |        -0.042|             1.000|              |    -0.411|      0.377|FALSE   |
-#> |Item3  |Item9  |        -0.074|             1.000|              |    -0.385|      0.384|FALSE   |
-#> |Item3  |Item10 |         0.221|             1.000|              |    -0.375|      0.425|FALSE   |
-#> |Item4  |Item5  |        -0.024|             1.000|              |    -0.390|      0.369|FALSE   |
-#> |Item4  |Item6  |         0.224|             1.000|              |    -0.405|      0.410|FALSE   |
-#> |Item4  |Item7  |         0.333|             1.000|              |    -0.466|      0.357|FALSE   |
-#> |Item4  |Item8  |        -0.406|             0.305|              |    -0.496|      0.471|FALSE   |
-#> |Item4  |Item9  |        -0.153|             1.000|              |    -0.441|      0.467|FALSE   |
-#> |Item4  |Item10 |        -0.084|             1.000|              |    -0.330|      0.296|FALSE   |
-#> |Item5  |Item6  |        -0.136|             1.000|              |    -0.355|      0.489|FALSE   |
-#> |Item5  |Item7  |         0.157|             1.000|              |    -0.412|      0.392|FALSE   |
-#> |Item5  |Item8  |         0.130|             1.000|              |    -0.436|      0.448|FALSE   |
-#> |Item5  |Item9  |        -0.348|             1.000|              |    -0.325|      0.342|TRUE    |
-#> |Item5  |Item10 |         0.014|             1.000|              |    -0.407|      0.344|FALSE   |
-#> |Item6  |Item7  |         0.004|             1.000|              |    -0.398|      0.465|FALSE   |
-#> |Item6  |Item8  |        -0.133|             1.000|              |    -0.376|      0.393|FALSE   |
-#> |Item6  |Item9  |         0.062|             1.000|              |    -0.367|      0.417|FALSE   |
-#> |Item6  |Item10 |        -0.243|             1.000|              |    -0.410|      0.451|FALSE   |
-#> |Item7  |Item8  |        -0.198|             1.000|              |    -0.351|      0.497|FALSE   |
-#> |Item7  |Item9  |        -0.005|             1.000|              |    -0.336|      0.480|FALSE   |
-#> |Item7  |Item10 |         0.021|             1.000|              |    -0.353|      0.384|FALSE   |
-#> |Item8  |Item9  |         0.301|             1.000|              |    -0.445|      0.431|FALSE   |
-#> |Item8  |Item10 |         0.045|             1.000|              |    -0.340|      0.471|FALSE   |
-#> |Item9  |Item10 |         0.036|             1.000|              |    -0.381|      0.411|FALSE   |
-#> 
-#> 
-#> 
-#> Table: Partial gamma LD analysis (n = 200 complete cases). Cutoff values based on 100 simulation iterations (99% HDCI). Direction 2: rest score = total - Item1.
-#> 
-#> |Item 1 |Item 2 | Partial gamma| Adj. p-value (BH)|p-value sign. | Gamma low| Gamma high|Flagged |
-#> |:------|:------|-------------:|-----------------:|:-------------|---------:|----------:|:-------|
-#> |Item2  |Item1  |         0.300|             1.000|              |    -0.431|      0.431|FALSE   |
-#> |Item3  |Item1  |        -0.158|             1.000|              |    -0.358|      0.325|FALSE   |
-#> |Item3  |Item2  |        -0.230|             1.000|              |    -0.420|      0.399|FALSE   |
-#> |Item4  |Item1  |        -0.141|             1.000|              |    -0.509|      0.430|FALSE   |
-#> |Item4  |Item2  |        -0.263|             1.000|              |    -0.364|      0.353|FALSE   |
-#> |Item4  |Item3  |        -0.042|             1.000|              |    -0.393|      0.411|FALSE   |
-#> |Item5  |Item1  |        -0.152|             1.000|              |    -0.395|      0.307|FALSE   |
-#> |Item5  |Item2  |         0.039|             1.000|              |    -0.447|      0.488|FALSE   |
-#> |Item5  |Item3  |         0.201|             1.000|              |    -0.414|      0.330|FALSE   |
-#> |Item5  |Item4  |         0.021|             1.000|              |    -0.390|      0.369|FALSE   |
-#> |Item6  |Item1  |        -0.102|             1.000|              |    -0.464|      0.524|FALSE   |
-#> |Item6  |Item2  |        -0.063|             1.000|              |    -0.373|      0.373|FALSE   |
-#> |Item6  |Item3  |        -0.208|             1.000|              |    -0.382|      0.430|FALSE   |
-#> |Item6  |Item4  |         0.206|             1.000|              |    -0.405|      0.410|FALSE   |
-#> |Item6  |Item5  |        -0.201|             1.000|              |    -0.355|      0.489|FALSE   |
-#> |Item7  |Item1  |        -0.116|             1.000|              |    -0.473|      0.415|FALSE   |
-#> |Item7  |Item2  |        -0.195|             1.000|              |    -0.438|      0.409|FALSE   |
-#> |Item7  |Item3  |         0.211|             1.000|              |    -0.435|      0.384|FALSE   |
-#> |Item7  |Item4  |         0.428|             0.126|              |    -0.466|      0.357|TRUE    |
-#> |Item7  |Item5  |         0.218|             1.000|              |    -0.412|      0.392|FALSE   |
-#> |Item7  |Item6  |         0.093|             1.000|              |    -0.398|      0.465|FALSE   |
-#> |Item8  |Item1  |         0.237|             1.000|              |    -0.502|      0.339|FALSE   |
-#> |Item8  |Item2  |         0.220|             1.000|              |    -0.402|      0.459|FALSE   |
-#> |Item8  |Item3  |         0.024|             1.000|              |    -0.411|      0.377|FALSE   |
-#> |Item8  |Item4  |        -0.319|             1.000|              |    -0.496|      0.471|FALSE   |
-#> |Item8  |Item5  |         0.152|             1.000|              |    -0.436|      0.448|FALSE   |
-#> |Item8  |Item6  |        -0.022|             1.000|              |    -0.376|      0.393|FALSE   |
-#> |Item8  |Item7  |        -0.222|             1.000|              |    -0.351|      0.497|FALSE   |
-#> |Item9  |Item1  |         0.193|             1.000|              |    -0.525|      0.382|FALSE   |
-#> |Item9  |Item2  |         0.199|             1.000|              |    -0.339|      0.394|FALSE   |
-#> |Item9  |Item3  |        -0.008|             1.000|              |    -0.385|      0.384|FALSE   |
-#> |Item9  |Item4  |        -0.071|             1.000|              |    -0.441|      0.467|FALSE   |
-#> |Item9  |Item5  |        -0.256|             1.000|              |    -0.325|      0.342|FALSE   |
-#> |Item9  |Item6  |         0.218|             1.000|              |    -0.367|      0.417|FALSE   |
-#> |Item9  |Item7  |        -0.001|             1.000|              |    -0.336|      0.480|FALSE   |
-#> |Item9  |Item8  |         0.357|             1.000|              |    -0.445|      0.431|FALSE   |
-#> |Item10 |Item1  |        -0.071|             1.000|              |    -0.376|      0.370|FALSE   |
-#> |Item10 |Item2  |        -0.023|             1.000|              |    -0.354|      0.309|FALSE   |
-#> |Item10 |Item3  |         0.176|             1.000|              |    -0.375|      0.425|FALSE   |
-#> |Item10 |Item4  |        -0.088|             1.000|              |    -0.330|      0.296|FALSE   |
-#> |Item10 |Item5  |        -0.029|             1.000|              |    -0.407|      0.344|FALSE   |
-#> |Item10 |Item6  |        -0.235|             1.000|              |    -0.410|      0.451|FALSE   |
-#> |Item10 |Item7  |        -0.040|             1.000|              |    -0.353|      0.384|FALSE   |
-#> |Item10 |Item8  |        -0.047|             1.000|              |    -0.340|      0.471|FALSE   |
-#> |Item10 |Item9  |        -0.069|             1.000|              |    -0.381|      0.411|FALSE   |
 # }
 ```

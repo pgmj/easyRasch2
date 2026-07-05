@@ -15,7 +15,7 @@ intended for use before model fitting."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.8.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -148,6 +148,9 @@ equals the number of non-missing responses for that item.</p>
 <p>Categories with zero responses still appear in the legend but produce
 no visible bar segment, which helps identify gaps in the response
 distribution.</p>
+<p>The plot caption reports the sample in the standard
+<code>n = X respondents (policy)</code> form; item-level <code>NA</code>s are retained –
+each bar counts the non-missing responses for that item.</p>
 <p><strong>Input requirements:</strong></p><ul><li><p>All columns must be numeric (integer-valued).</p></li>
 <li><p>The data frame must contain at least 2 columns (items)
 and at least 1 row (person).</p></li>

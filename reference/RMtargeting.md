@@ -24,7 +24,7 @@ RMtargeting(
   person_fill = "#0072B2",
   threshold_fill = "#D55E00",
   height_ratios = c(3, 2, 5),
-  output = "figure"
+  output = "patchwork"
 )
 ```
 
@@ -81,13 +81,13 @@ RMtargeting(
 
 - output:
 
-  Character string. `"figure"` (the default) returns the combined
+  Character string. `"patchwork"` (the default) returns the combined
   patchwork plot. `"list"` returns a named list of the three ggplot
   objects (`p1`, `p2`, `p3`) for further customisation.
 
 ## Value
 
-- If `output = "figure"`: a `patchwork` object (combined `ggplot`).
+- If `output = "patchwork"`: a `patchwork` object (combined `ggplot`).
 
 - If `output = "list"`: a named list with elements `p1` (person
   histogram), `p2` (threshold histogram), and `p3` (item threshold
@@ -102,12 +102,10 @@ makes it easy to assess whether the test is well-targeted to the sample.
 response category has fewer than 3 observations. If all categories have
 at least 3 responses, item threshold locations and their standard errors
 are estimated via Conditional Maximum Likelihood (CML) using
-[`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html) (dichotomous) or
-[`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html) (polytomous), with
-SEs from
-[`eRm::thresholds()`](https://rdrr.io/pkg/eRm/man/thresholds.html). If
-any category has fewer than 3 responses, the function falls back to
-Marginal Maximum Likelihood (MML) estimation via
+[`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
+(a dichotomous item is a 2-category PCM). If any category has fewer than
+3 responses, the function falls back to Marginal Maximum Likelihood
+(MML) estimation via
 [`mirt::mirt()`](https://philchalmers.github.io/mirt/reference/mirt.html)
 with `itemtype = "Rasch"` and `SE = TRUE`, which is more numerically
 stable under sparse-category conditions. A message is emitted when the
@@ -116,12 +114,10 @@ MML fallback is used.
 In both cases, item threshold locations are centered (shifted so the
 grand mean of all thresholds equals zero).
 
-**Person estimates** are obtained via Maximum Likelihood (ML) from
-[`eRm::person.parameter()`](https://rdrr.io/pkg/eRm/man/person.parameter.html),
-which uses spline interpolation to extrapolate location estimates for
-persons with extreme scores (all-zero or perfect). Persons for whom the
-spline interpolation fails receive `NA` and are excluded from the
-histogram.
+**Person estimates** are obtained by Warm's weighted likelihood (WLE)
+from the fitted item thresholds, consistent with the rest of the
+package. WLE is finite at extreme scores, so all-zero and perfect
+responders are located rather than dropped.
 
 **Confidence intervals** for item thresholds are based on Wald-type
 intervals: threshold estimate ± z × SE, where z is the standard normal
@@ -136,42 +132,40 @@ Wright, B. D. & Stone, M. H. (1979). *Best Test Design*. MESA Press.
 
 ## See also
 
-[`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html),
-[`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html),
-[`mirt::mirt()`](https://philchalmers.github.io/mirt/reference/mirt.html),
-[`eRm::person.parameter()`](https://rdrr.io/pkg/eRm/man/person.parameter.html),
-[`eRm::thresholds()`](https://rdrr.io/pkg/eRm/man/thresholds.html)
+[`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html),
+[`mirt::mirt()`](https://philchalmers.github.io/mirt/reference/mirt.html)
 
 ## Examples
 
 ``` r
 # \donttest{
-# Polytomous example
-set.seed(42)
-sim_data <- as.data.frame(
-  matrix(sample(0:3, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
-)
-colnames(sim_data) <- paste0("Item", 1:8)
+if (requireNamespace("ggplot2", quietly = TRUE) &&
+    requireNamespace("patchwork", quietly = TRUE)) {
+  # Polytomous example
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:3, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
+  )
+  colnames(sim_data) <- paste0("Item", 1:8)
 
-# Default: mean/SD, data order, 95% CI
-RMtargeting(sim_data)
+  # Default: mean/SD, data order, 95% CI
+  RMtargeting(sim_data)
 
+  # Robust (median/MAD), sorted by location, 84% CI
+  RMtargeting(sim_data, robust = TRUE, sort_items = "location",
+              ci_level = 0.84)
 
-# Robust (median/MAD), sorted by location, 84% CI
-RMtargeting(sim_data, robust = TRUE, sort_items = "location", ci_level = 0.84)
+  # Get list of sub-plots for customisation
+  plots <- RMtargeting(sim_data, output = "list")
+  plots$p1 + ggplot2::ggtitle("My custom title")
 
-
-# Get list of sub-plots for customisation
-plots <- RMtargeting(sim_data, output = "list")
-plots$p1 + ggplot2::ggtitle("My custom title")
-
-
-# Dichotomous example
-sim_bin <- as.data.frame(
-  matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
-)
-colnames(sim_bin) <- paste0("Item", 1:10)
-RMtargeting(sim_bin)
+  # Dichotomous example
+  sim_bin <- as.data.frame(
+    matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
+  )
+  colnames(sim_bin) <- paste0("Item", 1:10)
+  RMtargeting(sim_bin)
+}
 
 # }
 ```

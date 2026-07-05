@@ -35,7 +35,10 @@ RMitemInfitMI(mids_object, cutoff = NULL, output = "kable", sort)
 
   - The `$item_cutoffs` data.frame directly: must have columns `Item`,
     `infit_low`, and `infit_high`. When provided, adds columns
-    `Infit_low`, `Infit_high`, and `Flagged` to the result.
+    `Infit_low`, `Infit_high`, and `Flagged` to the result. `Flagged` is
+    a character column labelling the misfit direction: `"overfit"`
+    (pooled infit below the range), `"underfit"` (above), or `""`
+    (within range).
 
 - output:
 
@@ -61,20 +64,25 @@ RMitemInfitMI(mids_object, cutoff = NULL, output = "kable", sort)
   `Infit_MSQ`, `Infit_SE`, and `Relative_location`. When `cutoff` is
   provided, columns `Infit_low`, `Infit_high`, and `Flagged` are also
   included (inserted after `Infit_SE`, before `Relative_location`).
+  `Flagged` is a character column (`"overfit"` / `"underfit"` / `""`),
+  not the previous logical.
 
 ## Details
 
 For each of the `m` imputed datasets, the function:
 
-1.  Fits a Rasch model
-    ([`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html) for dichotomous
-    data or [`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html) for
-    polytomous data).
+1.  Fits a Rasch model by CML via
+    [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
+    (a dichotomous item is a 2-category partial credit model),
+    consistent with
+    [`RMitemInfit`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md)
+    and the rest of the package.
 
 2.  Computes conditional infit MSQ and its standard error via
     [`iarm::out_infit()`](https://rdrr.io/pkg/iarm/man/out_infit.html).
 
-3.  Computes item and person locations.
+3.  Computes item locations (mean of the grand-mean-centred CML Andrich
+    thresholds) and the mean WLE person location.
 
 The per-imputation estimates are then pooled using Rubin's rules:
 
@@ -101,6 +109,17 @@ The per-imputation estimates are then pooled using Rubin's rules:
 Relative item location is the mean of per-imputation relative locations
 (item location minus sample mean person location).
 
+**Caveat on the pooled SE.** The within-imputation variance is the
+squared conditional infit SE from
+[`iarm::out_infit()`](https://rdrr.io/pkg/iarm/man/out_infit.html).
+Müller (2020) showed that this asymptotic SE is an unreliable measure of
+uncertainty for the conditional infit statistic; Rubin's pooled SE
+inherits that limitation, so the `Infit_SE`/`Infit SE` column should be
+read as an approximate indication of imputation-related variability
+rather than a trustworthy inferential standard error. For item misfit
+decisions, prefer the simulation-based cutoffs from
+[`RMitemInfitCutoffMI`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffMI.md).
+
 Imputed datasets that cause model convergence failures are dropped with
 a warning. If all imputations fail, the function stops with an error. At
 least two successful imputations are required to estimate
@@ -108,6 +127,12 @@ between-imputation variance.
 
 The `mice` and `iarm` packages must be installed (they are in Suggests,
 not Imports).
+
+## References
+
+Müller, M. (2020). Item fit statistics for Rasch analysis: Can we trust
+them? *Journal of Statistical Distributions and Applications*, 7(5).
+[doi:10.1186/s40488-020-00108-7](https://doi.org/10.1186/s40488-020-00108-7)
 
 ## See also
 
@@ -118,14 +143,20 @@ not Imports).
 
 ``` r
 # \donttest{
-if (requireNamespace("mice", quietly = TRUE)) {
-  # Create example data with missing values
+if (requireNamespace("mice", quietly = TRUE) &&
+    requireNamespace("iarm", quietly = TRUE) &&
+    requireNamespace("ggdist", quietly = TRUE)) {
+  # Create example data with ~10% MCAR missingness
   set.seed(42)
-  sim_data <- as.data.frame(
-    matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
-  )
+  mat <- matrix(sample(0:1, 200 * 8, replace = TRUE), nrow = 200, ncol = 8)
+  mat[sample(length(mat), round(0.10 * length(mat)))] <- NA
+  sim_data <- as.data.frame(mat)
   colnames(sim_data) <- paste0("Item", 1:8)
-  sim_data[sample(length(sim_data), 0.10 * length(sim_data))] <- NA
+
+  # mice's ordinal method (`polr`) requires the items to be ordered
+  # factors, so code them as such before imputing. RMitemInfitMI()
+  # converts the completed factors back to numeric internally.
+  sim_data[] <- lapply(sim_data, function(x) factor(x, ordered = TRUE))
 
   # Impute (use more imputations, e.g. m = 5+, in real analyses)
   imp <- mice::mice(sim_data, m = 2, method = "polr", seed = 123,

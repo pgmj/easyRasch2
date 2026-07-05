@@ -77,12 +77,12 @@ or
 [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/reference/RMscoreSE.md)
 instead.
 
-**Centring convention.** The PCM thresholds returned by
-[`eRm::thresholds()`](https://rdrr.io/pkg/eRm/man/thresholds.html) are
-shifted so that their grand mean is zero; each item's location is then
-the mean of its centred thresholds. The dashed horizontal reference line
-on the plot marks this zero – i.e., the average threshold across all
-items.
+**Centring convention.** The CML PCM thresholds (estimated via
+[`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html))
+are shifted so that their grand mean is zero; each item's location is
+then the mean of its centred thresholds. The dashed horizontal reference
+line on the plot marks this zero – i.e., the average threshold across
+all items.
 
 ## References
 
@@ -101,24 +101,24 @@ terms of statistical significance? *Journal of Insect Science, 3*(34),
 
 ``` r
 # \donttest{
-data("pcmdat2", package = "eRm")
-RMitemHierarchy(pcmdat2)
+if (requireNamespace("eRm", quietly = TRUE)) {
+  data("pcmdat2", package = "eRm")
+  RMitemHierarchy(pcmdat2)
 
+  # 95% CI instead of 84%
+  RMitemHierarchy(pcmdat2, sem_multiplier = 1.96)
 
-# 95% CI instead of 84%
-RMitemHierarchy(pcmdat2, sem_multiplier = 1.96)
-
-
-# Underlying data.frame
-RMitemHierarchy(pcmdat2, output = "dataframe")
+  # Underlying data.frame
+  RMitemHierarchy(pcmdat2, output = "dataframe")
+}
 #>   Item ItemLabel Threshold ThresholdLocation ThresholdSE ItemLocation
-#> 1   I1        I1        T1        -0.4581338   0.1519290    0.6840541
-#> 2   I1        I1        T2         1.8262421   0.2013173    0.6840541
-#> 3   I2        I2        T1         0.2174992   0.1484292    0.9295923
-#> 4   I2        I2        T2         1.6416854   0.2110598    0.9295923
-#> 5   I3        I3        T1        -2.6684535   0.3364599   -1.2127610
-#> 6   I3        I3        T2         0.2429314   0.1582221   -1.2127610
-#> 7   I4        I4        T1        -1.3370918   0.2026607   -0.4008854
-#> 8   I4        I4        T2         0.5353210   0.1652776   -0.4008854
+#> 1   I1        I1        T1        -0.4581328   0.1545659    0.6840543
+#> 2   I1        I1        T2         1.8262414   0.1815586    0.6840543
+#> 3   I2        I2        T1         0.2175018   0.1496752    0.9295949
+#> 4   I2        I2        T2         1.6416881   0.1907856    0.9295949
+#> 5   I3        I3        T1        -2.6684648   0.3556982   -1.2127668
+#> 6   I3        I3        T2         0.2429311   0.1419154   -1.2127668
+#> 7   I4        I4        T1        -1.3370901   0.2126350   -0.4008824
+#> 8   I4        I4        T2         0.5353253   0.1476954   -0.4008824
 # }
 ```

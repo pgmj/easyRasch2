@@ -20,6 +20,30 @@ tutorials, see the
 the archived sibling package
 [`easyRasch`](https://pgmj.github.io/easyRasch/).
 
+## Statement of need
+
+A complete Rasch analysis requires many separate procedures — item fit,
+local dependence, dimensionality, differential item functioning,
+reliability, targeting, and more. In R these are spread across packages
+with differing data formats, argument conventions, and output objects,
+which raises the barrier to entry and can make analyses hard to
+reproduce. A further problem is that fit statistics (item fit MSQ, Yen’s
+Q_3 residuals, the first residual-PCA contrast, CFA fit indices) are
+usually judged against fixed rule-of-thumb cutoffs that are known to
+depend on sample size, number of items and other factors such as
+targeting, and the number of response categories.
+
+`easyRasch2` targets applied researchers and students validating rating
+scales and tests in health, education, and psychology using modern
+psychometric methods. It provides a single, consistently named interface
+across the whole workflow with publication-ready output, and — as its
+distinguishing feature — replaces rule-of-thumb cutoffs with
+sample-specific critical values obtained by parametric bootstrap from
+the fitted Rasch/PCM model (Johansson, 2025). Several methods, including
+the polytomous Martin-Löf test with Monte Carlo *p*-values (Christensen
+& Kreiner, 2007) and the bootstrap item-restscore test, are not
+available in other R packages.
+
 ## Installation
 
 Install from CRAN:
@@ -39,14 +63,25 @@ remotes::install_github("pgmj/easyRasch2")
 
 ## Key design principles
 
-- **Estimation**: Conditional Maximum Likelihood (CML) via `eRm`,
-  `psychotools`, and `iarm` for item parameters; Weighted Likelihood
-  Estimation (WLE) for person parameters; `mirt` (MML) only where CML
-  alternatives do not exist (e.g., Q3 residual correlations).
+- **Estimation**: a single engine across the package — Conditional
+  Maximum Likelihood (CML) item parameters via `psychotools` and Warm’s
+  Weighted Likelihood Estimation (WLE) for person parameters. `eRm` is
+  used for Andersen’s LR test
+  ([`RMdifLR()`](https://pgmj.github.io/easyRasch2/reference/RMdifLR.md));
+  `mirt` (MML) is available as an optional engine (`estimator = "MML"`
+  in
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md)
+  and
+  [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/reference/RMitemParameters.md))
+  and for the plausible values behind the RMU reliability metric.
+- **Inference**: simulation-based cutoffs throughout, with optional
+  bootstrap *p*-values (`p_value = TRUE`) using Westfall–Young
+  family-wise correction (default) or FDR alternatives (Ferreira, 2024).
 - **Output**:
   [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html) for
   tables (Quarto-friendly), `ggplot2` for figures, and `"dataframe"`
-  output options for downstream use.
+  output options for downstream use. Every caption reports the
+  estimation sample size and missing-data policy.
 - **Naming**: Functions use the `RM` prefix (e.g.,
   [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md)).
 
@@ -55,15 +90,17 @@ remotes::install_github("pgmj/easyRasch2")
 ### Item fit
 
 - [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md)
-  — conditional infit MSQ
+  — conditional infit MSQ; optional bootstrap *p*-values
+  (`p_value = TRUE`) with family-wise (Westfall–Young) or FDR
+  multiple-comparison correction
 - [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md) +
-  [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffPlot.md)
+  [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitPlot.md)
   — simulation-based cutoffs and plot
 - [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitMI.md) +
   [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffMI.md)
   — multiple-imputation variants
 - [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md)
-  — item-restscore with Goodman-Kruskal’s gamma
+  — item-restscore with Goodman-Kruskal’s \gamma (gamma)
 - [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/reference/RMitemRestscoreBoot.md)
   — non-parametric bootstrap of item-restscore fit
 - [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemICCPlot.md) -
@@ -72,27 +109,34 @@ remotes::install_github("pgmj/easyRasch2")
 ### Local dependence
 
 - [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md) +
-  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
-  — Yen’s Q3 residual correlations
+  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md) +
+  [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3plot.md)
+  — Yen’s Q_3 residual correlations (CML/WLE by default,
+  `estimator = "MML"` optional); table and plot share a `$matrix` (Q_3
+  heatmap) / `$pairs` (per-pair observed-vs-simulated) structure;
+  optional per-pair bootstrap *p*-values
 - [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGamma.md) +
   [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaCutoff.md) +
   [`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaPlot.md)
-  — partial-gamma local dependence
+  — partial-\gamma local dependence; optional per-pair bootstrap
+  *p*-values
 
 ### Dimensionality / unidimensionality
 
 - [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/reference/RMdimResidualPCA.md) +
   [`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdimResidualPCACutoff.md)
   — PCA of standardized residuals, with simulation-based first-contrast
-  cutoff (Chou & Wang, 2010)
+  cutoff (Chou & Wang, 2010) and an optional bootstrap *p*-value
 - [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLof.md) +
   [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLofResiduals.md)
   — Martin-Löf LR test (Christensen & Kreiner, 2007), supports
-  polytomous data
+  polytomous data with Monte Carlo *p*-values
 - [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFACutoff.md) +
+  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFA.md) +
   [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFAPlot.md)
-  — posterior-predictive CFA fit-index cutoffs under PCM
-  unidimensionality (via `lavaan` WLSMV)
+  — posterior-predictive CFA fit-index and per-item loading checks under
+  PCM unidimensionality (via `lavaan` WLSMV) with simulation-based
+  cutoffs and optional bootstrap *p*-values
 
 ### Differential item functioning
 
@@ -101,12 +145,13 @@ remotes::install_github("pgmj/easyRasch2")
   ([`eRm::LRtest`](https://rdrr.io/pkg/eRm/man/LRtest.html))
 - [`RMdifTree()`](https://pgmj.github.io/easyRasch2/reference/RMdifTree.md)
   — Rasch / partial-credit trees (`psychotree`) with Mantel-Haenszel or
-  partial-gamma effect sizes per split, optional iterative purification,
-  and `stablelearner`-based stability assessment
+  partial-\gamma effect sizes per split, optional iterative
+  purification, and `stablelearner`-based stability assessment
 - [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/reference/RMdifGamma.md) +
   [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdifGammaCutoff.md) +
   [`RMdifGammaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMdifGammaPlot.md)
-  — partial-gamma DIF
+  — partial-\gamma DIF; optional bootstrap *p*-values calibrated against
+  the simulated Rasch null
 - [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemICCPlot.md) -
   evaluates DIF across class intervals
 
@@ -122,12 +167,29 @@ remotes::install_github("pgmj/easyRasch2")
 
 - [`RMreliability()`](https://pgmj.github.io/easyRasch2/reference/RMreliability.md) +
   [`RMUreliability()`](https://pgmj.github.io/easyRasch2/reference/RMUreliability.md)
-  — Cronbach’s α, PSI, empirical reliability, and Relative Measurement
+  — Cronbach’s α, PSI, marginal reliability, and Relative Measurement
   Uncertainty from plausible values
 - [`RMtargeting()`](https://pgmj.github.io/easyRasch2/reference/RMtargeting.md)
   — Wright-map style person-item targeting plot
 - [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/reference/RMscoreSE.md)
   — raw-score → logit transformation table (WLE / EAP)
+
+### Item & person parameters
+
+- [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/reference/RMitemParameters.md)
+  — item difficulty / threshold locations in long or wide format, with
+  optional standard errors and confidence intervals (CML via
+  `psychotools`, or MML via `mirt` for sparse data)
+- [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/reference/RMpersonParameters.md)
+  — per-respondent person locations (WLE or EAP), estimated on each
+  response pattern so partial missingness is handled directly
+
+### Person fit
+
+- [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/reference/RMpersonFit.md)
+  — per-respondent conditional infit / outfit MSQ and the standardized
+  log-likelihood \ell_z, with resampling-based *p*-values rather than
+  unreliable asymptotic nulls (Sinharay, 2016; Müller, 2020)
 
 ### Data visualization
 
@@ -151,9 +213,13 @@ simfit <- RMitemInfitCutoff(pcmdat2, iterations = 250)
 RMitemInfit(pcmdat2, cutoff = simfit)
 
 # Test of unidimensionality via posterior-predictive ordinal CFA
-cfa_res <- RMdimCFACutoff(pcmdat2, iterations = 250)
-cfa_res                # kable: observed vs simulated cutoffs
-RMdimCFAPlot(cfa_res)     # histogram + observed diamond
+cfa_sim <- RMdimCFACutoff(pcmdat2, iterations = 250)   # simulated reference
+tabs <- RMdimCFA(pcmdat2, cutoff = cfa_sim)            # observed vs expected
+tabs$fit                                                # fit-index table
+tabs$loadings                                           # per-item loading table
+plots <- RMdimCFAPlot(cfa_sim, data = pcmdat2)          # list of 2 ggplots
+plots$loadings                                          # observed vs expected loadings
+plots$fit                                               # fit-index distributions
 
 # DIF analysis via Andersen's LR test
 grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
@@ -186,6 +252,11 @@ RMdifTree(pcmdat2, covariates = covs)
   values for Yen’s Q3: Identification of local dependence in the Rasch
   model using residual correlations. *Applied Psychological Measurement,
   41*(3), 178–194. <https://doi.org/10.1177/0146621616677520>
+- Ferreira, J. A. (2024). Methods of testing a ‘small’ or ‘moderate’
+  number of hypotheses simultaneously: An account focusing on the
+  control of the probability of at least one incorrect rejection and of
+  the false discovery rate. *Journal of Statistical Theory and Practice,
+  19*(6). <https://doi.org/10.1007/s42519-024-00412-4>
 - Henninger, M., Debelak, R., & Strobl, C. (2023). A new stopping
   criterion for Rasch trees based on the Mantel-Haenszel effect size
   measure for DIF. *Educational and Psychological Measurement, 83*,
@@ -210,6 +281,9 @@ RMdifTree(pcmdat2, covariates = covs)
 - Rosseel, Y. (2012). lavaan: An R package for structural equation
   modeling. *Journal of Statistical Software, 48*(2), 1–36.
   <https://doi.org/10.18637/jss.v048.i02>
+- Sinharay, S. (2016). Assessment of person fit using resampling-based
+  approaches. *Journal of Educational Measurement, 53*(1), 63–85.
+  <https://doi.org/10.1111/jedm.12101>
 - Strobl, C., Kopf, J., & Zeileis, A. (2015). Rasch trees: A new method
   for detecting DIF in the Rasch model. *Psychometrika, 80*, 289–316.
   <https://doi.org/10.1007/s11336-013-9388-3>
@@ -217,9 +291,9 @@ RMdifTree(pcmdat2, covariates = covs)
 ## Credits
 
 As mentioned earlier, this is based on my `easyRasch` package, and I am
-using Claude to “transfer” functions to this more properly formatted
-package. While it uses my earlier code, most of the code in this package
-is produced by the LLM and bug fixed by me.
+using Claude Opus/Fable to rewrite functions to this more properly
+formatted package. While it uses my earlier code, most of the code in
+this package is produced by the LLM and tested and bug fixed by me.
 
 [`RMdifTree()`](https://pgmj.github.io/easyRasch2/reference/RMdifTree.md)
 adapts MIT-licensed code from Mirka Henninger and Jan Radek’s
@@ -229,7 +303,8 @@ for the effect-size and ETS-classification algorithms.
 
 [Magnus Johansson](https://ki.se/en/people/magnus-johansson-3) is a
 licensed psychologist with a PhD in behavior analysis. He works as a
-research specialist at [Karolinska
+research specialist focused on psychometrics and statistics at
+[Karolinska
 Institutet](https://ki.se/en/cns/research/centre-for-psychiatry-research),
 Department of Clinical Neuroscience, Center for Psychiatry Research.
 
@@ -251,7 +326,8 @@ Conditional item fit statistics with simulation-based cutoffs
   : Conditional Item Infit MSQ
 - [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md)
   : Simulation-Based Infit MSQ Cutoff Determination
-- [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffPlot.md)
+- [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitPlot.md)
+  [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitPlot.md)
   : Plot Distribution of Simulated Infit and Outfit MSQ Values
 - [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitMI.md)
   : Conditional Item Infit MSQ for Multiply Imputed Data
@@ -278,11 +354,11 @@ Q3 residual correlations & partial gammal LD with simulation-based
 cutoffs
 
 - [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md)
-  : Q3 Residual Correlations for Local Dependence Assessment
+  : \\Q_3\\ Residual Correlations for Local Dependence Assessment
 - [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
-  : Simulation-Based Q3 Cutoff Determination
+  : Simulation-Based \\Q_3\\ Cutoff Determination
 - [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3plot.md)
-  : Plot Distribution of Simulated Q3 Residual Correlations
+  : Plot Distribution of Simulated \\Q_3\\ Residual Correlations
 - [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGamma.md)
   : Partial Gamma Local Dependence Analysis
 - [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaCutoff.md)
@@ -310,19 +386,36 @@ DIF assessment functions
 PCA of residuals, and more to come
 
 - [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFACutoff.md)
-  : Posterior-predictive CFA fit-index cutoffs under PCM
-  unidimensionality
+  : Simulated null distribution for one-factor CFA fit and loadings
+  under PCM unidimensionality
+- [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFA.md)
+  : Observed one-factor CFA fit and loadings vs a simulated reference
 - [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFAPlot.md)
-  : Plot observed CFA fit indices against the simulated null
-  distribution
+  : Plot observed CFA fit and loadings against the simulated null
 - [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/reference/RMdimResidualPCA.md)
   : PCA of Standardized Rasch Residuals
 - [`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdimResidualPCACutoff.md)
   : Simulation-based Cutoff for First-Contrast Eigenvalue
 - [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLof.md)
-  : Martin-Lof Test of Unidimensionality
+  : Martin-Löf Test of Unidimensionality
 - [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLofResiduals.md)
   : Standardised Residuals from the Joint Subscore Distribution
+
+## Item & person parameters
+
+Item difficulty/threshold and person-location estimation
+
+- [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/reference/RMitemParameters.md)
+  : Item Parameters for a Rasch / Partial Credit Model
+- [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/reference/RMpersonParameters.md)
+  : Person Locations for a Rasch / Partial Credit Model
+
+## Person fit
+
+Per-respondent fit statistics with resampling-based p-values
+
+- [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/reference/RMpersonFit.md)
+  : Person-Fit Statistics for a Rasch / Partial Credit Model
 
 ## Descriptive functions
 

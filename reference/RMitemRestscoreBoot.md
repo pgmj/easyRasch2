@@ -97,25 +97,26 @@ Useful with large samples, where the asymptotic test underlying
 can flag items that are not practically misfitting; bootstrapping gives
 a more nuanced view of the probability of an item actually being misfit.
 
-For **dichotomous** data (maximum score = 1), the full-sample model is
-fitted via [`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html) and
-bootstrap iterations refit via
-[`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html) with `se = FALSE` for
-speed.
-
-For **polytomous** data (maximum score \> 1), the full-sample model is
-fitted via [`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html) (so item
-locations can be obtained from
-[`eRm::thresholds()`](https://rdrr.io/pkg/eRm/man/thresholds.html)) and
-bootstrap iterations refit via
-`psychotools::pcmodel(..., hessian = FALSE)` for speed.
+The full-sample model is fitted by CML via
+[`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
+(a dichotomous item is a 2-category partial credit model), and item
+locations (mean of the grand-mean-centred CML Andrich thresholds) and
+the mean WLE person location are computed from it — consistent with
+[`RMitemRestscore`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md)
+and the rest of the package. Each bootstrap iteration draws a sample of
+size `samplesize` with replacement and refits via
+`psychotools::pcmodel(..., hessian = FALSE)` for speed;
 [`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html)
-accepts both model classes.
+accepts the fitted model.
 
 Conditional infit MSQ (computed once on the full sample via
 [`iarm::out_infit()`](https://rdrr.io/pkg/iarm/man/out_infit.html)) and
 relative item locations are reported alongside the bootstrap percentages
-for context.
+for context. The item-restscore classification and the infit statistic
+are conditional and engine-invariant; only the relative-item location
+shifts slightly relative to the previous `eRm` implementation, because
+it now uses the WLE person mean (finite at extreme scores) rather than
+the `eRm` MLE mean.
 
 Iterations that fail (e.g., due to convergence issues on a degenerate
 bootstrap sample) are silently discarded; the caption /
@@ -141,6 +142,7 @@ Models. *Applied Psychological Measurement, 35*(7), 557-561.
 
 ``` r
 # \donttest{
+if (requireNamespace("iarm", quietly = TRUE)) {
 set.seed(42)
 sim_data <- as.data.frame(
   matrix(sample(0:1, 400 * 8, replace = TRUE), nrow = 400, ncol = 8)
@@ -151,173 +153,15 @@ colnames(sim_data) <- paste0("Item", 1:8)
 # Default kable output (only items flagged > cutoff%)
 RMitemRestscoreBoot(sim_data, iterations = 50, samplesize = 300,
                 parallel = FALSE, seed = 1)
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> Table: Results based on 50 successful bootstrap iterations with n = 300 and 8 items. Conditional mean-square infit based on complete responders only (n = 400).
-#> 
-#> |Item  |Item-restscore result | % of iterations| Conditional MSQ infit| Relative item location|
-#> |:-----|:---------------------|---------------:|---------------------:|----------------------:|
-#> |Item3 |overfit               |               6|                  0.95|                   0.01|
-#> |Item1 |underfit              |               6|                  1.06|                  -0.04|
 
 # Per-item summary data.frame (all classifications, including "no misfit")
 summary_df <- RMitemRestscoreBoot(sim_data, iterations = 50, samplesize = 300,
                               parallel = FALSE, seed = 1,
                               output = "dataframe")
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
 
 # Per-iteration long data for custom plotting
 raw_df <- RMitemRestscoreBoot(sim_data, iterations = 50, samplesize = 300,
                           parallel = FALSE, seed = 1, output = "raw")
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
-#> 
 
 # Distribution of (expected - observed) across iterations, per item
 if (requireNamespace("ggplot2", quietly = TRUE)) {
@@ -335,6 +179,157 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }
+}
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
+#> 
 
 # }
 ```

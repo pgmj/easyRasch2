@@ -42,7 +42,7 @@ Variant suffixes attached at the end:
 | `RMiteminfit_mi()` | [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitMI.md) |
 | `RMinfitcutoff()` | [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md) |
 | `RMinfitcutoff_mi()` | [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffMI.md) |
-| `RMinfitcutoffPlot()` | [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffPlot.md) |
+| `RMinfitcutoffPlot()` | [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitPlot.md) |
 | `RMitemrestscore()` | [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md) |
 | `RMbootRestscore()` | [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/reference/RMitemRestscoreBoot.md) |
 | `RMciccPlot()` | [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemICCPlot.md) |

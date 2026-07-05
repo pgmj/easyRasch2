@@ -21,7 +21,7 @@ preparation pipeline feeds all six combinations."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.8.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +66,7 @@ preparation pipeline feeds all six combinations.</p>
 <span>  <span class="va">dif_var</span>,</span>
 <span>  model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"PCM"</span>, <span class="st">"RM"</span><span class="op">)</span>,</span>
 <span>  level <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"item"</span>, <span class="st">"threshold"</span><span class="op">)</span>,</span>
-<span>  output <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ggplot"</span>, <span class="st">"kable"</span>, <span class="st">"dataframe"</span><span class="op">)</span>,</span>
+<span>  output <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"kable"</span>, <span class="st">"dataframe"</span>, <span class="st">"ggplot"</span><span class="op">)</span>,</span>
 <span>  cutoff <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  conf <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  sort <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -108,8 +108,8 @@ item).</p></dd>
 
 
 <dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
-<dd><p>One of <code>"ggplot"</code> (default), <code>"kable"</code>, or
-<code>"dataframe"</code>. The data.frame view always carries a
+<dd><p>One of <code>"kable"</code> (default), <code>"dataframe"</code>, or
+<code>"ggplot"</code>. The data.frame view always carries a
 <code>Flagged</code> logical column; the kable view bolds flagged rows; the
 ggplot view shows confidence intervals.</p></dd>
 
@@ -168,60 +168,25 @@ kable renders correctly in HTML, LaTeX, and pipe/markdown.</p>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"pcmdat2"</span>, package <span class="op">=</span> <span class="st">"eRm"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">grp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">pcmdat2</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"eRm"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"pcmdat2"</span>, package <span class="op">=</span> <span class="st">"eRm"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">grp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">pcmdat2</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Default: ggplot panel of item locations with 95% CIs</span></span></span>
-<span class="r-in"><span><span class="fu">RMdifLR</span><span class="op">(</span><span class="va">pcmdat2</span>, dif_var <span class="op">=</span> <span class="va">grp</span><span class="op">)</span></span></span>
-<span class="r-plt img"><img src="RMdifLR-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span>  <span class="co"># Default: kable of per-group item locations</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMdifLR</span><span class="op">(</span><span class="va">pcmdat2</span>, dif_var <span class="op">=</span> <span class="va">grp</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Threshold-level kable, sorted by MaxDiff</span></span></span>
-<span class="r-in"><span><span class="fu">RMdifLR</span><span class="op">(</span><span class="va">pcmdat2</span>, dif_var <span class="op">=</span> <span class="va">grp</span>,</span></span>
-<span class="r-in"><span>        level <span class="op">=</span> <span class="st">"threshold"</span>, output <span class="op">=</span> <span class="st">"kable"</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Partial Credit Model split by DIF variable (2 groups). Andersen LR chi^2 = 4.064, df = 7, p = 0.772. n = 300 complete cases, 4 items. **Bold** = MaxDiff &gt; 0.5 logits.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item |Threshold |      A|      B|    All| MaxDiff|Flagged |  SE_A|  SE_B| SE_All|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |:----|:---------|------:|------:|------:|-------:|:-------|-----:|-----:|------:|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |I1   |c1        |  0.130| -0.346| -0.104|   0.476|no      | 0.214| 0.219|  0.152|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |I1   |c2        |  1.965|  2.367|  2.180|   0.402|no      | 0.288| 0.282|  0.201|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |I4   |c1        | -1.096| -0.865| -0.983|   0.231|no      | 0.294| 0.282|  0.203|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |I4   |c2        |  0.996|  0.789|  0.889|   0.206|no      | 0.234| 0.235|  0.165|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |I3   |c1        | -2.409| -2.228| -2.315|   0.182|no      | 0.506| 0.452|  0.336|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |I2   |c2        |  2.086|  1.922|  1.996|   0.164|no      | 0.309| 0.291|  0.211|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |I3   |c2        |  0.657|  0.543|  0.597|   0.114|no      | 0.225| 0.224|  0.158|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |I2   |c1        |  0.524|  0.629|  0.571|   0.104|no      | 0.210| 0.211|  0.148|</span>
+<span class="r-in"><span>  <span class="co"># ggplot panel of item locations with 95% CIs</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMdifLR</span><span class="op">(</span><span class="va">pcmdat2</span>, dif_var <span class="op">=</span> <span class="va">grp</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Tidy data.frame for downstream use</span></span></span>
-<span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">RMdifLR</span><span class="op">(</span><span class="va">pcmdat2</span>, dif_var <span class="op">=</span> <span class="va">grp</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"lr_test"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $LR</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 4.063775</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $df</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $p_value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.7724031</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $n_groups</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 2</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $groups</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "A" "B"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $model</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "PCM"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $n_persons</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 300</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> $n_items</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-in"><span><span class="va">df</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">Flagged</span>, <span class="op">]</span></span></span>
+<span class="r-in"><span>  <span class="co"># Threshold-level kable, sorted by MaxDiff</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMdifLR</span><span class="op">(</span><span class="va">pcmdat2</span>, dif_var <span class="op">=</span> <span class="va">grp</span>, level <span class="op">=</span> <span class="st">"threshold"</span>, sort <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Tidy data.frame for downstream use</span></span></span>
+<span class="r-in"><span>  <span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">RMdifLR</span><span class="op">(</span><span class="va">pcmdat2</span>, dif_var <span class="op">=</span> <span class="va">grp</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">df</span>, <span class="st">"lr_test"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">df</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">Flagged</span>, <span class="op">]</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] Item    A       B       All     MaxDiff Flagged SE_A    SE_B    SE_All </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;0 rows&gt; (or 0-length row.names)</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

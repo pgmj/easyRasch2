@@ -32,8 +32,8 @@ RMscoreSE(
 
   Character string. Either `"WLE"` (default) for Warm's Weighted
   Likelihood Estimator computed from a CML-fitted Rasch / Partial Credit
-  Model via `eRm`, or `"EAP"` for Expected A Posteriori sum-score
-  estimates from an MML-fitted model via `mirt`.
+  Model via `psychotools`, or `"EAP"` for Expected A Posteriori
+  sum-score estimates from an MML-fitted model via `mirt`.
 
 - output:
 
@@ -84,16 +84,18 @@ The function automatically detects whether the data is dichotomous (max
 score 1) or polytomous (max score \> 1) and selects the appropriate
 Rasch / Partial Credit model.
 
-**`method = "WLE"`** fits the model with
-[`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html) or
-[`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html) (CML) and applies
-Warm's Weighted Likelihood correction for the bias inherent in MLE-based
-person estimates at the score boundaries. Score-boundary estimates are
-obtained via the `theta_range` search; if a boundary cannot be solved
-within that range it is returned as `Inf` / `-Inf` with `NA` SE. This
-path uses lightly patched copies of the iarm 0.4.x person-estimation
-code so that boundary scores converge cleanly across the full theta
-range.
+**`method = "WLE"`** fits the model by CML with
+[`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html),
+centres the item thresholds to grand-mean-zero, and solves Warm's
+weighted-likelihood equation for each raw score with the same engine
+used by
+[`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/reference/RMpersonParameters.md);
+the two functions therefore report identical locations and standard
+errors. Warm's bias correction yields finite locations even at the
+minimum and maximum scores (only a root outside `theta_range` is clamped
+to the boundary with `NA` SE). The reported `logit_se` is the
+information-based standard error `1 / sqrt(I(theta))`, matching `catR`,
+`TAM` and most Rasch software.
 
 **`method = "EAP"`** fits the model with
 `mirt::mirt(..., itemtype = "Rasch")` (MML) and obtains sum-score-based
@@ -129,62 +131,64 @@ colnames(sim_data) <- paste0("Item", 1:6)
 RMscoreSE(sim_data)
 #> 
 #> 
-#> Table: Person locations via Warm's WLE (CML item parameters from eRm).
+#> Table: Person locations via Warm's WLE (CML item parameters). n = 200 respondents.
 #> 
 #> | Ordinal sum score| Logit score| Logit std.error|
 #> |-----------------:|-----------:|---------------:|
-#> |                 0|      -2.543|           0.556|
-#> |                 1|      -1.581|           0.628|
-#> |                 2|      -1.170|           0.582|
-#> |                 3|      -0.902|           0.526|
-#> |                 4|      -0.699|           0.477|
-#> |                 5|      -0.530|           0.439|
-#> |                 6|      -0.381|           0.411|
-#> |                 7|      -0.246|           0.392|
-#> |                 8|      -0.117|           0.381|
-#> |                 9|       0.007|           0.377|
-#> |                10|       0.132|           0.381|
-#> |                11|       0.260|           0.391|
-#> |                12|       0.394|           0.409|
-#> |                13|       0.541|           0.435|
-#> |                14|       0.707|           0.471|
-#> |                15|       0.906|           0.517|
-#> |                16|       1.165|           0.568|
-#> |                17|       1.560|           0.608|
-#> |                18|       2.472|           0.536|
+#> |                 0|      -2.543|           1.298|
+#> |                 1|      -1.581|           0.738|
+#> |                 2|      -1.170|           0.575|
+#> |                 3|      -0.902|           0.494|
+#> |                 4|      -0.699|           0.446|
+#> |                 5|      -0.530|           0.415|
+#> |                 6|      -0.381|           0.394|
+#> |                 7|      -0.246|           0.381|
+#> |                 8|      -0.117|           0.374|
+#> |                 9|       0.007|           0.371|
+#> |                10|       0.132|           0.373|
+#> |                11|       0.260|           0.380|
+#> |                12|       0.394|           0.393|
+#> |                13|       0.541|           0.412|
+#> |                14|       0.707|           0.442|
+#> |                15|       0.906|           0.489|
+#> |                16|       1.165|           0.567|
+#> |                17|       1.560|           0.724|
+#> |                18|       2.472|           1.259|
 
 # Underlying data.frame
 RMscoreSE(sim_data, output = "dataframe")
 #>    raw_score  logit_score  logit_se
-#> 1          0 -2.543000725 0.5563760
-#> 2          1 -1.581232465 0.6282994
-#> 3          2 -1.169506442 0.5819061
-#> 4          3 -0.902148954 0.5256115
-#> 5          4 -0.698683174 0.4768012
-#> 6          5 -0.529798884 0.4386318
-#> 7          6 -0.381484688 0.4107720
-#> 8          7 -0.245771035 0.3920219
-#> 9          8 -0.117452193 0.3811928
-#> 10         9  0.007350623 0.3774651
-#> 11        10  0.131958452 0.3805345
-#> 12        11  0.259668306 0.3906430
-#> 13        12  0.394278172 0.4085130
-#> 14        13  0.540823944 0.4351554
-#> 15        14  0.706934527 0.4714464
-#> 16        15  0.905894381 0.5171699
-#> 17        16  1.165238245 0.5684007
-#> 18        17  1.560005394 0.6076141
-#> 19        18  2.472066455 0.5357012
+#> 1          0 -2.543009251 1.2975432
+#> 2          1 -1.581232885 0.7377485
+#> 3          2 -1.169505478 0.5749937
+#> 4          3 -0.902147524 0.4938857
+#> 5          4 -0.698681315 0.4456050
+#> 6          5 -0.529796880 0.4145554
+#> 7          6 -0.381482620 0.3941221
+#> 8          7 -0.245769004 0.3810601
+#> 9          8 -0.117449995 0.3736801
+#> 10         9  0.007352443 0.3711473
+#> 11        10  0.131960186 0.3731978
+#> 12        11  0.259669689 0.3800580
+#> 13        12  0.394279356 0.3925154
+#> 14        13  0.540824565 0.4121876
+#> 15        14  0.706934558 0.4421911
+#> 16        15  0.905893650 0.4888747
+#> 17        16  1.165236002 0.5671642
+#> 18        17  1.560000535 0.7236097
+#> 19        18  2.472059396 1.2591152
 
 # ggplot figure
-RMscoreSE(sim_data, output = "ggplot")
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  RMscoreSE(sim_data, output = "ggplot")
+}
 
 
 # EAP via mirt
 RMscoreSE(sim_data, method = "EAP")
 #> 
 #> 
-#> Table: Person locations via EAPsum (MML item parameters from mirt; depends on a normal theta prior).
+#> Table: Person locations via EAPsum (MML item parameters from mirt; depends on a normal theta prior). n = 200 respondents.
 #> 
 #> | Ordinal sum score| Logit score| Logit std.error|
 #> |-----------------:|-----------:|---------------:|

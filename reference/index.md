@@ -8,7 +8,8 @@ Conditional item fit statistics with simulation-based cutoffs
   : Conditional Item Infit MSQ
 - [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md)
   : Simulation-Based Infit MSQ Cutoff Determination
-- [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffPlot.md)
+- [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitPlot.md)
+  [`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitPlot.md)
   : Plot Distribution of Simulated Infit and Outfit MSQ Values
 - [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitMI.md)
   : Conditional Item Infit MSQ for Multiply Imputed Data
@@ -35,11 +36,11 @@ Q3 residual correlations & partial gammal LD with simulation-based
 cutoffs
 
 - [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md)
-  : Q3 Residual Correlations for Local Dependence Assessment
+  : \\Q_3\\ Residual Correlations for Local Dependence Assessment
 - [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
-  : Simulation-Based Q3 Cutoff Determination
+  : Simulation-Based \\Q_3\\ Cutoff Determination
 - [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3plot.md)
-  : Plot Distribution of Simulated Q3 Residual Correlations
+  : Plot Distribution of Simulated \\Q_3\\ Residual Correlations
 - [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGamma.md)
   : Partial Gamma Local Dependence Analysis
 - [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaCutoff.md)
@@ -67,19 +68,36 @@ DIF assessment functions
 PCA of residuals, and more to come
 
 - [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFACutoff.md)
-  : Posterior-predictive CFA fit-index cutoffs under PCM
-  unidimensionality
+  : Simulated null distribution for one-factor CFA fit and loadings
+  under PCM unidimensionality
+- [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFA.md)
+  : Observed one-factor CFA fit and loadings vs a simulated reference
 - [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFAPlot.md)
-  : Plot observed CFA fit indices against the simulated null
-  distribution
+  : Plot observed CFA fit and loadings against the simulated null
 - [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/reference/RMdimResidualPCA.md)
   : PCA of Standardized Rasch Residuals
 - [`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdimResidualPCACutoff.md)
   : Simulation-based Cutoff for First-Contrast Eigenvalue
 - [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLof.md)
-  : Martin-Lof Test of Unidimensionality
+  : Martin-Löf Test of Unidimensionality
 - [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLofResiduals.md)
   : Standardised Residuals from the Joint Subscore Distribution
+
+## Item & person parameters
+
+Item difficulty/threshold and person-location estimation
+
+- [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/reference/RMitemParameters.md)
+  : Item Parameters for a Rasch / Partial Credit Model
+- [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/reference/RMpersonParameters.md)
+  : Person Locations for a Rasch / Partial Credit Model
+
+## Person fit
+
+Per-respondent fit statistics with resampling-based p-values
+
+- [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/reference/RMpersonFit.md)
+  : Person-Fit Statistics for a Rasch / Partial Credit Model
 
 ## Descriptive functions
 

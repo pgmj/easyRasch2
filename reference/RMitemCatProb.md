@@ -1,13 +1,12 @@
 # Item Category Probability Curves
 
 Plots model-implied response-category probability curves for each item
-as a function of the latent trait \\\theta\\. Polytomous items are
-fitted with the Partial Credit Model via
-[`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html); dichotomous items
-are fitted with the Rasch model via
-[`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html). Each item gets its
-own facet panel, with one curve per response category coloured from low
-to high using the viridis palette. Comparable in scope to
+as a function of the latent trait \\\theta\\. Item parameters are
+estimated by conditional maximum likelihood via
+[`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
+(a dichotomous item is a 2-category PCM). Each item gets its own facet
+panel, with one curve per response category coloured from low to high
+using the viridis palette. Comparable in scope to
 [`eRm::plotICC()`](https://rdrr.io/pkg/eRm/man/plotICC.html) and
 `mirt`'s trace plots, with a `ggplot2` / viridis output and optional
 descriptive labels for items and categories.
@@ -146,9 +145,7 @@ RMitemCatProb(
 
 For each polytomous item *i* with response categories \\0, 1, \ldots,
 K_i\\ and threshold parameters \\\delta\_{i,1}, \ldots,
-\delta\_{i,K_i}\\ from
-[`eRm::thresholds()`](https://rdrr.io/pkg/eRm/man/thresholds.html), the
-PCM category probability is
+\delta\_{i,K_i}\\ (CML, `psychotools`), the PCM category probability is
 
 \$\$P(X_i = k \mid \theta) = \frac{\exp(\sum\_{j=1}^{k} (\theta -
 \delta\_{i,j}))}{\sum\_{k'=0}^{K_i} \exp(\sum\_{j=1}^{k'} (\theta -

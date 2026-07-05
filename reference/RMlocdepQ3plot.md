@@ -1,10 +1,10 @@
-# Plot Distribution of Simulated Q3 Residual Correlations
+# Plot Distribution of Simulated \\Q_3\\ Residual Correlations
 
-Visualises the distribution of simulation-based Yen's Q3 residual
+Visualises the distribution of simulation-based Yen's \\Q_3\\ residual
 correlations per item pair from
 [`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md),
-optionally overlaying observed Q3 values computed from real data via
-`mirt::residuals(..., type = "Q3")`.
+optionally overlaying observed \\Q_3\\ values computed from real data
+via `mirt::residuals(..., type = "Q3")`.
 
 ## Usage
 
@@ -24,9 +24,9 @@ RMlocdepQ3Plot(simfit, data, items = NULL, n_pairs = NULL)
 - data:
 
   Optional. A data.frame or matrix of item responses for computing and
-  overlaying observed Q3 values. Items must be scored starting at 0
+  overlaying observed \\Q_3\\ values. Items must be scored starting at 0
   (non-negative integers). When provided, the plot includes orange
-  diamond markers for the observed Q3 alongside the simulated
+  diamond markers for the observed \\Q_3\\ alongside the simulated
   distribution, plus segment summaries from the cutoff intervals.
 
 - items:
@@ -47,7 +47,22 @@ RMlocdepQ3Plot(simfit, data, items = NULL, n_pairs = NULL)
 
 ## Value
 
-A `ggplot` object.
+A named list of two `ggplot` objects (mirroring the `$matrix` / `$pairs`
+structure of
+[`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md)'s
+table output):
+
+- `$pairs`:
+
+  the per-pair plot described below (always returned).
+
+- `$matrix`:
+
+  a lower-triangle tile heatmap of the **observed** \\Q_3\\ matrix, with
+  pairs above the global dynamic cut-off outlined. This needs the
+  observed data, so it is `NULL` (with a message) when `data` is not
+  supplied. When `items` is given, the heatmap is subset to those items;
+  `n_pairs` does not apply to it.
 
 ## Details
 
@@ -58,9 +73,10 @@ Uses
 (when `data` is supplied) with `point_interval = "median_hdci"` and
 `.width = c(0.66, 0.95, 0.99)`.
 
-The plot shows one row per item pair (labelled as "Item1 - Item2"). Only
-the upper triangle of the Q3 matrix is plotted (pairs are unordered
-under symmetric Q3, unlike partial gamma which is direction-dependent).
+The `$pairs` plot shows one row per item pair (labelled as "Item1 -
+Item2"). Only the upper triangle of the \\Q_3\\ matrix is plotted (pairs
+are unordered under symmetric \\Q_3\\, unlike partial gamma which is
+direction-dependent).
 
 When `data` is **not** supplied, the function plots the simulated Q3
 distributions as dot-interval plots using
@@ -69,11 +85,11 @@ with median and Highest Density Continuous Interval (HDCI) summaries.
 
 When `data` **is** supplied, the function:
 
-1.  Fits a Rasch model to `data` via
-    [`mirt::mirt()`](https://philchalmers.github.io/mirt/reference/mirt.html)
-    and extracts observed Q3 residual correlations.
+1.  Computes observed \\Q_3\\ residual correlations under the same
+    estimator used to build `simfit` (its `$estimator`: CML/WLE by
+    default, or MML via `mirt`).
 
-2.  Overlays observed Q3 values as orange diamond markers on the
+2.  Overlays observed \\Q_3\\ values as orange diamond markers on the
     simulated distributions.
 
 3.  Shows per-pair cutoff intervals (from `simfit$pair_cutoffs`) as
@@ -114,6 +130,12 @@ if (requireNamespace("ggplot2", quietly = TRUE) &&
   # Top 10 pairs by departure from null
   RMlocdepQ3Plot(cutoff_res, data = sim_data, n_pairs = 10)
 }
+#> The Q3 tile heatmap ($matrix) requires `data`; returning $matrix = NULL.
+#> $matrix
 
+#> 
+#> $pairs
+
+#> 
 # }
 ```

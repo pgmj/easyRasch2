@@ -42,7 +42,9 @@ RMplotTile(
   Optional vector of length `nrow(data)` (factor, character, or numeric)
   defining a grouping variable. When provided, the plot is faceted by
   group and counts / percentages are computed within each group. Default
-  `NULL` (no faceting). Persons with `NA` group are excluded.
+  `NULL` (no faceting). Persons with `NA` group are excluded, with a
+  [`message()`](https://rdrr.io/r/base/message.html) reporting how many
+  rows were dropped.
 
 - cutoff:
 
@@ -116,36 +118,39 @@ When `group` is supplied, percentages and the highlight cutoff are
 applied within each group, so a cell labelled "5" in the group-A facet
 contains the count for group A only.
 
+The plot caption reports the sample in the standard
+`n = X of Y respondents (policy)` form: rows with `NA` group are dropped
+(and counted in `Y` only), while item-level `NA`s are retained – each
+cell simply counts the non-missing responses for that item.
+
 ## Examples
 
 ``` r
 # \donttest{
-data("pcmdat2", package = "eRm")
+if (requireNamespace("eRm", quietly = TRUE)) {
+  data("pcmdat2", package = "eRm")
 
-# Basic tile plot
-RMplotTile(pcmdat2)
+  # Basic tile plot
+  RMplotTile(pcmdat2)
 
+  # With percentages
+  RMplotTile(pcmdat2, percent = TRUE)
 
-# With percentages
-RMplotTile(pcmdat2, percent = TRUE)
+  # Faceted by an external grouping variable
+  set.seed(1)
+  grp <- sample(c("A", "B"), nrow(pcmdat2), replace = TRUE)
+  RMplotTile(pcmdat2, group = grp)
 
+  # With custom labels and tighter cutoff
+  RMplotTile(pcmdat2,
+             group = grp,
+             group_labels = c("Female", "Male"),
+             cutoff = 5,
+             facet_ncol = 2)
 
-# Faceted by an external grouping variable
-set.seed(1)
-grp <- sample(c("A", "B"), nrow(pcmdat2), replace = TRUE)
-RMplotTile(pcmdat2, group = grp)
-
-
-# With custom labels and tighter cutoff
-RMplotTile(pcmdat2,
-           group = grp,
-           group_labels = c("Female", "Male"),
-           cutoff = 5,
-           facet_ncol = 2)
-
-
-# Underlying counts as a data.frame
-RMplotTile(pcmdat2, group = grp, output = "dataframe")
+  # Underlying counts as a data.frame
+  RMplotTile(pcmdat2, group = grp, output = "dataframe")
+}
 #>    group item item_label category  n percentage
 #> 1      A   I1         I1        0 44       30.1
 #> 2      A   I1         I1        1 64       43.8

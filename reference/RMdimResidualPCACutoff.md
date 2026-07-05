@@ -96,15 +96,14 @@ Rule-of-thumb cutoffs for the first-contrast eigenvalue depend strongly
 on sample size, test length, and item-parameter spread; simulation-based
 cutoffs tailored to the data are more defensible (Chou & Wang, 2010).
 
-Per iteration: theta values are sampled with replacement from the
-WLE/MLE estimates derived from the fitted full-sample model; response
-data are simulated under the model
+The generating model uses CML item parameters (`psychotools`) and WLE
+person locations. Per iteration: theta values are sampled with
+replacement from the WLE estimates; response data are simulated under
+the model
 ([`psychotools::rrm`](https://rdrr.io/pkg/psychotools/man/rrm.html) for
-dichotomous, partial-credit simulator for polytomous); the model is
-refitted with [`eRm::RM()`](https://rdrr.io/pkg/eRm/man/RM.html) /
-[`eRm::PCM()`](https://rdrr.io/pkg/eRm/man/PCM.html); standardized
-residuals are extracted via `eRm::itemfit()$st.res`;
-[`prcomp()`](https://rdrr.io/r/stats/prcomp.html) is run; the
+dichotomous, partial-credit simulator for polytomous); CML/WLE
+standardized residuals are computed (the same engine as the observed
+analysis); [`prcomp()`](https://rdrr.io/r/stats/prcomp.html) is run; the
 first-contrast eigenvalue is recorded.
 
 Iterations that fail (e.g., due to a degenerate simulated dataset where
@@ -135,20 +134,19 @@ colnames(dat) <- paste0("I", 1:12)
 # Few iterations for a fast example; use 250+ in real analyses
 bound <- RMdimResidualPCACutoff(dat, iterations = 50, parallel = FALSE, seed = 1)
 bound$suggested_cutoff
-#> [1] 1.656817
+#> [1] 1.623358
 
 RMdimResidualPCA(dat, cutoff = bound)
 #> 
 #> 
-#> Table: Rasch model (200 complete cases, 12 items). Total observed variance: 9.7% explained by measures, 90.3% unexplained
-#> (basis for PCA; n = 200 non-extreme cases). First-contrast cutoff = 1.657 based on 50 simulation iterations (99th percentile).
+#> Table: Rasch model (12 items), n = 200 respondents. Total observed variance: 8.3% explained by measures, 91.7% unexplained. First-contrast cutoff = 1.623 based on 50 simulation iterations (99th percentile).
 #> 
 #> |Component | Eigenvalue| Proportion of variance|Flagged |
 #> |:---------|----------:|----------------------:|:-------|
-#> |PC1       |      1.464|                  0.121|FALSE   |
-#> |PC2       |      1.425|                  0.118|FALSE   |
-#> |PC3       |      1.281|                  0.106|FALSE   |
-#> |PC4       |      1.155|                  0.096|FALSE   |
-#> |PC5       |      1.125|                  0.093|FALSE   |
+#> |PC1       |      1.431|                  0.121|FALSE   |
+#> |PC2       |      1.407|                  0.119|FALSE   |
+#> |PC3       |      1.254|                  0.106|FALSE   |
+#> |PC4       |      1.132|                  0.096|FALSE   |
+#> |PC5       |      1.105|                  0.093|FALSE   |
 # }
 ```

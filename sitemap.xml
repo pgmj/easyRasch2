@@ -1,5 +1,6 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://pgmj.github.io/easyRasch2/404.html</loc></url>
+<url><loc>https://pgmj.github.io/easyRasch2/CONTRIBUTING.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/LICENSE.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/articles/easyRasch2.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/articles/index.html</loc></url>
@@ -12,6 +13,7 @@
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMdifGammaPlot.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMdifLR.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMdifTree.html</loc></url>
+<url><loc>https://pgmj.github.io/easyRasch2/reference/RMdimCFA.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMdimCFACutoff.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMdimCFAPlot.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMdimMartinLof.html</loc></url>
@@ -23,8 +25,9 @@
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMitemICCPlot.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffMI.html</loc></url>
-<url><loc>https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffPlot.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMitemInfitMI.html</loc></url>
+<url><loc>https://pgmj.github.io/easyRasch2/reference/RMitemInfitPlot.html</loc></url>
+<url><loc>https://pgmj.github.io/easyRasch2/reference/RMitemParameters.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMitemRestscoreBoot.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMiteminfit.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.html</loc></url>
@@ -34,6 +37,8 @@
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3plot.html</loc></url>
+<url><loc>https://pgmj.github.io/easyRasch2/reference/RMpersonFit.html</loc></url>
+<url><loc>https://pgmj.github.io/easyRasch2/reference/RMpersonParameters.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMplotBar.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMplotStackedbar.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/reference/RMplotTile.html</loc></url>
