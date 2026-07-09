@@ -11,7 +11,7 @@ a single categorical DIF variable, controlling for the total score."><meta name=
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.939</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.0.0.900</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -224,28 +224,28 @@ Wiley.</p>
 <span class="r-in"><span>  <span class="op">}</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations &gt;= 1000 in RMdifGammaCutoff() for reliable p-values.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      Item  gamma    se  lower upper gamma_low gamma_high p_gamma padj_gamma</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   Item1  0.029 0.161 -0.287 0.345    -0.392      0.419  1.0000     1.0000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   Item2 -0.168 0.156 -0.474 0.138    -0.334      0.297  0.2376     0.9010</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3   Item3  0.111 0.168 -0.219 0.441    -0.404      0.486  0.4554     0.9802</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4   Item4 -0.030 0.155 -0.333 0.273    -0.338      0.395  0.9010     1.0000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5   Item5  0.076 0.159 -0.235 0.387    -0.368      0.379  0.5743     1.0000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6   Item6  0.042 0.156 -0.264 0.349    -0.347      0.354  0.9010     1.0000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7   Item7 -0.146 0.160 -0.460 0.169    -0.391      0.273  0.4158     0.9802</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8   Item8  0.019 0.162 -0.298 0.336    -0.363      0.325  0.9208     1.0000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9   Item9 -0.141 0.161 -0.457 0.175    -0.372      0.419  0.5347     0.9802</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10 Item10  0.178 0.156 -0.127 0.483    -0.386      0.354  0.2178     0.9010</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    flagged</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1    FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2    FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3    FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4    FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5    FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6    FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7    FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8    FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9    FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      Item       gamma        se      lower     upper  gamma_low gamma_high</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   Item1  0.02929936 0.1612158 -0.2866779 0.3452766 -0.3918869  0.4190476</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   Item2 -0.16753927 0.1561349 -0.4735580 0.1384794 -0.3341646  0.2969502</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3   Item3  0.11111111 0.1681747 -0.2185053 0.4407275 -0.4043210  0.4864595</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4   Item4 -0.03045685 0.1545831 -0.3334342 0.2725205 -0.3377265  0.3954457</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5   Item5  0.07616708 0.1587018 -0.2348828 0.3872169 -0.3684211  0.3787375</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6   Item6  0.04239401 0.1562001 -0.2637526 0.3485406 -0.3467337  0.3541153</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7   Item7 -0.14560440 0.1603616 -0.4599073 0.1686985 -0.3906899  0.2727273</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8   Item8  0.01897019 0.1618599 -0.2982693 0.3362097 -0.3626374  0.3248998</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9   Item9 -0.14088398 0.1614016 -0.4572253 0.1754573 -0.3724247  0.4188101</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 Item10  0.17777778 0.1556159 -0.1272237 0.4827792 -0.3863216  0.3540313</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      p_gamma padj_gamma flagged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1.0000000  1.0000000   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  0.2376238  0.9009901   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  0.4554455  0.9801980   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  0.9009901  1.0000000   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  0.5742574  1.0000000   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  0.9009901  1.0000000   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7  0.4158416  0.9801980   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8  0.9207921  1.0000000   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9  0.5346535  0.9801980   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 0.2178218  0.9009901   FALSE</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
@@ -258,7 +258,7 @@ Wiley.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

@@ -161,13 +161,13 @@ dat[cbind(sample(200, 30), sample(6, 30, replace = TRUE))] <- NA
 
 # Default: WLE person locations
 RMpersonParameters(dat, output = "dataframe") |> head()
-#>     theta    sem sum_score n_answered extreme
-#> 1 -0.2225 0.5055         5          6   FALSE
-#> 2 -0.2225 0.5055         5          6   FALSE
-#> 3 -1.0472 0.6396         2          6   FALSE
-#> 4  0.2239 0.5054         7          6   FALSE
-#> 5 -2.4725 1.3254         0          6    TRUE
-#> 6 -1.0472 0.6396         2          6   FALSE
+#>        theta       sem sum_score n_answered extreme
+#> 1 -0.2224510 0.5054892         5          6   FALSE
+#> 2 -0.2224510 0.5054892         5          6   FALSE
+#> 3 -1.0471828 0.6395816         2          6   FALSE
+#> 4  0.2239135 0.5053530         7          6   FALSE
+#> 5 -2.4725321 1.3253669         0          6    TRUE
+#> 6 -1.0471828 0.6395816         2          6   FALSE
 
 # EAP with a data-estimated prior SD
 eap <- RMpersonParameters(dat, method = "EAP", output = "dataframe")
@@ -178,17 +178,17 @@ attr(eap, "prior")
 # EAP with a fixed N(0, 1) prior
 RMpersonParameters(dat, method = "EAP", prior_sd = 1, output = "dataframe") |>
   head()
-#>     theta    sem sum_score n_answered extreme
-#> 1 -0.2162 0.4680         5          6   FALSE
-#> 2 -0.2162 0.4680         5          6   FALSE
-#> 3 -0.9457 0.5322         2          6   FALSE
-#> 4  0.2170 0.4679         7          6   FALSE
-#> 5 -1.6175 0.6353         0          6    TRUE
-#> 6 -0.9457 0.5322         2          6   FALSE
+#>        theta       sem sum_score n_answered extreme
+#> 1 -0.2162073 0.4680027         5          6   FALSE
+#> 2 -0.2162073 0.4680027         5          6   FALSE
+#> 3 -0.9457010 0.5321904         2          6   FALSE
+#> 4  0.2169764 0.4679247         7          6   FALSE
+#> 5 -1.6175238 0.6352806         0          6    TRUE
+#> 6 -0.9457010 0.5321904         2          6   FALSE
 
 # Write the person-location table to a CSV (also returned invisibly)
 RMpersonParameters(dat, output = "file",
                    filename = tempfile(fileext = ".csv"))
-#> Wrote 200 row(s) to '/tmp/Rtmpu1s2jm/file21ac4a728015.csv'.
+#> Wrote 200 row(s) to '/tmp/RtmpfVOSS5/file21d54298b893.csv'.
 # }
 ```

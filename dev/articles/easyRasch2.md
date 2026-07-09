@@ -105,7 +105,7 @@ distributions:
 
 ``` r
 
-hist(rowSums(items), col = "lightblue", main = "")
+hist(rowSums(items), col = "lightblue", main = "", xlab = "Ordinal sum scores")
 ```
 
 ![\*\*Figure 1.\*\* \*Histogram of ordinal sum
@@ -140,8 +140,8 @@ diagnostics that can be combined for a robust conclusion:
 
 - item-level conditional infit MSQ statistics ([Müller
   2020](#ref-muller_item_2020))
-- item-level item-restscore associations with Goodman-Kruskal’s gamma
-  ([Kreiner 2011](#ref-kreiner_note_2011))
+- item-level item-restscore associations with Goodman-Kruskal’s \gamma
+  (gamma) ([Kreiner 2011](#ref-kreiner_note_2011))
 - confirmatory factor analysis (CFA) with WLSMV estimator for ordinal
   data
 - principal components analysis (PCA) of the standardized residuals
@@ -231,12 +231,12 @@ for other reasons.
 
 ### Item-restscore
 
-Item-restscore uses Goodman-Kruskal’s gamma and shows the expected and
-observed correlation between an item and a score based on the rest of
-the items ([Kreiner 2011](#ref-kreiner_note_2011)). Similarly, but
-inverted, to item infit, a lower observed correlation value than
-expected indicates underfit, that the item may not belong to the
-dimension. A higher than expected observed value indicates an
+Item-restscore uses Goodman-Kruskal’s \gamma (gamma) and shows the
+expected and observed correlation between an item and a score based on
+the rest of the items ([Kreiner 2011](#ref-kreiner_note_2011)).
+Similarly, but inverted, to item infit, a lower observed correlation
+value than expected indicates underfit, that the item may not belong to
+the dimension. A higher than expected observed value indicates an
 overfitting and possibly redundant item. Overfitting items will often
 also show issues with local dependency.
 
@@ -534,8 +534,8 @@ candidates for further inspection or possible item revision. Some argue
 for creating testlets by combining a locally dependent pair into a
 single polytomous super-item rather than eliminating one in an LD pair.
 I suggest looking closely at the item content before taking any action.
-Often, one will see very similarly worded items, where one in a LD pair
-is clearly redundant. Another solution to LD can be the Graphical
+Often, one will see very similarly worded items, where one item in an LD
+pair is clearly redundant. Another solution to LD can be the Graphical
 Loglinear Rasch Model by Kreiner and Christensen ([Kreiner
 2007](#ref-kreiner_validity_2007)), but that is beyond the scope of this
 vignette.
@@ -637,9 +637,9 @@ tests, be interpreted with care.
 
 ### Partial-gamma DIF
 
-This plot annotates each item with its partial-gamma DIF coefficient and
-shows group differences within class intervals (respondents grouped by
-their total/latent score).
+This plot annotates each item with its partial-\gamma DIF coefficient
+and shows group differences within class intervals (respondents grouped
+by their total/latent score).
 
 ``` r
 
@@ -652,9 +652,9 @@ Curves\*](figures/rasch-dif-cicc-1.png)
 **Figure 10.** *Partial Gamma DIF Conditional Item Characteristic
 Curves*
 
-To demonstrate the FWER-adjusted *p*-values, we’ll run the partial
-\gamma DIF analysis with parametric bootstrap (only 100 here for
-rendering speed).
+To demonstrate the FWER-adjusted *p*-values, we’ll run the
+partial-\gamma DIF analysis with parametric bootstrap (only 100 here for
+rendering speed, which limits the reliability of the *p*-values).
 
 ``` r
 
@@ -757,6 +757,25 @@ how often each covariate is selected and where the cutpoints land — a
 guard against overinterpreting a single sample’s tree structure; and
 output = “plot” draws the tree with per-node item parameters.
 
+## Next step
+
+Since we found issues with item misfit, local dependence, and gender
+DIF, these need to be addressed before the scale is used for
+measurement. Notably, item 2 recurs across all three criteria — overfit,
+the strongest local dependence (with item 1), and the largest gender DIF
+— making it the natural first candidate for closer inspection. The
+recommended approach is iterative: remove a single item (for instance,
+an underfit item, or one item from an LD pair after reviewing item
+content), then re-run the full set of analyses, since fit indications
+for the remaining items change with every removal. When the sample is
+large enough, it is good practice to set aside a random holdout
+subsample before the analysis, so that the final item set can be
+confirmed in data that played no part in the item-reduction decisions.
+
+The following sections are primarily of interest once an acceptable item
+set has been established; here we continue with all nine items for
+demonstration purposes.
+
 ## Targeting
 
 A targeting plot summarizes how well the item-threshold distribution
@@ -794,7 +813,7 @@ RMreliability(items, draws = 200, rmu_iter = 20, parallel = FALSE,
 | Cronbach’s alpha | 0.886 | NA | NA | no bootstrap |
 | PSI | 0.838 | NA | NA | no bootstrap |
 | Marginal | 0.862 | NA | NA | no bootstrap |
-| RMU (WLE) | 0.880 | 0.866 | 0.894 | 200 PVs, 20 RMU iterations |
+| RMU (WLE) | 0.881 | 0.865 | 0.894 | 200 PVs, 20 RMU iterations |
 
 Reliability for 9 items, n = 600. PSI is the WLE-based separation
 reliability and excludes min/max scoring respondents. {.table}
@@ -915,7 +934,7 @@ implemented, with Monte-Carlo resampling for *p*-values.
 
 ``` r
 
-pfit <- RMpersonFit(items, iterations = 100, output = "ggplot")
+pfit <- RMpersonFit(items, iterations = 100, output = "ggplot", seed = 7)
 pfit$lz
 ```
 

@@ -2,15 +2,90 @@
 
 ## easyRasch2 (development version)
 
-A large consolidation release in preparation for the next CRAN
-submission. The headline change is that the whole package now runs on a
-**single estimation engine** — conditional maximum likelihood (CML) item
-parameters via `psychotools` and Warm’s weighted-likelihood (WLE) person
-locations — replacing the previous mix of `eRm` (MLE) and `mirt`
-(MML/EAP). On top of that: new CFA loading diagnostics, three new
-functions for person+item parameters and person fit, bootstrap p-values
-with multiplicity correction, and a round of naming/output consistency
-fixes. After this release `eRm` is used only by
+### Changes
+
+- **`output = "dataframe"` now returns unrounded values** across the
+  package; rounding is a presentation concern and now happens only when
+  rendering the kable (whose displayed precision is unchanged). Affected
+  functions:
+  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
+  [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md),
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md),
+  [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md),
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
+  (the `$pairs` table),
+  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md),
+  [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md),
+  [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md),
+  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
+  (both `$fit` and `$loadings`),
+  [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md),
+  [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md),
+  [`RMdifTree()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md)
+  (including the stability summary attribute),
+  [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
+  (the `wle_correlation` element),
+  [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLofResiduals.md),
+  [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md)
+  (dataframe and file/CSV output), and
+  [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonFit.md).
+  [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md)
+  already followed this convention.
+- Consequently, `Flagged` labels and sorting are now always computed on
+  the exact (unrounded) values. Items or pairs sitting exactly on a
+  rounded boundary could in principle change flag relative to earlier
+  releases; displayed tables are otherwise identical.
+- Deliberately unchanged: the infit *simulation workers* still round the
+  per-iteration statistics to 3 decimals before the cutoff computation,
+  so simulation-based expected ranges reproduce earlier releases
+  exactly.
+
+### Bug fixes
+
+- Respondents with **no responses at all** (all-`NA` rows) no longer
+  crash the functions that fit a CML model on data retaining missing
+  values.
+  [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
+  errors on all-NA rows with an opaque “invalid argument type” (and
+  [`psychotools::raschmodel()`](https://rdrr.io/pkg/psychotools/man/raschmodel.html)
+  segfaults), so such rows are now dropped up front — with the standard
+  “`N respondent(s) with no responses dropped.`” message — in
+  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md),
+  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md),
+  [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md),
+  [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md),
+  and the observed-data overlays of
+  [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md)
+  and
+  [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md).
+  [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
+  now drops such rows too (jointly with `dif_var`) instead of failing
+  with [`eRm::LRtest()`](https://rdrr.io/pkg/eRm/man/LRtest.html)’s
+  error. Functions that already used complete cases or called
+  `.drop_empty_respondents()` are unaffected.
+- [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)’s
+  `sample_n` now counts the respondents actually used (all-NA rows
+  excluded, incomplete responses still retained) and `sample_n_total`
+  the raw input rows, matching
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
+  and the other `*Cutoff()` objects; previously the two were documented
+  as always equal. Captions in the affected functions keep reporting the
+  raw total in the `n = X of Y respondents (policy)` form.
+
+## easyRasch2 1.0.0
+
+CRAN release: 2026-07-05
+
+A large consolidation release. The headline change is that the whole
+package now runs on a **single estimation engine** — conditional maximum
+likelihood (CML) item parameters via `psychotools` and Warm’s
+weighted-likelihood (WLE) person locations — replacing the previous mix
+of `eRm` (MLE) and `mirt` (MML/EAP). On top of that: new CFA loading
+diagnostics, three new functions for person+item parameters and person
+fit, bootstrap p-values with multiplicity correction, and a round of
+naming/output consistency fixes. After this release `eRm` is used only
+by
 [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
 (Andersen’s LR test) and `mirt` only for the RMU plausible values
 ([`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)’s

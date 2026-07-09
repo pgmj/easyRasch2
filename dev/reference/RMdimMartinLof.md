@@ -704,8 +704,8 @@ RMdimMartinLof(dat,
 #> 400     0.35429558   -0.355949378
 #> 
 #> $wle_correlation
-#>   subscale_a subscale_b      r ci_lower ci_upper p_value   n
-#> 1          1          2 -0.005   -0.103    0.093   0.915 400
+#>   subscale_a subscale_b            r   ci_lower   ci_upper   p_value   n
+#> 1          1          2 -0.005350613 -0.1033481 0.09274977 0.9150443 400
 #> 
 
 # Sequential stopping: stop as soon as h = 25 simulated statistics exceed
@@ -1163,8 +1163,8 @@ RMdimMartinLof(dat,
 #> 400     0.35429558   -0.355949378
 #> 
 #> $wle_correlation
-#>   subscale_a subscale_b      r ci_lower ci_upper p_value   n
-#> 1          1          2 -0.005   -0.103    0.093   0.915 400
+#>   subscale_a subscale_b            r   ci_lower   ci_upper   p_value   n
+#> 1          1          2 -0.005350613 -0.1033481 0.09274977 0.9150443 400
 #> 
 # }
 ```

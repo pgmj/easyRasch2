@@ -145,9 +145,9 @@ RMdimMartinLofResiduals(dat,
 #> |:-----|:-----|:---------|:--------|:-----|:-----|
 #> |0     |      |1.04      |**2.65** |-0.11 |-1.24 |
 #> |1     |-1.04 |**-2.17** |0.11     |0.67  |0.48  |
-#> |2     |-0.00 |-0.12     |-0.41    |0.36  |1.07  |
-#> |3     |0.12  |-0.13     |-0.71    |-0.66 |-1.59 |
-#> |4     |1.01  |0.21      |-0.26    |1.59  |--    |
+#> |2     |-0.00 |-0.11     |-0.41    |0.36  |1.07  |
+#> |3     |0.12  |-0.13     |-0.71    |-0.66 |-1.60 |
+#> |4     |1.01  |0.21      |-0.26    |1.60  |--    |
 
 # Heatmap
 if (requireNamespace("ggplot2", quietly = TRUE)) {
@@ -162,8 +162,8 @@ df <- RMdimMartinLofResiduals(dat,
                            partition = c(1,1,1,1,2,2,2,2),
                            output = "dataframe")
 df[df$flagged, ]
-#>   t1 t2 total observed expected residual flagged
-#> 3  0  2     2       18   10.396    2.650    TRUE
-#> 4  1  1     2       21   28.596   -2.171    TRUE
+#>   t1 t2 total observed expected  residual flagged
+#> 3  0  2     2       18 10.39601  2.649864    TRUE
+#> 4  1  1     2       21 28.59559 -2.170927    TRUE
 # }
 ```

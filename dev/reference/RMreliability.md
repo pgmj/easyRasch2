@@ -191,7 +191,7 @@ if (requireNamespace("ggdist", quietly = TRUE) &&
 }
 #> 
 #> 
-#> Table: Reliability for 20 items, n = 100. PSI is the WLE-based separation reliability and excludes min/max scoring respondents.
+#> Table: Reliability for 20 items, n = 100 respondents. PSI is the WLE-based separation reliability and excludes min/max scoring respondents.
 #> 
 #> |Metric           | Estimate| Lower (95% HDCI)| Upper (95% HDCI)|Notes                       |
 #> |:----------------|--------:|----------------:|----------------:|:---------------------------|

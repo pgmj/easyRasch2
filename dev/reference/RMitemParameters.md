@@ -175,6 +175,6 @@ RMitemParameters(dich, output = "dataframe")
 # Write the parameter table to a CSV (also returned invisibly)
 RMitemParameters(poly, output = "file",
                  filename = tempfile(fileext = ".csv"))
-#> Wrote 10 row(s) to '/tmp/Rtmpu1s2jm/file21ac7e801d62.csv'.
+#> Wrote 10 row(s) to '/tmp/RtmpfVOSS5/file21d574d0244e.csv'.
 # }
 ```

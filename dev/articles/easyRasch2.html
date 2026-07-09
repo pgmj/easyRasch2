@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.939</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.0.0.900</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -179,7 +179,7 @@ the public domain by the U.S. federal government.</p>
 <p>Before fitting any model it is worth eyeballing the response
 distributions:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"lightblue"</span>, main <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/hist.html" class="external-link">hist</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowSums</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span>, col <span class="op">=</span> <span class="st">"lightblue"</span>, main <span class="op">=</span> <span class="st">""</span>, xlab <span class="op">=</span> <span class="st">"Ordinal sum scores"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="figures/rasch-hist-plot-1.png" alt="**Figure 1.** *Histogram of ordinal sum scores*" width="100%"><p class="caption">
 <strong>Figure 1.</strong> <em>Histogram of ordinal sum scores</em>
@@ -212,9 +212,7 @@ conclusion:</p>
 <li>item-level conditional infit MSQ statistics <span class="citation">(<a href="#ref-muller_item_2020">Müller
 2020</a>)</span>
 </li>
-<li>item-level item-restscore associations with Goodman-Kruskal’s gamma
-<span class="citation">(<a href="#ref-kreiner_note_2011">Kreiner
-2011</a>)</span>
+<li>item-level item-restscore associations with Goodman-Kruskal’s <span class="math inline">\gamma</span> (gamma) <span class="citation">(<a href="#ref-kreiner_note_2011">Kreiner 2011</a>)</span>
 </li>
 <li>confirmatory factor analysis (CFA) with WLSMV estimator for ordinal
 data</li>
@@ -367,9 +365,9 @@ for other reasons.</p>
 <div class="section level3">
 <h3 id="item-restscore">Item-restscore<a class="anchor" aria-label="anchor" href="#item-restscore"></a>
 </h3>
-<p>Item-restscore uses Goodman-Kruskal’s gamma and shows the expected
-and observed correlation between an item and a score based on the rest
-of the items <span class="citation">(<a href="#ref-kreiner_note_2011">Kreiner 2011</a>)</span>. Similarly, but
+<p>Item-restscore uses Goodman-Kruskal’s <span class="math inline">\gamma</span> (gamma) and shows the expected and
+observed correlation between an item and a score based on the rest of
+the items <span class="citation">(<a href="#ref-kreiner_note_2011">Kreiner 2011</a>)</span>. Similarly, but
 inverted, to item infit, a lower observed correlation value than
 expected indicates underfit, that the item may not belong to the
 dimension. A higher than expected observed value indicates an
@@ -1062,7 +1060,7 @@ possible item revision. Some argue for creating testlets by combining a
 locally dependent pair into a single polytomous super-item rather than
 eliminating one in an LD pair. I suggest looking closely at the item
 content before taking any action. Often, one will see very similarly
-worded items, where one in a LD pair is clearly redundant. Another
+worded items, where one item in an LD pair is clearly redundant. Another
 solution to LD can be the Graphical Loglinear Rasch Model by Kreiner and
 Christensen <span class="citation">(<a href="#ref-kreiner_validity_2007">Kreiner 2007</a>)</span>, but that is
 beyond the scope of this vignette.</p>
@@ -1153,9 +1151,9 @@ tests, be interpreted with care.</p>
 <div class="section level3">
 <h3 id="partial-gamma-dif">Partial-gamma DIF<a class="anchor" aria-label="anchor" href="#partial-gamma-dif"></a>
 </h3>
-<p>This plot annotates each item with its partial-gamma DIF coefficient
-and shows group differences within class intervals (respondents grouped
-by their total/latent score).</p>
+<p>This plot annotates each item with its partial-<span class="math inline">\gamma</span> DIF coefficient and shows group
+differences within class intervals (respondents grouped by their
+total/latent score).</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemICCPlot.html">RMitemICCPlot</a></span><span class="op">(</span><span class="va">items</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>, error_band <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -1165,8 +1163,9 @@ Characteristic Curves</em>
 </p>
 </div>
 <p>To demonstrate the FWER-adjusted <em>p</em>-values, we’ll run the
-partial <span class="math inline">\gamma</span> DIF analysis with
-parametric bootstrap (only 100 here for rendering speed).</p>
+partial-<span class="math inline">\gamma</span> DIF analysis with
+parametric bootstrap (only 100 here for rendering speed, which limits
+the reliability of the <em>p</em>-values).</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">difpg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMdifGammaCutoff.html">RMdifGammaCutoff</a></span><span class="op">(</span><span class="va">items</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>, iterations <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>                          parallel <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
@@ -1444,6 +1443,26 @@ output = “plot” draws the tree with per-node item parameters.</p>
 </div>
 </div>
 <div class="section level2">
+<h2 id="next-step">Next step<a class="anchor" aria-label="anchor" href="#next-step"></a>
+</h2>
+<p>Since we found issues with item misfit, local dependence, and gender
+DIF, these need to be addressed before the scale is used for
+measurement. Notably, item 2 recurs across all three criteria — overfit,
+the strongest local dependence (with item 1), and the largest gender DIF
+— making it the natural first candidate for closer inspection. The
+recommended approach is iterative: remove a single item (for instance,
+an underfit item, or one item from an LD pair after reviewing item
+content), then re-run the full set of analyses, since fit indications
+for the remaining items change with every removal. When the sample is
+large enough, it is good practice to set aside a random holdout
+subsample before the analysis, so that the final item set can be
+confirmed in data that played no part in the item-reduction
+decisions.</p>
+<p>The following sections are primarily of interest once an acceptable
+item set has been established; here we continue with all nine items for
+demonstration purposes.</p>
+</div>
+<div class="section level2">
 <h2 id="targeting">Targeting<a class="anchor" aria-label="anchor" href="#targeting"></a>
 </h2>
 <p>A targeting plot summarizes how well the item-threshold distribution
@@ -1512,8 +1531,8 @@ respondents.</caption>
 </tr>
 <tr class="even">
 <td align="left">RMU (WLE)</td>
-<td align="right">0.880</td>
-<td align="right">0.866</td>
+<td align="right">0.881</td>
+<td align="right">0.865</td>
 <td align="right">0.894</td>
 <td align="left">200 PVs, 20 RMU iterations</td>
 </tr>
@@ -1832,7 +1851,7 @@ a posteriori).</p>
 <p>Conditional person infit/outfit MSQ and the <span class="math inline">\ell_z</span> statistic are implemented, with
 Monte-Carlo resampling for <em>p</em>-values.</p>
 <div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMpersonFit.html">RMpersonFit</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMpersonFit.html">RMpersonFit</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, output <span class="op">=</span> <span class="st">"ggplot"</span>, seed <span class="op">=</span> <span class="fl">7</span><span class="op">)</span></span>
 <span><span class="va">pfit</span><span class="op">$</span><span class="va">lz</span></span></code></pre></div>
 <div class="figure">
 <img src="figures/rasch-personfit-1.png" alt="**Figure 13.** *Person fit with the lz statistic*" width="100%"><p class="caption">
@@ -1971,7 +1990,7 @@ Minimum Sample Size Requirements, and Criterion Refinement.”</span>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

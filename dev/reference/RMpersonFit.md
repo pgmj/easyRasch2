@@ -232,20 +232,20 @@ colnames(dat) <- paste0("Item", 1:8)
 
 # Conditional infit/outfit MSQ + lz with resampled p-values
 RMpersonFit(dat, iterations = 200, output = "dataframe") |> head()
-#>   id n_answered sum_score infit_msq outfit_msq      lz p_infit p_outfit   p_lz
-#> 1  1          8         5    1.3900     1.3988  0.0619  0.3284   0.3284 0.3383
-#> 2  2          8         6    0.7271     0.7335 -0.0611  0.3483   0.3980 0.2935
-#> 3  3          8         2    0.8185     0.8472  0.2747  0.7960   0.7960 0.4527
-#> 4  4          8        10    0.7119     0.6872  0.4211  0.2786   0.1990 0.8209
-#> 5  5          8         4    1.5137     1.4541  0.3392  0.2289   0.2289 0.6468
-#> 6  6          8         4    1.5322     1.4836  0.2989  0.1692   0.1692 0.5721
-#>   flagged
-#> 1   FALSE
-#> 2   FALSE
-#> 3   FALSE
-#> 4   FALSE
-#> 5   FALSE
-#> 6   FALSE
+#>   id n_answered sum_score infit_msq outfit_msq          lz   p_infit  p_outfit
+#> 1  1          8         5 1.3900179  1.3988496  0.06189744 0.3283582 0.3283582
+#> 2  2          8         6 0.7271090  0.7334992 -0.06110551 0.3482587 0.3980100
+#> 3  3          8         2 0.8184723  0.8471554  0.27470409 0.7960199 0.7960199
+#> 4  4          8        10 0.7119447  0.6871710  0.42107989 0.2786070 0.1990050
+#> 5  5          8         4 1.5137117  1.4541483  0.33920680 0.2288557 0.2288557
+#> 6  6          8         4 1.5321777  1.4836487  0.29890695 0.1691542 0.1691542
+#>        p_lz flagged
+#> 1 0.3383085   FALSE
+#> 2 0.2935323   FALSE
+#> 3 0.4527363   FALSE
+#> 4 0.8208955   FALSE
+#> 5 0.6467662   FALSE
+#> 6 0.5721393   FALSE
 
 # Person-fit maps: a named list with one plot per statistic
 if (requireNamespace("ggplot2", quietly = TRUE)) {
@@ -257,19 +257,19 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
 # Flag only underfit (noisy responding), the validity-relevant direction
 RMpersonFit(dat, iterations = 200, flag = "underfit",
             output = "dataframe") |> head()
-#>   id n_answered sum_score infit_msq outfit_msq      lz p_infit p_outfit   p_lz
-#> 1  1          8         5    1.3900     1.3988  0.0619  0.1443   0.1194 0.3433
-#> 2  2          8         6    0.7271     0.7335 -0.0611  0.8209   0.8010 0.2736
-#> 3  3          8         2    0.8185     0.8472  0.2747  0.4328   0.4328 0.4428
-#> 4  4          8        10    0.7119     0.6872  0.4211  0.8209   0.8458 0.7960
-#> 5  5          8         4    1.5137     1.4541  0.3392  0.0995   0.0995 0.6965
-#> 6  6          8         4    1.5322     1.4836  0.2989  0.0746   0.0746 0.6368
-#>   flagged
-#> 1   FALSE
-#> 2   FALSE
-#> 3   FALSE
-#> 4   FALSE
-#> 5   FALSE
-#> 6   FALSE
+#>   id n_answered sum_score infit_msq outfit_msq          lz    p_infit
+#> 1  1          8         5 1.3900179  1.3988496  0.06189744 0.14427861
+#> 2  2          8         6 0.7271090  0.7334992 -0.06110551 0.82089552
+#> 3  3          8         2 0.8184723  0.8471554  0.27470409 0.43283582
+#> 4  4          8        10 0.7119447  0.6871710  0.42107989 0.82089552
+#> 5  5          8         4 1.5137117  1.4541483  0.33920680 0.09950249
+#> 6  6          8         4 1.5321777  1.4836487  0.29890695 0.07462687
+#>     p_outfit      p_lz flagged
+#> 1 0.11940299 0.3432836   FALSE
+#> 2 0.80099502 0.2736318   FALSE
+#> 3 0.43283582 0.4427861   FALSE
+#> 4 0.84577114 0.7960199   FALSE
+#> 5 0.09950249 0.6965174   FALSE
+#> 6 0.07462687 0.6368159   FALSE
 # }
 ```

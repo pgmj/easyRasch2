@@ -23,7 +23,7 @@ missingness is handled directly."><meta name="robots" content="noindex"></head><
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.8.0.939</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.0.0.900</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -272,20 +272,20 @@ statistics with estimated person parameter. <em>Psychometrika, 66</em>(3),
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Conditional infit/outfit MSQ + lz with resampled p-values</span></span></span>
 <span class="r-in"><span><span class="fu">RMpersonFit</span><span class="op">(</span><span class="va">dat</span>, iterations <span class="op">=</span> <span class="fl">200</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   id n_answered sum_score infit_msq outfit_msq      lz p_infit p_outfit   p_lz</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1          8         5    1.3900     1.3988  0.0619  0.3284   0.3284 0.3383</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  2          8         6    0.7271     0.7335 -0.0611  0.3483   0.3980 0.2935</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  3          8         2    0.8185     0.8472  0.2747  0.7960   0.7960 0.4527</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  4          8        10    0.7119     0.6872  0.4211  0.2786   0.1990 0.8209</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  5          8         4    1.5137     1.4541  0.3392  0.2289   0.2289 0.6468</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6  6          8         4    1.5322     1.4836  0.2989  0.1692   0.1692 0.5721</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   flagged</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   id n_answered sum_score infit_msq outfit_msq          lz   p_infit  p_outfit</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1          8         5 1.3900179  1.3988496  0.06189744 0.3283582 0.3283582</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  2          8         6 0.7271090  0.7334992 -0.06110551 0.3482587 0.3980100</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  3          8         2 0.8184723  0.8471554  0.27470409 0.7960199 0.7960199</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  4          8        10 0.7119447  0.6871710  0.42107989 0.2786070 0.1990050</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  5          8         4 1.5137117  1.4541483  0.33920680 0.2288557 0.2288557</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  6          8         4 1.5321777  1.4836487  0.29890695 0.1691542 0.1691542</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        p_lz flagged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.3383085   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.2935323   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 0.4527363   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 0.8208955   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 0.6467662   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 0.5721393   FALSE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Person-fit maps: a named list with one plot per statistic</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
@@ -297,20 +297,20 @@ statistics with estimated person parameter. <em>Psychometrika, 66</em>(3),
 <span class="r-in"><span><span class="co"># Flag only underfit (noisy responding), the validity-relevant direction</span></span></span>
 <span class="r-in"><span><span class="fu">RMpersonFit</span><span class="op">(</span><span class="va">dat</span>, iterations <span class="op">=</span> <span class="fl">200</span>, flag <span class="op">=</span> <span class="st">"underfit"</span>,</span></span>
 <span class="r-in"><span>            output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   id n_answered sum_score infit_msq outfit_msq      lz p_infit p_outfit   p_lz</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1          8         5    1.3900     1.3988  0.0619  0.1443   0.1194 0.3433</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  2          8         6    0.7271     0.7335 -0.0611  0.8209   0.8010 0.2736</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  3          8         2    0.8185     0.8472  0.2747  0.4328   0.4328 0.4428</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  4          8        10    0.7119     0.6872  0.4211  0.8209   0.8458 0.7960</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  5          8         4    1.5137     1.4541  0.3392  0.0995   0.0995 0.6965</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6  6          8         4    1.5322     1.4836  0.2989  0.0746   0.0746 0.6368</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   flagged</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   id n_answered sum_score infit_msq outfit_msq          lz    p_infit</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1          8         5 1.3900179  1.3988496  0.06189744 0.14427861</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  2          8         6 0.7271090  0.7334992 -0.06110551 0.82089552</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  3          8         2 0.8184723  0.8471554  0.27470409 0.43283582</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  4          8        10 0.7119447  0.6871710  0.42107989 0.82089552</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  5          8         4 1.5137117  1.4541483  0.33920680 0.09950249</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  6          8         4 1.5321777  1.4836487  0.29890695 0.07462687</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     p_outfit      p_lz flagged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.11940299 0.3432836   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.80099502 0.2736318   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 0.43283582 0.4427861   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 0.84577114 0.7960199   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 0.09950249 0.6965174   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 0.07462687 0.6368159   FALSE</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
@@ -323,7 +323,7 @@ statistics with estimated person parameter. <em>Psychometrika, 66</em>(3),
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>
