@@ -690,8 +690,8 @@ RMdimCFA <- function(
       correction = correction,
       tail = "upper"
     )
-    fit_df$p <- round(pv_fit$p, 4)
-    fit_df$padj <- round(pv_fit$padj, 4)
+    fit_df$p <- pv_fit$p
+    fit_df$padj <- pv_fit$padj
     fit_df$Flagged <- ifelse(
       !is.na(fit_df$padj) & fit_df$padj < alpha,
       "TRUE",
@@ -722,8 +722,8 @@ RMdimCFA <- function(
       tail = "two.sided"
     )
     idx <- match(load_df$Item, pv_load$name)
-    load_df$p_loading <- round(pv_load$p[idx], 4)
-    load_df$padj_loading <- round(pv_load$padj[idx], 4)
+    load_df$p_loading <- pv_load$p[idx]
+    load_df$padj_loading <- pv_load$padj[idx]
     sim_mean <- colMeans(sim_load, na.rm = TRUE)[load_df$Item]
     sig <- !is.na(load_df$padj_loading) & load_df$padj_loading < alpha
     load_df$Flagged <- ifelse(
@@ -745,6 +745,13 @@ RMdimCFA <- function(
   if (output == "dataframe") {
     return(list(fit = fit_df, loadings = load_df))
   }
+
+  # Kable display rounding (the dataframe output above stays unrounded)
+  fit_df <- .round_display(fit_df, c(Observed = 4, Cutoff = 4, p = 4, padj = 4))
+  load_df <- .round_display(load_df, c(
+    Observed = 3, Expected_low = 3, Expected_high = 3,
+    p_loading = 4, padj_loading = 4
+  ))
 
   list(
     fit = render_cfa_fit_kable(
@@ -776,14 +783,8 @@ build_cfa_fit_df <- function(observed, cutoffs, flagged, percentile) {
   cfi_suffix <- ordinal_suffix(cfi_pct_lbl)
   data.frame(
     Index = c("CFI", "RMSEA", "SRMR"),
-    Observed = round(
-      c(observed[["cfi"]], observed[["rmsea"]], observed[["srmr"]]),
-      4
-    ),
-    Cutoff = round(
-      c(cutoffs[["cfi"]], cutoffs[["rmsea"]], cutoffs[["srmr"]]),
-      4
-    ),
+    Observed = c(observed[["cfi"]], observed[["rmsea"]], observed[["srmr"]]),
+    Cutoff = c(cutoffs[["cfi"]], cutoffs[["rmsea"]], cutoffs[["srmr"]]),
     Direction = c(
       paste0("< ", cfi_pct_lbl, cfi_suffix, " pct"),
       paste0("> ", percentile, pct_suffix, " pct"),
@@ -806,9 +807,9 @@ build_cfa_loadings_df <- function(
 ) {
   data.frame(
     Item = loading_cutoffs$Item,
-    Observed = round(as.numeric(observed_loadings[loading_cutoffs$Item]), 3),
-    Expected_low = round(loading_cutoffs$low, 3),
-    Expected_high = round(loading_cutoffs$high, 3),
+    Observed = as.numeric(observed_loadings[loading_cutoffs$Item]),
+    Expected_low = loading_cutoffs$low,
+    Expected_high = loading_cutoffs$high,
     Flagged = loading_flagged,
     stringsAsFactors = FALSE,
     row.names = NULL

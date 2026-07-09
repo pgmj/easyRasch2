@@ -214,3 +214,15 @@ test_that(".format_p follows APA-style thresholds", {
   expect_equal(.format_p(0.71638), "p = 0.716")
   expect_equal(.format_p(NA_real_), "p = NA")
 })
+
+test_that("RMdifLR drops all-NA respondents instead of erroring", {
+  skip_if_not_installed("eRm")
+  set.seed(42)
+  df <- as.data.frame(matrix(sample(0:2, 80 * 5, replace = TRUE), nrow = 80))
+  colnames(df) <- paste0("i", 1:5)
+  df[3, ] <- NA
+  grp <- factor(rep(c("a", "b"), 40))
+
+  expect_message(k <- RMdifLR(df, dif_var = grp), "no responses dropped")
+  expect_s3_class(k, "knitr_kable")
+})

@@ -76,10 +76,11 @@ Used by \code{\link{RMlocdepQ3Plot}}.}
 \code{Item1}, \code{Item2}, \code{Q3_low}, \code{Q3_high}. Boundaries are computed via
 the method specified by \code{cutoff_method}.}
 \item{\code{actual_iterations}}{Number of successful iterations.}
-\item{\code{sample_n}}{Number of persons in the original data.}
-\item{\code{sample_n_total}}{Equal to \code{sample_n}: no respondents are dropped
-(incomplete responses are retained). Stored for consistency with the
-other \verb{*Cutoff()} objects.}
+\item{\code{sample_n}}{Number of persons used: respondents with no responses
+at all (all-\code{NA} rows) are dropped, as in \code{\link{RMlocdepQ3}};
+incomplete response patterns are retained.}
+\item{\code{sample_n_total}}{Number of respondents in the raw input data,
+before dropping all-\code{NA} rows.}
 \item{\code{sample_has_na}}{Logical. Whether the data contained any missing
 values.}
 \item{\code{sample_summary}}{Summary statistics of estimated person parameters.}

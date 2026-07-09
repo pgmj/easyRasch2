@@ -1,6 +1,6 @@
 Package: easyRasch2
 Title: Psychometric Analysis with Rasch Measurement Theory
-Version: 1.0.0
+Version: 1.0.0.900
 Authors@R: c(
     person("Magnus", "Johansson",
            role = c("aut", "cre"),
@@ -38,7 +38,6 @@ License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 URL: https://github.com/pgmj/easyRasch2, https://pgmj.github.io/easyRasch2/
 BugReports: https://github.com/pgmj/easyRasch2/issues
 Depends:
@@ -73,3 +72,4 @@ Suggests:
     withr
 Config/testthat/edition: 3
 VignetteBuilder: knitr
+Config/roxygen2/version: 8.0.0

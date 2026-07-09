@@ -52,10 +52,9 @@ test_that("RMitemRestscore output = 'dataframe' returns correct structure (dicho
   flg <- result$Flagged != ""
   expect_true(all((result$Difference[flg] > 0) == (result$Flagged[flg] == "overfit")))
   expect_equal(result$Item, colnames(df))
-  # Signed difference equals Observed - Expected (allowing rounding noise)
-  expect_equal(result$Difference,
-               round(result$Observed - result$Expected, 3),
-               tolerance = 1e-3)
+  # Signed difference equals Observed - Expected (dataframe output is
+  # unrounded; rounding happens only in the kable display)
+  expect_equal(result$Difference, result$Observed - result$Expected)
 })
 
 test_that("RMitemRestscore p_adj = 'none' returns numeric raw p-values without a coercion warning", {
@@ -108,4 +107,15 @@ test_that("RMitemRestscore sort = 'diff' sorts by absolute Difference descending
   )
   # Unsorted should contain the same rows, just in a different order
   expect_setequal(result_sorted$Item, result_unsorted$Item)
+})
+
+test_that("RMitemRestscore drops all-NA respondents instead of erroring", {
+  skip_if_not_installed("iarm")
+  set.seed(42)
+  df <- as.data.frame(matrix(sample(0:2, 60 * 6, replace = TRUE), nrow = 60))
+  colnames(df) <- paste0("i", 1:6)
+  df[3, ] <- NA
+
+  expect_message(k <- RMitemRestscore(df), "no responses dropped")
+  expect_match(paste(as.character(k), collapse = "\n"), "of 60 respondents")
 })

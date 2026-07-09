@@ -77,3 +77,20 @@ test_that("RMitemInfitCutoffPlot is a deprecated alias forwarding to RMitemInfit
   expect_snapshot(p <- RMitemInfitCutoffPlot(simfit))
   expect_s3_class(p, "ggplot")
 })
+
+test_that("RMitemInfitPlot observed overlay drops all-NA respondents", {
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("ggplot2")
+  skip_if_not_installed("ggdist")
+  set.seed(42)
+  df <- as.data.frame(matrix(sample(0:2, 60 * 6, replace = TRUE), nrow = 60))
+  colnames(df) <- paste0("i", 1:6)
+  simfit <- suppressWarnings(
+    RMitemInfitCutoff(df, iterations = 5, parallel = FALSE, seed = 1)
+  )
+  df[3, ] <- NA
+
+  expect_message(p <- RMitemInfitPlot(simfit, data = df),
+                 "no responses dropped")
+  expect_s3_class(p, "ggplot")
+})

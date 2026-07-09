@@ -287,10 +287,11 @@ RMdimResidualPCA <- function(
 
   k_show <- min(as.integer(n_components), length(eigvals))
 
+  # Unrounded values; the kable path rounds a display copy before rendering.
   result_df <- data.frame(
     Component = paste0("PC", seq_len(k_show)),
-    Eigenvalue = round(eigvals[seq_len(k_show)], 3),
-    Proportion_of_variance = round(prop_var[seq_len(k_show)], 3),
+    Eigenvalue = eigvals[seq_len(k_show)],
+    Proportion_of_variance = prop_var[seq_len(k_show)],
     stringsAsFactors = FALSE,
     row.names = NULL
   )
@@ -317,7 +318,7 @@ RMdimResidualPCA <- function(
       correction = "none",
       tail = "upper"
     )
-    p_pc1 <- round(pv$p[1L], 4)
+    p_pc1 <- pv$p[1L]
     result_df$p <- c(p_pc1, rep(NA_real_, nrow(result_df) - 1L))
   }
 
@@ -386,6 +387,10 @@ RMdimResidualPCA <- function(
   }
 
   # --- kable -----------------------------------------------------------------
+  # Display rounding (the dataframe output above stays unrounded)
+  result_df <- .round_display(result_df, c(
+    Eigenvalue = 3, Proportion_of_variance = 3, p = 4
+  ))
   n_clause <- .n_caption(
     nrow(data),
     n_total,

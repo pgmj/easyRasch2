@@ -1,3 +1,48 @@
+# easyRasch2 (development version)
+
+## Changes
+
+- **`output = "dataframe"` now returns unrounded values** across the
+  package; rounding is a presentation concern and now happens only when
+  rendering the kable (whose displayed precision is unchanged). Affected
+  functions: `RMitemInfit()`, `RMitemInfitMI()`, `RMitemRestscore()`,
+  `RMitemRestscoreBoot()`, `RMlocdepQ3()` (the `$pairs` table),
+  `RMdifGamma()`, `RMlocdepGamma()`, `RMdimResidualPCA()`, `RMdimCFA()`
+  (both `$fit` and `$loadings`), `RMreliability()`, `RMdifLR()`,
+  `RMdifTree()` (including the stability summary attribute),
+  `RMdimMartinLof()` (the `wle_correlation` element),
+  `RMdimMartinLofResiduals()`, `RMpersonParameters()` (dataframe and
+  file/CSV output), and `RMpersonFit()`. `RMscoreSE()` already followed
+  this convention.
+- Consequently, `Flagged` labels and sorting are now always computed on
+  the exact (unrounded) values. Items or pairs sitting exactly on a
+  rounded boundary could in principle change flag relative to earlier
+  releases; displayed tables are otherwise identical.
+- Deliberately unchanged: the infit *simulation workers* still round the
+  per-iteration statistics to 3 decimals before the cutoff computation,
+  so simulation-based expected ranges reproduce earlier releases exactly.
+
+## Bug fixes
+
+- Respondents with **no responses at all** (all-`NA` rows) no longer crash
+  the functions that fit a CML model on data retaining missing values.
+  `psychotools::pcmodel()` errors on all-NA rows with an opaque
+  "invalid argument type" (and `psychotools::raschmodel()` segfaults), so
+  such rows are now dropped up front — with the standard
+  "`N respondent(s) with no responses dropped.`" message — in
+  `RMlocdepQ3Cutoff()`, `RMitemInfit()`, `RMitemRestscore()`,
+  `RMitemRestscoreBoot()`, `RMreliability()`, and the observed-data
+  overlays of `RMlocdepQ3Plot()` and `RMitemInfitPlot()`. `RMdifLR()`
+  now drops such rows too (jointly with `dif_var`) instead of failing
+  with `eRm::LRtest()`'s error. Functions that already used complete
+  cases or called `.drop_empty_respondents()` are unaffected.
+- `RMlocdepQ3Cutoff()`'s `sample_n` now counts the respondents actually
+  used (all-NA rows excluded, incomplete responses still retained) and
+  `sample_n_total` the raw input rows, matching `RMlocdepQ3()` and the
+  other `*Cutoff()` objects; previously the two were documented as always
+  equal. Captions in the affected functions keep reporting the raw total
+  in the `n = X of Y respondents (policy)` form.
+
 # easyRasch2 1.0.0
 
 A large consolidation release. The

@@ -763,6 +763,8 @@ RMdifTree <- function(
   }
 
   # output == "kable"
+  # Display rounding (the dataframe output above stays unrounded)
+  df <- .round_display(df, c(EffectSize = 4, SE = 4))
   kbl <- render_effectsize_kable(
     df,
     n_persons = nrow(combined),
@@ -1526,8 +1528,8 @@ effectsize_to_dataframe <- function(
       Variable = rep(nd$Variable, n_items),
       Direction = rep(nd$Direction, n_items),
       Item = item_names,
-      EffectSize = round(nd$EffectSize, 4),
-      SE = round(nd$SE, 4),
+      EffectSize = nd$EffectSize,
+      SE = nd$SE,
       Class = nd$Class,
       Flagged = nd$Class %in% c("B", "C"),
       Rescaled = rescaled,
@@ -1850,9 +1852,9 @@ stabletree_summary_df <- function(stb, covariates) {
     Variable = vars,
     Type = vapply(vars, type_of, character(1L)),
     Selected_orig = unname(vs0),
-    Selection_freq_pct = round(unname(freq) * 100, 1),
-    Cutpoint_mean = round(cp_mean, 4),
-    Cutpoint_sd = round(cp_sd, 4),
+    Selection_freq_pct = unname(freq) * 100,
+    Cutpoint_mean = cp_mean,
+    Cutpoint_sd = cp_sd,
     stringsAsFactors = FALSE,
     row.names = NULL
   )
@@ -1889,6 +1891,10 @@ stabletree_summary_kable <- function(stab_df) {
   if (nrow(stab_df) == 0L) {
     return(NULL)
   }
+  # Display rounding (the dataframe / attribute output stays unrounded)
+  stab_df <- .round_display(stab_df, c(
+    Selection_freq_pct = 1, Cutpoint_mean = 4, Cutpoint_sd = 4
+  ))
   cap <- attr(stab_df, "caption")
   knitr::kable(stab_df, format = "pipe", row.names = FALSE, caption = cap)
 }

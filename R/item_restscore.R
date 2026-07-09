@@ -102,6 +102,13 @@ RMitemRestscore <- function(data, output = "kable", sort, p_adj = "BH") {
     )
   }
 
+  # Respondents with no responses at all contribute nothing and break the CML
+  # fit (psychotools errors on all-NA rows); drop them, keeping the raw totals
+  # for the caption.
+  n_total <- nrow(as.data.frame(data))
+  has_na <- anyNA(data)
+  data <- .drop_empty_respondents(data)
+
   data_mat <- as.matrix(data)
   n_items <- ncol(data)
   n_complete <- nrow(stats::na.omit(data))
@@ -145,16 +152,16 @@ RMitemRestscore <- function(data, output = "kable", sort, p_adj = "BH") {
   cn <- colnames(res_mat)
   padj_idx <- grep("^padj", cn)
   p_col <- if (length(padj_idx) == 1L) padj_idx else match("pvalue", cn)
-  observed <- round(as.numeric(res_mat[seq_len(n_items), 1L]), 2)
-  expected <- round(as.numeric(res_mat[seq_len(n_items), 2L]), 2)
-  p_adjusted <- round(as.numeric(res_mat[seq_len(n_items), p_col]), 3)
+  observed <- as.numeric(res_mat[seq_len(n_items), 1L])
+  expected <- as.numeric(res_mat[seq_len(n_items), 2L])
+  p_adjusted <- as.numeric(res_mat[seq_len(n_items), p_col])
 
   # Flagged labels the misfit direction (only when adj. p < .05): observed
   # above expected = over-discrimination ("overfit", often local dependence);
   # below = under-discrimination ("underfit", often multidimensionality/noise);
   # "" otherwise. Note the value direction is opposite to infit (where a high
   # statistic is underfit).
-  difference <- round(observed - expected, 3)
+  difference <- observed - expected
   flagged <- ifelse(
     !is.na(p_adjusted) & p_adjusted < 0.05 & difference > 0,
     "overfit",
@@ -173,7 +180,7 @@ RMitemRestscore <- function(data, output = "kable", sort, p_adj = "BH") {
     Difference = difference,
     p_adjusted = p_adjusted,
     Flagged = flagged,
-    Relative_location = round(relative_item_avg_locations, 2),
+    Relative_location = as.numeric(relative_item_avg_locations),
     stringsAsFactors = FALSE,
     row.names = NULL
   )
@@ -190,6 +197,12 @@ RMitemRestscore <- function(data, output = "kable", sort, p_adj = "BH") {
   if (output == "dataframe") {
     return(i2)
   }
+
+  # Kable display rounding (the dataframe output above stays unrounded)
+  i2 <- .round_display(i2, c(
+    Observed = 2, Expected = 2, Difference = 3, p_adjusted = 3,
+    Relative_location = 2
+  ))
 
   p_header <- if (identical(p_adj, "none")) {
     "p-value"
@@ -213,8 +226,8 @@ RMitemRestscore <- function(data, output = "kable", sort, p_adj = "BH") {
       "Item-restscore associations. ",
       .n_caption(
         n_complete,
-        nrow(data),
-        if (anyNA(data)) "complete cases" else character()
+        n_total,
+        if (has_na) "complete cases" else character()
       ),
       ". Flagged (",
       if (identical(p_adj, "none")) "p" else "adj. p",

@@ -616,12 +616,13 @@ RMlocdepQ3 <- function(
   low <- pc$Q3_low
   high <- pc$Q3_high
 
+  # Unrounded values; the kable path rounds a display copy before rendering.
   tbl <- data.frame(
     Item1 = pc$Item1,
     Item2 = pc$Item2,
-    Observed = round(as.numeric(observed), 3),
-    Low = round(as.numeric(low), 3),
-    High = round(as.numeric(high), 3),
+    Observed = as.numeric(observed),
+    Low = as.numeric(low),
+    High = as.numeric(high),
     stringsAsFactors = FALSE,
     row.names = NULL
   )
@@ -636,8 +637,8 @@ RMlocdepQ3 <- function(
       tail = "upper"
     )
     idx <- match(keys, pv$name)
-    tbl$p_q3 <- round(pv$p[idx], 4)
-    tbl$padj_q3 <- round(pv$padj[idx], 4)
+    tbl$p_q3 <- pv$p[idx]
+    tbl$padj_q3 <- pv$padj[idx]
     is_flagged <- !is.na(tbl$padj_q3) & tbl$padj_q3 < alpha
   } else {
     is_flagged <- observed > high | observed < low
@@ -661,6 +662,11 @@ RMlocdepQ3 <- function(
   if (output == "dataframe") {
     return(tbl)
   }
+
+  # Kable display rounding (the dataframe output above stays unrounded)
+  tbl <- .round_display(tbl, c(
+    Observed = 3, Low = 3, High = 3, p_q3 = 4, padj_q3 = 4
+  ))
 
   width_pct <- round(100 * cutoff_full$hdci_width, 1)
   caption <- paste0(
@@ -766,10 +772,11 @@ RMlocdepQ3 <- function(
 #'     `Item1`, `Item2`, `Q3_low`, `Q3_high`. Boundaries are computed via
 #'     the method specified by `cutoff_method`.}
 #'   \item{`actual_iterations`}{Number of successful iterations.}
-#'   \item{`sample_n`}{Number of persons in the original data.}
-#'   \item{`sample_n_total`}{Equal to `sample_n`: no respondents are dropped
-#'     (incomplete responses are retained). Stored for consistency with the
-#'     other `*Cutoff()` objects.}
+#'   \item{`sample_n`}{Number of persons used: respondents with no responses
+#'     at all (all-`NA` rows) are dropped, as in \code{\link{RMlocdepQ3}};
+#'     incomplete response patterns are retained.}
+#'   \item{`sample_n_total`}{Number of respondents in the raw input data,
+#'     before dropping all-`NA` rows.}
 #'   \item{`sample_has_na`}{Logical. Whether the data contained any missing
 #'     values.}
 #'   \item{`sample_summary`}{Summary statistics of estimated person parameters.}
@@ -896,15 +903,19 @@ RMlocdepQ3Cutoff <- function(
   # Generate per-iteration seeds
   sim_seeds <- sample.int(.Machine$integer.max, iterations)
 
+  # Incomplete responses are retained (they feed the per-pattern WLE pool and
+  # the conditional DGP), but respondents with no responses at all must go:
+  # they contribute nothing and break the CML fit (psychotools errors on
+  # all-NA rows). Record the raw total and the missingness flag first so
+  # callers (e.g. RMlocdepQ3Plot) can report the sample in the standard
+  # `n = X of Y respondents (policy)` form, matching RMlocdepQ3().
+  sample_n_total <- nrow(as.data.frame(data))
+  sample_has_na <- anyNA(data)
+  data <- .drop_empty_respondents(data)
+
   data_mat <- as.matrix(data)
   sample_n <- nrow(data_mat)
   is_polytomous <- max(data_mat, na.rm = TRUE) > 1L
-
-  # No rows are dropped here (incomplete responses feed the per-pattern WLE
-  # pool and the conditional DGP), so the raw total equals `sample_n`; record
-  # the missingness flag so callers (e.g. RMlocdepQ3Plot) can report the
-  # sample in the standard `n = X respondents (policy)` form.
-  sample_has_na <- anyNA(data_mat)
 
   # Preserve item names so the per-iteration pair_q3 frames use the user's
   # labels (e.g., "q1", "q2") rather than psychotools / mirt's auto-generated
@@ -1044,7 +1055,7 @@ RMlocdepQ3Cutoff <- function(
   out$pair_cutoffs <- pair_cutoffs
   out$actual_iterations <- actual_iterations
   out$sample_n <- sample_n
-  out$sample_n_total <- sample_n
+  out$sample_n_total <- sample_n_total
   out$sample_has_na <- sample_has_na
   out$sample_summary <- summary(wle_thetas)
   out$item_names <- item_names_vec

@@ -86,6 +86,25 @@ validate_response_data <- function(data) {
   paste0("n = ", n_used, of_total, " ", noun, paren)
 }
 
+#' Round selected columns of a data.frame for kable display
+#'
+#' The `output = "dataframe"` contract is *unrounded* values (rounding is a
+#' presentation concern); the kable path rounds a display copy just before
+#' rendering via this helper. Columns absent from `df` are silently skipped,
+#' so one digits spec can serve several table variants (e.g. with and
+#' without p-value columns).
+#'
+#' @param df A data.frame.
+#' @param digits Named numeric vector: column name -> decimal places.
+#' @return `df` with the named columns rounded.
+#' @noRd
+.round_display <- function(df, digits) {
+  for (nm in intersect(names(digits), names(df))) {
+    df[[nm]] <- round(df[[nm]], digits[[nm]])
+  }
+  df
+}
+
 #' Coerce a completed multiply-imputed dataset back to numeric responses
 #'
 #' `mice::complete()` returns the item columns in their original type. When the

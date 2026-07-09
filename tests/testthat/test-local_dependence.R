@@ -411,3 +411,44 @@ test_that("RMlocdepQ3(estimator='CML') warns on sparse/zero-variance items", {
   expect_warning(try(RMlocdepQ3(df, estimator = "CML"), silent = TRUE),
                  regexp = "[Ss]parse|zero-variance")
 })
+
+# ---------------------------------------------------------------------
+# All-NA respondents (regression: psychotools cannot fit all-NA rows;
+# pcmodel errors and raschmodel segfaults, so they must be dropped
+# up front)
+# ---------------------------------------------------------------------
+test_that("RMlocdepQ3Cutoff drops all-NA respondents instead of erroring", {
+  skip_if_not_installed("ggdist")
+  set.seed(42)
+  df <- as.data.frame(matrix(sample(0:2, 60 * 6, replace = TRUE), nrow = 60))
+  colnames(df) <- paste0("i", 1:6)
+  df[3, ] <- NA
+
+  expect_message(
+    res <- RMlocdepQ3Cutoff(df, iterations = 5, parallel = FALSE, seed = 1),
+    "no responses dropped"
+  )
+  expect_equal(res$sample_n, 59L)
+  expect_equal(res$sample_n_total, 60L)
+  expect_true(res$sample_has_na)
+  # The full object stays consumable by RMlocdepQ3() (which drops the same row)
+  out <- suppressMessages(RMlocdepQ3(df, cutoff = res, output = "dataframe"))
+  expect_named(out, c("matrix", "pairs"))
+})
+
+test_that("RMlocdepQ3Plot observed overlay drops all-NA respondents", {
+  skip_if_not_installed("ggdist")
+  skip_if_not_installed("ggplot2")
+  skip_if_not_installed("scales")
+  set.seed(42)
+  df <- as.data.frame(matrix(sample(0:2, 60 * 6, replace = TRUE), nrow = 60))
+  colnames(df) <- paste0("i", 1:6)
+  simfit <- RMlocdepQ3Cutoff(df, iterations = 5, parallel = FALSE, seed = 1)
+  df[3, ] <- NA
+
+  expect_message(
+    p <- RMlocdepQ3Plot(simfit, data = df),
+    "no responses dropped"
+  )
+  expect_s3_class(p$pairs, "ggplot")
+})

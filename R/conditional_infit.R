@@ -256,6 +256,13 @@ RMitemInfit <- function(
     )
   }
 
+  # Respondents with no responses at all contribute nothing and break the CML
+  # fit (psychotools errors on all-NA rows); drop them, keeping the raw totals
+  # for the caption.
+  n_total <- nrow(as.data.frame(data))
+  has_na <- anyNA(data)
+  data <- .drop_empty_respondents(data)
+
   data_mat <- as.matrix(data)
 
   # --- Fit Rasch model and compute item/person locations ----------------------
@@ -289,15 +296,15 @@ RMitemInfit <- function(
   n_complete <- nrow(stats::na.omit(data))
   n_clause <- .n_caption(
     n_complete,
-    nrow(data),
-    if (anyNA(data)) "complete cases" else character()
+    n_total,
+    if (has_na) "complete cases" else character()
   )
 
-  # --- Assemble result data.frame ---------------------------------------------
+  # --- Assemble result data.frame (unrounded; kable rounds for display) -------
   item_fit_table <- data.frame(
     Item = names(data),
-    Infit_MSQ = round(cfit$Infit, 3),
-    Relative_location = round(relative_item_avg_locations, 2),
+    Infit_MSQ = as.numeric(cfit$Infit),
+    Relative_location = as.numeric(relative_item_avg_locations),
     stringsAsFactors = FALSE,
     row.names = NULL
   )
@@ -327,8 +334,8 @@ RMitemInfit <- function(
     # Restore original row order (merge may reorder)
     item_fit_table <- item_fit_table[match(data_items, item_fit_table$Item), ]
     rownames(item_fit_table) <- NULL
-    item_fit_table$Infit_low <- round(item_fit_table$infit_low, 3)
-    item_fit_table$Infit_high <- round(item_fit_table$infit_high, 3)
+    item_fit_table$Infit_low <- item_fit_table$infit_low
+    item_fit_table$Infit_high <- item_fit_table$infit_high
     item_fit_table$infit_low <- NULL
     item_fit_table$infit_high <- NULL
     # Flagged labels the misfit direction: infit below the expected range =
@@ -362,8 +369,8 @@ RMitemInfit <- function(
       observed <- stats::setNames(as.numeric(cfit$Infit), names(data))
       pv <- .bootstrap_pvalues(observed, sim_mat, correction = correction)
       idx <- match(item_fit_table$Item, pv$name)
-      item_fit_table$p_infit <- round(pv$p[idx], 4)
-      item_fit_table$padj_infit <- round(pv$padj[idx], 4)
+      item_fit_table$p_infit <- pv$p[idx]
+      item_fit_table$padj_infit <- pv$padj[idx]
       sig <- item_fit_table$padj_infit < alpha
       item_fit_table$Flagged <- ifelse(
         is.na(sig) | !sig,
@@ -405,6 +412,12 @@ RMitemInfit <- function(
   if (output == "dataframe") {
     return(item_fit_table)
   }
+
+  # Kable display rounding (the dataframe output above stays unrounded)
+  item_fit_table <- .round_display(item_fit_table, c(
+    Infit_MSQ = 3, Infit_low = 3, Infit_high = 3,
+    p_infit = 4, padj_infit = 4, Relative_location = 2
+  ))
 
   if (p_value) {
     kbl_colnames <- c(

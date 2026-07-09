@@ -262,15 +262,7 @@ RMdifGamma <- function(
     stringsAsFactors = FALSE
   )
 
-  # Round numeric columns
-  pgam_df$gamma <- round(pgam_df$gamma, 3)
-  pgam_df$se <- round(pgam_df$se, 3)
-  pgam_df$pvalue <- round(pgam_df$pvalue, 3)
-  pgam_df$padj_bh <- round(pgam_df$padj_bh, 3)
-  pgam_df$lower <- round(pgam_df$lower, 3)
-  pgam_df$upper <- round(pgam_df$upper, 3)
-
-  # Keep output columns
+  # Keep output columns (unrounded; the kable path rounds a display copy)
   result_df <- pgam_df[, c(
     "Item",
     "gamma",
@@ -301,8 +293,6 @@ RMdifGamma <- function(
     # Restore original row order
     result_df <- result_df[match(data_items, result_df$Item), ]
     rownames(result_df) <- NULL
-    result_df$gamma_low <- round(result_df$gamma_low, 3)
-    result_df$gamma_high <- round(result_df$gamma_high, 3)
     result_df$flagged <- result_df$gamma < result_df$gamma_low |
       result_df$gamma > result_df$gamma_high
 
@@ -333,8 +323,8 @@ RMdifGamma <- function(
         tail = "two.sided"
       )
       idx <- match(result_df$Item, pv$name)
-      result_df$p_gamma <- round(pv$p[idx], 4)
-      result_df$padj_gamma <- round(pv$padj[idx], 4)
+      result_df$p_gamma <- pv$p[idx]
+      result_df$padj_gamma <- pv$padj[idx]
       result_df$flagged <- !is.na(result_df$padj_gamma) &
         result_df$padj_gamma < alpha
       # Drop the asymptotic p-value pair; the bootstrap p-values replace it.
@@ -371,6 +361,12 @@ RMdifGamma <- function(
   if (output == "dataframe") {
     return(result_df)
   }
+
+  # Kable display rounding (the dataframe output above stays unrounded)
+  result_df <- .round_display(result_df, c(
+    gamma = 3, se = 3, lower = 3, upper = 3, padj_bh = 3,
+    gamma_low = 3, gamma_high = 3, p_gamma = 4, padj_gamma = 4
+  ))
 
   # Build caption
   n_complete <- sum(stats::complete.cases(cbind(

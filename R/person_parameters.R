@@ -252,8 +252,8 @@ RMpersonParameters <- function(
 
   # --- Output -----------------------------------------------------------------
   if (output %in% c("dataframe", "file")) {
-    out$theta <- round(out$theta, 4)
-    out$sem <- round(out$sem, 4)
+    # Unrounded: rounding is a display concern (the kable path rounds a
+    # display copy below).
     if (output == "file") {
       # row.names = TRUE preserves respondent identifiers (the person kable
       # also shows them), which live in the data.frame's row names.

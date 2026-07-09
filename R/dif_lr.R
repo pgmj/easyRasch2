@@ -176,6 +176,17 @@ RMdifLR <- function(
     dif_factor <- droplevels(dif_factor[!na_mask])
   }
 
+  # Respondents with no responses at all contribute nothing and make
+  # eRm::LRtest() error; drop them jointly with `dif_factor` (the standard
+  # .drop_empty_respondents() treatment, inlined to keep the rows aligned
+  # with the grouping variable).
+  empty <- rowSums(!is.na(as.matrix(data))) == 0L
+  if (any(empty)) {
+    message(sum(empty), " respondent(s) with no responses dropped.")
+    data <- data[!empty, , drop = FALSE]
+    dif_factor <- droplevels(dif_factor[!empty])
+  }
+
   if (nlevels(dif_factor) < 2L) {
     stop(
       "`dif_var` must have at least 2 distinct non-missing levels.",
@@ -271,16 +282,6 @@ RMdifLR <- function(
   rownames(table_df) <- NULL
 
   # ---------------------------------------------------------------------
-  # Round numeric columns (3 dp) -- match other easyRasch2 functions
-  # ---------------------------------------------------------------------
-  num_cols <- c(groups, "All", "MaxDiff", se_cols)
-  for (cc in num_cols) {
-    if (is.numeric(table_df[[cc]])) {
-      table_df[[cc]] <- round(table_df[[cc]], 3)
-    }
-  }
-
-  # ---------------------------------------------------------------------
   # LR test summary (Andersen)
   # ---------------------------------------------------------------------
   lr_summary <- list(
@@ -307,6 +308,13 @@ RMdifLR <- function(
   }
 
   if (output == "kable") {
+    # Display rounding (3 dp; the dataframe output above stays unrounded)
+    num_cols <- c(groups, "All", "MaxDiff", se_cols)
+    for (cc in num_cols) {
+      if (is.numeric(table_df[[cc]])) {
+        table_df[[cc]] <- round(table_df[[cc]], 3)
+      }
+    }
     n_clause <- .n_caption(
       lr_summary$n_persons,
       n_total_lr,

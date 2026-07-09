@@ -159,3 +159,15 @@ test_that("RMUreliability prints input summary when verbose = TRUE", {
   m <- matrix(rnorm(60 * 4), nrow = 60, ncol = 4)
   expect_message(RMUreliability(m, verbose = TRUE), regexp = "Subjects")
 })
+
+test_that("RMreliability drops all-NA respondents instead of erroring", {
+  skip_if_not_installed("ggdist")
+  set.seed(42)
+  df <- as.data.frame(matrix(sample(0:2, 60 * 6, replace = TRUE), nrow = 60))
+  colnames(df) <- paste0("i", 1:6)
+  df[3, ] <- NA
+
+  expect_message(k <- RMreliability(df), "no responses dropped")
+  expect_match(paste(as.character(k), collapse = "\n"),
+               "n = 59 of 60 respondents")
+})

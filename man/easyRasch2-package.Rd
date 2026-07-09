@@ -20,6 +20,11 @@ Useful links:
 \author{
 \strong{Maintainer}: Magnus Johansson \email{pgmj@pm.me} (\href{https://orcid.org/0000-0003-1669-592X}{ORCID})
 
+Authors:
+\itemize{
+  \item Magnus Johansson \email{pgmj@pm.me} (\href{https://orcid.org/0000-0003-1669-592X}{ORCID})
+}
+
 Other contributors:
 \itemize{
   \item Nicklas Korsell (PCM simulation code) [contributor]

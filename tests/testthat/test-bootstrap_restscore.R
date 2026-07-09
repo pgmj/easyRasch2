@@ -67,3 +67,19 @@ test_that("RMitemRestscoreBoot is reproducible with the same seed", {
                         output = "dataframe")
   expect_equal(r1, r2)
 })
+
+test_that("RMitemRestscoreBoot drops all-NA respondents instead of erroring", {
+  skip_if_not_installed("iarm")
+  set.seed(42)
+  df <- as.data.frame(matrix(sample(0:2, 60 * 6, replace = TRUE), nrow = 60))
+  colnames(df) <- paste0("i", 1:6)
+  df[3, ] <- NA
+
+  expect_message(
+    res <- RMitemRestscoreBoot(df, iterations = 5, samplesize = 40,
+                               parallel = FALSE, seed = 1,
+                               output = "dataframe"),
+    "no responses dropped"
+  )
+  expect_s3_class(res, "data.frame")
+})

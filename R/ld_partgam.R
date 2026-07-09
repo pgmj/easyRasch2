@@ -269,8 +269,8 @@ RMlocdepGamma <- function(
     df <- data.frame(
       Item1 = as.character(raw_df$Item1),
       Item2 = as.character(raw_df$Item2),
-      gamma = round(as.numeric(raw_df$gamma), 3),
-      padj_bh = round(as.numeric(raw_df[[6]]), 3),
+      gamma = as.numeric(raw_df$gamma),
+      padj_bh = as.numeric(raw_df[[6]]),
       Significance = trimws(as.character(raw_df[[7]])),
       stringsAsFactors = FALSE
     )
@@ -314,8 +314,6 @@ RMlocdepGamma <- function(
       # Restore original row order
       merged <- merged[match(result_df$canonical_key, merged$canonical_key), ]
       rownames(merged) <- NULL
-      merged$gamma_low <- round(merged$gamma_low, 3)
-      merged$gamma_high <- round(merged$gamma_high, 3)
       merged$flagged <- !is.na(merged$gamma_low) &
         (merged$gamma < merged$gamma_low | merged$gamma > merged$gamma_high)
 
@@ -377,8 +375,8 @@ RMlocdepGamma <- function(
       correction = correction,
       tail = "upper"
     )
-    p_lookup <- stats::setNames(round(pv$p, 4), pv$name)
-    padj_lookup <- stats::setNames(round(pv$padj, 4), pv$name)
+    p_lookup <- stats::setNames(pv$p, pv$name)
+    padj_lookup <- stats::setNames(pv$padj, pv$name)
 
     for (idx in seq_along(result_list)) {
       df <- result_list[[idx]]
@@ -422,6 +420,13 @@ RMlocdepGamma <- function(
   if (output == "dataframe") {
     return(result_list)
   }
+
+  # Kable display rounding (the dataframe output above stays unrounded)
+  ld_digits <- c(
+    gamma = 3, padj_bh = 3, gamma_low = 3, gamma_high = 3,
+    p_gamma = 4, padj_gamma = 4
+  )
+  result_list <- lapply(result_list, .round_display, digits = ld_digits)
 
   # Build caption
   n_complete <- sum(stats::complete.cases(as.data.frame(data)))

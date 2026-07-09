@@ -412,3 +412,27 @@ test_that("RMitemInfit Flagged column correctly identifies values outside cutoff
   loose_result <- RMitemInfit(df, cutoff = loose_cutoff, output = "dataframe")
   expect_true(all(loose_result$Flagged == ""))
 })
+
+test_that("RMitemInfit drops all-NA respondents instead of erroring", {
+  skip_if_not_installed("iarm")
+  set.seed(42)
+  df <- as.data.frame(matrix(sample(0:2, 60 * 6, replace = TRUE), nrow = 60))
+  colnames(df) <- paste0("i", 1:6)
+  df[3, ] <- NA
+
+  expect_message(k <- RMitemInfit(df), "no responses dropped")
+  # Caption keeps the raw total: complete cases of 60 respondents
+  expect_match(paste(as.character(k), collapse = "\n"), "of 60 respondents")
+})
+
+test_that("dataframe output is unrounded (kable-only display rounding)", {
+  skip_if_not_installed("iarm")
+  set.seed(42)
+  df <- as.data.frame(matrix(sample(0:2, 60 * 6, replace = TRUE), nrow = 60))
+  colnames(df) <- paste0("i", 1:6)
+
+  result <- RMitemInfit(df, output = "dataframe")
+  # Must match the raw iarm statistic exactly, not its 3-dp rounding
+  fit <- psychotools::pcmodel(as.matrix(df))
+  expect_equal(result$Infit_MSQ, as.numeric(iarm::out_infit(fit)$Infit))
+})

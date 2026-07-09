@@ -813,8 +813,8 @@ RMpersonFit <- function(
     "."
   )
   if (output == "dataframe") {
-    num <- vapply(out, is.numeric, logical(1))
-    out[num] <- lapply(out[num], function(x) round(x, 4))
+    # Unrounded: rounding is a display concern (the kable path rounds a
+    # display copy below).
     return(out)
   }
 

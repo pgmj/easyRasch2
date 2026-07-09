@@ -146,6 +146,13 @@ RMitemRestscoreBoot <- function(
 
   validate_response_data(data)
 
+  # Respondents with no responses at all contribute nothing, break the CML
+  # fit (psychotools errors on all-NA rows), and would poison the bootstrap
+  # resampling pool; drop them, keeping the raw totals for the caption.
+  n_total <- nrow(as.data.frame(data))
+  has_na <- anyNA(data)
+  data <- .drop_empty_respondents(data)
+
   if (samplesize > nrow(data)) {
     stop(
       paste0(
@@ -296,12 +303,13 @@ RMitemRestscoreBoot <- function(
   )
   fit_tbl$n[is.na(fit_tbl$n)] <- 0L
   per_item_total <- tapply(fit_tbl$n, fit_tbl$Item, sum)
-  fit_tbl$percent <- round(fit_tbl$n * 100 / per_item_total[fit_tbl$Item], 1)
+  # Unrounded values; the kable path rounds a display copy before rendering.
+  fit_tbl$percent <- fit_tbl$n * 100 / per_item_total[fit_tbl$Item]
 
   cfit_df <- data.frame(
     Item = item_names,
-    Infit_MSQ = round(cfit$Infit, 2),
-    Relative_location = round(relative_item_avg_locations, 2),
+    Infit_MSQ = as.numeric(cfit$Infit),
+    Relative_location = as.numeric(relative_item_avg_locations),
     stringsAsFactors = FALSE,
     row.names = NULL
   )
@@ -316,6 +324,13 @@ RMitemRestscoreBoot <- function(
   if (output == "dataframe") {
     return(result_df)
   }
+
+  # Kable display rounding (the dataframe output above stays unrounded); done
+  # before the percent filter below so the kable keeps its previous behaviour
+  # (filtering on the displayed, rounded percentage).
+  result_df <- .round_display(result_df, c(
+    percent = 1, Infit_MSQ = 2, Relative_location = 2
+  ))
 
   # --- Kable: only flagged items above cutoff --------------------------------
   show <- result_df[
@@ -364,8 +379,8 @@ RMitemRestscoreBoot <- function(
       " items). ",
       .n_caption(
         n_complete,
-        nrow(data),
-        if (anyNA(data)) "complete cases" else character()
+        n_total,
+        if (has_na) "complete cases" else character()
       ),
       "."
     )

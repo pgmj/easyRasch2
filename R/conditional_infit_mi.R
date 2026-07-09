@@ -333,11 +333,12 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable", sort) {
   pooled_location <- rowMeans(loc_mat)
 
   # --- Assemble result data.frame ---------------------------------------------
+  # Unrounded values; the kable path rounds a display copy before rendering.
   item_fit_table <- data.frame(
     Item = item_names,
-    Infit_MSQ = round(pooled_msq, 3),
-    Infit_SE = round(pooled_se, 3),
-    Relative_location = round(pooled_location, 2),
+    Infit_MSQ = pooled_msq,
+    Infit_SE = pooled_se,
+    Relative_location = pooled_location,
     stringsAsFactors = FALSE,
     row.names = NULL
   )
@@ -367,8 +368,8 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable", sort) {
     # Restore original row order
     item_fit_table <- item_fit_table[match(data_items, item_fit_table$Item), ]
     rownames(item_fit_table) <- NULL
-    item_fit_table$Infit_low <- round(item_fit_table$infit_low, 3)
-    item_fit_table$Infit_high <- round(item_fit_table$infit_high, 3)
+    item_fit_table$Infit_low <- item_fit_table$infit_low
+    item_fit_table$Infit_high <- item_fit_table$infit_high
     item_fit_table$infit_low <- NULL
     item_fit_table$infit_high <- NULL
     # Flagged labels the misfit direction: overfit (pooled infit below the
@@ -406,6 +407,12 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable", sort) {
   if (output == "dataframe") {
     return(item_fit_table)
   }
+
+  # Kable display rounding (the dataframe output above stays unrounded)
+  item_fit_table <- .round_display(item_fit_table, c(
+    Infit_MSQ = 3, Infit_SE = 3, Infit_low = 3, Infit_high = 3,
+    Relative_location = 2
+  ))
 
   # Build caption
   base_caption <- paste0(

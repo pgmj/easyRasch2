@@ -604,10 +604,10 @@ compute_subscale_wle_and_correlations <- function(
       data.frame(
         subscale_a = a,
         subscale_b = b,
-        r = round(unname(test$estimate), 3),
-        ci_lower = round(test$conf.int[1L], 3),
-        ci_upper = round(test$conf.int[2L], 3),
-        p_value = signif(test$p.value, 4),
+        r = unname(test$estimate),
+        ci_lower = test$conf.int[1L],
+        ci_upper = test$conf.int[2L],
+        p_value = test$p.value,
         n = sum(finite),
         stringsAsFactors = FALSE,
         row.names = NULL
@@ -1109,8 +1109,8 @@ RMdimMartinLofResiduals <- function(
     cell_indices,
     total = as.integer(cell_totals),
     observed = as.integer(observed),
-    expected = round(expected, 3),
-    residual = round(residual, 3),
+    expected = expected,
+    residual = residual,
     flagged = !is.na(residual) & abs(residual) > flag_threshold,
     stringsAsFactors = FALSE,
     row.names = NULL
@@ -1193,6 +1193,8 @@ RMdimMartinLofResiduals <- function(
         "residual",
         "flagged"
       )
+      # Display rounding (the dataframe output above stays unrounded)
+      result_df <- .round_display(result_df, c(expected = 3, residual = 3))
       return(knitr::kable(
         result_df[, cols],
         format = "pipe",

@@ -1,28 +1,22 @@
-# easyRasch2 1.0.0
-
-## Resubmission
-
-This is a resubmission addressing the check-time NOTE (tests ran 11 min):
-the simulation-heavy tests are now skipped on CRAN via
-`testthat::skip_on_cran()` and run only when `NOT_CRAN` is set — locally
-and on GitHub Actions CI (three platforms, every commit). CRAN still runs
-a fast smoke suite of 500+ assertions covering input validation, error
-paths, and output structure for every exported function. Test time on
-local machine dropped from ~134 s to ~12 s; the full `--as-cran` check now
-completes well under 10 minutes.
+# easyRasch2 1.1.0
 
 ## Submission
 
-This is an update (0.8.0 -> 1.0.0). The headline changes are a unified
-CML/WLE estimation engine (moving `eRm` from Imports to Suggests),
-new person fit and person/item-parameter functions, bootstrap
-p-values with multiplicity correction for the simulation-based
-diagnostics, and consistent sample-size reporting across all table and
-figure captions. See NEWS.md for the full list.
+This is an update (1.0.0 -> 1.1.0). It is submitted relatively soon
+after 1.0.0 because it fixes a crash: response data containing a
+respondent with no responses at all (an all-NA row) caused a segfault
+(dichotomous data) or an opaque error (polytomous data) in several
+functions. Such rows are now dropped up front with an informative
+message, consistently across the package.
 
-One function from 0.8.0 was renamed in this release; the deprecated
-alias is retained (see NEWS.md). There are no CRAN reverse dependencies
-affected.
+The other headline change: `output = "dataframe"` now returns unrounded
+values across all functions (rounding was inconsistently applied and is
+a presentation concern); the formatted kable output is unchanged.
+Flag labels and sorting are now computed on exact rather than rounded
+values. There are no changes to function signatures and no functions
+were added, removed, or renamed. See NEWS.md for the full list.
+
+There are no CRAN reverse dependencies affected.
 
 ## Test environments
 
