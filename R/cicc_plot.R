@@ -22,18 +22,30 @@
 #'   averages are shown separately per group and the partial-gamma DIF
 #'   coefficient (`iarm::partgam_DIF()`, as in [RMdifGamma()]) is annotated
 #'   per panel. Default `NULL` (no DIF).
-#' @param method One of `"cut"` (default) or `"score"`. `"cut"` groups
-#'   respondents into `class_intervals` total-score bins (equal-count
-#'   quantile bins, common across groups); `"score"` uses every observed
-#'   total score as its own group.
-#' @param class_intervals Integer >= 2. Number of class intervals when
-#'   `method = "cut"`. Default `4`. Ignored when `method = "score"`.
+#' @param method How the observed means are grouped along the total score
+#'   (see \emph{Class intervals} in Details). One of `"quantile"` (default):
+#'   `class_intervals` groups of approximately equal numbers of respondents;
+#'   `"width"`: `class_intervals` equal-width intervals over the observed
+#'   total-score range; `"score"`: every observed total score is its own
+#'   group; or `"manual"`: groups defined by `score_breaks`. `"cut"` is
+#'   accepted as a legacy alias for `"quantile"`.
+#' @param class_intervals Integer >= 2. Number of class intervals for
+#'   `method = "quantile"` and `method = "width"`. Default `4`. Ignored
+#'   (without an error) by `method = "score"` and `method = "manual"`.
+#' @param score_breaks Integer vector for `method = "manual"`: the total
+#'   scores at which a new group \emph{starts}, in increasing order. For
+#'   example, `score_breaks = c(3, 6, 8)` on a 0-9 scale defines the groups
+#'   0-2, 3-5, 6-7, and 8-9 (the endpoints are added automatically).
+#'   Serves the same purpose as `lower.groups` in RASCHplot's `CICCplot()`,
+#'   without the leading zero. Default `NULL`.
 #' @param ci Logical. Draw confidence intervals (error bars) on the observed
 #'   class-interval means. Default `TRUE`.
-#' @param error_band Logical. Add a shaded band for the model's interval of the
-#'   *observed mean* at each total score, \eqn{E \pm z \sqrt{\mathrm{Var}/n_r}}
-#'   (`n_r` = number of respondents at that total score), as in RASCHplot's
-#'   `CICCplot`. Default `FALSE`.
+#' @param error_band Logical. Add a shaded band around the model-expected
+#'   curve: the model's interval for the \emph{observed mean} at each total
+#'   score, \eqn{E \pm z \sqrt{\mathrm{Var}/n_r}} (`n_r` = number of
+#'   respondents at that total score), as in RASCHplot's `CICCplot`.
+#'   Complementary to `ci`, not a replacement -- see Details. Default
+#'   `FALSE`.
 #' @param conf_level Numeric in (0, 1). Confidence level for the observed
 #'   error bars and the model band. Default `0.95`.
 #' @param min_n Integer. A group-by-interval cell needs at least this many
@@ -54,18 +66,50 @@
 #' expectation of the item score given the total score (it accounts for the
 #' item being part of the total), not a marginal ICC.
 #'
-#' \strong{Class intervals.} With `method = "cut"`, total scores are split into
-#' `class_intervals` equal-count bins using common boundaries (so groups share
-#' the x-axis); each bin contributes one observed point at its mean total
-#' score. With `method = "score"`, every observed total score is a point. If
-#' the score distribution is too sparse to form `class_intervals` distinct
-#' bins, the function falls back to score-level points.
+#' \strong{Class intervals.} Following Buchardt et al. (2023), the empirical
+#' item means can be shown for each value of the total score or for each
+#' value of the \emph{grouped} total score; all grouping happens on the
+#' total-score scale (never on an estimated latent score). Four grouping
+#' rules are available. `method = "quantile"` (the default) splits the
+#' observed total scores into `class_intervals` bins of approximately equal
+#' numbers of respondents, using common boundaries so DIF groups share the
+#' x-axis -- the same approach as `iarm::ICCplot()`'s class intervals
+#' (`Hmisc::cut2(g = ...)`). `method = "width"` instead splits the observed
+#' score range into `class_intervals` intervals of equal width, which reads
+#' naturally on the score axis but can leave sparse intervals (pruned by
+#' `min_n`). `method = "score"` uses every observed total score as its own
+#' group -- the maximal-resolution display, sensible for short scales, with
+#' `min_n` pruning thinly-populated scores. `method = "manual"` places the
+#' group boundaries exactly where you say via `score_breaks` (RASCHplot's
+#' `lower.groups` concept). Each bin contributes one observed point at its
+#' mean total score. If the score distribution is too sparse to form
+#' `class_intervals` distinct bins, the quantile and width methods fall
+#' back to score-level points.
 #'
 #' \strong{Confidence intervals.} Observed error bars use the normal
 #' approximation \eqn{\bar{x}_l \pm z \sqrt{\mathrm{var}(x_l) / n_l}} within
 #' each (group, interval) cell, clamped to the item's score range; cells with
 #' fewer than `min_n` respondents are dropped. In DIF mode this makes sparse
 #' group differences visibly uncertain rather than over-interpreted.
+#'
+#' \strong{The model band (`error_band`).} The shaded band is drawn around
+#' the model-expected curve at \eqn{E_{ri} \pm z \sqrt{V_{ri}/n_r}}, where
+#' \eqn{E_{ri}} and \eqn{V_{ri}} are the exact conditional mean and variance
+#' of the item score given total score \eqn{r} (model quantities), and
+#' \eqn{n_r} is the \emph{observed} number of respondents at that total
+#' score. If the Rasch model is true, this is where the empirical mean item
+#' score at total score \eqn{r} should fall, given how many people actually
+#' sit at that score; an observed diamond outside the band is localized
+#' graphical misfit. The band is deliberately the standard error of the
+#' \emph{mean} (\eqn{\sqrt{V/n_r}}), not the far wider individual-response
+#' SD band, which would flag nothing. Its width therefore tracks the data:
+#' narrow where many respondents sit (a strict test), wide in sparse score
+#' regions (a lenient one), with gaps where \eqn{n_r = 0} and collapsing to
+#' the curve at the deterministic extremes (total score 0 and the maximum).
+#' It is complementary to, not a replacement for, the `ci` error bars: the
+#' band is the model-implied uncertainty of the observed mean per raw
+#' score; the error bars are the sample-based uncertainty of the observed
+#' group means.
 #'
 #' \strong{DIF magnitude.} The annotated partial gamma (Bjorner et al., 1998)
 #' is the association between the item score and the group conditional on the
@@ -88,12 +132,39 @@
 #'
 #' @seealso \code{\link{RMdifGamma}}, \code{\link{RMitemRestscore}}
 #'
+#' @examples
+#' \donttest{
+#' if (requireNamespace("ggplot2", quietly = TRUE) &&
+#'     requireNamespace("patchwork", quietly = TRUE) &&
+#'     requireNamespace("iarm", quietly = TRUE)) {
+#'   set.seed(42)
+#'   sim_data <- as.data.frame(
+#'     matrix(sample(0:2, 200 * 4, replace = TRUE), nrow = 200, ncol = 4)
+#'   )
+#'   colnames(sim_data) <- paste0("Item", 1:4)
+#'
+#'   # Default: quantile groups (~equal numbers of respondents per group)
+#'   RMitemICCPlot(sim_data)
+#'
+#'   # Equal-width intervals on the total-score scale, with the model band
+#'   RMitemICCPlot(sim_data, method = "width", error_band = TRUE)
+#'
+#'   # Every total score as its own group (short scales)
+#'   RMitemICCPlot(sim_data, method = "score")
+#'
+#'   # Manual grouping: new groups start at total scores 3, 5, and 7
+#'   RMitemICCPlot(sim_data, method = "manual", score_breaks = c(3, 5, 7))
+#' }
+#' }
+#'
 #' @importFrom rlang .data
 #' @export
 RMitemICCPlot <- function(data,
                           dif_var         = NULL,
-                          method          = c("cut", "score"),
+                          method          = c("quantile", "width", "score",
+                                              "manual", "cut"),
                           class_intervals = 4,
+                          score_breaks    = NULL,
                           ci              = TRUE,
                           error_band      = FALSE,
                           conf_level      = 0.95,
@@ -102,18 +173,50 @@ RMitemICCPlot <- function(data,
                           output          = c("patchwork", "list")) {
 
   method <- match.arg(method)
+  # "cut" is the pre-1.1.0 name of the quantile grouping, kept as a silent
+  # legacy alias so existing code keeps working.
+  if (method == "cut") {
+    method <- "quantile"
+  }
   output <- match.arg(output)
+
+  if (!is.null(score_breaks)) {
+    if (method != "manual") {
+      stop(
+        "`score_breaks` is only used with method = 'manual'.",
+        call. = FALSE
+      )
+    }
+    if (!is.numeric(score_breaks) || length(score_breaks) < 1L ||
+        anyNA(score_breaks) || any(score_breaks != as.integer(score_breaks)) ||
+        is.unsorted(score_breaks, strictly = TRUE) || any(score_breaks < 1)) {
+      stop(
+        "`score_breaks` must be a strictly increasing vector of positive ",
+        "integers (each value starts a new total-score group).",
+        call. = FALSE
+      )
+    }
+    score_breaks <- as.integer(score_breaks)
+  } else if (method == "manual") {
+    stop(
+      "method = 'manual' requires `score_breaks` (the total scores at ",
+      "which a new group starts, e.g. c(3, 6, 8)).",
+      call. = FALSE
+    )
+  }
 
   validate_response_data(data)
   data <- as.data.frame(data)
   if (ncol(data) < 2L) {
     stop("RMitemICCPlot() requires at least 2 items.", call. = FALSE)
   }
-  if (!is.numeric(class_intervals) || length(class_intervals) != 1L ||
-      !is.finite(class_intervals) || class_intervals < 2L) {
-    stop("`class_intervals` must be a single integer >= 2.", call. = FALSE)
+  if (method %in% c("quantile", "width")) {
+    if (!is.numeric(class_intervals) || length(class_intervals) != 1L ||
+        !is.finite(class_intervals) || class_intervals < 2L) {
+      stop("`class_intervals` must be a single integer >= 2.", call. = FALSE)
+    }
+    class_intervals <- as.integer(class_intervals)
   }
-  class_intervals <- as.integer(class_intervals)
   if (!is.numeric(conf_level) || length(conf_level) != 1L ||
       conf_level <= 0 || conf_level >= 1) {
     stop("`conf_level` must be a single number in (0, 1).", call. = FALSE)
@@ -183,7 +286,14 @@ RMitemICCPlot <- function(data,
   z          <- stats::qnorm(1 - (1 - conf_level) / 2)
 
   # --- Common class-interval assignment --------------------------------------
-  bin <- .cicc_class_bins(rs, method, class_intervals)
+  if (method == "manual" && any(score_breaks > max_sc)) {
+    stop(
+      "`score_breaks` contains values above the maximum possible total ",
+      "score (", max_sc, ").",
+      call. = FALSE
+    )
+  }
+  bin <- .cicc_class_bins(rs, method, class_intervals, score_breaks)
   grp <- if (dif_mode) dif_factor else factor(rep("all", nrow(data_mat)))
 
   # Dodge width for per-group points/bars: scales with the number of DIF groups,
@@ -235,8 +345,35 @@ RMitemICCPlot <- function(data,
 #' Assign respondents to total-score class intervals
 #' @keywords internal
 #' @noRd
-.cicc_class_bins <- function(rs, method, class_intervals) {
+.cicc_class_bins <- function(rs, method, class_intervals,
+                             score_breaks = NULL) {
   if (method == "score") return(factor(rs))
+
+  if (method == "manual") {
+    # Each value in score_breaks starts a new group: breaks c(3, 6, 8) on a
+    # 0-9 scale give the groups 0-2, 3-5, 6-7, 8-9. Groups left empty by the
+    # data simply contribute no observed point (min_n prunes them anyway).
+    lows   <- c(0L, score_breaks)
+    highs  <- c(score_breaks - 1L, max(rs, score_breaks))
+    labels <- ifelse(lows == highs, as.character(lows),
+                     paste0(lows, "-", highs))
+    return(cut(rs,
+               breaks = c(-0.5, score_breaks - 0.5, max(rs, score_breaks) + 0.5),
+               labels = labels, include.lowest = TRUE))
+  }
+
+  if (method == "width") {
+    # Equal-width intervals over the observed total-score range.
+    breaks <- unique(seq(min(rs) - 0.5, max(rs) + 0.5,
+                         length.out = class_intervals + 1L))
+    if (length(breaks) < 3L) {
+      # Too few distinct total scores to form bins: fall back to score level.
+      return(factor(rs))
+    }
+    return(cut(rs, breaks = breaks, include.lowest = TRUE))
+  }
+
+  # method == "quantile": equal-count bins over the observed total scores.
   qs <- unique(stats::quantile(
     rs, probs = seq(0, 1, length.out = class_intervals + 1L), na.rm = TRUE))
   if (length(qs) < 3L) {
@@ -370,24 +507,24 @@ RMitemICCPlot <- function(data,
           data = obs,
           ggplot2::aes(x = .data$x, ymin = .data$lo, ymax = .data$hi,
                        colour = .data$grp),
-          width = 0, linewidth = 0.6, position = dodge
+          width = 0, linewidth = 0.75, position = dodge
         )
       }
       p <- p + ggplot2::geom_point(
         data = obs,
         ggplot2::aes(x = .data$x, y = .data$mean, colour = .data$grp),
-        shape = 18, size = 2.6, position = dodge
+        shape = 18, size = 2.9, position = dodge
       )
     } else {
       if (ci) {
         p <- p + ggplot2::geom_errorbar(
           data = obs, ggplot2::aes(x = .data$x, ymin = .data$lo, ymax = .data$hi),
-          width = 0, linewidth = 0.6, colour = "sienna2"
+          width = 0, linewidth = 0.75, colour = "sienna2"
         )
       }
       p <- p + ggplot2::geom_point(
         data = obs, ggplot2::aes(x = .data$x, y = .data$mean),
-        shape = 18, size = 2.6, colour = "sienna2"
+        shape = 18, size = 2.9, colour = "sienna2"
       )
     }
   }
@@ -399,7 +536,7 @@ RMitemICCPlot <- function(data,
     )
   }
   xmax  <- max(curve$score)
-  xstep <- if (xmax <= 15) 1L else if (xmax <= 40) 2L else 5L
+  xstep <- if (xmax <= 15) 1L else if (xmax <= 40) 3L else 5L
   p +
     ggplot2::facet_wrap(~ item) +
     ggplot2::scale_x_continuous(breaks = seq(0L, xmax, by = xstep)) +

@@ -119,3 +119,45 @@ test_that("RMitemICCPlot drops rows with NA in data or dif_var", {
     RMitemICCPlot(df, class_intervals = 4L, dif_var = grp), "patchwork"
   )
 })
+
+# ---------------------------------------------------------------------
+# Grouping methods (quantile / width / score / manual, "cut" alias)
+# ---------------------------------------------------------------------
+test_that("all grouping methods run and 'cut' aliases 'quantile'", {
+  skip_if_not_installed("ggplot2")
+  skip_if_not_installed("patchwork")
+  set.seed(42)
+  df <- as.data.frame(matrix(sample(0:2, 150 * 4, replace = TRUE), nrow = 150))
+  colnames(df) <- paste0("i", 1:4)
+
+  for (m in c("quantile", "width", "score")) {
+    p <- suppressWarnings(RMitemICCPlot(df, method = m))
+    expect_s3_class(p, "patchwork")
+  }
+  # legacy alias gives the same grouping as "quantile"
+  p_cut <- suppressWarnings(RMitemICCPlot(df, method = "cut", output = "list"))
+  p_q   <- suppressWarnings(RMitemICCPlot(df, method = "quantile", output = "list"))
+  expect_identical(p_cut[[1]]$data, p_q[[1]]$data)
+})
+
+test_that("manual grouping via score_breaks works and validates", {
+  skip_if_not_installed("ggplot2")
+  skip_if_not_installed("patchwork")
+  set.seed(42)
+  df <- as.data.frame(matrix(sample(0:2, 150 * 4, replace = TRUE), nrow = 150))
+  colnames(df) <- paste0("i", 1:4)
+
+  p <- suppressWarnings(
+    RMitemICCPlot(df, method = "manual", score_breaks = c(3, 5, 7)))
+  expect_s3_class(p, "patchwork")
+
+  # validation
+  expect_error(RMitemICCPlot(df, method = "manual"),
+               "requires `score_breaks`")
+  expect_error(RMitemICCPlot(df, method = "quantile", score_breaks = c(3)),
+               "only used with method")
+  expect_error(RMitemICCPlot(df, method = "manual", score_breaks = c(5, 3)),
+               "strictly increasing")
+  expect_error(RMitemICCPlot(df, method = "manual", score_breaks = c(3, 99)),
+               "maximum possible total")
+})

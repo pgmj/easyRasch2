@@ -11,6 +11,8 @@ RMplotTile(
   highlight = TRUE,
   percent = FALSE,
   text_color = "orange",
+  text_size = 4,
+  zero_fill = "white",
   item_labels = NULL,
   category_labels = NULL,
   group_labels = NULL,
@@ -45,6 +47,15 @@ within group, when \code{group} is supplied). Default \code{FALSE}.}
 
 \item{text_color}{Character. Colour for non-highlighted cell labels.
 Default \code{"orange"}.}
+
+\item{text_size}{Numeric. Size of the cell labels (passed to
+\code{ggplot2::geom_text()}). Default \code{4}, matching \code{\link[=RMitemCatProb]{RMitemCatProb()}}.}
+
+\item{zero_fill}{Colour for cells with zero responses, or \code{NULL} to
+keep them on the fill scale. Default \code{"white"}: empty cells are
+shown unfilled with a light grey outline, so the \emph{absence} of data
+reads as absence rather than as the darkest end of the colour
+scale (where \code{n = 0} is nearly indistinguishable from \code{n = 1}).}
 
 \item{item_labels}{Optional character vector of descriptive labels
 for the items (y-axis), same length as \code{ncol(data)}. Default \code{NULL}

@@ -136,3 +136,23 @@ test_that("RMplotTile group-NA message also fires for dataframe output", {
     regexp = "1 row\\(s\\) with NA in `group` dropped"
   )
 })
+
+test_that("zero cells are taken off the fill scale and text_size applies", {
+  skip_if_not_installed("ggplot2")
+  set.seed(1)
+  df <- as.data.frame(matrix(sample(0:2, 60 * 3, replace = TRUE), nrow = 60))
+  colnames(df) <- paste0("i", 1:3)
+  df$i1[df$i1 == 2] <- 1   # force an empty category on item 1
+
+  p <- RMplotTile(df, text_size = 5)
+  expect_s3_class(p, "ggplot")
+  # zero cells have NA fill (mapped to zero_fill via na.value)
+  expect_true(anyNA(p$data$fill_n))
+  expect_true(all(is.na(p$data$fill_n[p$data$n == 0])))
+  # caption mentions the convention
+  expect_match(p$labels$caption, "no responses")
+
+  # opting out restores the old fill mapping
+  p0 <- RMplotTile(df, zero_fill = NULL)
+  expect_false(anyNA(p0$data$fill_n))
+})

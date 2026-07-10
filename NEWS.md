@@ -21,9 +21,29 @@
 - Deliberately unchanged: the infit *simulation workers* still round the
   per-iteration statistics to 3 decimals before the cutoff computation,
   so simulation-based expected ranges reproduce earlier releases exactly.
+- Minor layout changes for `RMtargeting()` regarding number of bins if not set 
+  by user. Earlier it was sum score + 1, now it is sum score divided by 2.
+  `RMitemICCPlot()` gets slightly larger points and thicker error bars.
 
 ## Improvements
 
+- `RMitemICCPlot()` gains two grouping methods for the observed means,
+  alongside the existing quantile grouping (`method = "cut"` is now a
+  legacy alias for `method = "quantile"`): `method = "width"` for
+  equal-width intervals on the total-score scale, and `method = "manual"`
+  with the new `score_breaks` argument -- the total scores at which a new
+  group starts (the concept of RASCHplot's `lower.groups`, without the
+  leading zero). The documentation of the grouping rules and of the
+  `error_band` (the model-implied interval for the observed mean per
+  total score) was substantially expanded.
+- `RMplotTile()` gains a `text_size` argument for the cell labels
+  (default 4, matching `RMitemCatProb()`), and cells with **zero
+  responses are now visually distinct**: they are taken off the colour
+  scale and shown unfilled with a light grey outline (`zero_fill =
+  "white"`, set to `NULL` for the previous behaviour), so the absence of
+  data reads as absence rather than as the darkest end of the fill
+  scale, where `n = 0` was nearly indistinguishable from `n = 1`. The
+  caption notes the convention when empty cells are present.
 - `RMlocdepGamma()`'s `output = "dataframe"` tables now include the
   `se`, `lower`, and `upper` (95% Wald CI) columns for each pair,
   matching `RMdifGamma()`; the formatted kable output is unchanged.

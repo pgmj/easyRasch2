@@ -23,7 +23,7 @@
 #'   `data` (first item at top). `"location"` sorts items by their average
 #'   threshold location (easiest at top, hardest at bottom).
 #' @param bins Integer. Number of bins for both histograms. Default is number of
-#'   unique scores plus one, but no less than 15.
+#'   unique scores divided by 2, but no less than 11.
 #' @param xlim Numeric vector of length 2. Initial lower and upper limits for
 #'   the shared x-axis. Automatically expanded if any person or item threshold
 #'   values fall outside these limits.
@@ -138,11 +138,11 @@ RMtargeting <- function(
   }
 
   # if no manual value was selected for number of bins, use the number of
-  # unique scores plus one, but no less than 15
+  # unique scores divided by 2, but no less than 10
   if (missing(bins)) {
-    bins <- max(rowSums(data, na.rm = TRUE)) + 1
-    if (bins < 15) {
-      bins <- 15
+    bins <- max(rowSums(data, na.rm = TRUE)) / 2
+    if (bins < 11) {
+      bins <- 11
     }
   }
 
@@ -303,6 +303,7 @@ RMtargeting <- function(
         seq(0, floor(lim[2]), by = max(1, round(lim[2] / 6)))
       }
     ) +
+    ggplot2::scale_x_continuous(breaks = seq(xlim[1], xlim[2], by = 1)) +
     ggplot2::coord_cartesian(xlim = xlim, clip = "off") +
     ggplot2::labs(x = NULL, y = "Persons") +
     ggplot2::theme_bw() +
@@ -358,11 +359,13 @@ RMtargeting <- function(
       colour = "grey20"
     ) +
     ggplot2::scale_y_reverse(
+      minor_breaks = NULL,
       breaks = function(lim) {
         max_val <- abs(floor(lim[1]))
         seq(0, max_val, by = max(1, round(max_val / 4)))
       }
     ) +
+    ggplot2::scale_x_continuous(breaks = seq(xlim[1], xlim[2], by = 1)) +
     ggplot2::coord_cartesian(xlim = xlim, clip = "off") +
     ggplot2::labs(x = NULL, y = "Thresholds") +
     ggplot2::theme_bw() +
@@ -474,6 +477,7 @@ RMtargeting <- function(
         position = ggplot2::position_dodge(width = 0.4)
       ) +
       ggplot2::scale_colour_viridis_d(end = 0.9) +
+      ggplot2::scale_x_continuous(breaks = seq(xlim[1], xlim[2], by = 1)) +
       ggplot2::coord_cartesian(xlim = xlim) +
       ggplot2::labs(
         x = "Location (logit scale)",

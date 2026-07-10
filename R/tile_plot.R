@@ -32,6 +32,13 @@
 #'   within group, when `group` is supplied). Default `FALSE`.
 #' @param text_color Character. Colour for non-highlighted cell labels.
 #'   Default `"orange"`.
+#' @param text_size Numeric. Size of the cell labels (passed to
+#'   `ggplot2::geom_text()`). Default `4`, matching [RMitemCatProb()].
+#' @param zero_fill Colour for cells with zero responses, or `NULL` to
+#'   keep them on the fill scale. Default `"white"`: empty cells are
+#'   shown unfilled with a light grey outline, so the *absence* of data
+#'   reads as absence rather than as the darkest end of the colour
+#'   scale (where `n = 0` is nearly indistinguishable from `n = 1`).
 #' @param item_labels Optional character vector of descriptive labels
 #'   for the items (y-axis), same length as `ncol(data)`. Default `NULL`
 #'   uses the column names.
@@ -107,6 +114,8 @@ RMplotTile <- function(
   highlight = TRUE,
   percent = FALSE,
   text_color = "orange",
+  text_size = 4,
+  zero_fill = "white",
   item_labels = NULL,
   category_labels = NULL,
   group_labels = NULL,
@@ -338,6 +347,8 @@ RMplotTile <- function(
   # counts non-missing responses only.
   n_total <- nrow(data)
   n_used <- n_total - n_group_na
+  has_zero_cells <- any(count_df$n == 0L)
+  use_zero_fill <- !is.null(zero_fill) && has_zero_cells
   caption_text <- er2_caption(paste0(
     .n_caption(
       n_used,
@@ -347,17 +358,29 @@ RMplotTile <- function(
         if (n_group_na > 0L) "complete group data"
       )
     ),
-    "."
+    ".",
+    if (use_zero_fill) " Outlined cells without fill: no responses." else ""
   ))
+
+  # Cells with zero responses are taken off the fill scale (NA fill ->
+  # `zero_fill`) and outlined, so missing data reads as *absence* rather
+  # than as the darkest end of the colour scale.
+  if (!is.null(zero_fill)) {
+    count_df$fill_n <- ifelse(count_df$n == 0L, NA_integer_, count_df$n)
+  } else {
+    count_df$fill_n <- count_df$n
+  }
 
   p <- ggplot2::ggplot(
     count_df,
-    ggplot2::aes(x = .data$category, y = .data$item_label, fill = .data$n)
+    ggplot2::aes(x = .data$category, y = .data$item_label,
+                 fill = .data$fill_n)
   ) +
     ggplot2::geom_tile() +
     ggplot2::scale_fill_viridis_c(
       expression(italic(n)),
-      limits = c(0, NA)
+      limits = c(0, NA),
+      na.value = if (is.null(zero_fill)) "grey50" else zero_fill
     ) +
     ggplot2::labs(y = "Items", caption = caption_text) +
     ggplot2::theme_minimal() +
@@ -368,6 +391,21 @@ RMplotTile <- function(
     ) +
     er2_axis_margins() +
     er2_plot_caption()
+
+  if (use_zero_fill) {
+    p <- p +
+      ggplot2::geom_tile(
+        data = count_df[count_df$n == 0L, , drop = FALSE],
+        fill = zero_fill,
+        color = "grey70",
+        linewidth = 0.4,
+        # Explicit cell size: ggplot otherwise derives the tile width from
+        # this layer's own x-resolution, which overshoots when the empty
+        # cells are non-adjacent categories.
+        width = 1,
+        height = 1
+      )
+  }
 
   # X-axis: numeric breaks or category labels
   if (!is.null(category_labels)) {
@@ -395,7 +433,8 @@ RMplotTile <- function(
           ggplot2::aes(
             label = paste0(.data$percentage, "%"),
             color = ifelse(.data$n < cutoff, "red", text_color)
-          )
+          ),
+          size = text_size
         ) +
         ggplot2::guides(color = "none") +
         ggplot2::scale_color_identity()
@@ -403,7 +442,8 @@ RMplotTile <- function(
       p <- p +
         ggplot2::geom_text(
           ggplot2::aes(label = paste0(.data$percentage, "%")),
-          color = text_color
+          color = text_color,
+          size = text_size
         )
     }
   } else {
@@ -413,7 +453,8 @@ RMplotTile <- function(
           ggplot2::aes(
             label = .data$n,
             color = ifelse(.data$n < cutoff, "red", text_color)
-          )
+          ),
+          size = text_size
         ) +
         ggplot2::guides(color = "none") +
         ggplot2::scale_color_identity()
@@ -421,7 +462,8 @@ RMplotTile <- function(
       p <- p +
         ggplot2::geom_text(
           ggplot2::aes(label = .data$n),
-          color = text_color
+          color = text_color,
+          size = text_size
         )
     }
   }

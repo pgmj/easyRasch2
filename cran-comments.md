@@ -13,14 +13,16 @@ The other headline change: `output = "dataframe"` now returns unrounded
 values across all functions (rounding was inconsistently applied and is
 a presentation concern); the formatted kable output is unchanged.
 Flag labels and sorting are now computed on exact rather than rounded
-values. There are no changes to function signatures and no functions
-were added, removed, or renamed. See NEWS.md for the full list.
+values. All changes are backwards compatible: two plotting functions
+gained new optional arguments (with defaults preserving prior
+behaviour), and no functions were added, removed, or renamed. See
+NEWS.md for the full list.
 
 There are no CRAN reverse dependencies affected.
 
 ## Test environments
 
-* Local: macOS v26.5.1, R v4.5.3 — `R CMD check --as-cran`
+* Local: macOS v26.5.1, R v4.6.1 — `R CMD check --as-cran`
 * R CMD check: macos-latest, windows-latest, ubuntu-latest
 
 ## R CMD check results
