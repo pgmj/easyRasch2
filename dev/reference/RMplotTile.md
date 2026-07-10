@@ -18,6 +18,8 @@ RMplotTile(
   highlight = TRUE,
   percent = FALSE,
   text_color = "orange",
+  text_size = 4,
+  zero_fill = "white",
   item_labels = NULL,
   category_labels = NULL,
   group_labels = NULL,
@@ -66,6 +68,21 @@ RMplotTile(
 - text_color:
 
   Character. Colour for non-highlighted cell labels. Default `"orange"`.
+
+- text_size:
+
+  Numeric. Size of the cell labels (passed to
+  [`ggplot2::geom_text()`](https://ggplot2.tidyverse.org/reference/geom_text.html)).
+  Default `4`, matching
+  [`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatProb.md).
+
+- zero_fill:
+
+  Colour for cells with zero responses, or `NULL` to keep them on the
+  fill scale. Default `"white"`: empty cells are shown unfilled with a
+  light grey outline, so the *absence* of data reads as absence rather
+  than as the darkest end of the colour scale (where `n = 0` is nearly
+  indistinguishable from `n = 1`).
 
 - item_labels:
 

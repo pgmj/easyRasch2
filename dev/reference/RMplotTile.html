@@ -19,7 +19,7 @@ under-represented subgroups before fitting Rasch models per group."><meta name="
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.0.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.0.0.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,6 +65,8 @@ under-represented subgroups before fitting Rasch models per group.</p>
 <span>  highlight <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  percent <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  text_color <span class="op">=</span> <span class="st">"orange"</span>,</span>
+<span>  text_size <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  zero_fill <span class="op">=</span> <span class="st">"white"</span>,</span>
 <span>  item_labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  category_labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group_labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -114,6 +116,19 @@ within group, when <code>group</code> is supplied). Default <code>FALSE</code>.<
 <dt id="arg-text-color">text_color<a class="anchor" aria-label="anchor" href="#arg-text-color"></a></dt>
 <dd><p>Character. Colour for non-highlighted cell labels.
 Default <code>"orange"</code>.</p></dd>
+
+
+<dt id="arg-text-size">text_size<a class="anchor" aria-label="anchor" href="#arg-text-size"></a></dt>
+<dd><p>Numeric. Size of the cell labels (passed to
+<code><a href="https://ggplot2.tidyverse.org/reference/geom_text.html" class="external-link">ggplot2::geom_text()</a></code>). Default <code>4</code>, matching <code><a href="RMitemCatProb.html">RMitemCatProb()</a></code>.</p></dd>
+
+
+<dt id="arg-zero-fill">zero_fill<a class="anchor" aria-label="anchor" href="#arg-zero-fill"></a></dt>
+<dd><p>Colour for cells with zero responses, or <code>NULL</code> to
+keep them on the fill scale. Default <code>"white"</code>: empty cells are
+shown unfilled with a light grey outline, so the <em>absence</em> of data
+reads as absence rather than as the darkest end of the colour
+scale (where <code>n = 0</code> is nearly indistinguishable from <code>n = 1</code>).</p></dd>
 
 
 <dt id="arg-item-labels">item_labels<a class="anchor" aria-label="anchor" href="#arg-item-labels"></a></dt>
