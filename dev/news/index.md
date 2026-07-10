@@ -40,8 +40,23 @@
   so simulation-based expected ranges reproduce earlier releases
   exactly.
 
+### Improvements
+
+- [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)’s
+  `output = "dataframe"` tables now include the `se`, `lower`, and
+  `upper` (95% Wald CI) columns for each pair, matching
+  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md);
+  the formatted kable output is unchanged.
+
 ### Bug fixes
 
+- [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
+  is now fully reproducible with the same `seed`: the RMU estimate
+  previously varied slightly between identical calls because `mirt`’s
+  Metropolis-Hastings plausible-value sampler leaves the R random-number
+  stream in a nondeterministic state (the draws themselves are
+  reproducible), which perturbed the RMU split-half column assignments
+  downstream. The function now re-seeds before the RMU iterations.
 - Respondents with **no responses at all** (all-`NA` rows) no longer
   crash the functions that fit a CML model on data retaining missing
   values.
