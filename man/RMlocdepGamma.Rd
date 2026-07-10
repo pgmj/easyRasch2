@@ -86,8 +86,9 @@ Access the individual tables explicitly as \code{result$direction1} and
 \code{result$direction2} if needed.
 \item If \code{output = "dataframe"}: a named list of two data.frames
 (\verb{$direction1}, \verb{$direction2}) with columns \code{Item1}, \code{Item2},
-\code{gamma}, \code{padj_bh}, \code{Significance}. When \code{cutoff} is provided,
-columns \code{gamma_low}, \code{gamma_high}, and \code{flagged} are also included.
+\code{gamma}, \code{se}, \code{lower}, \code{upper} (95\% Wald CI), \code{padj_bh},
+\code{Significance}. When \code{cutoff} is provided, columns \code{gamma_low},
+\code{gamma_high}, and \code{flagged} are also included.
 With \code{p_value = TRUE}, \code{padj_bh} and \code{Significance} are replaced by
 \code{p_gamma} and \code{padj_gamma} (identical for a pair in both directions).
 }

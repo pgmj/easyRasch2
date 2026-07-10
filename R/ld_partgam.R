@@ -67,8 +67,9 @@
 #'   `result$direction2` if needed.
 #' * If `output = "dataframe"`: a named list of two data.frames
 #'   (`$direction1`, `$direction2`) with columns `Item1`, `Item2`,
-#'   `gamma`, `padj_bh`, `Significance`. When `cutoff` is provided,
-#'   columns `gamma_low`, `gamma_high`, and `flagged` are also included.
+#'   `gamma`, `se`, `lower`, `upper` (95% Wald CI), `padj_bh`,
+#'   `Significance`. When `cutoff` is provided, columns `gamma_low`,
+#'   `gamma_high`, and `flagged` are also included.
 #'   With `p_value = TRUE`, `padj_bh` and `Significance` are replaced by
 #'   `p_gamma` and `padj_gamma` (identical for a pair in both directions).
 #'
@@ -270,6 +271,9 @@ RMlocdepGamma <- function(
       Item1 = as.character(raw_df$Item1),
       Item2 = as.character(raw_df$Item2),
       gamma = as.numeric(raw_df$gamma),
+      se = as.numeric(raw_df$se),
+      lower = as.numeric(raw_df$lower),
+      upper = as.numeric(raw_df$upper),
       padj_bh = as.numeric(raw_df[[6]]),
       Significance = trimws(as.character(raw_df[[7]])),
       stringsAsFactors = FALSE
@@ -324,6 +328,9 @@ RMlocdepGamma <- function(
         "Item1",
         "Item2",
         "gamma",
+        "se",
+        "lower",
+        "upper",
         "padj_bh",
         "Significance",
         "gamma_low",
@@ -389,6 +396,9 @@ RMlocdepGamma <- function(
         "Item1",
         "Item2",
         "gamma",
+        "se",
+        "lower",
+        "upper",
         "gamma_low",
         "gamma_high",
         "p_gamma",
@@ -421,12 +431,18 @@ RMlocdepGamma <- function(
     return(result_list)
   }
 
-  # Kable display rounding (the dataframe output above stays unrounded)
+  # Kable display rounding (the dataframe output above stays unrounded).
+  # The se / lower / upper columns are dataframe-only (added for
+  # programmatic use, e.g. the jamovi module); the kable keeps its
+  # previous column set.
   ld_digits <- c(
     gamma = 3, padj_bh = 3, gamma_low = 3, gamma_high = 3,
     p_gamma = 4, padj_gamma = 4
   )
-  result_list <- lapply(result_list, .round_display, digits = ld_digits)
+  result_list <- lapply(result_list, function(d) {
+    .round_display(d[, setdiff(names(d), c("se", "lower", "upper")),
+                     drop = FALSE], digits = ld_digits)
+  })
 
   # Build caption
   n_complete <- sum(stats::complete.cases(as.data.frame(data)))

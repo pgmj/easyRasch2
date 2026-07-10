@@ -329,6 +329,15 @@ RMreliability <- function(
   )
   rmu_input <- do.call(cbind, lapply(pvs, as.numeric))
 
+  # mirt's MH plausible-value sampler leaves the R RNG in a nondeterministic
+  # state even under set.seed() (the draws themselves are reproducible, the
+  # stream advancement is not), so the RMU column splits below would differ
+  # between identical calls. Re-seed to make the whole result reproducible;
+  # + 2L keeps the stream distinct from the bootstrap's seed + 1L.
+  if (!is.null(seed)) {
+    set.seed(seed + 2L)
+  }
+
   rmu_iter_results <- do.call(
     rbind,
     lapply(seq_len(rmu_iter), function(i) {
