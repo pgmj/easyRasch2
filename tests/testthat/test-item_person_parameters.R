@@ -359,3 +359,24 @@ test_that("RMpersonParameters output = 'file' writes a CSV with one row per pers
   expect_equal(nrow(back), nrow(df))
   expect_equal(back$theta, ddf$theta, tolerance = 1e-6)
 })
+
+test_that("RMitemParameters dataframe output is unrounded and wide location = mean of thresholds", {
+  # Regression: the dataframe/file path used to round to 4 decimals
+  # (missed in the unrounded-dataframe sweep), which also made the wide
+  # format's mean `location` differ from the mean of its threshold
+  # columns in the 5th decimal.
+  set.seed(42)
+  dat <- as.data.frame(replicate(4, sample(0:2, 120, replace = TRUE)))
+  names(dat) <- paste0("q", 1:4)
+
+  w <- RMitemParameters(dat, format = "wide", se = FALSE,
+                        output = "dataframe")
+  t_cols <- grep("^t[0-9]+$", names(w), value = TRUE)
+  expect_equal(w$location, rowMeans(w[, t_cols]))
+
+  l <- RMitemParameters(dat, format = "long", se = TRUE,
+                        output = "dataframe")
+  # unrounded: exact agreement between long locations and wide columns
+  expect_identical(sort(l$location), sort(unlist(w[, t_cols], use.names = FALSE)))
+  expect_false(all(l$se == round(l$se, 4)))
+})

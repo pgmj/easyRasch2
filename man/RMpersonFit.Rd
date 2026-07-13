@@ -16,7 +16,7 @@ RMpersonFit(
   parallel = FALSE,
   n_cores = NULL,
   seed = NULL,
-  output = c("kable", "dataframe", "ggplot")
+  output = c("kable", "dataframe", "ggplot", "list")
 )
 }
 \arguments{
@@ -60,10 +60,11 @@ across persons via \pkg{mirai} when available. Default sequential.}
 
 \item{seed}{Optional integer for reproducible resampling.}
 
-\item{output}{Character. \code{"kable"} (default), \code{"dataframe"}, or
-\code{"ggplot"}. For \code{"ggplot"}, a \strong{named list} of person-fit maps is
-returned -- one per requested statistic (e.g. \verb{$infit}, \verb{$outfit},
-\verb{$lz}) -- each plotting the statistic against person location, with
+\item{output}{Character. \code{"kable"} (default), \code{"dataframe"},
+\code{"ggplot"}, or \code{"list"}. For \code{"ggplot"}, a \strong{named list} of
+person-fit maps is returned -- one per requested statistic (e.g.
+\verb{$infit}, \verb{$outfit}, \verb{$lz}) -- each plotting the statistic against
+person location, with
 respondents flagged by \emph{that} statistic highlighted and a caption
 reporting the assessed sample size and the proportion flagged. For the
 MSQ maps the flagged count is split into underfit (MSQ > 1, noisy/erratic
@@ -84,7 +85,9 @@ counts respondents flagged by its \strong{own} statistic alone. Extreme scorers
 (minimum or maximum possible given the items they answered) receive \code{NA}
 statistics and are not assessed. For \code{output = "kable"} the same content as
 a \code{knitr_kable}; for \code{output = "ggplot"} the named list of maps described
-under that argument.
+under that argument; for \code{output = "list"}, a list with both views from a
+single computation: \code{fit} (the data.frame) and \code{plots} (the named list of
+maps).
 }
 \description{
 Computes per-respondent person-fit statistics and resampling-based

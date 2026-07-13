@@ -177,9 +177,9 @@ RMitemParameters <- function(
   }
 
   # --- Output -----------------------------------------------------------------
+  # Dataframe/file output stays unrounded (the kable branch rounds a
+  # display copy), like every other output = "dataframe" in the package.
   if (output %in% c("dataframe", "file")) {
-    num <- vapply(result, is.numeric, logical(1))
-    result[num] <- lapply(result[num], round, 4)
     if (output == "file") {
       return(.write_output_csv(result, filename, row.names = FALSE))
     }

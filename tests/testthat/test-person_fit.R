@@ -370,3 +370,24 @@ test_that("RMpersonFit Monte-Carlo p-values are never exactly 0", {
     expect_true(all(p > 0 & p <= 1))
   }
 })
+
+test_that("output = 'list' returns fit + plots from one computation, matching the other outputs", {
+  set.seed(7)
+  dat <- as.data.frame(replicate(5, sample(0:2, 100, replace = TRUE)))
+  names(dat) <- paste0("q", 1:5)
+
+  res <- RMpersonFit(dat, iterations = 50, seed = 42, output = "list")
+  expect_named(res, c("fit", "plots"))
+  expect_s3_class(res$fit, "data.frame")
+  expect_named(res$plots, c("infit", "outfit", "lz"))
+  for (p in res$plots) expect_s3_class(p, "ggplot")
+
+  df <- RMpersonFit(dat, iterations = 50, seed = 42, output = "dataframe")
+  expect_identical(res$fit, df)
+
+  # subset of statistics propagates to both views
+  res2 <- RMpersonFit(dat, statistics = "infit", iterations = 0,
+                      output = "list")
+  expect_named(res2$plots, "infit")
+  expect_false("lz" %in% names(res2$fit))
+})

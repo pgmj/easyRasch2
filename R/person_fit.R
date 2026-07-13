@@ -47,10 +47,11 @@
 #' @param parallel,n_cores Logical / integer. Parallelise the resampling
 #'   across persons via \pkg{mirai} when available. Default sequential.
 #' @param seed Optional integer for reproducible resampling.
-#' @param output Character. `"kable"` (default), `"dataframe"`, or
-#'   `"ggplot"`. For `"ggplot"`, a **named list** of person-fit maps is
-#'   returned -- one per requested statistic (e.g. `$infit`, `$outfit`,
-#'   `$lz`) -- each plotting the statistic against person location, with
+#' @param output Character. `"kable"` (default), `"dataframe"`,
+#'   `"ggplot"`, or `"list"`. For `"ggplot"`, a **named list** of
+#'   person-fit maps is returned -- one per requested statistic (e.g.
+#'   `$infit`, `$outfit`, `$lz`) -- each plotting the statistic against
+#'   person location, with
 #'   respondents flagged by *that* statistic highlighted and a caption
 #'   reporting the assessed sample size and the proportion flagged. For the
 #'   MSQ maps the flagged count is split into underfit (MSQ > 1, noisy/erratic
@@ -71,7 +72,9 @@
 #' (minimum or maximum possible given the items they answered) receive `NA`
 #' statistics and are not assessed. For `output = "kable"` the same content as
 #' a `knitr_kable`; for `output = "ggplot"` the named list of maps described
-#' under that argument.
+#' under that argument; for `output = "list"`, a list with both views from a
+#' single computation: `fit` (the data.frame) and `plots` (the named list of
+#' maps).
 #'
 #' @details
 #' \strong{Conditional MSQ.} For person \eqn{v} with answered items
@@ -196,7 +199,7 @@ RMpersonFit <- function(
   parallel = FALSE,
   n_cores = NULL,
   seed = NULL,
-  output = c("kable", "dataframe", "ggplot")
+  output = c("kable", "dataframe", "ggplot", "list")
 ) {
   statistics <- match.arg(
     statistics,
@@ -259,7 +262,7 @@ RMpersonFit <- function(
   # Needed for lz (both the statistic and its theta-based resampling) and for
   # the ggplot x-axis. The MSQ statistics and their conditional resampling
   # need no person estimate.
-  need_theta <- ("lz" %in% statistics) || (output == "ggplot")
+  need_theta <- ("lz" %in% statistics) || (output %in% c("ggplot", "list"))
   theta <- rep(NA_real_, n)
   if (need_theta) {
     # Shared engine (utils-theta.R): WLE caches by (answered-set, score); EAP
@@ -818,10 +821,10 @@ RMpersonFit <- function(
     return(out)
   }
 
-  if (output == "ggplot") {
+  if (output %in% c("ggplot", "list")) {
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
       stop(
-        "Package 'ggplot2' is required for output = \"ggplot\". ",
+        "Package 'ggplot2' is required for output = \"", output, "\". ",
         "Install it with: install.packages(\"ggplot2\")",
         call. = FALSE
       )
@@ -862,6 +865,10 @@ RMpersonFit <- function(
       )
     })
     names(plots) <- statistics
+    if (output == "list") {
+      # One computation, both views: the per-person results and the maps.
+      return(list(fit = out, plots = plots))
+    }
     return(plots)
   }
 

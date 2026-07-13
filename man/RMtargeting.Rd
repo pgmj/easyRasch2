@@ -30,7 +30,7 @@ of the bottom panel. \code{"data"} (the default) preserves the column order in
 threshold location (easiest at top, hardest at bottom).}
 
 \item{bins}{Integer. Number of bins for both histograms. Default is number of
-unique scores plus one, but no less than 15.}
+unique scores divided by 2, but no less than 11.}
 
 \item{xlim}{Numeric vector of length 2. Initial lower and upper limits for
 the shared x-axis. Automatically expanded if any person or item threshold

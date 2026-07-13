@@ -2,6 +2,11 @@
 
 ## Changes
 
+- `RMpersonFit()` gains `output = "list"`, returning both the per-person
+  data.frame (`$fit`) and the named list of person-fit maps (`$plots`)
+  from a single computation — avoiding a second resampling run when both
+  views are needed (used by the jamovi module).
+
 - **`output = "dataframe"` now returns unrounded values** across the
   package; rounding is a presentation concern and now happens only when
   rendering the kable (whose displayed precision is unchanged). Affected
@@ -12,7 +17,10 @@
   `RMdifTree()` (including the stability summary attribute),
   `RMdimMartinLof()` (the `wle_correlation` element),
   `RMdimMartinLofResiduals()`, `RMpersonParameters()` (dataframe and
-  file/CSV output), and `RMpersonFit()`. `RMscoreSE()` already followed
+  file/CSV output), `RMpersonFit()`, and `RMitemParameters()` (dataframe
+  and file/CSV output; previously rounded to 4 decimals, which also made
+  the wide format's mean `location` differ from the mean of its rounded
+  threshold columns in the 5th decimal). `RMscoreSE()` already followed
   this convention.
 - Consequently, `Flagged` labels and sorting are now always computed on
   the exact (unrounded) values. Items or pairs sitting exactly on a
