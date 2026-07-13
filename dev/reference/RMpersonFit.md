@@ -25,7 +25,7 @@ RMpersonFit(
   parallel = FALSE,
   n_cores = NULL,
   seed = NULL,
-  output = c("kable", "dataframe", "ggplot")
+  output = c("kable", "dataframe", "ggplot", "list")
 )
 ```
 
@@ -91,14 +91,15 @@ RMpersonFit(
 
 - output:
 
-  Character. `"kable"` (default), `"dataframe"`, or `"ggplot"`. For
-  `"ggplot"`, a **named list** of person-fit maps is returned – one per
-  requested statistic (e.g. `$infit`, `$outfit`, `$lz`) – each plotting
-  the statistic against person location, with respondents flagged by
-  *that* statistic highlighted and a caption reporting the assessed
-  sample size and the proportion flagged. For the MSQ maps the flagged
-  count is split into underfit (MSQ \> 1, noisy/erratic responding) and
-  overfit (MSQ \< 1, overly deterministic responding).
+  Character. `"kable"` (default), `"dataframe"`, `"ggplot"`, or
+  `"list"`. For `"ggplot"`, a **named list** of person-fit maps is
+  returned – one per requested statistic (e.g. `$infit`, `$outfit`,
+  `$lz`) – each plotting the statistic against person location, with
+  respondents flagged by *that* statistic highlighted and a caption
+  reporting the assessed sample size and the proportion flagged. For the
+  MSQ maps the flagged count is split into underfit (MSQ \> 1,
+  noisy/erratic responding) and overfit (MSQ \< 1, overly deterministic
+  responding).
 
 ## Value
 
@@ -116,7 +117,9 @@ counts respondents flagged by its **own** statistic alone. Extreme
 scorers (minimum or maximum possible given the items they answered)
 receive `NA` statistics and are not assessed. For `output = "kable"` the
 same content as a `knitr_kable`; for `output = "ggplot"` the named list
-of maps described under that argument.
+of maps described under that argument; for `output = "list"`, a list
+with both views from a single computation: `fit` (the data.frame) and
+`plots` (the named list of maps).
 
 ## Details
 

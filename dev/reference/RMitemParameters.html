@@ -17,7 +17,7 @@ mirt) available for sparse data where CML can be unstable."><meta name="robots" 
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.0.0.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.0.0.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -193,12 +193,12 @@ Statistical Software, 20</em>(9), 1-20. <a href="https://doi.org/10.18637/jss.v0
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Wide format, point estimates only</span></span></span>
 <span class="r-in"><span><span class="fu">RMitemParameters</span><span class="op">(</span><span class="va">poly</span>, format <span class="op">=</span> <span class="st">"wide"</span>, se <span class="op">=</span> <span class="cn">FALSE</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    item      t1      t2 location</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item1 -0.0138  0.0864   0.0363</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2  0.1650 -0.1007   0.0321</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item3  0.0086  0.1131   0.0609</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4 -0.2167  0.0543  -0.0812</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item5  0.2028 -0.2989  -0.0481</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    item           t1          t2    location</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item1 -0.013827472  0.08639039  0.03628146</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2  0.164981820 -0.10073089  0.03212546</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item3  0.008649071  0.11308001  0.06086454</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4 -0.216719823  0.05432339 -0.08119822</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item5  0.202788083 -0.29893458 -0.04807325</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Dichotomous data</span></span></span>
 <span class="r-in"><span><span class="va">dich</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span></span></span>
@@ -206,18 +206,18 @@ Statistical Software, 20</em>(9), 1-20. <a href="https://doi.org/10.18637/jss.v0
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">dich</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"Item"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">6</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">RMitemParameters</span><span class="op">(</span><span class="va">dich</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    item threshold location     se ci_lower ci_upper</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item1         1  -0.0539 0.1162  -0.2817   0.1738</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2         1  -0.0215 0.1161  -0.2491   0.2061</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item3         1  -0.0377 0.1162  -0.2654   0.1899</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4         1   0.0754 0.1160  -0.1520   0.3028</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item5         1   0.0593 0.1160  -0.1681   0.2867</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 Item6         1  -0.0215 0.1161  -0.2491   0.2061</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    item threshold    location        se   ci_lower  ci_upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item1         1 -0.05391210 0.1161968 -0.2816535 0.1738293</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2         1 -0.02152718 0.1161144 -0.2491072 0.2060529</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item3         1 -0.03771319 0.1161523 -0.2653675 0.1899411</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4         1  0.07541289 0.1160244 -0.1519907 0.3028165</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item5         1  0.05926676 0.1160231 -0.1681343 0.2866678</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 Item6         1 -0.02152718 0.1161144 -0.2491072 0.2060529</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Write the parameter table to a CSV (also returned invisibly)</span></span></span>
 <span class="r-in"><span><span class="fu">RMitemParameters</span><span class="op">(</span><span class="va">poly</span>, output <span class="op">=</span> <span class="st">"file"</span>,</span></span>
 <span class="r-in"><span>                 filename <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".csv"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Wrote 10 row(s) to '/tmp/RtmpJy67XL/file222e77e4dd02.csv'.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Wrote 10 row(s) to '/tmp/RtmpmqmvXs/file221e201f56c3.csv'.</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

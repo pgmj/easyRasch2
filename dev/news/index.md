@@ -4,6 +4,12 @@
 
 ### Changes
 
+- [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonFit.md)
+  gains `output = "list"`, returning both the per-person data.frame
+  (`$fit`) and the named list of person-fit maps (`$plots`) from a
+  single computation — avoiding a second resampling run when both views
+  are needed (used by the jamovi module).
+
 - **`output = "dataframe"` now returns unrounded values** across the
   package; rounding is a presentation concern and now happens only when
   rendering the kable (whose displayed precision is unchanged). Affected
@@ -27,18 +33,26 @@
   (the `wle_correlation` element),
   [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLofResiduals.md),
   [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md)
-  (dataframe and file/CSV output), and
-  [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonFit.md).
+  (dataframe and file/CSV output),
+  [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonFit.md),
+  and
+  [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemParameters.md)
+  (dataframe and file/CSV output; previously rounded to 4 decimals,
+  which also made the wide format’s mean `location` differ from the mean
+  of its rounded threshold columns in the 5th decimal).
   [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md)
   already followed this convention.
+
 - Consequently, `Flagged` labels and sorting are now always computed on
   the exact (unrounded) values. Items or pairs sitting exactly on a
   rounded boundary could in principle change flag relative to earlier
   releases; displayed tables are otherwise identical.
+
 - Deliberately unchanged: the infit *simulation workers* still round the
   per-iteration statistics to 3 decimals before the cutoff computation,
   so simulation-based expected ranges reproduce earlier releases
   exactly.
+
 - Minor layout changes for
   [`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md)
   regarding number of bins if not set by user. Earlier it was sum

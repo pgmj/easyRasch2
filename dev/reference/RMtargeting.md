@@ -51,7 +51,7 @@ RMtargeting(
 - bins:
 
   Integer. Number of bins for both histograms. Default is number of
-  unique scores plus one, but no less than 15.
+  unique scores divided by 2, but no less than 11.
 
 - xlim:
 
