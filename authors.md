@@ -22,7 +22,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/pgmj/easyRasch2/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/pgmj/easyRasch2/blob/v1.1.0/DESCRIPTION)
 
 Johansson M (2026). *easyRasch2: Psychometric Analysis with Rasch
 Measurement Theory*. R package version 1.1.0,
