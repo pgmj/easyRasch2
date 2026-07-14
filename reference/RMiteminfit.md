@@ -227,17 +227,17 @@ if (requireNamespace("iarm", quietly = TRUE)) {
   }
 }
 #> Warning: Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations >= 1000 in RMitemInfitCutoff() for reliable p-values.
-#>    Item Infit_MSQ Infit_low Infit_high p_infit padj_infit Flagged
-#> 1 Item1     1.049     0.607      1.577  0.5842     0.9208        
-#> 2 Item2     0.929     0.625      1.519  0.6436     0.9208        
-#> 3 Item3     0.828     0.674      1.354  0.1980     0.5347        
-#> 4 Item4     1.216     0.643      1.434  0.0792     0.2970        
-#> 5 Item5     0.931     0.648      1.353  0.6634     0.9208        
+#>    Item Infit_MSQ Infit_low Infit_high    p_infit padj_infit Flagged
+#> 1 Item1 1.0486894     0.607      1.577 0.58415842  0.9207921        
+#> 2 Item2 0.9291116     0.625      1.519 0.64356436  0.9207921        
+#> 3 Item3 0.8278667     0.674      1.354 0.19801980  0.5346535        
+#> 4 Item4 1.2161059     0.643      1.434 0.07920792  0.2970297        
+#> 5 Item5 0.9308541     0.648      1.353 0.66336634  0.9207921        
 #>   Relative_location
-#> 1              0.04
-#> 2             -0.48
-#> 3             -0.16
-#> 4              0.33
-#> 5             -0.70
+#> 1        0.03566442
+#> 2       -0.47593330
+#> 3       -0.16351968
+#> 4        0.32749828
+#> 5       -0.69983314
 # }
 ```

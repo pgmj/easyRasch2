@@ -246,11 +246,11 @@ if (requireNamespace("ggdist", quietly = TRUE)) {
              output = "dataframe")$pairs
 }
 #> Warning: Bootstrap p-values are based on only 50 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations >= 1000 in RMlocdepQ3Cutoff() for reliable p-values.
-#>   Item1  Item2 Observed    Low  High   p_q3 padj_q3 Flagged
-#> 1 Item4  Item8   -0.277 -0.270 0.014 1.0000  1.0000        
-#> 2 Item4  Item7    0.029 -0.264 0.016 0.0196  0.4510        
-#> 3 Item5  Item9   -0.220 -0.216 0.033 1.0000  1.0000        
-#> 4 Item4  Item6    0.028 -0.259 0.027 0.0196  0.5098        
-#> 5 Item3 Item10    0.001 -0.243 0.028 0.0588  0.8824        
+#>   Item1  Item2      Observed        Low       High       p_q3   padj_q3 Flagged
+#> 1 Item4  Item8 -0.2765225048 -0.2700737 0.01430429 1.00000000 1.0000000        
+#> 2 Item4  Item7  0.0285193666 -0.2640942 0.01619448 0.01960784 0.4509804        
+#> 3 Item5  Item9 -0.2199294805 -0.2160826 0.03315679 1.00000000 1.0000000        
+#> 4 Item4  Item6  0.0279341896 -0.2592712 0.02734526 0.01960784 0.5098039        
+#> 5 Item3 Item10  0.0005837293 -0.2430223 0.02814042 0.05882353 0.8823529        
 # }
 ```

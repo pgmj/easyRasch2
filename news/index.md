@@ -1,5 +1,172 @@
 # Changelog
 
+## easyRasch2 1.1.0
+
+CRAN release: 2026-07-14
+
+### Bug fixes
+
+- Respondents with **no responses at all** (all-`NA` rows) no longer
+  crash the functions that fit a CML model on data retaining missing
+  values.
+  [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
+  errors on all-NA rows with an opaque “invalid argument type” (and
+  [`psychotools::raschmodel()`](https://rdrr.io/pkg/psychotools/man/raschmodel.html)
+  segfaults), so such rows are now dropped up front — with the standard
+  “`N respondent(s) with no responses dropped.`” message — in
+  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md),
+  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md),
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md),
+  [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/reference/RMitemRestscoreBoot.md),
+  [`RMreliability()`](https://pgmj.github.io/easyRasch2/reference/RMreliability.md),
+  and the observed-data overlays of
+  [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3plot.md)
+  and
+  [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitPlot.md).
+  [`RMdifLR()`](https://pgmj.github.io/easyRasch2/reference/RMdifLR.md)
+  now drops such rows too (jointly with `dif_var`) instead of failing
+  with [`eRm::LRtest()`](https://rdrr.io/pkg/eRm/man/LRtest.html)’s
+  error. Functions that already used complete cases or called
+  `.drop_empty_respondents()` are unaffected.
+
+- [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)’s
+  `sample_n` now counts the respondents actually used (all-NA rows
+  excluded, incomplete responses still retained) and `sample_n_total`
+  the raw input rows, matching
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md)
+  and the other `*Cutoff()` objects; previously the two were documented
+  as always equal. Captions in the affected functions keep reporting the
+  raw total in the `n = X of Y respondents` form.
+
+- **[`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLof.md)
+  /
+  [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLofResiduals.md):
+  corrected the category weights in the Monte Carlo null sampler and the
+  expected-count computation** (present in 1.0.0). The item parameters
+  were passed to
+  [`psychotools::elementary_symmetric_functions()`](https://rdrr.io/pkg/psychotools/man/elementary_symmetric_functions.html)
+  with the wrong sign convention (it weights categories by `exp(-par)`),
+  so the gamma functions used sign-inverted weights while the sampler’s
+  numerator used the correct ones. Consequences of the bug: simulated
+  null datasets did not follow the fitted model, the Monte Carlo null
+  distribution (and hence the p-value) depended systematically on the
+  *column order* of the data, and the residual table’s expected counts
+  were wrong. The fixed sampler reproduces the exact conditional pattern
+  distribution (verified against brute-force enumeration), and expected
+  counts match enumeration exactly. **Martin-Löf p-values and residuals
+  change relative to 1.0.0** — typically the corrected null distribution
+  sits lower, so rejections become somewhat clearer. In addition, items
+  are now processed in a fixed (alphabetical) internal order, so the
+  same seed reproduces the same p-value regardless of how the data’s
+  columns are arranged.
+
+- [`RMreliability()`](https://pgmj.github.io/easyRasch2/reference/RMreliability.md)
+  is now fully reproducible with the same `seed`: the RMU estimate
+  previously varied slightly between identical calls because `mirt`’s
+  Metropolis-Hastings plausible-value sampler leaves the R random-number
+  stream in a nondeterministic state (the draws themselves are
+  reproducible), which perturbed the RMU split-half column assignments
+  downstream. The function now re-seeds before the RMU iterations.
+
+### Changes
+
+- [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLof.md)
+  now returns `p_value_floor` (`1 / (actual_iterations + 1)`), the
+  smallest attainable Monte Carlo p-value; the documentation explains
+  that a p-value equal to the floor means no simulated statistic reached
+  the observed one and should be read as “p \< floor” (increase
+  `iterations` for finer resolution). The vignette’s Martin-Löf example
+  now sets a seed and discusses this.
+
+- [`RMdifTree()`](https://pgmj.github.io/easyRasch2/reference/RMdifTree.md)
+  gains `output = "list"`, returning both the tidy effect-size table
+  (`$table`) and the augmented tree object (`$tree`) from a single fit
+  (used by the jamovi module).
+
+- [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/reference/RMpersonFit.md)
+  gains `output = "list"`, returning both the per-person data.frame
+  (`$fit`) and the named list of person-fit maps (`$plots`) from a
+  single computation — avoiding a second resampling run when both views
+  are needed (used by the jamovi module).
+
+- **`output = "dataframe"` now returns unrounded values** across the
+  package; rounding is a presentation concern and now happens only when
+  rendering the kable (whose displayed precision is unchanged). Affected
+  functions:
+  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md),
+  [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitMI.md),
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md),
+  [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/reference/RMitemRestscoreBoot.md),
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md)
+  (the `$pairs` table),
+  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/reference/RMdifGamma.md),
+  [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGamma.md),
+  [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/reference/RMdimResidualPCA.md),
+  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFA.md)
+  (both `$fit` and `$loadings`),
+  [`RMreliability()`](https://pgmj.github.io/easyRasch2/reference/RMreliability.md),
+  [`RMdifLR()`](https://pgmj.github.io/easyRasch2/reference/RMdifLR.md),
+  [`RMdifTree()`](https://pgmj.github.io/easyRasch2/reference/RMdifTree.md)
+  (including the stability summary attribute),
+  [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLof.md)
+  (the `wle_correlation` element),
+  [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLofResiduals.md),
+  [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/reference/RMpersonParameters.md)
+  (dataframe and file/CSV output),
+  [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/reference/RMpersonFit.md),
+  and
+  [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/reference/RMitemParameters.md)
+  (dataframe and file/CSV output; previously rounded to 4 decimals,
+  which also made the wide format’s mean `location` differ from the mean
+  of its rounded threshold columns in the 5th decimal).
+  [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/reference/RMscoreSE.md)
+  already followed this convention.
+
+- Consequently, `Flagged` labels and sorting are now always computed on
+  the exact (unrounded) values. Items or pairs sitting exactly on a
+  rounded boundary could in principle change flag relative to earlier
+  releases; displayed tables are otherwise identical.
+
+- Deliberately unchanged: the infit *simulation workers* still round the
+  per-iteration statistics to 3 decimals before the cutoff computation,
+  so simulation-based expected ranges reproduce earlier releases
+  exactly.
+
+- Minor layout changes for
+  [`RMtargeting()`](https://pgmj.github.io/easyRasch2/reference/RMtargeting.md)
+  regarding number of bins if not set by user. Earlier it was sum
+  score + 1, now it is sum score divided by 2.
+  [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemICCPlot.md)
+  gets slightly larger points and thicker error bars.
+
+### Improvements
+
+- [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemICCPlot.md)
+  gains two grouping methods for the observed means, alongside the
+  existing quantile grouping (`method = "cut"` is now a legacy alias for
+  `method = "quantile"`): `method = "width"` for equal-width intervals
+  on the total-score scale, and `method = "manual"` with the new
+  `score_breaks` argument – the total scores at which a new group starts
+  (the concept of RASCHplot’s `lower.groups`, without the leading zero).
+  The documentation of the grouping rules and of the `error_band` (the
+  model-implied interval for the observed mean per total score) was
+  substantially expanded.
+- [`RMplotTile()`](https://pgmj.github.io/easyRasch2/reference/RMplotTile.md)
+  gains a `text_size` argument for the cell labels (default 4, matching
+  [`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/reference/RMitemCatProb.md)),
+  and cells with **zero responses are now visually distinct**: they are
+  taken off the colour scale and shown unfilled with a light grey
+  outline (`zero_fill = "white"`, set to `NULL` for the previous
+  behaviour), so the absence of data reads as absence rather than as the
+  darkest end of the fill scale, where `n = 0` was nearly
+  indistinguishable from `n = 1`. The caption notes the convention when
+  empty cells are present.
+- [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGamma.md)’s
+  `output = "dataframe"` tables now include the `se`, `lower`, and
+  `upper` (95% Wald CI) columns for each pair, matching
+  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/reference/RMdifGamma.md);
+  the formatted kable output is unchanged.
+
 ## easyRasch2 1.0.0
 
 CRAN release: 2026-07-05

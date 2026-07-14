@@ -151,12 +151,12 @@ RMitemParameters(poly)
 
 # Wide format, point estimates only
 RMitemParameters(poly, format = "wide", se = FALSE, output = "dataframe")
-#>    item      t1      t2 location
-#> 1 Item1 -0.0138  0.0864   0.0363
-#> 2 Item2  0.1650 -0.1007   0.0321
-#> 3 Item3  0.0086  0.1131   0.0609
-#> 4 Item4 -0.2167  0.0543  -0.0812
-#> 5 Item5  0.2028 -0.2989  -0.0481
+#>    item           t1          t2    location
+#> 1 Item1 -0.013827472  0.08639039  0.03628146
+#> 2 Item2  0.164981820 -0.10073089  0.03212546
+#> 3 Item3  0.008649071  0.11308001  0.06086454
+#> 4 Item4 -0.216719823  0.05432339 -0.08119822
+#> 5 Item5  0.202788083 -0.29893458 -0.04807325
 
 # Dichotomous data
 dich <- as.data.frame(
@@ -164,17 +164,17 @@ dich <- as.data.frame(
 )
 colnames(dich) <- paste0("Item", 1:6)
 RMitemParameters(dich, output = "dataframe")
-#>    item threshold location     se ci_lower ci_upper
-#> 1 Item1         1  -0.0539 0.1162  -0.2817   0.1738
-#> 2 Item2         1  -0.0215 0.1161  -0.2491   0.2061
-#> 3 Item3         1  -0.0377 0.1162  -0.2654   0.1899
-#> 4 Item4         1   0.0754 0.1160  -0.1520   0.3028
-#> 5 Item5         1   0.0593 0.1160  -0.1681   0.2867
-#> 6 Item6         1  -0.0215 0.1161  -0.2491   0.2061
+#>    item threshold    location        se   ci_lower  ci_upper
+#> 1 Item1         1 -0.05391210 0.1161968 -0.2816535 0.1738293
+#> 2 Item2         1 -0.02152718 0.1161144 -0.2491072 0.2060529
+#> 3 Item3         1 -0.03771319 0.1161523 -0.2653675 0.1899411
+#> 4 Item4         1  0.07541289 0.1160244 -0.1519907 0.3028165
+#> 5 Item5         1  0.05926676 0.1160231 -0.1681343 0.2866678
+#> 6 Item6         1 -0.02152718 0.1161144 -0.2491072 0.2060529
 
 # Write the parameter table to a CSV (also returned invisibly)
 RMitemParameters(poly, output = "file",
                  filename = tempfile(fileext = ".csv"))
-#> Wrote 10 row(s) to '/tmp/RtmpdLjA78/file22027046ee89.csv'.
+#> Wrote 10 row(s) to '/tmp/RtmpzQ988M/file21f65d22ec7c.csv'.
 # }
 ```

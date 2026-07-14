@@ -251,15 +251,15 @@ RMitemRestscore(items)
 
 | Item | Observed | Expected | Difference | Adj. p-value (BH) | Flagged  | Rel. location |
 |:-----|---------:|---------:|-----------:|------------------:|:---------|--------------:|
-| q1   |     0.66 |     0.62 |       0.04 |             0.210 |          |         -0.56 |
-| q2   |     0.72 |     0.62 |       0.10 |             0.000 | overfit  |         -0.76 |
-| q3   |     0.57 |     0.63 |      -0.06 |             0.085 |          |         -0.83 |
-| q4   |     0.71 |     0.62 |       0.09 |             0.000 | overfit  |         -1.48 |
-| q5   |     0.62 |     0.62 |       0.00 |             0.968 |          |         -0.58 |
-| q6   |     0.69 |     0.63 |       0.06 |             0.021 | overfit  |         -0.76 |
-| q7   |     0.64 |     0.62 |       0.02 |             0.476 |          |         -0.66 |
-| q8   |     0.55 |     0.63 |      -0.08 |             0.021 | underfit |          0.97 |
-| q9   |     0.59 |     0.64 |      -0.05 |             0.151 |          |          0.79 |
+| q1   |     0.66 |     0.62 |      0.041 |             0.210 |          |         -0.56 |
+| q2   |     0.72 |     0.62 |      0.103 |             0.000 | overfit  |         -0.76 |
+| q3   |     0.57 |     0.63 |     -0.059 |             0.085 |          |         -0.83 |
+| q4   |     0.71 |     0.62 |      0.097 |             0.000 | overfit  |         -1.48 |
+| q5   |     0.62 |     0.62 |     -0.001 |             0.968 |          |         -0.58 |
+| q6   |     0.69 |     0.63 |      0.065 |             0.021 | overfit  |         -0.76 |
+| q7   |     0.64 |     0.62 |      0.020 |             0.476 |          |         -0.66 |
+| q8   |     0.55 |     0.63 |     -0.083 |             0.021 | underfit |          0.97 |
+| q9   |     0.59 |     0.64 |     -0.046 |             0.151 |          |          0.79 |
 
 Item-restscore associations. n = 600 respondents. Flagged (adj. p \<
 .05): overfit = observed above expected (over-discrimination, often
@@ -411,19 +411,27 @@ mlof <- RMdimMartinLof(items, iterations = 100,
                        partition = list(
                          c("q1","q2","q6","q9"),
                          c("q3","q4","q5","q7","q8")
-                       )
+                       ),
+                       seed = 4
 )
 
 mlof$p_value
 #> [1] 0.00990099
 mlof$wle_correlation
-#>   subscale_a subscale_b     r ci_lower ci_upper   p_value   n
-#> 1          1          2 0.717    0.676    0.754 5.994e-96 600
+#>   subscale_a subscale_b         r ci_lower  ci_upper      p_value   n
+#> 1          1          2 0.7174163 0.676203 0.7541533 5.994126e-96 600
 ```
 
 The *p*-value rejects unidimensionality across the partition, while the
 subscale WLE correlation indicates the dimensions are strongly related.
-The M-L test results can be further investigated using the diagnostic
+Note that the Monte Carlo *p*-value’s resolution is limited by the
+number of iterations: the attainable values are k/(B+1), so with B = 100
+iterations the smallest possible *p*-value is 1/101 \approx 0.0099
+(returned as `mlof$p_value_floor`). A *p*-value *equal to* that floor
+means that no simulated statistic reached the observed one and should be
+read as p \< 0.01 — the true *p*-value may be much smaller. Use more
+iterations (e.g. 1000, floor \approx 0.001) when reporting results. The
+M-L test results can be further investigated using the diagnostic
 function
 [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLofResiduals.md).
 
@@ -785,12 +793,9 @@ Wright-map style display.
 ``` r
 
 RMtargeting(items)
+#> Error in `seq.default()`:
+#> ! 'to' must be a finite number
 ```
-
-![\*\*Figure 11.\*\* \*Person-item
-targeting\*](figures/rasch-targeting-1.png)
-
-**Figure 11.** *Person-item targeting*
 
 ## Reliability
 
@@ -813,10 +818,11 @@ RMreliability(items, draws = 200, rmu_iter = 20, parallel = FALSE,
 | Cronbach’s alpha | 0.886 | NA | NA | no bootstrap |
 | PSI | 0.838 | NA | NA | no bootstrap |
 | Marginal | 0.862 | NA | NA | no bootstrap |
-| RMU (WLE) | 0.881 | 0.865 | 0.894 | 200 PVs, 20 RMU iterations |
+| RMU (WLE) | 0.881 | 0.867 | 0.895 | 200 PVs, 20 RMU iterations |
 
-Reliability for 9 items, n = 600. PSI is the WLE-based separation
-reliability and excludes min/max scoring respondents. {.table}
+Reliability for 9 items, n = 600 respondents. PSI is the WLE-based
+separation reliability and excludes min/max scoring respondents.
+{.table}
 
 ## Item and person parameters
 
@@ -856,17 +862,17 @@ each respondent to a CSV file.
 
 ppar <- RMpersonParameters(items, output = "dataframe")
 head(ppar, 10)
-#>      theta    sem sum_score n_answered extreme
-#> 1   2.2761 0.6185        25          9   FALSE
-#> 2  -0.9998 0.4659         7          9   FALSE
-#> 3   1.1407 0.4262        20          9   FALSE
-#> 4   0.3379 0.3960        15          9   FALSE
-#> 5   3.6996 1.3248        27          9    TRUE
-#> 6   1.1407 0.4262        20          9   FALSE
-#> 7  -0.6130 0.4288         9          9   FALSE
-#> 8   0.9701 0.4155        19          9   FALSE
-#> 9   0.6466 0.4019        17          9   FALSE
-#> 10 -3.2339 0.9217         1          9   FALSE
+#>         theta       sem sum_score n_answered extreme
+#> 1   2.2760818 0.6184838        25          9   FALSE
+#> 2  -0.9997531 0.4658741         7          9   FALSE
+#> 3   1.1406643 0.4262412        20          9   FALSE
+#> 4   0.3379335 0.3959994        15          9   FALSE
+#> 5   3.6996335 1.3248428        27          9    TRUE
+#> 6   1.1406643 0.4262412        20          9   FALSE
+#> 7  -0.6129841 0.4288279         9          9   FALSE
+#> 8   0.9701100 0.4155331        19          9   FALSE
+#> 9   0.6465516 0.4019393        17          9   FALSE
+#> 10 -3.2339486 0.9216600         1          9   FALSE
 ```
 
 ## Ordinal-to-interval transformation

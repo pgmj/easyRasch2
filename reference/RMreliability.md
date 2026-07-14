@@ -191,13 +191,13 @@ if (requireNamespace("ggdist", quietly = TRUE) &&
 }
 #> 
 #> 
-#> Table: Reliability for 20 items, n = 100. PSI is the WLE-based separation reliability and excludes min/max scoring respondents.
+#> Table: Reliability for 20 items, n = 100 respondents. PSI is the WLE-based separation reliability and excludes min/max scoring respondents.
 #> 
 #> |Metric           | Estimate| Lower (95% HDCI)| Upper (95% HDCI)|Notes                       |
 #> |:----------------|--------:|----------------:|----------------:|:---------------------------|
 #> |Cronbach's alpha |    0.754|            0.701|            0.813|25 bootstrap resamples      |
 #> |PSI              |    0.725|            0.673|            0.768|25 bootstrap resamples      |
 #> |Marginal         |    0.695|            0.602|            0.769|25 bootstrap resamples      |
-#> |RMU (WLE)        |    0.753|            0.683|            0.818|1000 PVs, 50 RMU iterations |
+#> |RMU (WLE)        |    0.753|            0.684|            0.817|1000 PVs, 50 RMU iterations |
 # }
 ```

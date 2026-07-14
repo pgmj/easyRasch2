@@ -120,13 +120,15 @@ A list with components:
 
 - `sample_n`:
 
-  Number of persons in the original data.
+  Number of persons used: respondents with no responses at all (all-`NA`
+  rows) are dropped, as in
+  [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md);
+  incomplete response patterns are retained.
 
 - `sample_n_total`:
 
-  Equal to `sample_n`: no respondents are dropped (incomplete responses
-  are retained). Stored for consistency with the other `*Cutoff()`
-  objects.
+  Number of respondents in the raw input data, before dropping all-`NA`
+  rows.
 
 - `sample_has_na`:
 

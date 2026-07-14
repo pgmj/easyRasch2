@@ -19,7 +19,7 @@ complete data."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,7 @@ complete data."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Person Locations for a Rasch / Partial Credit Model</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/v1.0.0/R/person_parameters.R" class="external-link"><code>R/person_parameters.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/R/person_parameters.R" class="external-link"><code>R/person_parameters.R</code></a></small>
       <div class="d-none name"><code>RMpersonParameters.Rd</code></div>
     </div>
 
@@ -201,13 +201,13 @@ estimation of proficiency levels in polytomous item response models.
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Default: WLE person locations</span></span></span>
 <span class="r-in"><span><span class="fu">RMpersonParameters</span><span class="op">(</span><span class="va">dat</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     theta    sem sum_score n_answered extreme</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 -0.2225 0.5055         5          6   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 -0.2225 0.5055         5          6   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 -1.0472 0.6396         2          6   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  0.2239 0.5054         7          6   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 -2.4725 1.3254         0          6    TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 -1.0472 0.6396         2          6   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        theta       sem sum_score n_answered extreme</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 -0.2224510 0.5054892         5          6   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 -0.2224510 0.5054892         5          6   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 -1.0471828 0.6395816         2          6   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  0.2239135 0.5053530         7          6   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 -2.4725321 1.3253669         0          6    TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 -1.0471828 0.6395816         2          6   FALSE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># EAP with a data-estimated prior SD</span></span></span>
 <span class="r-in"><span><span class="va">eap</span> <span class="op">&lt;-</span> <span class="fu">RMpersonParameters</span><span class="op">(</span><span class="va">dat</span>, method <span class="op">=</span> <span class="st">"EAP"</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
@@ -218,18 +218,18 @@ estimation of proficiency levels in polytomous item response models.
 <span class="r-in"><span><span class="co"># EAP with a fixed N(0, 1) prior</span></span></span>
 <span class="r-in"><span><span class="fu">RMpersonParameters</span><span class="op">(</span><span class="va">dat</span>, method <span class="op">=</span> <span class="st">"EAP"</span>, prior_sd <span class="op">=</span> <span class="fl">1</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     theta    sem sum_score n_answered extreme</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 -0.2162 0.4680         5          6   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 -0.2162 0.4680         5          6   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 -0.9457 0.5322         2          6   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  0.2170 0.4679         7          6   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 -1.6175 0.6353         0          6    TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 -0.9457 0.5322         2          6   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        theta       sem sum_score n_answered extreme</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 -0.2162073 0.4680027         5          6   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 -0.2162073 0.4680027         5          6   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 -0.9457010 0.5321904         2          6   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  0.2169764 0.4679247         7          6   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 -1.6175238 0.6352806         0          6    TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 -0.9457010 0.5321904         2          6   FALSE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Write the person-location table to a CSV (also returned invisibly)</span></span></span>
 <span class="r-in"><span><span class="fu">RMpersonParameters</span><span class="op">(</span><span class="va">dat</span>, output <span class="op">=</span> <span class="st">"file"</span>,</span></span>
 <span class="r-in"><span>                   filename <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".csv"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Wrote 200 row(s) to '/tmp/RtmpdLjA78/file22025e7fa8fd.csv'.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Wrote 200 row(s) to '/tmp/RtmpzQ988M/file21f63c7288f.csv'.</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
@@ -242,7 +242,7 @@ estimation of proficiency levels in polytomous item response models.
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

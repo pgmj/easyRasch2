@@ -33,6 +33,11 @@ Useful links:
 **Maintainer**: Magnus Johansson <pgmj@pm.me>
 ([ORCID](https://orcid.org/0000-0003-1669-592X))
 
+Authors:
+
+- Magnus Johansson <pgmj@pm.me>
+  ([ORCID](https://orcid.org/0000-0003-1669-592X))
+
 Other contributors:
 
 - Nicklas Korsell (PCM simulation code) \[contributor\]

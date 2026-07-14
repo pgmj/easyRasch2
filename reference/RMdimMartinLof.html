@@ -21,7 +21,7 @@ degrees of freedom can be very large."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,7 @@ degrees of freedom can be very large."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Martin-Löf Test of Unidimensionality</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/v1.0.0/R/martin_lof.R" class="external-link"><code>R/martin_lof.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/R/martin_lof.R" class="external-link"><code>R/martin_lof.R</code></a></small>
       <div class="d-none name"><code>RMdimMartinLof.Rd</code></div>
     </div>
 
@@ -133,7 +133,10 @@ to sequential with a warning.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Integer or <code>NULL</code>. Random seed for reproducibility.</p></dd>
+<dd><p>Integer or <code>NULL</code>. Random seed for reproducibility. Items
+are processed internally in a fixed (alphabetical) order, so the same
+seed reproduces the same p-value regardless of how the data's columns
+are arranged.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -143,7 +146,17 @@ to sequential with a warning.</p></dd>
 
 <dt><code>p_value</code></dt>
 <dd><p>Monte Carlo p-value with <code>(n_exceed + 1) / (n + 1)</code>
-correction.</p></dd>
+correction. The attainable p-values are <code>k / (n + 1)</code> for
+<code>k = 1, ..., n + 1</code>, so the p-value's resolution is limited by the
+number of iterations: with 100 iterations the smallest attainable
+value is <code>1/101 = 0.0099</code>. A reported p-value <em>equal to the floor</em>
+(see <code>p_value_floor</code>) means no simulated statistic reached the
+observed one and should be read as "p &lt; floor" – the true p-value
+may be much smaller; increase <code>iterations</code> for finer resolution.</p></dd>
+
+<dt><code>p_value_floor</code></dt>
+<dd><p>The smallest attainable p-value,
+<code>1 / (actual_iterations + 1)</code>.</p></dd>
 
 <dt><code>actual_iterations</code></dt>
 <dd><p>Number of successful MC iterations
@@ -274,7 +287,10 @@ Psychological Measurement, 31</em>(1), 20-30.
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 192.632</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $p_value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.6534653</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.5940594</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $p_value_floor</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.00990099</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $actual_iterations</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 100</span>
@@ -309,19 +325,19 @@ Psychological Measurement, 31</em>(1), 20-30.
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] NA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $T_rep</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1] 206.0389 166.3877 194.9720 204.4492 207.1425 196.6579 216.9442 197.6134</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [9] 172.4626 218.5905 199.0015 195.1739 216.5321 182.6884 217.0950 218.8864</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [17] 192.7154 185.2851 192.7088 221.7256 202.7919 176.0545 198.9419 201.3091</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [25] 183.5134 180.9435 220.2507 190.9950 165.2263 205.3121 179.9966 199.0912</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [33] 209.9757 186.9456 207.1048 222.5765 172.6883 189.9174 188.9495 214.3288</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [41] 239.4142 200.3612 196.5159 179.2678 185.1985 207.1306 191.2819 186.9377</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [49] 234.6889 223.7720 200.3495 229.2963 217.0652 190.6780 174.6319 177.5629</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [57] 183.8911 173.2841 175.2353 168.6826 201.5378 187.2811 215.6033 223.9948</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [65] 195.7404 177.6570 199.5232 214.2349 217.5769 201.7543 187.2711 215.9331</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [73] 232.4575 202.8224 170.1252 166.7032 250.8870 225.2021 203.6722 197.0560</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [81] 198.9194 196.2369 196.3658 201.8303 185.7057 205.8228 210.1014 212.3893</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [89] 193.8428 203.5530 186.0830 172.6292 204.6191 191.5059 203.7121 201.6772</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [97] 205.7420 186.1810 218.6124 193.5746</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [1] 217.3739 156.9169 178.9840 211.2337 190.9902 197.9099 200.7671 175.4362</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   [9] 155.5236 213.5078 209.8393 212.2892 224.7373 200.0692 213.2293 218.6514</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [17] 215.9354 185.6733 191.6138 184.7622 196.8899 193.1802 201.9903 196.4503</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [25] 186.3135 185.5979 210.9303 178.3912 176.9220 198.5879 169.1423 197.1674</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [33] 173.3412 191.4246 195.2852 226.3838 189.8889 182.4467 182.4824 204.9755</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [41] 210.8322 205.7216 183.0040 169.7485 180.3166 206.8898 173.9285 189.8289</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [49] 200.0002 223.2624 182.1958 231.5607 193.5054 193.7613 186.0160 192.5819</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [57] 167.7840 182.1707 163.5399 166.4012 214.3525 184.4794 201.9769 206.4572</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [65] 166.9049 185.7820 196.9688 208.9551 226.8527 194.6176 191.9582 213.7848</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [73] 202.4612 197.0988 182.6484 166.8774 227.3283 216.5728 211.3303 194.3861</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [81] 190.0304 205.6361 196.1770 218.5077 176.4973 211.8179 202.2630 202.4776</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [89] 206.8426 210.3141 198.0656 173.7472 192.8587 205.2612 201.4721 180.2346</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [97] 198.2777 188.6162 224.2046 204.4681</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $wle_scores</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     subscale_1_wle subscale_2_wle</span>
@@ -727,8 +743,8 @@ Psychological Measurement, 31</em>(1), 20-30.
 <span class="r-out co"><span class="r-pr">#&gt;</span> 400     0.35429558   -0.355949378</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $wle_correlation</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   subscale_a subscale_b      r ci_lower ci_upper p_value   n</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1          1          2 -0.005   -0.103    0.093   0.915 400</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   subscale_a subscale_b            r   ci_lower   ci_upper   p_value   n</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1          1          2 -0.005350613 -0.1033481 0.09274977 0.9150443 400</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Sequential stopping: stop as soon as h = 25 simulated statistics exceed</span></span></span>
@@ -741,10 +757,13 @@ Psychological Measurement, 31</em>(1), 20-30.
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 192.632</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $p_value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.7027027</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.5531915</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $p_value_floor</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.0212766</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $actual_iterations</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 36</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 46</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $rejected</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
@@ -776,11 +795,12 @@ Psychological Measurement, 31</em>(1), 20-30.
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 25</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $T_rep</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] 206.0389 166.3877 194.9720 204.4492 207.1425 196.6579 216.9442 197.6134</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [9] 172.4626 218.5905 199.0015 195.1739 216.5321 182.6884 217.0950 218.8864</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [17] 192.7154 185.2851 192.7088 221.7256 202.7919 176.0545 198.9419 201.3091</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [25] 183.5134 180.9435 220.2507 190.9950 165.2263 205.3121 179.9966 199.0912</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [33] 209.9757 186.9456 207.1048 222.5765</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] 217.3739 156.9169 178.9840 211.2337 190.9902 197.9099 200.7671 175.4362</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [9] 155.5236 213.5078 209.8393 212.2892 224.7373 200.0692 213.2293 218.6514</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [17] 215.9354 185.6733 191.6138 184.7622 196.8899 193.1802 201.9903 196.4503</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] 186.3135 185.5979 210.9303 178.3912 176.9220 198.5879 169.1423 197.1674</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [33] 173.3412 191.4246 195.2852 226.3838 189.8889 182.4467 182.4824 204.9755</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [41] 210.8322 205.7216 183.0040 169.7485 180.3166 206.8898</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $wle_scores</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     subscale_1_wle subscale_2_wle</span>
@@ -1186,8 +1206,8 @@ Psychological Measurement, 31</em>(1), 20-30.
 <span class="r-out co"><span class="r-pr">#&gt;</span> 400     0.35429558   -0.355949378</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $wle_correlation</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   subscale_a subscale_b      r ci_lower ci_upper p_value   n</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1          1          2 -0.005   -0.103    0.093   0.915 400</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   subscale_a subscale_b            r   ci_lower   ci_upper   p_value   n</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1          1          2 -0.005350613 -0.1033481 0.09274977 0.9150443 400</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
@@ -1201,7 +1221,7 @@ Psychological Measurement, 31</em>(1), 20-30.
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

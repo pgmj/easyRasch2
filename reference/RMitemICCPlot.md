@@ -15,8 +15,9 @@ item.
 RMitemICCPlot(
   data,
   dif_var = NULL,
-  method = c("cut", "score"),
+  method = c("quantile", "width", "score", "manual", "cut"),
   class_intervals = 4,
+  score_breaks = NULL,
   ci = TRUE,
   error_band = FALSE,
   conf_level = 0.95,
@@ -45,15 +46,28 @@ RMitemICCPlot(
 
 - method:
 
-  One of `"cut"` (default) or `"score"`. `"cut"` groups respondents into
-  `class_intervals` total-score bins (equal-count quantile bins, common
-  across groups); `"score"` uses every observed total score as its own
-  group.
+  How the observed means are grouped along the total score (see *Class
+  intervals* in Details). One of `"quantile"` (default):
+  `class_intervals` groups of approximately equal numbers of
+  respondents; `"width"`: `class_intervals` equal-width intervals over
+  the observed total-score range; `"score"`: every observed total score
+  is its own group; or `"manual"`: groups defined by `score_breaks`.
+  `"cut"` is accepted as a legacy alias for `"quantile"`.
 
 - class_intervals:
 
-  Integer \>= 2. Number of class intervals when `method = "cut"`.
-  Default `4`. Ignored when `method = "score"`.
+  Integer \>= 2. Number of class intervals for `method = "quantile"` and
+  `method = "width"`. Default `4`. Ignored (without an error) by
+  `method = "score"` and `method = "manual"`.
+
+- score_breaks:
+
+  Integer vector for `method = "manual"`: the total scores at which a
+  new group *starts*, in increasing order. For example,
+  `score_breaks = c(3, 6, 8)` on a 0-9 scale defines the groups 0-2,
+  3-5, 6-7, and 8-9 (the endpoints are added automatically). Serves the
+  same purpose as `lower.groups` in RASCHplot's `CICCplot()`, without
+  the leading zero. Default `NULL`.
 
 - ci:
 
@@ -62,10 +76,11 @@ RMitemICCPlot(
 
 - error_band:
 
-  Logical. Add a shaded band for the model's interval of the *observed
-  mean* at each total score, \\E \pm z \sqrt{\mathrm{Var}/n_r}\\ (`n_r`
-  = number of respondents at that total score), as in RASCHplot's
-  `CICCplot`. Default `FALSE`.
+  Logical. Add a shaded band around the model-expected curve: the
+  model's interval for the *observed mean* at each total score, \\E \pm
+  z \sqrt{\mathrm{Var}/n_r}\\ (`n_r` = number of respondents at that
+  total score), as in RASCHplot's `CICCplot`. Complementary to `ci`, not
+  a replacement – see Details. Default `FALSE`.
 
 - conf_level:
 
@@ -108,18 +123,50 @@ implementation here is native to easyRasch2's CML/WLE engine.
 expectation of the item score given the total score (it accounts for the
 item being part of the total), not a marginal ICC.
 
-**Class intervals.** With `method = "cut"`, total scores are split into
-`class_intervals` equal-count bins using common boundaries (so groups
-share the x-axis); each bin contributes one observed point at its mean
-total score. With `method = "score"`, every observed total score is a
-point. If the score distribution is too sparse to form `class_intervals`
-distinct bins, the function falls back to score-level points.
+**Class intervals.** Following Buchardt et al. (2023), the empirical
+item means can be shown for each value of the total score or for each
+value of the *grouped* total score; all grouping happens on the
+total-score scale (never on an estimated latent score). Four grouping
+rules are available. `method = "quantile"` (the default) splits the
+observed total scores into `class_intervals` bins of approximately equal
+numbers of respondents, using common boundaries so DIF groups share the
+x-axis – the same approach as
+[`iarm::ICCplot()`](https://rdrr.io/pkg/iarm/man/ICCplot.html)'s class
+intervals (`Hmisc::cut2(g = ...)`). `method = "width"` instead splits
+the observed score range into `class_intervals` intervals of equal
+width, which reads naturally on the score axis but can leave sparse
+intervals (pruned by `min_n`). `method = "score"` uses every observed
+total score as its own group – the maximal-resolution display, sensible
+for short scales, with `min_n` pruning thinly-populated scores.
+`method = "manual"` places the group boundaries exactly where you say
+via `score_breaks` (RASCHplot's `lower.groups` concept). Each bin
+contributes one observed point at its mean total score. If the score
+distribution is too sparse to form `class_intervals` distinct bins, the
+quantile and width methods fall back to score-level points.
 
 **Confidence intervals.** Observed error bars use the normal
 approximation \\\bar{x}\_l \pm z \sqrt{\mathrm{var}(x_l) / n_l}\\ within
 each (group, interval) cell, clamped to the item's score range; cells
 with fewer than `min_n` respondents are dropped. In DIF mode this makes
 sparse group differences visibly uncertain rather than over-interpreted.
+
+**The model band (`error_band`).** The shaded band is drawn around the
+model-expected curve at \\E\_{ri} \pm z \sqrt{V\_{ri}/n_r}\\, where
+\\E\_{ri}\\ and \\V\_{ri}\\ are the exact conditional mean and variance
+of the item score given total score \\r\\ (model quantities), and
+\\n_r\\ is the *observed* number of respondents at that total score. If
+the Rasch model is true, this is where the empirical mean item score at
+total score \\r\\ should fall, given how many people actually sit at
+that score; an observed diamond outside the band is localized graphical
+misfit. The band is deliberately the standard error of the *mean*
+(\\\sqrt{V/n_r}\\), not the far wider individual-response SD band, which
+would flag nothing. Its width therefore tracks the data: narrow where
+many respondents sit (a strict test), wide in sparse score regions (a
+lenient one), with gaps where \\n_r = 0\\ and collapsing to the curve at
+the deterministic extremes (total score 0 and the maximum). It is
+complementary to, not a replacement for, the `ci` error bars: the band
+is the model-implied uncertainty of the observed mean per raw score; the
+error bars are the sample-based uncertainty of the observed group means.
 
 **DIF magnitude.** The annotated partial gamma (Bjorner et al., 1998) is
 the association between the item score and the group conditional on the
@@ -147,3 +194,32 @@ SF-36. *Journal of Clinical Epidemiology, 51*(11), 1189-1202.
 
 [`RMdifGamma`](https://pgmj.github.io/easyRasch2/reference/RMdifGamma.md),
 [`RMitemRestscore`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md)
+
+## Examples
+
+``` r
+# \donttest{
+if (requireNamespace("ggplot2", quietly = TRUE) &&
+    requireNamespace("patchwork", quietly = TRUE) &&
+    requireNamespace("iarm", quietly = TRUE)) {
+  set.seed(42)
+  sim_data <- as.data.frame(
+    matrix(sample(0:2, 200 * 4, replace = TRUE), nrow = 200, ncol = 4)
+  )
+  colnames(sim_data) <- paste0("Item", 1:4)
+
+  # Default: quantile groups (~equal numbers of respondents per group)
+  RMitemICCPlot(sim_data)
+
+  # Equal-width intervals on the total-score scale, with the model band
+  RMitemICCPlot(sim_data, method = "width", error_band = TRUE)
+
+  # Every total score as its own group (short scales)
+  RMitemICCPlot(sim_data, method = "score")
+
+  # Manual grouping: new groups start at total scores 3, 5, and 7
+  RMitemICCPlot(sim_data, method = "manual", score_breaks = c(3, 5, 7))
+}
+
+# }
+```

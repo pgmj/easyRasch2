@@ -15,7 +15,7 @@ rather than just whether it does (which RMdimMartinLof() answers)."></head><body
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,7 @@ rather than just whether it does (which RMdimMartinLof() answers)."></head><body
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Standardised Residuals from the Joint Subscore Distribution</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/v1.0.0/R/martin_lof.R" class="external-link"><code>R/martin_lof.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/R/martin_lof.R" class="external-link"><code>R/martin_lof.R</code></a></small>
       <div class="d-none name"><code>RMdimMartinLofResiduals.Rd</code></div>
     </div>
 
@@ -174,17 +174,18 @@ Testing unidimensionality in polytomous Rasch models. <em>Psychometrika,
 <span class="r-in"><span><span class="fu">RMdimMartinLofResiduals</span><span class="op">(</span><span class="va">dat</span>,</span></span>
 <span class="r-in"><span>                     partition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"I1"</span>,<span class="st">"I2"</span>,<span class="st">"I3"</span>,<span class="st">"I4"</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                                      <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"I5"</span>,<span class="st">"I6"</span>,<span class="st">"I7"</span>,<span class="st">"I8"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>NaNs produced</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Table: Standardised residuals (Christensen et al. 2002, eq. 13). Rows = subscale 1 score, columns = subscale 2 score. **Bold** = |residual| &gt; 2. -- = uncomputable. n = 400 respondents.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |t1\t2 |0     |1         |2        |3     |4     |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |:-----|:-----|:---------|:--------|:-----|:-----|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |0     |      |1.04      |**2.65** |-0.11 |-1.24 |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |1     |-1.04 |**-2.17** |0.11     |0.67  |0.48  |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |2     |-0.00 |-0.12     |-0.41    |0.36  |1.07  |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |3     |0.12  |-0.13     |-0.71    |-0.66 |-1.59 |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |4     |1.01  |0.21      |-0.26    |1.59  |--    |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |0     |      |0.95      |**2.38** |-0.32 |-1.31 |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |1     |-0.95 |**-2.17** |-0.12    |0.32  |0.22  |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |2     |0.22  |0.11      |-0.41    |0.10  |0.84  |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |3     |0.35  |0.22      |-0.46    |-0.66 |-1.67 |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |4     |1.22  |0.47      |-0.06    |1.67  |--    |</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Heatmap</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
@@ -192,16 +193,18 @@ Testing unidimensionality in polytomous Rasch models. <em>Psychometrika,
 <span class="r-in"><span>                       partition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">2</span>,<span class="fl">2</span>,<span class="fl">2</span>,<span class="fl">2</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                       output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>NaNs produced</span>
 <span class="r-plt img"><img src="RMdimMartinLofResiduals-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Underlying data.frame for custom analysis</span></span></span>
 <span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">RMdimMartinLofResiduals</span><span class="op">(</span><span class="va">dat</span>,</span></span>
 <span class="r-in"><span>                           partition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">2</span>,<span class="fl">2</span>,<span class="fl">2</span>,<span class="fl">2</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                           output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>NaNs produced</span>
 <span class="r-in"><span><span class="va">df</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">flagged</span>, <span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   t1 t2 total observed expected residual flagged</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  0  2     2       18   10.396    2.650    TRUE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  1  1     2       21   28.596   -2.171    TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   t1 t2 total observed expected  residual flagged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  0  2     2       18 11.02774  2.378139    TRUE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  1  1     2       21 28.59561 -2.170933    TRUE</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
@@ -214,7 +217,7 @@ Testing unidimensionality in polytomous Rasch models. <em>Psychometrika,
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,7 @@
       <h1>A Rasch analysis workflow with easyRasch2</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/v1.0.0/vignettes/easyRasch2.Rmd" class="external-link"><code>vignettes/easyRasch2.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/vignettes/easyRasch2.Rmd" class="external-link"><code>vignettes/easyRasch2.Rmd</code></a></small>
       <div class="d-none name"><code>easyRasch2.Rmd</code></div>
     </div>
 
@@ -405,7 +405,7 @@ multidimensionality/noise).</caption>
 <td align="left">q1</td>
 <td align="right">0.66</td>
 <td align="right">0.62</td>
-<td align="right">0.04</td>
+<td align="right">0.041</td>
 <td align="right">0.210</td>
 <td align="left"></td>
 <td align="right">-0.56</td>
@@ -414,7 +414,7 @@ multidimensionality/noise).</caption>
 <td align="left">q2</td>
 <td align="right">0.72</td>
 <td align="right">0.62</td>
-<td align="right">0.10</td>
+<td align="right">0.103</td>
 <td align="right">0.000</td>
 <td align="left">overfit</td>
 <td align="right">-0.76</td>
@@ -423,7 +423,7 @@ multidimensionality/noise).</caption>
 <td align="left">q3</td>
 <td align="right">0.57</td>
 <td align="right">0.63</td>
-<td align="right">-0.06</td>
+<td align="right">-0.059</td>
 <td align="right">0.085</td>
 <td align="left"></td>
 <td align="right">-0.83</td>
@@ -432,7 +432,7 @@ multidimensionality/noise).</caption>
 <td align="left">q4</td>
 <td align="right">0.71</td>
 <td align="right">0.62</td>
-<td align="right">0.09</td>
+<td align="right">0.097</td>
 <td align="right">0.000</td>
 <td align="left">overfit</td>
 <td align="right">-1.48</td>
@@ -441,7 +441,7 @@ multidimensionality/noise).</caption>
 <td align="left">q5</td>
 <td align="right">0.62</td>
 <td align="right">0.62</td>
-<td align="right">0.00</td>
+<td align="right">-0.001</td>
 <td align="right">0.968</td>
 <td align="left"></td>
 <td align="right">-0.58</td>
@@ -450,7 +450,7 @@ multidimensionality/noise).</caption>
 <td align="left">q6</td>
 <td align="right">0.69</td>
 <td align="right">0.63</td>
-<td align="right">0.06</td>
+<td align="right">0.065</td>
 <td align="right">0.021</td>
 <td align="left">overfit</td>
 <td align="right">-0.76</td>
@@ -459,7 +459,7 @@ multidimensionality/noise).</caption>
 <td align="left">q7</td>
 <td align="right">0.64</td>
 <td align="right">0.62</td>
-<td align="right">0.02</td>
+<td align="right">0.020</td>
 <td align="right">0.476</td>
 <td align="left"></td>
 <td align="right">-0.66</td>
@@ -468,7 +468,7 @@ multidimensionality/noise).</caption>
 <td align="left">q8</td>
 <td align="right">0.55</td>
 <td align="right">0.63</td>
-<td align="right">-0.08</td>
+<td align="right">-0.083</td>
 <td align="right">0.021</td>
 <td align="left">underfit</td>
 <td align="right">0.97</td>
@@ -477,7 +477,7 @@ multidimensionality/noise).</caption>
 <td align="left">q9</td>
 <td align="right">0.59</td>
 <td align="right">0.64</td>
-<td align="right">-0.05</td>
+<td align="right">-0.046</td>
 <td align="right">0.151</td>
 <td align="left"></td>
 <td align="right">0.79</td>
@@ -729,18 +729,28 @@ see <code><a href="../reference/RMdimMartinLof.html">?RMdimMartinLof</a></code> 
 <span>                       partition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>                         <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"q1"</span>,<span class="st">"q2"</span>,<span class="st">"q6"</span>,<span class="st">"q9"</span><span class="op">)</span>,</span>
 <span>                         <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"q3"</span>,<span class="st">"q4"</span>,<span class="st">"q5"</span>,<span class="st">"q7"</span>,<span class="st">"q8"</span><span class="op">)</span></span>
-<span>                       <span class="op">)</span></span>
+<span>                       <span class="op">)</span>,</span>
+<span>                       seed <span class="op">=</span> <span class="fl">4</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">mlof</span><span class="op">$</span><span class="va">p_value</span></span>
 <span><span class="co">#&gt; [1] 0.00990099</span></span>
 <span><span class="va">mlof</span><span class="op">$</span><span class="va">wle_correlation</span></span>
-<span><span class="co">#&gt;   subscale_a subscale_b     r ci_lower ci_upper   p_value   n</span></span>
-<span><span class="co">#&gt; 1          1          2 0.717    0.676    0.754 5.994e-96 600</span></span></code></pre></div>
+<span><span class="co">#&gt;   subscale_a subscale_b         r ci_lower  ci_upper      p_value   n</span></span>
+<span><span class="co">#&gt; 1          1          2 0.7174163 0.676203 0.7541533 5.994126e-96 600</span></span></code></pre></div>
 <p>The <em>p</em>-value rejects unidimensionality across the partition,
 while the subscale WLE correlation indicates the dimensions are strongly
-related. The M-L test results can be further investigated using the
-diagnostic function <code><a href="../reference/RMdimMartinLofResiduals.html">RMdimMartinLofResiduals()</a></code>.</p>
+related. Note that the Monte Carlo <em>p</em>-value’s resolution is
+limited by the number of iterations: the attainable values are <span class="math inline">k/(B+1)</span>, so with <span class="math inline">B
+= 100</span> iterations the smallest possible <em>p</em>-value is <span class="math inline">1/101 \approx 0.0099</span> (returned as
+<code>mlof$p_value_floor</code>). A <em>p</em>-value <em>equal to</em>
+that floor means that no simulated statistic reached the observed one
+and should be read as <span class="math inline">p &lt; 0.01</span> — the
+true <em>p</em>-value may be much smaller. Use more iterations
+(e.g. 1000, floor <span class="math inline">\approx 0.001</span>) when
+reporting results. The M-L test results can be further investigated
+using the diagnostic function
+<code><a href="../reference/RMdimMartinLofResiduals.html">RMdimMartinLofResiduals()</a></code>.</p>
 </div>
 </div>
 <div class="section level2">
@@ -1468,12 +1478,9 @@ demonstration purposes.</p>
 matches the distribution of person locations on the latent scale — a
 Wright-map style display.</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMtargeting.html">RMtargeting</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="figures/rasch-targeting-1.png" alt="**Figure 11.** *Person-item targeting*" width="100%"><p class="caption">
-<strong>Figure 11.</strong> <em>Person-item targeting</em>
-</p>
-</div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMtargeting.html">RMtargeting</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Error in `seq.default()`:</span></span>
+<span><span class="co">#&gt; ! 'to' must be a finite number</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="reliability">Reliability<a class="anchor" aria-label="anchor" href="#reliability"></a>
@@ -1489,8 +1496,8 @@ separation/precision.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMreliability.html">RMreliability</a></span><span class="op">(</span><span class="va">items</span>, draws <span class="op">=</span> <span class="fl">200</span>, rmu_iter <span class="op">=</span> <span class="fl">20</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>              seed <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
-<caption>Reliability for 9 items, n = 600. PSI is the WLE-based
-separation reliability and excludes min/max scoring
+<caption>Reliability for 9 items, n = 600 respondents. PSI is the
+WLE-based separation reliability and excludes min/max scoring
 respondents.</caption>
 <colgroup>
 <col width="19%">
@@ -1531,8 +1538,8 @@ respondents.</caption>
 <tr class="even">
 <td align="left">RMU (WLE)</td>
 <td align="right">0.881</td>
-<td align="right">0.865</td>
-<td align="right">0.894</td>
+<td align="right">0.867</td>
+<td align="right">0.895</td>
 <td align="left">200 PVs, 20 RMU iterations</td>
 </tr>
 </tbody>
@@ -1662,17 +1669,17 @@ estimated latent scores for each respondent to a CSV file.</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ppar</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMpersonParameters.html">RMpersonParameters</a></span><span class="op">(</span><span class="va">items</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">ppar</span>, <span class="fl">10</span><span class="op">)</span></span>
-<span><span class="co">#&gt;      theta    sem sum_score n_answered extreme</span></span>
-<span><span class="co">#&gt; 1   2.2761 0.6185        25          9   FALSE</span></span>
-<span><span class="co">#&gt; 2  -0.9998 0.4659         7          9   FALSE</span></span>
-<span><span class="co">#&gt; 3   1.1407 0.4262        20          9   FALSE</span></span>
-<span><span class="co">#&gt; 4   0.3379 0.3960        15          9   FALSE</span></span>
-<span><span class="co">#&gt; 5   3.6996 1.3248        27          9    TRUE</span></span>
-<span><span class="co">#&gt; 6   1.1407 0.4262        20          9   FALSE</span></span>
-<span><span class="co">#&gt; 7  -0.6130 0.4288         9          9   FALSE</span></span>
-<span><span class="co">#&gt; 8   0.9701 0.4155        19          9   FALSE</span></span>
-<span><span class="co">#&gt; 9   0.6466 0.4019        17          9   FALSE</span></span>
-<span><span class="co">#&gt; 10 -3.2339 0.9217         1          9   FALSE</span></span></code></pre></div>
+<span><span class="co">#&gt;         theta       sem sum_score n_answered extreme</span></span>
+<span><span class="co">#&gt; 1   2.2760818 0.6184838        25          9   FALSE</span></span>
+<span><span class="co">#&gt; 2  -0.9997531 0.4658741         7          9   FALSE</span></span>
+<span><span class="co">#&gt; 3   1.1406643 0.4262412        20          9   FALSE</span></span>
+<span><span class="co">#&gt; 4   0.3379335 0.3959994        15          9   FALSE</span></span>
+<span><span class="co">#&gt; 5   3.6996335 1.3248428        27          9    TRUE</span></span>
+<span><span class="co">#&gt; 6   1.1406643 0.4262412        20          9   FALSE</span></span>
+<span><span class="co">#&gt; 7  -0.6129841 0.4288279         9          9   FALSE</span></span>
+<span><span class="co">#&gt; 8   0.9701100 0.4155331        19          9   FALSE</span></span>
+<span><span class="co">#&gt; 9   0.6465516 0.4019393        17          9   FALSE</span></span>
+<span><span class="co">#&gt; 10 -3.2339486 0.9216600         1          9   FALSE</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="ordinal-to-interval-transformation">Ordinal-to-interval transformation<a class="anchor" aria-label="anchor" href="#ordinal-to-interval-transformation"></a>
@@ -1989,7 +1996,7 @@ Minimum Sample Size Requirements, and Criterion Refinement.”</span>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>
