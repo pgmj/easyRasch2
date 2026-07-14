@@ -119,12 +119,15 @@
 #'   are not affected.} The diagnostic concerns only the per-node item
 #'   parameters that are visible via \code{plot(tree)}.
 #' @param output One of \code{"kable"} (default), \code{"dataframe"},
-#'   \code{"tree"}, or \code{"plot"}. \code{"kable"} renders the
+#'   \code{"tree"}, \code{"plot"}, or \code{"list"}. \code{"kable"}
+#'   renders the
 #'   per-split per-item effect-size table as a \code{knitr::kable()};
 #'   \code{"dataframe"} returns the underlying tidy data.frame;
 #'   \code{"tree"} returns the augmented partykit tree object;
 #'   \code{"plot"} returns the partykit tree plot with item names on
-#'   the terminal-node x-axis (\code{tp_args = list(names = TRUE)}).
+#'   the terminal-node x-axis (\code{tp_args = list(names = TRUE)});
+#'   \code{"list"} returns both views from a single fit, as
+#'   \code{list(table = <data.frame>, tree = <tree object>)}.
 #'   For full control over the plot, use \code{output = "tree"} and
 #'   call \code{plot()} on the result with your own \code{tp_args}.
 #'   When
@@ -153,6 +156,9 @@
 #'     \code{c("RMdifTree", ...)}, with effect-size results stored at
 #'     \code{tree$info$effectsize}.}
 #'   \item{\code{"plot"}}{A plotted partykit tree.}
+#'   \item{\code{"list"}}{A list with both views from a single fit:
+#'     \code{table} (the \code{"dataframe"} result, with its attributes)
+#'     and \code{tree} (the \code{"tree"} result).}
 #' }
 #'
 #' Stability results (when \code{stability = TRUE}) are attached to the
@@ -303,7 +309,7 @@ RMdifTree <- function(
   stability_sampler = c("subsampling", "bootstrap"),
   min_n_per_level = 20L,
   on_rescale = c("message", "warning", "stop"),
-  output = c("kable", "dataframe", "tree", "plot"),
+  output = c("kable", "dataframe", "tree", "plot", "list"),
   ...
 ) {
   # Capture the unevaluated `covariates` expression so we can recover a
@@ -739,7 +745,7 @@ RMdifTree <- function(
   # ---------------------------------------------------------------------
   # Dispatch on output
   # ---------------------------------------------------------------------
-  if (output == "tree") {
+  if (output %in% c("tree", "list")) {
     if (!is.null(stab_df)) {
       attr(tree, "stability") <- stab_df
     }
@@ -748,6 +754,11 @@ RMdifTree <- function(
     }
     if (rescale_info$n_terminal_cells > 0L) {
       attr(tree, "rescaled_terminal_items") <- rescale_info$per_terminal
+    }
+    if (output == "list") {
+      # One fit, both views: the tidy per-split table (with its
+      # attributes) and the augmented tree object (for plotting).
+      return(list(table = df, tree = tree))
     }
     return(tree)
   }

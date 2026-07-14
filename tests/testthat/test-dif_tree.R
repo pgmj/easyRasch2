@@ -446,3 +446,20 @@ test_that("invalid thresholds, alpha, and stability_B are rejected", {
     regexp = "stability_B"
   )
 })
+
+# ---------------------------------------------------------------------
+# output = "list"
+# ---------------------------------------------------------------------
+test_that("output = 'list' returns table + tree from one fit, matching the other outputs", {
+  need_tree_pkgs()
+  dd <- make_dif_dichotomous()
+
+  res <- suppressMessages(RMdifTree(dd$items, dd$covs, output = "list"))
+  expect_named(res, c("table", "tree"))
+  expect_s3_class(res$table, "data.frame")
+  expect_s3_class(res$tree, "RMdifTree")
+
+  df <- suppressMessages(RMdifTree(dd$items, dd$covs, output = "dataframe"))
+  expect_identical(res$table, df)
+  expect_identical(attr(res$table, "effect_size"), "MH")
+})

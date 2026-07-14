@@ -40,13 +40,24 @@
 #'   `getOption("mc.cores")` is checked first; if neither is set, falls back
 #'   to sequential with a warning.
 #' @param verbose Logical. Show a progress bar (default `FALSE`).
-#' @param seed Integer or `NULL`. Random seed for reproducibility.
+#' @param seed Integer or `NULL`. Random seed for reproducibility. Items
+#'   are processed internally in a fixed (alphabetical) order, so the same
+#'   seed reproduces the same p-value regardless of how the data's columns
+#'   are arranged.
 #'
 #' @return A list with components:
 #' \describe{
 #'   \item{`T_obs`}{Observed Martin-Löf likelihood-ratio statistic.}
 #'   \item{`p_value`}{Monte Carlo p-value with `(n_exceed + 1) / (n + 1)`
-#'     correction.}
+#'     correction. The attainable p-values are `k / (n + 1)` for
+#'     `k = 1, ..., n + 1`, so the p-value's resolution is limited by the
+#'     number of iterations: with 100 iterations the smallest attainable
+#'     value is `1/101 = 0.0099`. A reported p-value *equal to the floor*
+#'     (see `p_value_floor`) means no simulated statistic reached the
+#'     observed one and should be read as "p < floor" -- the true p-value
+#'     may be much smaller; increase `iterations` for finer resolution.}
+#'   \item{`p_value_floor`}{The smallest attainable p-value,
+#'     `1 / (actual_iterations + 1)`.}
 #'   \item{`actual_iterations`}{Number of successful MC iterations
 #'     completed.}
 #'   \item{`rejected`}{Logical: is `p_value < alpha`?}
@@ -195,6 +206,20 @@ RMdimMartinLof <- function(
     })
   }
 
+  # Canonical item order (alphabetical by column name): the Monte Carlo
+  # sampler consumes the RNG per item in column order, so a fixed internal
+  # order makes results reproducible under the same seed regardless of how
+  # the caller's columns happen to be arranged. The test statistic and the
+  # subscale WLEs are order-invariant anyway.
+  canon <- order(colnames(data))
+  if (!identical(canon, seq_along(canon))) {
+    remap <- stats::setNames(seq_along(canon), canon)
+    data <- data[, canon, drop = FALSE]
+    partition_list <- lapply(partition_list, function(idx) {
+      sort(unname(remap[as.character(idx)]))
+    })
+  }
+
   data_mat <- as.matrix(data)
   is_polytomous <- max(data_mat, na.rm = TRUE) > 1L
   N <- nrow(data)
@@ -335,6 +360,7 @@ RMdimMartinLof <- function(
   list(
     T_obs = T_obs,
     p_value = p_value,
+    p_value_floor = 1 / (actual_iterations + 1),
     actual_iterations = actual_iterations,
     rejected = p_value < alpha,
     partition = partition_list,
@@ -443,10 +469,13 @@ extract_ml_sampling_params <- function(data, is_polytomous) {
   if (is_polytomous) {
     # CML Andrich thresholds via psychotools (grand-mean centred). The
     # Martin-Löf conditional Monte Carlo samples patterns given the total
-    # score, so it is invariant to this overall location; the cumulative
-    # negated thresholds (epsilon) feed elementary_symmetric_functions().
+    # score, so it is invariant to this overall location. Parameters are
+    # stored in the psychotools convention -- cumulative thresholds
+    # (item-category difficulties) -- because
+    # elementary_symmetric_functions() weights category k of item j by
+    # exp(-par_jk); the sampler negates for its numerator weights.
     thr_list <- .fit_cml_thresholds(as.matrix(data))
-    params_list <- lapply(thr_list, function(taus) -cumsum(as.numeric(taus)))
+    params_list <- lapply(thr_list, function(taus) cumsum(as.numeric(taus)))
     names(params_list) <- colnames(as.matrix(data))
     params_list
   } else {
@@ -454,7 +483,9 @@ extract_ml_sampling_params <- function(data, is_polytomous) {
     # `coef(raschmodel)` returns K-1 parameters under the sum-to-zero
     # constraint, but the sampler needs all K item parameters. Use
     # `itempar()` which returns the full K-vector with proper names.
-    -as.numeric(psychotools::itempar(rasch_fit))
+    # Difficulties (psychotools convention); the sampler negates to get
+    # easiness weights.
+    as.numeric(psychotools::itempar(rasch_fit))
   }
 }
 
@@ -623,7 +654,9 @@ compute_subscale_wle_and_correlations <- function(
 #' Sample a dichotomous response vector with target total score
 #'
 #' Uses the fast algorithm of Christensen & Kreiner (2007, p. 23): pick `s`
-#' items without replacement, weighted by `exp(item_params)`.
+#' items without replacement, weighted by easiness. `item_params` are
+#' difficulties (psychotools convention), so the weights are
+#' `exp(-item_params)`.
 #'
 #' @keywords internal
 #' @noRd
@@ -635,7 +668,7 @@ sample_dichotomous_at_score <- function(s, item_params) {
   if (s == n_items) {
     return(rep(1L, n_items))
   }
-  weights <- exp(item_params)
+  weights <- exp(-item_params)
   picked <- sample.int(n_items, size = s, prob = weights, replace = FALSE)
   out <- integer(n_items)
   out[picked] <- 1L
@@ -694,8 +727,12 @@ sample_polytomous_at_score <- function(t, params_list) {
       if (is.list(esf)) esf[[1L]] else esf
     }
 
-    # Conditional log-probabilities for x_j in 0:m_j
-    eps_j <- c(0, remaining_params[[j]]) # epsilon_{j,0}=0 prepended
+    # Conditional log-probabilities for x_j in 0:m_j. The stored
+    # parameters follow the psychotools convention (cumulative
+    # difficulties, category weight exp(-par)), so the log-weights
+    # epsilon are their negation -- matching the exp(-par) weights that
+    # elementary_symmetric_functions() uses for gamma_other above.
+    eps_j <- c(0, -remaining_params[[j]]) # epsilon_{j,0}=0 prepended
     max_xj <- remaining_max[j]
     log_probs <- rep(-Inf, max_xj + 1L)
     for (xj in 0L:max_xj) {

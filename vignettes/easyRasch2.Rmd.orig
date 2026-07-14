@@ -263,14 +263,15 @@ mlof <- RMdimMartinLof(items, iterations = 100,
                        partition = list(
                          c("q1","q2","q6","q9"),
                          c("q3","q4","q5","q7","q8")
-                       )
+                       ),
+                       seed = 4
 )
 
 mlof$p_value
 mlof$wle_correlation
 ```
 
-The *p*-value rejects unidimensionality across the partition, while the subscale WLE correlation indicates the dimensions are strongly related. The M-L test results can be further investigated using the diagnostic function `RMdimMartinLofResiduals()`.
+The *p*-value rejects unidimensionality across the partition, while the subscale WLE correlation indicates the dimensions are strongly related. Note that the Monte Carlo *p*-value's resolution is limited by the number of iterations: the attainable values are $k/(B+1)$, so with $B = 100$ iterations the smallest possible *p*-value is $1/101 \approx 0.0099$ (returned as `mlof$p_value_floor`). A *p*-value *equal to* that floor means that no simulated statistic reached the observed one and should be read as $p < 0.01$ — the true *p*-value may be much smaller. Use more iterations (e.g. 1000, floor $\approx 0.001$) when reporting results. The M-L test results can be further investigated using the diagnostic function `RMdimMartinLofResiduals()`.
 
 ## 2. Local independence
 

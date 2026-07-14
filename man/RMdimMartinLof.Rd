@@ -55,14 +55,25 @@ to sequential with a warning.}
 
 \item{verbose}{Logical. Show a progress bar (default \code{FALSE}).}
 
-\item{seed}{Integer or \code{NULL}. Random seed for reproducibility.}
+\item{seed}{Integer or \code{NULL}. Random seed for reproducibility. Items
+are processed internally in a fixed (alphabetical) order, so the same
+seed reproduces the same p-value regardless of how the data's columns
+are arranged.}
 }
 \value{
 A list with components:
 \describe{
 \item{\code{T_obs}}{Observed Martin-Löf likelihood-ratio statistic.}
 \item{\code{p_value}}{Monte Carlo p-value with \code{(n_exceed + 1) / (n + 1)}
-correction.}
+correction. The attainable p-values are \code{k / (n + 1)} for
+\verb{k = 1, ..., n + 1}, so the p-value's resolution is limited by the
+number of iterations: with 100 iterations the smallest attainable
+value is \code{1/101 = 0.0099}. A reported p-value \emph{equal to the floor}
+(see \code{p_value_floor}) means no simulated statistic reached the
+observed one and should be read as "p < floor" -- the true p-value
+may be much smaller; increase \code{iterations} for finer resolution.}
+\item{\code{p_value_floor}}{The smallest attainable p-value,
+\code{1 / (actual_iterations + 1)}.}
 \item{\code{actual_iterations}}{Number of successful MC iterations
 completed.}
 \item{\code{rejected}}{Logical: is \code{p_value < alpha}?}

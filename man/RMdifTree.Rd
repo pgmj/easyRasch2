@@ -19,7 +19,7 @@ RMdifTree(
   stability_sampler = c("subsampling", "bootstrap"),
   min_n_per_level = 20L,
   on_rescale = c("message", "warning", "stop"),
-  output = c("kable", "dataframe", "tree", "plot"),
+  output = c("kable", "dataframe", "tree", "plot", "list"),
   ...
 )
 }
@@ -89,12 +89,15 @@ are not affected.} The diagnostic concerns only the per-node item
 parameters that are visible via \code{plot(tree)}.}
 
 \item{output}{One of \code{"kable"} (default), \code{"dataframe"},
-\code{"tree"}, or \code{"plot"}. \code{"kable"} renders the
+\code{"tree"}, \code{"plot"}, or \code{"list"}. \code{"kable"}
+renders the
 per-split per-item effect-size table as a \code{knitr::kable()};
 \code{"dataframe"} returns the underlying tidy data.frame;
 \code{"tree"} returns the augmented partykit tree object;
 \code{"plot"} returns the partykit tree plot with item names on
-the terminal-node x-axis (\code{tp_args = list(names = TRUE)}).
+the terminal-node x-axis (\code{tp_args = list(names = TRUE)});
+\code{"list"} returns both views from a single fit, as
+\code{list(table = <data.frame>, tree = <tree object>)}.
 For full control over the plot, use \code{output = "tree"} and
 call \code{plot()} on the result with your own \code{tp_args}.
 When
@@ -125,6 +128,9 @@ description of the split), \code{Variable}, \code{Direction},
 \code{c("RMdifTree", ...)}, with effect-size results stored at
 \code{tree$info$effectsize}.}
 \item{\code{"plot"}}{A plotted partykit tree.}
+\item{\code{"list"}}{A list with both views from a single fit:
+\code{table} (the \code{"dataframe"} result, with its attributes)
+and \code{tree} (the \code{"tree"} result).}
 }
 
 Stability results (when \code{stability = TRUE}) are attached to the

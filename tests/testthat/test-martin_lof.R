@@ -279,3 +279,84 @@ test_that("RMdimMartinLofResiduals rejects bad min_expected / color_limits / D>3
     regexp = "D = 2 or 3"
   )
 })
+
+test_that("p_value_floor reports the smallest attainable MC p-value", {
+  set.seed(11)
+  dat <- as.data.frame(replicate(6, sample(0:2, 120, replace = TRUE)))
+  names(dat) <- paste0("q", 1:6)
+  res <- RMdimMartinLof(dat, partition = c(1, 1, 1, 2, 2, 2),
+                        iterations = 100, parallel = FALSE, seed = 3)
+  expect_equal(res$p_value_floor, 1 / (res$actual_iterations + 1))
+  expect_gte(res$p_value, res$p_value_floor)
+})
+
+test_that("polytomous sampler draws the exact conditional pattern distribution", {
+  # Regression for the 1.0.0 sign-convention bug: the numerator weights and
+  # the psychotools gamma functions must use the same convention
+  # (psychotools weights category k by exp(-par_k)).
+  taus <- list(c(-0.8, 0.4), c(0.2, 0.9), c(-0.3, -0.1))
+  params <- lapply(taus, cumsum)
+  psi <- lapply(params, function(p) exp(-c(0, p)))
+  pats <- expand.grid(x1 = 0:2, x2 = 0:2, x3 = 0:2)
+  pats$w <- psi[[1]][pats$x1 + 1] * psi[[2]][pats$x2 + 1] *
+    psi[[3]][pats$x3 + 1]
+  pats$t <- pats$x1 + pats$x2 + pats$x3
+  sub <- pats[pats$t == 3L, ]
+  exact <- sub$w / sum(sub$w)
+
+  set.seed(1)
+  draws <- t(replicate(20000, sample_polytomous_at_score(3L, params)))
+  key_d <- apply(draws, 1, paste, collapse = "")
+  key_e <- paste0(sub$x1, sub$x2, sub$x3)
+  freq <- as.numeric(table(factor(key_d, levels = key_e)) / nrow(draws))
+  expect_lt(max(abs(freq - exact)), 0.015)
+
+  # and invariant (in distribution) to item order
+  set.seed(1)
+  draws_p <- t(replicate(20000, sample_polytomous_at_score(
+    3L, params[c(3, 1, 2)])))
+  key_p <- apply(draws_p[, c(2, 3, 1)], 1, paste, collapse = "")
+  freq_p <- as.numeric(table(factor(key_p, levels = key_e)) / nrow(draws_p))
+  expect_lt(max(abs(freq_p - exact)), 0.015)
+})
+
+test_that("same seed gives the same p-value regardless of column arrangement", {
+  set.seed(9)
+  n <- 150
+  th <- rnorm(n)
+  dat <- as.data.frame(sapply(1:6, function(j)
+    findInterval(plogis(th + rnorm(n, 0, 0.8)), c(0.3, 0.6, 0.85))))
+  names(dat) <- paste0("w", 1:6)
+  s1 <- paste0("w", 1:3); s2 <- paste0("w", 4:6)
+
+  r1 <- RMdimMartinLof(dat, partition = list(s1, s2), iterations = 60,
+                       parallel = FALSE, seed = 42)
+  r2 <- RMdimMartinLof(dat[, c(s2, s1)], partition = list(s2, s1),
+                       iterations = 60, parallel = FALSE, seed = 42)
+  expect_identical(r1$p_value, r2$p_value)
+  expect_equal(r1$T_obs, r2$T_obs)
+  expect_equal(r1$T_rep, r2$T_rep, tolerance = 1e-9)
+})
+
+test_that("residual expected counts match brute-force enumeration", {
+  set.seed(3)
+  n <- 200
+  th <- rnorm(n)
+  dat <- as.data.frame(sapply(1:4, function(j)
+    findInterval(plogis(th + rnorm(n, 0, 0.8)), c(0.3, 0.6, 0.85))))
+  names(dat) <- paste0("v", 1:4)
+  part <- list(c("v1", "v2"), c("v3", "v4"))
+  res_df <- suppressWarnings(RMdimMartinLofResiduals(
+    dat, partition = part, output = "dataframe"))
+
+  fp <- extract_ml_sampling_params(dat, TRUE)
+  g1 <- compute_esf_gamma(fp[1:2])
+  g2 <- compute_esf_gamma(fp[3:4])
+  gT <- compute_esf_gamma(fp)
+  tot <- rowSums(dat)
+  row_pick <- res_df[which.max(res_df$observed), ]
+  E_bf <- sum(tot == row_pick$t1 + row_pick$t2) *
+    g1[row_pick$t1 + 1] * g2[row_pick$t2 + 1] /
+    gT[row_pick$t1 + row_pick$t2 + 1]
+  expect_equal(row_pick$expected, as.numeric(E_bf), tolerance = 1e-6)
+})
