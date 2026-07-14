@@ -1,6 +1,25 @@
-# easyRasch2 (development version)
+# easyRasch2 1.1.0
 
 ## Bug fixes
+
+- Respondents with **no responses at all** (all-`NA` rows) no longer crash
+  the functions that fit a CML model on data retaining missing values.
+  `psychotools::pcmodel()` errors on all-NA rows with an opaque
+  "invalid argument type" (and `psychotools::raschmodel()` segfaults), so
+  such rows are now dropped up front — with the standard
+  "`N respondent(s) with no responses dropped.`" message — in
+  `RMlocdepQ3Cutoff()`, `RMitemInfit()`, `RMitemRestscore()`,
+  `RMitemRestscoreBoot()`, `RMreliability()`, and the observed-data
+  overlays of `RMlocdepQ3Plot()` and `RMitemInfitPlot()`. `RMdifLR()`
+  now drops such rows too (jointly with `dif_var`) instead of failing
+  with `eRm::LRtest()`'s error. Functions that already used complete
+  cases or called `.drop_empty_respondents()` are unaffected.
+- `RMlocdepQ3Cutoff()`'s `sample_n` now counts the respondents actually
+  used (all-NA rows excluded, incomplete responses still retained) and
+  `sample_n_total` the raw input rows, matching `RMlocdepQ3()` and the
+  other `*Cutoff()` objects; previously the two were documented as always
+  equal. Captions in the affected functions keep reporting the raw total
+  in the `n = X of Y respondents` form.
 
 - **`RMdimMartinLof()` / `RMdimMartinLofResiduals()`: corrected the
   category weights in the Monte Carlo null sampler and the
@@ -20,6 +39,14 @@
   In addition, items are now processed in a fixed (alphabetical)
   internal order, so the same seed reproduces the same p-value
   regardless of how the data's columns are arranged.
+
+- `RMreliability()` is now fully reproducible with the same `seed`: the
+  RMU estimate previously varied slightly between identical calls because
+  `mirt`'s Metropolis-Hastings plausible-value sampler leaves the R
+  random-number stream in a nondeterministic state (the draws themselves
+  are reproducible), which perturbed the RMU split-half column
+  assignments downstream. The function now re-seeds before the RMU
+  iterations.
 
 ## Changes
 
@@ -85,34 +112,6 @@
 - `RMlocdepGamma()`'s `output = "dataframe"` tables now include the
   `se`, `lower`, and `upper` (95% Wald CI) columns for each pair,
   matching `RMdifGamma()`; the formatted kable output is unchanged.
-
-## Bug fixes
-
-- `RMreliability()` is now fully reproducible with the same `seed`: the
-  RMU estimate previously varied slightly between identical calls because
-  `mirt`'s Metropolis-Hastings plausible-value sampler leaves the R
-  random-number stream in a nondeterministic state (the draws themselves
-  are reproducible), which perturbed the RMU split-half column
-  assignments downstream. The function now re-seeds before the RMU
-  iterations.
-- Respondents with **no responses at all** (all-`NA` rows) no longer crash
-  the functions that fit a CML model on data retaining missing values.
-  `psychotools::pcmodel()` errors on all-NA rows with an opaque
-  "invalid argument type" (and `psychotools::raschmodel()` segfaults), so
-  such rows are now dropped up front — with the standard
-  "`N respondent(s) with no responses dropped.`" message — in
-  `RMlocdepQ3Cutoff()`, `RMitemInfit()`, `RMitemRestscore()`,
-  `RMitemRestscoreBoot()`, `RMreliability()`, and the observed-data
-  overlays of `RMlocdepQ3Plot()` and `RMitemInfitPlot()`. `RMdifLR()`
-  now drops such rows too (jointly with `dif_var`) instead of failing
-  with `eRm::LRtest()`'s error. Functions that already used complete
-  cases or called `.drop_empty_respondents()` are unaffected.
-- `RMlocdepQ3Cutoff()`'s `sample_n` now counts the respondents actually
-  used (all-NA rows excluded, incomplete responses still retained) and
-  `sample_n_total` the raw input rows, matching `RMlocdepQ3()` and the
-  other `*Cutoff()` objects; previously the two were documented as always
-  equal. Captions in the affected functions keep reporting the raw total
-  in the `n = X of Y respondents (policy)` form.
 
 # easyRasch2 1.0.0
 

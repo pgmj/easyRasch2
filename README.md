@@ -251,7 +251,7 @@ the LLM and tested and bug fixed by me.
 [`effecttree`](https://github.com/mirka-henninger/effecttree) packages for
 the effect-size and ETS-classification algorithms.
 
-[Magnus Johansson](https://ki.se/en/people/magnus-johansson-3) is a licensed psychologist with a PhD in behavior analysis. He works as a research specialist focused on psychometrics and statistics at [Karolinska Institutet](https://ki.se/en/cns/research/centre-for-psychiatry-research), Department of Clinical Neuroscience, Center for Psychiatry Research.
+[Magnus Johansson](https://ki.se/en/people/magnus-johansson-3) is a licensed psychologist with a PhD in behavior analysis. He works as a research specialist focused on psychometrics and statistics at Karolinska Institutet, Department of Clinical Neuroscience, Center for Psychiatry Research.
 
 - ORCID: [0000-0003-1669-592X](https://orcid.org/0000-0003-1669-592X)
 - Bluesky: [@pgmj.bsky.social](https://bsky.app/profile/pgmj.bsky.social) 

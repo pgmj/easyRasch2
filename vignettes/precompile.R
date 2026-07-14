@@ -15,7 +15,7 @@ library(knitr)
 # current and you only want a quick re-render.
 if (interactive() ||
     !nzchar(Sys.getenv("EASYRASCH2_SKIP_INSTALL"))) {
-  devtools::install(".", upgrade = "never", quiet = TRUE)
+  devtools::install(".", upgrade = FALSE, quiet = TRUE)
 }
 
 # Knit from within vignettes/ so fig.path = "figures/rasch-" resolves
