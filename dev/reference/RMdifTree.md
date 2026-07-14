@@ -34,7 +34,7 @@ RMdifTree(
   stability_sampler = c("subsampling", "bootstrap"),
   min_n_per_level = 20L,
   on_rescale = c("message", "warning", "stop"),
-  output = c("kable", "dataframe", "tree", "plot"),
+  output = c("kable", "dataframe", "tree", "plot", "list"),
   ...
 )
 ```
@@ -126,14 +126,15 @@ RMdifTree(
 
 - output:
 
-  One of `"kable"` (default), `"dataframe"`, `"tree"`, or `"plot"`.
-  `"kable"` renders the per-split per-item effect-size table as a
-  [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html);
+  One of `"kable"` (default), `"dataframe"`, `"tree"`, `"plot"`, or
+  `"list"`. `"kable"` renders the per-split per-item effect-size table
+  as a [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html);
   `"dataframe"` returns the underlying tidy data.frame; `"tree"` returns
   the augmented partykit tree object; `"plot"` returns the partykit tree
   plot with item names on the terminal-node x-axis
-  (`tp_args = list(names = TRUE)`). For full control over the plot, use
-  `output = "tree"` and call
+  (`tp_args = list(names = TRUE)`); `"list"` returns both views from a
+  single fit, as `list(table = <data.frame>, tree = <tree object>)`. For
+  full control over the plot, use `output = "tree"` and call
   [`plot()`](https://rdrr.io/r/graphics/plot.default.html) on the result
   with your own `tp_args`. When `stability = TRUE`, the stability
   summary is attached as `attr(result, "stability")` (a small
@@ -176,6 +177,11 @@ Depending on `output`:
 - `"plot"`:
 
   A plotted partykit tree.
+
+- `"list"`:
+
+  A list with both views from a single fit: `table` (the `"dataframe"`
+  result, with its attributes) and `tree` (the `"tree"` result).
 
 Stability results (when `stability = TRUE`) are attached to the return
 value as `attr(result, "stability")` (data.frame) and

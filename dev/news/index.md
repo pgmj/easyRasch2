@@ -2,7 +2,44 @@
 
 ## easyRasch2 (development version)
 
+### Bug fixes
+
+- **[`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
+  /
+  [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLofResiduals.md):
+  corrected the category weights in the Monte Carlo null sampler and the
+  expected-count computation** (present in 1.0.0). The item parameters
+  were passed to
+  [`psychotools::elementary_symmetric_functions()`](https://rdrr.io/pkg/psychotools/man/elementary_symmetric_functions.html)
+  with the wrong sign convention (it weights categories by `exp(-par)`),
+  so the gamma functions used sign-inverted weights while the sampler’s
+  numerator used the correct ones. Consequences of the bug: simulated
+  null datasets did not follow the fitted model, the Monte Carlo null
+  distribution (and hence the p-value) depended systematically on the
+  *column order* of the data, and the residual table’s expected counts
+  were wrong. The fixed sampler reproduces the exact conditional pattern
+  distribution (verified against brute-force enumeration), and expected
+  counts match enumeration exactly. **Martin-Löf p-values and residuals
+  change relative to 1.0.0** — typically the corrected null distribution
+  sits lower, so rejections become somewhat clearer. In addition, items
+  are now processed in a fixed (alphabetical) internal order, so the
+  same seed reproduces the same p-value regardless of how the data’s
+  columns are arranged.
+
 ### Changes
+
+- [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
+  now returns `p_value_floor` (`1 / (actual_iterations + 1)`), the
+  smallest attainable Monte Carlo p-value; the documentation explains
+  that a p-value equal to the floor means no simulated statistic reached
+  the observed one and should be read as “p \< floor” (increase
+  `iterations` for finer resolution). The vignette’s Martin-Löf example
+  now sets a seed and discusses this.
+
+- [`RMdifTree()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md)
+  gains `output = "list"`, returning both the tidy effect-size table
+  (`$table`) and the augmented tree object (`$tree`) from a single fit
+  (used by the jamovi module).
 
 - [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonFit.md)
   gains `output = "list"`, returning both the per-person data.frame
