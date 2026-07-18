@@ -60,7 +60,7 @@ RMlocdepQ3Cutoff(
   Character. Method used to compute per-pair \\Q_3\\ credible intervals
   in `pair_cutoffs`. One of `"hdci"` (the default, Highest Density
   Continuous Interval via
-  [`ggdist::hdci()`](https://mjskay.github.io/ggdist/reference/point_interval.html))
+  [`ggdist::hdci()`](https://rdrr.io/pkg/ggdist/man/point_interval.html))
   or `"quantile"` (symmetric 2.5th / 97.5th percentiles). Only affects
   `pair_cutoffs`; the global `$suggested_cutoff` (99th percentile of
   `max(Q3) - mean(Q3)`) is unaffected.

@@ -50,15 +50,15 @@ A `ggplot` object (or a `patchwork` object when `statistic = "both"` and
 ## Details
 
 Uses
-[`ggdist::stat_dotsinterval()`](https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html)
+[`ggdist::stat_dotsinterval()`](https://rdrr.io/pkg/ggdist/man/stat_dotsinterval.html)
 (when `data` is not supplied) or
-[`ggdist::stat_dots()`](https://mjskay.github.io/ggdist/reference/stat_dots.html)
+[`ggdist::stat_dots()`](https://rdrr.io/pkg/ggdist/man/stat_dots.html)
 (when `data` is supplied) with `point_interval = "median_hdci"` and
 `.width = c(0.66, 0.999)`.
 
 When `data` is **not** supplied, the function plots the simulated MSQ
 distributions as dot-interval plots using
-[`ggdist::stat_dotsinterval()`](https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html)
+[`ggdist::stat_dotsinterval()`](https://rdrr.io/pkg/ggdist/man/stat_dotsinterval.html)
 with median and Highest Density Continuous Interval (HDCI) summaries,
 faceted by statistic (InfitMSQ / OutfitMSQ).
 

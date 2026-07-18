@@ -79,12 +79,12 @@ same length as <code>nrow(data)</code>.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Uses <code><a href="https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html" class="external-link">ggdist::stat_dotsinterval()</a></code> (when <code>data</code> is not supplied) or
-<code><a href="https://mjskay.github.io/ggdist/reference/stat_dots.html" class="external-link">ggdist::stat_dots()</a></code> (when <code>data</code> is supplied) with
+    <p>Uses <code><a href="https://rdrr.io/pkg/ggdist/man/stat_dotsinterval.html" class="external-link">ggdist::stat_dotsinterval()</a></code> (when <code>data</code> is not supplied) or
+<code><a href="https://rdrr.io/pkg/ggdist/man/stat_dots.html" class="external-link">ggdist::stat_dots()</a></code> (when <code>data</code> is supplied) with
 <code>point_interval = "median_hdci"</code> and <code>.width = c(0.66, 0.95, 0.99)</code>.</p>
 <p>When <code>data</code> is <strong>not</strong> supplied, the function plots the simulated partial
 gamma distributions as dot-interval plots using
-<code><a href="https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html" class="external-link">ggdist::stat_dotsinterval()</a></code> with median and Highest Density Continuous
+<code><a href="https://rdrr.io/pkg/ggdist/man/stat_dotsinterval.html" class="external-link">ggdist::stat_dotsinterval()</a></code> with median and Highest Density Continuous
 Interval (HDCI) summaries.</p>
 <p>When <code>data</code> <strong>is</strong> supplied (along with <code>dif_var</code>), the function:</p><ol><li><p>Computes observed partial gamma values via
 <code><a href="https://rdrr.io/pkg/iarm/man/partgam_DIF.html" class="external-link">iarm::partgam_DIF()</a></code>.</p></li>

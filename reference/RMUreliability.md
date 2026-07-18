@@ -33,7 +33,7 @@ RMUreliability(input_draws, level = 0.95, verbose = FALSE)
 A 1-row data.frame with columns `rmu_estimate`, `hdci_lowerbound`,
 `hdci_upperbound`, plus the `.width`/`.point`/`.interval` metadata
 columns added by
-[`ggdist::mean_hdci()`](https://mjskay.github.io/ggdist/reference/point_interval.html).
+[`ggdist::mean_hdci()`](https://rdrr.io/pkg/ggdist/man/point_interval.html).
 
 ## Details
 
