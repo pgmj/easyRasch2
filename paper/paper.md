@@ -13,7 +13,7 @@ authors:
     affiliation: 1
 affiliations:
   - index: 1
-    name: Centre for Psychiatry Research, Department of Clinical Neuroscience, Karolinska Institutet, Sweden
+    name: Centre for Psychiatry Research, Department of Clinical Neuroscience, Karolinska Institutet, Stockholm, Sweden
     ror: 056d84691
 date: 18 July 2026
 bibliography: paper.bib

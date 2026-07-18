@@ -3,9 +3,13 @@
 on:
   push:
     branches: [main, master]
+    paths-ignore:
+      - 'paper/**'
   pull_request:
+    paths-ignore:
+      - 'paper/**'
 
-name: R-CMD-check.yaml
+name: R-CMD-check
 
 permissions: read-all
 
