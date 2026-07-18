@@ -178,7 +178,7 @@ nulls [@sinharay_2016; @muller_item_2020].
 `easyRasch2` is distributed on the Comprehensive R Archive Network (CRAN)
 under the GPL (>= 3) licence, with development hosted on GitHub
 (<https://github.com/pgmj/easyRasch2>), a documentation website
-(<https://pgmj.github.io/easyRasch2/>), an automated test suite (83% line
+(<https://pgmj.github.io/easyRasch2/>), an automated test suite (84% line
 coverage, run on every commit via GitHub Actions), and a worked vignette built
 around an included PHQ-9 depression-screener dataset drawn from the U.S.
 National Health and Nutrition Examination Survey.
