@@ -99,7 +99,7 @@ sequential (single core) processing.</p></dd>
 <dt id="arg-cutoff-method">cutoff_method<a class="anchor" aria-label="anchor" href="#arg-cutoff-method"></a></dt>
 <dd><p>Character. Method used to compute per-pair \(Q_3\)
 credible intervals in <code>pair_cutoffs</code>. One of <code>"hdci"</code> (the default,
-Highest Density Continuous Interval via <code><a href="https://rdrr.io/pkg/ggdist/man/point_interval.html" class="external-link">ggdist::hdci()</a></code>) or
+Highest Density Continuous Interval via <code><a href="https://mjskay.github.io/ggdist/reference/point_interval.html" class="external-link">ggdist::hdci()</a></code>) or
 <code>"quantile"</code> (symmetric 2.5th / 97.5th percentiles). Only affects
 <code>pair_cutoffs</code>; the global <code>$suggested_cutoff</code> (99th percentile of
 <code>max(Q3) - mean(Q3)</code>) is unaffected.</p></dd>

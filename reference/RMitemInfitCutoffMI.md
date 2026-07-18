@@ -63,7 +63,7 @@ RMitemInfitCutoffMI(
   Character string specifying how cutoff intervals are computed from the
   stacked distribution. Either `"hdci"` (default) for the Highest
   Density Interval via
-  [`ggdist::hdci()`](https://rdrr.io/pkg/ggdist/man/point_interval.html),
+  [`ggdist::hdci()`](https://mjskay.github.io/ggdist/reference/point_interval.html),
   or `"quantile"` for the 2.5th/97.5th percentiles via
   [`stats::quantile()`](https://rdrr.io/r/stats/quantile.html).
 

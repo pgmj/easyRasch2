@@ -90,15 +90,15 @@ than the number of available pairs are silently capped.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Uses <code><a href="https://rdrr.io/pkg/ggdist/man/stat_dotsinterval.html" class="external-link">ggdist::stat_dotsinterval()</a></code> (when <code>data</code> is not supplied) or
-<code><a href="https://rdrr.io/pkg/ggdist/man/stat_dots.html" class="external-link">ggdist::stat_dots()</a></code> (when <code>data</code> is supplied) with
+    <p>Uses <code><a href="https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html" class="external-link">ggdist::stat_dotsinterval()</a></code> (when <code>data</code> is not supplied) or
+<code><a href="https://mjskay.github.io/ggdist/reference/stat_dots.html" class="external-link">ggdist::stat_dots()</a></code> (when <code>data</code> is supplied) with
 <code>point_interval = "median_hdci"</code> and <code>.width = c(0.66, 0.95, 0.99)</code>.</p>
 <p>The plot shows one row per item pair (labelled as "Item1 - Item2"). Only
 direction 1 (rest score = total - Item2) is plotted, matching the
 convention used in the simulation.</p>
 <p>When <code>data</code> is <strong>not</strong> supplied, the function plots the simulated partial
 gamma distributions as dot-interval plots using
-<code><a href="https://rdrr.io/pkg/ggdist/man/stat_dotsinterval.html" class="external-link">ggdist::stat_dotsinterval()</a></code> with median and Highest Density Continuous
+<code><a href="https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html" class="external-link">ggdist::stat_dotsinterval()</a></code> with median and Highest Density Continuous
 Interval (HDCI) summaries.</p>
 <p>When <code>data</code> <strong>is</strong> supplied, the function:</p><ol><li><p>Computes observed partial gamma values via
 <code><a href="https://rdrr.io/pkg/iarm/man/partgam_LD.html" class="external-link">iarm::partgam_LD()</a></code>.</p></li>

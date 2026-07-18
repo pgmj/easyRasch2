@@ -766,7 +766,7 @@ the full table.
   parameters**: By default (`cutoff_method = "hdci"`,
   `hdci_width = 0.999`), per-item cutoff intervals are now computed
   using the Highest Density Interval via
-  [`ggdist::hdci()`](https://rdrr.io/pkg/ggdist/man/point_interval.html)
+  [`ggdist::hdci()`](https://mjskay.github.io/ggdist/reference/point_interval.html)
   (99.9% HDCI). Set `cutoff_method = "quantile"` to restore the previous
   behaviour (2.5th/97.5th percentiles). The `ggdist` package is only
   required when `cutoff_method = "hdci"` (added to Suggests). The
