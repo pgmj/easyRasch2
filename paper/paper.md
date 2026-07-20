@@ -1,5 +1,5 @@
 ---
-title: 'easyRasch2: Reproducible Rasch Measurement Theory Analysis in R'
+title: 'easyRasch2: Reproducible Psychometric Analysis with Rasch Measurement Theory in R'
 tags:
   - R
   - psychometrics
@@ -15,7 +15,7 @@ affiliations:
   - index: 1
     name: Centre for Psychiatry Research, Department of Clinical Neuroscience, Karolinska Institutet, Stockholm, Sweden
     ror: 056d84691
-date: 18 July 2026
+date: 20 July 2026
 bibliography: paper.bib
 ---
 
