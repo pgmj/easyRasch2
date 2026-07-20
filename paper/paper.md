@@ -199,9 +199,10 @@ methods and produce identical results.
 Generative AI (Anthropic's Claude) was used substantially in developing
 `easyRasch2`. Much of the implementation was produced by porting and
 refactoring the author's earlier `easyRasch` code with large-language-model
-assistance. AI tools also assisted in drafting this manuscript. All
-AI-generated code and text were reviewed and tested by the author and verified against (a) the package's automated test suite, (b) reference implementations in
-`eRm`, `mirt`, `catR`, and `TAM`, and (c) the published statistical literature cited here.
+assistance. AI tools also assisted in drafting this manuscript. All AI-generated code and text were reviewed by the author; the code was
+additionally verified against (a) the package's automated test suite, (b)
+reference implementations in `eRm`, `mirt`, `catR`, and `TAM`, and (c) the
+published statistical literature cited here.
 
 # Acknowledgements
 
