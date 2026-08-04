@@ -118,8 +118,7 @@ remotes::install_github("pgmj/easyRasch2")
 - [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md) +
   [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md) +
   [`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaPlot.md)
-  — partial-\gamma local dependence; optional per-pair bootstrap
-  *p*-values
+  — partial-γ local dependence; optional per-pair bootstrap *p*-values
 
 ### Dimensionality / unidimensionality
 
@@ -145,13 +144,13 @@ remotes::install_github("pgmj/easyRasch2")
   ([`eRm::LRtest`](https://rdrr.io/pkg/eRm/man/LRtest.html))
 - [`RMdifTree()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md)
   — Rasch / partial-credit trees (`psychotree`) with Mantel-Haenszel or
-  partial-\gamma effect sizes per split, optional iterative
-  purification, and `stablelearner`-based stability assessment
+  partial-γ effect sizes per split, optional iterative purification, and
+  `stablelearner`-based stability assessment
 - [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md) +
   [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md) +
   [`RMdifGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaPlot.md)
-  — partial-\gamma DIF; optional bootstrap *p*-values calibrated against
-  the simulated Rasch null
+  — partial-γ DIF; optional bootstrap *p*-values calibrated against the
+  simulated Rasch null
 - [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md) -
   evaluates DIF across class intervals
 
@@ -304,9 +303,8 @@ for the effect-size and ETS-classification algorithms.
 [Magnus Johansson](https://ki.se/en/people/magnus-johansson-3) is a
 licensed psychologist with a PhD in behavior analysis. He works as a
 research specialist focused on psychometrics and statistics at
-[Karolinska
-Institutet](https://ki.se/en/cns/research/centre-for-psychiatry-research),
-Department of Clinical Neuroscience, Center for Psychiatry Research.
+Karolinska Institutet, Department of Clinical Neuroscience, Center for
+Psychiatry Research.
 
 - ORCID: [0000-0003-1669-592X](https://orcid.org/0000-0003-1669-592X)
 - Bluesky:

@@ -11,7 +11,7 @@ mean person location."><meta name="robots" content="noindex"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.0.0.9003</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,8 @@ mean person location.</p>
 <span>  correction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fwer"</span>, <span class="st">"fdr_bh"</span>, <span class="st">"fdr_by"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  output <span class="op">=</span> <span class="st">"kable"</span>,</span>
-<span>  <span class="va">sort</span></span>
+<span>  <span class="va">sort</span>,</span>
+<span>  statistic <span class="op">=</span> <span class="st">"infit"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -74,7 +75,8 @@ the data.frame is extracted automatically and the number of simulation
 iterations, <code>cutoff_method</code>, and <code>hdci_width</code> are included in the kable
 caption.</p></li>
 <li><p>The <code>$item_cutoffs</code> data.frame from <code><a href="RMitemInfitCutoff.html">RMitemInfitCutoff</a></code> directly: must
-have columns <code>Item</code>, <code>infit_low</code>, and <code>infit_high</code>.
+have columns <code>Item</code>, <code>infit_low</code>, and <code>infit_high</code> (or <code>outfit_low</code> and
+<code>outfit_high</code> when <code>statistic = "outfit"</code>).
 When provided, adds columns <code>Infit_low</code>, <code>Infit_high</code>, and <code>Flagged</code>
 to the result. <code>Flagged</code> labels the misfit direction: <code>"overfit"</code>
 (infit below the range – more predictable than the model expects),
@@ -113,8 +115,21 @@ below <code>alpha</code>). Default <code>0.05</code>.</p></dd>
 
 
 <dt id="arg-sort">sort<a class="anchor" aria-label="anchor" href="#arg-sort"></a></dt>
-<dd><p>Optional character string. When <code>sort = "infit"</code>, rows are
-sorted by <code>Infit_MSQ</code> in descending order before output.</p></dd>
+<dd><p>Optional character string. When <code>sort</code> matches <code>statistic</code>
+(<code>"infit"</code> by default), rows are sorted by the reported MSQ column in
+descending order before output.</p></dd>
+
+
+<dt id="arg-statistic">statistic<a class="anchor" aria-label="anchor" href="#arg-statistic"></a></dt>
+<dd><p>Character string. Which conditional fit statistic the table
+reports: <code>"infit"</code> (default) or <code>"outfit"</code>. Both come from the same
+<code><a href="https://rdrr.io/pkg/iarm/man/out_infit.html" class="external-link">iarm::out_infit()</a></code> call and the same parametric bootstrap, so the choice
+only selects which one is displayed and tested. Column names, cutoff
+bounds, p-values and <code>Flagged</code> all follow it, and when <code>p_value = TRUE</code>
+the multiplicity correction is applied across items <em>within</em> the selected
+statistic (the family is the <em>k</em> items, not 2<em>k</em> item-by-statistic
+combinations). Testing both statistics on the same items and reporting
+whichever flags is a larger family than either call corrects for.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -134,7 +149,10 @@ logical). When <code>p_value = TRUE</code>, columns <code>p_infit</code> (margin
 p-value) and <code>padj_infit</code> (corrected p-value) are added and <code>Flagged</code>
 reflects items with <code>padj_infit &lt; alpha</code> (direction from <code>Infit_MSQ</code>
 relative to 1).</p></li>
-</ul></div>
+</ul><p>With <code>statistic = "outfit"</code> the layout is identical and the column names
+follow the statistic: <code>Outfit_MSQ</code>, <code>Outfit_low</code>, <code>Outfit_high</code>, <code>p_outfit</code>,
+<code>padj_outfit</code>.</p>
+    </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Infit MSQ is a weighted fit statistic that emphasises deviations near the
@@ -158,8 +176,8 @@ WLE estimates.</p>
 sample mean person location, providing a measure of item targeting.</p>
 <p>The <code>iarm</code> package must be installed (it is in Suggests, not Imports).</p>
 <p><strong>Bootstrap p-values.</strong> When <code>p_value = TRUE</code>, each item's observed
-infit is compared against its simulated null distribution (from
-<code>cutoff$results</code>). The per-item statistic is the residual studentised by
+infit (or outfit, per <code>statistic</code>) is compared against its simulated null
+distribution (from <code>cutoff$results</code>). The per-item statistic is the residual studentised by
 the bootstrap mean and SD – deliberately the empirical SD rather than the
 Wilson-Hilferty / ZSTD transform, which is uninformative for conditional
 MSQ (Müller, 2020). The marginal p-value is the two-sided Monte-Carlo
@@ -242,15 +260,20 @@ Wiley.</p>
 <span class="r-in"><span>    <span class="co"># (use iterations &gt;= 1000 in real analyses for stable p-values)</span></span></span>
 <span class="r-in"><span>    <span class="fu">RMitemInfit</span><span class="op">(</span><span class="va">sim_data</span>, cutoff <span class="op">=</span> <span class="va">cutoff_res</span>, p_value <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>                output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>    <span class="co"># The same for conditional outfit MSQ</span></span></span>
+<span class="r-in"><span>    <span class="fu">RMitemInfit</span><span class="op">(</span><span class="va">sim_data</span>, cutoff <span class="op">=</span> <span class="va">cutoff_res</span>, p_value <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>                statistic <span class="op">=</span> <span class="st">"outfit"</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="op">}</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations &gt;= 1000 in RMitemInfitCutoff() for reliable p-values.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    Item Infit_MSQ Infit_low Infit_high    p_infit padj_infit Flagged</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item1 1.0486894     0.607      1.577 0.58415842  0.9207921        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2 0.9291116     0.625      1.519 0.64356436  0.9207921        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item3 0.8278667     0.674      1.354 0.19801980  0.5346535        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4 1.2161059     0.643      1.434 0.07920792  0.2970297        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item5 0.9308541     0.648      1.353 0.66336634  0.9207921        </span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations &gt;= 1000 in RMitemInfitCutoff() for reliable p-values.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Item Outfit_MSQ Outfit_low Outfit_high  p_outfit padj_outfit Flagged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item1  1.1294533      0.558       2.040 0.3762376   0.7722772        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2  0.9381845      0.547       1.615 0.7128713   0.7821782        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item3  0.8125048      0.627       1.440 0.3465347   0.6534653        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4  1.2755158      0.525       1.535 0.1683168   0.4851485        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item5  0.9035259      0.517       2.357 0.5742574   0.7821782        </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Relative_location</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1        0.03566442</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2       -0.47593330</span>

@@ -11,7 +11,7 @@ mimics your data and returns per-item empirical cutoffs.
 ``` r
 RMitemInfitCutoff(
   data,
-  iterations = 250,
+  iterations = 400,
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,
@@ -32,7 +32,7 @@ RMitemInfitCutoff(
 
 - iterations:
 
-  Integer. Number of simulation iterations (default 250).
+  Integer. Number of simulation iterations (default 400).
 
 - parallel:
 

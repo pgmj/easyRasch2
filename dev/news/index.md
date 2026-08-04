@@ -2,7 +2,80 @@
 
 ## easyRasch2 (development version)
 
+### New features
+
+- [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
+  gains a `statistic` argument (`"infit"`, the default, or `"outfit"`)
+  that selects which conditional fit statistic the table reports.
+  [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
+  already simulated both, but only infit could be displayed and tested.
+  With `statistic = "outfit"` the cutoff bounds come from
+  `outfit_low`/`outfit_high`, the bootstrap p-values from the simulated
+  outfit distribution, and the columns are named `Outfit_MSQ`,
+  `Outfit_low`, `Outfit_high`, `p_outfit`, `padj_outfit`. The
+  multiplicity correction runs across items within the selected
+  statistic, so testing both and reporting whichever flags is a larger
+  family than either call corrects for. The default is unchanged.
+
 ### Bug fixes
+
+- [`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md)
+  no longer fails when the maximum possible raw score is odd. The
+  default `bins` was the maximum observed raw score divided by two,
+  which is fractional for an odd maximum (e.g. 13.5 for a nine-item 0-3
+  instrument); ggplot2 4.0 rejects a non-whole `bins` in
+  [`geom_histogram()`](https://ggplot2.tidyverse.org/reference/geom_histogram.html),
+  which produced an
+  `Error in seq.default(): 'to' must be a finite number` when the empty
+  panel was scaled. The default is now rounded up.
+
+### Other changes
+
+- [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
+  changes its default iterations setting from 250 to 400. This is based
+  on a simulation study, available at
+  <https://github.com/pgmj/rasch_fwer>, and is intended for use with the
+  FWER corrected p-values in
+  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
+  which will be the new default method in a future release.
+
+## easyRasch2 1.1.0
+
+CRAN release: 2026-07-14
+
+### Bug fixes
+
+- Respondents with **no responses at all** (all-`NA` rows) no longer
+  crash the functions that fit a CML model on data retaining missing
+  values.
+  [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
+  errors on all-NA rows with an opaque “invalid argument type” (and
+  [`psychotools::raschmodel()`](https://rdrr.io/pkg/psychotools/man/raschmodel.html)
+  segfaults), so such rows are now dropped up front — with the standard
+  “`N respondent(s) with no responses dropped.`” message — in
+  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md),
+  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md),
+  [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md),
+  [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md),
+  and the observed-data overlays of
+  [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md)
+  and
+  [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md).
+  [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
+  now drops such rows too (jointly with `dif_var`) instead of failing
+  with [`eRm::LRtest()`](https://rdrr.io/pkg/eRm/man/LRtest.html)’s
+  error. Functions that already used complete cases or called
+  `.drop_empty_respondents()` are unaffected.
+
+- [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)’s
+  `sample_n` now counts the respondents actually used (all-NA rows
+  excluded, incomplete responses still retained) and `sample_n_total`
+  the raw input rows, matching
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
+  and the other `*Cutoff()` objects; previously the two were documented
+  as always equal. Captions in the affected functions keep reporting the
+  raw total in the `n = X of Y respondents` form.
 
 - **[`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
   /
@@ -25,6 +98,14 @@
   are now processed in a fixed (alphabetical) internal order, so the
   same seed reproduces the same p-value regardless of how the data’s
   columns are arranged.
+
+- [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
+  is now fully reproducible with the same `seed`: the RMU estimate
+  previously varied slightly between identical calls because `mirt`’s
+  Metropolis-Hastings plausible-value sampler leaves the R random-number
+  stream in a nondeterministic state (the draws themselves are
+  reproducible), which perturbed the RMU split-half column assignments
+  downstream. The function now re-seeds before the RMU iterations.
 
 ### Changes
 
@@ -124,46 +205,6 @@
   `upper` (95% Wald CI) columns for each pair, matching
   [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md);
   the formatted kable output is unchanged.
-
-### Bug fixes
-
-- [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
-  is now fully reproducible with the same `seed`: the RMU estimate
-  previously varied slightly between identical calls because `mirt`’s
-  Metropolis-Hastings plausible-value sampler leaves the R random-number
-  stream in a nondeterministic state (the draws themselves are
-  reproducible), which perturbed the RMU split-half column assignments
-  downstream. The function now re-seeds before the RMU iterations.
-- Respondents with **no responses at all** (all-`NA` rows) no longer
-  crash the functions that fit a CML model on data retaining missing
-  values.
-  [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
-  errors on all-NA rows with an opaque “invalid argument type” (and
-  [`psychotools::raschmodel()`](https://rdrr.io/pkg/psychotools/man/raschmodel.html)
-  segfaults), so such rows are now dropped up front — with the standard
-  “`N respondent(s) with no responses dropped.`” message — in
-  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md),
-  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
-  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md),
-  [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md),
-  [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md),
-  and the observed-data overlays of
-  [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md)
-  and
-  [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md).
-  [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
-  now drops such rows too (jointly with `dif_var`) instead of failing
-  with [`eRm::LRtest()`](https://rdrr.io/pkg/eRm/man/LRtest.html)’s
-  error. Functions that already used complete cases or called
-  `.drop_empty_respondents()` are unaffected.
-- [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)’s
-  `sample_n` now counts the respondents actually used (all-NA rows
-  excluded, incomplete responses still retained) and `sample_n_total`
-  the raw input rows, matching
-  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
-  and the other `*Cutoff()` objects; previously the two were documented
-  as always equal. Captions in the affected functions keep reporting the
-  raw total in the `n = X of Y respondents (policy)` form.
 
 ## easyRasch2 1.0.0
 

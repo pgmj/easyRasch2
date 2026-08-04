@@ -16,7 +16,8 @@ RMitemInfit(
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
   alpha = 0.05,
   output = "kable",
-  sort
+  sort,
+  statistic = "infit"
 )
 ```
 
@@ -42,7 +43,8 @@ RMitemInfit(
 
   - The `$item_cutoffs` data.frame from
     [`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
-    directly: must have columns `Item`, `infit_low`, and `infit_high`.
+    directly: must have columns `Item`, `infit_low`, and `infit_high`
+    (or `outfit_low` and `outfit_high` when `statistic = "outfit"`).
     When provided, adds columns `Infit_low`, `Infit_high`, and `Flagged`
     to the result. `Flagged` labels the misfit direction: `"overfit"`
     (infit below the range – more predictable than the model expects),
@@ -82,8 +84,22 @@ RMitemInfit(
 
 - sort:
 
-  Optional character string. When `sort = "infit"`, rows are sorted by
-  `Infit_MSQ` in descending order before output.
+  Optional character string. When `sort` matches `statistic` (`"infit"`
+  by default), rows are sorted by the reported MSQ column in descending
+  order before output.
+
+- statistic:
+
+  Character string. Which conditional fit statistic the table reports:
+  `"infit"` (default) or `"outfit"`. Both come from the same
+  [`iarm::out_infit()`](https://rdrr.io/pkg/iarm/man/out_infit.html)
+  call and the same parametric bootstrap, so the choice only selects
+  which one is displayed and tested. Column names, cutoff bounds,
+  p-values and `Flagged` all follow it, and when `p_value = TRUE` the
+  multiplicity correction is applied across items *within* the selected
+  statistic (the family is the *k* items, not 2*k* item-by-statistic
+  combinations). Testing both statistics on the same items and reporting
+  whichever flags is a larger family than either call corrects for.
 
 ## Value
 
@@ -102,6 +118,10 @@ RMitemInfit(
   (marginal two-sided p-value) and `padj_infit` (corrected p-value) are
   added and `Flagged` reflects items with `padj_infit < alpha`
   (direction from `Infit_MSQ` relative to 1).
+
+With `statistic = "outfit"` the layout is identical and the column names
+follow the statistic: `Outfit_MSQ`, `Outfit_low`, `Outfit_high`,
+`p_outfit`, `padj_outfit`.
 
 ## Details
 
@@ -135,23 +155,23 @@ the sample mean person location, providing a measure of item targeting.
 The `iarm` package must be installed (it is in Suggests, not Imports).
 
 **Bootstrap p-values.** When `p_value = TRUE`, each item's observed
-infit is compared against its simulated null distribution (from
-`cutoff$results`). The per-item statistic is the residual studentised by
-the bootstrap mean and SD – deliberately the empirical SD rather than
-the Wilson-Hilferty / ZSTD transform, which is uninformative for
-conditional MSQ (Müller, 2020). The marginal p-value is the two-sided
-Monte-Carlo p-value `(1 + #{|t*| >= |t|}) / (B + 1)`. For
-`correction = "fwer"` the family-wise adjustment uses the Westfall-Young
-studentised-max step-down, which exploits the bootstrap dependence among
-items and is more powerful than Bonferroni/Holm (Ferreira, 2024); its
-validity rests on subset pivotality. `"fdr_bh"`/`"fdr_by"` apply
-Benjamini-Hochberg / Benjamini- Yekutieli instead. These are
-model-conditional, sample-size-sensitive p-values and are reported
-alongside the simulated effect-size band, not in place of it. p-values
-can be no smaller than `1 / (B + 1)`, and the studentised-max (FWER)
-correction is *liberal* when the simulation is small (the bootstrap
-mean/SD used for studentisation are then too noisy). At least 1000
-`iterations` in
+infit (or outfit, per `statistic`) is compared against its simulated
+null distribution (from `cutoff$results`). The per-item statistic is the
+residual studentised by the bootstrap mean and SD – deliberately the
+empirical SD rather than the Wilson-Hilferty / ZSTD transform, which is
+uninformative for conditional MSQ (Müller, 2020). The marginal p-value
+is the two-sided Monte-Carlo p-value `(1 + #{|t*| >= |t|}) / (B + 1)`.
+For `correction = "fwer"` the family-wise adjustment uses the
+Westfall-Young studentised-max step-down, which exploits the bootstrap
+dependence among items and is more powerful than Bonferroni/Holm
+(Ferreira, 2024); its validity rests on subset pivotality.
+`"fdr_bh"`/`"fdr_by"` apply Benjamini-Hochberg / Benjamini- Yekutieli
+instead. These are model-conditional, sample-size-sensitive p-values and
+are reported alongside the simulated effect-size band, not in place of
+it. p-values can be no smaller than `1 / (B + 1)`, and the
+studentised-max (FWER) correction is *liberal* when the simulation is
+small (the bootstrap mean/SD used for studentisation are then too
+noisy). At least 1000 `iterations` in
 [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
 are recommended – in simulations the family-wise error rate is then
 controlled at the nominal level – and a warning is issued when the
@@ -224,15 +244,20 @@ if (requireNamespace("iarm", quietly = TRUE)) {
     # (use iterations >= 1000 in real analyses for stable p-values)
     RMitemInfit(sim_data, cutoff = cutoff_res, p_value = TRUE,
                 output = "dataframe")
+
+    # The same for conditional outfit MSQ
+    RMitemInfit(sim_data, cutoff = cutoff_res, p_value = TRUE,
+                statistic = "outfit", output = "dataframe")
   }
 }
 #> Warning: Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations >= 1000 in RMitemInfitCutoff() for reliable p-values.
-#>    Item Infit_MSQ Infit_low Infit_high    p_infit padj_infit Flagged
-#> 1 Item1 1.0486894     0.607      1.577 0.58415842  0.9207921        
-#> 2 Item2 0.9291116     0.625      1.519 0.64356436  0.9207921        
-#> 3 Item3 0.8278667     0.674      1.354 0.19801980  0.5346535        
-#> 4 Item4 1.2161059     0.643      1.434 0.07920792  0.2970297        
-#> 5 Item5 0.9308541     0.648      1.353 0.66336634  0.9207921        
+#> Warning: Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations >= 1000 in RMitemInfitCutoff() for reliable p-values.
+#>    Item Outfit_MSQ Outfit_low Outfit_high  p_outfit padj_outfit Flagged
+#> 1 Item1  1.1294533      0.558       2.040 0.3762376   0.7722772        
+#> 2 Item2  0.9381845      0.547       1.615 0.7128713   0.7821782        
+#> 3 Item3  0.8125048      0.627       1.440 0.3465347   0.6534653        
+#> 4 Item4  1.2755158      0.525       1.535 0.1683168   0.4851485        
+#> 5 Item5  0.9035259      0.517       2.357 0.5742574   0.7821782        
 #>   Relative_location
 #> 1        0.03566442
 #> 2       -0.47593330
