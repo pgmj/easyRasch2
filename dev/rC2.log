@@ -1,0 +1,73 @@
+[31m
+
+processing file: infit_fwer_iterations.qmd
+[39m1/39         
+2/39 [setup] 
+3/39         
+4/39 [gen]   
+5/39         
+6/39 [studyA]
+7/39         
+8/39 [fwerA] 
+9/39         
+10/39 [fpA]   
+11/39         
+12/39 [detA1] 
+13/39         
+14/39 [detA3] 
+15/39         
+16/39 [figA]  
+17/39         
+18/39 [studyB]
+19/39         
+20/39 [flipB] 
+21/39         
+22/39 [flipB2]
+23/39         
+24/39 [sdB]   
+25/39         
+26/39 [figB]  
+27/39         
+28/39 [studyC]
+29/39         
+30/39 [detC]  
+31/39         
+32/39 [fweC]  
+33/39         
+34/39 [dirC]  
+35/39         
+36/39 [dirC0] 
+37/39         
+38/39 [expC]  
+39/39         
+[31moutput file: infit_fwer_iterations.knit.md
+
+[39m[1mpandoc [22m
+  to: typst
+  output-file: infit_fwer_iterations.typ
+  standalone: true
+  shift-heading-level-by: -1
+  default-image-extension: svg
+  wrap: none
+  citeproc: false
+  toc: true
+  toc-depth: 2
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  papersize: a4
+  margin:
+    x: 2cm
+    'y': 2cm
+  fontsize: 9pt
+  title: 'Bootstrap iterations for infit MSQ: FWER p-values vs simulation cutoffs'
+  subtitle: Extending the 100/200/400 comparison in Johansson (2025) to FWER-adjusted p-values
+  author: Magnus Johansson
+  date: today
+  
+[typst]: Compiling infit_fwer_iterations.typ to infit_fwer_iterations.pdf...DONE
+
+Output created: infit_fwer_iterations.pdf
+

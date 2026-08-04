@@ -7,7 +7,7 @@
 #' @param data A data.frame or matrix of item responses. Items must be scored
 #'   starting at 0 (non-negative integers). Only complete cases (rows without
 #'   any `NA`) are used.
-#' @param iterations Integer. Number of simulation iterations (default 250).
+#' @param iterations Integer. Number of simulation iterations (default 400).
 #' @param parallel Logical. Use parallel processing via `mirai` if available
 #'   (default `TRUE`).
 #' @param n_cores Integer or `NULL`. Number of parallel workers. When `NULL`,
@@ -94,7 +94,7 @@
 #' }
 RMitemInfitCutoff <- function(
   data,
-  iterations = 250,
+  iterations = 400,
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,

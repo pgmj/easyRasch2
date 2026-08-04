@@ -667,9 +667,12 @@ display.
 
 ``` r
 RMtargeting(items)
-#> Error in `seq.default()`:
-#> ! 'to' must be a finite number
 ```
+
+<div class="figure">
+<img src="figures/rasch-targeting-1.png" alt="**Figure 11.** *Person-item targeting*" width="100%" />
+<p class="caption">**Figure 11.** *Person-item targeting*</p>
+</div>
 
 ## Reliability
 

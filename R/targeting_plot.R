@@ -23,7 +23,7 @@
 #'   `data` (first item at top). `"location"` sorts items by their average
 #'   threshold location (easiest at top, hardest at bottom).
 #' @param bins Integer. Number of bins for both histograms. Default is number of
-#'   unique scores divided by 2, but no less than 11.
+#'   unique scores divided by 2 (rounded up), but no less than 11.
 #' @param xlim Numeric vector of length 2. Initial lower and upper limits for
 #'   the shared x-axis. Automatically expanded if any person or item threshold
 #'   values fall outside these limits.
@@ -138,9 +138,10 @@ RMtargeting <- function(
   }
 
   # if no manual value was selected for number of bins, use the number of
-  # unique scores divided by 2, but no less than 10
+  # unique scores divided by 2, but no less than 11. ggplot2 requires a whole
+  # number, so round up (an odd maximum score would otherwise give e.g. 13.5).
   if (missing(bins)) {
-    bins <- max(rowSums(data, na.rm = TRUE)) / 2
+    bins <- ceiling(max(rowSums(data, na.rm = TRUE)) / 2)
     if (bins < 11) {
       bins <- 11
     }

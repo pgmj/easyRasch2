@@ -1,0 +1,75 @@
+[31m
+
+processing file: infit_width_iterations.qmd
+[39m1/41             
+2/41 [setup]     
+3/41             
+4/41 [runner]    
+5/41             
+6/41 [gen]       
+7/41             
+8/41 [helpers]   
+9/41             
+10/41 [s1]        
+11/41             
+12/41 [s1tab]     
+13/41             
+14/41 [s1rel]     
+15/41             
+16/41 [s1tail]    
+17/41             
+18/41 [s1fig]     
+19/41             
+20/41 [s2]        
+21/41             
+22/41 [s2fwer]    
+23/41             
+24/41 [s2det]     
+25/41             
+26/41 [s2exp]     
+27/41             
+28/41 [s2dir]     
+29/41             
+30/41 [s3rates]   
+31/41             
+32/41 [s3fwe]     
+33/41             
+34/41 [s3fdp]     
+35/41             
+36/41 [s3floor]   
+37/41             
+38/41 [s3floorobs]
+39/41             
+40/41 [s3fig]     
+41/41             
+[31moutput file: infit_width_iterations.knit.md
+
+[39m[1mpandoc [22m
+  to: typst
+  output-file: infit_width_iterations.typ
+  standalone: true
+  shift-heading-level-by: -1
+  default-image-extension: svg
+  wrap: none
+  citeproc: false
+  toc: true
+  toc-depth: 2
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  papersize: a4
+  margin:
+    x: 2cm
+    'y': 2cm
+  fontsize: 9pt
+  title: Interval width and bootstrap iterations for conditional infit MSQ
+  subtitle: Simulation material for a follow-up to Johansson (2025)
+  author: Magnus Johansson
+  date: today
+  
+[typst]: Compiling infit_width_iterations.typ to infit_width_iterations.pdf...DONE
+
+Output created: infit_width_iterations.pdf
+

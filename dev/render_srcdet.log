@@ -1,0 +1,59 @@
+[31m
+
+processing file: infit_misfit_source_correlation.qmd
+[39m1/25               
+2/25 [setup]       
+3/25               
+4/25 [arm]         
+5/25               
+6/25 [sim]         
+7/25               
+8/25 [attenuation] 
+9/25               
+10/25 [noise_anchor]
+11/25               
+12/25 [fig]         
+13/25               
+14/25 [detsetup]    
+15/25               
+16/25 [detrun]      
+17/25               
+18/25 [detq5]       
+19/25               
+20/25 [detfp]       
+21/25               
+22/25 [detnoise]    
+23/25               
+24/25 [detfig]      
+25/25               
+[31moutput file: infit_misfit_source_correlation.knit.md
+
+[39m[1mpandoc [22m
+  to: typst
+  output-file: infit_misfit_source_correlation.typ
+  standalone: true
+  shift-heading-level-by: -1
+  default-image-extension: svg
+  wrap: none
+  citeproc: false
+  toc: true
+  toc-depth: 2
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  papersize: a4
+  margin:
+    x: 2cm
+    'y': 2cm
+  fontsize: 9pt
+  title: Does it matter whether misfitting items share a dimension?
+  subtitle: Attenuation of item fit as a function of the correlation between misfit sources
+  author: Magnus Johansson
+  date: today
+  
+[typst]: Compiling infit_misfit_source_correlation.typ to infit_misfit_source_correlation.pdf...DONE
+
+Output created: infit_misfit_source_correlation.pdf
+

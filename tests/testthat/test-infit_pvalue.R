@@ -123,3 +123,64 @@ test_that("kable output works with p-values", {
     "knitr_kable"
   )
 })
+
+# ---------------------------------------------------------------------
+# statistic = "outfit"
+# ---------------------------------------------------------------------
+
+test_that("statistic = 'outfit' names columns for outfit and uses OutfitMSQ", {
+  skip_on_cran()
+  skip_if_not_installed("eRm"); skip_if_not_installed("iarm")
+  df  <- sim_rasch_null()
+  sim <- RMitemInfitCutoff(df, iterations = 300, parallel = FALSE, seed = 1)
+  res <- suppressWarnings(
+    RMitemInfit(df, cutoff = sim, p_value = TRUE, statistic = "outfit",
+                output = "dataframe")
+  )
+  expect_named(res, c("Item", "Outfit_MSQ", "Outfit_low", "Outfit_high",
+                      "p_outfit", "padj_outfit", "Flagged",
+                      "Relative_location"))
+  expect_true(all(res$p_outfit >= 0 & res$p_outfit <= 1, na.rm = TRUE))
+  expect_true(all(res$padj_outfit >= res$p_outfit - 1e-9, na.rm = TRUE))
+  # the reported statistic is iarm's outfit, not infit
+  cfit <- iarm::out_infit(psychotools::pcmodel(df))
+  expect_equal(res$Outfit_MSQ, as.numeric(cfit$Outfit))
+  # and the p-values come from the outfit column of the simulated null
+  sim_mat <- tapply(sim$results$OutfitMSQ,
+                    list(sim$results$iteration, sim$results$Item),
+                    function(x) x[1L])
+  expected <- easyRasch2:::.bootstrap_pvalues(
+    setNames(as.numeric(cfit$Outfit), names(df)), sim_mat, "fwer"
+  )
+  expect_equal(res$p_outfit, expected$p[match(res$Item, expected$name)])
+})
+
+test_that("statistic = 'outfit' works without p-values and against a bare cutoff df", {
+  skip_on_cran()
+  skip_if_not_installed("eRm"); skip_if_not_installed("iarm")
+  df  <- sim_rasch_null()
+  sim <- RMitemInfitCutoff(df, iterations = 200, parallel = FALSE, seed = 1)
+  res <- RMitemInfit(df, cutoff = sim$item_cutoffs, statistic = "outfit",
+                     output = "dataframe")
+  expect_named(res, c("Item", "Outfit_MSQ", "Outfit_low", "Outfit_high",
+                      "Flagged", "Relative_location"))
+  expect_equal(res$Outfit_low, sim$item_cutoffs$outfit_low)
+  # a cutoff df carrying only infit bounds is rejected
+  expect_error(
+    RMitemInfit(df, cutoff = sim$item_cutoffs[, c("Item", "infit_low", "infit_high")],
+                statistic = "outfit"),
+    regexp = "outfit_low, outfit_high"
+  )
+})
+
+test_that("statistic = 'infit' is the default and leaves output unchanged", {
+  skip_on_cran()
+  skip_if_not_installed("eRm"); skip_if_not_installed("iarm")
+  df  <- sim_rasch_null()
+  sim <- RMitemInfitCutoff(df, iterations = 200, parallel = FALSE, seed = 1)
+  expect_identical(
+    RMitemInfit(df, cutoff = sim, output = "dataframe"),
+    RMitemInfit(df, cutoff = sim, statistic = "infit", output = "dataframe")
+  )
+  expect_error(RMitemInfit(df, statistic = "both"), regexp = "should be one of")
+})

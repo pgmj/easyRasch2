@@ -1,0 +1,57 @@
+[31m
+
+processing file: infit_misfit_mechanism.qmd
+[39m1/23                 
+2/23 [setup]         
+3/23                 
+4/23 [runner]        
+5/23                 
+6/23 [arm]           
+7/23                 
+8/23 [run]           
+9/23                 
+10/23 [cascade]       
+11/23                 
+12/23 [cascade_fwer]  
+13/23                 
+14/23 [direction]     
+15/23                 
+16/23 [detection]     
+17/23                 
+18/23 [detection_item]
+19/23                 
+20/23 [rules]         
+21/23                 
+22/23 [fig]           
+23/23                 
+[31moutput file: infit_misfit_mechanism.knit.md
+
+[39m[1mpandoc [22m
+  to: typst
+  output-file: infit_misfit_mechanism.typ
+  standalone: true
+  shift-heading-level-by: -1
+  default-image-extension: svg
+  wrap: none
+  citeproc: false
+  toc: true
+  toc-depth: 2
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  papersize: a4
+  margin:
+    x: 2cm
+    'y': 2cm
+  fontsize: 9pt
+  title: Is the false-positive cascade specific to multidimensional misfit?
+  subtitle: Random responding vs multidimensionality at matched misfit magnitude
+  author: Magnus Johansson
+  date: today
+  
+[typst]: Compiling infit_misfit_mechanism.typ to infit_misfit_mechanism.pdf...DONE
+
+Output created: infit_misfit_mechanism.pdf
+

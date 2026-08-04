@@ -18,3 +18,4 @@
 ^vignettes/precompile\.R$
 ^vignettes/easyRasch2-workflow\.Rmd\.orig$
 ^dev$
+^paper$

@@ -1,0 +1,51 @@
+[31m
+
+processing file: sx2_itemfit_sim.qmd
+[39m1/21         
+2/21 [setup] 
+3/21         
+4/21 [gen]   
+5/21         
+6/21 [onerep]
+7/21         
+8/21 [run]   
+9/21         
+10/21 [null]  
+11/21         
+12/21 [det1]  
+13/21         
+14/21 [fp1]   
+15/21         
+16/21 [det3]  
+17/21         
+18/21 [fp3]   
+19/21         
+20/21 [fig]   
+21/21         
+[31moutput file: sx2_itemfit_sim.knit.md
+
+[39m[1mpandoc [22m
+  to: html
+  output-file: sx2_itemfit_sim.html
+  standalone: true
+  section-divs: true
+  html-math-method: mathjax
+  wrap: none
+  default-image-extension: png
+  toc: true
+  variables: {}
+  
+[1mmetadata[22m
+  document-css: false
+  link-citations: true
+  date-format: long
+  lang: en
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  title: Generalized S-X2 compared to conditional infit and item-restscore
+  subtitle: Detection of 1-3 misfitting items under multidimensionality
+  author: Magnus Johansson
+  date: today
+  
+Output created: sx2_itemfit_sim.html
+

@@ -6,7 +6,7 @@
 \usage{
 RMitemInfitCutoff(
   data,
-  iterations = 250,
+  iterations = 400,
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,
@@ -21,7 +21,7 @@ RMitemInfitCutoff(
 starting at 0 (non-negative integers). Only complete cases (rows without
 any \code{NA}) are used.}
 
-\item{iterations}{Integer. Number of simulation iterations (default 250).}
+\item{iterations}{Integer. Number of simulation iterations (default 400).}
 
 \item{parallel}{Logical. Use parallel processing via \code{mirai} if available
 (default \code{TRUE}).}

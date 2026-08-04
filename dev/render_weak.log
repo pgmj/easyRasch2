@@ -1,0 +1,59 @@
+[31m
+
+processing file: infit_width_iterations_poly_weak.qmd
+[39m1/25         
+2/25 [setup] 
+3/25         
+4/25 [runner]
+5/25         
+6/25 [arms]  
+7/25         
+8/25 [simfun]
+9/25         
+10/25 [run]   
+11/25         
+12/25 [theory]
+13/25         
+14/25 [fwe]   
+15/25         
+16/25 [det]   
+17/25         
+18/25 [fp]    
+19/25         
+20/25 [target]
+21/25         
+22/25 [h2h]   
+23/25         
+24/25 [fig]   
+25/25         
+[31moutput file: infit_width_iterations_poly_weak.knit.md
+
+[39m[1mpandoc [22m
+  to: typst
+  output-file: infit_width_iterations_poly_weak.typ
+  standalone: true
+  shift-heading-level-by: -1
+  default-image-extension: svg
+  wrap: none
+  citeproc: false
+  toc: true
+  toc-depth: 2
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  papersize: a4
+  margin:
+    x: 2cm
+    'y': 2cm
+  fontsize: 9pt
+  title: 'Interval width and bootstrap iterations: polytomous items, realistic misfit'
+  subtitle: Stylised 15-item and phq9-derived item parameters
+  author: Magnus Johansson
+  date: today
+  
+[typst]: Compiling infit_width_iterations_poly_weak.typ to infit_width_iterations_poly_weak.pdf...DONE
+
+Output created: infit_width_iterations_poly_weak.pdf
+

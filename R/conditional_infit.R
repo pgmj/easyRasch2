@@ -14,7 +14,8 @@
 #'     iterations, `cutoff_method`, and `hdci_width` are included in the kable
 #'     caption.
 #'   * The `$item_cutoffs` data.frame from \code{\link{RMitemInfitCutoff}} directly: must
-#'     have columns `Item`, `infit_low`, and `infit_high`.
+#'     have columns `Item`, `infit_low`, and `infit_high` (or `outfit_low` and
+#'     `outfit_high` when `statistic = "outfit"`).
 #'   When provided, adds columns `Infit_low`, `Infit_high`, and `Flagged`
 #'   to the result. `Flagged` labels the misfit direction: `"overfit"`
 #'   (infit below the range -- more predictable than the model expects),
@@ -37,8 +38,18 @@
 #' @param output Character string controlling the return value. Either
 #'   `"kable"` (default) for a formatted `knitr::kable()` table, or
 #'   `"dataframe"` for the underlying data.frame.
-#' @param sort Optional character string. When `sort = "infit"`, rows are
-#'   sorted by `Infit_MSQ` in descending order before output.
+#' @param sort Optional character string. When `sort` matches `statistic`
+#'   (`"infit"` by default), rows are sorted by the reported MSQ column in
+#'   descending order before output.
+#' @param statistic Character string. Which conditional fit statistic the table
+#'   reports: `"infit"` (default) or `"outfit"`. Both come from the same
+#'   `iarm::out_infit()` call and the same parametric bootstrap, so the choice
+#'   only selects which one is displayed and tested. Column names, cutoff
+#'   bounds, p-values and `Flagged` all follow it, and when `p_value = TRUE`
+#'   the multiplicity correction is applied across items *within* the selected
+#'   statistic (the family is the *k* items, not 2*k* item-by-statistic
+#'   combinations). Testing both statistics on the same items and reporting
+#'   whichever flags is a larger family than either call corrects for.
 #'
 #' @return
 #' * If `output = "kable"`: a `knitr_kable` object (plain text table via
@@ -55,6 +66,10 @@
 #'   p-value) and `padj_infit` (corrected p-value) are added and `Flagged`
 #'   reflects items with `padj_infit < alpha` (direction from `Infit_MSQ`
 #'   relative to 1).
+#'
+#' With `statistic = "outfit"` the layout is identical and the column names
+#' follow the statistic: `Outfit_MSQ`, `Outfit_low`, `Outfit_high`, `p_outfit`,
+#' `padj_outfit`.
 #'
 #' @details
 #' Infit MSQ is a weighted fit statistic that emphasises deviations near the
@@ -83,8 +98,8 @@
 #' The `iarm` package must be installed (it is in Suggests, not Imports).
 #'
 #' \strong{Bootstrap p-values.} When `p_value = TRUE`, each item's observed
-#' infit is compared against its simulated null distribution (from
-#' `cutoff$results`). The per-item statistic is the residual studentised by
+#' infit (or outfit, per `statistic`) is compared against its simulated null
+#' distribution (from `cutoff$results`). The per-item statistic is the residual studentised by
 #' the bootstrap mean and SD -- deliberately the empirical SD rather than the
 #' Wilson-Hilferty / ZSTD transform, which is uninformative for conditional
 #' MSQ (Müller, 2020). The marginal p-value is the two-sided Monte-Carlo
@@ -163,6 +178,10 @@
 #'     # (use iterations >= 1000 in real analyses for stable p-values)
 #'     RMitemInfit(sim_data, cutoff = cutoff_res, p_value = TRUE,
 #'                 output = "dataframe")
+#'
+#'     # The same for conditional outfit MSQ
+#'     RMitemInfit(sim_data, cutoff = cutoff_res, p_value = TRUE,
+#'                 statistic = "outfit", output = "dataframe")
 #'   }
 #' }
 #' }
@@ -173,7 +192,8 @@ RMitemInfit <- function(
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
   alpha = 0.05,
   output = "kable",
-  sort
+  sort,
+  statistic = "infit"
 ) {
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
@@ -185,9 +205,23 @@ RMitemInfit <- function(
 
   output <- match.arg(output, c("kable", "dataframe"))
   correction <- match.arg(correction)
+  statistic <- match.arg(statistic, c("infit", "outfit"))
   if (!is.numeric(alpha) || length(alpha) != 1L || alpha <= 0 || alpha >= 1) {
     stop("`alpha` must be a single number in (0, 1).", call. = FALSE)
   }
+
+  # Column names follow the reported statistic. Infit and outfit come from the
+  # same iarm::out_infit() call and the same bootstrap, so only the naming and
+  # the source column differ.
+  stat_title <- if (statistic == "outfit") "Outfit" else "Infit"
+  msq_col <- paste0(stat_title, "_MSQ") # Infit_MSQ / Outfit_MSQ
+  low_col <- paste0(stat_title, "_low")
+  high_col <- paste0(stat_title, "_high")
+  cut_low <- paste0(statistic, "_low") # infit_low / outfit_low (in $item_cutoffs)
+  cut_high <- paste0(statistic, "_high")
+  p_col <- paste0("p_", statistic)
+  padj_col <- paste0("padj_", statistic)
+  sim_col <- paste0(stat_title, "MSQ") # InfitMSQ / OutfitMSQ (in $results)
 
   # --- Validate and normalise cutoff ------------------------------------------
   cutoff_n_iter <- NULL
@@ -213,7 +247,7 @@ RMitemInfit <- function(
         call. = FALSE
       )
     }
-    required_cols <- c("Item", "infit_low", "infit_high")
+    required_cols <- c("Item", cut_low, cut_high)
     missing_cols <- setdiff(required_cols, names(cutoff))
     if (length(missing_cols) > 0L) {
       stop(
@@ -301,13 +335,15 @@ RMitemInfit <- function(
   )
 
   # --- Assemble result data.frame (unrounded; kable rounds for display) -------
+  observed_msq <- as.numeric(if (statistic == "outfit") cfit$Outfit else cfit$Infit)
   item_fit_table <- data.frame(
     Item = names(data),
-    Infit_MSQ = as.numeric(cfit$Infit),
+    MSQ = observed_msq,
     Relative_location = as.numeric(relative_item_avg_locations),
     stringsAsFactors = FALSE,
     row.names = NULL
   )
+  names(item_fit_table)[names(item_fit_table) == "MSQ"] <- msq_col
 
   # --- Apply cutoff if provided ------------------------------------------------
   if (!is.null(cutoff)) {
@@ -324,7 +360,7 @@ RMitemInfit <- function(
         call. = FALSE
       )
     }
-    cutoff_sub <- cutoff[, c("Item", "infit_low", "infit_high")]
+    cutoff_sub <- cutoff[, c("Item", cut_low, cut_high)]
     item_fit_table <- merge(
       item_fit_table,
       cutoff_sub,
@@ -334,25 +370,26 @@ RMitemInfit <- function(
     # Restore original row order (merge may reorder)
     item_fit_table <- item_fit_table[match(data_items, item_fit_table$Item), ]
     rownames(item_fit_table) <- NULL
-    item_fit_table$Infit_low <- item_fit_table$infit_low
-    item_fit_table$Infit_high <- item_fit_table$infit_high
-    item_fit_table$infit_low <- NULL
-    item_fit_table$infit_high <- NULL
-    # Flagged labels the misfit direction: infit below the expected range =
+    item_fit_table[[low_col]] <- item_fit_table[[cut_low]]
+    item_fit_table[[high_col]] <- item_fit_table[[cut_high]]
+    item_fit_table[[cut_low]] <- NULL
+    item_fit_table[[cut_high]] <- NULL
+    # Flagged labels the misfit direction: MSQ below the expected range =
     # overfit (more predictable than the model expects), above = underfit
     # (noisier than expected); "" when within range.
     item_fit_table$Flagged <- ifelse(
-      item_fit_table$Infit_MSQ < item_fit_table$Infit_low,
+      item_fit_table[[msq_col]] < item_fit_table[[low_col]],
       "overfit",
       ifelse(
-        item_fit_table$Infit_MSQ > item_fit_table$Infit_high,
+        item_fit_table[[msq_col]] > item_fit_table[[high_col]],
         "underfit",
         ""
       )
     )
 
     if (p_value) {
-      # Compare observed infit to its simulated null (cutoff_full$results).
+      # Compare the observed statistic to its simulated null
+      # (cutoff_full$results).
       sim_items <- unique(cutoff_full$results$Item)
       if (!setequal(data_items, sim_items)) {
         stop(
@@ -361,39 +398,50 @@ RMitemInfit <- function(
           call. = FALSE
         )
       }
+      if (!sim_col %in% names(cutoff_full$results)) {
+        stop(
+          "The cutoff simulations ($results) have no `",
+          sim_col,
+          "` column, which `statistic = \"",
+          statistic,
+          "\"` requires.",
+          call. = FALSE
+        )
+      }
       sim_mat <- tapply(
-        cutoff_full$results$InfitMSQ,
+        cutoff_full$results[[sim_col]],
         list(cutoff_full$results$iteration, cutoff_full$results$Item),
         function(x) x[1L]
       )
-      observed <- stats::setNames(as.numeric(cfit$Infit), names(data))
+      observed <- stats::setNames(observed_msq, names(data))
       pv <- .bootstrap_pvalues(observed, sim_mat, correction = correction)
       idx <- match(item_fit_table$Item, pv$name)
-      item_fit_table$p_infit <- pv$p[idx]
-      item_fit_table$padj_infit <- pv$padj[idx]
-      sig <- item_fit_table$padj_infit < alpha
+      item_fit_table[[p_col]] <- pv$p[idx]
+      item_fit_table[[padj_col]] <- pv$padj[idx]
+      sig <- item_fit_table[[padj_col]] < alpha
       item_fit_table$Flagged <- ifelse(
         is.na(sig) | !sig,
         "",
-        ifelse(item_fit_table$Infit_MSQ > 1, "underfit", "overfit")
+        ifelse(item_fit_table[[msq_col]] > 1, "underfit", "overfit")
       )
       item_fit_table <- item_fit_table[, c(
         "Item",
-        "Infit_MSQ",
-        "Infit_low",
-        "Infit_high",
-        "p_infit",
-        "padj_infit",
+        msq_col,
+        low_col,
+        high_col,
+        p_col,
+        padj_col,
         "Flagged",
         "Relative_location"
       )]
     } else {
-      # Reorder: Item, Infit_MSQ, Infit_low, Infit_high, Flagged, Relative_location
+      # Reorder: Item, <stat>_MSQ, <stat>_low, <stat>_high, Flagged,
+      # Relative_location
       item_fit_table <- item_fit_table[, c(
         "Item",
-        "Infit_MSQ",
-        "Infit_low",
-        "Infit_high",
+        msq_col,
+        low_col,
+        high_col,
         "Flagged",
         "Relative_location"
       )]
@@ -401,9 +449,9 @@ RMitemInfit <- function(
   }
 
   # --- Sort if requested ------------------------------------------------------
-  if (!missing(sort) && identical(sort, "infit")) {
+  if (!missing(sort) && identical(sort, statistic)) {
     item_fit_table <- item_fit_table[
-      order(item_fit_table$Infit_MSQ, decreasing = TRUE),
+      order(item_fit_table[[msq_col]], decreasing = TRUE),
     ]
     rownames(item_fit_table) <- NULL
   }
@@ -414,17 +462,20 @@ RMitemInfit <- function(
   }
 
   # Kable display rounding (the dataframe output above stays unrounded)
-  item_fit_table <- .round_display(item_fit_table, c(
-    Infit_MSQ = 3, Infit_low = 3, Infit_high = 3,
-    p_infit = 4, padj_infit = 4, Relative_location = 2
-  ))
+  item_fit_table <- .round_display(
+    item_fit_table,
+    stats::setNames(
+      c(3, 3, 3, 4, 4, 2),
+      c(msq_col, low_col, high_col, p_col, padj_col, "Relative_location")
+    )
+  )
 
   if (p_value) {
     kbl_colnames <- c(
       "Item",
-      "Infit MSQ",
-      "Infit low",
-      "Infit high",
+      paste(stat_title, "MSQ"),
+      paste(stat_title, "low"),
+      paste(stat_title, "high"),
       "p",
       "p (adj)",
       "Flagged",
@@ -446,10 +497,14 @@ RMitemInfit <- function(
       "+1) = ",
       round(1 / (cutoff_n_iter + 1), 4),
       ".",
-      " Flagged: underfit (infit > 1, noisier) / overfit (infit < 1, more predictable)."
+      " Flagged: underfit (",
+      statistic,
+      " > 1, noisier) / overfit (",
+      statistic,
+      " < 1, more predictable)."
     )
   } else if (is.null(cutoff)) {
-    kbl_colnames <- c("Item", "Infit MSQ", "Relative location")
+    kbl_colnames <- c("Item", paste(stat_title, "MSQ"), "Relative location")
     kbl_caption <- paste0(
       "MSQ values based on conditional estimation. ",
       n_clause,
@@ -458,9 +513,9 @@ RMitemInfit <- function(
   } else {
     kbl_colnames <- c(
       "Item",
-      "Infit MSQ",
-      "Infit low",
-      "Infit high",
+      paste(stat_title, "MSQ"),
+      paste(stat_title, "low"),
+      paste(stat_title, "high"),
       "Flagged",
       "Relative location"
     )
@@ -489,7 +544,9 @@ RMitemInfit <- function(
     }
     kbl_caption <- paste0(
       kbl_caption,
-      " Flagged: overfit = infit below range (more predictable); ",
+      " Flagged: overfit = ",
+      statistic,
+      " below range (more predictable); ",
       "underfit = above range (noisier)."
     )
   }

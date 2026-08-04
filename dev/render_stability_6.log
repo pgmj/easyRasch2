@@ -1,0 +1,55 @@
+[31m
+
+processing file: infit_decision_stability.qmd
+[39m1/21                
+2/21 [setup]        
+3/21                
+4/21 [runner]       
+5/21                
+6/21 [arms]         
+7/21                
+8/21 [run]          
+9/21                
+10/21 [hdci_unstable]
+11/21                
+12/21 [p_unstable]   
+13/21                
+14/21 [disagree]     
+15/21                
+16/21 [sd_padj]      
+17/21                
+18/21 [sd_bounds]    
+19/21                
+20/21 [fig]          
+21/21                
+[31moutput file: infit_decision_stability.knit.md
+
+[39m[1mpandoc [22m
+  to: typst
+  output-file: infit_decision_stability.typ
+  standalone: true
+  shift-heading-level-by: -1
+  default-image-extension: svg
+  wrap: none
+  citeproc: false
+  toc: true
+  toc-depth: 2
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  papersize: a4
+  margin:
+    x: 2cm
+    'y': 2cm
+  fontsize: 9pt
+  title: Decision stability under reseeding, at realistic misfit
+  subtitle: How often does the same data give a different answer?
+  author: Magnus Johansson
+  date: today
+  
+[typst]: Compiling infit_decision_stability.typ to infit_decision_stability.pdf...DONE
+
+Output created: infit_decision_stability.pdf
+

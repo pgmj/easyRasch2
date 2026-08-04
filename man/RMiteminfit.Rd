@@ -11,7 +11,8 @@ RMitemInfit(
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
   alpha = 0.05,
   output = "kable",
-  sort
+  sort,
+  statistic = "infit"
 )
 }
 \arguments{
@@ -27,7 +28,8 @@ the data.frame is extracted automatically and the number of simulation
 iterations, \code{cutoff_method}, and \code{hdci_width} are included in the kable
 caption.
 \item The \verb{$item_cutoffs} data.frame from \code{\link{RMitemInfitCutoff}} directly: must
-have columns \code{Item}, \code{infit_low}, and \code{infit_high}.
+have columns \code{Item}, \code{infit_low}, and \code{infit_high} (or \code{outfit_low} and
+\code{outfit_high} when \code{statistic = "outfit"}).
 When provided, adds columns \code{Infit_low}, \code{Infit_high}, and \code{Flagged}
 to the result. \code{Flagged} labels the misfit direction: \code{"overfit"}
 (infit below the range -- more predictable than the model expects),
@@ -56,8 +58,19 @@ below \code{alpha}). Default \code{0.05}.}
 \code{"kable"} (default) for a formatted \code{knitr::kable()} table, or
 \code{"dataframe"} for the underlying data.frame.}
 
-\item{sort}{Optional character string. When \code{sort = "infit"}, rows are
-sorted by \code{Infit_MSQ} in descending order before output.}
+\item{sort}{Optional character string. When \code{sort} matches \code{statistic}
+(\code{"infit"} by default), rows are sorted by the reported MSQ column in
+descending order before output.}
+
+\item{statistic}{Character string. Which conditional fit statistic the table
+reports: \code{"infit"} (default) or \code{"outfit"}. Both come from the same
+\code{iarm::out_infit()} call and the same parametric bootstrap, so the choice
+only selects which one is displayed and tested. Column names, cutoff
+bounds, p-values and \code{Flagged} all follow it, and when \code{p_value = TRUE}
+the multiplicity correction is applied across items \emph{within} the selected
+statistic (the family is the \emph{k} items, not 2\emph{k} item-by-statistic
+combinations). Testing both statistics on the same items and reporting
+whichever flags is a larger family than either call corrects for.}
 }
 \value{
 \itemize{
@@ -76,6 +89,10 @@ p-value) and \code{padj_infit} (corrected p-value) are added and \code{Flagged}
 reflects items with \code{padj_infit < alpha} (direction from \code{Infit_MSQ}
 relative to 1).
 }
+
+With \code{statistic = "outfit"} the layout is identical and the column names
+follow the statistic: \code{Outfit_MSQ}, \code{Outfit_low}, \code{Outfit_high}, \code{p_outfit},
+\code{padj_outfit}.
 }
 \description{
 Computes conditional infit mean-square (MSQ) statistics for each item using
@@ -109,8 +126,8 @@ sample mean person location, providing a measure of item targeting.
 The \code{iarm} package must be installed (it is in Suggests, not Imports).
 
 \strong{Bootstrap p-values.} When \code{p_value = TRUE}, each item's observed
-infit is compared against its simulated null distribution (from
-\code{cutoff$results}). The per-item statistic is the residual studentised by
+infit (or outfit, per \code{statistic}) is compared against its simulated null
+distribution (from \code{cutoff$results}). The per-item statistic is the residual studentised by
 the bootstrap mean and SD -- deliberately the empirical SD rather than the
 Wilson-Hilferty / ZSTD transform, which is uninformative for conditional
 MSQ (Müller, 2020). The marginal p-value is the two-sided Monte-Carlo
@@ -175,6 +192,10 @@ if (requireNamespace("iarm", quietly = TRUE)) {
     # (use iterations >= 1000 in real analyses for stable p-values)
     RMitemInfit(sim_data, cutoff = cutoff_res, p_value = TRUE,
                 output = "dataframe")
+
+    # The same for conditional outfit MSQ
+    RMitemInfit(sim_data, cutoff = cutoff_res, p_value = TRUE,
+                statistic = "outfit", output = "dataframe")
   }
 }
 }

@@ -1,0 +1,5 @@
+[Fri Jul 31 22:47:27 CEST 2026] chain started; waiting for infit_misfit_mechanism.pdf
+[Sat Aug  1 00:17:28 CEST 2026] mechanism render errored; continuing anyway
+[Sat Aug  1 00:17:28 CEST 2026] mechanism study done; backing up stability cache
+[Sat Aug  1 00:17:28 CEST 2026] launching stability extension (3 -> 6 datasets)
+[Sat Aug  1 09:02:08 CEST 2026] stability render exited with status 0

@@ -1,0 +1,461 @@
+---
+title: "Interval width and bootstrap iterations for conditional infit MSQ"
+subtitle: "Simulation material for a follow-up to Johansson (2025)"
+author: "Magnus Johansson"
+date: today
+---
+
+## Scope
+
+Simulation material only — no manuscript text. Three questions:
+
+- **Study 1 (convergence).** The HDCI endpoint at width *w* is an extreme order
+  statistic, so its stability is governed by the expected number of bootstrap
+  draws in each tail, `(1 - w)/2 * B`. Where does the interval stop changing,
+  for each width, up to B = 10 000?
+- **Study 2 (error rates).** Detection and false positive rates over the full
+  `(w, B)` grid.
+- **Study 3 (multiplicity).** Marginal, FWER (Westfall-Young step-down) and BH
+  p-values, read off the same bootstraps as Study 2.
+
+Every `(rep, k, n, B)` cell uses an **independent** bootstrap; no draws are
+reused across B conditions.
+
+### Extending a run
+
+Replication counts are set by `R1` and `R2` below. Runs are **resumable**:
+raise `R2` from 250 to 500, re-render, and only replications 251-500 are
+computed — the cached cells are reused. Seeds are a deterministic function of
+`(rep, k, n, B)`, so a resumed run is identical to having run the larger number
+from the start. Results are checkpointed to disk after every chunk, so an
+interrupted run also resumes from where it stopped rather than from zero.
+
+Delete the `.rds` files to force a full re-run.
+
+```{r setup}
+suppressMessages({
+  library(easyRasch2)
+  library(ggdist)
+  library(eRm)
+  library(MASS)
+  library(parallel)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+})
+
+WIDTHS   <- c(0.90, 0.95, 0.99, 0.995, 0.999)
+NS       <- c(150, 250, 500, 1000)
+NCORES   <- 10
+ALPHA    <- 0.05
+CHUNK    <- 100          # cells per checkpoint
+
+B1 <- c(100, 200, 400, 1000, 2000, 5000, 10000)
+R1 <- 30
+RES_1 <- "infit_width_iterations_S1.rds"
+
+B2 <- c(100, 200, 400, 1000, 2000)
+R2 <- 250                # raise to 500 and re-render to extend
+NMISFITS <- c(0, 1, 3)
+RES_2 <- "infit_width_iterations_S2.rds"
+```
+
+### Resumable runner
+
+```{r runner}
+run_resumable <- function(res_file, grid, keys, fn,
+                          ncores = NCORES, chunk_size = CHUNK,
+                          extra = list()) {
+  key_of <- function(g) {
+    if (nrow(g) == 0L) return(character(0))
+    do.call(paste, c(unname(as.list(g[keys])), sep = "|"))
+  }
+  if (file.exists(res_file)) {
+    acc <- readRDS(res_file)
+  } else {
+    acc <- c(list(res = list(), grid = grid[0, , drop = FALSE],
+                  elapsed_min = 0), extra)
+  }
+  todo <- which(!(key_of(grid) %in% key_of(acc$grid)))
+  if (length(todo) == 0L) {
+    message("cached: ", nrow(acc$grid), " cells, nothing to run")
+    return(acc)
+  }
+  message("running ", length(todo), " new cells (",
+          nrow(acc$grid), " already cached)")
+  for (s in seq(1, length(todo), by = chunk_size)) {
+    idx <- todo[s:min(s + chunk_size - 1L, length(todo))]
+    t0 <- Sys.time()
+    out <- mclapply(idx, function(i) fn(grid[i, , drop = FALSE]),
+                    mc.cores = ncores)
+    acc$res <- c(acc$res, out)
+    acc$grid <- rbind(acc$grid, grid[idx, , drop = FALSE])
+    acc$elapsed_min <- acc$elapsed_min +
+      as.numeric(Sys.time() - t0, "mins")
+    acc <- utils::modifyList(acc, extra)
+    saveRDS(acc, res_file)
+    message("  checkpoint ", nrow(acc$grid), " / ", nrow(grid),
+            "  (", round(acc$elapsed_min, 1), " min)")
+  }
+  acc
+}
+```
+
+### Data generation
+
+Follows Johansson (2025): 20 dichotomous items, locations
+`runif(20, -2, 2)`, person locations bivariate normal with SD 1.5 and
+inter-dimensional correlation 0.15, misfit induced by loading items on a second
+dimension, misfitting items at approximately 0, -1 and -2 logits.
+
+```{r gen}
+make_master <- function(n_misfit, N = 10000, seed = 20250727) {
+  set.seed(seed)
+  locs <- runif(20, -2, 2)
+  misfit_idx <- integer(0)
+  for (tg in c(0, -1, -2)) {
+    cand <- setdiff(order(abs(locs - tg)), misfit_idx)[1]
+    misfit_idx <- c(misfit_idx, cand)
+  }
+  use <- misfit_idx[seq_len(n_misfit)]
+  W <- cbind(rep(1, 20), rep(0, 20))
+  if (n_misfit > 0) W[use, ] <- matrix(c(0, 1), nrow = length(use), ncol = 2,
+                                       byrow = TRUE)
+  Sigma <- matrix(c(1.5^2, .15 * 1.5^2, .15 * 1.5^2, 1.5^2), 2, 2)
+  set.seed(seed + n_misfit)
+  th <- MASS::mvrnorm(N, mu = c(0, 0), Sigma = Sigma)
+  d <- as.data.frame(eRm::sim.xdim(persons = th, items = locs,
+                                   Sigma = Sigma, weightmat = W))
+  names(d) <- paste0("V", 1:20)
+  list(data = d, locs = locs, misfit = use)
+}
+
+masters <- lapply(NMISFITS, make_master)
+names(masters) <- as.character(NMISFITS)
+misfit_all <- masters[["3"]]$misfit
+locs <- masters[["3"]]$locs
+
+data.frame(item = paste0("V", misfit_all), intended = c(0, -1, -2),
+           actual = round(locs[misfit_all], 2))
+```
+
+```{r helpers}
+bounds_at <- function(results, width, items) {
+  vapply(items, function(it) {
+    v <- results$InfitMSQ[results$Item == it]
+    as.numeric(ggdist::hdci(v, .width = width))[1:2]
+  }, numeric(2))
+}
+
+# 0 = not flagged, 1 = overfit (below interval), 2 = underfit (above)
+flag_code <- function(msq, lo, hi) {
+  ifelse(msq > hi, 2L, ifelse(msq < lo, 1L, 0L))
+}
+```
+
+## Study 1: convergence of the interval
+
+Null data only (k = 0), independent bootstrap per B.
+
+```{r s1}
+one_rep_S1 <- function(g) {
+  rep <- g$rep; n <- g$n
+  set.seed(5e7 + 1e3 * n + rep)
+  d <- masters[["0"]]$data[sample(10000, n), ]
+  items <- names(d)
+  out <- vector("list", length(B1))
+  for (j in seq_along(B1)) {
+    co <- try(RMitemInfitCutoff(d, iterations = B1[j], parallel = FALSE,
+                                seed = rep * 100 + j, verbose = FALSE),
+              silent = TRUE)
+    if (inherits(co, "try-error")) next
+    out[[j]] <- do.call(rbind, lapply(WIDTHS, function(w) {
+      b <- bounds_at(co$results, w, items)
+      data.frame(B = B1[j], w = w, item = seq_along(items),
+                 width = b[2, ] - b[1, ])
+    }))
+  }
+  do.call(rbind, out)
+}
+
+grid1 <- expand.grid(rep = 1:R1, n = NS)
+s1 <- run_resumable(RES_1, grid1, c("rep", "n"), one_rep_S1)
+
+long1 <- do.call(rbind, lapply(seq_len(nrow(s1$grid)), function(i) {
+  r <- s1$res[[i]]
+  if (is.null(r)) return(NULL)
+  cbind(rep = s1$grid$rep[i], n = s1$grid$n[i], r)
+}))
+cat("Study 1:", nrow(s1$grid), "cells |", round(s1$elapsed_min, 1), "min\n")
+```
+
+### Median interval width by B and width
+
+```{r s1tab}
+long1 |>
+  group_by(n, w, B) |>
+  summarise(v = median(width), .groups = "drop") |>
+  pivot_wider(names_from = B, values_from = v, names_prefix = "B=") |>
+  mutate(across(where(is.numeric), \(x) round(x, 3))) |>
+  arrange(n, w)
+```
+
+### Relative to the B = 10 000 reference
+
+Values below 1 mean the interval is too **narrow**, which inflates the false
+positive rate.
+
+```{r s1rel}
+long1 |>
+  group_by(n, w, B) |>
+  summarise(v = median(width), .groups = "drop") |>
+  group_by(n, w) |>
+  mutate(rel = round(v / v[B == max(B)], 3)) |>
+  select(-v) |>
+  pivot_wider(names_from = B, values_from = rel, names_prefix = "B=") |>
+  arrange(n, w)
+```
+
+### Draws expected in each tail
+
+```{r s1tail}
+expand.grid(w = WIDTHS, B = B1) |>
+  mutate(per_tail = (1 - w) / 2 * B) |>
+  pivot_wider(names_from = B, values_from = per_tail, names_prefix = "B=") |>
+  mutate(across(where(is.numeric), \(x) round(x, 1)))
+```
+
+```{r s1fig, fig.width = 9, fig.height = 5}
+long1 |>
+  group_by(n, w, B) |>
+  summarise(v = median(width), .groups = "drop") |>
+  group_by(n, w) |>
+  mutate(rel = v / v[B == max(B)]) |>
+  ggplot(aes(B, rel, colour = factor(w))) +
+  geom_hline(yintercept = 1, linetype = 2) +
+  geom_line() + geom_point(size = 1) +
+  scale_x_log10() +
+  facet_wrap(~n, labeller = label_both) +
+  labs(x = "Bootstrap iterations (log scale)",
+       y = "Interval width relative to largest B",
+       colour = "hdci_width") +
+  theme_minimal(base_size = 11)
+```
+
+## Study 2 and 3: error rates and multiplicity
+
+One pass produces both: HDCI flags at every width, and the three p-value rules.
+
+```{r s2}
+one_rep_S2 <- function(g) {
+  rep <- g$rep; k <- g$k; n <- g$n
+  set.seed(6e7 + 1e6 * k + 1e3 * n + rep)
+  d <- masters[[as.character(k)]]$data[sample(10000, n), ]
+  items <- names(d)
+  obs <- RMitemInfit(d, output = "dataframe")
+  msq <- obs$Infit_MSQ[match(items, obs$Item)]
+  hd <- vector("list", length(B2)); pv <- vector("list", length(B2))
+  for (j in seq_along(B2)) {
+    co <- try(RMitemInfitCutoff(d, iterations = B2[j], parallel = FALSE,
+                                seed = rep * 100 + j, verbose = FALSE),
+              silent = TRUE)
+    if (inherits(co, "try-error")) next
+    hd[[j]] <- do.call(rbind, lapply(WIDTHS, function(w) {
+      b <- bounds_at(co$results, w, items)
+      data.frame(B = B2[j], w = w, item = seq_along(items),
+                 code = flag_code(msq, b[1, ], b[2, ]))
+    }))
+    fw <- try(suppressWarnings(
+      RMitemInfit(d, cutoff = co, p_value = TRUE, correction = "fwer",
+                  alpha = ALPHA, output = "dataframe")), silent = TRUE)
+    bh <- try(suppressWarnings(
+      RMitemInfit(d, cutoff = co, p_value = TRUE, correction = "fdr_bh",
+                  alpha = ALPHA, output = "dataframe")), silent = TRUE)
+    if (!inherits(fw, "try-error") && !inherits(bh, "try-error")) {
+      i1 <- match(items, fw$Item); i2 <- match(items, bh$Item)
+      pv[[j]] <- data.frame(B = B2[j], item = seq_along(items),
+                            p_marg = fw$p_infit[i1],
+                            padj_fwer = fw$padj_infit[i1],
+                            padj_bh = bh$padj_infit[i2])
+    }
+  }
+  list(hdci = do.call(rbind, hd), pval = do.call(rbind, pv))
+}
+
+grid2 <- expand.grid(rep = 1:R2, n = NS, k = NMISFITS)
+s2 <- run_resumable(RES_2, grid2, c("rep", "k", "n"), one_rep_S2,
+                    extra = list(misfit = misfit_all))
+
+bind_part <- function(part) {
+  do.call(rbind, lapply(seq_len(nrow(s2$grid)), function(i) {
+    r <- s2$res[[i]][[part]]
+    if (is.null(r)) return(NULL)
+    cbind(rep = s2$grid$rep[i], k = s2$grid$k[i], n = s2$grid$n[i], r)
+  }))
+}
+tag <- function(x) x |>
+  mutate(is_misfit = mapply(function(k, it) it %in% s2$misfit[seq_len(k)],
+                            k, item))
+hdci2 <- bind_part("hdci") |> tag() |> mutate(flag = as.integer(code > 0))
+pval2 <- bind_part("pval") |> tag()
+cat("Study 2/3:", nrow(s2$grid), "cells |", round(s2$elapsed_min, 1), "min |",
+    length(unique(s2$grid$rep)), "reps\n")
+```
+
+### Family-wise false positive rate under a true model (k = 0)
+
+```{r s2fwer}
+hdci2 |>
+  filter(k == 0) |>
+  group_by(w, B, n, rep) |>
+  summarise(any = as.integer(sum(flag) > 0), .groups = "drop") |>
+  group_by(w, B, n) |>
+  summarise(v = 100 * mean(any), .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = v, names_prefix = "n=") |>
+  mutate(across(where(is.numeric), \(x) round(x, 1))) |>
+  arrange(w, B)
+```
+
+### Detection and false positives (k = 3)
+
+```{r s2det}
+hdci2 |>
+  filter(k == 3) |>
+  mutate(type = ifelse(is_misfit, "detection", "false_pos")) |>
+  group_by(w, B, n, type) |>
+  summarise(v = 100 * mean(flag), .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = v, names_prefix = "n=") |>
+  mutate(across(where(is.numeric), \(x) round(x, 1))) |>
+  arrange(type, w, B)
+```
+
+### Expected flags per analysis (k = 3)
+
+```{r s2exp}
+hdci2 |>
+  filter(k == 3) |>
+  group_by(w, B, n, rep) |>
+  summarise(t = sum(flag[is_misfit]), f = sum(flag[!is_misfit]),
+            .groups = "drop") |>
+  group_by(w, B, n) |>
+  summarise(true = round(mean(t), 2), false = round(mean(f), 2),
+            .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = c(true, false)) |>
+  arrange(w, B)
+```
+
+### Direction of false flags under a true model
+
+```{r s2dir}
+hdci2 |>
+  filter(k == 0, code > 0) |>
+  mutate(dir = ifelse(code == 1, "overfit", "underfit")) |>
+  group_by(w, B, dir) |>
+  summarise(ct = n(), .groups = "drop") |>
+  group_by(w, B) |>
+  mutate(pct = round(100 * ct / sum(ct), 1)) |>
+  ungroup() |> select(-ct) |>
+  pivot_wider(names_from = dir, values_from = pct, values_fill = 0)
+```
+
+## Study 3: FWER vs BH
+
+### Per-item rates
+
+```{r s3rates}
+pv_long <- pval2 |>
+  mutate(fwer = as.integer(padj_fwer < ALPHA),
+         bh = as.integer(padj_bh < ALPHA),
+         uncorr = as.integer(p_marg < ALPHA)) |>
+  pivot_longer(c(fwer, bh, uncorr), names_to = "rule", values_to = "flag")
+
+pv_long |>
+  filter(k %in% c(0, 3)) |>
+  mutate(type = case_when(k == 0 ~ "type_I", is_misfit ~ "detection",
+                          TRUE ~ "false_pos")) |>
+  group_by(rule, B, n, type) |>
+  summarise(v = 100 * mean(flag, na.rm = TRUE), .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = v, names_prefix = "n=") |>
+  mutate(across(where(is.numeric), \(x) round(x, 1))) |>
+  arrange(type, rule, B)
+```
+
+### Family-wise error rate under a true model
+
+The quantity FWER is meant to bound. BH bounds the false discovery rate
+instead, so it is not expected to sit at alpha here — the comparison shows what
+each actually delivers.
+
+```{r s3fwe}
+pv_long |>
+  filter(k == 0) |>
+  group_by(rule, B, n, rep) |>
+  summarise(any = as.integer(sum(flag, na.rm = TRUE) > 0), .groups = "drop") |>
+  group_by(rule, B, n) |>
+  summarise(v = 100 * mean(any), .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = v, names_prefix = "n=") |>
+  mutate(across(where(is.numeric), \(x) round(x, 1))) |>
+  arrange(rule, B)
+```
+
+### Realised false discovery proportion (k = 3)
+
+Among items flagged, the proportion that were in fact fitting. This is what BH
+targets.
+
+```{r s3fdp}
+pv_long |>
+  filter(k == 3, rule %in% c("fwer", "bh")) |>
+  group_by(rule, B, n, rep) |>
+  summarise(flagged = sum(flag, na.rm = TRUE),
+            false = sum(flag[!is_misfit], na.rm = TRUE), .groups = "drop") |>
+  filter(flagged > 0) |>
+  group_by(rule, B, n) |>
+  summarise(fdp = round(100 * mean(false / flagged), 1), .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = fdp, names_prefix = "n=") |>
+  arrange(rule, B)
+```
+
+### The BH reachability floor
+
+The smallest attainable BH-adjusted p-value is `m / (B + 1)` for *m*
+comparisons, so BH cannot flag a single item unless `B >= m/alpha - 1`. With
+m = 20 and alpha = .05 that is B >= 399. FWER's studentised-max p-value has no
+such floor — it needs only `B >= 1/alpha - 1 = 19`.
+
+```{r s3floor}
+data.frame(B = B2) |>
+  mutate(marginal_floor = round(1 / (B + 1), 5),
+         bh_min_adj_p = round(20 / (B + 1), 4),
+         bh_can_flag_one_item = 20 / (B + 1) < ALPHA)
+```
+
+Observed minima, as a check:
+
+```{r s3floorobs}
+pval2 |>
+  group_by(B) |>
+  summarise(min_p_marg = round(min(p_marg, na.rm = TRUE), 5),
+            min_padj_fwer = round(min(padj_fwer, na.rm = TRUE), 5),
+            min_padj_bh = round(min(padj_bh, na.rm = TRUE), 5),
+            .groups = "drop")
+```
+
+```{r s3fig, fig.width = 9, fig.height = 4.5}
+pv_long |>
+  filter(k == 3) |>
+  mutate(type = ifelse(is_misfit, "Detection", "False positives")) |>
+  group_by(rule, B, n, type) |>
+  summarise(v = 100 * mean(flag, na.rm = TRUE), .groups = "drop") |>
+  ggplot(aes(factor(B), v, colour = rule, group = rule)) +
+  geom_line() + geom_point() +
+  facet_grid(type ~ n, scales = "free_y", labeller = label_both) +
+  labs(x = "Bootstrap iterations (B)", y = "Percent", colour = "Rule") +
+  theme_minimal(base_size = 10)
+```
+
+## Notes
+
+Self-contained apart from exported easyRasch2 functions; relative paths
+throughout, so the whole set can be relocated to a reproducibility folder
+without modification.

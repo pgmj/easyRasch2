@@ -1,0 +1,466 @@
+---
+title: "Generalized S-X2 compared to conditional infit and item-restscore"
+subtitle: "Detection of 1-3 misfitting items under multidimensionality"
+author: "Magnus Johansson"
+date: today
+---
+
+## Purpose
+
+Johansson (2025) compared conditional item infit (with simulation-based cutoffs)
+and item-restscore for detecting item misfit caused by multidimensionality, and
+found that neither method behaves well at large sample sizes: false positive
+rates rise sharply from n = 1000 onwards. Kang and Chen (2008) report that the
+generalized S-X2 index maintains nominal Type I error rates from n = 500 up to
+n = 5000, which raises the question of whether it could fill that gap.
+
+Two things make this worth testing rather than assuming:
+
+1. Kang and Chen only evaluated power in conditions where **every** item was
+   misfitting, and where misfit was a clean nested-model contrast (RSM data
+   calibrated as PCM, etc.). The realistic case of a few misfitting items among
+   fitting ones was explicitly left for future work.
+2. The follow-up study on the graded response model found S-X2 power to be
+   "much lower when the source of misfit was multidimensionality" than when it
+   came from a wrong item response function. Multidimensionality is precisely
+   the misfit source used in Johansson (2025), and the dominant concern in
+   applied Rasch analysis.
+
+This simulation therefore replicates the Johansson (2025) design and adds
+S-X2 as a fourth method, so all methods are evaluated on the *same* datasets.
+
+## Design
+
+Following Johansson (2025):
+
+- 20 dichotomous items, locations drawn from `runif(20, -2, 2)`
+- person locations from a bivariate normal, SD 1.5, correlation 0.15 between
+  dimensions (lower correlation = stronger multidimensionality)
+- misfit induced with `eRm::sim.xdim()` by loading selected items on the second
+  dimension
+- misfitting items chosen at approximately 0, -1 and -2 logits relative to the
+  sample mean, to vary targeting
+- master datasets of 10 000 respondents, from which samples are drawn
+- sample sizes 150, 250, 500, 1000, 2000
+
+Three misfit conditions are used: **0** misfitting items (a clean null, to
+measure Type I error uncontaminated by other misfitting items), **1**
+(the on-target item only), and **3**.
+
+Four decision rules are compared:
+
+| Label | Rule |
+|---|---|
+| `infit` | conditional infit MSQ outside simulation-based cutoffs (`RMitemInfitCutoff`, 100 iterations for n < 500, 200 otherwise) |
+| `restscore` | item-restscore gamma, BH-corrected p < .05 |
+| `sx2_bh` | generalized S-X2, BH-corrected p < .05 |
+| `sx2_rmsea` | RMSEA.S_X2 > .05 (effect size, no significance test) |
+
+Uncorrected S-X2 p-values are also recorded, since infit cutoffs are not
+multiplicity-corrected and the comparison should be readable either way.
+
+S-X2 is computed via `mirt::itemfit()`, which implements the Kang and Chen
+generalization. Note that this estimates item parameters by MML under a normal
+θ prior, whereas the other two methods use CML — see the discussion at the end.
+
+```{r setup}
+suppressMessages({
+  library(mirt)
+  library(easyRasch2)
+  library(eRm)
+  library(MASS)
+  library(parallel)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+})
+
+R_REPS   <- 200
+NS       <- c(150, 250, 500, 1000, 2000)
+NMISFITS <- c(0, 1, 3)
+NCORES   <- 12   # performance cores only (M4 Max)
+RES_FILE <- "sx2_itemfit_sim_results.rds"
+```
+
+### Data generation
+
+```{r gen}
+make_master <- function(n_misfit, N = 10000, seed = 20250727) {
+  set.seed(seed)
+  locs <- runif(20, -2, 2)
+  # items closest to 0, -1, -2 logits (sample theta mean = 0)
+  misfit_idx <- integer(0)
+  for (tg in c(0, -1, -2)) {
+    cand <- setdiff(order(abs(locs - tg)), misfit_idx)[1]
+    misfit_idx <- c(misfit_idx, cand)
+  }
+  use <- misfit_idx[seq_len(n_misfit)]
+  W <- cbind(rep(1, 20), rep(0, 20))
+  if (n_misfit > 0) W[use, ] <- matrix(c(0, 1), nrow = length(use), ncol = 2,
+                                       byrow = TRUE)
+  Sigma <- matrix(c(1.5^2, .15 * 1.5^2, .15 * 1.5^2, 1.5^2), 2, 2)
+  set.seed(seed + n_misfit)
+  th <- MASS::mvrnorm(N, mu = c(0, 0), Sigma = Sigma)
+  d <- as.data.frame(eRm::sim.xdim(persons = th, items = locs,
+                                   Sigma = Sigma, weightmat = W))
+  names(d) <- paste0("V", 1:20)
+  list(data = d, locs = locs, misfit = use, misfit_all = misfit_idx)
+}
+
+masters <- lapply(NMISFITS, make_master)
+names(masters) <- as.character(NMISFITS)
+misfit_all <- masters[["3"]]$misfit
+locs <- masters[["3"]]$locs
+
+data.frame(
+  item = paste0("V", misfit_all),
+  intended_location = c(0, -1, -2),
+  actual_location = round(locs[misfit_all], 2)
+)
+```
+
+### One replication
+
+```{r onerep}
+one_rep <- function(rep, k, n) {
+  set.seed(1e6 * k + 1e3 * n + rep)
+  md <- masters[[as.character(k)]]$data
+  d  <- md[sample(nrow(md), n), ]
+  iters <- if (n < 500) 100 else 200
+  out <- matrix(NA_integer_, nrow = 20, ncol = 5,
+                dimnames = list(NULL, c("infit", "restscore", "sx2_raw",
+                                        "sx2_bh", "sx2_rmsea")))
+  try({
+    co <- RMitemInfitCutoff(d, iterations = iters, parallel = FALSE,
+                            seed = rep, verbose = FALSE)
+    fi <- RMitemInfit(d, cutoff = co, output = "dataframe")
+    out[, "infit"] <- as.integer(fi$Flagged[match(names(d), fi$Item)] != "")
+  }, silent = TRUE)
+  try({
+    rs <- RMitemRestscore(d, output = "dataframe", p_adj = "BH")
+    out[, "restscore"] <- as.integer(rs$Flagged[match(names(d), rs$Item)] != "")
+  }, silent = TRUE)
+  try({
+    mm <- mirt(d, 1, itemtype = "Rasch", verbose = FALSE)
+    f  <- mirt::itemfit(mm, fit_stats = "S_X2")
+    i  <- match(names(d), f$item)
+    out[, "sx2_raw"]   <- as.integer(f$p.S_X2[i] < .05)
+    out[, "sx2_bh"]    <- as.integer(p.adjust(f$p.S_X2, "BH")[i] < .05)
+    out[, "sx2_rmsea"] <- as.integer(f$RMSEA.S_X2[i] > .05)
+  }, silent = TRUE)
+  out
+}
+```
+
+### Run
+
+Results are cached; delete `r RES_FILE` to force a re-run.
+
+```{r run}
+grid <- expand.grid(rep = 1:R_REPS, n = NS, k = NMISFITS)
+
+if (file.exists(RES_FILE)) {
+  sim <- readRDS(RES_FILE)
+} else {
+  t0 <- Sys.time()
+  res <- mclapply(seq_len(nrow(grid)),
+                  function(i) one_rep(grid$rep[i], grid$k[i], grid$n[i]),
+                  mc.cores = NCORES)
+  sim <- list(res = res, grid = grid, misfit = misfit_all, locs = locs,
+              elapsed_min = as.numeric(Sys.time() - t0, "mins"))
+  saveRDS(sim, RES_FILE)
+}
+
+long <- do.call(rbind, lapply(seq_len(nrow(sim$grid)), function(i) {
+  m <- sim$res[[i]]
+  data.frame(k = sim$grid$k[i], n = sim$grid$n[i], rep = sim$grid$rep[i],
+             item = 1:20, m)
+})) |>
+  pivot_longer(c(infit, restscore, sx2_raw, sx2_bh, sx2_rmsea),
+               names_to = "method", values_to = "flag") |>
+  mutate(is_misfit = mapply(function(k, it) it %in% sim$misfit[seq_len(k)],
+                            k, item))
+
+cat("failed method-replications:", sum(is.na(long$flag)), "of", nrow(long), "\n")
+```
+
+## Results
+
+### Type I error under a true Rasch model (k = 0)
+
+With no misfitting items present, the flag rate on any item is a false positive.
+
+```{r null}
+long |>
+  filter(k == 0) |>
+  group_by(method, n) |>
+  summarise(fp = 100 * mean(flag, na.rm = TRUE), .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = fp, names_prefix = "n=") |>
+  mutate(across(where(is.numeric), \(x) round(x, 1)))
+```
+
+### Detection rate, 1 misfitting item
+
+```{r det1}
+long |>
+  filter(k == 1, is_misfit) |>
+  group_by(method, n) |>
+  summarise(det = 100 * mean(flag, na.rm = TRUE), .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = det, names_prefix = "n=") |>
+  mutate(across(where(is.numeric), \(x) round(x, 1)))
+```
+
+False positives on the 19 fitting items in the same datasets:
+
+```{r fp1}
+long |>
+  filter(k == 1, !is_misfit) |>
+  group_by(method, n) |>
+  summarise(fp = 100 * mean(flag, na.rm = TRUE), .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = fp, names_prefix = "n=") |>
+  mutate(across(where(is.numeric), \(x) round(x, 1)))
+```
+
+### Detection rate, 3 misfitting items
+
+Broken out by item, since targeting matters.
+
+```{r det3}
+long |>
+  filter(k == 3, is_misfit) |>
+  mutate(target = c("0 logits", "-1 logits", "-2 logits")[match(item, sim$misfit)]) |>
+  group_by(method, target, n) |>
+  summarise(det = 100 * mean(flag, na.rm = TRUE), .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = det, names_prefix = "n=") |>
+  mutate(across(where(is.numeric), \(x) round(x, 1))) |>
+  arrange(factor(target, levels = c("0 logits", "-1 logits", "-2 logits")), method)
+```
+
+False positives on the 17 fitting items:
+
+```{r fp3}
+long |>
+  filter(k == 3, !is_misfit) |>
+  group_by(method, n) |>
+  summarise(fp = 100 * mean(flag, na.rm = TRUE), .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = fp, names_prefix = "n=") |>
+  mutate(across(where(is.numeric), \(x) round(x, 1)))
+```
+
+### Figure: detection vs false positives, 3 misfitting items
+
+```{r fig, fig.width = 9, fig.height = 5}
+plot_dat <- long |>
+  filter(k == 3, method %in% c("infit", "restscore", "sx2_bh", "sx2_rmsea")) |>
+  mutate(type = ifelse(is_misfit, "Detection (misfitting items)",
+                       "False positives (fitting items)")) |>
+  group_by(method, n, type) |>
+  summarise(pct = 100 * mean(flag, na.rm = TRUE), .groups = "drop")
+
+ggplot(plot_dat, aes(factor(n), pct, fill = method)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~type) +
+  labs(x = "Sample size", y = "Percent", fill = "Method") +
+  theme_minimal(base_size = 12)
+```
+
+## Supplementary study: weaker multidimensionality
+
+The main study uses an inter-dimensional correlation of 0.15, which is strong
+misfit — detection saturates at 100% for all methods from n = 500 onwards, so
+the main study discriminates between methods almost entirely on false
+positives.
+
+The `sx2_rmsea` rule performs strikingly well at n >= 500 there, but it applies
+a **fixed** threshold of .05 to an effect size. Its performance therefore
+depends on how far the true misfit sits above that threshold, and a strong
+misfit condition flatters it. This supplement re-runs the k = 3 condition with
+inter-dimensional correlations of 0.50 and 0.75 (progressively weaker
+multidimensionality) and records the raw `RMSEA.S_X2` values, to check whether
+the rule survives when the effect is subtle.
+
+```{r gen2}
+make_master_r <- function(rho, n_misfit = 3, N = 10000, seed = 20250727) {
+  set.seed(seed)
+  locs <- runif(20, -2, 2)
+  misfit_idx <- integer(0)
+  for (tg in c(0, -1, -2)) {
+    cand <- setdiff(order(abs(locs - tg)), misfit_idx)[1]
+    misfit_idx <- c(misfit_idx, cand)
+  }
+  use <- misfit_idx[seq_len(n_misfit)]
+  W <- cbind(rep(1, 20), rep(0, 20))
+  W[use, ] <- matrix(c(0, 1), nrow = length(use), ncol = 2, byrow = TRUE)
+  Sigma <- matrix(c(1.5^2, rho * 1.5^2, rho * 1.5^2, 1.5^2), 2, 2)
+  set.seed(seed + round(rho * 100))
+  th <- MASS::mvrnorm(N, mu = c(0, 0), Sigma = Sigma)
+  d <- as.data.frame(eRm::sim.xdim(persons = th, items = locs,
+                                   Sigma = Sigma, weightmat = W))
+  names(d) <- paste0("V", 1:20)
+  list(data = d, locs = locs, misfit = use)
+}
+
+RHOS  <- c(0.50, 0.75)
+NS2   <- c(250, 500, 1000, 2000)
+R2    <- 150
+RES2  <- "sx2_itemfit_sim_weak_results.rds"
+
+masters2 <- lapply(RHOS, make_master_r)
+names(masters2) <- as.character(RHOS)
+
+one_rep2 <- function(rep, rho, n) {
+  set.seed(1e6 * round(rho * 100) + 1e3 * n + rep)
+  md <- masters2[[as.character(rho)]]$data
+  d  <- md[sample(nrow(md), n), ]
+  iters <- if (n < 500) 100 else 200
+  out <- data.frame(item = 1:20, infit = NA_integer_, restscore = NA_integer_,
+                    sx2_bh = NA_integer_, sx2_rmsea = NA_integer_,
+                    rmsea = NA_real_)
+  try({
+    co <- RMitemInfitCutoff(d, iterations = iters, parallel = FALSE,
+                            seed = rep, verbose = FALSE)
+    fi <- RMitemInfit(d, cutoff = co, output = "dataframe")
+    out$infit <- as.integer(fi$Flagged[match(names(d), fi$Item)] != "")
+  }, silent = TRUE)
+  try({
+    rs <- RMitemRestscore(d, output = "dataframe", p_adj = "BH")
+    out$restscore <- as.integer(rs$Flagged[match(names(d), rs$Item)] != "")
+  }, silent = TRUE)
+  try({
+    mm <- mirt(d, 1, itemtype = "Rasch", verbose = FALSE)
+    f  <- mirt::itemfit(mm, fit_stats = "S_X2")
+    i  <- match(names(d), f$item)
+    out$sx2_bh    <- as.integer(p.adjust(f$p.S_X2, "BH")[i] < .05)
+    out$rmsea     <- f$RMSEA.S_X2[i]
+    out$sx2_rmsea <- as.integer(f$RMSEA.S_X2[i] > .05)
+  }, silent = TRUE)
+  out
+}
+
+grid2 <- expand.grid(rep = 1:R2, n = NS2, rho = RHOS)
+
+if (file.exists(RES2)) {
+  sim2 <- readRDS(RES2)
+} else {
+  res2 <- mclapply(seq_len(nrow(grid2)),
+                   function(i) one_rep2(grid2$rep[i], grid2$rho[i], grid2$n[i]),
+                   mc.cores = NCORES)
+  sim2 <- list(res = res2, grid = grid2, misfit = masters2[["0.5"]]$misfit)
+  saveRDS(sim2, RES2)
+}
+
+long2 <- do.call(rbind, lapply(seq_len(nrow(sim2$grid)), function(i)
+  cbind(sim2$grid[i, ], sim2$res[[i]]))) |>
+  mutate(is_misfit = item %in% sim2$misfit)
+```
+
+Detection of the three misfitting items:
+
+```{r det2}
+long2 |>
+  filter(is_misfit) |>
+  pivot_longer(c(infit, restscore, sx2_bh, sx2_rmsea),
+               names_to = "method", values_to = "flag") |>
+  group_by(rho, method, n) |>
+  summarise(v = 100 * mean(flag, na.rm = TRUE), .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = v, names_prefix = "n=") |>
+  mutate(across(where(is.numeric), \(x) round(x, 1))) |>
+  arrange(rho, method)
+```
+
+False positives on the 17 fitting items:
+
+```{r fp2}
+long2 |>
+  filter(!is_misfit) |>
+  pivot_longer(c(infit, restscore, sx2_bh, sx2_rmsea),
+               names_to = "method", values_to = "flag") |>
+  group_by(rho, method, n) |>
+  summarise(v = 100 * mean(flag, na.rm = TRUE), .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = v, names_prefix = "n=") |>
+  mutate(across(where(is.numeric), \(x) round(x, 1))) |>
+  arrange(rho, method)
+```
+
+Median `RMSEA.S_X2` for misfitting vs fitting items, against the .05 threshold:
+
+```{r rmsea2}
+long2 |>
+  group_by(rho, n, type = ifelse(is_misfit, "misfitting", "fitting")) |>
+  summarise(median_rmsea = round(median(rmsea, na.rm = TRUE), 3),
+            .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = median_rmsea, names_prefix = "n=")
+```
+
+## Conclusions
+
+**1. S-X2 has no power advantage, and a power disadvantage against subtle
+misfit.** With strong multidimensionality (rho = 0.15) all methods are
+equivalent and saturate. With rho = 0.75, conditional infit clearly dominates:
+23.8 / 36.4 / 69.6 / 94.7 percent detection at n = 250 / 500 / 1000 / 2000,
+against 9.3 / 23.3 / 39.6 / 77.8 for S-X2. The concern raised by the Kang and
+Chen GRM follow-up — weak power against multidimensionality — does not appear
+under strong misfit but is clearly visible once the misfit is subtle.
+
+**2. S-X2 does control the false positive cascade.** This is its real
+contribution. With three strongly misfitting items at n = 2000, false positives
+on fitting items are 54.2 percent for infit and 80.6 percent for item-restscore,
+against 16.9 percent for S-X2. On the practically relevant metric — recovering
+all three misfitting items with no false positives — S-X2 achieves 72 percent
+at n = 1000-2000 with rho = 0.5, where infit manages 26 and 3.3 percent.
+
+**3. Infit and item-restscore are not miscalibrated.** Under a true Rasch model
+with no misfitting items, false positive rates are 0.1-1.6 percent at every
+sample size, including n = 2000. The large-sample false positives reported in
+Johansson (2025) are therefore entirely the overfit cascade caused by the
+misfitting items themselves, not a defect in the simulation-based cutoffs.
+
+**4. A fixed RMSEA threshold of .05 is not usable.** It fails in both
+directions. At n = 150 under a true model it flags 26.2 percent of items,
+because the null RMSEA has not yet shrunk. At rho = 0.75 the median RMSEA of
+genuinely misfitting items is .030-.043 — below the threshold — so detection
+falls to 0.4 percent at n = 2000, and gets *worse* as n grows, since the
+estimate concentrates around a true value under the cutoff.
+
+**5. The implied design.** RMSEA.S_X2 has the property that is wanted — it does
+not inflate with sample size (median .058-.075 for misfitting items across
+n = 250-2000 at rho = 0.5) — but the threshold is wrong and is itself
+sample-size dependent. Median RMSEA for fitting items is .000-.007 at
+n >= 250, far below .05. This is exactly the problem `RMitemInfitCutoff` solves
+for infit, which suggests a simulation-based cutoff for RMSEA.S_X2 would set a
+much lower and n-appropriate threshold, and would likely recover the rho = 0.75
+detection that the fixed rule misses. **This is a hypothesis, not a result — it
+has not been tested here.**
+
+Overall: S-X2 is a large-sample complement to conditional infit, not a
+replacement for it. Its niche is several strongly misfitting items at
+n >= 1000, which is precisely where the existing methods fail.
+
+## Notes on interpretation
+
+`sx2_rmsea` uses a fixed RMSEA cutoff of .05, borrowed from SEM convention.
+Item-level RMSEA cutoffs are not well established, and the null RMSEA shrinks
+with sample size, so this rule is expected to behave asymmetrically across n.
+It is included to separate two questions that the S-X2 significance test
+confounds: whether the departure is detectable, and whether it is large.
+
+A caveat on estimation: `mirt::itemfit()` estimates item parameters by MML
+under a normal θ prior. For the Rasch family the S-X2 expected proportions are
+in principle distribution-free — the θ density cancels between numerator and
+denominator, leaving the CML conditional probabilities — but that only holds at
+the true parameters. A CML-based implementation would remove the normality
+assumption, which matters here since the generating θ distribution is normal
+and therefore favourable to the mirt route.
+
+## References
+
+Johansson, M. (2025). Detecting Item Misfit in Rasch Models.
+*Educational Methods & Psychometrics, 3*(18). <https://dx.doi.org/10.61186/emp.2025.5>
+
+Kang, T., & Chen, T. T. (2008). Performance of the Generalized S-X2 Item Fit
+Index for Polytomous IRT Models. *Journal of Educational Measurement, 45*(4),
+391-406.
+
+Kang, T., & Chen, T. T. (2011). Performance of the generalized S-X2 item fit
+index for the graded response model. *Asia Pacific Education Review, 12*,
+89-96.

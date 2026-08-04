@@ -1,0 +1,31 @@
+# Shared Quarto config for dev/ simulation studies and methods notes.
+#
+# Typst PDF is the default output. Render a single study with:
+#   quarto render dev/<file>.qmd
+# HTML is still available on demand without being declared here:
+#   quarto render dev/<file>.qmd --to html
+#
+# dev/ is listed in .Rbuildignore, so nothing here affects the built package.
+
+project:
+  type: default
+
+format:
+  typst:
+    toc: true
+    toc-depth: 2
+    papersize: a4
+    margin:
+      x: 2cm
+      y: 2cm
+    fontsize: 9pt
+    df-print: kable
+    fig-width: 8
+    fig-height: 5
+    fig-format: png
+    fig-dpi: 200
+
+execute:
+  warning: false
+  message: false
+  echo: true

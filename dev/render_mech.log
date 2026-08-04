@@ -1,0 +1,23 @@
+[31m
+
+processing file: infit_misfit_mechanism.qmd
+[39m1/23                 
+2/23 [setup]         
+3/23                 
+4/23 [runner]        
+5/23                 
+6/23 [arm]           
+7/23                 
+8/23 [run]           
+[31mError in `rbind()`:
+! numbers of columns of arguments do not match
+Backtrace:
+    x
+ 1. +-dplyr::mutate(...)
+ 2. +-dplyr::filter(rbind(NOI_P, MD_P), n %in% NS, B %in% BS)
+ 3. \-base::rbind(NOI_P, MD_P)
+ 4.   \-base::rbind(deparse.level, ...)
+[39m[31m
+Quitting from infit_misfit_mechanism.qmd:166-244 [run]
+Execution halted
+[39m[33mWARN: Error encountered when rendering files[39m

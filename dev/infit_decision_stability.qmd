@@ -1,0 +1,342 @@
+---
+title: "Decision stability under reseeding, at realistic misfit"
+subtitle: "How often does the same data give a different answer?"
+author: "Magnus Johansson"
+date: today
+---
+
+## Scope
+
+Error rates averaged over datasets can look fine while individual decisions
+remain unstable. This study holds the **dataset fixed** and varies only the
+bootstrap seed, isolating Monte-Carlo noise from sampling noise: if an analyst
+re-runs `RMitemInfitCutoff()` on the same data with a different seed, how often
+does the flag change?
+
+An earlier version of this exists in `infit_fwer_iterations.qmd` (Study B), but
+it has two limitations that this run addresses:
+
+1. It used **dichotomous** items at `rho = 0.15` — misfit roughly 60 percent
+   stronger than anything observed in real phq9 data, which we now know
+   saturates detection.
+2. It covered only n in {250, 500} and B <= 1000.
+
+This matters because the current recommendation of **B >= 1000 for FWER rests
+entirely on that single measurement** — stability, not calibration, is what
+drives it. Calibration is already nominal from B ~= 400.
+
+### Prediction being tested
+
+Instability should be **worse** at realistic misfit, because when the signal is
+weaker more items sit near the decision boundary, and a boundary-adjacent item
+is exactly the one a different seed can push either way. Three levels are
+included so this is a dose-response test rather than a two-point comparison:
+`rho = 0.15` (the unrealistically strong condition used in the earlier study),
+`rho = 0.50` (intermediate), and `rho = 0.85` (calibrated to real phq9 misfit,
+injected infit ~1.25 against q3 = 1.23 and q8 = 1.26).
+
+### Design
+
+- Same two arms as `infit_width_iterations_poly_weak.qmd`: **sim15** (15
+  stylised polytomous items) and **phq9** (9 items, CML parameters from the
+  packaged real responses)
+- `rho` in {0.15, 0.50, 0.85} for the misfit conditions; k = 0 has no `rho`
+- Misfitting items: the maximum per arm (3 for sim15, 2 for phq9), i.e. the
+  strongest cascade, plus a k = 0 null baseline
+- n in {250, 1000}
+- **3 fixed datasets** per condition, each analysed with **25 bootstrap seeds**
+  (seeds resolve instability better than datasets do — an item flagged with
+  probability 0.1 is caught as non-unanimous 93 percent of the time with 25
+  seeds, only 79 percent with 15)
+- B in {100, 400, 1000, 2000}; widths {.90, .95, .99, .995, .999} read off the
+  same draws
+- FWER and BH p-values recorded alongside
+
+Outcomes: the share of items whose flag is not unanimous across seeds, the
+probability that two randomly chosen seeds disagree, and the spread of the
+adjusted p-value and interval bounds.
+
+```{r setup}
+suppressMessages({
+  pkgload::load_all("..", quiet = TRUE)
+  library(ggdist)
+  library(MASS)
+  library(parallel)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+})
+
+WIDTHS   <- c(0.90, 0.95, 0.99, 0.995, 0.999)
+NS       <- c(250, 1000)
+BS       <- c(100, 400, 1000, 2000)
+RHOS     <- c(0.15, 0.50, 0.85)
+N_DATA   <- 6     # raised from 3 on 2026-07-31; datasets 4-6 resume
+N_SEEDS  <- 25    # bootstrap seeds per dataset
+NCORES   <- 10
+ALPHA    <- 0.05
+CHUNK    <- 30    # frequent checkpoints: this run may be stopped mid-way
+RES      <- "infit_decision_stability.rds"
+```
+
+```{r runner}
+run_resumable <- function(res_file, grid, keys, fn,
+                          ncores = NCORES, chunk_size = CHUNK,
+                          extra = list()) {
+  key_of <- function(g) {
+    if (nrow(g) == 0L) return(character(0))
+    do.call(paste, c(unname(as.list(g[keys])), sep = "|"))
+  }
+  acc <- if (file.exists(res_file)) readRDS(res_file) else
+    c(list(res = list(), grid = grid[0, , drop = FALSE], elapsed_min = 0), extra)
+  todo <- which(!(key_of(grid) %in% key_of(acc$grid)))
+  if (length(todo) == 0L) {
+    message("cached: ", nrow(acc$grid), " cells, nothing to run"); return(acc)
+  }
+  message("running ", length(todo), " new cells (", nrow(acc$grid), " cached)")
+  for (s in seq(1, length(todo), by = chunk_size)) {
+    idx <- todo[s:min(s + chunk_size - 1L, length(todo))]
+    t0 <- Sys.time()
+    out <- mclapply(idx, function(i) fn(grid[i, , drop = FALSE]), mc.cores = ncores)
+    acc$res <- c(acc$res, out)
+    acc$grid <- rbind(acc$grid, grid[idx, , drop = FALSE])
+    acc$elapsed_min <- acc$elapsed_min + as.numeric(Sys.time() - t0, "mins")
+    acc <- utils::modifyList(acc, extra)
+    saveRDS(acc, res_file)
+    message("  checkpoint ", nrow(acc$grid), " / ", nrow(grid),
+            "  (", round(acc$elapsed_min, 1), " min)")
+  }
+  acc
+}
+```
+
+### Arms (identical to the poly_weak study)
+
+```{r arms}
+S15_LOCS <- seq(-2, 2, length.out = 15)
+S15_THR  <- lapply(S15_LOCS, function(L) L + seq(-1, 1, length.out = 3))
+S15_MIS  <- vapply(c(0, -1, -2), function(tg) which.min(abs(S15_LOCS - tg)),
+                   integer(1))
+
+load("../data/phq9.rda")
+PH_OBS <- as.matrix(phq9[, paste0("q", 1:9)])
+PH_OBS <- PH_OBS[complete.cases(PH_OBS), ]
+PH_THR  <- .fit_cml_thresholds(PH_OBS)
+PH_LOCS <- vapply(PH_THR, mean, numeric(1))
+.g <- seq(-6, 6, length.out = 81)
+PH_SD <- .estimate_prior_sd(
+  .grid_loglik(PH_OBS, .logp_tables(PH_THR, .g), .g), .g, 0)
+PH_MIS <- c(5L, 8L)
+
+ARMS <- list(
+  sim15 = list(thr = S15_THR, sd = 1.5,   mis = S15_MIS, locs = S15_LOCS,
+               nm = paste0("V", 1:15), kmax = 3L),
+  phq9  = list(thr = PH_THR,  sd = PH_SD, mis = PH_MIS,  locs = PH_LOCS,
+               nm = paste0("q", 1:9),  kmax = 2L)
+)
+
+sim_arm <- function(arm, n, k, rho, seed) {
+  a <- ARMS[[arm]]
+  set.seed(seed)
+  S <- matrix(c(a$sd^2, rho * a$sd^2, rho * a$sd^2, a$sd^2), 2, 2)
+  th <- MASS::mvrnorm(n, mu = c(0, 0), Sigma = S)
+  ni <- length(a$thr); mis <- a$mis[seq_len(k)]
+  d <- matrix(0L, n, ni); fit_items <- setdiff(seq_len(ni), mis)
+  if (length(fit_items)) d[, fit_items] <- sim_partial_score(a$thr[fit_items], th[, 1])
+  if (length(mis))       d[, mis]       <- sim_partial_score(a$thr[mis], th[, 2])
+  d <- as.data.frame(d); names(d) <- a$nm; d
+}
+
+bounds_at <- function(results, width, items) {
+  vapply(items, function(it) {
+    v <- results$InfitMSQ[results$Item == it]
+    as.numeric(ggdist::hdci(v, .width = width))[1:2]
+  }, numeric(2))
+}
+flag_code <- function(msq, lo, hi) ifelse(msq > hi, 2L, ifelse(msq < lo, 1L, 0L))
+```
+
+### Run
+
+Each cell is one `(dataset, seed)` pair: the dataset is regenerated from a seed
+that depends only on `(arm, k, n, rho, dataset)`, so it is **identical across
+all bootstrap seeds**, while the bootstrap seed varies.
+
+```{r run}
+one_cell <- function(g) {
+  out <- try({
+    arm <- as.character(g$arm); k <- g$k; n <- g$n; rho <- g$rho
+    dat <- g$dataset; sd_seed <- g$seed
+    d <- sim_arm(arm, n, k, rho,
+                 seed = 5e8 + 1e7 * match(arm, names(ARMS)) + 1e6 * k +
+                   1e4 * round(rho * 100) + 1e3 * n + dat)
+    items <- names(d)
+    obs <- RMitemInfit(d, output = "dataframe")
+    msq <- obs$Infit_MSQ[match(items, obs$Item)]
+    hd <- list(); pv <- list()
+    for (j in seq_along(BS)) {
+      co <- try(RMitemInfitCutoff(d, iterations = BS[j], parallel = FALSE,
+                                  seed = sd_seed * 1000 + j, verbose = FALSE),
+                silent = TRUE)
+      if (inherits(co, "try-error")) next
+      hd[[length(hd) + 1L]] <- do.call(rbind, lapply(WIDTHS, function(w) {
+        b <- bounds_at(co$results, w, items)
+        data.frame(B = BS[j], w = w, item = seq_along(items),
+                   code = flag_code(msq, b[1, ], b[2, ]),
+                   lo = b[1, ], hi = b[2, ])
+      }))
+      fw <- try(suppressWarnings(
+        RMitemInfit(d, cutoff = co, p_value = TRUE, correction = "fwer",
+                    alpha = ALPHA, output = "dataframe")), silent = TRUE)
+      bh <- try(suppressWarnings(
+        RMitemInfit(d, cutoff = co, p_value = TRUE, correction = "fdr_bh",
+                    alpha = ALPHA, output = "dataframe")), silent = TRUE)
+      if (!inherits(fw, "try-error") && !inherits(bh, "try-error")) {
+        i1 <- match(items, fw$Item); i2 <- match(items, bh$Item)
+        pv[[length(pv) + 1L]] <- data.frame(
+          B = BS[j], item = seq_along(items),
+          padj_fwer = fw$padj_infit[i1], padj_bh = bh$padj_infit[i2])
+      }
+    }
+    list(hdci = do.call(rbind, hd), pval = do.call(rbind, pv))
+  }, silent = TRUE)
+  if (inherits(out, "try-error")) NULL else out
+}
+
+blocks <- list()
+for (a in names(ARMS)) {
+  # null baseline: rho is inert with no misfitting items
+  blocks[[length(blocks) + 1L]] <- expand.grid(
+    arm = a, k = 0L, rho = 0, n = NS, dataset = 1:N_DATA, seed = 1:N_SEEDS,
+    stringsAsFactors = FALSE)
+  blocks[[length(blocks) + 1L]] <- expand.grid(
+    arm = a, k = ARMS[[a]]$kmax, rho = RHOS, n = NS,
+    dataset = 1:N_DATA, seed = 1:N_SEEDS, stringsAsFactors = FALSE)
+}
+grid <- do.call(rbind, blocks)[, c("arm", "k", "rho", "n", "dataset", "seed")]
+
+# Explicit priority order, so a run stopped early still answers the main
+# question. Blocks cost roughly the same (~2.3 h each on 10 cores):
+#   1. rho = 0.85  -- the calibrated, realistic condition (the point of the run)
+#   2. k = 0       -- instability under a true model, the reference baseline
+#   3. rho = 0.15  -- the old unrealistically strong condition, for contrast
+#   4. rho = 0.50  -- intermediate; fills in the dose-response, least critical
+prio <- with(grid, ifelse(k == 0L, 2L,
+                   ifelse(rho == 0.85, 1L,
+                   ifelse(rho == 0.15, 3L, 4L))))
+grid <- grid[order(prio, grid$n), ]
+rownames(grid) <- NULL
+cat("cells to run:", nrow(grid), "\n")
+print(table(priority = sort(prio)))
+
+s <- run_resumable(RES, grid, c("arm", "k", "rho", "n", "dataset", "seed"),
+                   one_cell,
+                   extra = list(arms = lapply(ARMS, function(a)
+                     a[c("mis", "locs", "sd", "nm", "kmax")])))
+
+bind_part <- function(part) {
+  do.call(rbind, lapply(seq_len(nrow(s$grid)), function(i) {
+    r <- s$res[[i]][[part]]
+    if (is.null(r)) return(NULL)
+    cbind(s$grid[i, c("arm", "k", "rho", "n", "dataset", "seed")], r)
+  }))
+}
+H <- bind_part("hdci") |> mutate(flag = as.integer(code > 0),
+                                 w = sprintf("%.3f", w),
+                                 rho = sprintf("%.2f", rho))
+P <- bind_part("pval") |> mutate(rho = sprintf("%.2f", rho))
+cat(nrow(s$grid), "cells |", round(s$elapsed_min, 1), "min |",
+    "failed:", sum(sapply(s$res, is.null)), "\n")
+```
+
+## Instability of the HDCI rule
+
+Share of items whose flag is **not unanimous** across the 25 seeds, averaged
+over the 5 datasets.
+
+```{r hdci_unstable}
+H |>
+  group_by(arm, rho, k, n, w, B, dataset, item) |>
+  summarise(rate = mean(flag), .groups = "drop") |>
+  group_by(arm, rho, k, n, w, B) |>
+  summarise(unstable = round(100 * mean(rate > 0 & rate < 1), 1), .groups = "drop") |>
+  filter(w == "0.999") |>
+  pivot_wider(names_from = B, values_from = unstable, names_prefix = "B=") |>
+  arrange(arm, rho, n)
+```
+
+## Instability of the FWER and BH rules
+
+```{r p_unstable}
+P |>
+  mutate(fwer = as.integer(padj_fwer < ALPHA),
+         bh = as.integer(padj_bh < ALPHA)) |>
+  pivot_longer(c(fwer, bh), names_to = "rule", values_to = "flag") |>
+  group_by(arm, rho, k, n, rule, B, dataset, item) |>
+  summarise(rate = mean(flag, na.rm = TRUE), .groups = "drop") |>
+  group_by(arm, rho, k, n, rule, B) |>
+  summarise(unstable = round(100 * mean(rate > 0 & rate < 1), 1), .groups = "drop") |>
+  pivot_wider(names_from = B, values_from = unstable, names_prefix = "B=") |>
+  arrange(rule, arm, rho, n)
+```
+
+## Probability that two analysts disagree
+
+For an item flagged with probability *p* across seeds, two independently seeded
+runs disagree with probability `2p(1-p)`. Averaged over items, this is the
+chance that two analysts running the same data reach a different conclusion
+about at least one item.
+
+```{r disagree}
+P |>
+  mutate(fwer = as.integer(padj_fwer < ALPHA)) |>
+  group_by(arm, rho, k, n, B, dataset, item) |>
+  summarise(p = mean(fwer, na.rm = TRUE), .groups = "drop") |>
+  mutate(disagree = 2 * p * (1 - p)) |>
+  group_by(arm, rho, k, n, B) |>
+  summarise(any_item = round(100 * (1 - prod(1 - disagree)^(1 / n_distinct(dataset))), 1),
+            per_item = round(100 * mean(disagree), 2), .groups = "drop") |>
+  pivot_wider(names_from = B, values_from = c(per_item, any_item)) |>
+  arrange(arm, rho, n)
+```
+
+## Spread of the adjusted p-value
+
+```{r sd_padj}
+P |>
+  group_by(arm, rho, k, n, B, dataset, item) |>
+  summarise(sd_p = sd(padj_fwer, na.rm = TRUE), .groups = "drop") |>
+  group_by(arm, rho, k, n, B) |>
+  summarise(median_sd = round(median(sd_p, na.rm = TRUE), 4), .groups = "drop") |>
+  pivot_wider(names_from = B, values_from = median_sd, names_prefix = "B=") |>
+  arrange(arm, rho, n)
+```
+
+## Spread of the HDCI bounds
+
+```{r sd_bounds}
+H |>
+  filter(w == "0.999") |>
+  group_by(arm, rho, k, n, B, dataset, item) |>
+  summarise(sd_hi = sd(hi), .groups = "drop") |>
+  group_by(arm, rho, k, n, B) |>
+  summarise(median_sd_upper = round(median(sd_hi), 4), .groups = "drop") |>
+  pivot_wider(names_from = B, values_from = median_sd_upper, names_prefix = "B=") |>
+  arrange(arm, rho, n)
+```
+
+```{r fig, fig.width = 9, fig.height = 5.5}
+P |>
+  mutate(fwer = as.integer(padj_fwer < ALPHA)) |>
+  group_by(arm, rho, k, n, B, dataset, item) |>
+  summarise(rate = mean(fwer, na.rm = TRUE), .groups = "drop") |>
+  group_by(arm, rho, n, B) |>
+  summarise(unstable = 100 * mean(rate > 0 & rate < 1), .groups = "drop") |>
+  ggplot(aes(factor(B), unstable, colour = rho, group = rho)) +
+  geom_line() + geom_point() +
+  facet_grid(arm ~ n, labeller = label_both) +
+  labs(x = "Bootstrap iterations (B)",
+       y = "% of items with a non-unanimous FWER flag",
+       colour = "rho") +
+  theme_minimal(base_size = 10)
+```

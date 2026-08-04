@@ -1,0 +1,57 @@
+[31m
+
+processing file: infit_width_iterations_poly.qmd
+[39m1/23          
+2/23 [setup]  
+3/23          
+4/23 [runner] 
+5/23          
+6/23 [gen]    
+7/23          
+8/23 [helpers]
+9/23          
+10/23 [run]    
+11/23          
+12/23 [theory] 
+13/23          
+14/23 [fwe]    
+15/23          
+16/23 [det]    
+17/23          
+18/23 [pv]     
+19/23          
+20/23 [pvdet]  
+21/23          
+22/23 [h2h]    
+23/23          
+[31moutput file: infit_width_iterations_poly.knit.md
+
+[39m[1mpandoc [22m
+  to: typst
+  output-file: infit_width_iterations_poly.typ
+  standalone: true
+  shift-heading-level-by: -1
+  default-image-extension: svg
+  wrap: none
+  citeproc: false
+  toc: true
+  toc-depth: 2
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  papersize: a4
+  margin:
+    x: 2cm
+    'y': 2cm
+  fontsize: 9pt
+  title: 'Interval width and bootstrap iterations: polytomous items'
+  subtitle: Generalisation check for the follow-up to Johansson (2025)
+  author: Magnus Johansson
+  date: today
+  
+[typst]: Compiling infit_width_iterations_poly.typ to infit_width_iterations_poly.pdf...DONE
+
+Output created: infit_width_iterations_poly.pdf
+

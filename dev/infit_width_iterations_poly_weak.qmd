@@ -1,0 +1,391 @@
+---
+title: "Interval width and bootstrap iterations: polytomous items, realistic misfit"
+subtitle: "Stylised 15-item and phq9-derived item parameters"
+author: "Magnus Johansson"
+date: today
+---
+
+## Scope
+
+Third instalment. `infit_width_iterations.qmd` used 20 dichotomous items;
+`infit_width_iterations_poly.qmd` repeated it with 20 polytomous items at an
+inter-dimensional correlation of 0.15. That confirmed the Sidak relation
+(`1 - w^k`) for polytomous items but **saturated on detection** — every rule
+detected every misfitting item in every cell — so it could not price the rules
+against each other on power.
+
+This run fixes that, and moves to conditions closer to applied practice.
+
+### Misfit strength calibrated against real data
+
+Conditional infit on the real `phq9` responses (N = 600, B = 1000 cutoffs,
+FWER) flags three underfitting items: q3 = 1.234, q8 = 1.260, q9 = 1.315. The
+earlier runs at `rho = 0.15` injected infit around 2.0 — roughly 60 percent
+larger than the worst-fitting real item, which is why detection saturated.
+Matching the real magnitude needs `rho` in the .85 to .90 range. Values below
+are from a calibration scan of a single misfitting item (q5) simulated from
+the phq9 item parameters:
+
+| rho | injected infit, k = 1 | comparable to |
+|---|---|---|
+| 0.75 | 1.36 | worse than q9 (1.32) |
+| 0.85 | 1.32 | q9 (1.32) |
+| 0.90 | 1.24 | q3 (1.23), q8 (1.26) |
+
+`rho = 0.50` (infit 1.71) is dropped — it exceeds anything observed in phq9 and
+saturated in the previous run.
+
+### Why the latent SD is held fixed
+
+Misfit magnitude is `sigma * sqrt(2 * (1 - rho))`, so the person SD and the
+inter-dimensional correlation are near-substitutes: `sigma = 1.0, rho = 0.50`
+(misfit SD 1.00, infit 1.41) and `sigma = 1.39, rho = 0.75` (misfit SD 0.98,
+infit 1.38) are practically the same condition. `rho` is the misfit-strength
+knob here because `sigma` additionally changes targeting and test information,
+making it a confounded lever. Each arm keeps its own justified SD: **1.39 for
+phq9** (estimated from the same responses as its item parameters) and **1.5 for
+sim15**. Varying targeting or reliability deliberately would deserve its own
+designed factor.
+
+### Two arms
+
+| | `sim15` | `phq9` |
+|---|---|---|
+| Items | 15 stylised | 9, CML from real responses |
+| Locations | `seq(-2, 2, length.out = 15)` | clustered, range 2.46 logits |
+| Thresholds | location `+/- 1` logit, ordered | real; **includes disordered** (q9) |
+| Latent SD | 1.5 | 1.39 (estimated) |
+| Misfitting items | 1 or 3, at 0 / -1.14 / -2 logits | 1 or 2: q5 (-0.15) then q8 (+1.40) |
+| Sample sizes | 250, 1000 | **150**, 250, 1000 |
+
+**n = 150 is used for the phq9 arm only.** 15 polytomous items imply 45
+threshold parameters, so at n = 150 the bootstrap replicates are sparse enough
+that `psychotools::pcmodel()` intermittently fails to invert the Hessian. The
+9-item phq9 arm has 27 parameters and is the more appropriate vehicle for the
+small-sample condition anyway — a short scale with a small sample being the
+realistic pairing.
+
+15 items rather than 20: since `rho` changes anyway, the comparison with the
+dichotomous study is already broken, and 5-15 items is the typical range for a
+unidimensional scale. Locations are evenly spaced so the 0 / -1 / -2 logit
+targeting design is exact rather than a property of a particular random draw.
+
+For phq9, the misfitting items are **q5 and q8**, chosen for targeting: q5 sits
+essentially on the person mean (-0.15) and q8 is the most off-target item
+(+1.40). This prioritises the targeting contrast over using the items that
+happen to misfit in the real data — q3 (-0.40) would have been nearly as
+off-target as q8 in the opposite direction, giving no on-target case. Note that
+q5 fits well in the real data (infit 1.069, ns); what is borrowed from phq9 is
+its location and threshold structure, not its misfit.
+
+Item counts of 9 and 15 give two further tests of `1 - w^k`, alongside k = 20
+from the earlier studies.
+
+### Efficiency
+
+`rho` only matters when misfitting items exist, so the **k = 0 condition is run
+once per arm** rather than once per `rho`. Cells are ordered so that the
+calibrated `rho = 0.85` condition and the cheaper sample sizes complete first —
+if the run is stopped early, the most informative cells are already done.
+
+```{r setup}
+suppressMessages({
+  pkgload::load_all("..", quiet = TRUE)   # internal helpers
+  library(ggdist)
+  library(MASS)
+  library(parallel)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+})
+
+WIDTHS  <- c(0.90, 0.95, 0.99, 0.995, 0.999)
+NS      <- c(150, 250, 1000)
+BS      <- c(100, 400, 2000)
+RHOS    <- c(0.85, 0.90, 0.75)   # priority order; 0.85 matches real phq9 misfit
+R_NULL  <- 120          # raised from 60 on 2026-07-30; reps 61-120 resume
+R_MIS   <- 120
+NCORES  <- 10
+ALPHA   <- 0.05
+CHUNK   <- 60
+RES     <- "infit_width_iterations_poly_weak.rds"
+```
+
+```{r runner}
+run_resumable <- function(res_file, grid, keys, fn,
+                          ncores = NCORES, chunk_size = CHUNK,
+                          extra = list()) {
+  key_of <- function(g) {
+    if (nrow(g) == 0L) return(character(0))
+    do.call(paste, c(unname(as.list(g[keys])), sep = "|"))
+  }
+  acc <- if (file.exists(res_file)) readRDS(res_file) else
+    c(list(res = list(), grid = grid[0, , drop = FALSE], elapsed_min = 0), extra)
+  todo <- which(!(key_of(grid) %in% key_of(acc$grid)))
+  if (length(todo) == 0L) {
+    message("cached: ", nrow(acc$grid), " cells, nothing to run"); return(acc)
+  }
+  message("running ", length(todo), " new cells (", nrow(acc$grid), " cached)")
+  for (s in seq(1, length(todo), by = chunk_size)) {
+    idx <- todo[s:min(s + chunk_size - 1L, length(todo))]
+    t0 <- Sys.time()
+    out <- mclapply(idx, function(i) fn(grid[i, , drop = FALSE]), mc.cores = ncores)
+    acc$res <- c(acc$res, out)
+    acc$grid <- rbind(acc$grid, grid[idx, , drop = FALSE])
+    acc$elapsed_min <- acc$elapsed_min + as.numeric(Sys.time() - t0, "mins")
+    acc <- utils::modifyList(acc, extra)
+    saveRDS(acc, res_file)
+    message("  checkpoint ", nrow(acc$grid), " / ", nrow(grid),
+            "  (", round(acc$elapsed_min, 1), " min)")
+  }
+  acc
+}
+```
+
+### Arm definitions
+
+```{r arms}
+# ---- sim15: stylised, evenly spaced -----------------------------------------
+S15_LOCS <- seq(-2, 2, length.out = 15)
+S15_THR  <- lapply(S15_LOCS, function(L) L + seq(-1, 1, length.out = 3))
+S15_MIS  <- vapply(c(0, -1, -2), function(tg) which.min(abs(S15_LOCS - tg)),
+                   integer(1))
+
+# ---- phq9: CML estimates from the packaged real data ------------------------
+load("../data/phq9.rda")
+PH_OBS <- as.matrix(phq9[, paste0("q", 1:9)])
+PH_OBS <- PH_OBS[complete.cases(PH_OBS), ]
+PH_THR  <- .fit_cml_thresholds(PH_OBS)
+PH_LOCS <- vapply(PH_THR, mean, numeric(1))
+.g <- seq(-6, 6, length.out = 81)
+PH_SD <- .estimate_prior_sd(
+  .grid_loglik(PH_OBS, .logp_tables(PH_THR, .g), .g), .g, 0)
+PH_MIS <- c(5L, 8L)   # on-target (-0.15) then most off-target (+1.40)
+
+ARMS <- list(
+  sim15 = list(thr = S15_THR, sd = 1.5,   mis = S15_MIS, locs = S15_LOCS,
+               nm = paste0("V", 1:15), ks = c(1L, 3L),
+               ns = c(250, 1000)),           # no n = 150: see note above
+  phq9  = list(thr = PH_THR,  sd = PH_SD, mis = PH_MIS,  locs = PH_LOCS,
+               nm = paste0("q", 1:9),  ks = c(1L, 2L),
+               ns = c(150, 250, 1000))
+)
+
+bind_rows(lapply(names(ARMS), function(a) {
+  x <- ARMS[[a]]
+  data.frame(arm = a, items = length(x$thr),
+             misfit_items = paste(x$nm[x$mis], collapse = ", "),
+             misfit_loc = paste(round(x$locs[x$mis], 2), collapse = ", "),
+             latent_sd = round(x$sd, 2),
+             k_levels = paste(x$ks, collapse = ", "),
+             n_levels = paste(x$ns, collapse = ", "))
+}))
+```
+
+```{r simfun}
+sim_arm <- function(arm, n, k, rho, seed) {
+  a <- ARMS[[arm]]
+  set.seed(seed)
+  S <- matrix(c(a$sd^2, rho * a$sd^2, rho * a$sd^2, a$sd^2), 2, 2)
+  th <- MASS::mvrnorm(n, mu = c(0, 0), Sigma = S)
+  ni <- length(a$thr)
+  mis <- a$mis[seq_len(k)]
+  d <- matrix(0L, n, ni)
+  fit_items <- setdiff(seq_len(ni), mis)
+  if (length(fit_items)) d[, fit_items] <- sim_partial_score(a$thr[fit_items], th[, 1])
+  if (length(mis))       d[, mis]       <- sim_partial_score(a$thr[mis], th[, 2])
+  d <- as.data.frame(d)
+  names(d) <- a$nm
+  d
+}
+
+bounds_at <- function(results, width, items) {
+  vapply(items, function(it) {
+    v <- results$InfitMSQ[results$Item == it]
+    as.numeric(ggdist::hdci(v, .width = width))[1:2]
+  }, numeric(2))
+}
+flag_code <- function(msq, lo, hi) ifelse(msq > hi, 2L, ifelse(msq < lo, 1L, 0L))
+```
+
+### Run
+
+```{r run}
+one_rep <- function(g) {
+  out <- try({
+    arm <- as.character(g$arm); rep <- g$rep; k <- g$k; n <- g$n; rho <- g$rho
+    d <- sim_arm(arm, n, k, rho,
+                 seed = 9e7 + 1e7 * match(arm, names(ARMS)) + 1e6 * k +
+                   1e4 * round(rho * 100) + 1e3 * n + rep)
+    items <- names(d)
+    obs <- RMitemInfit(d, output = "dataframe")
+    msq <- obs$Infit_MSQ[match(items, obs$Item)]
+    hd <- list(); pv <- list()
+    for (j in seq_along(BS)) {
+      co <- try(RMitemInfitCutoff(d, iterations = BS[j], parallel = FALSE,
+                                  seed = rep * 100 + j, verbose = FALSE),
+                silent = TRUE)
+      if (inherits(co, "try-error")) next
+      hd[[length(hd) + 1L]] <- do.call(rbind, lapply(WIDTHS, function(w) {
+        b <- bounds_at(co$results, w, items)
+        data.frame(B = BS[j], w = w, item = seq_along(items),
+                   code = flag_code(msq, b[1, ], b[2, ]))
+      }))
+      fw <- try(suppressWarnings(
+        RMitemInfit(d, cutoff = co, p_value = TRUE, correction = "fwer",
+                    alpha = ALPHA, output = "dataframe")), silent = TRUE)
+      bh <- try(suppressWarnings(
+        RMitemInfit(d, cutoff = co, p_value = TRUE, correction = "fdr_bh",
+                    alpha = ALPHA, output = "dataframe")), silent = TRUE)
+      if (!inherits(fw, "try-error") && !inherits(bh, "try-error")) {
+        i1 <- match(items, fw$Item); i2 <- match(items, bh$Item)
+        pv[[length(pv) + 1L]] <- data.frame(
+          B = BS[j], item = seq_along(items),
+          p_marg = fw$p_infit[i1], padj_fwer = fw$padj_infit[i1],
+          padj_bh = bh$padj_infit[i2])
+      }
+    }
+    list(hdci = do.call(rbind, hd), pval = do.call(rbind, pv))
+  }, silent = TRUE)
+  if (inherits(out, "try-error")) NULL else out
+}
+
+# Grid in priority order: k = 0 first (all n ascending), then misfit blocks by
+# rho (0.85 first), n ascending within each so cheap cells finish early.
+blocks <- list()
+for (a in names(ARMS)) {
+  blocks[[length(blocks) + 1L]] <- expand.grid(
+    rep = 1:R_NULL, n = ARMS[[a]]$ns, k = 0L, rho = 0, arm = a,
+    stringsAsFactors = FALSE)[, c("arm", "rep", "k", "n", "rho")]
+}
+for (r in RHOS) for (a in names(ARMS)) {
+  blocks[[length(blocks) + 1L]] <- expand.grid(
+    rep = 1:R_MIS, n = ARMS[[a]]$ns, k = ARMS[[a]]$ks, rho = r, arm = a,
+    stringsAsFactors = FALSE)[, c("arm", "rep", "k", "n", "rho")]
+}
+grid <- do.call(rbind, blocks)
+grid <- grid[order(match(paste(grid$rho, grid$arm),
+                         unique(paste(grid$rho, grid$arm))), grid$n), ]
+rownames(grid) <- NULL
+cat("cells to run:", nrow(grid), "\n")
+
+s <- run_resumable(RES, grid, c("arm", "rep", "k", "n", "rho"), one_rep,
+                   extra = list(arms = lapply(ARMS, function(a)
+                     a[c("mis", "locs", "sd", "nm", "ks")])))
+
+bind_part <- function(part) {
+  do.call(rbind, lapply(seq_len(nrow(s$grid)), function(i) {
+    r <- s$res[[i]][[part]]
+    if (is.null(r)) return(NULL)
+    cbind(s$grid[i, c("arm", "rep", "k", "n", "rho")], r)
+  }))
+}
+tag <- function(x) x |>
+  mutate(is_misfit = mapply(function(arm, k, it)
+    it %in% s$arms[[arm]]$mis[seq_len(k)], arm, k, item))
+H <- bind_part("hdci") |> tag() |>
+  mutate(flag = as.integer(code > 0), w = sprintf("%.3f", w))
+P <- bind_part("pval") |> tag()
+cat(nrow(s$grid), "cells complete |", round(s$elapsed_min, 1), "min\n")
+```
+
+## Sidak relation at k = 9 and k = 15
+
+```{r theory}
+expand.grid(w = WIDTHS, k = c(9, 15)) |>
+  mutate(predicted = round(100 * (1 - w^k), 1)) |>
+  pivot_wider(names_from = k, values_from = predicted, names_prefix = "k=") |>
+  mutate(w = sprintf("%.3f", w))
+```
+
+Measured under a true model (k = 0):
+
+```{r fwe}
+H |>
+  filter(k == 0) |>
+  group_by(arm, w, B, n, rep) |>
+  summarise(any = as.integer(sum(flag) > 0), .groups = "drop") |>
+  group_by(arm, w, B, n) |>
+  summarise(v = 100 * mean(any), .groups = "drop") |>
+  pivot_wider(names_from = c(arm, n), values_from = v) |>
+  mutate(across(where(is.numeric), \(x) round(x, 1))) |>
+  arrange(w, B)
+```
+
+## Detection at realistic misfit strength
+
+```{r det}
+H |>
+  filter(k > 0, is_misfit, B == 2000) |>
+  group_by(arm, rho, k, w, n) |>
+  summarise(det = 100 * mean(flag), .groups = "drop") |>
+  pivot_wider(names_from = c(arm, n), values_from = det) |>
+  mutate(across(where(is.numeric), \(x) round(x, 1))) |>
+  arrange(rho, k, w)
+```
+
+## False positives on fitting items
+
+```{r fp}
+H |>
+  filter(k > 0, !is_misfit, B == 2000) |>
+  group_by(arm, rho, k, w, n) |>
+  summarise(fp = 100 * mean(flag), .groups = "drop") |>
+  pivot_wider(names_from = c(arm, n), values_from = fp) |>
+  mutate(across(where(is.numeric), \(x) round(x, 1))) |>
+  arrange(rho, k, w)
+```
+
+## Detection by targeting
+
+The misfitting items differ in targeting within each arm, so detection is broken
+out per item.
+
+```{r target}
+H |>
+  filter(k > 0, is_misfit, B == 2000, w == "0.999") |>
+  mutate(loc = round(mapply(function(a, i) s$arms[[a]]$locs[i], arm, item), 2)) |>
+  group_by(arm, rho, k, n, item, loc) |>
+  summarise(det = round(100 * mean(flag), 1), .groups = "drop") |>
+  arrange(arm, rho, k, n, loc)
+```
+
+## FWER vs BH vs the width rule
+
+```{r h2h}
+PL <- P |>
+  mutate(fwer = as.integer(padj_fwer < ALPHA),
+         bh = as.integer(padj_bh < ALPHA)) |>
+  pivot_longer(c(fwer, bh), names_to = "rule", values_to = "flag")
+
+bind_rows(
+  H |> filter(k > 0, B == 2000, w == "0.999") |>
+    group_by(arm, rho, k, n) |>
+    summarise(rule = "HDCI w=.999",
+              det = 100 * mean(flag[is_misfit]),
+              fp = 100 * mean(flag[!is_misfit]), .groups = "drop"),
+  PL |> filter(k > 0, B == 2000) |>
+    group_by(arm, rho, k, n, rule) |>
+    summarise(det = 100 * mean(flag[is_misfit], na.rm = TRUE),
+              fp = 100 * mean(flag[!is_misfit], na.rm = TRUE), .groups = "drop")
+) |>
+  mutate(across(c(det, fp), \(x) round(x, 1))) |>
+  arrange(arm, rho, k, n, rule)
+```
+
+```{r fig, fig.width = 9, fig.height = 6}
+bind_rows(
+  H |> filter(k > 0, B == 2000, w == "0.999") |>
+    group_by(arm, rho, k, n) |>
+    summarise(rule = "HDCI .999", det = 100 * mean(flag[is_misfit]), .groups = "drop"),
+  PL |> filter(k > 0, B == 2000) |>
+    group_by(arm, rho, k, n, rule) |>
+    summarise(det = 100 * mean(flag[is_misfit], na.rm = TRUE), .groups = "drop")
+) |>
+  ggplot(aes(factor(rho), det, colour = rule, group = rule)) +
+  geom_line() + geom_point() +
+  facet_grid(arm + k ~ n, labeller = label_both) +
+  labs(x = "Inter-dimensional correlation (higher = weaker misfit)",
+       y = "Detection (%)", colour = "Rule") +
+  theme_minimal(base_size = 10)
+```
