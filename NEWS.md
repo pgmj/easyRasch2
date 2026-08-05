@@ -1,4 +1,14 @@
-# easyRasch2 (development version)
+# easyRasch2 1.1.1
+
+## Bug fixes
+
+- `RMtargeting()` no longer fails when the maximum possible raw score is
+  odd. The default `bins` was the maximum observed raw score divided by
+  two, which is fractional for an odd maximum (e.g. 13.5 for a nine-item
+  0-3 instrument); ggplot2 4.0 rejects a non-whole `bins` in
+  `geom_histogram()`, which produced an `Error in seq.default(): 'to'
+  must be a finite number` when the empty panel was scaled. The default
+  is now rounded up.
 
 ## New features
 
@@ -13,19 +23,9 @@
   statistic, so testing both and reporting whichever flags is a larger
   family than either call corrects for. The default is unchanged.
 
-## Bug fixes
-
-- `RMtargeting()` no longer fails when the maximum possible raw score is
-  odd. The default `bins` was the maximum observed raw score divided by
-  two, which is fractional for an odd maximum (e.g. 13.5 for a nine-item
-  0-3 instrument); ggplot2 4.0 rejects a non-whole `bins` in
-  `geom_histogram()`, which produced an `Error in seq.default(): 'to'
-  must be a finite number` when the empty panel was scaled. The default
-  is now rounded up.
-
 ## Other changes
 
-- `RMitemInfitCutoff()` changes its default iterations setting from 250 to 400. This is based on a simulation study, available at   <https://github.com/pgmj/rasch_fwer>, and is intended for use with the FWER   corrected p-values in `RMitemInfit()`, which will be the new default method in a future release.
+- `RMitemInfitCutoff()` changes its default iterations setting from 250 to 400. This is based on a simulation study, available at   <https://github.com/pgmj/rasch_fwer>, and is intended for use with the FWER   corrected p-values in `RMitemInfit()`, which will be the new default method in a future release. While 400 iterations is the new recommended lowest level for all sample sizes, a final analysis should use 1000-2000 iterations.
 
 # easyRasch2 1.1.0
 

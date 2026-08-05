@@ -159,7 +159,7 @@ options(mc.cores = 4)
 set.seed(42)
 
 # Conditional item infit with simulation-based cutoffs
-simfit <- RMitemInfitCutoff(pcmdat2, iterations = 250)
+simfit <- RMitemInfitCutoff(pcmdat2, iterations = 400)
 RMitemInfit(pcmdat2, cutoff = simfit)
 
 # Test of unidimensionality via posterior-predictive ordinal CFA
