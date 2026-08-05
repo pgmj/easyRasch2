@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -115,7 +115,7 @@
 <li>
 <code><a href="reference/RMlocdepQ3.html">RMlocdepQ3()</a></code> + <code><a href="reference/RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code> + <code><a href="reference/RMlocdepQ3plot.html">RMlocdepQ3Plot()</a></code> — Yen’s <span class="math inline">Q_3</span> residual correlations (CML/WLE by default, <code>estimator = "MML"</code> optional); table and plot share a <code>$matrix</code> (<span class="math inline">Q_3</span> heatmap) / <code>$pairs</code> (per-pair observed-vs-simulated) structure; optional per-pair bootstrap <em>p</em>-values</li>
 <li>
-<code><a href="reference/RMlocdepGamma.html">RMlocdepGamma()</a></code> + <code><a href="reference/RMlocdepGammaCutoff.html">RMlocdepGammaCutoff()</a></code> + <code><a href="reference/RMlocdepGammaPlot.html">RMlocdepGammaPlot()</a></code> — partial-<span class="math inline">\gamma</span> local dependence; optional per-pair bootstrap <em>p</em>-values</li>
+<code><a href="reference/RMlocdepGamma.html">RMlocdepGamma()</a></code> + <code><a href="reference/RMlocdepGammaCutoff.html">RMlocdepGammaCutoff()</a></code> + <code><a href="reference/RMlocdepGammaPlot.html">RMlocdepGammaPlot()</a></code> — partial-γ local dependence; optional per-pair bootstrap <em>p</em>-values</li>
 </ul>
 </div>
 <div class="section level3">
@@ -137,9 +137,9 @@
 <li>
 <code><a href="reference/RMdifLR.html">RMdifLR()</a></code> — Andersen’s likelihood-ratio test (<code><a href="https://rdrr.io/pkg/eRm/man/LRtest.html" class="external-link">eRm::LRtest</a></code>)</li>
 <li>
-<code><a href="reference/RMdifTree.html">RMdifTree()</a></code> — Rasch / partial-credit trees (<code>psychotree</code>) with Mantel-Haenszel or partial-<span class="math inline">\gamma</span> effect sizes per split, optional iterative purification, and <code>stablelearner</code>-based stability assessment</li>
+<code><a href="reference/RMdifTree.html">RMdifTree()</a></code> — Rasch / partial-credit trees (<code>psychotree</code>) with Mantel-Haenszel or partial-γ effect sizes per split, optional iterative purification, and <code>stablelearner</code>-based stability assessment</li>
 <li>
-<code><a href="reference/RMdifGamma.html">RMdifGamma()</a></code> + <code><a href="reference/RMdifGammaCutoff.html">RMdifGammaCutoff()</a></code> + <code><a href="reference/RMdifGammaPlot.html">RMdifGammaPlot()</a></code> — partial-<span class="math inline">\gamma</span> DIF; optional bootstrap <em>p</em>-values calibrated against the simulated Rasch null</li>
+<code><a href="reference/RMdifGamma.html">RMdifGamma()</a></code> + <code><a href="reference/RMdifGammaCutoff.html">RMdifGammaCutoff()</a></code> + <code><a href="reference/RMdifGammaPlot.html">RMdifGammaPlot()</a></code> — partial-γ DIF; optional bootstrap <em>p</em>-values calibrated against the simulated Rasch null</li>
 <li>
 <code><a href="reference/RMitemICCPlot.html">RMitemICCPlot()</a></code> - evaluates DIF across class intervals</li>
 </ul>
@@ -206,7 +206,7 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Conditional item infit with simulation-based cutoffs</span></span>
-<span><span class="va">simfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/RMitemInfitCutoff.html">RMitemInfitCutoff</a></span><span class="op">(</span><span class="va">pcmdat2</span>, iterations <span class="op">=</span> <span class="fl">250</span><span class="op">)</span></span>
+<span><span class="va">simfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/RMitemInfitCutoff.html">RMitemInfitCutoff</a></span><span class="op">(</span><span class="va">pcmdat2</span>, iterations <span class="op">=</span> <span class="fl">400</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/RMiteminfit.html">RMitemInfit</a></span><span class="op">(</span><span class="va">pcmdat2</span>, cutoff <span class="op">=</span> <span class="va">simfit</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Test of unidimensionality via posterior-predictive ordinal CFA</span></span>

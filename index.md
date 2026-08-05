@@ -118,8 +118,7 @@ remotes::install_github("pgmj/easyRasch2")
 - [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGamma.md) +
   [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaCutoff.md) +
   [`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaPlot.md)
-  — partial-\gamma local dependence; optional per-pair bootstrap
-  *p*-values
+  — partial-γ local dependence; optional per-pair bootstrap *p*-values
 
 ### Dimensionality / unidimensionality
 
@@ -145,13 +144,13 @@ remotes::install_github("pgmj/easyRasch2")
   ([`eRm::LRtest`](https://rdrr.io/pkg/eRm/man/LRtest.html))
 - [`RMdifTree()`](https://pgmj.github.io/easyRasch2/reference/RMdifTree.md)
   — Rasch / partial-credit trees (`psychotree`) with Mantel-Haenszel or
-  partial-\gamma effect sizes per split, optional iterative
-  purification, and `stablelearner`-based stability assessment
+  partial-γ effect sizes per split, optional iterative purification, and
+  `stablelearner`-based stability assessment
 - [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/reference/RMdifGamma.md) +
   [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdifGammaCutoff.md) +
   [`RMdifGammaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMdifGammaPlot.md)
-  — partial-\gamma DIF; optional bootstrap *p*-values calibrated against
-  the simulated Rasch null
+  — partial-γ DIF; optional bootstrap *p*-values calibrated against the
+  simulated Rasch null
 - [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemICCPlot.md) -
   evaluates DIF across class intervals
 
@@ -209,7 +208,7 @@ options(mc.cores = 4)
 set.seed(42)
 
 # Conditional item infit with simulation-based cutoffs
-simfit <- RMitemInfitCutoff(pcmdat2, iterations = 250)
+simfit <- RMitemInfitCutoff(pcmdat2, iterations = 400)
 RMitemInfit(pcmdat2, cutoff = simfit)
 
 # Test of unidimensionality via posterior-predictive ordinal CFA

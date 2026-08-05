@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,24 @@
       <small>Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.1" id="easyrasch2-111">easyRasch2 1.1.1<a class="anchor" aria-label="anchor" href="#easyrasch2-111"></a></h2><p class="text-muted">CRAN release: 2026-08-04</p>
+<div class="section level3">
+<h3 id="bug-fixes-1-1-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-1-1"></a></h3>
+<ul><li>
+<code><a href="../reference/RMtargeting.html">RMtargeting()</a></code> no longer fails when the maximum possible raw score is odd. The default <code>bins</code> was the maximum observed raw score divided by two, which is fractional for an odd maximum (e.g. 13.5 for a nine-item 0-3 instrument); ggplot2 4.0 rejects a non-whole <code>bins</code> in <code><a href="https://ggplot2.tidyverse.org/reference/geom_histogram.html" class="external-link">geom_histogram()</a></code>, which produced an <code>Error in seq.default(): 'to' must be a finite number</code> when the empty panel was scaled. The default is now rounded up.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-features-1-1-1">New features<a class="anchor" aria-label="anchor" href="#new-features-1-1-1"></a></h3>
+<ul><li>
+<code><a href="../reference/RMiteminfit.html">RMitemInfit()</a></code> gains a <code>statistic</code> argument (<code>"infit"</code>, the default, or <code>"outfit"</code>) that selects which conditional fit statistic the table reports. <code><a href="../reference/RMitemInfitCutoff.html">RMitemInfitCutoff()</a></code> already simulated both, but only infit could be displayed and tested. With <code>statistic = "outfit"</code> the cutoff bounds come from <code>outfit_low</code>/<code>outfit_high</code>, the bootstrap p-values from the simulated outfit distribution, and the columns are named <code>Outfit_MSQ</code>, <code>Outfit_low</code>, <code>Outfit_high</code>, <code>p_outfit</code>, <code>padj_outfit</code>. The multiplicity correction runs across items within the selected statistic, so testing both and reporting whichever flags is a larger family than either call corrects for. The default is unchanged.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="other-changes-1-1-1">Other changes<a class="anchor" aria-label="anchor" href="#other-changes-1-1-1"></a></h3>
+<ul><li>
+<code><a href="../reference/RMitemInfitCutoff.html">RMitemInfitCutoff()</a></code> changes its default iterations setting from 250 to 400. This is based on a simulation study, available at <a href="https://github.com/pgmj/rasch_fwer" class="external-link uri">https://github.com/pgmj/rasch_fwer</a>, and is intended for use with the FWER corrected p-values in <code><a href="../reference/RMiteminfit.html">RMitemInfit()</a></code>, which will be the new default method in a future release. While 400 iterations is the new recommended lowest level for all sample sizes, a final analysis should use 1000-2000 iterations.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.0" id="easyrasch2-110">easyRasch2 1.1.0<a class="anchor" aria-label="anchor" href="#easyrasch2-110"></a></h2><p class="text-muted">CRAN release: 2026-07-14</p>
 <div class="section level3">

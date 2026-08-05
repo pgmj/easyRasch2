@@ -793,9 +793,12 @@ Wright-map style display.
 ``` r
 
 RMtargeting(items)
-#> Error in `seq.default()`:
-#> ! 'to' must be a finite number
 ```
+
+![\*\*Figure 11.\*\* \*Person-item
+targeting\*](figures/rasch-targeting-1.png)
+
+**Figure 11.** *Person-item targeting*
 
 ## Reliability
 
