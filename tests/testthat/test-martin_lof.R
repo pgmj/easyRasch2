@@ -292,8 +292,8 @@ test_that("p_value_floor reports the smallest attainable MC p-value", {
 
 test_that("polytomous sampler draws the exact conditional pattern distribution", {
   # Regression for the 1.0.0 sign-convention bug: the numerator weights and
-  # the psychotools gamma functions must use the same convention
-  # (psychotools weights category k by exp(-par_k)).
+  # the gamma functions must use the same convention (category k of item j
+  # carries weight exp(-par_jk)).
   taus <- list(c(-0.8, 0.4), c(0.2, 0.9), c(-0.3, -0.1))
   params <- lapply(taus, cumsum)
   psi <- lapply(params, function(p) exp(-c(0, p)))
@@ -305,7 +305,8 @@ test_that("polytomous sampler draws the exact conditional pattern distribution",
   exact <- sub$w / sum(sub$w)
 
   set.seed(1)
-  draws <- t(replicate(20000, sample_polytomous_at_score(3L, params)))
+  tabs <- build_ml_gamma_tables(params)
+  draws <- t(replicate(20000, sample_pattern_at_score(3L, tabs)))
   key_d <- apply(draws, 1, paste, collapse = "")
   key_e <- paste0(sub$x1, sub$x2, sub$x3)
   freq <- as.numeric(table(factor(key_d, levels = key_e)) / nrow(draws))
@@ -313,11 +314,50 @@ test_that("polytomous sampler draws the exact conditional pattern distribution",
 
   # and invariant (in distribution) to item order
   set.seed(1)
-  draws_p <- t(replicate(20000, sample_polytomous_at_score(
-    3L, params[c(3, 1, 2)])))
+  tabs_p <- build_ml_gamma_tables(params[c(3, 1, 2)])
+  draws_p <- t(replicate(20000, sample_pattern_at_score(3L, tabs_p)))
   key_p <- apply(draws_p[, c(2, 3, 1)], 1, paste, collapse = "")
   freq_p <- as.numeric(table(factor(key_p, levels = key_e)) / nrow(draws_p))
   expect_lt(max(abs(freq_p - exact)), 0.015)
+})
+
+test_that("dichotomous sampler draws the exact conditional pattern distribution", {
+  # Regression for the 1.1.1 dichotomous-sampler bug: the previous path used
+  # sample.int(prob = , replace = FALSE), which is successive sampling
+  # (Wallenius) and not the Rasch conditional distribution
+  # p(x | t) prop. to prod_i phi_i^{x_i}. This is also the point at which
+  # the implementation departs from Christensen & Kreiner (2007, p. 23),
+  # whose dichotomous shortcut describes exactly that successive scheme.
+  b <- c(-1.5, -0.4, 0.3, 1.6)
+  phi <- exp(-b)
+  pats <- as.matrix(expand.grid(rep(list(0:1), 4)))
+  pats <- pats[rowSums(pats) == 2L, , drop = FALSE]
+  w <- apply(pats, 1, function(x) prod(phi^x))
+  exact <- w / sum(w)
+  key_e <- apply(pats, 1, paste, collapse = "")
+
+  set.seed(1)
+  tabs <- build_ml_gamma_tables(b)
+  draws <- t(replicate(20000, sample_pattern_at_score(2L, tabs)))
+  freq <- as.numeric(
+    table(factor(apply(draws, 1, paste, collapse = ""), levels = key_e))
+  ) / nrow(draws)
+  expect_lt(max(abs(freq - exact)), 0.015)
+
+  # the boundary scores are deterministic
+  expect_equal(sample_pattern_at_score(0L, tabs), integer(4))
+  expect_equal(sample_pattern_at_score(4L, tabs), rep(1L, 4))
+})
+
+test_that("build_ml_gamma_tables matches the psychotools gamma functions", {
+  # Up to the per-item rescaling, which is constant within a gamma vector.
+  params <- lapply(list(c(-0.8, 0.4), c(0.2, 0.9), c(-0.3, -0.1)), cumsum)
+  tabs <- build_ml_gamma_tables(params)
+  ref <- compute_esf_gamma(params)
+  ratio <- tabs$gamma[[3]] / ref
+  expect_equal(max(ratio) - min(ratio), 0, tolerance = 1e-12)
+  expect_equal(tabs$m_i, c(2L, 2L, 2L))
+  expect_equal(tabs$M_total, 6L)
 })
 
 test_that("same seed gives the same p-value regardless of column arrangement", {
@@ -336,6 +376,60 @@ test_that("same seed gives the same p-value regardless of column arrangement", {
   expect_identical(r1$p_value, r2$p_value)
   expect_equal(r1$T_obs, r2$T_obs)
   expect_equal(r1$T_rep, r2$T_rep, tolerance = 1e-9)
+})
+
+test_that("missingness on unpartitioned items does not drop respondents", {
+  df <- make_dichotomous(n = 200, k = 8)
+  part <- list(paste0("I", 1:3), paste0("I", 4:6))
+  # NA only on I7/I8, which the partition never uses
+  df$I7[1:60] <- NA
+  df$I8[61:100] <- NA
+  expect_equal(sum(stats::complete.cases(df)), 100L)
+
+  res <- suppressWarnings(RMdimMartinLof(
+    df, partition = part, iterations = 20L, parallel = FALSE, seed = 1L))
+  expect_equal(res$sample_n, 200L)
+  expect_equal(res$sample_n_total, 200L)
+  expect_false(res$sample_has_na)
+  expect_equal(nrow(res$wle_scores), 200L)
+
+  rdf <- suppressWarnings(RMdimMartinLofResiduals(
+    df, partition = part, output = "dataframe"))
+  expect_equal(sum(rdf$observed), 200L)
+})
+
+test_that("missingness on partitioned items is reported the house way", {
+  df <- make_dichotomous(n = 200, k = 8)
+  part <- list(paste0("I", 1:3), paste0("I", 4:6))
+  df$I2[1:20] <- NA
+
+  res <- suppressWarnings(RMdimMartinLof(
+    df, partition = part, iterations = 20L, parallel = FALSE, seed = 1L))
+  expect_equal(res$sample_n, 180L)
+  expect_equal(res$sample_n_total, 200L)
+  expect_true(res$sample_has_na)
+
+  k <- suppressWarnings(RMdimMartinLofResiduals(df, partition = part))
+  expect_match(
+    paste(as.character(k), collapse = " "),
+    "n = 180 of 200 respondents \\(complete cases\\)"
+  )
+})
+
+test_that("the 30-case minimum counts partitioned items only", {
+  df <- make_dichotomous(n = 60, k = 8)
+  part <- list(paste0("I", 1:3), paste0("I", 4:6))
+  df$I8[1:40] <- NA  # only 20 rows complete overall, but 60 on I1-I6
+  expect_no_error(suppressWarnings(RMdimMartinLof(
+    df, partition = part, iterations = 5L, parallel = FALSE, seed = 1L)))
+
+  df2 <- make_dichotomous(n = 60, k = 8)
+  df2$I1[1:40] <- NA
+  expect_error(
+    suppressWarnings(RMdimMartinLof(
+      df2, partition = part, iterations = 5L, parallel = FALSE, seed = 1L)),
+    regexp = "30 complete cases"
+  )
 })
 
 test_that("residual expected counts match brute-force enumeration", {

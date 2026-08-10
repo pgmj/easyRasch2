@@ -734,7 +734,9 @@ RMlocdepQ3 <- function(
 #'   `parallel = TRUE`, a warning is issued and execution falls back to
 #'   sequential (single core) processing.
 #' @param verbose Logical. Show a progress bar (default `FALSE`).
-#' @param seed Integer or `NULL`. Random seed for reproducibility.
+#' @param seed Integer or `NULL`. Random seed for reproducibility. See
+#'   [easyRasch2-reproducibility] for what this guarantees and how it
+#'   interacts with `parallel`.
 #' @param cutoff_method Character. Method used to compute per-pair \eqn{Q_3}
 #'   credible intervals in `pair_cutoffs`. One of `"hdci"` (the default,
 #'   Highest Density Continuous Interval via `ggdist::hdci()`) or
@@ -1145,7 +1147,16 @@ RMlocdepQ3Cutoff <- function(
 #' @return A list with `mean` and `max` Q3, or a character string on failure.
 #' @keywords internal
 run_single_q3_sim <- function(seed, data_list) {
-  set.seed(seed)
+  # The RNG kind is pinned, not just the seed: mirai daemons start under
+  # L'Ecuyer-CMRG while the calling session uses the Mersenne-Twister
+  # default, so seeding alone would make the parallel and sequential paths
+  # draw different streams from the same `seed`.
+  set.seed(
+    seed,
+    kind = "Mersenne-Twister",
+    normal.kind = "Inversion",
+    sample.kind = "Rejection"
+  )
 
   tryCatch(
     {

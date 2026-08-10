@@ -45,7 +45,9 @@ sequential is used.}
 
 \item{verbose}{Logical. Show a progress bar (default \code{FALSE}).}
 
-\item{seed}{Integer or \code{NULL}. Master seed for reproducibility.}
+\item{seed}{Integer or \code{NULL}. Master seed for reproducibility. See
+\link{easyRasch2-reproducibility} for what this guarantees and how it
+interacts with \code{parallel}.}
 
 \item{estimator}{Character. The lavaan estimator passed to
 \code{lavaan::cfa()}. Default \code{"WLSMV"}. Other limited-information

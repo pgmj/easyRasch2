@@ -19,7 +19,9 @@ RMdimMartinLof(
 }
 \arguments{
 \item{data}{A data.frame or matrix of item responses (0-based,
-non-negative integers). Rows with any \code{NA} are dropped.}
+non-negative integers). Complete cases only: rows with any \code{NA} on the
+items named in \code{partition} are dropped. Missingness on items outside
+\code{partition} is ignored.}
 
 \item{partition}{The hypothesised partition of items into subscales. One of:
 \itemize{
@@ -55,10 +57,12 @@ to sequential with a warning.}
 
 \item{verbose}{Logical. Show a progress bar (default \code{FALSE}).}
 
-\item{seed}{Integer or \code{NULL}. Random seed for reproducibility. Items
-are processed internally in a fixed (alphabetical) order, so the same
-seed reproduces the same p-value regardless of how the data's columns
-are arranged.}
+\item{seed}{Integer or \code{NULL}. Random seed for reproducibility. Items are
+processed internally in a fixed (alphabetical) order, so the same seed
+reproduces the same p-value regardless of how the data's columns are
+arranged and regardless of the \code{parallel} setting. See
+\link{easyRasch2-reproducibility} for what this guarantees and how it
+interacts with \code{parallel}.}
 }
 \value{
 A list with components:
@@ -80,7 +84,12 @@ completed.}
 \item{\code{partition}}{Normalised partition (list of integer indices).}
 \item{\code{n_subscales}}{Number of subscales.}
 \item{\code{is_polytomous}}{Whether a PCM was fitted.}
-\item{\code{sample_n}}{Number of complete cases analysed.}
+\item{\code{sample_n}}{Number of complete cases analysed, counted over the
+items in \code{partition} only.}
+\item{\code{sample_n_total}}{Number of respondents in the raw input data,
+before the complete-case filter.}
+\item{\code{sample_has_na}}{Logical. Whether the partitioned items contained
+any missing values.}
 \item{\code{n_items}}{Number of items.}
 \item{\code{stopping}}{The stopping strategy used.}
 \item{\code{h}}{The sequential-stopping count, or \code{NA} for \code{stopping = "none"}.}
@@ -133,12 +142,20 @@ CML fits use \code{psychotools::raschmodel()} (RM) or \code{psychotools::pcmodel
 (a) sample N total scores from the empirical score distribution
 \eqn{n_t/N}; (b) for each sampled score, sample an item-response vector
 from the conditional distribution \eqn{p(x \mid t, \hat{\epsilon})} given
-by eq. 4 of the paper. For dichotomous data the fast algorithm of
-Christensen & Kreiner (2007, p. 23) is used (sample without replacement
-weighted by item easinesses). For polytomous data the recursive
-\eqn{\gamma}-function approach is used, with each item's response sampled
-conditional on the remaining items' joint score distribution (computed via
-\code{psychotools::elementary_symmetric_functions()}).
+by eq. 4 of the paper. Step (b) uses the recursive \eqn{\gamma}-function
+algorithm (Andersen, 1995, eq. 15.22 and 15.27) for dichotomous and
+polytomous items alike: items are filled in from the last backwards, each
+conditional on the score still to be distributed over the items before it.
+The nested \eqn{\gamma^{(1)}, \ldots, \gamma^{(n)}} depend only on the
+item parameters, which are fixed across the run, so the recursion is
+evaluated once rather than per person.
+
+The faster dichotomous shortcut described by Christensen & Kreiner (2007,
+p. 23), choosing \eqn{s} items one at a time with probabilities
+\eqn{\phi_i / \sum_{\mathrm{remaining}} \phi}, is deliberately \emph{not} used:
+successive sampling of that kind follows a Wallenius-type distribution,
+whereas the Rasch conditional distribution weights a set of items by the
+\emph{product} of their easinesses. See the note on validation below.
 
 Iterations that fail (e.g., simulated dataset has an empty category for an
 item) are silently dropped.
@@ -148,6 +165,23 @@ across MC iterations. Christensen & Kreiner (2007) use the extended
 likelihood function (Tjur, 1982) with the empirical score distribution as
 a non-parametric estimate of the latent distribution, so no distributional
 assumption about \eqn{\theta} is needed.
+
+\strong{Missing data.} Complete cases only. The statistic is built from the
+joint table of subscores, so a respondent needs a defined subscore on
+every subscale; there is no partial-missingness path, and the SAS macro
+this implementation was validated against has the same requirement. Rows
+with \code{NA} are dropped \emph{after} items outside \code{partition} have been
+removed, so missingness on items the test does not use costs no
+respondents. \code{sample_n} reports the respondents analysed and
+\code{sample_n_total} the raw input rows.
+
+\strong{Validation.} The statistic, the conditional log-likelihoods, the
+conditional sampler and the expected counts and residuals of
+\code{\link{RMdimMartinLofResiduals}} have been checked against the \code{pml}
+SAS macro (Christensen, 2004), kindly shared by Karl Bang Christensen.
+The statistic and the residual table agree with the macro to numerical
+precision. The sampler follows the macro's recursion rather than the
+dichotomous shortcut published in Christensen & Kreiner (2007).
 }
 \examples{
 \donttest{
@@ -180,6 +214,18 @@ RMdimMartinLof(dat,
 }
 }
 \references{
+Andersen, E. B. (1995). Polytomous Rasch models and their estimation. In
+G. H. Fischer & I. W. Molenaar (Eds.), \emph{Rasch models: Foundations, recent
+developments, and applications} (pp. 271-291). Springer-Verlag.
+
+Besag, J., & Clifford, P. (1991). Sequential Monte Carlo p-values.
+\emph{Biometrika, 78}(2), 301-304. \doi{10.1093/biomet/78.2.301}
+
+Christensen, K. B. (2004). \emph{pml: A SAS macro for testing
+unidimensionality in polytomous Rasch models} (Technical note). National
+Institute of Occupational Health, Denmark, and Department of
+Biostatistics, University of Copenhagen.
+
 Christensen, K. B., Bjorner, J. B., Kreiner, S., & Petersen, J. H. (2002).
 Testing unidimensionality in polytomous Rasch models. \emph{Psychometrika,
 67}(4), 563-574. \doi{10.1007/BF02295132}
@@ -188,9 +234,6 @@ Christensen, K. B., & Kreiner, S. (2007). A Monte Carlo approach to
 unidimensionality testing in polytomous Rasch models. \emph{Applied
 Psychological Measurement, 31}(1), 20-30.
 \doi{10.1177/0146621605286204}
-
-Besag, J., & Clifford, P. (1991). Sequential Monte Carlo p-values.
-\emph{Biometrika, 78}(2), 301-304. \doi{10.1093/biomet/78.2.301}
 }
 \seealso{
 \code{\link{RMdimResidualPCA}}, \code{\link{RMdimResidualPCACutoff}}

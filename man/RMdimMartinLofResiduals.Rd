@@ -16,7 +16,9 @@ RMdimMartinLofResiduals(
 }
 \arguments{
 \item{data}{A data.frame or matrix of item responses (0-based,
-non-negative integers). Rows with any \code{NA} are dropped.}
+non-negative integers). Complete cases only: rows with any \code{NA} on the
+items named in \code{partition} are dropped. Missingness on items outside
+\code{partition} is ignored.}
 
 \item{partition}{Same format as in \code{\link{RMdimMartinLof}}: a list of
 item-name/index vectors, or a length-\code{ncol(data)} vector of group
@@ -92,6 +94,17 @@ negative residuals at high/high and low/low. See Christensen et al.
 
 Cells where the total score has no observed cases (\code{n_t = 0}) are
 uninformative and are dropped from the output.
+
+Complete cases only, as in \code{\link{RMdimMartinLof}}, and rows with
+\code{NA} are dropped only after items outside \code{partition} have been removed.
+The reported \verb{n = X of Y respondents} counts respondents complete on the
+partitioned items against the raw input rows.
+
+Expected counts and residuals agree to numerical precision with the \code{pml}
+SAS macro (Christensen, 2004), kindly shared by Karl Bang Christensen.
+The one deliberate difference is at the extreme totals \code{t = 0} and
+\code{t = max}, where the conditional probability is 1 and the residual is
+undefined: the macro prints 0, this function returns \code{NA}.
 }
 \examples{
 \donttest{
@@ -120,6 +133,11 @@ df[df$flagged, ]
 }
 }
 \references{
+Christensen, K. B. (2004). \emph{pml: A SAS macro for testing
+unidimensionality in polytomous Rasch models} (Technical note). National
+Institute of Occupational Health, Denmark, and Department of
+Biostatistics, University of Copenhagen.
+
 Christensen, K. B., Bjorner, J. B., Kreiner, S., & Petersen, J. H. (2002).
 Testing unidimensionality in polytomous Rasch models. \emph{Psychometrika,
 67}(4), 563-574. \doi{10.1007/BF02295132}

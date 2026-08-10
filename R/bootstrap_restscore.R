@@ -28,7 +28,9 @@
 #'   iterations are excluded from the kable output (default 5). Has no effect
 #'   when `output = "dataframe"` or `output = "raw"`.
 #' @param verbose Logical. Show a progress bar (default `FALSE`).
-#' @param seed Integer or `NULL`. Random seed for reproducibility.
+#' @param seed Integer or `NULL`. Random seed for reproducibility. See
+#'   [easyRasch2-reproducibility] for what this guarantees and how it
+#'   interacts with `parallel`.
 #' @param output Either `"kable"` (default) for a formatted `knitr::kable()`
 #'   table, `"dataframe"` for the per-item summary data.frame, or `"raw"` for
 #'   the per-iteration long data.frame (useful for custom plotting).
@@ -400,7 +402,16 @@ RMitemRestscoreBoot <- function(
 #'   `diff_abs`, or a character string on failure.
 #' @keywords internal
 run_single_boot_restscore <- function(seed, data_list) {
-  set.seed(seed)
+  # The RNG kind is pinned, not just the seed: mirai daemons start under
+  # L'Ecuyer-CMRG while the calling session uses the Mersenne-Twister
+  # default, so seeding alone would make the parallel and sequential paths
+  # draw different streams from the same `seed`.
+  set.seed(
+    seed,
+    kind = "Mersenne-Twister",
+    normal.kind = "Inversion",
+    sample.kind = "Rejection"
+  )
   idx <- sample.int(nrow(data_list$data), data_list$samplesize, replace = TRUE)
   d <- data_list$data[idx, , drop = FALSE]
 

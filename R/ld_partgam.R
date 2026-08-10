@@ -640,7 +640,9 @@ knit_print.RMlocdepGamma <- function(x, ...) {
 #'   `parallel = TRUE`, a warning is issued and execution falls back to
 #'   sequential (single core) processing.
 #' @param verbose Logical. Show a progress bar (default `FALSE`).
-#' @param seed Integer or `NULL`. Random seed for reproducibility.
+#' @param seed Integer or `NULL`. Random seed for reproducibility. See
+#'   [easyRasch2-reproducibility] for what this guarantees and how it
+#'   interacts with `parallel`.
 #' @param cutoff_method Character string specifying how cutoff intervals are
 #'   computed. Either `"hdci"` (default) for the Highest Density Interval via
 #'   `ggdist::hdci()`, or `"quantile"` for the 2.5th/97.5th percentiles via
@@ -946,7 +948,16 @@ RMlocdepGammaCutoff <- function(
 #'   character string on failure.
 #' @keywords internal
 run_single_partgam_LD_sim <- function(seed, data_list) {
-  set.seed(seed)
+  # The RNG kind is pinned, not just the seed: mirai daemons start under
+  # L'Ecuyer-CMRG while the calling session uses the Mersenne-Twister
+  # default, so seeding alone would make the parallel and sequential paths
+  # draw different streams from the same `seed`.
+  set.seed(
+    seed,
+    kind = "Mersenne-Twister",
+    normal.kind = "Inversion",
+    sample.kind = "Rejection"
+  )
 
   thetas_res <- sample(
     data_list$thetas,

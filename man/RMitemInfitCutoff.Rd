@@ -33,7 +33,9 @@ sequential (single core) processing.}
 
 \item{verbose}{Logical. Show a progress bar (default \code{FALSE}).}
 
-\item{seed}{Integer or \code{NULL}. Random seed for reproducibility.}
+\item{seed}{Integer or \code{NULL}. Random seed for reproducibility. See
+\link{easyRasch2-reproducibility} for what this guarantees and how it
+interacts with \code{parallel}.}
 
 \item{cutoff_method}{Character string specifying how cutoff intervals are
 computed. Either \code{"hdci"} (default) for the Highest Density Interval via

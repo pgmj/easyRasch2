@@ -46,7 +46,9 @@
 #'   are **not** used for inference (see Müller, 2020). Default `FALSE`.
 #' @param parallel,n_cores Logical / integer. Parallelise the resampling
 #'   across persons via \pkg{mirai} when available. Default sequential.
-#' @param seed Optional integer for reproducible resampling.
+#' @param seed Optional integer for reproducible resampling. See
+#'   [easyRasch2-reproducibility] for what this guarantees and how it
+#'   interacts with `parallel`.
 #' @param output Character. `"kable"` (default), `"dataframe"`,
 #'   `"ggplot"`, or `"list"`. For `"ggplot"`, a **named list** of
 #'   person-fit maps is returned -- one per requested statistic (e.g.
@@ -576,7 +578,20 @@ RMpersonFit <- function(
   # the estimated location, is referenced against patterns simulated there and
   # scored with a location *re-estimated* from each simulated pattern (see the
   # lz block below).
+  # One seed per respondent, drawn from the caller's stream. Without this the
+  # parallel path is not reproducible at all: each mirai daemon carries its
+  # own L'Ecuyer-CMRG stream and the assignment of respondents to daemons is
+  # not fixed, so `seed` controlled the sequential path only. Seeding per
+  # respondent instead of per path also makes the two agree exactly.
+  person_seeds <- sample.int(.Machine$integer.max, n)
+
   one_person <- function(p) {
+    set.seed(
+      person_seeds[p],
+      kind = "Mersenne-Twister",
+      normal.kind = "Inversion",
+      sample.kind = "Rejection"
+    )
     ans <- ans_sets[[p]]
     res <- c(infit = NA_real_, outfit = NA_real_, lz = NA_real_)
     if (length(ans) == 0L) {

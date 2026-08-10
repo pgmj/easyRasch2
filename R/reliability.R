@@ -176,6 +176,8 @@ RMUreliability <- function(input_draws, level = 0.95, verbose = FALSE) {
 #'   `getOption("mc.cores")` is checked first; if neither is set,
 #'   bootstrapping falls back to sequential.
 #' @param seed Integer or `NULL`. Master random seed for reproducibility.
+#'   See [easyRasch2-reproducibility] for what this guarantees and how it
+#'   interacts with `parallel`.
 #' @param verbose Logical. Print progress messages and a progress bar for
 #'   the bootstrap. Default `FALSE`.
 #' @param theta_range Numeric length-2 vector. Theta limits passed to
@@ -597,7 +599,16 @@ RMreliability <- function(
 #' @keywords internal
 #' @noRd
 run_single_reliability_boot <- function(seed, data_list) {
-  set.seed(seed)
+  # The RNG kind is pinned, not just the seed: mirai daemons start under
+  # L'Ecuyer-CMRG while the calling session uses the Mersenne-Twister
+  # default, so seeding alone would make the parallel and sequential paths
+  # draw different streams from the same `seed`.
+  set.seed(
+    seed,
+    kind = "Mersenne-Twister",
+    normal.kind = "Inversion",
+    sample.kind = "Rejection"
+  )
   idx <- sample.int(nrow(data_list$data), nrow(data_list$data), replace = TRUE)
   dat_b <- data_list$data[idx, , drop = FALSE]
 

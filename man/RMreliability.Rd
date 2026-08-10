@@ -54,7 +54,9 @@ bootstrap if available. Default \code{TRUE}.}
 \code{getOption("mc.cores")} is checked first; if neither is set,
 bootstrapping falls back to sequential.}
 
-\item{seed}{Integer or \code{NULL}. Master random seed for reproducibility.}
+\item{seed}{Integer or \code{NULL}. Master random seed for reproducibility.
+See \link{easyRasch2-reproducibility} for what this guarantees and how it
+interacts with \code{parallel}.}
 
 \item{verbose}{Logical. Print progress messages and a progress bar for
 the bootstrap. Default \code{FALSE}.}

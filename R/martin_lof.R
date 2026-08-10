@@ -15,7 +15,9 @@
 #' Type-I error rate. Both source papers state this explicitly.
 #'
 #' @param data A data.frame or matrix of item responses (0-based,
-#'   non-negative integers). Rows with any `NA` are dropped.
+#'   non-negative integers). Complete cases only: rows with any `NA` on the
+#'   items named in `partition` are dropped. Missingness on items outside
+#'   `partition` is ignored.
 #' @param partition The hypothesised partition of items into subscales. One of:
 #'   * a **list** of column-name or column-index vectors, e.g.
 #'     `list(c("I1","I2","I3"), c("I4","I5","I6"))`;
@@ -40,10 +42,12 @@
 #'   `getOption("mc.cores")` is checked first; if neither is set, falls back
 #'   to sequential with a warning.
 #' @param verbose Logical. Show a progress bar (default `FALSE`).
-#' @param seed Integer or `NULL`. Random seed for reproducibility. Items
-#'   are processed internally in a fixed (alphabetical) order, so the same
-#'   seed reproduces the same p-value regardless of how the data's columns
-#'   are arranged.
+#' @param seed Integer or `NULL`. Random seed for reproducibility. Items are
+#'   processed internally in a fixed (alphabetical) order, so the same seed
+#'   reproduces the same p-value regardless of how the data's columns are
+#'   arranged and regardless of the `parallel` setting. See
+#'   [easyRasch2-reproducibility] for what this guarantees and how it
+#'   interacts with `parallel`.
 #'
 #' @return A list with components:
 #' \describe{
@@ -64,7 +68,12 @@
 #'   \item{`partition`}{Normalised partition (list of integer indices).}
 #'   \item{`n_subscales`}{Number of subscales.}
 #'   \item{`is_polytomous`}{Whether a PCM was fitted.}
-#'   \item{`sample_n`}{Number of complete cases analysed.}
+#'   \item{`sample_n`}{Number of complete cases analysed, counted over the
+#'     items in `partition` only.}
+#'   \item{`sample_n_total`}{Number of respondents in the raw input data,
+#'     before the complete-case filter.}
+#'   \item{`sample_has_na`}{Logical. Whether the partitioned items contained
+#'     any missing values.}
 #'   \item{`n_items`}{Number of items.}
 #'   \item{`stopping`}{The stopping strategy used.}
 #'   \item{`h`}{The sequential-stopping count, or `NA` for `stopping = "none"`.}
@@ -102,12 +111,20 @@
 #' (a) sample N total scores from the empirical score distribution
 #' \eqn{n_t/N}; (b) for each sampled score, sample an item-response vector
 #' from the conditional distribution \eqn{p(x \mid t, \hat{\epsilon})} given
-#' by eq. 4 of the paper. For dichotomous data the fast algorithm of
-#' Christensen & Kreiner (2007, p. 23) is used (sample without replacement
-#' weighted by item easinesses). For polytomous data the recursive
-#' \eqn{\gamma}-function approach is used, with each item's response sampled
-#' conditional on the remaining items' joint score distribution (computed via
-#' `psychotools::elementary_symmetric_functions()`).
+#' by eq. 4 of the paper. Step (b) uses the recursive \eqn{\gamma}-function
+#' algorithm (Andersen, 1995, eq. 15.22 and 15.27) for dichotomous and
+#' polytomous items alike: items are filled in from the last backwards, each
+#' conditional on the score still to be distributed over the items before it.
+#' The nested \eqn{\gamma^{(1)}, \ldots, \gamma^{(n)}} depend only on the
+#' item parameters, which are fixed across the run, so the recursion is
+#' evaluated once rather than per person.
+#'
+#' The faster dichotomous shortcut described by Christensen & Kreiner (2007,
+#' p. 23), choosing \eqn{s} items one at a time with probabilities
+#' \eqn{\phi_i / \sum_{\mathrm{remaining}} \phi}, is deliberately *not* used:
+#' successive sampling of that kind follows a Wallenius-type distribution,
+#' whereas the Rasch conditional distribution weights a set of items by the
+#' *product* of their easinesses. See the note on validation below.
 #'
 #' Iterations that fail (e.g., simulated dataset has an empty category for an
 #' item) are silently dropped.
@@ -118,7 +135,36 @@
 #' a non-parametric estimate of the latent distribution, so no distributional
 #' assumption about \eqn{\theta} is needed.
 #'
+#' **Missing data.** Complete cases only. The statistic is built from the
+#' joint table of subscores, so a respondent needs a defined subscore on
+#' every subscale; there is no partial-missingness path, and the SAS macro
+#' this implementation was validated against has the same requirement. Rows
+#' with `NA` are dropped *after* items outside `partition` have been
+#' removed, so missingness on items the test does not use costs no
+#' respondents. `sample_n` reports the respondents analysed and
+#' `sample_n_total` the raw input rows.
+#'
+#' **Validation.** The statistic, the conditional log-likelihoods, the
+#' conditional sampler and the expected counts and residuals of
+#' \code{\link{RMdimMartinLofResiduals}} have been checked against the `pml`
+#' SAS macro (Christensen, 2004), kindly shared by Karl Bang Christensen.
+#' The statistic and the residual table agree with the macro to numerical
+#' precision. The sampler follows the macro's recursion rather than the
+#' dichotomous shortcut published in Christensen & Kreiner (2007).
+#'
 #' @references
+#' Andersen, E. B. (1995). Polytomous Rasch models and their estimation. In
+#' G. H. Fischer & I. W. Molenaar (Eds.), *Rasch models: Foundations, recent
+#' developments, and applications* (pp. 271-291). Springer-Verlag.
+#'
+#' Besag, J., & Clifford, P. (1991). Sequential Monte Carlo p-values.
+#' *Biometrika, 78*(2), 301-304. \doi{10.1093/biomet/78.2.301}
+#'
+#' Christensen, K. B. (2004). *pml: A SAS macro for testing
+#' unidimensionality in polytomous Rasch models* (Technical note). National
+#' Institute of Occupational Health, Denmark, and Department of
+#' Biostatistics, University of Copenhagen.
+#'
 #' Christensen, K. B., Bjorner, J. B., Kreiner, S., & Petersen, J. H. (2002).
 #' Testing unidimensionality in polytomous Rasch models. *Psychometrika,
 #' 67*(4), 563-574. \doi{10.1007/BF02295132}
@@ -127,9 +173,6 @@
 #' unidimensionality testing in polytomous Rasch models. *Applied
 #' Psychological Measurement, 31*(1), 20-30.
 #' \doi{10.1177/0146621605286204}
-#'
-#' Besag, J., & Clifford, P. (1991). Sequential Monte Carlo p-values.
-#' *Biometrika, 78*(2), 301-304. \doi{10.1093/biomet/78.2.301}
 #'
 #' @seealso \code{\link{RMdimResidualPCA}}, \code{\link{RMdimResidualPCACutoff}}
 #'
@@ -180,10 +223,9 @@ RMdimMartinLof <- function(
 
   validate_response_data(data)
 
-  data <- stats::na.omit(as.data.frame(data))
-  if (nrow(data) < 30L) {
-    stop("Need at least 30 complete cases.", call. = FALSE)
-  }
+  data <- as.data.frame(data)
+  n_total <- nrow(data)
+  data <- .drop_empty_respondents(data)
 
   # Normalise partition
   partition_list <- normalize_ml_partition(partition, data)
@@ -204,6 +246,19 @@ RMdimMartinLof <- function(
     partition_list <- lapply(partition_list, function(idx) {
       unname(remap[as.character(idx)])
     })
+  }
+
+  # Complete cases only -- the statistic is built from the joint subscore
+  # table, so every respondent needs a defined subscore on every subscale.
+  # The filter runs *after* the restriction above: missingness on items that
+  # are not part of the partition must not cost respondents.
+  has_na <- anyNA(data)
+  data <- stats::na.omit(data)
+  if (nrow(data) < 30L) {
+    stop(
+      "Need at least 30 complete cases on the partitioned items.",
+      call. = FALSE
+    )
   }
 
   # Canonical item order (alphabetical by column name): the Monte Carlo
@@ -229,8 +284,11 @@ RMdimMartinLof <- function(
   options(rgl.useNULL = TRUE)
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
 
-  # Item parameters for sampling under H0 (fixed at observed-data CML estimates)
+  # Item parameters for sampling under H0 (fixed at observed-data CML
+  # estimates), and the nested gamma functions they imply. Both are constant
+  # across iterations, so the recursion is built once here.
   sampling_params <- extract_ml_sampling_params(data, is_polytomous)
+  gamma_tables <- build_ml_gamma_tables(sampling_params)
 
   # Observed test statistic (also returns log-likelihood components)
   T_obs <- compute_ml_statistic(data, partition_list, is_polytomous)
@@ -262,7 +320,7 @@ RMdimMartinLof <- function(
   sim_data_list <- list(
     N = N,
     is_polytomous = is_polytomous,
-    sampling_params = sampling_params,
+    gamma_tables = gamma_tables,
     score_values = score_values,
     score_probs = score_probs,
     item_names = colnames(data),
@@ -367,6 +425,8 @@ RMdimMartinLof <- function(
     n_subscales = D,
     is_polytomous = is_polytomous,
     sample_n = N,
+    sample_n_total = n_total,
+    sample_has_na = has_na,
     n_items = ncol(data),
     stopping = stopping,
     h = if (stopping == "sequential") h else NA_integer_,
@@ -651,112 +711,115 @@ compute_subscale_wle_and_correlations <- function(
   list(wle_scores = wle_scores, wle_correlation = wle_correlation)
 }
 
-#' Sample a dichotomous response vector with target total score
+#' Precompute the nested gamma functions used by the conditional sampler
 #'
-#' Uses the fast algorithm of Christensen & Kreiner (2007, p. 23): pick `s`
-#' items without replacement, weighted by easiness. `item_params` are
-#' difficulties (psychotools convention), so the weights are
-#' `exp(-item_params)`.
+#' Builds \eqn{\gamma^{(1)}, \ldots, \gamma^{(n)}}, where \eqn{\gamma^{(m)}}
+#' is the elementary symmetric function over the *first m* items only
+#' (Andersen, 1995, eq. 15.26). These depend only on the item parameters,
+#' which are held fixed across the whole Monte Carlo run, so the recursion is
+#' evaluated once and reused for every simulated person.
+#'
+#' `params` follows the psychotools convention: either a numeric vector of
+#' item difficulties (dichotomous) or a list of cumulative item-category
+#' difficulties, category `x` of item `j` carrying weight `exp(-par_jx)`.
+#'
+#' Each item's category weights are rescaled to sum to 1. Every term of
+#' \eqn{\gamma^{(m)}_t} contains exactly one factor from each of items
+#' 1..m, so rescaling item j divides the whole \eqn{\gamma^{(m)}} vector by
+#' the same constant for every t; the constants cancel in the sampling
+#' probabilities below. The rescaling exists only to keep the recursion in a
+#' safe numeric range on long scales.
 #'
 #' @keywords internal
 #' @noRd
-sample_dichotomous_at_score <- function(s, item_params) {
-  n_items <- length(item_params)
-  if (s == 0L) {
-    return(integer(n_items))
+build_ml_gamma_tables <- function(params) {
+  if (!is.list(params)) {
+    params <- as.list(params)
   }
-  if (s == n_items) {
-    return(rep(1L, n_items))
+  psi <- lapply(params, function(p) {
+    w <- exp(-c(0, as.numeric(p))) # psi_{j,0} = 1 prepended
+    w / sum(w)
+  })
+  m_i <- vapply(psi, function(w) length(w) - 1L, integer(1L))
+  n_items <- length(psi)
+
+  gamma_nested <- vector("list", n_items)
+  gamma_nested[[1L]] <- psi[[1L]]
+  if (n_items >= 2L) {
+    for (j in 2:n_items) {
+      prev <- gamma_nested[[j - 1L]]
+      cur <- numeric(sum(m_i[seq_len(j)]) + 1L)
+      for (x in 0L:m_i[j]) {
+        at <- seq_along(prev) + x
+        cur[at] <- cur[at] + psi[[j]][x + 1L] * prev
+      }
+      gamma_nested[[j]] <- cur
+    }
   }
-  weights <- exp(-item_params)
-  picked <- sample.int(n_items, size = s, prob = weights, replace = FALSE)
-  out <- integer(n_items)
-  out[picked] <- 1L
-  out
+
+  list(psi = psi, gamma = gamma_nested, m_i = m_i, M_total = sum(m_i))
 }
 
-#' Sample a polytomous response vector with target total score
+#' Sample a response vector with a given total score
 #'
-#' Iteratively samples one item's response at a time. For each item j in the
-#' remaining pool, the conditional probability of \eqn{x_j} given the
-#' remaining target score \eqn{t'} is proportional to
-#' \eqn{\exp(\epsilon_{j,x_j}) \cdot \gamma^{(j)}_{t' - x_j}} where
-#' \eqn{\gamma^{(j)}} is the elementary symmetric function over the
-#' remaining items excluding item j (Andersen, 1995, eq. 15.22, 15.26).
-#' \eqn{\gamma^{(j)}} is recomputed via
-#' `psychotools::elementary_symmetric_functions()` for each step.
+#' Draws from the exact conditional distribution
+#' \eqn{p(x \mid t, \hat{\epsilon}) = \prod_j \psi_{j,x_j} / \gamma_t},
+#' one item at a time from the last item backwards: given the score
+#' \eqn{t'} still to be distributed over items 1..j,
+#' \deqn{p(x_j \mid t') = \psi_{j,x_j}\,\gamma^{(j-1)}_{t' - x_j} /
+#'   \gamma^{(j)}_{t'}}
+#' (Andersen, 1995, eq. 15.22 and 15.27). Item 1 takes whatever score
+#' remains. `tables` comes from `build_ml_gamma_tables()`, so no gamma
+#' function is recomputed per person. Handles dichotomous and polytomous
+#' items alike, and items with differing numbers of categories.
+#'
+#' This is the algorithm used by Christensen's `pml` SAS macro. Note that
+#' the faster dichotomous shortcut given in Christensen & Kreiner (2007,
+#' p. 23) --- choose `s` items one at a time with probabilities
+#' \eqn{\phi_i / \sum_{\text{remaining}} \phi} --- does *not* reproduce this
+#' distribution. Successive sampling of that kind gives a Wallenius-type
+#' distribution, whereas the Rasch conditional distribution weights a set of
+#' items by the *product* of their easinesses. The two agree only when the
+#' easinesses are all equal or when `s` is 0, 1, or `n`.
 #'
 #' @keywords internal
 #' @noRd
-sample_polytomous_at_score <- function(t, params_list) {
-  n_items <- length(params_list)
-  m_i <- vapply(params_list, length, integer(1L)) # max category per item
-  M_total <- sum(m_i)
-
-  if (t == 0L) {
+sample_pattern_at_score <- function(t, tables) {
+  m_i <- tables$m_i
+  n_items <- length(m_i)
+  if (t <= 0L) {
     return(integer(n_items))
   }
-  if (t == M_total) {
+  if (t >= tables$M_total) {
     return(m_i)
   }
 
   x <- integer(n_items)
-  remaining_pos <- seq_len(n_items) # original positions still in pool
-  remaining_params <- params_list
-  remaining_max <- m_i
   remaining_score <- t
-
-  while (length(remaining_pos) > 0L) {
-    if (length(remaining_pos) == 1L) {
-      x[remaining_pos] <- remaining_score
-      break
-    }
-    j <- 1L
-    item_pos <- remaining_pos[j]
-    other_params <- remaining_params[-j]
-    M_other <- sum(remaining_max[-j])
-
-    # gamma^{(j)}: ESF over the items remaining minus item j
-    gamma_other <- if (length(other_params) == 0L) {
-      1
-    } else {
-      esf <- psychotools::elementary_symmetric_functions(
-        other_params,
-        order = 0L
-      )
-      if (is.list(esf)) esf[[1L]] else esf
-    }
-
-    # Conditional log-probabilities for x_j in 0:m_j. The stored
-    # parameters follow the psychotools convention (cumulative
-    # difficulties, category weight exp(-par)), so the log-weights
-    # epsilon are their negation -- matching the exp(-par) weights that
-    # elementary_symmetric_functions() uses for gamma_other above.
-    eps_j <- c(0, -remaining_params[[j]]) # epsilon_{j,0}=0 prepended
-    max_xj <- remaining_max[j]
-    log_probs <- rep(-Inf, max_xj + 1L)
-    for (xj in 0L:max_xj) {
-      target_other <- remaining_score - xj
-      if (target_other >= 0L && target_other <= M_other) {
-        log_probs[xj + 1L] <- eps_j[xj + 1L] +
-          log(gamma_other[target_other + 1L])
+  if (n_items >= 2L) {
+    for (j in n_items:2L) {
+      prev <- tables$gamma[[j - 1L]]
+      # feasible x_j: the rest must be attainable on items 1..j-1
+      lo <- max(0L, remaining_score - (length(prev) - 1L))
+      hi <- min(m_i[j], remaining_score)
+      if (hi <= lo) {
+        xj <- lo
+      } else {
+        xs <- lo:hi
+        w <- tables$psi[[j]][xs + 1L] * prev[remaining_score - xs + 1L]
+        total <- sum(w)
+        xj <- if (!is.finite(total) || total <= 0) {
+          # Numerical fallback: should be unreachable with rescaled psi.
+          xs[which.max(w)]
+        } else {
+          xs[sample.int(length(xs), size = 1L, prob = w)]
+        }
       }
+      x[j] <- xj
+      remaining_score <- remaining_score - xj
     }
-    log_probs <- log_probs - max(log_probs)
-    probs <- exp(log_probs)
-    if (sum(probs) <= 0 || !is.finite(sum(probs))) {
-      # Numerical fallback: should be rare. Pick the most likely value.
-      sampled_xj <- which.max(log_probs) - 1L
-    } else {
-      probs <- probs / sum(probs)
-      sampled_xj <- sample(0L:max_xj, size = 1L, prob = probs)
-    }
-    x[item_pos] <- sampled_xj
-    remaining_score <- remaining_score - sampled_xj
-    remaining_pos <- remaining_pos[-j]
-    remaining_params <- remaining_params[-j]
-    remaining_max <- remaining_max[-j]
   }
+  x[1L] <- remaining_score
   x
 }
 
@@ -765,7 +828,16 @@ sample_polytomous_at_score <- function(t, params_list) {
 #' @keywords internal
 #' @noRd
 run_single_ml_iteration <- function(seed, sim_data) {
-  set.seed(seed)
+  # The RNG kind is pinned, not just the seed: mirai daemons start under
+  # L'Ecuyer-CMRG while the calling session uses the Mersenne-Twister
+  # default, so seeding alone would make the parallel and sequential paths
+  # draw different streams from the same `seed`.
+  set.seed(
+    seed,
+    kind = "Mersenne-Twister",
+    normal.kind = "Inversion",
+    sample.kind = "Rejection"
+  )
 
   N <- sim_data$N
   scores <- sample(
@@ -776,20 +848,11 @@ run_single_ml_iteration <- function(seed, sim_data) {
   )
 
   sim_responses <- matrix(0L, nrow = N, ncol = length(sim_data$item_names))
-  if (sim_data$is_polytomous) {
-    for (i in seq_len(N)) {
-      sim_responses[i, ] <- sample_polytomous_at_score(
-        scores[i],
-        sim_data$sampling_params
-      )
-    }
-  } else {
-    for (i in seq_len(N)) {
-      sim_responses[i, ] <- sample_dichotomous_at_score(
-        scores[i],
-        sim_data$sampling_params
-      )
-    }
+  for (i in seq_len(N)) {
+    sim_responses[i, ] <- sample_pattern_at_score(
+      scores[i],
+      sim_data$gamma_tables
+    )
   }
 
   sim_df <- as.data.frame(sim_responses)
@@ -835,8 +898,7 @@ run_ml_sim_parallel <- function(
       data_list = sim_data_list,
       run_single_ml_iteration = run_single_ml_iteration,
       compute_ml_statistic = compute_ml_statistic,
-      sample_dichotomous_at_score = sample_dichotomous_at_score,
-      sample_polytomous_at_score = sample_polytomous_at_score
+      sample_pattern_at_score = sample_pattern_at_score
     )
   })
 
@@ -912,8 +974,21 @@ run_ml_sim_sequential <- function(
 #' Cells where the total score has no observed cases (`n_t = 0`) are
 #' uninformative and are dropped from the output.
 #'
+#' Complete cases only, as in \code{\link{RMdimMartinLof}}, and rows with
+#' `NA` are dropped only after items outside `partition` have been removed.
+#' The reported `n = X of Y respondents` counts respondents complete on the
+#' partitioned items against the raw input rows.
+#'
+#' Expected counts and residuals agree to numerical precision with the `pml`
+#' SAS macro (Christensen, 2004), kindly shared by Karl Bang Christensen.
+#' The one deliberate difference is at the extreme totals `t = 0` and
+#' `t = max`, where the conditional probability is 1 and the residual is
+#' undefined: the macro prints 0, this function returns `NA`.
+#'
 #' @param data A data.frame or matrix of item responses (0-based,
-#'   non-negative integers). Rows with any `NA` are dropped.
+#'   non-negative integers). Complete cases only: rows with any `NA` on the
+#'   items named in `partition` are dropped. Missingness on items outside
+#'   `partition` is ignored.
 #' @param partition Same format as in \code{\link{RMdimMartinLof}}: a list of
 #'   item-name/index vectors, or a length-`ncol(data)` vector of group
 #'   labels. Each subscale must contain at least 2 items.
@@ -955,6 +1030,11 @@ run_ml_sim_sequential <- function(
 #' * `output = "ggplot"`: a `geom_tile()` heatmap (D = 2 or 3 only).
 #'
 #' @references
+#' Christensen, K. B. (2004). *pml: A SAS macro for testing
+#' unidimensionality in polytomous Rasch models* (Technical note). National
+#' Institute of Occupational Health, Denmark, and Department of
+#' Biostatistics, University of Copenhagen.
+#'
 #' Christensen, K. B., Bjorner, J. B., Kreiner, S., & Petersen, J. H. (2002).
 #' Testing unidimensionality in polytomous Rasch models. *Psychometrika,
 #' 67*(4), 563-574. \doi{10.1007/BF02295132}
@@ -1030,11 +1110,7 @@ RMdimMartinLofResiduals <- function(
 
   data <- as.data.frame(data)
   n_total_ml <- nrow(data)
-  has_na_ml <- anyNA(data)
-  data <- stats::na.omit(data)
-  if (nrow(data) < 30L) {
-    stop("Need at least 30 complete cases.", call. = FALSE)
-  }
+  data <- .drop_empty_respondents(data)
 
   partition_list <- normalize_ml_partition(partition, data)
   D <- length(partition_list)
@@ -1060,6 +1136,17 @@ RMdimMartinLofResiduals <- function(
     partition_list <- lapply(partition_list, function(idx) {
       unname(remap[as.character(idx)])
     })
+  }
+
+  # Complete cases only, and only after the restriction above, so that
+  # missingness on items outside the partition costs no respondents.
+  has_na_ml <- anyNA(data)
+  data <- stats::na.omit(data)
+  if (nrow(data) < 30L) {
+    stop(
+      "Need at least 30 complete cases on the partitioned items.",
+      call. = FALSE
+    )
   }
 
   data_mat <- as.matrix(data)

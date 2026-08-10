@@ -39,7 +39,9 @@ when \code{output = "dataframe"} or \code{output = "raw"}.}
 
 \item{verbose}{Logical. Show a progress bar (default \code{FALSE}).}
 
-\item{seed}{Integer or \code{NULL}. Random seed for reproducibility.}
+\item{seed}{Integer or \code{NULL}. Random seed for reproducibility. See
+\link{easyRasch2-reproducibility} for what this guarantees and how it
+interacts with \code{parallel}.}
 
 \item{output}{Either \code{"kable"} (default) for a formatted \code{knitr::kable()}
 table, \code{"dataframe"} for the per-item summary data.frame, or \code{"raw"} for

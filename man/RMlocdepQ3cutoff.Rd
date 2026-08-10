@@ -33,7 +33,9 @@ sequential (single core) processing.}
 
 \item{verbose}{Logical. Show a progress bar (default \code{FALSE}).}
 
-\item{seed}{Integer or \code{NULL}. Random seed for reproducibility.}
+\item{seed}{Integer or \code{NULL}. Random seed for reproducibility. See
+\link{easyRasch2-reproducibility} for what this guarantees and how it
+interacts with \code{parallel}.}
 
 \item{cutoff_method}{Character. Method used to compute per-pair \eqn{Q_3}
 credible intervals in \code{pair_cutoffs}. One of \code{"hdci"} (the default,

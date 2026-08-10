@@ -37,7 +37,9 @@
 #'   `NULL`, `getOption("mc.cores")` is consulted; if neither is set,
 #'   sequential is used.
 #' @param verbose Logical. Show a progress bar (default `FALSE`).
-#' @param seed Integer or `NULL`. Master seed for reproducibility.
+#' @param seed Integer or `NULL`. Master seed for reproducibility. See
+#'   [easyRasch2-reproducibility] for what this guarantees and how it
+#'   interacts with `parallel`.
 #' @param estimator Character. The lavaan estimator passed to
 #'   `lavaan::cfa()`. Default `"WLSMV"`. Other limited-information
 #'   estimators that produce robust/scaled fit indices (e.g.,
@@ -1349,7 +1351,16 @@ cfa_fit_plot <- function(simfit, observed_fit, cutoffs, percentile) {
 #' @noRd
 run_single_cfa_sim <- function(seed, data_list, obs_data = NULL) {
   build_sim_df <- function() {
-    set.seed(seed)
+    # The RNG kind is pinned, not just the seed: mirai daemons start under
+    # L'Ecuyer-CMRG while the calling session uses the Mersenne-Twister
+    # default, so seeding alone would make the parallel and sequential paths
+    # draw different streams from the same `seed`.
+    set.seed(
+      seed,
+      kind = "Mersenne-Twister",
+      normal.kind = "Inversion",
+      sample.kind = "Rejection"
+    )
     thetas_res <- sample(
       data_list$thetas,
       size = data_list$sample_n,

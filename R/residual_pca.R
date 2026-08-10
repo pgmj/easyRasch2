@@ -483,7 +483,9 @@ RMdimResidualPCA <- function(
 #'   `getOption("mc.cores")` is checked first; if neither is set,
 #'   `parallel = TRUE` falls back to sequential with a warning.
 #' @param verbose Logical. Show a progress bar. Default `FALSE`.
-#' @param seed Integer or `NULL`. Random seed for reproducibility.
+#' @param seed Integer or `NULL`. Random seed for reproducibility. See
+#'   [easyRasch2-reproducibility] for what this guarantees and how it
+#'   interacts with `parallel`.
 #'
 #' @return A list with components:
 #' \describe{
@@ -683,7 +685,16 @@ RMdimResidualPCACutoff <- function(
 #' @keywords internal
 #' @noRd
 run_single_pca_sim <- function(seed, data_list) {
-  set.seed(seed)
+  # The RNG kind is pinned, not just the seed: mirai daemons start under
+  # L'Ecuyer-CMRG while the calling session uses the Mersenne-Twister
+  # default, so seeding alone would make the parallel and sequential paths
+  # draw different streams from the same `seed`.
+  set.seed(
+    seed,
+    kind = "Mersenne-Twister",
+    normal.kind = "Inversion",
+    sample.kind = "Rejection"
+  )
   thetas_res <- sample(
     data_list$thetas,
     size = data_list$sample_n,

@@ -34,7 +34,9 @@ imputed dataset (default \code{TRUE}). Passed to \code{\link{RMitemInfitCutoff}}
 \item{verbose}{Logical. Show progress messages (default \code{FALSE}).}
 
 \item{seed}{Integer or \code{NULL}. Master random seed for reproducibility. A
-unique per-imputation seed is derived from this value.}
+unique per-imputation seed is derived from this value. See
+\link{easyRasch2-reproducibility} for what this guarantees and how it
+interacts with \code{parallel}.}
 
 \item{cutoff_method}{Character string specifying how cutoff intervals are
 computed from the stacked distribution. Either \code{"hdci"} (default) for the

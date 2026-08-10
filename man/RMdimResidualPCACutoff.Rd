@@ -28,7 +28,9 @@ non-negative integers).}
 
 \item{verbose}{Logical. Show a progress bar. Default \code{FALSE}.}
 
-\item{seed}{Integer or \code{NULL}. Random seed for reproducibility.}
+\item{seed}{Integer or \code{NULL}. Random seed for reproducibility. See
+\link{easyRasch2-reproducibility} for what this guarantees and how it
+interacts with \code{parallel}.}
 }
 \value{
 A list with components:
