@@ -56,7 +56,9 @@ RMitemInfitCutoffMI(
 - seed:
 
   Integer or `NULL`. Master random seed for reproducibility. A unique
-  per-imputation seed is derived from this value.
+  per-imputation seed is derived from this value. See
+  [easyRasch2-reproducibility](https://pgmj.github.io/easyRasch2/dev/reference/easyRasch2-reproducibility.md)
+  for what this guarantees and how it interacts with `parallel`.
 
 - cutoff_method:
 

@@ -28,7 +28,9 @@ RMdimMartinLofResiduals(
 - data:
 
   A data.frame or matrix of item responses (0-based, non-negative
-  integers). Rows with any `NA` are dropped.
+  integers). Complete cases only: rows with any `NA` on the items named
+  in `partition` are dropped. Missingness on items outside `partition`
+  is ignored.
 
 - partition:
 
@@ -113,7 +115,24 @@ negative residuals at high/high and low/low. See Christensen et al.
 Cells where the total score has no observed cases (`n_t = 0`) are
 uninformative and are dropped from the output.
 
+Complete cases only, as in
+[`RMdimMartinLof`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md),
+and rows with `NA` are dropped only after items outside `partition` have
+been removed. The reported `n = X of Y respondents` counts respondents
+complete on the partitioned items against the raw input rows.
+
+Expected counts and residuals agree to numerical precision with the
+`pml` SAS macro (Christensen, 2004), kindly shared by Karl Bang
+Christensen. The one deliberate difference is at the extreme totals
+`t = 0` and `t = max`, where the conditional probability is 1 and the
+residual is undefined: the macro prints 0, this function returns `NA`.
+
 ## References
+
+Christensen, K. B. (2004). *pml: A SAS macro for testing
+unidimensionality in polytomous Rasch models* (Technical note). National
+Institute of Occupational Health, Denmark, and Department of
+Biostatistics, University of Copenhagen.
 
 Christensen, K. B., Bjorner, J. B., Kreiner, S., & Petersen, J. H.
 (2002). Testing unidimensionality in polytomous Rasch models.

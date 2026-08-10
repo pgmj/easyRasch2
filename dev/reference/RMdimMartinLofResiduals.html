@@ -15,7 +15,7 @@ rather than just whether it does (which RMdimMartinLof() answers)."><meta name="
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.1.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -69,7 +69,9 @@ rather than just whether it does (which <code><a href="RMdimMartinLof.html">RMdi
 
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
 <dd><p>A data.frame or matrix of item responses (0-based,
-non-negative integers). Rows with any <code>NA</code> are dropped.</p></dd>
+non-negative integers). Complete cases only: rows with any <code>NA</code> on the
+items named in <code>partition</code> are dropped. Missingness on items outside
+<code>partition</code> is ignored.</p></dd>
 
 
 <dt id="arg-partition">partition<a class="anchor" aria-label="anchor" href="#arg-partition"></a></dt>
@@ -150,10 +152,23 @@ negative residuals at high/high and low/low. See Christensen et al.
 (2002, section7) for a worked example.</p>
 <p>Cells where the total score has no observed cases (<code>n_t = 0</code>) are
 uninformative and are dropped from the output.</p>
+<p>Complete cases only, as in <code><a href="RMdimMartinLof.html">RMdimMartinLof</a></code>, and rows with
+<code>NA</code> are dropped only after items outside <code>partition</code> have been removed.
+The reported <code>n = X of Y respondents</code> counts respondents complete on the
+partitioned items against the raw input rows.</p>
+<p>Expected counts and residuals agree to numerical precision with the <code>pml</code>
+SAS macro (Christensen, 2004), kindly shared by Karl Bang Christensen.
+The one deliberate difference is at the extreme totals <code>t = 0</code> and
+<code>t = max</code>, where the conditional probability is 1 and the residual is
+undefined: the macro prints 0, this function returns <code>NA</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Christensen, K. B., Bjorner, J. B., Kreiner, S., &amp; Petersen, J. H. (2002).
+    <p>Christensen, K. B. (2004). <em>pml: A SAS macro for testing
+unidimensionality in polytomous Rasch models</em> (Technical note). National
+Institute of Occupational Health, Denmark, and Department of
+Biostatistics, University of Copenhagen.</p>
+<p>Christensen, K. B., Bjorner, J. B., Kreiner, S., &amp; Petersen, J. H. (2002).
 Testing unidimensionality in polytomous Rasch models. <em>Psychometrika,
 67</em>(4), 563-574. <a href="https://doi.org/10.1007/BF02295132" class="external-link">doi:10.1007/BF02295132</a></p>
     </div>

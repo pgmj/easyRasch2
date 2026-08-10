@@ -87,7 +87,9 @@ RMpersonFit(
 
 - seed:
 
-  Optional integer for reproducible resampling.
+  Optional integer for reproducible resampling. See
+  [easyRasch2-reproducibility](https://pgmj.github.io/easyRasch2/dev/reference/easyRasch2-reproducibility.md)
+  for what this guarantees and how it interacts with `parallel`.
 
 - output:
 
@@ -236,19 +238,19 @@ colnames(dat) <- paste0("Item", 1:8)
 # Conditional infit/outfit MSQ + lz with resampled p-values
 RMpersonFit(dat, iterations = 200, output = "dataframe") |> head()
 #>   id n_answered sum_score infit_msq outfit_msq          lz   p_infit  p_outfit
-#> 1  1          8         5 1.3900179  1.3988496  0.06189744 0.3283582 0.3283582
-#> 2  2          8         6 0.7271090  0.7334992 -0.06110551 0.3482587 0.3980100
+#> 1  1          8         5 1.3900179  1.3988496  0.06189744 0.2786070 0.2885572
+#> 2  2          8         6 0.7271090  0.7334992 -0.06110551 0.4079602 0.4477612
 #> 3  3          8         2 0.8184723  0.8471554  0.27470409 0.7960199 0.7960199
-#> 4  4          8        10 0.7119447  0.6871710  0.42107989 0.2786070 0.1990050
+#> 4  4          8        10 0.7119447  0.6871710  0.42107989 0.2587065 0.1791045
 #> 5  5          8         4 1.5137117  1.4541483  0.33920680 0.2288557 0.2288557
-#> 6  6          8         4 1.5321777  1.4836487  0.29890695 0.1691542 0.1691542
+#> 6  6          8         4 1.5321777  1.4836487  0.29890695 0.2189055 0.2189055
 #>        p_lz flagged
-#> 1 0.3383085   FALSE
-#> 2 0.2935323   FALSE
-#> 3 0.4527363   FALSE
-#> 4 0.8208955   FALSE
-#> 5 0.6467662   FALSE
-#> 6 0.5721393   FALSE
+#> 1 0.3930348   FALSE
+#> 2 0.2835821   FALSE
+#> 3 0.4228856   FALSE
+#> 4 0.7860697   FALSE
+#> 5 0.7064677   FALSE
+#> 6 0.6119403   FALSE
 
 # Person-fit maps: a named list with one plot per statistic
 if (requireNamespace("ggplot2", quietly = TRUE)) {
@@ -260,19 +262,19 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
 # Flag only underfit (noisy responding), the validity-relevant direction
 RMpersonFit(dat, iterations = 200, flag = "underfit",
             output = "dataframe") |> head()
-#>   id n_answered sum_score infit_msq outfit_msq          lz    p_infit
-#> 1  1          8         5 1.3900179  1.3988496  0.06189744 0.14427861
-#> 2  2          8         6 0.7271090  0.7334992 -0.06110551 0.82089552
-#> 3  3          8         2 0.8184723  0.8471554  0.27470409 0.43283582
-#> 4  4          8        10 0.7119447  0.6871710  0.42107989 0.82089552
-#> 5  5          8         4 1.5137117  1.4541483  0.33920680 0.09950249
-#> 6  6          8         4 1.5321777  1.4836487  0.29890695 0.07462687
-#>     p_outfit      p_lz flagged
-#> 1 0.11940299 0.3432836   FALSE
-#> 2 0.80099502 0.2736318   FALSE
-#> 3 0.43283582 0.4427861   FALSE
-#> 4 0.84577114 0.7960199   FALSE
-#> 5 0.09950249 0.6965174   FALSE
-#> 6 0.07462687 0.6368159   FALSE
+#>   id n_answered sum_score infit_msq outfit_msq          lz   p_infit  p_outfit
+#> 1  1          8         5 1.3900179  1.3988496  0.06189744 0.1243781 0.1243781
+#> 2  2          8         6 0.7271090  0.7334992 -0.06110551 0.7860697 0.7860697
+#> 3  3          8         2 0.8184723  0.8471554  0.27470409 0.4577114 0.4577114
+#> 4  4          8        10 0.7119447  0.6871710  0.42107989 0.8258706 0.8805970
+#> 5  5          8         4 1.5137117  1.4541483  0.33920680 0.1144279 0.1144279
+#> 6  6          8         4 1.5321777  1.4836487  0.29890695 0.1144279 0.1144279
+#>        p_lz flagged
+#> 1 0.3830846   FALSE
+#> 2 0.2935323   FALSE
+#> 3 0.3930348   FALSE
+#> 4 0.8407960   FALSE
+#> 5 0.6417910   FALSE
+#> 6 0.6666667   FALSE
 # }
 ```

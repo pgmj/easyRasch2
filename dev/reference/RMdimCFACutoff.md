@@ -73,7 +73,9 @@ RMdimCFACutoff(
 
 - seed:
 
-  Integer or `NULL`. Master seed for reproducibility.
+  Integer or `NULL`. Master seed for reproducibility. See
+  [easyRasch2-reproducibility](https://pgmj.github.io/easyRasch2/dev/reference/easyRasch2-reproducibility.md)
+  for what this guarantees and how it interacts with `parallel`.
 
 - estimator:
 
