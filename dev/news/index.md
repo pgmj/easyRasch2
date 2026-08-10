@@ -4,119 +4,59 @@
 
 ### Bug fixes
 
-- **[`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md):
-  the Monte Carlo null sampler drew dichotomous response patterns from
-  the wrong distribution** (present since 1.0.0, dichotomous data only).
-  Patterns were generated with `sample.int(prob = , replace = FALSE)`,
-  which R implements as successive sampling: draw one item weighted by
-  easiness, renormalise over the remaining items, draw the next. That
-  yields a Wallenius-type distribution, whereas the Rasch conditional
-  distribution `p(x | t)` is proportional to the *product* of the
-  easinesses of the items scored 1. The two coincide only when all item
-  easinesses are equal or when the score is 0, 1, or the maximum.
-  Consequence: simulated null data sets did not follow the fitted model
-  and the null distribution of the statistic was inflated by roughly
-  75%, so the dichotomous test was severely conservative. In a check
-  with eight items and N = 500 the null mean was 24.7 against a correct
-  13.9, and the empirical Type-I error was 0.000 against a nominal 0.05,
-  with power against a two-dimensional alternative (correlation 0.6)
-  falling from 0.55 to 0.14. Polytomous data used a different, correct
-  code path and is unaffected. **Dichotomous Martin-Löf p-values from
-  1.0.0 and 1.1.x should be recomputed.**
+- [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
+  sampled dichotomous null patterns from the wrong distribution (since
+  1.0.0). Successive weighted sampling without replacement is not the
+  Rasch conditional distribution, and it inflated the null distribution
+  by roughly 75%, giving a Type-I error of 0.000 against a nominal 0.05
+  and badly reduced power. Polytomous data was unaffected. **Dichotomous
+  Martin-Löf p-values from 1.0.0 and 1.1.x should be recomputed.**
 
-  This is also where the implementation now departs from its source
-  paper. The shortcut is stated as exact in Christensen & Kreiner (2007,
-  p. 23), and the previous code implemented it faithfully. Christensen’s
-  own `pml` SAS macro does not use it and applies the general recursion
-  in all cases.
-
-- **`parallel = TRUE` and `parallel = FALSE` now give identical results
-  for the same `seed`.** `mirai` daemons start under
-  `RNGkind("L'Ecuyer-CMRG")` while the calling session uses the
-  `"Mersenne-Twister"` default, so a worker calling `set.seed(seed)`
-  drew a different stream depending on which path it ran in. The
-  per-iteration runners now pin the generator as well as the seed.
-  Affects
+- `parallel = TRUE` and `parallel = FALSE` now give identical results
+  for the same `seed`. `mirai` workers run under a different random
+  number generator, which the per-iteration runners now pin. Parallel
+  results change, to agree with the sequential ones. Affects
   [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md),
   [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md),
   [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md),
   [`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md),
   [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md),
+  [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md),
+  [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md),
   [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md),
-  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md),
-  [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
-  and `RMrestscoreBootstrap()`. Sequential results are unchanged unless
-  the session had been switched away from the default generator.
-  **Parallel results change**, to agree with the sequential ones.
+  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
+  and
+  [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md).
 
-- **`RMpersonFit(parallel = TRUE)` was not reproducible from `seed` at
-  all.** Its per-respondent resampling ran in `mirai` workers with no
-  per-task seed, so results depended on each daemon’s own stream and on
-  how respondents happened to be distributed across daemons. Each
-  respondent now draws its own seed from the caller’s stream, which
-  makes the parallel and sequential paths agree exactly. **Results
-  change in both paths**, because the respondent loop no longer consumes
-  one continuous stream.
+- `RMpersonFit(parallel = TRUE)` was not reproducible from `seed` at
+  all, its workers having had no per-task seed. Respondents are now
+  seeded individually. Results change in both paths.
 
 - [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
   and
   [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLofResiduals.md)
-  no longer discard respondents for missingness on items outside
-  `partition`. The complete-case filter ran before items unassigned to a
-  subscale were dropped, so an `NA` on an item the test never uses cost
-  a whole respondent. With 200 respondents complete on the six
-  partitioned items but scattered `NA`s on two unused items, `sample_n`
-  was 100. The filter now runs after the restriction, and the “at least
-  30 complete cases” minimum is likewise counted over the partitioned
-  items only.
+  no longer drop respondents for missingness on items outside
+  `partition`. The 30-case minimum is likewise counted over the
+  partitioned items only.
 
 ### Other changes
 
-- New help topic `?easyRasch2-reproducibility` documents what `seed`
-  guarantees, the per-iteration seeding scheme, the pinned random number
-  generator and its two side effects (a non-default
-  [`RNGkind()`](https://rdrr.io/r/base/Random.html) is not honoured
-  inside these functions, and the session is left on the default
-  generator afterwards). Every affected `@param seed` now points to it.
+- Both Martin-Löf functions have been validated against the `pml` SAS
+  macro (Christensen, 2004), kindly shared by Karl Bang Christensen. The
+  statistic, the conditional log-likelihoods, the expected counts and
+  the residuals reproduce the macro to numerical precision.
+
+- New help topic `?easyRasch2-reproducibility` covers what `seed`
+  guarantees and the pinned generator’s side effects.
 
 - [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
-  gains `sample_n_total` (raw input rows) and `sample_has_na` in its
-  return value, matching
-  [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md),
-  `RMdifPartgamCutoff()` and
-  [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md).
-  `sample_n` continues to report the respondents analysed, now counted
-  over the partitioned items. Both functions also call
-  `.drop_empty_respondents()`, so all-NA rows are reported at run time
-  as elsewhere in the package.
+  gains `sample_n_total` and `sample_has_na`, matching the other cutoff
+  objects.
 
-- The two conditional samplers have been replaced by a single recursion
-  over the nested gamma functions, used for dichotomous and polytomous
-  items alike. The gamma functions depend only on the item parameters,
-  which are fixed across the run, so they are now computed once per call
-  rather than once per simulated person. This is about four times faster
-  than the previous polytomous sampler on a six-item scale and the gain
-  grows with scale length. The simulated patterns follow the same
-  distribution as before for polytomous data, but the random numbers are
-  consumed differently, so **a given `seed` no longer reproduces the
-  p-values of earlier versions**.
-
-- [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
-  and
-  [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLofResiduals.md)
-  have been validated against the `pml` SAS macro (Christensen, 2004),
-  kindly shared by Karl Bang Christensen. The test statistic and the
-  conditional log-likelihoods reproduce the macro’s arithmetic to
-  numerical precision for both dichotomous and polytomous data, as do
-  the expected counts and standardised residuals of
-  [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLofResiduals.md).
-  Two deliberate differences remain. The macro reports the asymptotic
-  chi-square p-value alongside the bootstrap one, which this package
-  omits because both source papers show it has low power. And at the
-  extreme totals, where the conditional probability is 1 and the
-  residual is undefined, the macro prints 0 where
-  [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLofResiduals.md)
-  returns `NA`.
+- The two conditional samplers are now one recursion over the nested
+  gamma functions, computed once per call rather than per simulated
+  person, and about four times faster on a six-item scale. A given
+  `seed` no longer reproduces the p-values of earlier versions.
 
 ## easyRasch2 1.1.1
 
