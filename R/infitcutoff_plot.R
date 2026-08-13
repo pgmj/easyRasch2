@@ -6,7 +6,9 @@
 #'
 #' Uses `ggdist::stat_dotsinterval()` (when `data` is not supplied) or
 #' `ggdist::stat_dots()` (when `data` is supplied) with
-#' `point_interval = "median_hdci"` and `.width = c(0.66, 0.999)`.
+#' `point_interval = "median_hdci"`. The outer `.width` follows
+#' `simfit$hdci_width`, so the shaded interval matches the one
+#' [RMitemInfit()] tabulates.
 #'
 #' @param simfit The return value of \code{\link{RMitemInfitCutoff}} (a list with
 #'   components `results`, `item_cutoffs`, `actual_iterations`, `sample_n`, and
@@ -133,6 +135,23 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
   # Item factor levels (reversed for plotting top-to-bottom)
   item_levels <- rev(item_names)
 
+  # Outer interval width. The plot used to draw a fixed 0.1st-to-99.9th
+  # percentile whisker regardless of how the cutoffs were computed, so it
+  # could show a wider interval than the one RMitemInfit() tabulates. It now
+  # follows the cutoff object, which keeps the plot and the table describing
+  # the same interval. Objects made by older versions carry no width, and
+  # `cutoff_method = "quantile"` fixes the interval at the 2.5th/97.5th
+  # percentiles, so both fall back to .95.
+  outer_width <- if (
+    identical(simfit$cutoff_method, "hdci") && !is.null(simfit$hdci_width)
+  ) {
+    simfit$hdci_width
+  } else {
+    0.95
+  }
+  outer_lo <- (1 - outer_width) / 2
+  outer_hi <- 1 - outer_lo
+
   # --- Compute per-item summary intervals for segment overlays ----------------
   lo_hi <- do.call(
     rbind,
@@ -140,13 +159,13 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
       sub <- results_df[results_df$Item == item, ]
       data.frame(
         Item = item,
-        min_infit_msq = stats::quantile(sub$InfitMSQ, 0.001, na.rm = TRUE),
-        max_infit_msq = stats::quantile(sub$InfitMSQ, 0.999, na.rm = TRUE),
+        min_infit_msq = stats::quantile(sub$InfitMSQ, outer_lo, na.rm = TRUE),
+        max_infit_msq = stats::quantile(sub$InfitMSQ, outer_hi, na.rm = TRUE),
         p66lo_infit_msq = stats::quantile(sub$InfitMSQ, 0.167, na.rm = TRUE),
         p66hi_infit_msq = stats::quantile(sub$InfitMSQ, 0.833, na.rm = TRUE),
         median_infit = stats::median(sub$InfitMSQ, na.rm = TRUE),
-        min_outfit_msq = stats::quantile(sub$OutfitMSQ, 0.001, na.rm = TRUE),
-        max_outfit_msq = stats::quantile(sub$OutfitMSQ, 0.999, na.rm = TRUE),
+        min_outfit_msq = stats::quantile(sub$OutfitMSQ, outer_lo, na.rm = TRUE),
+        max_outfit_msq = stats::quantile(sub$OutfitMSQ, outer_hi, na.rm = TRUE),
         p66lo_outfit_msq = stats::quantile(sub$OutfitMSQ, 0.167, na.rm = TRUE),
         p66hi_outfit_msq = stats::quantile(sub$OutfitMSQ, 0.833, na.rm = TRUE),
         median_outfit = stats::median(sub$OutfitMSQ, na.rm = TRUE),
@@ -188,7 +207,7 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
         point_interval = "median_hdci",
         layout = "weave",
         slab_color = NA,
-        .width = c(0.66, 0.999)
+        .width = c(0.66, outer_width)
       ) +
       ggplot2::labs(
         x = "Conditional MSQ",
@@ -289,7 +308,7 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
       quantiles = actual_iterations,
       layout = "weave",
       slab_color = NA,
-      .width = c(0.666, 0.999)
+      .width = c(0.666, outer_width)
     ) +
     ggplot2::geom_segment(
       data = lo_hi,
@@ -372,7 +391,7 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
       quantiles = actual_iterations,
       layout = "weave",
       slab_color = NA,
-      .width = c(0.666, 0.999)
+      .width = c(0.666, outer_width)
     ) +
     ggplot2::geom_segment(
       data = lo_hi,

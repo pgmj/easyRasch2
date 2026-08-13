@@ -96,6 +96,17 @@ variance.
 The \code{mice} and \code{iarm} packages must be installed (they are in Suggests, not
 Imports).
 }
+\section{Flagging differs from the complete-data function}{
+
+\code{\link{RMitemInfit}} flags on the Westfall-Young corrected p-value by
+default. This function has no p-value path and flags against the interval,
+so the two are not directly comparable. Combining bootstrap p-values across
+imputations is planned but needs calibration of its own, since Johansson
+(2026) studied complete data. Until then \code{\link{RMitemInfitCutoffMI}}
+keeps \code{hdci_width = 0.999}, a width suited to a decision rule, and the
+family-wise error rate of that rule is \code{1 - 0.999^k} over \code{k} items.
+}
+
 \examples{
 \donttest{
 if (requireNamespace("mice", quietly = TRUE) &&

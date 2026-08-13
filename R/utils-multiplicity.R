@@ -115,6 +115,188 @@
   )
 }
 
+# ---------------------------------------------------------------------------
+# The interval width as an error-rate parameter
+#
+# Flagging every item whose statistic falls outside a width-w interval tests
+# k hypotheses at once, so the family-wise error rate is 1 - w^k (Sidak). The
+# helpers below turn that relation around, and translate a width into the
+# number of iterations it needs before the interval means what it says.
+# Johansson (2026) measures all three.
+# ---------------------------------------------------------------------------
+
+#' Family-wise error rate implied by an interval width
+#'
+#' @param w Interval width in (0, 1).
+#' @param k Number of comparisons.
+#' @return Numeric family-wise error rate.
+#' @keywords internal
+#' @noRd
+.sidak_fwe <- function(w, k) 1 - w^k
+
+#' Interval width implying a target family-wise error rate
+#'
+#' @param k Number of comparisons.
+#' @param alpha Target family-wise error rate (default `0.05`).
+#' @return Numeric width.
+#' @keywords internal
+#' @noRd
+.sidak_width <- function(k, alpha = 0.05) (1 - alpha)^(1 / k)
+
+#' Iterations an interval of a given width needs to converge
+#'
+#' Ten simulated values per tail, `B = 20 / (1 - w)`. Verified for
+#' `w <= .999` (Johansson, 2026).
+#'
+#' @param w Interval width in (0, 1).
+#' @return Numeric iteration count.
+#' @keywords internal
+#' @noRd
+.width_iterations <- function(w) 20 / (1 - w)
+
+#' Format a width for display, dropping the leading zero
+#'
+#' @param w Numeric width.
+#' @return A string such as `".95"` or `".99432"`.
+#' @keywords internal
+#' @noRd
+.fmt_width <- function(w) {
+  s <- sub("0+$", "", sprintf("%.5f", w))
+  sub("^0", "", sub("[.]$", "", s))
+}
+
+#' Clause describing the error rate of interval-based flagging
+#'
+#' Used in the kable caption whenever items are flagged against the interval
+#' rather than against a corrected p-value. Returns `NULL` when the width is
+#' unknown, which happens when only the bare `$item_cutoffs` data.frame was
+#' passed and the metadata went with it.
+#'
+#' @param width Interval width, or `NULL`.
+#' @param k Number of items.
+#' @return A single string, or `NULL`.
+#' @keywords internal
+#' @noRd
+.band_error_clause <- function(width, k) {
+  if (is.null(width) || !is.finite(width) || width <= 0 || width >= 1) {
+    return(NULL)
+  }
+  paste0(
+    " Flagging against the interval tests all ",
+    k,
+    " items at once, which implies a family-wise error rate of about ",
+    sprintf("%.0f", 100 * .sidak_fwe(width, k)),
+    "% (Johansson, 2026)."
+  )
+}
+
+#' One-time console notice that flagging is interval-based
+#'
+#' Emitted once per session when items are flagged against the interval. The
+#' interval is a description of where a fitting item's statistic is expected
+#' to fall, and using it as a decision rule sets an error rate implicitly and
+#' usually far above .05. A `message()` rather than a `warning()`, because the
+#' call is legitimate and a hard warning on a supported path trains users to
+#' ignore warnings.
+#'
+#' @param width Interval width, or `NULL` when unknown.
+#' @param k Number of items.
+#' @return Invisibly `NULL`, called for its side effect.
+#' @keywords internal
+#' @noRd
+.notify_band_flagging <- function(width, k) {
+  head <- "Items are flagged against the interval, not against a corrected p-value."
+  body <- if (is.null(width) || !is.finite(width) || width <= 0 || width >= 1) {
+    c(i = paste(
+      "The interval tests all", k, "items at once, so its width sets a",
+      "family-wise error rate of 1 - width^k."
+    ))
+  } else {
+    need_w <- .sidak_width(k)
+    c(
+      i = sprintf(
+        "The %s interval over %d items implies a family-wise error rate of about %.0f%%.",
+        .fmt_width(width),
+        k,
+        100 * .sidak_fwe(width, k)
+      ),
+      i = sprintf(
+        "A rate of .05 would need width %s, which needs roughly %s iterations to converge.",
+        .fmt_width(need_w),
+        format(
+          signif(.width_iterations(need_w), 2),
+          big.mark = " ",
+          scientific = FALSE,
+          trim = TRUE
+        )
+      )
+    )
+  }
+  rlang::inform(
+    c(
+      head,
+      body,
+      i = paste(
+        "Pass the full RMitemInfitCutoff() object and leave `p_value = NULL`",
+        "to flag on the Westfall-Young corrected p-value, which targets .05",
+        "directly at 400 iterations."
+      ),
+      i = "See Johansson (2026), doi:10.31234/osf.io/7pqz4_v1."
+    ),
+    .frequency = "once",
+    .frequency_id = "easyRasch2_band_flagging"
+  )
+  invisible(NULL)
+}
+
+#' One-time console notice that the bootstrap ran too few iterations
+#'
+#' Below 400 iterations the Westfall-Young rule is mildly liberal under the
+#' null (Johansson, 2026, measured 6.8% at 100 iterations against a nominal
+#' 5%, and 4.3% at 400). Between 400 and 1000 the error rate is trustworthy
+#' and only reproducibility improves further, which the table caption covers
+#' instead.
+#'
+#' @param n_iter Number of completed iterations.
+#' @param requested Number of iterations asked for, or `NULL`. When the two
+#'   differ the notice says so, since someone who asked for 400 and landed
+#'   below it needs to know that iterations were discarded rather than that
+#'   they chose too few.
+#' @return Invisibly `NULL`, called for its side effect.
+#' @keywords internal
+#' @noRd
+.notify_low_iterations <- function(n_iter, requested = NULL) {
+  lost <- !is.null(requested) && is.finite(requested) && n_iter < requested
+  rlang::inform(
+    c(
+      sprintf(
+        "Bootstrap p-values are based on %d iterations, below the calibrated floor of 400.",
+        n_iter
+      ),
+      i = paste(
+        "Below 400 the Westfall-Young correction is mildly liberal under the",
+        "null, so the family-wise error rate is above the nominal level."
+      ),
+      if (lost) {
+        c(i = sprintf(
+          paste(
+            "%d of the %d simulated datasets could not be refitted, usually",
+            "because an item ended up with an unused response category or",
+            "almost no variation."
+          ),
+          requested - n_iter,
+          requested
+        ))
+      },
+      i = "See Johansson (2026), doi:10.31234/osf.io/7pqz4_v1.",
+      i = "Raise `iterations` in RMitemInfitCutoff()."
+    ),
+    .frequency = "once",
+    .frequency_id = "easyRasch2_low_iterations"
+  )
+  invisible(NULL)
+}
+
 #' Westfall-Young studentised-max step-down adjusted p-values
 #'
 #' Rejects the most extreme comparison against the maximum over all

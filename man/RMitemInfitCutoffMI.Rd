@@ -94,6 +94,16 @@ warning. If all imputations fail, the function stops with an error.
 
 The \code{mice} package must be installed (it is in Suggests, not Imports).
 }
+\section{Interval width under multiple imputation}{
+
+\code{hdci_width} defaults to \code{0.999} here, not to the \code{0.95} used by
+\code{\link{RMitemInfitCutoff}}. \code{\link{RMitemInfitMI}} has no
+corrected-p-value path yet, so under imputation the interval is still the
+decision rule and keeps a width chosen for that job. Combining bootstrap
+p-values across imputations is planned but needs its own calibration, since
+Johansson (2026) covers complete data only.
+}
+
 \examples{
 \donttest{
 if (requireNamespace("mice", quietly = TRUE) &&

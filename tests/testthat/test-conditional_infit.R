@@ -260,8 +260,10 @@ test_that("RMitemInfitCutoff cutoff_method = 'quantile' returns valid cutoffs", 
                        cutoff_method = "quantile")
 
   expect_equal(res$cutoff_method, "quantile")
-  # hdci_width is always stored regardless of method; verify it keeps its default
-  expect_equal(res$hdci_width, 0.999)
+  # hdci_width is always stored regardless of method, verify it keeps its
+  # default (0.95 since 1.2.0, the interval being descriptive rather than a
+  # decision rule)
+  expect_equal(res$hdci_width, 0.95)
   expect_s3_class(res$item_cutoffs, "data.frame")
   expect_equal(nrow(res$item_cutoffs), 5L)
   expect_true(all(res$item_cutoffs$infit_low < res$item_cutoffs$infit_high))

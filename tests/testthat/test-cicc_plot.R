@@ -161,3 +161,84 @@ test_that("manual grouping via score_breaks works and validates", {
   expect_error(RMitemICCPlot(df, method = "manual", score_breaks = c(3, 99)),
                "maximum possible total")
 })
+
+# ---------------------------------------------------------------------
+# Class-interval caption (reports the grouping actually used)
+# ---------------------------------------------------------------------
+test_that(".cicc_interval_caption names each method and its group count", {
+  rs <- c(rep(0:8, each = 10))
+  q <- .cicc_class_bins(rs, "quantile", 4L)
+  expect_match(.cicc_interval_caption("quantile", 4L, NULL, q),
+               "^Class intervals: 4 groups of approximately equal size")
+
+  w <- .cicc_class_bins(rs, "width", 4L)
+  expect_match(.cicc_interval_caption("width", 4L, NULL, w),
+               "^Class intervals: 4 equal-width groups")
+
+  s <- .cicc_class_bins(rs, "score", 4L)
+  expect_match(.cicc_interval_caption("score", 4L, NULL, s),
+               "every observed total score is its own group \\(9 groups\\)")
+
+  m <- .cicc_class_bins(rs, "manual", 4L, score_breaks = c(3L, 6L))
+  expect_match(.cicc_interval_caption("manual", 4L, c(3L, 6L), m),
+               "a new group starting at total scores 3, 6 \\(3 groups\\)")
+  # singular when there is one break
+  m1 <- .cicc_class_bins(rs, "manual", 4L, score_breaks = 4L)
+  expect_match(.cicc_interval_caption("manual", 4L, 4L, m1),
+               "at total score 4 ")
+})
+
+test_that(".cicc_interval_caption reports fewer quantile groups than requested", {
+  # 9 distinct total scores cannot support 12 quantile bins
+  rs <- rep(0:8, each = 10)
+  b <- .cicc_class_bins(rs, "quantile", 12L)
+  expect_lt(nlevels(b), 12L)
+  expect_match(.cicc_interval_caption("quantile", 12L, NULL, b),
+               "12 were requested, fewer were formed")
+})
+
+test_that(".cicc_interval_caption reports groups that no respondent falls into", {
+  # equal-width bins over a range with only two occupied scores
+  rs <- rep(c(4L, 5L), each = 50)
+  b <- .cicc_class_bins(rs, "width", 6L)
+  expect_equal(nlevels(b), 6L)
+  cap <- .cicc_interval_caption("width", 6L, NULL, b)
+  expect_match(cap, "6 equal-width groups")
+  expect_match(cap, "2 of them contain respondents")
+})
+
+test_that(".cicc_class_bins flags the fall back to score level", {
+  # Quantile grouping collapses when every respondent has the same total
+  # score, since all the quantiles coincide.
+  rs <- rep(4L, 50)
+  b <- .cicc_class_bins(rs, "quantile", 4L)
+  expect_true(isTRUE(attr(b, "fallback")))
+  expect_match(.cicc_interval_caption("quantile", 4L, NULL, b),
+               "too few distinct total scores")
+
+  # Equal-width grouping pads the range by half a score either side, so it
+  # still forms bins on a single distinct score and only collapses when one
+  # interval is requested.
+  expect_null(attr(.cicc_class_bins(rs, "width", 4L), "fallback"))
+  expect_true(isTRUE(attr(.cicc_class_bins(rs, "width", 1L), "fallback")))
+
+  # no flag when the grouping succeeded
+  ok <- .cicc_class_bins(rep(0:8, each = 10), "width", 4L)
+  expect_null(attr(ok, "fallback"))
+})
+
+test_that("the plot caption carries the class-interval clause", {
+  skip_on_cran()
+  skip_if_not_installed("ggplot2")
+  skip_if_not_installed("patchwork")
+  set.seed(11)
+  n <- 250
+  th <- stats::rnorm(n)
+  d <- as.data.frame(sapply(1:8, function(j)
+    stats::rbinom(n, 1, stats::plogis(th - (j - 4.5) / 3))))
+  names(d) <- paste0("I", 1:8)
+  p <- RMitemICCPlot(d, method = "width", class_intervals = 5, items = 1:2)
+  # er2_caption() hard-wraps the note, so allow a line break inside it
+  expect_match(p$patches$annotation$caption,
+               "Class\\s+intervals:\\s+5\\s+equal-width")
+})

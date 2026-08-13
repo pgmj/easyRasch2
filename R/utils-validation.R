@@ -86,6 +86,45 @@ validate_response_data <- function(data) {
   paste0("n = ", n_used, of_total, " ", noun, paren)
 }
 
+#' Caption clause for simulated datasets that had to be discarded
+#'
+#' A parametric-bootstrap iteration is dropped when its simulated dataset
+#' cannot be refitted: an item with an unused response category
+#' (polytomous), an item with almost no positive responses (dichotomous), or
+#' a refit that fails to converge. All of these get more likely with small
+#' samples, extreme item locations and rarely used categories.
+#'
+#' Everything downstream rests on the successful count, so that is what the
+#' captions report. This clause explains the gap when the two differ, and
+#' names the remedy, which is simply to ask for more iterations. Returns
+#' `NULL` when nothing was lost or when the requested count is unknown
+#' (cutoff objects made before the count was stored).
+#'
+#' @param actual Number of successful iterations.
+#' @param requested Number of iterations asked for, or `NULL`.
+#' @return A single string with a leading space, or `NULL`.
+#' @keywords internal
+#' @noRd
+.attrition_clause <- function(actual, requested) {
+  if (is.null(requested) || is.null(actual)) {
+    return(NULL)
+  }
+  if (!is.finite(requested) || !is.finite(actual) || actual >= requested) {
+    return(NULL)
+  }
+  paste0(
+    " ",
+    requested - actual,
+    " of the ",
+    requested,
+    " simulated datasets could not be refitted, usually because an item ",
+    "ended up with an unused response category or almost no variation, so ",
+    "the results above rest on ",
+    actual,
+    ". Raise `iterations` to recover the intended number."
+  )
+}
+
 #' Round selected columns of a data.frame for kable display
 #'
 #' The `output = "dataframe"` contract is *unrounded* values (rounding is a

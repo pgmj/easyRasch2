@@ -72,12 +72,17 @@ test_that("p_value = TRUE errors without the full cutoff object", {
                regexp = "full RMitemInfitCutoff")
 })
 
-test_that("p_value = FALSE leaves the output unchanged (backward compatible)", {
+test_that("explicit p_value = FALSE gives the pre-1.2.0 columns", {
   skip_on_cran()
   skip_if_not_installed("eRm"); skip_if_not_installed("iarm")
   df  <- sim_rasch_null()
   sim <- RMitemInfitCutoff(df, iterations = 200, parallel = FALSE, seed = 1)
-  res <- RMitemInfit(df, cutoff = sim, output = "dataframe")
+  # Since 1.2.0 the default (p_value = NULL) would add the p-value columns
+  # here, because `sim` carries the simulations. Opting out restores the
+  # interval-based output.
+  res <- suppressMessages(
+    RMitemInfit(df, cutoff = sim, p_value = FALSE, output = "dataframe")
+  )
   expect_named(res, c("Item", "Infit_MSQ", "Infit_low", "Infit_high",
                       "Flagged", "Relative_location"))
 })
@@ -96,14 +101,17 @@ test_that("all correction methods run and return the expected columns", {
   }
 })
 
-test_that("low iteration count triggers a warning", {
+test_that("low iteration count triggers the calibration message", {
   skip_on_cran()
   skip_if_not_installed("eRm"); skip_if_not_installed("iarm")
   df  <- sim_rasch_null()
   sim <- RMitemInfitCutoff(df, iterations = 200, parallel = FALSE, seed = 1)
-  expect_warning(RMitemInfit(df, cutoff = sim, p_value = TRUE,
+  # Since 1.2.0 this is a once-per-session message rather than a warning, and
+  # the threshold is the calibrated floor of 400 rather than 1000.
+  rlang::reset_message_verbosity("easyRasch2_low_iterations")
+  expect_message(RMitemInfit(df, cutoff = sim, p_value = TRUE,
                              output = "dataframe"),
-                 regexp = "iterations")
+                 regexp = "below the calibrated floor of 400")
 })
 
 test_that("invalid alpha is rejected", {

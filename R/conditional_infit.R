@@ -21,12 +21,29 @@
 #'   (infit below the range -- more predictable than the model expects),
 #'   `"underfit"` (above the range -- noisier than expected), or `""` (within
 #'   range, no misfit).
-#' @param p_value Logical. If `TRUE`, bootstrap p-values are computed from the
-#'   simulated null distribution and added to the output. This requires
-#'   `cutoff` to be the **full** \code{\link{RMitemInfitCutoff}} object (which
-#'   carries the per-item simulated values in its `$results` element); the
-#'   summarised `$item_cutoffs` data.frame is not sufficient. Default `FALSE`,
-#'   in which case behaviour is unchanged.
+#' @param p_value Logical or `NULL`. Whether to compute bootstrap p-values
+#'   from the simulated null distribution and flag on them.
+#'
+#'   `NULL` (the default) means **use them when they are available**: `TRUE`
+#'   when `cutoff` is the full \code{\link{RMitemInfitCutoff}} object, which
+#'   carries the per-item simulated values in its `$results` element, and
+#'   `FALSE` when `cutoff` is `NULL` or the summarised `$item_cutoffs`
+#'   data.frame, neither of which can support a p-value. Explicit `TRUE` with
+#'   an insufficient `cutoff` is an error rather than a silent downgrade.
+#'
+#'   With `FALSE`, items are flagged against the interval instead, and a
+#'   one-time message reports the family-wise error rate that implies. The
+#'   interval describes where a fitting item's statistic is expected to fall.
+#'   Using it as a decision rule tests all `k` items at once, so its width
+#'   sets a family-wise error rate of `1 - width^k`, which is 37% for the
+#'   default 95% interval over nine items. The corrected p-value targets
+#'   `alpha` directly and needs far fewer iterations to do it (Johansson,
+#'   2026).
+#'
+#'   Up to and including version 1.1.1 the default was `FALSE`, so `Flagged`
+#'   came from the interval. Existing scripts that pass the full cutoff object
+#'   will now flag on the corrected p-value instead and may report different
+#'   items.
 #' @param correction Character. Multiple-comparison correction applied across
 #'   items when `p_value = TRUE`: `"fwer"` (default) for the Westfall-Young
 #'   studentised-max step-down (family-wise error rate), `"fdr_bh"` /
@@ -144,6 +161,10 @@
 #' Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple Testing*.
 #' Wiley.
 #'
+#' Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
+#' Rasch models: Iterations, multiplicity correction, and decision stability.
+#' *PsyArXiv*. \doi{10.31234/osf.io/7pqz4_v1}
+#'
 #' @seealso \code{\link{RMitemInfitCutoff}}
 #'
 #' @export
@@ -188,13 +209,19 @@
 RMitemInfit <- function(
   data,
   cutoff = NULL,
-  p_value = FALSE,
+  p_value = NULL,
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
   alpha = 0.05,
   output = "kable",
   sort,
   statistic = "infit"
 ) {
+  if (
+    !is.null(p_value) &&
+      (!is.logical(p_value) || length(p_value) != 1L || is.na(p_value))
+  ) {
+    stop("`p_value` must be NULL, TRUE or FALSE.", call. = FALSE)
+  }
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
       "Package 'iarm' is required for RMitemInfit() but is not installed.\n",
@@ -225,6 +252,7 @@ RMitemInfit <- function(
 
   # --- Validate and normalise cutoff ------------------------------------------
   cutoff_n_iter <- NULL
+  cutoff_req_iter <- NULL
   cutoff_method <- NULL
   cutoff_hdci_width <- NULL
   cutoff_full <- NULL # full object (carries simulated $results for p-values)
@@ -236,6 +264,8 @@ RMitemInfit <- function(
     ) {
       cutoff_full <- cutoff
       cutoff_n_iter <- cutoff$actual_iterations
+      # NULL for cutoff objects made before 1.2.0 stored the requested count
+      cutoff_req_iter <- cutoff$requested_iterations
       cutoff_method <- cutoff$cutoff_method
       cutoff_hdci_width <- cutoff$hdci_width
       cutoff <- cutoff$item_cutoffs
@@ -259,9 +289,21 @@ RMitemInfit <- function(
     }
   }
 
+  # --- Resolve p_value --------------------------------------------------------
+  # NULL means "use the corrected p-value when the simulations are available".
+  # The interval is a description of where a fitting item's statistic is
+  # expected to fall; it makes a poor decision rule, because its width sets a
+  # family-wise error rate implicitly (Johansson, 2026). Passing the bare
+  # $item_cutoffs data.frame, or no cutoff at all, leaves nothing to compute a
+  # p-value from, so those resolve to FALSE.
+  have_sims <- !is.null(cutoff_full) && !is.null(cutoff_full$results)
+  if (is.null(p_value)) {
+    p_value <- have_sims
+  }
+
   # --- p-value prerequisites --------------------------------------------------
   if (p_value) {
-    if (is.null(cutoff_full) || is.null(cutoff_full$results)) {
+    if (!have_sims) {
       stop(
         "`p_value = TRUE` requires the full RMitemInfitCutoff() object (it ",
         "carries the simulated distributions in $results); a NULL cutoff or ",
@@ -269,16 +311,16 @@ RMitemInfit <- function(
         call. = FALSE
       )
     }
-    if (!is.null(cutoff_n_iter) && cutoff_n_iter < 1000L) {
-      warning(
-        "Bootstrap p-values are based on only ",
-        cutoff_n_iter,
-        " simulation iterations. With few iterations the studentised-max ",
-        "(FWER) correction is liberal and small p-values are imprecise; ",
-        "use iterations >= 1000 in RMitemInfitCutoff() for reliable p-values.",
-        call. = FALSE
-      )
+    # Below 400 the correction itself is off. Between 400 and 1000 only
+    # reproducibility improves, which the table caption reports instead.
+    if (!is.null(cutoff_n_iter) && cutoff_n_iter < 400L) {
+      .notify_low_iterations(cutoff_n_iter, cutoff_req_iter)
     }
+  } else if (!is.null(cutoff)) {
+    .notify_band_flagging(
+      if (identical(cutoff_method, "quantile")) 0.95 else cutoff_hdci_width,
+      nrow(cutoff)
+    )
   }
 
   validate_response_data(data)
@@ -487,9 +529,9 @@ RMitemInfit <- function(
       n_clause,
       ". Two-sided bootstrap p-values from ",
       cutoff_n_iter,
-      " iterations; multiplicity correction: ",
+      " iterations, multiplicity correction: ",
       corr_label,
-      "; flagged at alpha = ",
+      ". Flagged on the corrected p-value at alpha = ",
       alpha,
       ". p-values cannot be smaller than ",
       "1/(",
@@ -497,6 +539,30 @@ RMitemInfit <- function(
       "+1) = ",
       round(1 / (cutoff_n_iter + 1), 4),
       ".",
+      # Two tiers. Below the calibrated floor the correction itself is off,
+      # which the console also reports. Between the floor and 1000 the error
+      # rate is trustworthy and only reproducibility keeps improving, which
+      # is a caption matter rather than something to interrupt over.
+      if (is.null(cutoff_n_iter)) {
+        ""
+      } else if (cutoff_n_iter < 400L) {
+        paste0(
+          " This is below the calibrated floor of 400, where the correction",
+          " is mildly liberal and the family-wise error rate sits above the",
+          " nominal level (Johansson, 2026)."
+        )
+      } else if (cutoff_n_iter < 1000L) {
+        paste0(
+          " Error rates are calibrated at this many iterations, but decisions",
+          " are still somewhat seed-dependent. Two analysts using different",
+          " seeds disagree about at least one item roughly 10% of the time at",
+          " 400 iterations against 4% at 2000, so use 1000 to 2000 for a final",
+          " analysis (Johansson, 2026)."
+        )
+      } else {
+        ""
+      },
+      .attrition_clause(cutoff_n_iter, cutoff_req_iter),
       " Flagged: underfit (",
       statistic,
       " > 1, noisier) / overfit (",
@@ -546,8 +612,13 @@ RMitemInfit <- function(
       kbl_caption,
       " Flagged: overfit = ",
       statistic,
-      " below range (more predictable); ",
-      "underfit = above range (noisier)."
+      " below range (more predictable), ",
+      "underfit = above range (noisier).",
+      .band_error_clause(
+        if (identical(cutoff_method, "quantile")) 0.95 else cutoff_hdci_width,
+        nrow(item_fit_table)
+      ),
+      .attrition_clause(cutoff_n_iter, cutoff_req_iter)
     )
   }
 

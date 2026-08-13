@@ -7,7 +7,7 @@
 RMitemInfit(
   data,
   cutoff = NULL,
-  p_value = FALSE,
+  p_value = NULL,
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
   alpha = 0.05,
   output = "kable",
@@ -37,12 +37,29 @@ to the result. \code{Flagged} labels the misfit direction: \code{"overfit"}
 range, no misfit).
 }}
 
-\item{p_value}{Logical. If \code{TRUE}, bootstrap p-values are computed from the
-simulated null distribution and added to the output. This requires
-\code{cutoff} to be the \strong{full} \code{\link{RMitemInfitCutoff}} object (which
-carries the per-item simulated values in its \verb{$results} element); the
-summarised \verb{$item_cutoffs} data.frame is not sufficient. Default \code{FALSE},
-in which case behaviour is unchanged.}
+\item{p_value}{Logical or \code{NULL}. Whether to compute bootstrap p-values
+from the simulated null distribution and flag on them.
+
+\code{NULL} (the default) means \strong{use them when they are available}: \code{TRUE}
+when \code{cutoff} is the full \code{\link{RMitemInfitCutoff}} object, which
+carries the per-item simulated values in its \verb{$results} element, and
+\code{FALSE} when \code{cutoff} is \code{NULL} or the summarised \verb{$item_cutoffs}
+data.frame, neither of which can support a p-value. Explicit \code{TRUE} with
+an insufficient \code{cutoff} is an error rather than a silent downgrade.
+
+With \code{FALSE}, items are flagged against the interval instead, and a
+one-time message reports the family-wise error rate that implies. The
+interval describes where a fitting item's statistic is expected to fall.
+Using it as a decision rule tests all \code{k} items at once, so its width
+sets a family-wise error rate of \code{1 - width^k}, which is 37\% for the
+default 95\% interval over nine items. The corrected p-value targets
+\code{alpha} directly and needs far fewer iterations to do it (Johansson,
+2026).
+
+Up to and including version 1.1.1 the default was \code{FALSE}, so \code{Flagged}
+came from the interval. Existing scripts that pass the full cutoff object
+will now flag on the corrected p-value instead and may report different
+items.}
 
 \item{correction}{Character. Multiple-comparison correction applied across
 items when \code{p_value = TRUE}: \code{"fwer"} (default) for the Westfall-Young
@@ -211,6 +228,10 @@ of hypotheses simultaneously. \emph{Journal of Statistical Theory and Practice,
 
 Westfall, P. H., & Young, S. S. (1993). \emph{Resampling-Based Multiple Testing}.
 Wiley.
+
+Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
+Rasch models: Iterations, multiplicity correction, and decision stability.
+\emph{PsyArXiv}. \doi{10.31234/osf.io/7pqz4_v1}
 }
 \seealso{
 \code{\link{RMitemInfitCutoff}}

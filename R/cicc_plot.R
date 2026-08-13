@@ -86,6 +86,14 @@
 #' `class_intervals` distinct bins, the quantile and width methods fall
 #' back to score-level points.
 #'
+#' The figure caption names the grouping that was actually used, which is
+#' not always the one requested. Quantile grouping forms fewer bins than
+#' asked for when total scores tie at the boundaries, equal-width and manual
+#' grouping can define intervals no respondent falls into, and both binned
+#' methods fall back to score level on a degenerate score distribution. The
+#' caption reports the realised number of groups, how many of them contain
+#' respondents when that is fewer, and any fall back.
+#'
 #' \strong{Confidence intervals.} Observed error bars use the normal
 #' approximation \eqn{\bar{x}_l \pm z \sqrt{\mathrm{var}(x_l) / n_l}} within
 #' each (group, interval) cell, clamped to the item's score range; cells with
@@ -331,7 +339,11 @@ RMitemICCPlot <- function(data,
   out <- patchwork::wrap_plots(panels, axes = "collect", guides = "collect") +
     patchwork::plot_annotation(
       title   = "Conditional Item Characteristic Curves",
-      caption = er2_caption(.cicc_caption(dif_mode, conf_level)),
+      caption = er2_caption(.cicc_caption(
+        dif_mode,
+        conf_level,
+        .cicc_interval_caption(method, class_intervals, score_breaks, bin)
+      )),
       theme   = er2_plot_caption()
     )
   if (!is.null(gamma_tab)) attr(out, "dif_gamma") <- gamma_tab
@@ -362,13 +374,22 @@ RMitemICCPlot <- function(data,
                labels = labels, include.lowest = TRUE))
   }
 
+  # The two binned methods fall back to score level when the data cannot
+  # support the requested grouping. The fallback is flagged on the result so
+  # the figure caption can report what was actually used rather than what was
+  # asked for.
+  fell_back <- function(x) {
+    attr(x, "fallback") <- TRUE
+    x
+  }
+
   if (method == "width") {
     # Equal-width intervals over the observed total-score range.
     breaks <- unique(seq(min(rs) - 0.5, max(rs) + 0.5,
                          length.out = class_intervals + 1L))
     if (length(breaks) < 3L) {
       # Too few distinct total scores to form bins: fall back to score level.
-      return(factor(rs))
+      return(fell_back(factor(rs)))
     }
     return(cut(rs, breaks = breaks, include.lowest = TRUE))
   }
@@ -378,9 +399,68 @@ RMitemICCPlot <- function(data,
     rs, probs = seq(0, 1, length.out = class_intervals + 1L), na.rm = TRUE))
   if (length(qs) < 3L) {
     # Too few distinct total scores to form bins: fall back to score level.
-    return(factor(rs))
+    return(fell_back(factor(rs)))
   }
   cut(rs, breaks = qs, include.lowest = TRUE)
+}
+
+#' Caption clause naming the class-interval grouping actually used
+#'
+#' Reports the realised grouping rather than the requested one. `"quantile"`
+#' can form fewer groups than asked for when total scores tie at the quantile
+#' boundaries, and both binned methods fall back to one group per total score
+#' when there are too few distinct scores to bin at all. Either way the plot
+#' no longer shows what the arguments imply, so the caption says so.
+#'
+#' @param method Normalised method (`"cut"` already resolved to `"quantile"`).
+#' @param class_intervals The requested number of groups.
+#' @param score_breaks Breaks for `method = "manual"`, else `NULL`.
+#' @param bin The factor returned by `.cicc_class_bins()`.
+#' @return A single sentence.
+#' @keywords internal
+#' @noRd
+.cicc_interval_caption <- function(method, class_intervals, score_breaks, bin) {
+  n_groups <- nlevels(bin)
+  # Equal-width and manual grouping can define intervals that no respondent
+  # falls into, and those contribute no marker, so the caption reports both
+  # counts rather than implying more markers than the figure shows.
+  n_used <- sum(table(bin) > 0L)
+  empty_clause <- if (n_used < n_groups) {
+    sprintf(" %d of them contain respondents.", n_used)
+  } else {
+    ""
+  }
+
+  if (isTRUE(attr(bin, "fallback"))) {
+    return(sprintf(paste0(
+      "Class intervals: %s grouping was requested, but there are too few ",
+      "distinct total scores to form it, so every observed total score is ",
+      "its own group (%d groups)."), method, n_groups))
+  }
+  body <- switch(
+    method,
+    score = sprintf(
+      "Class intervals: every observed total score is its own group (%d groups).",
+      n_groups),
+    manual = sprintf(
+      "Class intervals: manual, a new group starting at total score%s %s (%d groups).",
+      if (length(score_breaks) > 1L) "s" else "",
+      paste(score_breaks, collapse = ", "), n_groups),
+    width = sprintf(
+      "Class intervals: %d equal-width groups over the observed total-score range.",
+      n_groups),
+    quantile = if (n_groups < class_intervals) {
+      sprintf(paste0(
+        "Class intervals: %d groups of approximately equal size (%d were ",
+        "requested, fewer were formed because total scores tie at the ",
+        "quantile boundaries)."), n_groups, class_intervals)
+    } else {
+      sprintf(
+        "Class intervals: %d groups of approximately equal size (quantile).",
+        n_groups)
+    }
+  )
+  paste0(body, empty_clause)
 }
 
 #' Expected conditional item score (and SE-of-mean band) per total score
@@ -463,13 +543,16 @@ RMitemICCPlot <- function(data,
 #' Composite caption explaining the markers and the DIF annotation
 #' @keywords internal
 #' @noRd
-.cicc_caption <- function(dif_mode, conf_level) {
+.cicc_caption <- function(dif_mode, conf_level, interval_clause = NULL) {
   pct <- round(conf_level * 100)
   g   <- intToUtf8(947L)   # Greek small letter gamma (keeps R source ASCII)
   cap <- sprintf(paste0(
     "Black line: model-expected conditional item score. Diamonds: observed mean ",
     "item score per total-score group with %d%% confidence-interval error ",
     "bars."), pct)
+  if (!is.null(interval_clause)) {
+    cap <- paste(cap, interval_clause)
+  }
   if (dif_mode) {
     cap <- paste0(cap, sprintf(paste0(
       " %s is Goodman-Kruskal's gamma (partial gamma DIF coefficient). The ",

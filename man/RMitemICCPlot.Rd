@@ -117,6 +117,14 @@ mean total score. If the score distribution is too sparse to form
 \code{class_intervals} distinct bins, the quantile and width methods fall
 back to score-level points.
 
+The figure caption names the grouping that was actually used, which is
+not always the one requested. Quantile grouping forms fewer bins than
+asked for when total scores tie at the boundaries, equal-width and manual
+grouping can define intervals no respondent falls into, and both binned
+methods fall back to score level on a degenerate score distribution. The
+caption reports the realised number of groups, how many of them contain
+respondents when that is fewer, and any fall back.
+
 \strong{Confidence intervals.} Observed error bars use the normal
 approximation \eqn{\bar{x}_l \pm z \sqrt{\mathrm{var}(x_l) / n_l}} within
 each (group, interval) cell, clamped to the item's score range; cells with

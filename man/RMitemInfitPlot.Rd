@@ -39,7 +39,9 @@ from the original data.
 \details{
 Uses \code{ggdist::stat_dotsinterval()} (when \code{data} is not supplied) or
 \code{ggdist::stat_dots()} (when \code{data} is supplied) with
-\code{point_interval = "median_hdci"} and \code{.width = c(0.66, 0.999)}.
+\code{point_interval = "median_hdci"}. The outer \code{.width} follows
+\code{simfit$hdci_width}, so the shaded interval matches the one
+\code{\link[=RMitemInfit]{RMitemInfit()}} tabulates.
 
 When \code{data} is \strong{not} supplied, the function plots the simulated MSQ
 distributions as dot-interval plots using \code{ggdist::stat_dotsinterval()} with

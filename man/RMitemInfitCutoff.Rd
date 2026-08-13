@@ -12,7 +12,7 @@ RMitemInfitCutoff(
   verbose = FALSE,
   seed = NULL,
   cutoff_method = "hdci",
-  hdci_width = 0.999,
+  hdci_width = 0.95,
   dgp = c("resample", "conditional")
 )
 }
@@ -43,7 +43,18 @@ computed. Either \code{"hdci"} (default) for the Highest Density Interval via
 \code{stats::quantile()}.}
 
 \item{hdci_width}{Numeric. Width of the HDCI when \code{cutoff_method = "hdci"}.
-Default is \code{0.999} (99.9\% HDCI). Ignored when \code{cutoff_method = "quantile"}.}
+Default is \code{0.95} (95\% HDCI). Ignored when \code{cutoff_method = "quantile"}.
+
+The interval is a \strong{description} of where a fitting item's statistic is
+expected to fall, not a decision rule. Flagging every item outside a
+width-\code{w} interval tests all \code{k} items at once, so the family-wise error
+rate is \code{1 - w^k}, which is 37\% for a 95\% interval over nine items.
+Decisions should come from the corrected p-value instead
+(\code{\link{RMitemInfit}} with \code{p_value = NULL} and the full object
+returned here). The default was \code{0.999} up to and including version
+1.1.1, which needs roughly 5000 iterations before the interval reaches
+its stated width; \code{0.95} reaches it by about 1000, so the band shown to
+readers means close to what it says (Johansson, 2026).}
 
 \item{dgp}{Character. Data-generating process for the parametric bootstrap.
 \code{"resample"} (default) resamples WLE person locations with replacement and
@@ -62,7 +73,11 @@ A list with components:
 \item{\code{item_cutoffs}}{data.frame with per-item cutoff summaries: \code{Item},
 \code{infit_low}, \code{infit_high}, \code{outfit_low}, \code{outfit_high}. Bounds are
 computed using the method specified by \code{cutoff_method}.}
-\item{\code{actual_iterations}}{Number of successful iterations.}
+\item{\code{actual_iterations}}{Number of successful iterations. Everything
+downstream rests on this rather than on \code{iterations}, so it is the
+number to report.}
+\item{\code{requested_iterations}}{The \code{iterations} argument, kept so callers
+can tell how many simulated datasets were discarded.}
 \item{\code{sample_n}}{Number of complete cases used.}
 \item{\code{sample_n_total}}{Number of respondents in the raw input data,
 before the complete-case filter.}
@@ -117,6 +132,15 @@ if (requireNamespace("iarm", quietly = TRUE) &&
   RMitemInfit(sim_data)
 }
 }
+}
+\references{
+Johansson, M. (2025). Detecting item misfit in Rasch models.
+\emph{Educational Methods & Psychometrics, 3}(18).
+\doi{10.61186/emp.2025.5}
+
+Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
+Rasch models: Iterations, multiplicity correction, and decision stability.
+\emph{PsyArXiv}. \doi{10.31234/osf.io/7pqz4_v1}
 }
 \seealso{
 \code{\link{RMitemInfit}}
