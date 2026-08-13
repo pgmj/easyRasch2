@@ -151,6 +151,16 @@ a warning. If all imputations fail, the function stops with an error.
 
 The `mice` package must be installed (it is in Suggests, not Imports).
 
+## Interval width under multiple imputation
+
+`hdci_width` defaults to `0.999` here, not to the `0.95` used by
+[`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md).
+[`RMitemInfitMI`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
+has no corrected-p-value path yet, so under imputation the interval is
+still the decision rule and keeps a width chosen for that job. Combining
+bootstrap p-values across imputations is planned but needs its own
+calibration, since Johansson (2026) covers complete data only.
+
 ## See also
 
 [`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md),

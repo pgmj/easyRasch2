@@ -53,8 +53,11 @@ Uses
 [`ggdist::stat_dotsinterval()`](https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html)
 (when `data` is not supplied) or
 [`ggdist::stat_dots()`](https://mjskay.github.io/ggdist/reference/stat_dots.html)
-(when `data` is supplied) with `point_interval = "median_hdci"` and
-`.width = c(0.66, 0.999)`.
+(when `data` is supplied) with `point_interval = "median_hdci"`. The
+outer `.width` follows `simfit$hdci_width`, so the shaded interval
+matches the one
+[`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
+tabulates.
 
 When `data` is **not** supplied, the function plots the simulated MSQ
 distributions as dot-interval plots using

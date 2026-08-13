@@ -15,7 +15,7 @@ uncertainty."><meta name="robots" content="noindex"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.1.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.1.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -174,6 +174,17 @@ computed, naturally incorporating imputation uncertainty.</p>
 <p>Imputed datasets that cause model convergence failures are dropped with a
 warning. If all imputations fail, the function stops with an error.</p>
 <p>The <code>mice</code> package must be installed (it is in Suggests, not Imports).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="interval-width-under-multiple-imputation">Interval width under multiple imputation<a class="anchor" aria-label="anchor" href="#interval-width-under-multiple-imputation"></a></h2>
+
+
+<p><code>hdci_width</code> defaults to <code>0.999</code> here, not to the <code>0.95</code> used by
+<code><a href="RMitemInfitCutoff.html">RMitemInfitCutoff</a></code>. <code><a href="RMitemInfitMI.html">RMitemInfitMI</a></code> has no
+corrected-p-value path yet, so under imputation the interval is still the
+decision rule and keeps a width chosen for that job. Combining bootstrap
+p-values across imputations is planned but needs its own calibration, since
+Johansson (2026) covers complete data only.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

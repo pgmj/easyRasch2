@@ -2,6 +2,62 @@
 
 ## easyRasch2 1.1.1.9000 (development version)
 
+### Breaking changes
+
+- **[`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
+  now flags on the corrected p-value rather than on the interval.**
+  `p_value` defaults to `NULL`, meaning `TRUE` when `cutoff` is the full
+  [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
+  object and `FALSE` otherwise. Scripts that pass the full object get
+  `p_infit` and `padj_infit` columns and a `Flagged` column that may
+  name different items. Pass `p_value = FALSE` for the old behaviour.
+
+- **[`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
+  defaults to `hdci_width = 0.95`**, was `0.999`. The interval is now a
+  description of where a fitting item’s statistic is expected to fall,
+  not a decision rule. At `.999` it needs roughly 5000 iterations to
+  reach its stated width, at `.95` about 1000. Flagging on the interval
+  at any width tests all items at once, so the width sets a family-wise
+  error rate of `1 - width^k`.
+  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
+  says so once per session, and in the table caption, whenever flagging
+  is interval-based.
+
+  Both changes follow Johansson (2026),
+  <https://doi.org/10.31234/osf.io/7pqz4_v1>.
+  [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md)
+  keeps `hdci_width = 0.999`, since
+  [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
+  has no corrected-p-value path and the interval is still its decision
+  rule there.
+
+### Other changes
+
+- [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md)’s
+  caption now names the class-interval grouping that was actually used:
+  the method, the number of groups formed, how many of those contain
+  respondents when that is fewer, and whether the requested grouping had
+  to fall back to score level. Quantile grouping can form fewer bins
+  than requested when total scores tie at the boundaries, and
+  equal-width and manual grouping can define empty intervals, so the
+  caption no longer has to be read against the call to know what the
+  figure shows.
+
+- [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
+  draws its outer interval at `simfit$hdci_width` instead of a fixed
+  0.1st-to-99.9th percentile range, so the plot and the table describe
+  the same interval.
+
+- The reminder about iteration counts is now two-tier and reworded from
+  calibration to reproducibility. Below 400 iterations a
+  once-per-session message reports that the Westfall-Young correction is
+  mildly liberal. Between 400 and 1000 the table caption notes that
+  error rates are calibrated but decisions remain somewhat
+  seed-dependent. Previously a hard
+  [`warning()`](https://rdrr.io/r/base/warning.html) fired below 1000
+  and claimed the correction was liberal there, which the simulation
+  study does not support.
+
 ### Bug fixes
 
 - [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)

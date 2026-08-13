@@ -90,8 +90,8 @@ remotes::install_github("pgmj/easyRasch2")
 ### Item fit
 
 - [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
-  — conditional infit MSQ; optional bootstrap *p*-values
-  (`p_value = TRUE`) with family-wise (Westfall–Young) or FDR
+  — conditional infit MSQ, flagged on multiplicity-corrected bootstrap
+  *p*-values (`p_value = TRUE`) with family-wise (Westfall–Young) or FDR
   multiple-comparison correction
 - [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md) +
   [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
@@ -209,6 +209,8 @@ set.seed(42)
 
 # Conditional item infit with simulation-based cutoffs
 simfit <- RMitemInfitCutoff(pcmdat2, iterations = 400)
+# Passing the full cutoff object flags on the Westfall-Young corrected
+# p-value. The 95% interval is reported alongside as a description.
 RMitemInfit(pcmdat2, cutoff = simfit)
 
 # Test of unidimensionality via posterior-predictive ordinal CFA

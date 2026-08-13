@@ -128,6 +128,18 @@ between-imputation variance.
 The `mice` and `iarm` packages must be installed (they are in Suggests,
 not Imports).
 
+## Flagging differs from the complete-data function
+
+[`RMitemInfit`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
+flags on the Westfall-Young corrected p-value by default. This function
+has no p-value path and flags against the interval, so the two are not
+directly comparable. Combining bootstrap p-values across imputations is
+planned but needs calibration of its own, since Johansson (2026) studied
+complete data. Until then
+[`RMitemInfitCutoffMI`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md)
+keeps `hdci_width = 0.999`, a width suited to a decision rule, and the
+family-wise error rate of that rule is `1 - 0.999^k` over `k` items.
+
 ## References
 
 Müller, M. (2020). Item fit statistics for Rasch analysis: Can we trust

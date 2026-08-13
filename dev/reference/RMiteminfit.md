@@ -12,7 +12,7 @@ location.
 RMitemInfit(
   data,
   cutoff = NULL,
-  p_value = FALSE,
+  p_value = NULL,
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
   alpha = 0.05,
   output = "kable",
@@ -53,13 +53,31 @@ RMitemInfit(
 
 - p_value:
 
-  Logical. If `TRUE`, bootstrap p-values are computed from the simulated
-  null distribution and added to the output. This requires `cutoff` to
-  be the **full**
+  Logical or `NULL`. Whether to compute bootstrap p-values from the
+  simulated null distribution and flag on them.
+
+  `NULL` (the default) means **use them when they are available**:
+  `TRUE` when `cutoff` is the full
   [`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
-  object (which carries the per-item simulated values in its `$results`
-  element); the summarised `$item_cutoffs` data.frame is not sufficient.
-  Default `FALSE`, in which case behaviour is unchanged.
+  object, which carries the per-item simulated values in its `$results`
+  element, and `FALSE` when `cutoff` is `NULL` or the summarised
+  `$item_cutoffs` data.frame, neither of which can support a p-value.
+  Explicit `TRUE` with an insufficient `cutoff` is an error rather than
+  a silent downgrade.
+
+  With `FALSE`, items are flagged against the interval instead, and a
+  one-time message reports the family-wise error rate that implies. The
+  interval describes where a fitting item's statistic is expected to
+  fall. Using it as a decision rule tests all `k` items at once, so its
+  width sets a family-wise error rate of `1 - width^k`, which is 37% for
+  the default 95% interval over nine items. The corrected p-value
+  targets `alpha` directly and needs far fewer iterations to do it
+  (Johansson, 2026).
+
+  Up to and including version 1.1.1 the default was `FALSE`, so
+  `Flagged` came from the interval. Existing scripts that pass the full
+  cutoff object will now flag on the corrected p-value instead and may
+  report different items.
 
 - correction:
 
@@ -208,6 +226,11 @@ Practice, 19*(6).
 Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple
 Testing*. Wiley.
 
+Johansson, M. (2026). Simulation-based cutoffs for conditional item fit
+in Rasch models: Iterations, multiplicity correction, and decision
+stability. *PsyArXiv*.
+[doi:10.31234/osf.io/7pqz4_v1](https://doi.org/10.31234/osf.io/7pqz4_v1)
+
 ## See also
 
 [`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
@@ -250,14 +273,17 @@ if (requireNamespace("iarm", quietly = TRUE)) {
                 statistic = "outfit", output = "dataframe")
   }
 }
-#> Warning: Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations >= 1000 in RMitemInfitCutoff() for reliable p-values.
-#> Warning: Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations >= 1000 in RMitemInfitCutoff() for reliable p-values.
+#> Bootstrap p-values are based on 100 iterations, below the calibrated floor of 400.
+#> ℹ Below 400 the Westfall-Young correction is mildly liberal under the null, so the family-wise error rate is above the nominal level.
+#> ℹ See Johansson (2026), doi:10.31234/osf.io/7pqz4_v1.
+#> ℹ Raise `iterations` in RMitemInfitCutoff().
+#> This message is displayed once per session.
 #>    Item Outfit_MSQ Outfit_low Outfit_high  p_outfit padj_outfit Flagged
-#> 1 Item1  1.1294533      0.558       2.040 0.3762376   0.7722772        
-#> 2 Item2  0.9381845      0.547       1.615 0.7128713   0.7821782        
-#> 3 Item3  0.8125048      0.627       1.440 0.3465347   0.6534653        
-#> 4 Item4  1.2755158      0.525       1.535 0.1683168   0.4851485        
-#> 5 Item5  0.9035259      0.517       2.357 0.5742574   0.7821782        
+#> 1 Item1  1.1294533      0.558       1.366 0.3762376   0.7722772        
+#> 2 Item2  0.9381845      0.661       1.399 0.7128713   0.7821782        
+#> 3 Item3  0.8125048      0.694       1.381 0.3465347   0.6534653        
+#> 4 Item4  1.2755158      0.583       1.379 0.1683168   0.4851485        
+#> 5 Item5  0.9035259      0.517       1.457 0.5742574   0.7821782        
 #>   Relative_location
 #> 1        0.03566442
 #> 2       -0.47593330

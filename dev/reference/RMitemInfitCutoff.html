@@ -11,7 +11,7 @@ Rasch model that mimics your data and returns per-item empirical cutoffs."><meta
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.1.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.1.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,7 @@ Rasch model that mimics your data and returns per-item empirical cutoffs.</p>
 <span>  verbose <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cutoff_method <span class="op">=</span> <span class="st">"hdci"</span>,</span>
-<span>  hdci_width <span class="op">=</span> <span class="fl">0.999</span>,</span>
+<span>  hdci_width <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  dgp <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"resample"</span>, <span class="st">"conditional"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -104,7 +104,17 @@ computed. Either <code>"hdci"</code> (default) for the Highest Density Interval 
 
 <dt id="arg-hdci-width">hdci_width<a class="anchor" aria-label="anchor" href="#arg-hdci-width"></a></dt>
 <dd><p>Numeric. Width of the HDCI when <code>cutoff_method = "hdci"</code>.
-Default is <code>0.999</code> (99.9% HDCI). Ignored when <code>cutoff_method = "quantile"</code>.</p></dd>
+Default is <code>0.95</code> (95% HDCI). Ignored when <code>cutoff_method = "quantile"</code>.</p>
+<p>The interval is a <strong>description</strong> of where a fitting item's statistic is
+expected to fall, not a decision rule. Flagging every item outside a
+width-<code>w</code> interval tests all <code>k</code> items at once, so the family-wise error
+rate is <code>1 - w^k</code>, which is 37% for a 95% interval over nine items.
+Decisions should come from the corrected p-value instead
+(<code><a href="RMiteminfit.html">RMitemInfit</a></code> with <code>p_value = NULL</code> and the full object
+returned here). The default was <code>0.999</code> up to and including version
+1.1.1, which needs roughly 5000 iterations before the interval reaches
+its stated width; <code>0.95</code> reaches it by about 1000, so the band shown to
+readers means close to what it says (Johansson, 2026).</p></dd>
 
 
 <dt id="arg-dgp">dgp<a class="anchor" aria-label="anchor" href="#arg-dgp"></a></dt>
@@ -130,7 +140,13 @@ matched null. <strong>Experimental.</strong></p></dd>
 computed using the method specified by <code>cutoff_method</code>.</p></dd>
 
 <dt><code>actual_iterations</code></dt>
-<dd><p>Number of successful iterations.</p></dd>
+<dd><p>Number of successful iterations. Everything
+downstream rests on this rather than on <code>iterations</code>, so it is the
+number to report.</p></dd>
+
+<dt><code>requested_iterations</code></dt>
+<dd><p>The <code>iterations</code> argument, kept so callers
+can tell how many simulated datasets were discarded.</p></dd>
 
 <dt><code>sample_n</code></dt>
 <dd><p>Number of complete cases used.</p></dd>
@@ -176,6 +192,15 @@ discarded.</p>
 <p>Parallel processing is provided by the <code>mirai</code> package (optional). Install
 it with <code>install.packages("mirai")</code> to enable parallelisation.</p>
 <p>The <code>iarm</code> package must be installed (it is in Suggests, not Imports).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
+    <p>Johansson, M. (2025). Detecting item misfit in Rasch models.
+<em>Educational Methods &amp; Psychometrics, 3</em>(18).
+<a href="https://doi.org/10.61186/emp.2025.5" class="external-link">doi:10.61186/emp.2025.5</a></p>
+<p>Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
+Rasch models: Iterations, multiplicity correction, and decision stability.
+<em>PsyArXiv</em>. <a href="https://doi.org/10.31234/osf.io/7pqz4_v1" class="external-link">doi:10.31234/osf.io/7pqz4_v1</a></p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
