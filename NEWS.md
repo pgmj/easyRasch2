@@ -18,11 +18,16 @@
   session, and in the table caption, whenever flagging is interval-based.
 
   Both changes follow Johansson (2026),
-  <https://doi.org/10.31234/osf.io/7pqz4_v1>. `RMitemInfitCutoffMI()` keeps
+  <https://doi.org/10.31234/osf.io/7pqz4_v2>. `RMitemInfitCutoffMI()` keeps
   `hdci_width = 0.999`, since `RMitemInfitMI()` has no corrected-p-value path
   and the interval is still its decision rule there.
 
 ## Other changes
+
+- `RMlocdepGammaCutoff()` is roughly 14 times faster since partial gamma is now
+  computed by a vectorised internal instead of `iarm::partgam_LD()`, which also
+  derives an asymptotic standard error and confidence interval that a simulated
+  null does not use.
 
 - `RMitemICCPlot()`'s caption now names the class-interval grouping that was
   actually used: the method, the number of groups formed, how many of those
@@ -33,16 +38,14 @@
   be read against the call to know what the figure shows.
 
 - `RMitemInfitPlot()` draws its outer interval at `simfit$hdci_width` instead
-  of a fixed 0.1st-to-99.9th percentile range, so the plot and the table
+  of a fixed percentile range, so the plot and the table
   describe the same interval.
 
 - The reminder about iteration counts is now two-tier and reworded from
   calibration to reproducibility. Below 400 iterations a once-per-session
   message reports that the Westfall-Young correction is mildly liberal.
   Between 400 and 1000 the table caption notes that error rates are
-  calibrated but decisions remain somewhat seed-dependent. Previously a hard
-  `warning()` fired below 1000 and claimed the correction was liberal there,
-  which the simulation study does not support.
+  calibrated but decisions remain somewhat seed-dependent.
 
 ## Bug fixes
 

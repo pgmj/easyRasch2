@@ -371,9 +371,16 @@ RMlocdepGamma <- function(
       list(sim_res$iteration, sim_key),
       function(x) x[1L]
     )
+    # The tested statistic is taken from the same code path that produced the
+    # simulated null, so the two cannot diverge. The `gamma` column displayed
+    # in the tables still comes from iarm and is numerically identical.
+    obs_fast <- .partgam_ld_gamma(
+      data[stats::complete.cases(data), , drop = FALSE],
+      direction = 1L
+    )
     observed <- stats::setNames(
-      as.numeric(pgam_raw[[1L]]$gamma),
-      obs_key
+      obs_fast$gamma,
+      canon_key(obs_fast$Item1, obs_fast$Item2)
     )
     # One-sided: excess positive LD (redundancy), matching RMlocdepQ3.
     pv <- .bootstrap_pvalues(
@@ -683,8 +690,12 @@ knit_print.RMlocdepGamma <- function(x, ...) {
 #'   \item Simulates item response data under a Rasch model (dichotomous via
 #'     `psychotools::rrm()` or polytomous via an internal partial credit
 #'     simulator).
-#'   \item Computes partial gamma LD statistics via
-#'     `iarm::partgam_LD()`.
+#'   \item Computes partial gamma for every item pair in the canonical
+#'     rest-score direction. The coefficients are identical to those of
+#'     `iarm::partgam_LD()`, but are computed by a vectorised internal, since
+#'     `iarm` also derives the asymptotic standard error and confidence
+#'     interval that a simulated null does not need and costs roughly two
+#'     orders of magnitude more per iteration.
 #' }
 #'
 #' Because the data are simulated under the Rasch model, items are locally
@@ -937,6 +948,249 @@ RMlocdepGammaCutoff <- function(
 }
 
 # ---------------------------------------------------------------------------
+# Internal: vectorised partial gamma
+# ---------------------------------------------------------------------------
+
+#' Partial gamma for every item pair, coefficient only
+#'
+#' Vectorised implementation of Davis's (1967) partial gamma. It returns the
+#' coefficient and nothing else, which is all a parametric bootstrap needs.
+#' `iarm::partgam_LD()` additionally computes the Goodman-Kruskal delta-method
+#' variance and loops over pairs, cells and strata in R, costing roughly 300 ms
+#' per call irrespective of sample size, so calling it once per bootstrap
+#' iteration dominates everything else by an order of magnitude.
+#'
+#' Used for the simulated null in [RMlocdepGammaCutoff()] and for the observed
+#' statistic that [RMlocdepGamma()] tests against it, so that the two cannot
+#' diverge. The `gamma`, `se`, `lower` and `upper` columns shown to users still
+#' come from `iarm::partgam_LD()`. Agreement with `iarm` is exact and is
+#' asserted in `tests/testthat/test-ld_partgam_gamma.R`.
+#'
+#' @details
+#' Partial gamma pools concordant and discordant pair counts over strata of the
+#' conditioning variable, here the rest score:
+#' \deqn{\gamma = \frac{\sum_k C_k - \sum_k D_k}{\sum_k C_k + \sum_k D_k}.}
+#' For a stratum with an \eqn{m \times m} count matrix \eqn{N} and \eqn{G} the
+#' strictly-upper indicator (\eqn{G_{ab} = 1} iff \eqn{b > a}), writing
+#' \eqn{A = GN} gives \eqn{A_{ij'} = \sum_{i' > i} N_{i'j'}}, and then
+#' \eqn{C = A G^{T}} sums over \eqn{j' > j} while \eqn{D = A G} sums over
+#' \eqn{j' < j}. Each unordered observation pair is counted once, so the
+#' halving `iarm` applies is not needed here.
+#'
+#' @param data data.frame or matrix of item responses scored from 0, with no
+#'   missing values. `iarm::partgam_LD()` applies `complete.cases()` internally;
+#'   this function does not, so the caller must filter first.
+#' @param direction `1` enumerates pairs with `Item1` before `Item2` in column
+#'   order, `2` the reverse. The rest score always excludes `Item2`, so the two
+#'   directions give the two conditional independence hypotheses of Kreiner and
+#'   Christensen (2004). Direction 1 is the canonical one stored by
+#'   [RMlocdepGammaCutoff()].
+#' @param strata When `TRUE`, adds the stratum sign-homogeneity columns
+#'   described in `.partgam_strata_summary()`. Off by default, since the
+#'   bootstrap needs the coefficient alone and calls this once per iteration.
+#' @return data.frame with `Item1`, `Item2` and `gamma`, one row per pair, in
+#'   the same order as `iarm::partgam_LD()[[direction]]`. `gamma` is `NA_real_`
+#'   for a pair with no concordant and no discordant observations, which
+#'   `iarm::partgam_LD()` cannot return at all because it errors on the whole
+#'   data set when an item is constant. With `strata = TRUE` the columns
+#'   `n_strata`, `n_pos`, `n_neg`, `n_zero`, `homogeneous` and `w_opposing` are
+#'   appended, and the per-stratum detail behind them is attached as the
+#'   `"strata"` attribute, a list with one element per pair.
+#' @keywords internal
+#' @noRd
+.partgam_ld_gamma <- function(data, direction = 1L, strata = FALSE) {
+  X <- as.matrix(data)
+  storage.mode(X) <- "integer"
+
+  if (ncol(X) < 2L) {
+    stop("`data` must have at least two items.", call. = FALSE)
+  }
+  if (anyNA(X)) {
+    stop(
+      "`data` must not contain missing values; filter to complete cases first.",
+      call. = FALSE
+    )
+  }
+
+  items <- colnames(X)
+  if (is.null(items)) {
+    items <- paste0("V", seq_len(ncol(X)))
+  }
+  k <- ncol(X)
+  m <- max(X) + 1L
+  score <- rowSums(X)
+
+  # G[a, b] = 1 iff b > a. Its transpose is the strictly-lower counterpart.
+  G <- outer(seq_len(m), seq_len(m), function(a, b) as.numeric(b > a))
+  tG <- t(G)
+
+  # iarm enumerates with i in the outer loop and j in the inner one, sending
+  # i < j to the first table and i > j to the second. Reproduced here so the
+  # row order matches.
+  pairs <- do.call(
+    rbind,
+    lapply(seq_len(k), function(i) {
+      js <- if (direction == 1L) {
+        seq_len(k)[seq_len(k) > i]
+      } else {
+        seq_len(k)[seq_len(k) < i]
+      }
+      if (length(js) == 0L) NULL else cbind(i = i, j = js)
+    })
+  )
+
+  if (!strata) {
+    gammas <- vapply(
+      seq_len(nrow(pairs)),
+      function(p) {
+        i <- pairs[p, "i"]
+        j <- pairs[p, "j"]
+        .partgam_one(X[, i], X[, j], score - X[, j], m, G, tG)
+      },
+      numeric(1L)
+    )
+    return(data.frame(
+      Item1 = items[pairs[, "i"]],
+      Item2 = items[pairs[, "j"]],
+      gamma = gammas,
+      stringsAsFactors = FALSE,
+      row.names = NULL
+    ))
+  }
+
+  detail <- lapply(seq_len(nrow(pairs)), function(p) {
+    i <- pairs[p, "i"]
+    j <- pairs[p, "j"]
+    .partgam_one(X[, i], X[, j], score - X[, j], m, G, tG, strata = TRUE)
+  })
+
+  out <- data.frame(
+    Item1 = items[pairs[, "i"]],
+    Item2 = items[pairs[, "j"]],
+    gamma = vapply(detail, function(d) d$gamma, numeric(1L)),
+    stringsAsFactors = FALSE,
+    row.names = NULL
+  )
+  out <- cbind(out, do.call(rbind, lapply(detail, .partgam_strata_summary)))
+  attr(out, "strata") <- detail
+  out
+}
+
+#' Partial gamma for one item pair
+#'
+#' @param x,y Integer response vectors scored from 0.
+#' @param z Integer conditioning variable (the rest score).
+#' @param m Number of response categories spanning `x` and `y`.
+#' @param G,tG The strictly-upper indicator matrix and its transpose.
+#' @param strata When `FALSE` (default) the coefficient is returned on its own,
+#'   which is the path the bootstrap takes. When `TRUE` the stratum-level
+#'   quantities behind it are returned as well.
+#' @return With `strata = FALSE`, the partial gamma coefficient, or `NA_real_`
+#'   when no pair of observations within a stratum is either concordant or
+#'   discordant. With `strata = TRUE`, a list with that value as `gamma` plus
+#'   `gamma_k` (per-stratum gamma, `NA_real_` where a stratum yields no
+#'   concordant or discordant pair), `weight_k` (that stratum's contribution to
+#'   the denominator, \eqn{C_k + D_k}) and `n_k` (stratum size). Strata are in
+#'   ascending order of `z`, including any empty intermediate ones.
+#' @keywords internal
+#' @noRd
+.partgam_one <- function(x, y, z, m, G, tG, strata = FALSE) {
+  zc <- z - min(z) + 1L
+  nz <- max(zc)
+  counts <- tabulate(
+    (zc - 1L) * m * m + y * m + x + 1L,
+    nbins = m * m * nz
+  )
+  dim(counts) <- c(m, m, nz)
+
+  conc <- 0
+  disc <- 0
+  if (strata) {
+    gamma_k <- rep(NA_real_, nz)
+    weight_k <- rep(0, nz)
+    n_k <- rep(0L, nz)
+  }
+
+  for (s in seq_len(nz)) {
+    N <- counts[, , s]
+    n_s <- sum(N)
+    if (strata) n_k[s] <- n_s
+    # A stratum holding fewer than two observations contributes no pairs.
+    if (n_s < 2L) next
+    A <- G %*% N
+    c_s <- sum(N * (A %*% tG))
+    d_s <- sum(N * (A %*% G))
+    conc <- conc + c_s
+    disc <- disc + d_s
+    if (strata) {
+      weight_k[s] <- c_s + d_s
+      # A stratum can hold observations yet no comparable pair, for instance
+      # when every respondent in it gave the same answer to one of the items.
+      if (c_s + d_s > 0) gamma_k[s] <- (c_s - d_s) / (c_s + d_s)
+    }
+  }
+
+  total <- conc + disc
+  gamma <- if (total == 0) NA_real_ else (conc - disc) / total
+
+  if (!strata) {
+    return(gamma)
+  }
+  list(gamma = gamma, gamma_k = gamma_k, weight_k = weight_k, n_k = n_k)
+}
+
+#' Summarise sign homogeneity across strata for one item pair
+#'
+#' Davis's partial gamma pools concordant and discordant counts over strata, so
+#' it is interpretable as a partial correlation only when the stratum-specific
+#' associations point the same way. Kreiner (personal communication, 2026)
+#' states the condition directly: the stratum gammas need not be equal, but they
+#' must be either positive or negative throughout, and if some are negative
+#' while others are zero or positive the pooled value is not a meaningful
+#' measure of partial correlation.
+#'
+#' Two cautions on reading the result. Stratum gammas estimated from a handful
+#' of respondents change sign readily by chance, so at small sample sizes a
+#' heterogeneous verdict is weak evidence of a real violation. And under the
+#' null the stratum gammas are zero in the population, so mixed sample signs are
+#' expected there and carry no meaning.
+#'
+#' @param st A list from `.partgam_one(strata = TRUE)`.
+#' @return A one-row data.frame with `n_strata` (strata contributing at least
+#'   one comparable pair), `n_pos`, `n_neg`, `n_zero`, `homogeneous` (no
+#'   stratum positive while another is negative) and `w_opposing`, the share of
+#'   the pooled denominator held by strata whose sign opposes the pooled one.
+#'   `w_opposing` is `NA_real_` when the pooled gamma is zero or undefined.
+#' @keywords internal
+#' @noRd
+.partgam_strata_summary <- function(st) {
+  ok <- !is.na(st$gamma_k)
+  g <- st$gamma_k[ok]
+  w <- st$weight_k[ok]
+
+  n_pos <- sum(g > 0)
+  n_neg <- sum(g < 0)
+
+  pooled_sign <- if (is.na(st$gamma)) NA_real_ else sign(st$gamma)
+  w_opposing <- if (is.na(pooled_sign) || pooled_sign == 0 || sum(w) == 0) {
+    NA_real_
+  } else {
+    sum(w[sign(g) == -pooled_sign]) / sum(w)
+  }
+
+  data.frame(
+    n_strata = length(g),
+    n_pos = n_pos,
+    n_neg = n_neg,
+    n_zero = sum(g == 0),
+    homogeneous = !(n_pos > 0 && n_neg > 0),
+    w_opposing = w_opposing,
+    stringsAsFactors = FALSE,
+    row.names = NULL
+  )
+}
+
+# ---------------------------------------------------------------------------
 # Internal: single simulation iteration
 # ---------------------------------------------------------------------------
 
@@ -999,26 +1253,12 @@ run_single_partgam_LD_sim <- function(seed, data_list) {
         }
       }
 
-      # Compute partial gamma LD via iarm.
-      # iarm::partgam_LD() prints its result tables to stdout on every call;
-      # silence it. `finally` restores the sink even if the call errors (the
-      # outer tryCatch then reports the failure as usual).
-      sink(nullfile())
-      pgam <- tryCatch(
-        iarm::partgam_LD(sim_df),
-        finally = sink()
-      )
-
-      # Use direction 1 (rest score = total - Item2) as the canonical direction
-      pgam_df <- as.data.frame(pgam[[1]])
-
-      data.frame(
-        Item1 = as.character(pgam_df$Item1),
-        Item2 = as.character(pgam_df$Item2),
-        gamma = as.numeric(pgam_df$gamma),
-        stringsAsFactors = FALSE,
-        row.names = NULL
-      )
+      # Partial gamma in direction 1 (rest score = total - Item2), the
+      # canonical direction. Computed with the vectorised internal rather than
+      # `iarm::partgam_LD()`: the coefficients are identical (see
+      # test-ld_partgam_gamma.R), but iarm costs around 300 ms per call against
+      # a few milliseconds here, and it is called once per iteration.
+      .partgam_ld_gamma(sim_df, direction = 1L)
     },
     error = function(e) {
       as.character(conditionMessage(e))
