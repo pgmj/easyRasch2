@@ -24,7 +24,7 @@
   is interval-based.
 
   Both changes follow Johansson (2026),
-  <https://doi.org/10.31234/osf.io/7pqz4_v1>.
+  <https://doi.org/10.31234/osf.io/7pqz4_v2>.
   [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md)
   keeps `hdci_width = 0.999`, since
   [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
@@ -32,6 +32,13 @@
   rule there.
 
 ### Other changes
+
+- [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md)
+  is roughly 14 times faster since partial gamma is now computed by a
+  vectorised internal instead of
+  [`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html),
+  which also derives an asymptotic standard error and confidence
+  interval that a simulated null does not use.
 
 - [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md)’s
   caption now names the class-interval grouping that was actually used:
@@ -45,18 +52,15 @@
 
 - [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
   draws its outer interval at `simfit$hdci_width` instead of a fixed
-  0.1st-to-99.9th percentile range, so the plot and the table describe
-  the same interval.
+  percentile range, so the plot and the table describe the same
+  interval.
 
 - The reminder about iteration counts is now two-tier and reworded from
   calibration to reproducibility. Below 400 iterations a
   once-per-session message reports that the Westfall-Young correction is
   mildly liberal. Between 400 and 1000 the table caption notes that
   error rates are calibrated but decisions remain somewhat
-  seed-dependent. Previously a hard
-  [`warning()`](https://rdrr.io/r/base/warning.html) fired below 1000
-  and claimed the correction was liberal there, which the simulation
-  study does not support.
+  seed-dependent.
 
 ### Bug fixes
 
