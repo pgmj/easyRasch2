@@ -23,7 +23,7 @@ missingness is handled directly."><meta name="robots" content="noindex"></head><
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.1.9002</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.1.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -137,7 +137,9 @@ are <strong>not</strong> used for inference (see Müller, 2020). Default <code>F
 
 <dt id="arg-parallel-n-cores">parallel, n_cores<a class="anchor" aria-label="anchor" href="#arg-parallel-n-cores"></a></dt>
 <dd><p>Logical / integer. Parallelise the resampling
-across persons via <span class="pkg">mirai</span> when available. Default sequential.</p></dd>
+across persons via <span class="pkg">mirai</span> when available. Default sequential.
+When <code>n_cores</code> is <code>NULL</code>, <code>getOption("mc.cores")</code> is used, and two
+workers when that is unset too.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>

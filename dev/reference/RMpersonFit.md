@@ -83,7 +83,9 @@ RMpersonFit(
 - parallel, n_cores:
 
   Logical / integer. Parallelise the resampling across persons via mirai
-  when available. Default sequential.
+  when available. Default sequential. When `n_cores` is `NULL`,
+  `getOption("mc.cores")` is used, and two workers when that is unset
+  too.
 
 - seed:
 

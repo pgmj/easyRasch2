@@ -201,7 +201,7 @@ if (requireNamespace("mice", quietly = TRUE) &&
 }
 #> 
 #> 
-#> Table: Pooled MSQ values from 2 imputations (Rubin's rules). n = 200 respondents (missing values imputed, m = 2) per imputed dataset. Cutoff values based on 50 total simulation iterations across 2 imputations (99.9% HDCI). Flagged: overfit = infit below range (more predictable); underfit = above range (noisier).
+#> Table: Pooled MSQ values from 2 imputations (Rubin's rules). n = 200 respondents (missing values imputed, m = 2) per imputed dataset. Cutoff values based on 50 total simulation iterations across 2 imputations (99.9% HDCI). Flagged: overfit = infit below range; underfit = above range.
 #> 
 #> |Item  | Infit MSQ| Infit SE| Infit low| Infit high|Flagged | Relative location|
 #> |:-----|---------:|--------:|---------:|----------:|:-------|-----------------:|

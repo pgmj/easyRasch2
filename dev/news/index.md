@@ -1,8 +1,26 @@
 # Changelog
 
-## easyRasch2 1.1.1.9000 (development version)
+## easyRasch2 1.1.1.9003 (development version)
 
 ### Breaking changes
+
+- **[`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
+  now tests each item pair once, on the larger of its two conditioning
+  directions.** Previously the p-value and the band flag came from the
+  canonical direction alone and were repeated in both tables, so the
+  direction-2 table showed a coefficient beside a p-value computed from
+  a different one, sometimes of the opposite sign. A new `gamma_pair`
+  column carries the tested statistic, `gamma` still carries each
+  direction’s own coefficient, and `flagged` compares `gamma_pair`
+  against the band. Local dependence violates both of the conditional
+  independence hypotheses a pair implies (Kreiner & Christensen, 2004),
+  and taking the maximum within each simulated dataset gives the null of
+  that maximum directly, so nothing is corrected for having looked at
+  two directions.
+  [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md)’s
+  `$results` and `$pair_cutoffs` now describe that maximum, and
+  [`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaPlot.md)
+  overlays it. **Cutoff values, p-values and flags all change.**
 
 - **[`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
   now flags on the corrected p-value rather than on the interval.**
@@ -99,6 +117,14 @@
   `partition`. The 30-case minimum is likewise counted over the
   partitioned items only.
 
+- [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
+  with the default `seed = NULL` now reproduces from a session-level
+  [`set.seed()`](https://rdrr.io/r/base/Random.html), as the other
+  simulation functions already did. Its plausible-value sampler leaves
+  the random number generator in a nondeterministic state, so the RMU
+  row and the bootstrap intervals differed between two otherwise
+  identical calls. Results for an explicit `seed` are unchanged.
+
 ### Other changes
 
 - Both Martin-Löf functions have been validated against the `pml` SAS
@@ -107,11 +133,17 @@
   the residuals reproduce the macro to numerical precision.
 
 - New help topic `?easyRasch2-reproducibility` covers what `seed`
-  guarantees and the pinned generator’s side effects.
+  guarantees, what the default `seed = NULL` inherits from a
+  session-level [`set.seed()`](https://rdrr.io/r/base/Random.html), and
+  the pinned generator’s side effects.
 
 - [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
   gains `sample_n_total` and `sample_has_na`, matching the other cutoff
   objects.
+
+- `RMpersonFit(parallel = TRUE, n_cores = NULL)` now reads
+  `getOption("mc.cores")` before falling back to two workers, matching
+  the cutoff functions. Results are unaffected by the worker count.
 
 - The two conditional samplers are now one recursion over the nested
   gamma functions, computed once per call rather than per simulated

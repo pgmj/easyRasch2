@@ -1,10 +1,11 @@
 # Random number generation and reproducibility in easyRasch2
 
-Every function in the package that simulates, bootstraps or resamples
-takes a `seed` argument, and most also take `parallel`. This topic
-describes what `seed` guarantees, what it does to the calling session's
-random number generator, and the one situation in which the package
-overrides a deliberate choice of generator.
+The functions that simulate, bootstrap or resample take a `seed`
+argument, and most also take `parallel`. This topic describes what
+`seed` guarantees, what the default `seed = NULL` inherits from the
+calling session, what a call does to that session's random number
+generator, and the one situation in which the package overrides a
+deliberate choice of generator.
 
 ## How seeding works
 
@@ -23,6 +24,25 @@ of the order in which they finish. This is what makes `parallel = TRUE`
 and `parallel = FALSE` return **identical** results for the same `seed`,
 rather than merely equivalent ones, and what makes a result independent
 of `n_cores`.
+
+## The default `seed = NULL` inherits the session's stream
+
+`seed` defaults to `NULL` everywhere, and a `NULL` seed sets nothing.
+Step 2 above then draws the per-iteration seeds from whatever stream the
+session is already on, so a
+[`set.seed()`](https://rdrr.io/r/base/Random.html) earlier in the script
+reproduces the call just as passing `seed` does. One
+[`set.seed()`](https://rdrr.io/r/base/Random.html) at the top of an
+analysis therefore covers every function listed below, and there is no
+need to give each call a seed of its own.
+
+The two routes differ in what they are robust to. An explicit `seed`
+pins one call whatever runs before it. A session-level
+[`set.seed()`](https://rdrr.io/r/base/Random.html) pins the script as a
+sequence, so inserting, removing or reordering an earlier call that
+draws random numbers changes every result after it. Use an explicit
+`seed` where a single result has to be reproducible on its own, such as
+a published cutoff.
 
 ## The generator is pinned inside iterations
 
@@ -80,6 +100,14 @@ and
 [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md).
 
 Functions that involve no simulation take no `seed` and are unaffected.
+
+[`RMUreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMUreliability.md)
+is the one resampling function without a `seed`. It splits the draw
+columns at random, and reproduces from the session's stream in the way
+described above.
+[`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
+calls it unseeded on purpose, so that each of the `rmu_iter` repetitions
+it averages uses a different split.
 
 ## A note on other sources of non-determinism
 

@@ -47,8 +47,7 @@ RMitemInfit(
     (or `outfit_low` and `outfit_high` when `statistic = "outfit"`).
     When provided, adds columns `Infit_low`, `Infit_high`, and `Flagged`
     to the result. `Flagged` labels the misfit direction: `"overfit"`
-    (infit below the range – more predictable than the model expects),
-    `"underfit"` (above the range – noisier than expected), or `""`
+    (infit below the range), `"underfit"` (above the range), or `""`
     (within range, no misfit).
 
 - p_value:
