@@ -6,13 +6,13 @@
 \usage{
 RMlocdepGammaCutoff(
   data,
-  iterations = 250,
+  iterations = 400,
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,
   seed = NULL,
   cutoff_method = "hdci",
-  hdci_width = 0.99
+  hdci_width = 0.95
 )
 }
 \arguments{
@@ -20,7 +20,10 @@ RMlocdepGammaCutoff(
 starting at 0 (non-negative integers). Only complete cases (rows without
 any \code{NA}) are used.}
 
-\item{iterations}{Integer. Number of simulation iterations (default 250).}
+\item{iterations}{Integer. Number of simulation iterations (default 400,
+was 250 before 1.2.0). 400 is the calibrated floor for the Westfall-Young
+correction (Johansson, 2026) and the count a 95\\% interval needs to
+converge. Use 1000 to 2000 for a final analysis.}
 
 \item{parallel}{Logical. Use parallel processing via \code{mirai} if available
 (default \code{TRUE}).}
@@ -42,8 +45,11 @@ computed. Either \code{"hdci"} (default) for the Highest Density Interval via
 \code{stats::quantile()}.}
 
 \item{hdci_width}{Numeric. Width of the HDCI when \code{cutoff_method = "hdci"}.
-Default is \code{0.99} (99\\% HDCI). Ignored when
-\code{cutoff_method = "quantile"}.}
+Default is \code{0.95} (95\\% HDCI), was \code{0.99} before 1.2.0. The interval
+describes where a fitting pair's coefficient is expected to fall and is
+no longer the default decision rule, so the width is chosen to converge
+at the default iteration count rather than to imply an error rate.
+Ignored when \code{cutoff_method = "quantile"}.}
 }
 \value{
 A list with components:

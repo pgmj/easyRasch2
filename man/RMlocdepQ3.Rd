@@ -9,7 +9,7 @@ RMlocdepQ3(
   cutoff = NULL,
   output = "kable",
   n_pairs = NULL,
-  p_value = FALSE,
+  p_value = NULL,
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
   alpha = 0.05,
   estimator = c("CML", "MML")
@@ -33,10 +33,16 @@ the cut-off matrix plus a per-pair table.}
 supplied, limits the per-pair table to the \code{n_pairs} pairs with the
 largest departure from their expected range. \code{NULL} shows all pairs.}
 
-\item{p_value}{Logical. If \code{TRUE} (requires the full
-\code{\link{RMlocdepQ3Cutoff}} object), the per-pair table also reports
+\item{p_value}{Logical or \code{NULL}. When \code{TRUE} the per-pair table reports
 one-sided bootstrap p-values (\code{p_q3}, \code{padj_q3}) and flags \code{above} pairs
-(only) on \code{padj_q3 < alpha} instead of the expected range. Default \code{FALSE}.}
+(only) on \code{padj_q3 < alpha} instead of on the expected range. \code{NULL}, the
+default, means \code{TRUE} when \code{cutoff} is the full
+\code{\link{RMlocdepQ3Cutoff}} object and \code{FALSE} otherwise, so a
+numeric cutoff or no cutoff keeps the interval. Pass \code{FALSE} for the
+pre-1.2.0 behaviour. The interval is a description of where a pair's
+\eqn{Q_3} is expected to fall and makes a poor decision rule, since its
+width sets a family-wise error rate of \code{1 - width^m} over all \eqn{m}
+pairs at once, and pairs grow quadratically in items (Johansson, 2026).}
 
 \item{correction}{Character. Multiple-comparison correction across item
 pairs when \code{p_value = TRUE}: \code{"fwer"} (default) for the Westfall-Young
@@ -120,9 +126,15 @@ with a one-sided (upper-tail) test for excess local dependence. The pair
 statistic is studentised by the bootstrap mean and SD; the marginal p-value
 is \verb{(1 + #\{Q3* >= Q3\}) / (B + 1)}, and \code{correction} applies the family-wise
 (Westfall-Young step-down) or FDR adjustment across the \eqn{k(k-1)/2} pairs.
-As for item fit, the family-wise correction is liberal when the simulation is
-small, so >= 1000 \code{iterations} in \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}} are recommended (a
-warning is issued otherwise).
+As for item fit, the family-wise correction is liberal below 400
+\code{iterations} in \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}, which is reported once per session,
+and between 400 and 1000 the table caption notes that decisions remain
+somewhat seed-dependent. A false discovery rate correction needs far more
+iterations than the family-wise one, because a bootstrap p-value cannot
+fall below \code{1/(B + 1)} and Benjamini-Hochberg compares the smallest against
+\code{alpha/m}. Over the 36 pairs of a nine-item scale that takes 720
+iterations, and over the 190 pairs of a twenty-item scale 3799, against 19
+for Westfall-Young whatever the number of pairs.
 }
 \section{Multiple comparisons}{
 

@@ -17,19 +17,23 @@
 #'   When provided, adds columns `Gamma_low`, `Gamma_high`, and `Flagged`
 #'   (logical; `TRUE` when the observed partial gamma falls outside the
 #'   credible range) to the result.
-#' @param p_value Logical. When `TRUE`, adds one-sided bootstrap p-values for
-#'   *excess positive* local dependence (`p_gamma`, `padj_gamma`), matching
-#'   the `p_value` semantics of \code{\link{RMlocdepQ3}}, and `flagged`
-#'   reflects `padj_gamma < alpha` (positive deviations only) instead of the
-#'   credible range. One test per item pair: the p-value is computed in the
-#'   canonical direction (direction 1, rest score = total - Item2, the
-#'   direction that was simulated) and repeated in the direction-2 table for
-#'   the same pair. The asymptotic BH-adjusted p-value and star columns from
-#'   `iarm::partgam_LD()` are **dropped** in this mode; the simulated
+#' @param p_value Logical or `NULL`. When `TRUE`, adds one-sided bootstrap
+#'   p-values for *excess positive* local dependence (`p_gamma`,
+#'   `padj_gamma`), matching the `p_value` semantics of
+#'   \code{\link{RMlocdepQ3}}, and `flagged` reflects `padj_gamma < alpha`
+#'   (positive deviations only) instead of the credible range. One test per
+#'   item pair: the p-value is computed on `gamma_pair`, the larger of the two
+#'   conditioning directions, and repeated in the direction-2 table for the
+#'   same pair. The asymptotic adjusted p-value and star columns from
+#'   `iarm::partgam_LD()` are **dropped** in this mode, and the simulated
 #'   `gamma_low` / `gamma_high` band is kept as the effect-size reference.
-#'   Requires the **full** \code{\link{RMlocdepGammaCutoff}} object as
-#'   `cutoff` (it carries the simulated distributions in `$results`).
-#'   Default `FALSE`.
+#'   `NULL`, the default, means `TRUE` when `cutoff` is the **full**
+#'   \code{\link{RMlocdepGammaCutoff}} object (it carries the simulated
+#'   distributions in `$results`) and `FALSE` otherwise, so calling with no
+#'   cutoff keeps the asymptotic table unchanged. Pass `FALSE` for the
+#'   pre-1.2.0 behaviour. The interval makes a poor decision rule, since its
+#'   width sets a family-wise error rate of `1 - width^m` over all \eqn{m}
+#'   pairs at once (Johansson, 2026).
 #' @param correction Character. Multiplicity correction for the bootstrap
 #'   p-values, applied over the family of all item pairs (before any
 #'   `n_pairs` display filter): `"fwer"` (default; Westfall-Young
@@ -153,7 +157,7 @@
 RMlocdepGamma <- function(
   data,
   cutoff = NULL,
-  p_value = FALSE,
+  p_value = NULL,
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
   alpha = 0.05,
   output = "kable",
@@ -228,9 +232,29 @@ RMlocdepGamma <- function(
     }
   }
 
-  # --- p-value prerequisites --------------------------------------------------
+  # --- Resolve p_value --------------------------------------------------------
+  # NULL means "use the corrected p-value when the simulations are available".
+  # The interval describes where a pair's coefficient is expected to fall and
+  # makes a poor decision rule, because its width sets a family-wise error rate
+  # over every pair at once (Johansson, 2026). The bare $pair_cutoffs, or no
+  # cutoff at all, leaves nothing to compute a p-value from and resolves to
+  # FALSE, which keeps the asymptotic path this function shows by default
+  # exactly as it was.
+  if (!is.null(p_value) && (!is.logical(p_value) || length(p_value) != 1L)) {
+    stop("`p_value` must be TRUE, FALSE, or NULL.", call. = FALSE)
+  }
+  have_sims <- !is.null(cutoff_full) && !is.null(cutoff_full$results)
+  if (is.null(p_value)) {
+    p_value <- have_sims
+  }
+  n_pairs_total <- if (!is.null(cutoff_full$pair_cutoffs)) {
+    nrow(cutoff_full$pair_cutoffs)
+  } else {
+    NULL
+  }
+
   if (p_value) {
-    if (is.null(cutoff_full) || is.null(cutoff_full$results)) {
+    if (!have_sims) {
       stop(
         "`p_value = TRUE` requires the full RMlocdepGammaCutoff() object (it ",
         "carries the simulated per-pair distributions in $results); a NULL ",
@@ -238,17 +262,34 @@ RMlocdepGamma <- function(
         call. = FALSE
       )
     }
-    if (!is.null(cutoff_n_iter) && cutoff_n_iter < 1000L) {
-      warning(
-        "Bootstrap p-values are based on only ",
+    # Below 400 the correction itself is off. Between 400 and 1000 only
+    # reproducibility improves, which the table caption reports instead.
+    if (!is.null(cutoff_n_iter) && cutoff_n_iter < 400L) {
+      .notify_low_iterations(
         cutoff_n_iter,
-        " simulation iterations. With few iterations the studentised-max ",
-        "(FWER) correction is liberal and small p-values are imprecise; ",
-        "use iterations >= 1000 in RMlocdepGammaCutoff() for reliable ",
-        "p-values.",
-        call. = FALSE
+        cutoff_full$requested_iterations,
+        fn = "RMlocdepGammaCutoff()",
+        id = "easyRasch2_low_iterations_locdep"
       )
     }
+    if (!is.null(n_pairs_total)) {
+      .warn_fdr_floor(
+        cutoff_n_iter,
+        n_pairs_total,
+        correction,
+        alpha,
+        unit = "item pairs",
+        fn = "RMlocdepGammaCutoff()"
+      )
+    }
+  } else if (!is.null(cutoff_full) && !is.null(n_pairs_total)) {
+    .notify_band_flagging(
+      if (identical(cutoff_method, "quantile")) 0.95 else cutoff_hdci_width,
+      n_pairs_total,
+      unit = "item pairs",
+      fn = "RMlocdepGammaCutoff()",
+      id = "easyRasch2_band_flagging_locdep"
+    )
   }
 
   # --- rgl workaround ---------------------------------------------------------
@@ -488,17 +529,20 @@ RMlocdepGamma <- function(
       n_clause,
       ". One-sided bootstrap p-values for excess positive LD from ",
       cutoff_n_iter,
-      " iterations, computed in the canonical direction (rest score = ",
-      "total - Item2) and repeated for both directions (replacing the ",
-      "asymptotic BH p-values); multiplicity correction: ",
+      " iterations, computed on gamma_pair, the larger of the two ",
+      "conditioning directions, and repeated across both tables (replacing ",
+      "the asymptotic p-values). Multiplicity correction: ",
       .correction_label(correction),
-      "; flagged at padj < ",
+      ". Flagged at padj < ",
       alpha,
       ". p-values cannot be smaller than 1/(",
       cutoff_n_iter,
       "+1) = ",
       round(1 / (cutoff_n_iter + 1), 4),
-      ".",
+      ". The interval is shown as description and is not the decision rule, ",
+      "so a pair below the lower bound is not flagged.",
+      .iteration_note(cutoff_n_iter),
+      .attrition_clause(cutoff_n_iter, cutoff_full$requested_iterations),
       filter_suffix
     )
   } else if (is.null(cutoff)) {
@@ -523,6 +567,12 @@ RMlocdepGamma <- function(
       } else {
         paste0(iter_part, ".")
       },
+      .band_error_clause(
+        if (identical(cutoff_method, "quantile")) 0.95 else cutoff_hdci_width,
+        total_pairs,
+        unit = "item pairs"
+      ),
+      .attrition_clause(cutoff_n_iter, cutoff_full$requested_iterations),
       filter_suffix
     )
   } else {
@@ -534,17 +584,23 @@ RMlocdepGamma <- function(
     )
   }
 
+  # One header per displayed column, in the order the tables carry them. The
+  # `gamma_pair` column (the larger of the two conditioning directions, and the
+  # statistic that is tested) sits fourth once a cutoff is supplied and last on
+  # the asymptotic path, so the three vectors are not interchangeable.
   col_names_no_cutoff <- c(
     "Item 1",
     "Item 2",
     "Partial gamma",
     "Adj. p-value (BH)",
-    "p-value sign."
+    "p-value sign.",
+    "Gamma pair"
   )
   col_names_cutoff <- c(
     "Item 1",
     "Item 2",
     "Partial gamma",
+    "Gamma pair",
     "Adj. p-value (BH)",
     "p-value sign.",
     "Gamma low",
@@ -555,6 +611,7 @@ RMlocdepGamma <- function(
     "Item 1",
     "Item 2",
     "Partial gamma",
+    "Gamma pair",
     "Gamma low",
     "Gamma high",
     "p",
@@ -658,7 +715,10 @@ knit_print.RMlocdepGamma <- function(x, ...) {
 #' @param data A data.frame or matrix of item responses. Items must be scored
 #'   starting at 0 (non-negative integers). Only complete cases (rows without
 #'   any `NA`) are used.
-#' @param iterations Integer. Number of simulation iterations (default 250).
+#' @param iterations Integer. Number of simulation iterations (default 400,
+#'   was 250 before 1.2.0). 400 is the calibrated floor for the Westfall-Young
+#'   correction (Johansson, 2026) and the count a 95\% interval needs to
+#'   converge. Use 1000 to 2000 for a final analysis.
 #' @param parallel Logical. Use parallel processing via `mirai` if available
 #'   (default `TRUE`).
 #' @param n_cores Integer or `NULL`. Number of parallel workers. When `NULL`,
@@ -674,8 +734,11 @@ knit_print.RMlocdepGamma <- function(x, ...) {
 #'   `ggdist::hdci()`, or `"quantile"` for the 2.5th/97.5th percentiles via
 #'   `stats::quantile()`.
 #' @param hdci_width Numeric. Width of the HDCI when `cutoff_method = "hdci"`.
-#'   Default is `0.99` (99\% HDCI). Ignored when
-#'   `cutoff_method = "quantile"`.
+#'   Default is `0.95` (95\% HDCI), was `0.99` before 1.2.0. The interval
+#'   describes where a fitting pair's coefficient is expected to fall and is
+#'   no longer the default decision rule, so the width is chosen to converge
+#'   at the default iteration count rather than to imply an error rate.
+#'   Ignored when `cutoff_method = "quantile"`.
 #'
 #' @return A list with components:
 #' \describe{
@@ -763,13 +826,13 @@ knit_print.RMlocdepGamma <- function(x, ...) {
 #' }
 RMlocdepGammaCutoff <- function(
   data,
-  iterations = 250,
+  iterations = 400,
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,
   seed = NULL,
   cutoff_method = "hdci",
-  hdci_width = 0.99
+  hdci_width = 0.95
 ) {
   cutoff_method <- match.arg(cutoff_method, c("hdci", "quantile"))
 
@@ -956,6 +1019,7 @@ RMlocdepGammaCutoff <- function(
     results = results_df,
     pair_cutoffs = pair_cutoffs,
     actual_iterations = actual_iterations,
+    requested_iterations = iterations,
     sample_n = sample_n,
     sample_n_total = n_total,
     sample_has_na = has_na,

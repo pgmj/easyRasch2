@@ -223,7 +223,11 @@ test_that("RMlocdepGamma band flag is taken on the pair statistic", {
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()
   cuts <- RMlocdepGammaCutoff(df, iterations = 10L, parallel = FALSE, seed = 1L)
-  res <- RMlocdepGamma(df, cutoff = cuts, output = "dataframe")
+  # p_value = FALSE pins the interval branch. The default is NULL, which
+  # resolves to TRUE for a full cutoff object.
+  res <- suppressMessages(
+    RMlocdepGamma(df, cutoff = cuts, p_value = FALSE, output = "dataframe")
+  )
   for (dir in res) {
     # Flagged on gamma_pair, not on the direction's own coefficient. The band
     # describes the null of the pair maximum, so comparing a single direction
@@ -289,14 +293,17 @@ test_that("RMlocdepGamma p_value adds one-sided p per pair, mirrored across dire
   skip_if_not_installed("ggdist")
   df <- make_dichotomous()
   cuts <- RMlocdepGammaCutoff(df, iterations = 10L, parallel = FALSE, seed = 1L)
-  expect_warning(
+  # Below 400 iterations the advice is a once-per-session message, not a
+  # warning, so that the default path does not warn about its own default.
+  rlang::reset_message_verbosity("easyRasch2_low_iterations_locdep")
+  expect_message(
     res <- RMlocdepGamma(
       df,
       cutoff = cuts,
       p_value = TRUE,
       output = "dataframe"
     ),
-    regexp = "only 10 simulation iterations"
+    regexp = "below the calibrated floor of 400"
   )
   expected_cols <- c(
     "Item1",
@@ -336,11 +343,11 @@ test_that("RMlocdepGamma p_value adds one-sided p per pair, mirrored across dire
   expect_equal(res$direction2$padj_gamma, res$direction1$padj_gamma[m])
   expect_equal(res$direction2$flagged, res$direction1$flagged[m])
 
-  # kable renders with the correction label and canonical-direction note
-  suppressWarnings(kbl <- RMlocdepGamma(df, cutoff = cuts, p_value = TRUE))
+  # kable renders with the correction label and names the tested statistic
+  suppressMessages(kbl <- RMlocdepGamma(df, cutoff = cuts, p_value = TRUE))
   expect_s3_class(kbl, "RMlocdepGamma")
   expect_match(kbl$.combined, "Westfall-Young")
-  expect_match(kbl$.combined, "canonical direction")
+  expect_match(kbl$.combined, "larger of the two")
 })
 
 test_that("RMlocdepGamma p_value correction runs on the full family before n_pairs", {

@@ -6,13 +6,13 @@
 \usage{
 RMlocdepQ3Cutoff(
   data,
-  iterations = 500,
+  iterations = 400,
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,
   seed = NULL,
   cutoff_method = "hdci",
-  hdci_width = 0.99,
+  hdci_width = 0.95,
   estimator = c("CML", "MML"),
   dgp = c("resample", "conditional")
 )
@@ -21,7 +21,10 @@ RMlocdepQ3Cutoff(
 \item{data}{A data.frame or matrix of item responses. Items must be scored
 starting at 0 (non-negative integers).}
 
-\item{iterations}{Integer. Number of simulation iterations (default 500).}
+\item{iterations}{Integer. Number of simulation iterations (default 400).
+400 is the calibrated floor for the Westfall-Young correction
+(Johansson, 2026) and the count a 95\\% interval needs to converge. Use
+1000 to 2000 for a final analysis.}
 
 \item{parallel}{Logical. Use parallel processing via \code{mirai} if available
 (default \code{TRUE}).}
@@ -45,8 +48,11 @@ Highest Density Continuous Interval via \code{ggdist::hdci()}) or
 \code{max(Q3) - mean(Q3)}) is unaffected.}
 
 \item{hdci_width}{Numeric in (0, 1). Width of the HDCI when
-\code{cutoff_method = "hdci"}. Default \code{0.99}. Ignored when
-\code{cutoff_method = "quantile"}.}
+\code{cutoff_method = "hdci"}. Default \code{0.95}, was \code{0.99} before 1.2.0. The
+interval describes where a fitting pair's \eqn{Q_3} is expected to fall
+and is no longer the default decision rule, so the width is chosen to
+converge at the default iteration count rather than to imply an error
+rate. Ignored when \code{cutoff_method = "quantile"}.}
 
 \item{estimator}{Character. Estimation engine for the simulated \eqn{Q_3} values,
 passed through to the per-iteration computation. \code{"CML"} (default) uses

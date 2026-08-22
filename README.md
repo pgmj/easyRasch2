@@ -66,9 +66,11 @@ remotes::install_github("pgmj/easyRasch2")
   Andersen's LR test (`RMdifLR()`); `mirt` (MML) is available as an optional
   engine (`estimator = "MML"` in `RMlocdepQ3()` and `RMitemParameters()`)
   and for the plausible values behind the RMU reliability metric.
-- **Inference**: simulation-based cutoffs throughout, with optional
-  bootstrap *p*-values (`p_value = TRUE`) using Westfall–Young family-wise
-  correction (default) or FDR alternatives (Ferreira, 2024).
+- **Inference**: simulation-based cutoffs throughout. Item fit and local
+  dependence flag on multiplicity-corrected bootstrap *p*-values whenever the
+  full cutoff object is supplied, using Westfall–Young family-wise correction
+  (default) or FDR alternatives (Ferreira, 2024). Pass `p_value = FALSE` to
+  flag against the simulated interval instead.
 - **Output**: `knitr::kable()` for tables (Quarto-friendly), `ggplot2`
   for figures, and `"dataframe"` output options for downstream use.
   Every caption reports the estimation sample size and missing-data policy.
@@ -79,8 +81,7 @@ remotes::install_github("pgmj/easyRasch2")
 ### Item fit
 
 - `RMitemInfit()` — conditional infit MSQ, flagged on multiplicity-corrected bootstrap *p*-values
-  (`p_value = TRUE`) with family-wise (Westfall–Young) or FDR multiple-comparison
-  correction
+  with family-wise (Westfall–Young) or FDR multiple-comparison correction
 - `RMitemInfitCutoff()` + `RMitemInfitPlot()` — simulation-based cutoffs and plot
 - `RMitemInfitMI()` + `RMitemInfitCutoffMI()` — multiple-imputation variants
 - `RMitemRestscore()` — item-restscore with Goodman-Kruskal's $\gamma$ (gamma)
@@ -92,9 +93,9 @@ remotes::install_github("pgmj/easyRasch2")
 - `RMlocdepQ3()` + `RMlocdepQ3Cutoff()` + `RMlocdepQ3Plot()` — Yen's $Q_3$
   residual correlations (CML/WLE by default, `estimator = "MML"` optional);
   table and plot share a `$matrix` ($Q_3$ heatmap) / `$pairs` (per-pair
-  observed-vs-simulated) structure; optional per-pair bootstrap *p*-values
+  observed-vs-simulated) structure; per-pair bootstrap *p*-values
 - `RMlocdepGamma()` + `RMlocdepGammaCutoff()` + `RMlocdepGammaPlot()` —
-  partial-γ local dependence; optional per-pair bootstrap *p*-values
+  partial-γ local dependence; per-pair bootstrap *p*-values
 
 ### Dimensionality / unidimensionality
 

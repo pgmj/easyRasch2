@@ -295,3 +295,62 @@ Nothing is left open. The plan is ready to implement on request.
   the familywise rate lands near .05 for both functions with no arguments
   beyond the data and the cutoff object.
 - `R CMD check --as-cran` under `LC_ALL=en_US.UTF-8`.
+
+## Implemented 2026-08-22
+
+All eight items are in the working tree. Two things came up while doing it.
+
+**`RMlocdepGamma(output = "kable")` was broken before this work started.** The
+in-flight direction change added `gamma_pair` to every result frame without
+adding a header, so all three `col.names` vectors were one short and the
+default output errored on every path, including the asymptotic one with no
+cutoff. Fixed as part of item 7, since the same block was being edited.
+`gamma_pair` sits fourth once a cutoff is supplied and last on the asymptotic
+path, so the three vectors are not interchangeable and the fix follows the
+order the data actually carries rather than reordering columns.
+
+**`.iteration_note()` is a new helper for the caption sentence, used by the two
+local dependence functions only.** `RMitemInfit()` keeps its inline copy,
+because its wording carries measured seed-disagreement percentages that were
+established for items and have no counterpart for pairs. Worth folding
+together later if the pair figures are ever measured.
+
+## Before CRAN submission
+
+⚠️ **The vignette has to be updated, and it is not part of this change.**
+`vignettes/easyRasch2.Rmd.orig` is the source, precompiled through
+`vignettes/precompile.R`. Three things need doing.
+
+1. **Cite the infit familywise preprint.** Johansson (2026), the study behind
+   the flagging defaults, is not in the vignette at all. It belongs next to the
+   existing `@johansson_detecting_2025` citation and in
+   `vignettes/references.bib`. It is the reference the new console notices and
+   captions point at, so a reader who follows them should find it named where
+   they started.
+2. **Bring the examples onto the new recommendations.** Every simulation call
+   in the vignette uses `iterations = 100` for render speed. The note at line
+   87 still says "500-1500 will be useful" and "if you plan to use
+   `p_value = TRUE`, use at least 1000 iterations", which no longer matches the
+   400 floor, the 1000 to 2000 recommendation for a final analysis, or the
+   family-wise argument for preferring p-values over the interval.
+3. **Reword the p-value passages.** Lines 167 and 169 describe `p_value = TRUE`
+   as optional. It is now the default whenever the full cutoff object is
+   passed, for item fit and both local dependence functions, and the interval
+   is description rather than a decision rule.
+
+Re-precompile with `vignettes/precompile.R` after editing the `.orig`, and
+check the rendered `easyRasch2.Rmd` into the tree.
+
+## Verification result
+
+Same design as the pre-change measurement (phq9 parameters, 9 items, 36 pairs,
+n = 400, complete null, 250 replications), calling each function with nothing
+beyond the data and its cutoff object, both now at the default B = 400:
+
+| Function | before | after |
+|---|---|---|
+| `RMlocdepQ3()` | .344 | **.052** (SE .014) |
+| `RMlocdepGamma()` | .410 | **.048** (SE .014) |
+
+Mean pairs falsely flagged per analysis 0.05 for both, against 0.42 and 0.55.
+Full test suite 1209 passing, `devtools::document()` clean.

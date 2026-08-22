@@ -260,7 +260,11 @@ test_that("full cutoff object returns list($matrix, $pairs, $plot)", {
   skip_if_not_installed("mirt"); skip_if_not_installed("ggdist")
   df  <- q3_null_data()
   sim <- RMlocdepQ3Cutoff(df, iterations = 300, parallel = FALSE, seed = 1)
-  res <- RMlocdepQ3(df, cutoff = sim, output = "dataframe")
+  # p_value = FALSE pins the interval branch, which is what this test covers.
+  # The default is NULL, which resolves to TRUE for a full cutoff object.
+  res <- suppressMessages(
+    RMlocdepQ3(df, cutoff = sim, p_value = FALSE, output = "dataframe")
+  )
   expect_named(res, c("matrix", "pairs"))
   expect_named(res$pairs, c("Item1", "Item2", "Observed", "Low", "High", "Flagged"))
   expect_equal(nrow(res$pairs), choose(ncol(df), 2L))          # one row per pair

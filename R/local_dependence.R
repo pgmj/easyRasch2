@@ -20,10 +20,16 @@
 #' @param n_pairs Integer or `NULL` (default). When the full cutoff object is
 #'   supplied, limits the per-pair table to the `n_pairs` pairs with the
 #'   largest departure from their expected range. `NULL` shows all pairs.
-#' @param p_value Logical. If `TRUE` (requires the full
-#'   \code{\link{RMlocdepQ3Cutoff}} object), the per-pair table also reports
+#' @param p_value Logical or `NULL`. When `TRUE` the per-pair table reports
 #'   one-sided bootstrap p-values (`p_q3`, `padj_q3`) and flags `above` pairs
-#'   (only) on `padj_q3 < alpha` instead of the expected range. Default `FALSE`.
+#'   (only) on `padj_q3 < alpha` instead of on the expected range. `NULL`, the
+#'   default, means `TRUE` when `cutoff` is the full
+#'   \code{\link{RMlocdepQ3Cutoff}} object and `FALSE` otherwise, so a
+#'   numeric cutoff or no cutoff keeps the interval. Pass `FALSE` for the
+#'   pre-1.2.0 behaviour. The interval is a description of where a pair's
+#'   \eqn{Q_3} is expected to fall and makes a poor decision rule, since its
+#'   width sets a family-wise error rate of `1 - width^m` over all \eqn{m}
+#'   pairs at once, and pairs grow quadratically in items (Johansson, 2026).
 #' @param correction Character. Multiple-comparison correction across item
 #'   pairs when `p_value = TRUE`: `"fwer"` (default) for the Westfall-Young
 #'   studentised-max step-down, `"fdr_bh"` / `"fdr_by"` for Benjamini-Hochberg
@@ -96,9 +102,15 @@
 #' statistic is studentised by the bootstrap mean and SD; the marginal p-value
 #' is `(1 + #{Q3* >= Q3}) / (B + 1)`, and `correction` applies the family-wise
 #' (Westfall-Young step-down) or FDR adjustment across the \eqn{k(k-1)/2} pairs.
-#' As for item fit, the family-wise correction is liberal when the simulation is
-#' small, so >= 1000 `iterations` in [RMlocdepQ3Cutoff()] are recommended (a
-#' warning is issued otherwise).
+#' As for item fit, the family-wise correction is liberal below 400
+#' `iterations` in [RMlocdepQ3Cutoff()], which is reported once per session,
+#' and between 400 and 1000 the table caption notes that decisions remain
+#' somewhat seed-dependent. A false discovery rate correction needs far more
+#' iterations than the family-wise one, because a bootstrap p-value cannot
+#' fall below `1/(B + 1)` and Benjamini-Hochberg compares the smallest against
+#' `alpha/m`. Over the 36 pairs of a nine-item scale that takes 720
+#' iterations, and over the 190 pairs of a twenty-item scale 3799, against 19
+#' for Westfall-Young whatever the number of pairs.
 #'
 #' @references
 #' Yen, W. M. (1984). Effects of local item dependence on the fit and
@@ -155,7 +167,7 @@ RMlocdepQ3 <- function(
   cutoff = NULL,
   output = "kable",
   n_pairs = NULL,
-  p_value = FALSE,
+  p_value = NULL,
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
   alpha = 0.05,
   estimator = c("CML", "MML")
@@ -212,8 +224,28 @@ RMlocdepQ3 <- function(
     stop("`n_pairs` must be NULL or a single positive integer.", call. = FALSE)
   }
 
+  # --- Resolve p_value --------------------------------------------------------
+  # NULL means "use the corrected p-value when the simulations are available".
+  # The interval describes where a pair's Q3 is expected to fall and makes a
+  # poor decision rule, because its width sets a family-wise error rate over
+  # every pair at once, and pairs grow quadratically in items (Johansson,
+  # 2026). A numeric cutoff, the bare $pair_cutoffs, or no cutoff at all
+  # leaves nothing to compute a p-value from, so those resolve to FALSE.
+  if (!is.null(p_value) && (!is.logical(p_value) || length(p_value) != 1L)) {
+    stop("`p_value` must be TRUE, FALSE, or NULL.", call. = FALSE)
+  }
+  have_sims <- !is.null(cutoff_full) && !is.null(cutoff_full$pair_results)
+  if (is.null(p_value)) {
+    p_value <- have_sims
+  }
+  n_pairs_total <- if (!is.null(cutoff_full$pair_cutoffs)) {
+    nrow(cutoff_full$pair_cutoffs)
+  } else {
+    NULL
+  }
+
   if (p_value) {
-    if (is.null(cutoff_full) || is.null(cutoff_full$pair_results)) {
+    if (!have_sims) {
       stop(
         "`p_value = TRUE` requires the full RMlocdepQ3Cutoff() object (it ",
         "carries the simulated per-pair distributions in $pair_results); a ",
@@ -221,20 +253,41 @@ RMlocdepQ3 <- function(
         call. = FALSE
       )
     }
+    # Below 400 the correction itself is off. Between 400 and 1000 only
+    # reproducibility improves, which the table caption reports instead.
     if (
       !is.null(cutoff_full$actual_iterations) &&
-        cutoff_full$actual_iterations < 1000L
+        cutoff_full$actual_iterations < 400L
     ) {
-      warning(
-        "Bootstrap p-values are based on only ",
+      .notify_low_iterations(
         cutoff_full$actual_iterations,
-        " simulation iterations. With few ",
-        "iterations the studentised-max (FWER) correction is liberal and ",
-        "small p-values are imprecise; use iterations >= 1000 in ",
-        "RMlocdepQ3Cutoff() for reliable p-values.",
-        call. = FALSE
+        cutoff_full$requested_iterations,
+        fn = "RMlocdepQ3Cutoff()",
+        id = "easyRasch2_low_iterations_locdep"
       )
     }
+    if (!is.null(n_pairs_total)) {
+      .warn_fdr_floor(
+        cutoff_full$actual_iterations,
+        n_pairs_total,
+        correction,
+        alpha,
+        unit = "item pairs",
+        fn = "RMlocdepQ3Cutoff()"
+      )
+    }
+  } else if (!is.null(cutoff_full) && !is.null(n_pairs_total)) {
+    .notify_band_flagging(
+      if (identical(cutoff_full$cutoff_method, "quantile")) {
+        0.95
+      } else {
+        cutoff_full$hdci_width
+      },
+      n_pairs_total,
+      unit = "item pairs",
+      fn = "RMlocdepQ3Cutoff()",
+      id = "easyRasch2_band_flagging_locdep"
+    )
   }
 
   validate_response_data(data)
@@ -608,6 +661,9 @@ RMlocdepQ3 <- function(
 ) {
   pc <- cutoff_full$pair_cutoffs # Item1, Item2, Q3_low, Q3_high
   pr <- cutoff_full$pair_results # Item1, Item2, Q3, iteration
+  # The family is every pair, not the `n_pairs` shown, so the error rate the
+  # interval implies is computed before the table is truncated.
+  n_pairs_total <- nrow(pc)
   pr$key <- paste(pr$Item1, pr$Item2, sep = "___")
   keys <- paste(pc$Item1, pc$Item2, sep = "___")
 
@@ -669,24 +725,28 @@ RMlocdepQ3 <- function(
   ))
 
   width_pct <- round(100 * cutoff_full$hdci_width, 1)
+  n_iter <- cutoff_full$actual_iterations
   caption <- paste0(
     "Q3 by item pair, sorted by departure from the expected range. ",
     "Expected range = ",
     width_pct,
     "% interval of the simulated Q3 per pair (",
-    cutoff_full$actual_iterations,
-    " iterations). Flagged: above = Q3 above ",
-    "the upper bound (local dependence); below = below the lower bound."
+    n_iter,
+    " iterations)."
   )
   if (p_value) {
     corr_label <- .correction_label(correction)
     caption <- paste0(
       caption,
-      " p_q3/padj_q3: one-sided bootstrap p-values, ",
+      " p_q3/padj_q3: one-sided bootstrap p-values (upper tail, local ",
+      "dependence), ",
       corr_label,
-      "; flagged at padj < ",
+      ". Flagged at padj < ",
       alpha,
-      "."
+      ". The interval is shown as description and is not the decision rule, ",
+      "so a pair below the lower bound is not flagged.",
+      .iteration_note(n_iter),
+      .attrition_clause(n_iter, cutoff_full$requested_iterations)
     )
     col.names <- c(
       "Item 1",
@@ -699,6 +759,21 @@ RMlocdepQ3 <- function(
       "Flagged"
     )
   } else {
+    caption <- paste0(
+      caption,
+      " Flagged: above = Q3 above the upper bound (local dependence), ",
+      "below = below the lower bound.",
+      .band_error_clause(
+        if (identical(cutoff_full$cutoff_method, "quantile")) {
+          0.95
+        } else {
+          cutoff_full$hdci_width
+        },
+        n_pairs_total,
+        unit = "item pairs"
+      ),
+      .attrition_clause(n_iter, cutoff_full$requested_iterations)
+    )
     col.names <- c(
       "Item 1",
       "Item 2",
@@ -726,7 +801,10 @@ RMlocdepQ3 <- function(
 #'
 #' @param data A data.frame or matrix of item responses. Items must be scored
 #'   starting at 0 (non-negative integers).
-#' @param iterations Integer. Number of simulation iterations (default 500).
+#' @param iterations Integer. Number of simulation iterations (default 400).
+#'   400 is the calibrated floor for the Westfall-Young correction
+#'   (Johansson, 2026) and the count a 95\% interval needs to converge. Use
+#'   1000 to 2000 for a final analysis.
 #' @param parallel Logical. Use parallel processing via `mirai` if available
 #'   (default `TRUE`).
 #' @param n_cores Integer or `NULL`. Number of parallel workers. When `NULL`,
@@ -744,8 +822,11 @@ RMlocdepQ3 <- function(
 #'   `pair_cutoffs`; the global `$suggested_cutoff` (99th percentile of
 #'   `max(Q3) - mean(Q3)`) is unaffected.
 #' @param hdci_width Numeric in (0, 1). Width of the HDCI when
-#'   `cutoff_method = "hdci"`. Default `0.99`. Ignored when
-#'   `cutoff_method = "quantile"`.
+#'   `cutoff_method = "hdci"`. Default `0.95`, was `0.99` before 1.2.0. The
+#'   interval describes where a fitting pair's \eqn{Q_3} is expected to fall
+#'   and is no longer the default decision rule, so the width is chosen to
+#'   converge at the default iteration count rather than to imply an error
+#'   rate. Ignored when `cutoff_method = "quantile"`.
 #' @param estimator Character. Estimation engine for the simulated \eqn{Q_3} values,
 #'   passed through to the per-iteration computation. `"CML"` (default) uses
 #'   CML item parameters and WLE person locations; `"MML"` uses `mirt`. This
@@ -837,13 +918,13 @@ RMlocdepQ3 <- function(
 #' }
 RMlocdepQ3Cutoff <- function(
   data,
-  iterations = 500,
+  iterations = 400,
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,
   seed = NULL,
   cutoff_method = "hdci",
-  hdci_width = 0.99,
+  hdci_width = 0.95,
   estimator = c("CML", "MML"),
   dgp = c("resample", "conditional")
 ) {
@@ -1056,6 +1137,7 @@ RMlocdepQ3Cutoff <- function(
   out$pair_results <- pair_results
   out$pair_cutoffs <- pair_cutoffs
   out$actual_iterations <- actual_iterations
+  out$requested_iterations <- iterations
   out$sample_n <- sample_n
   out$sample_n_total <- sample_n_total
   out$sample_has_na <- sample_has_na

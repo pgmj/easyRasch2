@@ -7,7 +7,7 @@
 RMlocdepGamma(
   data,
   cutoff = NULL,
-  p_value = FALSE,
+  p_value = NULL,
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
   alpha = 0.05,
   output = "kable",
@@ -31,19 +31,23 @@ When provided, adds columns \code{Gamma_low}, \code{Gamma_high}, and \code{Flagg
 credible range) to the result.
 }}
 
-\item{p_value}{Logical. When \code{TRUE}, adds one-sided bootstrap p-values for
-\emph{excess positive} local dependence (\code{p_gamma}, \code{padj_gamma}), matching
-the \code{p_value} semantics of \code{\link{RMlocdepQ3}}, and \code{flagged}
-reflects \code{padj_gamma < alpha} (positive deviations only) instead of the
-credible range. One test per item pair: the p-value is computed in the
-canonical direction (direction 1, rest score = total - Item2, the
-direction that was simulated) and repeated in the direction-2 table for
-the same pair. The asymptotic BH-adjusted p-value and star columns from
-\code{iarm::partgam_LD()} are \strong{dropped} in this mode; the simulated
+\item{p_value}{Logical or \code{NULL}. When \code{TRUE}, adds one-sided bootstrap
+p-values for \emph{excess positive} local dependence (\code{p_gamma},
+\code{padj_gamma}), matching the \code{p_value} semantics of
+\code{\link{RMlocdepQ3}}, and \code{flagged} reflects \code{padj_gamma < alpha}
+(positive deviations only) instead of the credible range. One test per
+item pair: the p-value is computed on \code{gamma_pair}, the larger of the two
+conditioning directions, and repeated in the direction-2 table for the
+same pair. The asymptotic adjusted p-value and star columns from
+\code{iarm::partgam_LD()} are \strong{dropped} in this mode, and the simulated
 \code{gamma_low} / \code{gamma_high} band is kept as the effect-size reference.
-Requires the \strong{full} \code{\link{RMlocdepGammaCutoff}} object as
-\code{cutoff} (it carries the simulated distributions in \verb{$results}).
-Default \code{FALSE}.}
+\code{NULL}, the default, means \code{TRUE} when \code{cutoff} is the \strong{full}
+\code{\link{RMlocdepGammaCutoff}} object (it carries the simulated
+distributions in \verb{$results}) and \code{FALSE} otherwise, so calling with no
+cutoff keeps the asymptotic table unchanged. Pass \code{FALSE} for the
+pre-1.2.0 behaviour. The interval makes a poor decision rule, since its
+width sets a family-wise error rate of \code{1 - width^m} over all \eqn{m}
+pairs at once (Johansson, 2026).}
 
 \item{correction}{Character. Multiplicity correction for the bootstrap
 p-values, applied over the family of all item pairs (before any
