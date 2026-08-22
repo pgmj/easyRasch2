@@ -300,6 +300,15 @@ RMreliability <- function(
   options(rgl.useNULL = TRUE)
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
 
+  # A NULL `seed` is resolved here rather than left to inherit the session
+  # stream. The plausible-value sampler below advances that stream
+  # nondeterministically (see the comment at the RMU block), so without a
+  # seed of its own everything after it would differ between two calls made
+  # under the same set.seed().
+  if (is.null(seed)) {
+    seed <- sample.int(.Machine$integer.max - 2L, 1L)
+  }
+
   # --- Full-sample fits ------------------------------------------------------
   mirt_fit <- mirt::mirt(
     data = data,
@@ -318,9 +327,7 @@ RMreliability <- function(
   alpha <- cronbach_alpha(data)
 
   # --- Plausible values + RMU ------------------------------------------------
-  if (!is.null(seed)) {
-    set.seed(seed)
-  }
+  set.seed(seed)
   pvs <- mirt::fscores(
     mirt_fit,
     method = estim,
@@ -336,9 +343,7 @@ RMreliability <- function(
   # stream advancement is not), so the RMU column splits below would differ
   # between identical calls. Re-seed to make the whole result reproducible;
   # + 2L keeps the stream distinct from the bootstrap's seed + 1L.
-  if (!is.null(seed)) {
-    set.seed(seed + 2L)
-  }
+  set.seed(seed + 2L)
 
   rmu_iter_results <- do.call(
     rbind,
@@ -385,9 +390,7 @@ RMreliability <- function(
       }
     }
 
-    if (!is.null(seed)) {
-      set.seed(seed + 1L)
-    }
+    set.seed(seed + 1L)
     boot_seeds <- sample.int(.Machine$integer.max, boot_iter)
 
     boot_args <- list(

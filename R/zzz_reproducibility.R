@@ -1,10 +1,11 @@
 #' Random number generation and reproducibility in easyRasch2
 #'
-#' Every function in the package that simulates, bootstraps or resamples
-#' takes a `seed` argument, and most also take `parallel`. This topic
-#' describes what `seed` guarantees, what it does to the calling session's
-#' random number generator, and the one situation in which the package
-#' overrides a deliberate choice of generator.
+#' The functions that simulate, bootstrap or resample take a `seed`
+#' argument, and most also take `parallel`. This topic describes what
+#' `seed` guarantees, what the default `seed = NULL` inherits from the
+#' calling session, what a call does to that session's random number
+#' generator, and the one situation in which the package overrides a
+#' deliberate choice of generator.
 #'
 #' @section How seeding works:
 #' A single call proceeds in three steps.
@@ -22,6 +23,21 @@
 #' `parallel = TRUE` and `parallel = FALSE` return **identical** results
 #' for the same `seed`, rather than merely equivalent ones, and what makes
 #' a result independent of `n_cores`.
+#'
+#' @section The default `seed = NULL` inherits the session's stream:
+#' `seed` defaults to `NULL` everywhere, and a `NULL` seed sets nothing.
+#' Step 2 above then draws the per-iteration seeds from whatever stream
+#' the session is already on, so a `set.seed()` earlier in the script
+#' reproduces the call just as passing `seed` does. One `set.seed()` at
+#' the top of an analysis therefore covers every function listed below,
+#' and there is no need to give each call a seed of its own.
+#'
+#' The two routes differ in what they are robust to. An explicit `seed`
+#' pins one call whatever runs before it. A session-level `set.seed()`
+#' pins the script as a sequence, so inserting, removing or reordering an
+#' earlier call that draws random numbers changes every result after it.
+#' Use an explicit `seed` where a single result has to be reproducible on
+#' its own, such as a published cutoff.
 #'
 #' @section The generator is pinned inside iterations:
 #' Parallel iterations run in `mirai` daemons, and a daemon starts under
@@ -68,6 +84,12 @@
 #' [RMreliability()].
 #'
 #' Functions that involve no simulation take no `seed` and are unaffected.
+#'
+#' [RMUreliability()] is the one resampling function without a `seed`. It
+#' splits the draw columns at random, and reproduces from the session's
+#' stream in the way described above. `RMreliability()` calls it unseeded
+#' on purpose, so that each of the `rmu_iter` repetitions it averages uses
+#' a different split.
 #'
 #' @section A note on other sources of non-determinism:
 #' A reproducible `seed` does not make every downstream number identical

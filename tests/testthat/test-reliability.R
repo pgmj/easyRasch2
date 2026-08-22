@@ -187,3 +187,24 @@ test_that("RMreliability is reproducible with the same seed (incl. RMU)", {
   expect_identical(r1$estimate, r2$estimate)
   expect_identical(r1$lower, r2$lower)
 })
+
+test_that("RMreliability is reproducible from a session-level set.seed()", {
+  skip_on_cran()
+  skip_if_not_installed("ggdist")
+  # Regression: with seed = NULL the internal re-seeds were skipped, so the
+  # RMU block and the bootstrap ran off the stream mirt's MH sampler had left
+  # in a nondeterministic state and two calls under the same session seed
+  # disagreed. A NULL seed is now drawn from the session's stream instead.
+  df <- make_dichotomous(n = 120, k = 6)
+  run <- function() {
+    set.seed(42L)
+    suppressWarnings(RMreliability(df, draws = 100, rmu_iter = 5,
+                                   boot = TRUE, boot_iter = 5,
+                                   parallel = FALSE, output = "dataframe"))
+  }
+  r1 <- run()
+  r2 <- run()
+  expect_identical(r1$estimate, r2$estimate)
+  expect_identical(r1$lower, r2$lower)
+  expect_identical(r1$upper, r2$upper)
+})

@@ -18,8 +18,8 @@
 #'     `outfit_high` when `statistic = "outfit"`).
 #'   When provided, adds columns `Infit_low`, `Infit_high`, and `Flagged`
 #'   to the result. `Flagged` labels the misfit direction: `"overfit"`
-#'   (infit below the range -- more predictable than the model expects),
-#'   `"underfit"` (above the range -- noisier than expected), or `""` (within
+#'   (infit below the range),
+#'   `"underfit"` (above the range), or `""` (within
 #'   range, no misfit).
 #' @param p_value Logical or `NULL`. Whether to compute bootstrap p-values
 #'   from the simulated null distribution and flag on them.
@@ -417,8 +417,8 @@ RMitemInfit <- function(
     item_fit_table[[cut_low]] <- NULL
     item_fit_table[[cut_high]] <- NULL
     # Flagged labels the misfit direction: MSQ below the expected range =
-    # overfit (more predictable than the model expects), above = underfit
-    # (noisier than expected); "" when within range.
+    # overfit, above = underfit
+    # ; "" when within range.
     item_fit_table$Flagged <- ifelse(
       item_fit_table[[msq_col]] < item_fit_table[[low_col]],
       "overfit",
@@ -565,9 +565,9 @@ RMitemInfit <- function(
       .attrition_clause(cutoff_n_iter, cutoff_req_iter),
       " Flagged: underfit (",
       statistic,
-      " > 1, noisier) / overfit (",
+      " > 1) / overfit (",
       statistic,
-      " < 1, more predictable)."
+      " < 1)."
     )
   } else if (is.null(cutoff)) {
     kbl_colnames <- c("Item", paste(stat_title, "MSQ"), "Relative location")
@@ -612,8 +612,8 @@ RMitemInfit <- function(
       kbl_caption,
       " Flagged: overfit = ",
       statistic,
-      " below range (more predictable), ",
-      "underfit = above range (noisier).",
+      " below range, ",
+      "underfit = above range.",
       .band_error_clause(
         if (identical(cutoff_method, "quantile")) 0.95 else cutoff_hdci_width,
         nrow(item_fit_table)

@@ -4,11 +4,12 @@
 \alias{easyRasch2-reproducibility}
 \title{Random number generation and reproducibility in easyRasch2}
 \description{
-Every function in the package that simulates, bootstraps or resamples
-takes a \code{seed} argument, and most also take \code{parallel}. This topic
-describes what \code{seed} guarantees, what it does to the calling session's
-random number generator, and the one situation in which the package
-overrides a deliberate choice of generator.
+The functions that simulate, bootstrap or resample take a \code{seed}
+argument, and most also take \code{parallel}. This topic describes what
+\code{seed} guarantees, what the default \code{seed = NULL} inherits from the
+calling session, what a call does to that session's random number
+generator, and the one situation in which the package overrides a
+deliberate choice of generator.
 }
 \section{How seeding works}{
 
@@ -27,6 +28,23 @@ of the order in which they finish. This is what makes
 \code{parallel = TRUE} and \code{parallel = FALSE} return \strong{identical} results
 for the same \code{seed}, rather than merely equivalent ones, and what makes
 a result independent of \code{n_cores}.
+}
+
+\section{The default \code{seed = NULL} inherits the session's stream}{
+
+\code{seed} defaults to \code{NULL} everywhere, and a \code{NULL} seed sets nothing.
+Step 2 above then draws the per-iteration seeds from whatever stream
+the session is already on, so a \code{set.seed()} earlier in the script
+reproduces the call just as passing \code{seed} does. One \code{set.seed()} at
+the top of an analysis therefore covers every function listed below,
+and there is no need to give each call a seed of its own.
+
+The two routes differ in what they are robust to. An explicit \code{seed}
+pins one call whatever runs before it. A session-level \code{set.seed()}
+pins the script as a sequence, so inserting, removing or reordering an
+earlier call that draws random numbers changes every result after it.
+Use an explicit \code{seed} where a single result has to be reproducible on
+its own, such as a published cutoff.
 }
 
 \section{The generator is pinned inside iterations}{
@@ -78,6 +96,12 @@ will not see the stream it would have seen without one. Use
 \code{\link[=RMreliability]{RMreliability()}}.
 
 Functions that involve no simulation take no \code{seed} and are unaffected.
+
+\code{\link[=RMUreliability]{RMUreliability()}} is the one resampling function without a \code{seed}. It
+splits the draw columns at random, and reproduces from the session's
+stream in the way described above. \code{RMreliability()} calls it unseeded
+on purpose, so that each of the \code{rmu_iter} repetitions it averages uses
+a different split.
 }
 
 \section{A note on other sources of non-determinism}{

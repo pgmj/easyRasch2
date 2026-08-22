@@ -32,8 +32,8 @@ have columns \code{Item}, \code{infit_low}, and \code{infit_high} (or \code{outf
 \code{outfit_high} when \code{statistic = "outfit"}).
 When provided, adds columns \code{Infit_low}, \code{Infit_high}, and \code{Flagged}
 to the result. \code{Flagged} labels the misfit direction: \code{"overfit"}
-(infit below the range -- more predictable than the model expects),
-\code{"underfit"} (above the range -- noisier than expected), or \code{""} (within
+(infit below the range),
+\code{"underfit"} (above the range), or \code{""} (within
 range, no misfit).
 }}
 

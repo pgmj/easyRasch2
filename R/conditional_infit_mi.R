@@ -382,7 +382,7 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable", sort) {
     item_fit_table$infit_low <- NULL
     item_fit_table$infit_high <- NULL
     # Flagged labels the misfit direction: overfit (pooled infit below the
-    # range, more predictable), underfit (above, noisier), "" within range.
+    # range), underfit (above), "" within range.
     item_fit_table$Flagged <- ifelse(
       item_fit_table$Infit_MSQ < item_fit_table$Infit_low,
       "overfit",
@@ -466,8 +466,8 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable", sort) {
   if (!is.null(cutoff)) {
     caption <- paste0(
       caption,
-      " Flagged: overfit = infit below range (more predictable); ",
-      "underfit = above range (noisier)."
+      " Flagged: overfit = infit below range; ",
+      "underfit = above range."
     )
   }
 

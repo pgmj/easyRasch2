@@ -86,8 +86,12 @@ WLE person locations.
 \item Simulates item response data under a Rasch model (dichotomous via
 \code{psychotools::rrm()} or polytomous via an internal partial credit
 simulator).
-\item Computes partial gamma LD statistics via
-\code{iarm::partgam_LD()}.
+\item Computes partial gamma for every item pair in the canonical
+rest-score direction. The coefficients are identical to those of
+\code{iarm::partgam_LD()}, but are computed by a vectorised internal, since
+\code{iarm} also derives the asymptotic standard error and confidence
+interval that a simulated null does not need and costs roughly two
+orders of magnitude more per iteration.
 }
 
 Because the data are simulated under the Rasch model, items are locally

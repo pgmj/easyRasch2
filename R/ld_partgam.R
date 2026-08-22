@@ -286,6 +286,29 @@ RMlocdepGamma <- function(
     direction2 = process_pgam_df(pgam_raw[[2]])
   )
 
+  # --- The tested pair statistic ----------------------------------------------
+  # A pair is tested once, on the larger of its two conditioning directions,
+  # because local dependence violates both of the conditional independence
+  # hypotheses the Rasch model implies for it. The `gamma` column of each table
+  # remains that direction's own coefficient, which is what a reader wants to
+  # see, but every decision below is taken on `gamma_pair`, so no p-value or
+  # flag is ever attributed to a coefficient it was not computed from.
+  data_complete <- data[stats::complete.cases(data), , drop = FALSE]
+  .obs1 <- .partgam_ld_gamma(data_complete, direction = 1L)
+  .obs2 <- .partgam_ld_gamma(data_complete, direction = 2L)
+  .pkey <- function(a, b) paste(pmin(a, b), pmax(a, b), sep = "___")
+  gamma_pair <- stats::setNames(
+    pmax(.obs1$gamma,
+         .obs2$gamma[match(.pkey(.obs1$Item1, .obs1$Item2),
+                           .pkey(.obs2$Item1, .obs2$Item2))]),
+    .pkey(.obs1$Item1, .obs1$Item2)
+  )
+  for (idx in seq_along(result_list)) {
+    df <- result_list[[idx]]
+    df$gamma_pair <- as.numeric(gamma_pair[.pkey(df$Item1, df$Item2)])
+    result_list[[idx]] <- df
+  }
+
   # --- Apply cutoff if provided -----------------------------------------------
   # Cutoffs are keyed by direction-1 pairs (i < j), so for direction 2 (i > j)
 
@@ -318,8 +341,10 @@ RMlocdepGamma <- function(
       # Restore original row order
       merged <- merged[match(result_df$canonical_key, merged$canonical_key), ]
       rownames(merged) <- NULL
+      # Flagged on the pair statistic, which is what the cutoff band describes.
       merged$flagged <- !is.na(merged$gamma_low) &
-        (merged$gamma < merged$gamma_low | merged$gamma > merged$gamma_high)
+        (merged$gamma_pair < merged$gamma_low |
+           merged$gamma_pair > merged$gamma_high)
 
       # Remove helper column
       merged$canonical_key <- NULL
@@ -328,6 +353,7 @@ RMlocdepGamma <- function(
         "Item1",
         "Item2",
         "gamma",
+        "gamma_pair",
         "se",
         "lower",
         "upper",
@@ -371,17 +397,9 @@ RMlocdepGamma <- function(
       list(sim_res$iteration, sim_key),
       function(x) x[1L]
     )
-    # The tested statistic is taken from the same code path that produced the
-    # simulated null, so the two cannot diverge. The `gamma` column displayed
-    # in the tables still comes from iarm and is numerically identical.
-    obs_fast <- .partgam_ld_gamma(
-      data[stats::complete.cases(data), , drop = FALSE],
-      direction = 1L
-    )
-    observed <- stats::setNames(
-      obs_fast$gamma,
-      canon_key(obs_fast$Item1, obs_fast$Item2)
-    )
+    # The tested statistic is the pair maximum computed above, from the same
+    # code path that produced the simulated null, so the two cannot diverge.
+    observed <- gamma_pair[obs_key]
     # One-sided: excess positive LD (redundancy), matching RMlocdepQ3.
     pv <- .bootstrap_pvalues(
       observed,
@@ -403,6 +421,7 @@ RMlocdepGamma <- function(
         "Item1",
         "Item2",
         "gamma",
+        "gamma_pair",
         "se",
         "lower",
         "upper",
@@ -1253,12 +1272,27 @@ run_single_partgam_LD_sim <- function(seed, data_list) {
         }
       }
 
-      # Partial gamma in direction 1 (rest score = total - Item2), the
-      # canonical direction. Computed with the vectorised internal rather than
+      # The pair statistic is the larger of the two conditioning directions.
+      # Local dependence violates both of the conditional independence
+      # hypotheses that the Rasch model implies for a pair (Kreiner &
+      # Christensen, 2004), so a pair is tested once, on whichever direction
+      # shows the stronger association. Taking the maximum within the same
+      # simulated dataset gives the null of that maximum directly, so nothing
+      # has to be corrected for having looked at two directions.
+      #
+      # Computed with the vectorised internal rather than
       # `iarm::partgam_LD()`: the coefficients are identical (see
       # test-ld_partgam_gamma.R), but iarm costs around 300 ms per call against
       # a few milliseconds here, and it is called once per iteration.
-      .partgam_ld_gamma(sim_df, direction = 1L)
+      g1 <- .partgam_ld_gamma(sim_df, direction = 1L)
+      g2 <- .partgam_ld_gamma(sim_df, direction = 2L)
+      # direction 2 enumerates the same pairs with the items swapped, so it is
+      # matched on the unordered pair rather than on row order.
+      key <- function(a, b) paste(pmin(a, b), pmax(a, b), sep = "___")
+      g1$gamma <- pmax(g1$gamma,
+                       g2$gamma[match(key(g1$Item1, g1$Item2),
+                                      key(g2$Item1, g2$Item2))])
+      g1
     },
     error = function(e) {
       as.character(conditionMessage(e))
@@ -1578,14 +1612,21 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     options(rgl.useNULL = TRUE)
     on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
 
-    sink(nullfile())
-    pgam_raw <- iarm::partgam_LD(as.data.frame(data))
-    sink()
+    # The simulated distribution is the null of the pair statistic, the larger
+    # of the two conditioning directions, so the observed overlay has to be the
+    # same quantity rather than one direction's coefficient.
+    dc <- data[stats::complete.cases(data), , drop = FALSE]
+    o1 <- .partgam_ld_gamma(dc, direction = 1L)
+    o2 <- .partgam_ld_gamma(dc, direction = 2L)
+    pkey <- function(a, b) paste(pmin(a, b), pmax(a, b), sep = "___")
 
     observed_df <- data.frame(
-      Item1 = as.character(pgam_raw[[1L]]$Item1),
-      Item2 = as.character(pgam_raw[[1L]]$Item2),
-      observed_gamma = as.numeric(pgam_raw[[1L]]$gamma),
+      Item1 = o1$Item1,
+      Item2 = o1$Item2,
+      observed_gamma = pmax(
+        o1$gamma,
+        o2$gamma[match(pkey(o1$Item1, o1$Item2), pkey(o2$Item1, o2$Item2))]
+      ),
       stringsAsFactors = FALSE
     )
     observed_df$Pair <- paste(observed_df$Item1, "-", observed_df$Item2)

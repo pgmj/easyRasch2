@@ -391,3 +391,37 @@ test_that("output = 'list' returns fit + plots from one computation, matching th
   expect_named(res2$plots, "infit")
   expect_false("lz" %in% names(res2$fit))
 })
+
+test_that("parallel workers come from n_cores, then mc.cores", {
+  skip_on_cran()
+  skip_if_not_installed("mirai")
+  # Regression: options(mc.cores) was ignored here, so a NULL n_cores always
+  # ran two workers however the option was set.
+  workers_used <- function(x, n_cores) {
+    seen <- NULL
+    testthat::with_mocked_bindings(
+      testthat::with_mocked_bindings(
+        {
+          .maybe_parallel_lapply(x, identity, parallel = TRUE,
+                                 n_cores = n_cores)
+          seen
+        },
+        mirai_map = function(.x, .f, ...) lapply(.x, .f),
+        .package = "mirai"
+      ),
+      daemons = function(n, ...) {
+        if (n > 0L) seen <<- n
+        invisible(0L)
+      },
+      .package = "mirai"
+    )
+  }
+
+  withr::local_options(mc.cores = 4L)
+  expect_identical(workers_used(1:6, 5L), 5L)
+  expect_identical(workers_used(1:6, NULL), 4L)
+  expect_identical(workers_used(1:3, NULL), 3L)
+
+  withr::local_options(mc.cores = NULL)
+  expect_identical(workers_used(1:6, NULL), 2L)
+})

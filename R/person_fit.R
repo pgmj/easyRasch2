@@ -46,6 +46,8 @@
 #'   are **not** used for inference (see Müller, 2020). Default `FALSE`.
 #' @param parallel,n_cores Logical / integer. Parallelise the resampling
 #'   across persons via \pkg{mirai} when available. Default sequential.
+#'   When `n_cores` is `NULL`, `getOption("mc.cores")` is used, and two
+#'   workers when that is unset too.
 #' @param seed Optional integer for reproducible resampling. See
 #'   [easyRasch2-reproducibility] for what this guarantees and how it
 #'   interacts with `parallel`.
@@ -789,7 +791,15 @@ RMpersonFit <- function(
 #' @noRd
 .maybe_parallel_lapply <- function(x, fun, parallel, n_cores) {
   if (parallel && requireNamespace("mirai", quietly = TRUE)) {
-    workers <- if (is.null(n_cores)) min(2L, length(x)) else n_cores
+    # Same resolution order as the cutoff functions: the argument first, then
+    # `options(mc.cores)`. Unlike them this one has a working default rather
+    # than a warning, since the per-respondent seeds make the result
+    # independent of how many workers run it.
+    if (is.null(n_cores)) {
+      n_cores <- getOption("mc.cores")
+    }
+    workers <- if (is.null(n_cores)) 2L else n_cores
+    workers <- min(workers, length(x))
     mirai::daemons(workers)
     on.exit(mirai::daemons(0L), add = TRUE)
     res <- mirai::mirai_map(x, fun)[]
