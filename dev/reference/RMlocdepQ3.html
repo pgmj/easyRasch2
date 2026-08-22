@@ -17,7 +17,7 @@ for how to determine the appropriate dynamic cut-off for your data."><meta name=
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.1.9003</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.1.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@ for how to determine the appropriate dynamic cut-off for your data.</p>
 <span>  cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  output <span class="op">=</span> <span class="st">"kable"</span>,</span>
 <span>  n_pairs <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  p_value <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  p_value <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  correction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fwer"</span>, <span class="st">"fdr_bh"</span>, <span class="st">"fdr_by"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  estimator <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CML"</span>, <span class="st">"MML"</span><span class="op">)</span></span>
@@ -97,10 +97,16 @@ largest departure from their expected range. <code>NULL</code> shows all pairs.<
 
 
 <dt id="arg-p-value">p_value<a class="anchor" aria-label="anchor" href="#arg-p-value"></a></dt>
-<dd><p>Logical. If <code>TRUE</code> (requires the full
-<code><a href="RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff</a></code> object), the per-pair table also reports
+<dd><p>Logical or <code>NULL</code>. When <code>TRUE</code> the per-pair table reports
 one-sided bootstrap p-values (<code>p_q3</code>, <code>padj_q3</code>) and flags <code>above</code> pairs
-(only) on <code>padj_q3 &lt; alpha</code> instead of the expected range. Default <code>FALSE</code>.</p></dd>
+(only) on <code>padj_q3 &lt; alpha</code> instead of on the expected range. <code>NULL</code>, the
+default, means <code>TRUE</code> when <code>cutoff</code> is the full
+<code><a href="RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff</a></code> object and <code>FALSE</code> otherwise, so a
+numeric cutoff or no cutoff keeps the interval. Pass <code>FALSE</code> for the
+pre-1.2.0 behaviour. The interval is a description of where a pair's
+\(Q_3\) is expected to fall and makes a poor decision rule, since its
+width sets a family-wise error rate of <code>1 - width^m</code> over all \(m\)
+pairs at once, and pairs grow quadratically in items (Johansson, 2026).</p></dd>
 
 
 <dt id="arg-correction">correction<a class="anchor" aria-label="anchor" href="#arg-correction"></a></dt>
@@ -183,9 +189,15 @@ with a one-sided (upper-tail) test for excess local dependence. The pair
 statistic is studentised by the bootstrap mean and SD; the marginal p-value
 is <code>(1 + #{Q3* &gt;= Q3}) / (B + 1)</code>, and <code>correction</code> applies the family-wise
 (Westfall-Young step-down) or FDR adjustment across the \(k(k-1)/2\) pairs.
-As for item fit, the family-wise correction is liberal when the simulation is
-small, so &gt;= 1000 <code>iterations</code> in <code><a href="RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code> are recommended (a
-warning is issued otherwise).</p>
+As for item fit, the family-wise correction is liberal below 400
+<code>iterations</code> in <code><a href="RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code>, which is reported once per session,
+and between 400 and 1000 the table caption notes that decisions remain
+somewhat seed-dependent. A false discovery rate correction needs far more
+iterations than the family-wise one, because a bootstrap p-value cannot
+fall below <code>1/(B + 1)</code> and Benjamini-Hochberg compares the smallest against
+<code>alpha/m</code>. Over the 36 pairs of a nine-item scale that takes 720
+iterations, and over the 190 pairs of a twenty-item scale 3799, against 19
+for Westfall-Young whatever the number of pairs.</p>
     </div>
     <div class="section level2">
     <h2 id="multiple-comparisons">Multiple comparisons<a class="anchor" aria-label="anchor" href="#multiple-comparisons"></a></h2>
@@ -266,13 +278,18 @@ of hypotheses simultaneously. <em>Journal of Statistical Theory and Practice,
 <span class="r-in"><span>  <span class="fu">RMlocdepQ3</span><span class="op">(</span><span class="va">sim_data</span>, cutoff <span class="op">=</span> <span class="va">cutoff_res</span>, n_pairs <span class="op">=</span> <span class="fl">5</span>, p_value <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
 <span class="r-in"><span>             output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span><span class="op">$</span><span class="va">pairs</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Bootstrap p-values are based on only 50 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations &gt;= 1000 in RMlocdepQ3Cutoff() for reliable p-values.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Item1  Item2      Observed        Low       High       p_q3   padj_q3 Flagged</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item4  Item8 -0.2765225048 -0.2700737 0.01430429 1.00000000 1.0000000        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item4  Item7  0.0285193666 -0.2640942 0.01619448 0.01960784 0.4509804        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item5  Item9 -0.2199294805 -0.2160826 0.03315679 1.00000000 1.0000000        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4  Item6  0.0279341896 -0.2592712 0.02734526 0.01960784 0.5098039        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item3 Item10  0.0005837293 -0.2430223 0.02814042 0.05882353 0.8823529        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Item1  Item2      Observed        Low         High       p_q3   padj_q3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item4  Item8 -0.2765225048 -0.2377678  0.009937381 1.00000000 1.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item4  Item7  0.0285193666 -0.2183735  0.016194476 0.01960784 0.4509804</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item5  Item9 -0.2199294805 -0.2001671  0.032761639 1.00000000 1.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4  Item6  0.0279341896 -0.2592712 -0.003896209 0.01960784 0.5098039</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item3 Item10  0.0005837293 -0.2339065  0.003444371 0.05882353 0.8823529</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Flagged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5        </span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

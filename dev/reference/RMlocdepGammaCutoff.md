@@ -12,13 +12,13 @@ item pair, providing empirical critical values.
 ``` r
 RMlocdepGammaCutoff(
   data,
-  iterations = 250,
+  iterations = 400,
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,
   seed = NULL,
   cutoff_method = "hdci",
-  hdci_width = 0.99
+  hdci_width = 0.95
 )
 ```
 
@@ -32,7 +32,10 @@ RMlocdepGammaCutoff(
 
 - iterations:
 
-  Integer. Number of simulation iterations (default 250).
+  Integer. Number of simulation iterations (default 400, was 250 before
+  1.2.0). 400 is the calibrated floor for the Westfall-Young correction
+  (Johansson, 2026) and the count a 95\\ converge. Use 1000 to 2000 for
+  a final analysis.
 
 - parallel:
 
@@ -67,7 +70,10 @@ RMlocdepGammaCutoff(
 - hdci_width:
 
   Numeric. Width of the HDCI when `cutoff_method = "hdci"`. Default is
-  `0.99` (99\\ `cutoff_method = "quantile"`.
+  `0.95` (95\\ describes where a fitting pair's coefficient is expected
+  to fall and is no longer the default decision rule, so the width is
+  chosen to converge at the default iteration count rather than to imply
+  an error rate. Ignored when `cutoff_method = "quantile"`.
 
 ## Value
 
@@ -189,50 +195,50 @@ if (requireNamespace("iarm", quietly = TRUE) &&
   cutoff_res$pair_cutoffs
 }
 #>    Item1  Item2  gamma_low gamma_high
-#> 1  Item1  Item2 -0.3786605  0.3198758
-#> 2  Item1  Item3 -0.4487578  0.4400000
-#> 3  Item1  Item4 -0.3680882  0.3430421
-#> 4  Item1  Item5 -0.3987730  0.4463083
-#> 5  Item1  Item6 -0.3453858  0.4024390
-#> 6  Item1  Item7 -0.3050393  0.4533333
-#> 7  Item1  Item8 -0.3167702  0.4881237
-#> 8  Item1  Item9 -0.2943803  0.4192496
-#> 9  Item1 Item10 -0.2962740  0.3655914
-#> 10 Item2  Item3 -0.2932350  0.3970037
-#> 11 Item2  Item4 -0.2475884  0.4506687
-#> 12 Item2  Item5 -0.3885018  0.4179104
-#> 13 Item2  Item6 -0.3139637  0.3795494
-#> 14 Item2  Item7 -0.4612154  0.4016620
-#> 15 Item2  Item8 -0.3849132  0.4314003
-#> 16 Item2  Item9 -0.3421927  0.3999171
-#> 17 Item2 Item10 -0.2885662  0.4048740
-#> 18 Item3  Item4 -0.3462214  0.3570880
-#> 19 Item3  Item5 -0.3854962  0.4344904
-#> 20 Item3  Item6 -0.3794266  0.4980121
-#> 21 Item3  Item7 -0.4143335  0.4424779
-#> 22 Item3  Item8 -0.4018660  0.4184874
-#> 23 Item3  Item9 -0.3321678  0.4060336
-#> 24 Item3 Item10 -0.3459716  0.4581142
-#> 25 Item4  Item5 -0.3553109  0.4174067
-#> 26 Item4  Item6 -0.2921043  0.4556213
-#> 27 Item4  Item7 -0.3747715  0.4062269
-#> 28 Item4  Item8 -0.3237254  0.3563579
-#> 29 Item4  Item9 -0.3711507  0.3342091
-#> 30 Item4 Item10 -0.3641851  0.3726609
-#> 31 Item5  Item6 -0.3874426  0.3421620
-#> 32 Item5  Item7 -0.4620253  0.4653952
-#> 33 Item5  Item8 -0.3712256  0.4956110
-#> 34 Item5  Item9 -0.3704415  0.4349242
-#> 35 Item5 Item10 -0.3932584  0.3349941
-#> 36 Item6  Item7 -0.4002185  0.3983051
-#> 37 Item6  Item8 -0.2313253  0.4759036
-#> 38 Item6  Item9 -0.3822401  0.3966102
-#> 39 Item6 Item10 -0.2862191  0.4840983
-#> 40 Item7  Item8 -0.3944025  0.4137405
-#> 41 Item7  Item9 -0.3649123  0.3709175
-#> 42 Item7 Item10 -0.3370577  0.3029197
-#> 43 Item8  Item9 -0.3995224  0.3657056
-#> 44 Item8 Item10 -0.3807107  0.4157810
-#> 45 Item9 Item10 -0.2923529  0.3491311
+#> 1  Item1  Item2 -0.2777321  0.3198758
+#> 2  Item1  Item3 -0.2571429  0.3843537
+#> 3  Item1  Item4 -0.2265372  0.3262195
+#> 4  Item1  Item5 -0.3109244  0.3537519
+#> 5  Item1  Item6 -0.2680723  0.3297003
+#> 6  Item1  Item7 -0.2089041  0.2947559
+#> 7  Item1  Item8 -0.3167702  0.3052264
+#> 8  Item1  Item9 -0.2711268  0.3800000
+#> 9  Item1 Item10 -0.2714777  0.2960000
+#> 10 Item2  Item3 -0.2605364  0.3693694
+#> 11 Item2  Item4 -0.2141653  0.3376906
+#> 12 Item2  Item5 -0.1967865  0.4179104
+#> 13 Item2  Item6 -0.3203540  0.2933912
+#> 14 Item2  Item7 -0.3580264  0.4016620
+#> 15 Item2  Item8 -0.2684564  0.3580705
+#> 16 Item2  Item9 -0.3421927  0.2688498
+#> 17 Item2 Item10 -0.2885662  0.2979177
+#> 18 Item3  Item4 -0.2500000  0.3216561
+#> 19 Item3  Item5 -0.2911392  0.2585670
+#> 20 Item3  Item6 -0.3357143  0.3543860
+#> 21 Item3  Item7 -0.3416537  0.3750000
+#> 22 Item3  Item8 -0.3453355  0.3333333
+#> 23 Item3  Item9 -0.2324723  0.3308271
+#> 24 Item3 Item10 -0.2238806  0.4440559
+#> 25 Item4  Item5 -0.2923077  0.3902848
+#> 26 Item4  Item6 -0.2087912  0.4170854
+#> 27 Item4  Item7 -0.3563636  0.2890365
+#> 28 Item4  Item8 -0.2226402  0.3563579
+#> 29 Item4  Item9 -0.3491311  0.2613241
+#> 30 Item4 Item10 -0.2740741  0.3381555
+#> 31 Item5  Item6 -0.2629969  0.3025335
+#> 32 Item5  Item7 -0.2527472  0.3256151
+#> 33 Item5  Item8 -0.3303965  0.3283358
+#> 34 Item5  Item9 -0.2671233  0.3651877
+#> 35 Item5 Item10 -0.2531876  0.3196481
+#> 36 Item6  Item7 -0.2467190  0.3983051
+#> 37 Item6  Item8 -0.2130584  0.3502235
+#> 38 Item6  Item9 -0.2437886  0.3966102
+#> 39 Item6 Item10 -0.2382609  0.3498350
+#> 40 Item7  Item8 -0.3460803  0.2953216
+#> 41 Item7  Item9 -0.2693498  0.3362319
+#> 42 Item7 Item10 -0.2040201  0.3078261
+#> 43 Item8  Item9 -0.2593918  0.3160813
+#> 44 Item8 Item10 -0.2667877  0.3750000
+#> 45 Item9 Item10 -0.2635379  0.3019197
 # }
 ```

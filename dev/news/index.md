@@ -1,99 +1,69 @@
 # Changelog
 
-## easyRasch2 1.1.1.9003 (development version)
+## easyRasch2 1.1.1.9004 (development version)
 
 ### Breaking changes
 
-- **[`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
-  now tests each item pair once, on the larger of its two conditioning
-  directions.** Previously the p-value and the band flag came from the
-  canonical direction alone and were repeated in both tables, so the
-  direction-2 table showed a coefficient beside a p-value computed from
-  a different one, sometimes of the opposite sign. A new `gamma_pair`
-  column carries the tested statistic, `gamma` still carries each
-  direction’s own coefficient, and `flagged` compares `gamma_pair`
-  against the band. Local dependence violates both of the conditional
-  independence hypotheses a pair implies (Kreiner & Christensen, 2004),
-  and taking the maximum within each simulated dataset gives the null of
-  that maximum directly, so nothing is corrected for having looked at
-  two directions.
-  [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md)’s
-  `$results` and `$pair_cutoffs` now describe that maximum, and
-  [`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaPlot.md)
-  overlays it. **Cutoff values, p-values and flags all change.**
-
-- **[`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
-  now flags on the corrected p-value rather than on the interval.**
-  `p_value` defaults to `NULL`, meaning `TRUE` when `cutoff` is the full
-  [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
-  object and `FALSE` otherwise. Scripts that pass the full object get
-  `p_infit` and `padj_infit` columns and a `Flagged` column that may
-  name different items. Pass `p_value = FALSE` for the old behaviour.
-
-- **[`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
-  defaults to `hdci_width = 0.95`**, was `0.999`. The interval is now a
-  description of where a fitting item’s statistic is expected to fall,
-  not a decision rule. At `.999` it needs roughly 5000 iterations to
-  reach its stated width, at `.95` about 1000. Flagging on the interval
-  at any width tests all items at once, so the width sets a family-wise
-  error rate of `1 - width^k`.
-  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
-  says so once per session, and in the table caption, whenever flagging
-  is interval-based.
-
-  Both changes follow Johansson (2026),
+- **[`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
+  and
+  [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
+  now flag on the multiplicity-corrected p-value rather than on the
+  simulated interval.** `p_value` defaults to `NULL`, meaning `TRUE`
+  when `cutoff` is the full cutoff object and `FALSE` otherwise, so
+  calls that pass no cutoff or a bare cutoff table are unchanged.
+  Flagging against an interval tests every item or pair at once and sets
+  a family-wise error rate of `1 - width^m`, which the corrected p-value
+  targets directly instead. Tables gain the `p_` and `padj_` columns.
+  **Flagged items and pairs change.** Pass `p_value = FALSE` for the old
+  behaviour. Follows Johansson (2026),
   <https://doi.org/10.31234/osf.io/7pqz4_v2>.
+
+- **All three cutoff functions default to `hdci_width = 0.95`**, was
+  `0.999` in
+  [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
+  and `0.99` in
+  [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
+  and
+  [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md),
+  **and the two local dependence cutoff functions default to
+  `iterations = 400`**, was 500 and 250. The interval is now a
+  description of where a fitting statistic is expected to fall rather
+  than a decision rule, and 400 is the count that width needs. **Cutoff
+  values change.**
   [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md)
   keeps `hdci_width = 0.999`, since
   [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
   has no corrected-p-value path and the interval is still its decision
   rule there.
 
-### Other changes
-
-- [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md)
-  is roughly 14 times faster since partial gamma is now computed by a
-  vectorised internal instead of
-  [`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html),
-  which also derives an asymptotic standard error and confidence
-  interval that a simulated null does not use.
-
-- [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md)’s
-  caption now names the class-interval grouping that was actually used:
-  the method, the number of groups formed, how many of those contain
-  respondents when that is fewer, and whether the requested grouping had
-  to fall back to score level. Quantile grouping can form fewer bins
-  than requested when total scores tie at the boundaries, and
-  equal-width and manual grouping can define empty intervals, so the
-  caption no longer has to be read against the call to know what the
-  figure shows.
-
-- [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
-  draws its outer interval at `simfit$hdci_width` instead of a fixed
-  percentile range, so the plot and the table describe the same
-  interval.
-
-- The reminder about iteration counts is now two-tier and reworded from
-  calibration to reproducibility. Below 400 iterations a
-  once-per-session message reports that the Westfall-Young correction is
-  mildly liberal. Between 400 and 1000 the table caption notes that
-  error rates are calibrated but decisions remain somewhat
-  seed-dependent.
+- **[`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
+  now tests each item pair once, on the larger of its two conditioning
+  directions.** The p-value and the flag previously came from the
+  canonical direction alone and were repeated in both tables, so the
+  direction-2 table showed a coefficient beside a p-value computed from
+  a different one, sometimes of the opposite sign. A new `gamma_pair`
+  column carries the tested statistic and `gamma` still carries each
+  direction’s own coefficient.
+  [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md)
+  and
+  [`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaPlot.md)
+  describe that maximum. **Cutoff values, p-values and flags all
+  change.**
 
 ### Bug fixes
 
 - [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
   sampled dichotomous null patterns from the wrong distribution (since
-  1.0.0). Successive weighted sampling without replacement is not the
-  Rasch conditional distribution, and it inflated the null distribution
-  by roughly 75%, giving a Type-I error of 0.000 against a nominal 0.05
-  and badly reduced power. Polytomous data was unaffected. **Dichotomous
-  Martin-Löf p-values from 1.0.0 and 1.1.x should be recomputed.**
+  1.0.0), which inflated the null distribution, gave a Type-I error near
+  zero against a nominal 0.05 and badly reduced power. Polytomous data
+  was unaffected. **Dichotomous Martin-Löf p-values from 1.0.0 and 1.1.x
+  should be recomputed.**
 
 - `parallel = TRUE` and `parallel = FALSE` now give identical results
-  for the same `seed`. `mirai` workers run under a different random
-  number generator, which the per-iteration runners now pin. Parallel
-  results change, to agree with the sequential ones. Affects
+  for the same `seed`, the per-iteration runners now pinning the
+  generator that `mirai` workers otherwise change. Parallel results
+  change, to agree with the sequential ones. Affects
   [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md),
   [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md),
   [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md),
@@ -110,6 +80,13 @@
   all, its workers having had no per-task seed. Respondents are now
   seeded individually. Results change in both paths.
 
+- [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
+  with the default `seed = NULL` now reproduces from a session-level
+  [`set.seed()`](https://rdrr.io/r/base/Random.html), as the other
+  simulation functions already did. The RMU row and the bootstrap
+  intervals previously differed between two otherwise identical calls.
+  Results for an explicit `seed` are unchanged.
+
 - [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
   and
   [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLofResiduals.md)
@@ -117,38 +94,69 @@
   `partition`. The 30-case minimum is likewise counted over the
   partitioned items only.
 
-- [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
-  with the default `seed = NULL` now reproduces from a session-level
-  [`set.seed()`](https://rdrr.io/r/base/Random.html), as the other
-  simulation functions already did. Its plausible-value sampler leaves
-  the random number generator in a nondeterministic state, so the RMU
-  row and the bootstrap intervals differed between two otherwise
-  identical calls. Results for an explicit `seed` are unchanged.
-
 ### Other changes
 
-- Both Martin-Löf functions have been validated against the `pml` SAS
-  macro (Christensen, 2004), kindly shared by Karl Bang Christensen. The
-  statistic, the conditional log-likelihoods, the expected counts and
-  the residuals reproduce the macro to numerical precision.
+- The reminder about iteration counts is now two-tier, reworded from
+  calibration to reproducibility, and applies to item fit and both local
+  dependence functions. Below 400 iterations a once-per-session message
+  reports that the Westfall-Young correction is mildly liberal, and
+  between 400 and 1000 the table caption notes that error rates are
+  calibrated but decisions remain somewhat seed-dependent. A separate
+  once-per-session message reports the family-wise error rate implied by
+  the interval whenever flagging is interval-based.
+
+- [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
+  and
+  [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
+  warn when `correction` is `"fdr_bh"` or `"fdr_by"` and the bootstrap
+  is too small for the procedure to reject anything. Over 36 item pairs
+  Benjamini-Hochberg needs 720 iterations against 19 for the default
+  Westfall-Young.
+
+- [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md)
+  is roughly 14 times faster, partial gamma now being computed by a
+  vectorised internal rather than by
+  [`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html),
+  which also derives an asymptotic standard error and confidence
+  interval that a simulated null does not use.
+
+- The two conditional samplers are now one recursion over the nested
+  gamma functions, computed once per call rather than per simulated
+  person, and about four times faster on a six-item scale. A given
+  `seed` no longer reproduces the p-values of earlier versions.
+
+- Captions now report simulated datasets that had to be discarded, so
+  the iteration count a result rests on can be read against the count
+  requested.
+
+- The three cutoff objects gain `requested_iterations`, and
+  [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
+  gains `sample_n_total` and `sample_has_na`.
+
+- [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md)’s
+  caption now names the class-interval grouping that was actually used:
+  the method, the number of groups formed, how many of those contain
+  respondents when that is fewer, and whether the requested grouping had
+  to fall back to score level.
+
+- [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
+  draws its outer interval at `simfit$hdci_width` instead of a fixed
+  percentile range, so the plot and the table describe the same
+  interval.
+
+- `RMpersonFit(parallel = TRUE, n_cores = NULL)` now reads
+  `getOption("mc.cores")` before falling back to two workers, matching
+  the cutoff functions. Results are unaffected by the worker count.
 
 - New help topic `?easyRasch2-reproducibility` covers what `seed`
   guarantees, what the default `seed = NULL` inherits from a
   session-level [`set.seed()`](https://rdrr.io/r/base/Random.html), and
   the pinned generator’s side effects.
 
-- [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
-  gains `sample_n_total` and `sample_has_na`, matching the other cutoff
-  objects.
-
-- `RMpersonFit(parallel = TRUE, n_cores = NULL)` now reads
-  `getOption("mc.cores")` before falling back to two workers, matching
-  the cutoff functions. Results are unaffected by the worker count.
-
-- The two conditional samplers are now one recursion over the nested
-  gamma functions, computed once per call rather than per simulated
-  person, and about four times faster on a six-item scale. A given
-  `seed` no longer reproduces the p-values of earlier versions.
+- Both Martin-Löf functions have been validated against the `pml` SAS
+  macro (Christensen, 2004), kindly shared by Karl Bang Christensen. The
+  statistic, the conditional log-likelihoods, the expected counts and
+  the residuals reproduce the macro to numerical precision.
 
 ## easyRasch2 1.1.1
 

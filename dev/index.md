@@ -74,9 +74,11 @@ remotes::install_github("pgmj/easyRasch2")
   and
   [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemParameters.md))
   and for the plausible values behind the RMU reliability metric.
-- **Inference**: simulation-based cutoffs throughout, with optional
-  bootstrap *p*-values (`p_value = TRUE`) using Westfall–Young
+- **Inference**: simulation-based cutoffs throughout. Item fit and local
+  dependence flag on multiplicity-corrected bootstrap *p*-values
+  whenever the full cutoff object is supplied, using Westfall–Young
   family-wise correction (default) or FDR alternatives (Ferreira, 2024).
+  Pass `p_value = FALSE` to flag against the simulated interval instead.
 - **Output**:
   [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html) for
   tables (Quarto-friendly), `ggplot2` for figures, and `"dataframe"`
@@ -91,7 +93,7 @@ remotes::install_github("pgmj/easyRasch2")
 
 - [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
   — conditional infit MSQ, flagged on multiplicity-corrected bootstrap
-  *p*-values (`p_value = TRUE`) with family-wise (Westfall–Young) or FDR
+  *p*-values with family-wise (Westfall–Young) or FDR
   multiple-comparison correction
 - [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md) +
   [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
@@ -114,11 +116,11 @@ remotes::install_github("pgmj/easyRasch2")
   — Yen’s Q_3 residual correlations (CML/WLE by default,
   `estimator = "MML"` optional); table and plot share a `$matrix` (Q_3
   heatmap) / `$pairs` (per-pair observed-vs-simulated) structure;
-  optional per-pair bootstrap *p*-values
+  per-pair bootstrap *p*-values
 - [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md) +
   [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md) +
   [`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaPlot.md)
-  — partial-γ local dependence; optional per-pair bootstrap *p*-values
+  — partial-γ local dependence; per-pair bootstrap *p*-values
 
 ### Dimensionality / unidimensionality
 
