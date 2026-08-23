@@ -15,7 +15,7 @@ via RMUreliability() applied to plausible values from mirt::fscores()."></head><
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,7 @@ via RMUreliability() applied to plausible values from mirt::fscores()."></head><
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Reliability metrics for a Rasch model</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/v1.1.1/R/reliability.R" class="external-link"><code>R/reliability.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/R/reliability.R" class="external-link"><code>R/reliability.R</code></a></small>
       <div class="d-none name"><code>RMreliability.Rd</code></div>
     </div>
 
@@ -125,7 +125,9 @@ bootstrapping falls back to sequential.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Integer or <code>NULL</code>. Master random seed for reproducibility.</p></dd>
+<dd><p>Integer or <code>NULL</code>. Master random seed for reproducibility.
+See <a href="easyRasch2-reproducibility.html">easyRasch2-reproducibility</a> for what this guarantees and how it
+interacts with <code>parallel</code>.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>

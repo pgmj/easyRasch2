@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,7 @@
       <h1>A Rasch analysis workflow with easyRasch2</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/v1.1.1/vignettes/easyRasch2.Rmd" class="external-link"><code>vignettes/easyRasch2.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/vignettes/easyRasch2.Rmd" class="external-link"><code>vignettes/easyRasch2.Rmd</code></a></small>
       <div class="d-none name"><code>easyRasch2.Rmd</code></div>
     </div>
 
@@ -111,11 +111,16 @@ For a Bayesian sibling package, see <a href="https://pgmj.github.io/easyRaschBay
 <blockquote>
 <p><strong>NOTE:</strong> all simulation-based functions use a low
 number of iterations to make this vignette render faster. You should use
-more iterations for actual analysis work. For most methods, 500-1500
-will be useful, except for conditional infit, where lower numbers can be
-optimal, depending on sample size <span class="citation">(<a href="#ref-johansson_detecting_2025">Johansson 2025</a>)</span>. If you
-plan to use <code>p_value = TRUE</code>, use at least 1000
-iterations.</p>
+more iterations for actual analysis work. 400 is the calibrated floor
+for the multiplicity-corrected <em>p</em>-values and is the package
+default, while 1000 to 2000 is advisable for a final analysis <span class="citation">(<a href="#ref-johansson_simulationbased_2026">Johansson 2026</a>)</span>.
+An earlier recommendation, that fewer iterations could improve detection
+for conditional infit at small samples, is withdrawn: that advantage
+came from an expected range that had not converged, and it was paid for
+with an inflated family-wise error rate. A false discovery rate
+correction (<code>correction = "fdr_bh"</code> or <code>"fdr_by"</code>)
+needs far more iterations than the default family-wise one, because a
+bootstrap <em>p</em>-value can be no smaller than <span class="math inline">1/(B+1)</span>.</p>
 </blockquote>
 <p>To get faster simulations, please make use of
 <code>options(mc.cores = 4)</code>, where <code>4</code> should be
@@ -230,19 +235,27 @@ data</li>
 uses <strong>conditional</strong> infit, which is both robust to
 different sample sizes and makes ZSTD unnecessary <span class="citation">(<a href="#ref-muller_item_2020">Müller
 2020</a>)</span>. Müller also questions the usefulness of outfit, and my
-simulation study <span class="citation">(<a href="#ref-johansson_detecting_2025">Johansson 2025</a>)</span> reached
-the same conclusion. Thus, outfit is not reported.</p>
+simulation studies [<span class="citation">Johansson (<a href="#ref-johansson_detecting_2025">2025</a>)</span>;johansson_simulationbased_2026]
+reached the same conclusion. Thus, outfit is not reported.</p>
 <p>Conditional item infit mean-square statistics flag items whose
 response patterns deviate from the Rasch expectation. With
 <code><a href="../reference/RMitemInfitCutoff.html">RMitemInfitCutoff()</a></code>, per-item highest-density intervals
 serve as the reference instead of rule-of-thumb cutoffs <span class="citation">(<a href="#ref-johansson_detecting_2025">Johansson
-2025</a>)</span>. Bootstrap <em>p</em>-values are also available via
-<code>p_value = TRUE</code>, with family-wise error rate (FWER; the
-default) or false discovery rate (FDR) correction.</p>
+2025</a>)</span>. Passing the <code><a href="../reference/RMitemInfitCutoff.html">RMitemInfitCutoff()</a></code> object to
+RMitemInfit() flags items on a multiplicity-corrected bootstrap
+<em>p</em>-value, with family-wise error rate (FWER; the default) or
+false discovery rate (FDR) correction, and the interval is reported
+alongside as a description of where a fitting item’s statistic is
+expected to fall <span class="citation">(<a href="#ref-johansson_simulationbased_2026">Johansson
+2026</a>)</span>.</p>
 <blockquote>
-<p><strong>NOTE:</strong> All functions that use simulation-based
-cutoffs (except <code><a href="../reference/RMitemInfitMI.html">RMitemInfitMI()</a></code>) have an optional
-<code>p_value = TRUE</code> for their table outputs.</p>
+<p><strong>NOTE:</strong> <code><a href="../reference/RMiteminfit.html">RMitemInfit()</a></code>,
+<code><a href="../reference/RMlocdepQ3.html">RMlocdepQ3()</a></code> and <code><a href="../reference/RMlocdepGamma.html">RMlocdepGamma()</a></code> use the
+corrected <em>p</em>-value whenever the full cutoff object is supplied.
+The other functions with simulation-based cutoffs take
+<code>p_value = TRUE</code> as an opt-in, and
+<code><a href="../reference/RMitemInfitMI.html">RMitemInfitMI()</a></code> has no <em>p</em>-value path, so it always
+flags against the interval.</p>
 </blockquote>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">infit_cut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMitemInfitCutoff.html">RMitemInfitCutoff</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -250,14 +263,30 @@ cutoffs (except <code><a href="../reference/RMitemInfitMI.html">RMitemInfitMI()<
 <span><span class="fu"><a href="../reference/RMiteminfit.html">RMitemInfit</a></span><span class="op">(</span><span class="va">items</span>, cutoff <span class="op">=</span> <span class="va">infit_cut</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>MSQ values based on conditional estimation. n = 600
-respondents. Cutoff values based on 100 simulation iterations (99.9%
-HDCI). Flagged: overfit = infit below range (more predictable); underfit
-= above range (noisier).</caption>
+respondents. Two-sided bootstrap p-values from 100 iterations,
+multiplicity correction: Westfall-Young step-down (FWER). Flagged on the
+corrected p-value at alpha = 0.05. p-values cannot be smaller than
+1/(100+1) = 0.0099. This is below the calibrated floor of 400, where the
+correction is mildly liberal and the family-wise error rate sits above
+the nominal level (Johansson, 2026). Flagged: underfit (infit &gt; 1) /
+overfit (infit &lt; 1).</caption>
+<colgroup>
+<col width="6%">
+<col width="12%">
+<col width="12%">
+<col width="14%">
+<col width="8%">
+<col width="10%">
+<col width="11%">
+<col width="23%">
+</colgroup>
 <thead><tr class="header">
 <th align="left">Item</th>
 <th align="right">Infit MSQ</th>
 <th align="right">Infit low</th>
 <th align="right">Infit high</th>
+<th align="right">p</th>
+<th align="right">p (adj)</th>
 <th align="left">Flagged</th>
 <th align="right">Relative location</th>
 </tr></thead>
@@ -265,64 +294,80 @@ HDCI). Flagged: overfit = infit below range (more predictable); underfit
 <tr class="odd">
 <td align="left">q1</td>
 <td align="right">0.946</td>
-<td align="right">0.883</td>
-<td align="right">1.143</td>
+<td align="right">0.911</td>
+<td align="right">1.097</td>
+<td align="right">0.2871</td>
+<td align="right">0.4554</td>
 <td align="left"></td>
 <td align="right">-0.56</td>
 </tr>
 <tr class="even">
 <td align="left">q2</td>
 <td align="right">0.778</td>
-<td align="right">0.883</td>
+<td align="right">0.924</td>
 <td align="right">1.107</td>
+<td align="right">0.0099</td>
+<td align="right">0.0099</td>
 <td align="left">overfit</td>
 <td align="right">-0.76</td>
 </tr>
 <tr class="odd">
 <td align="left">q3</td>
 <td align="right">1.234</td>
-<td align="right">0.878</td>
-<td align="right">1.194</td>
+<td align="right">0.897</td>
+<td align="right">1.107</td>
+<td align="right">0.0099</td>
+<td align="right">0.0198</td>
 <td align="left">underfit</td>
 <td align="right">-0.83</td>
 </tr>
 <tr class="even">
 <td align="left">q4</td>
 <td align="right">0.835</td>
-<td align="right">0.867</td>
-<td align="right">1.178</td>
+<td align="right">0.893</td>
+<td align="right">1.098</td>
+<td align="right">0.0198</td>
+<td align="right">0.0396</td>
 <td align="left">overfit</td>
 <td align="right">-1.48</td>
 </tr>
 <tr class="odd">
 <td align="left">q5</td>
 <td align="right">1.069</td>
-<td align="right">0.900</td>
-<td align="right">1.110</td>
+<td align="right">0.917</td>
+<td align="right">1.102</td>
+<td align="right">0.1881</td>
+<td align="right">0.4356</td>
 <td align="left"></td>
 <td align="right">-0.58</td>
 </tr>
 <tr class="even">
 <td align="left">q6</td>
 <td align="right">0.895</td>
-<td align="right">0.858</td>
-<td align="right">1.219</td>
+<td align="right">0.926</td>
+<td align="right">1.097</td>
+<td align="right">0.0297</td>
+<td align="right">0.1386</td>
 <td align="left"></td>
 <td align="right">-0.76</td>
 </tr>
 <tr class="odd">
 <td align="left">q7</td>
 <td align="right">0.986</td>
-<td align="right">0.899</td>
-<td align="right">1.153</td>
+<td align="right">0.919</td>
+<td align="right">1.101</td>
+<td align="right">0.7624</td>
+<td align="right">0.7624</td>
 <td align="left"></td>
 <td align="right">-0.66</td>
 </tr>
 <tr class="even">
 <td align="left">q8</td>
 <td align="right">1.260</td>
-<td align="right">0.856</td>
-<td align="right">1.136</td>
+<td align="right">0.880</td>
+<td align="right">1.119</td>
+<td align="right">0.0099</td>
+<td align="right">0.0099</td>
 <td align="left">underfit</td>
 <td align="right">0.97</td>
 </tr>
@@ -330,7 +375,9 @@ HDCI). Flagged: overfit = infit below range (more predictable); underfit
 <td align="left">q9</td>
 <td align="right">1.315</td>
 <td align="right">0.842</td>
-<td align="right">1.199</td>
+<td align="right">1.107</td>
+<td align="right">0.0099</td>
+<td align="right">0.0099</td>
 <td align="left">underfit</td>
 <td align="right">0.79</td>
 </tr>
@@ -373,8 +420,8 @@ dimension. A higher than expected observed value indicates an
 overfitting and possibly redundant item. Overfitting items will often
 also show issues with local dependency.</p>
 <p>Compared to infit, item-restscore more often flags overfit items
-(based on experience), and less often flags underfit items (based on a
-simulation study <span class="citation">(<a href="#ref-johansson_detecting_2025">Johansson 2025</a>)</span>).</p>
+(based on experience), and, under some conditions, less often flags
+underfit items (based on a simulation study <span class="citation">(<a href="#ref-johansson_detecting_2025">Johansson 2025</a>)</span>).</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemrestscore.html">RMitemRestscore</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
@@ -485,8 +532,8 @@ multidimensionality/noise).</caption>
 </tbody>
 </table>
 <p>Similarly to infit, item-restscore found items 2 and 4 to be overfit
-and 8 to be underfit. It also found item 6 to be overfit. These methods
-are best used together.</p>
+and 8 to be underfit. It also found item 6 to be overfit. The two
+methods are best used together.</p>
 </div>
 <div class="section level3">
 <h3 id="cfa-based-cutoffs-for-cfi-rmsea-and-item-loadings">CFA-based cutoffs for CFI / RMSEA and item loadings<a class="anchor" aria-label="anchor" href="#cfa-based-cutoffs-for-cfi-rmsea-and-item-loadings"></a>
@@ -950,12 +997,21 @@ deviations.</p>
 <caption>Partial gamma LD analysis. n = 600 respondents. Positive gamma
 indicates positive local dependence between items. Showing top 6 of 36
 pairs by |gamma|. Direction 1: rest score = total - Item2.</caption>
+<colgroup>
+<col width="9%">
+<col width="9%">
+<col width="18%">
+<col width="23%">
+<col width="18%">
+<col width="22%">
+</colgroup>
 <thead><tr class="header">
 <th align="left">Item 1</th>
 <th align="left">Item 2</th>
 <th align="right">Partial gamma</th>
 <th align="right">Adj. p-value (BH)</th>
 <th align="left">p-value sign.</th>
+<th align="right">Gamma pair (max)</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
@@ -964,6 +1020,7 @@ pairs by |gamma|. Direction 1: rest score = total - Item2.</caption>
 <td align="right">0.531</td>
 <td align="right">0.000</td>
 <td align="left">***</td>
+<td align="right">0.577</td>
 </tr>
 <tr class="even">
 <td align="left">q4</td>
@@ -971,6 +1028,7 @@ pairs by |gamma|. Direction 1: rest score = total - Item2.</caption>
 <td align="right">-0.381</td>
 <td align="right">0.000</td>
 <td align="left">***</td>
+<td align="right">-0.381</td>
 </tr>
 <tr class="odd">
 <td align="left">q2</td>
@@ -978,6 +1036,7 @@ pairs by |gamma|. Direction 1: rest score = total - Item2.</caption>
 <td align="right">0.332</td>
 <td align="right">0.001</td>
 <td align="left">***</td>
+<td align="right">0.332</td>
 </tr>
 <tr class="even">
 <td align="left">q2</td>
@@ -985,6 +1044,7 @@ pairs by |gamma|. Direction 1: rest score = total - Item2.</caption>
 <td align="right">-0.323</td>
 <td align="right">0.001</td>
 <td align="left">***</td>
+<td align="right">-0.323</td>
 </tr>
 <tr class="odd">
 <td align="left">q7</td>
@@ -992,6 +1052,7 @@ pairs by |gamma|. Direction 1: rest score = total - Item2.</caption>
 <td align="right">0.303</td>
 <td align="right">0.001</td>
 <td align="left">***</td>
+<td align="right">0.303</td>
 </tr>
 <tr class="even">
 <td align="left">q6</td>
@@ -999,6 +1060,7 @@ pairs by |gamma|. Direction 1: rest score = total - Item2.</caption>
 <td align="right">0.287</td>
 <td align="right">0.009</td>
 <td align="left">**</td>
+<td align="right">0.287</td>
 </tr>
 </tbody>
 </table>
@@ -1007,12 +1069,21 @@ pairs by |gamma|. Direction 1: rest score = total - Item2.</caption>
 indicates positive local dependence between items. Showing top 6 of 36
 pairs by |gamma|. Direction 2: rest score = total - Item2 (item pairs
 shown in the reverse order to direction 1).</caption>
+<colgroup>
+<col width="9%">
+<col width="9%">
+<col width="18%">
+<col width="23%">
+<col width="18%">
+<col width="22%">
+</colgroup>
 <thead><tr class="header">
 <th align="left">Item 1</th>
 <th align="left">Item 2</th>
 <th align="right">Partial gamma</th>
 <th align="right">Adj. p-value (BH)</th>
 <th align="left">p-value sign.</th>
+<th align="right">Gamma pair (max)</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
@@ -1021,6 +1092,7 @@ shown in the reverse order to direction 1).</caption>
 <td align="right">0.577</td>
 <td align="right">0.000</td>
 <td align="left">***</td>
+<td align="right">0.577</td>
 </tr>
 <tr class="even">
 <td align="left">q9</td>
@@ -1028,6 +1100,7 @@ shown in the reverse order to direction 1).</caption>
 <td align="right">-0.453</td>
 <td align="right">0.000</td>
 <td align="left">***</td>
+<td align="right">-0.381</td>
 </tr>
 <tr class="odd">
 <td align="left">q8</td>
@@ -1035,6 +1108,7 @@ shown in the reverse order to direction 1).</caption>
 <td align="right">-0.415</td>
 <td align="right">0.000</td>
 <td align="left">***</td>
+<td align="right">-0.323</td>
 </tr>
 <tr class="even">
 <td align="left">q4</td>
@@ -1042,6 +1116,7 @@ shown in the reverse order to direction 1).</caption>
 <td align="right">0.361</td>
 <td align="right">0.000</td>
 <td align="left">***</td>
+<td align="right">0.361</td>
 </tr>
 <tr class="odd">
 <td align="left">q5</td>
@@ -1049,6 +1124,7 @@ shown in the reverse order to direction 1).</caption>
 <td align="right">0.303</td>
 <td align="right">0.000</td>
 <td align="left">***</td>
+<td align="right">0.303</td>
 </tr>
 <tr class="even">
 <td align="left">q9</td>
@@ -1056,13 +1132,19 @@ shown in the reverse order to direction 1).</caption>
 <td align="right">0.291</td>
 <td align="right">0.007</td>
 <td align="left">**</td>
+<td align="right">0.332</td>
 </tr>
 </tbody>
 </table>
 <p>You can also get simulation-based thresholds for partial gamma LD,
 using <code><a href="../reference/RMlocdepGammaCutoff.html">RMlocdepGammaCutoff()</a></code>, which can be used with
 <code><a href="../reference/RMlocdepGamma.html">RMlocdepGamma()</a></code> and also to plot the results with
-<code><a href="../reference/RMlocdepGammaPlot.html">RMlocdepGammaPlot()</a></code></p>
+<code><a href="../reference/RMlocdepGammaPlot.html">RMlocdepGammaPlot()</a></code>. Supplying the cutoff object switches
+the table from the asymptotic <em>p</em>-values shown above to
+multiplicity-corrected bootstrap ones, and adds a
+<code>gamma_pair</code> column: each pair is tested once, on the larger
+of its two rest-score directions, so both tables carry the same result
+for a pair.</p>
 <p>Item pairs flagged by both <span class="math inline">Q_3</span> and
 partial gamma are the strongest candidates for further inspection or
 possible item revision. Some argue for creating testlets by combining a
@@ -1372,64 +1454,64 @@ combinations). <strong>Bold</strong> rows are flagged.</caption>
 <tbody>
 <tr class="odd">
 <td align="left"><strong>q1</strong></td>
-<td align="right"><strong>0.2508</strong></td>
-<td align="right"><strong>0.1045</strong></td>
+<td align="right"><strong>0.251</strong></td>
+<td align="right"><strong>0.104</strong></td>
 <td align="left"><strong>B</strong></td>
 <td align="left"><strong>yes</strong></td>
 </tr>
 <tr class="even">
 <td align="left"><strong>q2</strong></td>
-<td align="right"><strong>0.4113</strong></td>
-<td align="right"><strong>0.0939</strong></td>
+<td align="right"><strong>0.411</strong></td>
+<td align="right"><strong>0.094</strong></td>
 <td align="left"><strong>C</strong></td>
 <td align="left"><strong>yes</strong></td>
 </tr>
 <tr class="odd">
 <td align="left">q3</td>
-<td align="right">0.0637</td>
-<td align="right">0.1031</td>
+<td align="right">0.064</td>
+<td align="right">0.103</td>
 <td align="left">A</td>
 <td align="left">no</td>
 </tr>
 <tr class="even">
 <td align="left">q4</td>
-<td align="right">-0.0923</td>
-<td align="right">0.1137</td>
+<td align="right">-0.092</td>
+<td align="right">0.114</td>
 <td align="left">A</td>
 <td align="left">no</td>
 </tr>
 <tr class="odd">
 <td align="left"><strong>q5</strong></td>
-<td align="right"><strong>-0.2857</strong></td>
-<td align="right"><strong>0.0925</strong></td>
+<td align="right"><strong>-0.286</strong></td>
+<td align="right"><strong>0.092</strong></td>
 <td align="left"><strong>B</strong></td>
 <td align="left"><strong>yes</strong></td>
 </tr>
 <tr class="even">
 <td align="left">q6</td>
-<td align="right">-0.1553</td>
-<td align="right">0.1048</td>
+<td align="right">-0.155</td>
+<td align="right">0.105</td>
 <td align="left">A</td>
 <td align="left">no</td>
 </tr>
 <tr class="odd">
 <td align="left">q7</td>
-<td align="right">-0.0747</td>
-<td align="right">0.1023</td>
+<td align="right">-0.075</td>
+<td align="right">0.102</td>
 <td align="left">A</td>
 <td align="left">no</td>
 </tr>
 <tr class="even">
 <td align="left">q8</td>
-<td align="right">-0.1118</td>
-<td align="right">0.1018</td>
+<td align="right">-0.112</td>
+<td align="right">0.102</td>
 <td align="left">A</td>
 <td align="left">no</td>
 </tr>
 <tr class="odd">
 <td align="left">q9</td>
-<td align="right">0.1804</td>
-<td align="right">0.0999</td>
+<td align="right">0.180</td>
+<td align="right">0.100</td>
 <td align="left">A</td>
 <td align="left">no</td>
 </tr>
@@ -1938,6 +2020,12 @@ Holland, Paul W., and Dorothy T. Thayer. 1986. <span>“Differential
 Johansson, Magnus. 2025. <span>“Detecting <span>Item</span>
 <span>Misfit</span> in <span>Rasch</span> <span>Models</span>.”</span>
 <em>Educational Methods &amp; Psychometrics</em> 3 (18). <a href="https://doi.org/10.61186/emp.2025.5" class="external-link">https://doi.org/10.61186/emp.2025.5</a>.
+</div>
+<div id="ref-johansson_simulationbased_2026" class="csl-entry">
+Johansson, Magnus. 2026. <span>“Simulation-Based Cutoffs for Conditional
+Item Fit in <span>Rasch</span> Models: <span>Iterations</span>,
+Multiplicity Correction, and Decision Stability.”</span>
+<em>PsyArXiv</em>, ahead of print. <a href="https://doi.org/10.31234/osf.io/7pqz4_v2" class="external-link">https://doi.org/10.31234/osf.io/7pqz4_v2</a>.
 </div>
 <div id="ref-kreiner_validity_2007" class="csl-entry">
 Kreiner, Svend. 2007. <span>“Validity and Objectivity:

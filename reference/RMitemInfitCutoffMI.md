@@ -56,7 +56,9 @@ RMitemInfitCutoffMI(
 - seed:
 
   Integer or `NULL`. Master random seed for reproducibility. A unique
-  per-imputation seed is derived from this value.
+  per-imputation seed is derived from this value. See
+  [easyRasch2-reproducibility](https://pgmj.github.io/easyRasch2/reference/easyRasch2-reproducibility.md)
+  for what this guarantees and how it interacts with `parallel`.
 
 - cutoff_method:
 
@@ -149,6 +151,16 @@ a warning. If all imputations fail, the function stops with an error.
 
 The `mice` package must be installed (it is in Suggests, not Imports).
 
+## Interval width under multiple imputation
+
+`hdci_width` defaults to `0.999` here, not to the `0.95` used by
+[`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md).
+[`RMitemInfitMI`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitMI.md)
+has no corrected-p-value path yet, so under imputation the interval is
+still the decision rule and keeps a width chosen for that job. Combining
+bootstrap p-values across imputations is planned but needs its own
+calibration, since Johansson (2026) covers complete data only.
+
 ## See also
 
 [`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md),
@@ -189,7 +201,7 @@ if (requireNamespace("mice", quietly = TRUE) &&
 }
 #> 
 #> 
-#> Table: Pooled MSQ values from 2 imputations (Rubin's rules). n = 200 respondents (missing values imputed, m = 2) per imputed dataset. Cutoff values based on 50 total simulation iterations across 2 imputations (99.9% HDCI). Flagged: overfit = infit below range (more predictable); underfit = above range (noisier).
+#> Table: Pooled MSQ values from 2 imputations (Rubin's rules). n = 200 respondents (missing values imputed, m = 2) per imputed dataset. Cutoff values based on 50 total simulation iterations across 2 imputations (99.9% HDCI). Flagged: overfit = infit below range; underfit = above range.
 #> 
 #> |Item  | Infit MSQ| Infit SE| Infit low| Infit high|Flagged | Relative location|
 #> |:-----|---------:|--------:|---------:|----------:|:-------|-----------------:|

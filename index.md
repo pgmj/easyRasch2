@@ -10,7 +10,7 @@ A central design choice is **simulation-based critical values** for
 various fit statistics. Rather than relying on rule-of-thumb cutoffs,
 most diagnostics are paired with a parametric-bootstrap function that
 generates an empirical null distribution from the fitted Rasch / PCM
-model and the observed sample.
+model and the observed sample (Johansson, 2025, 2026).
 
 The [Get
 Started](https://pgmj.github.io/easyRasch2/articles/easyRasch2.html)
@@ -22,7 +22,7 @@ the archived sibling package
 
 ## Statement of need
 
-A complete Rasch analysis requires many separate procedures — item fit,
+A complete Rasch analysis requires many separate procedures: item fit,
 local dependence, dimensionality, differential item functioning,
 reliability, targeting, and more. In R these are spread across packages
 with differing data formats, argument conventions, and output objects,
@@ -36,13 +36,14 @@ targeting, and the number of response categories.
 `easyRasch2` targets applied researchers and students validating rating
 scales and tests in health, education, and psychology using modern
 psychometric methods. It provides a single, consistently named interface
-across the whole workflow with publication-ready output, and — as its
-distinguishing feature — replaces rule-of-thumb cutoffs with
+across the whole workflow with publication-ready output. Its
+distinguishing feature is that it replaces rule-of-thumb cutoffs with
 sample-specific critical values obtained by parametric bootstrap from
-the fitted Rasch/PCM model (Johansson, 2025). Several methods, including
-the polytomous Martin-Löf test with Monte Carlo *p*-values (Christensen
-& Kreiner, 2007) and the bootstrap item-restscore test, are not
-available in other R packages.
+the fitted Rasch/PCM model (Johansson, 2025, 2026). Item fit and local
+dependence flag on a multiplicity-corrected bootstrap *p*-value. Several
+methods, including the polytomous Martin-Löf test with Monte Carlo
+*p*-values (Christensen & Kreiner, 2007) and the bootstrap
+item-restscore test, are not available in other R packages.
 
 ## Installation
 
@@ -74,9 +75,13 @@ remotes::install_github("pgmj/easyRasch2")
   and
   [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/reference/RMitemParameters.md))
   and for the plausible values behind the RMU reliability metric.
-- **Inference**: simulation-based cutoffs throughout, with optional
-  bootstrap *p*-values (`p_value = TRUE`) using Westfall–Young
-  family-wise correction (default) or FDR alternatives (Ferreira, 2024).
+- **Inference**: simulation-based cutoffs throughout. Item fit and local
+  dependence flag on multiplicity-corrected bootstrap *p*-values
+  whenever the full cutoff object is supplied, using Westfall–Young
+  family-wise correction (default) or FDR alternatives (Ferreira, 2024;
+  Johansson, 2026). Pass `p_value = FALSE` to flag against the simulated
+  interval instead, which tests every item or pair at once and so sets a
+  family-wise error rate of `1 - width^m` implicitly.
 - **Output**:
   [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html) for
   tables (Quarto-friendly), `ggplot2` for figures, and `"dataframe"`
@@ -90,8 +95,8 @@ remotes::install_github("pgmj/easyRasch2")
 ### Item fit
 
 - [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md)
-  — conditional infit MSQ; optional bootstrap *p*-values
-  (`p_value = TRUE`) with family-wise (Westfall–Young) or FDR
+  — conditional infit MSQ, flagged on multiplicity-corrected bootstrap
+  *p*-values with family-wise (Westfall–Young) or FDR
   multiple-comparison correction
 - [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md) +
   [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitPlot.md)
@@ -114,11 +119,11 @@ remotes::install_github("pgmj/easyRasch2")
   — Yen’s Q_3 residual correlations (CML/WLE by default,
   `estimator = "MML"` optional); table and plot share a `$matrix` (Q_3
   heatmap) / `$pairs` (per-pair observed-vs-simulated) structure;
-  optional per-pair bootstrap *p*-values
+  per-pair bootstrap *p*-values
 - [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGamma.md) +
   [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaCutoff.md) +
   [`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaPlot.md)
-  — partial-γ local dependence; optional per-pair bootstrap *p*-values
+  — partial-γ local dependence; per-pair bootstrap *p*-values
 
 ### Dimensionality / unidimensionality
 
@@ -209,6 +214,8 @@ set.seed(42)
 
 # Conditional item infit with simulation-based cutoffs
 simfit <- RMitemInfitCutoff(pcmdat2, iterations = 400)
+# Passing the full cutoff object flags on the Westfall-Young corrected
+# p-value. The 95% interval is reported alongside as a description.
 RMitemInfit(pcmdat2, cutoff = simfit)
 
 # Test of unidimensionality via posterior-predictive ordinal CFA
@@ -267,6 +274,9 @@ RMdifTree(pcmdat2, covariates = covs)
 - Johansson, M. (2025). Detecting item misfit in Rasch models.
   *Educational Methods & Psychometrics, 3*(18).
   <https://doi.org/10.61186/emp.2025.5>
+- Johansson, M. (2026). Simulation-based cutoffs for conditional item
+  fit in Rasch models: Iterations, multiplicity correction, and decision
+  stability. *PsyArXiv*. <https://doi.org/10.31234/osf.io/7pqz4_v2>
 - Kreiner, S. (2011). A note on item-restscore association in Rasch
   models. *Applied Psychological Measurement, 35*(7), 557–561.
   <https://doi.org/10.1177/0146621611410227>

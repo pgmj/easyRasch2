@@ -19,7 +19,7 @@ check, and the partial-gamma DIF magnitude is reported per item."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,7 @@ check, and the partial-gamma DIF magnitude is reported per item."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Conditional Item Characteristic Curves</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/v1.1.1/R/cicc_plot.R" class="external-link"><code>R/cicc_plot.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/R/cicc_plot.R" class="external-link"><code>R/cicc_plot.R</code></a></small>
       <div class="d-none name"><code>RMitemICCPlot.Rd</code></div>
     </div>
 
@@ -187,6 +187,13 @@ group boundaries exactly where you say via <code>score_breaks</code> (RASCHplot'
 mean total score. If the score distribution is too sparse to form
 <code>class_intervals</code> distinct bins, the quantile and width methods fall
 back to score-level points.</p>
+<p>The figure caption names the grouping that was actually used, which is
+not always the one requested. Quantile grouping forms fewer bins than
+asked for when total scores tie at the boundaries, equal-width and manual
+grouping can define intervals no respondent falls into, and both binned
+methods fall back to score level on a degenerate score distribution. The
+caption reports the realised number of groups, how many of them contain
+respondents when that is fewer, and any fall back.</p>
 <p><strong>Confidence intervals.</strong> Observed error bars use the normal
 approximation \(\bar{x}_l \pm z \sqrt{\mathrm{var}(x_l) / n_l}\) within
 each (group, interval) cell, clamped to the item's score range; cells with

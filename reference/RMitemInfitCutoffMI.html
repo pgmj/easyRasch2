@@ -15,7 +15,7 @@ uncertainty."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,7 +38,7 @@ uncertainty."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Simulation-Based Infit MSQ Cutoff Determination for Multiply Imputed Data</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/v1.1.1/R/infit_cutoff_mi.R" class="external-link"><code>R/infit_cutoff_mi.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/R/infit_cutoff_mi.R" class="external-link"><code>R/infit_cutoff_mi.R</code></a></small>
       <div class="d-none name"><code>RMitemInfitCutoffMI.Rd</code></div>
     </div>
 
@@ -97,7 +97,9 @@ imputed dataset (default <code>TRUE</code>). Passed to <code><a href="RMitemInfi
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Integer or <code>NULL</code>. Master random seed for reproducibility. A
-unique per-imputation seed is derived from this value.</p></dd>
+unique per-imputation seed is derived from this value. See
+<a href="easyRasch2-reproducibility.html">easyRasch2-reproducibility</a> for what this guarantees and how it
+interacts with <code>parallel</code>.</p></dd>
 
 
 <dt id="arg-cutoff-method">cutoff_method<a class="anchor" aria-label="anchor" href="#arg-cutoff-method"></a></dt>
@@ -174,6 +176,17 @@ warning. If all imputations fail, the function stops with an error.</p>
 <p>The <code>mice</code> package must be installed (it is in Suggests, not Imports).</p>
     </div>
     <div class="section level2">
+    <h2 id="interval-width-under-multiple-imputation">Interval width under multiple imputation<a class="anchor" aria-label="anchor" href="#interval-width-under-multiple-imputation"></a></h2>
+
+
+<p><code>hdci_width</code> defaults to <code>0.999</code> here, not to the <code>0.95</code> used by
+<code><a href="RMitemInfitCutoff.html">RMitemInfitCutoff</a></code>. <code><a href="RMitemInfitMI.html">RMitemInfitMI</a></code> has no
+corrected-p-value path yet, so under imputation the interval is still the
+decision rule and keeps a width chosen for that job. Combining bootstrap
+p-values across imputations is planned but needs its own calibration, since
+Johansson (2026) covers complete data only.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="RMitemInfitCutoff.html">RMitemInfitCutoff</a></code>, <code><a href="RMitemInfitMI.html">RMitemInfitMI</a></code>,
 <code><a href="RMitemInfitPlot.html">RMitemInfitPlot</a></code></p></div>
@@ -212,7 +225,7 @@ warning. If all imputations fail, the function stops with an error.</p>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Pooled MSQ values from 2 imputations (Rubin's rules). n = 200 respondents (missing values imputed, m = 2) per imputed dataset. Cutoff values based on 50 total simulation iterations across 2 imputations (99.9% HDCI). Flagged: overfit = infit below range (more predictable); underfit = above range (noisier).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Pooled MSQ values from 2 imputations (Rubin's rules). n = 200 respondents (missing values imputed, m = 2) per imputed dataset. Cutoff values based on 50 total simulation iterations across 2 imputations (99.9% HDCI). Flagged: overfit = infit below range; underfit = above range.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |Item  | Infit MSQ| Infit SE| Infit low| Infit high|Flagged | Relative location|</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |:-----|---------:|--------:|---------:|----------:|:-------|-----------------:|</span>

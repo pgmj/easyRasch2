@@ -16,7 +16,7 @@ RMlocdepQ3(
   cutoff = NULL,
   output = "kable",
   n_pairs = NULL,
-  p_value = FALSE,
+  p_value = NULL,
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
   alpha = 0.05,
   estimator = c("CML", "MML")
@@ -56,11 +56,17 @@ RMlocdepQ3(
 
 - p_value:
 
-  Logical. If `TRUE` (requires the full
+  Logical or `NULL`. When `TRUE` the per-pair table reports one-sided
+  bootstrap p-values (`p_q3`, `padj_q3`) and flags `above` pairs (only)
+  on `padj_q3 < alpha` instead of on the expected range. `NULL`, the
+  default, means `TRUE` when `cutoff` is the full
   [`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
-  object), the per-pair table also reports one-sided bootstrap p-values
-  (`p_q3`, `padj_q3`) and flags `above` pairs (only) on
-  `padj_q3 < alpha` instead of the expected range. Default `FALSE`.
+  object and `FALSE` otherwise, so a numeric cutoff or no cutoff keeps
+  the interval. Pass `FALSE` for the pre-1.2.0 behaviour. The interval
+  is a description of where a pair's \\Q_3\\ is expected to fall and
+  makes a poor decision rule, since its width sets a family-wise error
+  rate of `1 - width^m` over all \\m\\ pairs at once, and pairs grow
+  quadratically in items (Johansson, 2026).
 
 - correction:
 
@@ -159,10 +165,16 @@ local dependence. The pair statistic is studentised by the bootstrap
 mean and SD; the marginal p-value is `(1 + #{Q3* >= Q3}) / (B + 1)`, and
 `correction` applies the family-wise (Westfall-Young step-down) or FDR
 adjustment across the \\k(k-1)/2\\ pairs. As for item fit, the
-family-wise correction is liberal when the simulation is small, so \>=
-1000 `iterations` in
-[`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md)
-are recommended (a warning is issued otherwise).
+family-wise correction is liberal below 400 `iterations` in
+[`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md),
+which is reported once per session, and between 400 and 1000 the table
+caption notes that decisions remain somewhat seed-dependent. A false
+discovery rate correction needs far more iterations than the family-wise
+one, because a bootstrap p-value cannot fall below `1/(B + 1)` and
+Benjamini-Hochberg compares the smallest against `alpha/m`. Over the 36
+pairs of a nine-item scale that takes 720 iterations, and over the 190
+pairs of a twenty-item scale 3799, against 19 for Westfall-Young
+whatever the number of pairs.
 
 ## Multiple comparisons
 
@@ -196,6 +208,11 @@ Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate'
 number of hypotheses simultaneously. *Journal of Statistical Theory and
 Practice, 19*(6).
 [doi:10.1007/s42519-024-00412-4](https://doi.org/10.1007/s42519-024-00412-4)
+
+Johansson, M. (2026). Simulation-based cutoffs for conditional item fit
+in Rasch models: Iterations, multiplicity correction, and decision
+stability. *PsyArXiv*.
+[doi:10.31234/osf.io/7pqz4_v2](https://doi.org/10.31234/osf.io/7pqz4_v2)
 
 ## Examples
 
@@ -245,12 +262,17 @@ if (requireNamespace("ggdist", quietly = TRUE)) {
   RMlocdepQ3(sim_data, cutoff = cutoff_res, n_pairs = 5, p_value = TRUE,
              output = "dataframe")$pairs
 }
-#> Warning: Bootstrap p-values are based on only 50 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations >= 1000 in RMlocdepQ3Cutoff() for reliable p-values.
-#>   Item1  Item2      Observed        Low       High       p_q3   padj_q3 Flagged
-#> 1 Item4  Item8 -0.2765225048 -0.2700737 0.01430429 1.00000000 1.0000000        
-#> 2 Item4  Item7  0.0285193666 -0.2640942 0.01619448 0.01960784 0.4509804        
-#> 3 Item5  Item9 -0.2199294805 -0.2160826 0.03315679 1.00000000 1.0000000        
-#> 4 Item4  Item6  0.0279341896 -0.2592712 0.02734526 0.01960784 0.5098039        
-#> 5 Item3 Item10  0.0005837293 -0.2430223 0.02814042 0.05882353 0.8823529        
+#>   Item1  Item2      Observed        Low         High       p_q3   padj_q3
+#> 1 Item4  Item8 -0.2765225048 -0.2377678  0.009937381 1.00000000 1.0000000
+#> 2 Item4  Item7  0.0285193666 -0.2183735  0.016194476 0.01960784 0.4509804
+#> 3 Item5  Item9 -0.2199294805 -0.2001671  0.032761639 1.00000000 1.0000000
+#> 4 Item4  Item6  0.0279341896 -0.2592712 -0.003896209 0.01960784 0.5098039
+#> 5 Item3 Item10  0.0005837293 -0.2339065  0.003444371 0.05882353 0.8823529
+#>   Flagged
+#> 1        
+#> 2        
+#> 3        
+#> 4        
+#> 5        
 # }
 ```

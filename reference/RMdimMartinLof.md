@@ -31,7 +31,9 @@ RMdimMartinLof(
 - data:
 
   A data.frame or matrix of item responses (0-based, non-negative
-  integers). Rows with any `NA` are dropped.
+  integers). Complete cases only: rows with any `NA` on the items named
+  in `partition` are dropped. Missingness on items outside `partition`
+  is ignored.
 
 - partition:
 
@@ -88,7 +90,9 @@ RMdimMartinLof(
   Integer or `NULL`. Random seed for reproducibility. Items are
   processed internally in a fixed (alphabetical) order, so the same seed
   reproduces the same p-value regardless of how the data's columns are
-  arranged.
+  arranged and regardless of the `parallel` setting. See
+  [easyRasch2-reproducibility](https://pgmj.github.io/easyRasch2/reference/easyRasch2-reproducibility.md)
+  for what this guarantees and how it interacts with `parallel`.
 
 ## Value
 
@@ -135,7 +139,17 @@ A list with components:
 
 - `sample_n`:
 
-  Number of complete cases analysed.
+  Number of complete cases analysed, counted over the items in
+  `partition` only.
+
+- `sample_n_total`:
+
+  Number of respondents in the raw input data, before the complete-case
+  filter.
+
+- `sample_has_na`:
+
+  Logical. Whether the partitioned items contained any missing values.
 
 - `n_items`:
 
@@ -200,13 +214,21 @@ CML fits use
 (2007): (a) sample N total scores from the empirical score distribution
 \\n_t/N\\; (b) for each sampled score, sample an item-response vector
 from the conditional distribution \\p(x \mid t, \hat{\epsilon})\\ given
-by eq. 4 of the paper. For dichotomous data the fast algorithm of
-Christensen & Kreiner (2007, p. 23) is used (sample without replacement
-weighted by item easinesses). For polytomous data the recursive
-\\\gamma\\-function approach is used, with each item's response sampled
-conditional on the remaining items' joint score distribution (computed
-via
-[`psychotools::elementary_symmetric_functions()`](https://rdrr.io/pkg/psychotools/man/elementary_symmetric_functions.html)).
+by eq. 4 of the paper. Step (b) uses the recursive \\\gamma\\-function
+algorithm (Andersen, 1995, eq. 15.22 and 15.27) for dichotomous and
+polytomous items alike: items are filled in from the last backwards,
+each conditional on the score still to be distributed over the items
+before it. The nested \\\gamma^{(1)}, \ldots, \gamma^{(n)}\\ depend only
+on the item parameters, which are fixed across the run, so the recursion
+is evaluated once rather than per person.
+
+The faster dichotomous shortcut described by Christensen & Kreiner
+(2007, p. 23), choosing \\s\\ items one at a time with probabilities
+\\\phi_i / \sum\_{\mathrm{remaining}} \phi\\, is deliberately *not*
+used: successive sampling of that kind follows a Wallenius-type
+distribution, whereas the Rasch conditional distribution weights a set
+of items by the *product* of their easinesses. See the note on
+validation below.
 
 Iterations that fail (e.g., simulated dataset has an empty category for
 an item) are silently dropped.
@@ -217,7 +239,38 @@ likelihood function (Tjur, 1982) with the empirical score distribution
 as a non-parametric estimate of the latent distribution, so no
 distributional assumption about \\\theta\\ is needed.
 
+**Missing data.** Complete cases only. The statistic is built from the
+joint table of subscores, so a respondent needs a defined subscore on
+every subscale; there is no partial-missingness path, and the SAS macro
+this implementation was validated against has the same requirement. Rows
+with `NA` are dropped *after* items outside `partition` have been
+removed, so missingness on items the test does not use costs no
+respondents. `sample_n` reports the respondents analysed and
+`sample_n_total` the raw input rows.
+
+**Validation.** The statistic, the conditional log-likelihoods, the
+conditional sampler and the expected counts and residuals of
+[`RMdimMartinLofResiduals`](https://pgmj.github.io/easyRasch2/reference/RMdimMartinLofResiduals.md)
+have been checked against the `pml` SAS macro (Christensen, 2004),
+kindly shared by Karl Bang Christensen. The statistic and the residual
+table agree with the macro to numerical precision. The sampler follows
+the macro's recursion rather than the dichotomous shortcut published in
+Christensen & Kreiner (2007).
+
 ## References
+
+Andersen, E. B. (1995). Polytomous Rasch models and their estimation. In
+G. H. Fischer & I. W. Molenaar (Eds.), *Rasch models: Foundations,
+recent developments, and applications* (pp. 271-291). Springer-Verlag.
+
+Besag, J., & Clifford, P. (1991). Sequential Monte Carlo p-values.
+*Biometrika, 78*(2), 301-304.
+[doi:10.1093/biomet/78.2.301](https://doi.org/10.1093/biomet/78.2.301)
+
+Christensen, K. B. (2004). *pml: A SAS macro for testing
+unidimensionality in polytomous Rasch models* (Technical note). National
+Institute of Occupational Health, Denmark, and Department of
+Biostatistics, University of Copenhagen.
 
 Christensen, K. B., Bjorner, J. B., Kreiner, S., & Petersen, J. H.
 (2002). Testing unidimensionality in polytomous Rasch models.
@@ -228,10 +281,6 @@ Christensen, K. B., & Kreiner, S. (2007). A Monte Carlo approach to
 unidimensionality testing in polytomous Rasch models. *Applied
 Psychological Measurement, 31*(1), 20-30.
 [doi:10.1177/0146621605286204](https://doi.org/10.1177/0146621605286204)
-
-Besag, J., & Clifford, P. (1991). Sequential Monte Carlo p-values.
-*Biometrika, 78*(2), 301-304.
-[doi:10.1093/biomet/78.2.301](https://doi.org/10.1093/biomet/78.2.301)
 
 ## See also
 
@@ -265,7 +314,7 @@ RMdimMartinLof(dat,
 #> [1] 192.632
 #> 
 #> $p_value
-#> [1] 0.5940594
+#> [1] 0.5544554
 #> 
 #> $p_value_floor
 #> [1] 0.00990099
@@ -293,6 +342,12 @@ RMdimMartinLof(dat,
 #> $sample_n
 #> [1] 400
 #> 
+#> $sample_n_total
+#> [1] 400
+#> 
+#> $sample_has_na
+#> [1] FALSE
+#> 
 #> $n_items
 #> [1] 8
 #> 
@@ -303,19 +358,19 @@ RMdimMartinLof(dat,
 #> [1] NA
 #> 
 #> $T_rep
-#>   [1] 217.3739 156.9169 178.9840 211.2337 190.9902 197.9099 200.7671 175.4362
-#>   [9] 155.5236 213.5078 209.8393 212.2892 224.7373 200.0692 213.2293 218.6514
-#>  [17] 215.9354 185.6733 191.6138 184.7622 196.8899 193.1802 201.9903 196.4503
-#>  [25] 186.3135 185.5979 210.9303 178.3912 176.9220 198.5879 169.1423 197.1674
-#>  [33] 173.3412 191.4246 195.2852 226.3838 189.8889 182.4467 182.4824 204.9755
-#>  [41] 210.8322 205.7216 183.0040 169.7485 180.3166 206.8898 173.9285 189.8289
-#>  [49] 200.0002 223.2624 182.1958 231.5607 193.5054 193.7613 186.0160 192.5819
-#>  [57] 167.7840 182.1707 163.5399 166.4012 214.3525 184.4794 201.9769 206.4572
-#>  [65] 166.9049 185.7820 196.9688 208.9551 226.8527 194.6176 191.9582 213.7848
-#>  [73] 202.4612 197.0988 182.6484 166.8774 227.3283 216.5728 211.3303 194.3861
-#>  [81] 190.0304 205.6361 196.1770 218.5077 176.4973 211.8179 202.2630 202.4776
-#>  [89] 206.8426 210.3141 198.0656 173.7472 192.8587 205.2612 201.4721 180.2346
-#>  [97] 198.2777 188.6162 224.2046 204.4681
+#>   [1] 203.1150 191.4289 205.5340 200.9726 186.1371 211.4777 208.6398 246.5549
+#>   [9] 235.7000 209.6456 242.6280 174.6350 181.3583 190.5831 212.3751 201.5643
+#>  [17] 166.3843 199.5976 211.6393 180.1643 186.0512 173.5937 187.3779 205.7209
+#>  [25] 187.0434 217.6454 178.8351 198.6360 210.9413 186.0347 182.6325 190.8734
+#>  [33] 191.0037 172.3550 205.6651 183.5835 172.5252 199.6062 213.2993 214.1189
+#>  [41] 200.0631 197.1147 206.1826 186.1101 193.9344 169.4966 177.8228 215.9291
+#>  [49] 194.2733 196.1078 183.3993 195.3645 172.1005 187.8224 162.7854 201.0410
+#>  [57] 214.2024 206.7241 196.1481 188.2455 184.4610 203.6818 161.3601 181.7351
+#>  [65] 175.0302 198.2537 210.1757 195.7541 206.0021 214.4578 195.7307 199.5314
+#>  [73] 192.2892 175.0420 184.2887 186.3762 177.6986 234.1348 184.9654 201.5393
+#>  [81] 164.3802 204.3653 196.8265 207.3065 162.1215 210.6383 225.2370 227.8416
+#>  [89] 192.4692 172.7222 200.3062 205.6332 214.2759 236.0662 186.4794 200.7419
+#>  [97] 177.7558 210.2142 185.6626 183.6979
 #> 
 #> $wle_scores
 #>     subscale_1_wle subscale_2_wle
@@ -735,13 +790,13 @@ RMdimMartinLof(dat,
 #> [1] 192.632
 #> 
 #> $p_value
-#> [1] 0.5531915
+#> [1] 0.5652174
 #> 
 #> $p_value_floor
-#> [1] 0.0212766
+#> [1] 0.02173913
 #> 
 #> $actual_iterations
-#> [1] 46
+#> [1] 45
 #> 
 #> $rejected
 #> [1] FALSE
@@ -763,6 +818,12 @@ RMdimMartinLof(dat,
 #> $sample_n
 #> [1] 400
 #> 
+#> $sample_n_total
+#> [1] 400
+#> 
+#> $sample_has_na
+#> [1] FALSE
+#> 
 #> $n_items
 #> [1] 8
 #> 
@@ -773,12 +834,12 @@ RMdimMartinLof(dat,
 #> [1] 25
 #> 
 #> $T_rep
-#>  [1] 217.3739 156.9169 178.9840 211.2337 190.9902 197.9099 200.7671 175.4362
-#>  [9] 155.5236 213.5078 209.8393 212.2892 224.7373 200.0692 213.2293 218.6514
-#> [17] 215.9354 185.6733 191.6138 184.7622 196.8899 193.1802 201.9903 196.4503
-#> [25] 186.3135 185.5979 210.9303 178.3912 176.9220 198.5879 169.1423 197.1674
-#> [33] 173.3412 191.4246 195.2852 226.3838 189.8889 182.4467 182.4824 204.9755
-#> [41] 210.8322 205.7216 183.0040 169.7485 180.3166 206.8898
+#>  [1] 203.1150 191.4289 205.5340 200.9726 186.1371 211.4777 208.6398 246.5549
+#>  [9] 235.7000 209.6456 242.6280 174.6350 181.3583 190.5831 212.3751 201.5643
+#> [17] 166.3843 199.5976 211.6393 180.1643 186.0512 173.5937 187.3779 205.7209
+#> [25] 187.0434 217.6454 178.8351 198.6360 210.9413 186.0347 182.6325 190.8734
+#> [33] 191.0037 172.3550 205.6651 183.5835 172.5252 199.6062 213.2993 214.1189
+#> [41] 200.0631 197.1147 206.1826 186.1101 193.9344
 #> 
 #> $wle_scores
 #>     subscale_1_wle subscale_2_wle

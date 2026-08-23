@@ -12,13 +12,13 @@ item pair, providing empirical critical values.
 ``` r
 RMlocdepGammaCutoff(
   data,
-  iterations = 250,
+  iterations = 400,
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,
   seed = NULL,
   cutoff_method = "hdci",
-  hdci_width = 0.99
+  hdci_width = 0.95
 )
 ```
 
@@ -32,7 +32,10 @@ RMlocdepGammaCutoff(
 
 - iterations:
 
-  Integer. Number of simulation iterations (default 250).
+  Integer. Number of simulation iterations (default 400, was 250 before
+  1.2.0). 400 is the calibrated floor for the Westfall-Young correction
+  (Johansson, 2026) and the count a 95\\ converge. Use 1000 to 2000 for
+  a final analysis.
 
 - parallel:
 
@@ -52,7 +55,9 @@ RMlocdepGammaCutoff(
 
 - seed:
 
-  Integer or `NULL`. Random seed for reproducibility.
+  Integer or `NULL`. Random seed for reproducibility. See
+  [easyRasch2-reproducibility](https://pgmj.github.io/easyRasch2/reference/easyRasch2-reproducibility.md)
+  for what this guarantees and how it interacts with `parallel`.
 
 - cutoff_method:
 
@@ -65,7 +70,10 @@ RMlocdepGammaCutoff(
 - hdci_width:
 
   Numeric. Width of the HDCI when `cutoff_method = "hdci"`. Default is
-  `0.99` (99\\ `cutoff_method = "quantile"`.
+  `0.95` (95\\ describes where a fitting pair's coefficient is expected
+  to fall and is no longer the default decision rule, so the width is
+  chosen to converge at the default iteration count rather than to imply
+  an error rate. Ignored when `cutoff_method = "quantile"`.
 
 ## Value
 
@@ -128,8 +136,13 @@ For each simulation iteration the function:
     [`psychotools::rrm()`](https://rdrr.io/pkg/psychotools/man/rrm.html)
     or polytomous via an internal partial credit simulator).
 
-3.  Computes partial gamma LD statistics via
-    [`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html).
+3.  Computes partial gamma for every item pair in the canonical
+    rest-score direction. The coefficients are identical to those of
+    [`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html),
+    but are computed by a vectorised internal, since `iarm` also derives
+    the asymptotic standard error and confidence interval that a
+    simulated null does not need and costs roughly two orders of
+    magnitude more per iteration.
 
 Because the data are simulated under the Rasch model, items are locally
 independent by construction. The distribution of partial gamma values
@@ -182,50 +195,50 @@ if (requireNamespace("iarm", quietly = TRUE) &&
   cutoff_res$pair_cutoffs
 }
 #>    Item1  Item2  gamma_low gamma_high
-#> 1  Item1  Item2 -0.4246238  0.3198758
-#> 2  Item1  Item3 -0.4725291  0.4400000
-#> 3  Item1  Item4 -0.4455579  0.3262195
-#> 4  Item1  Item5 -0.4192593  0.4463083
-#> 5  Item1  Item6 -0.3890363  0.3372093
-#> 6  Item1  Item7 -0.3239512  0.4533333
-#> 7  Item1  Item8 -0.4260870  0.4747872
-#> 8  Item1  Item9 -0.3201970  0.3996248
-#> 9  Item1 Item10 -0.3210702  0.3171954
-#> 10 Item2  Item3 -0.3423763  0.3693694
-#> 11 Item2  Item4 -0.2822086  0.4506687
-#> 12 Item2  Item5 -0.3933887  0.4179104
-#> 13 Item2  Item6 -0.3816425  0.3362769
-#> 14 Item2  Item7 -0.5614692  0.3977456
-#> 15 Item2  Item8 -0.4305085  0.3895771
-#> 16 Item2  Item9 -0.4109589  0.3747739
-#> 17 Item2 Item10 -0.3531353  0.3608790
-#> 18 Item3  Item4 -0.3698551  0.3174603
-#> 19 Item3  Item5 -0.4548193  0.4344904
-#> 20 Item3  Item6 -0.4166667  0.4460015
-#> 21 Item3  Item7 -0.4143335  0.4424779
-#> 22 Item3  Item8 -0.4346727  0.4184874
-#> 23 Item3  Item9 -0.3793103  0.3470952
-#> 24 Item3 Item10 -0.3508501  0.4581142
-#> 25 Item4  Item5 -0.3603667  0.4174067
-#> 26 Item4  Item6 -0.3335321  0.4556213
-#> 27 Item4  Item7 -0.3969336  0.3440059
-#> 28 Item4  Item8 -0.3689320  0.3484576
-#> 29 Item4  Item9 -0.3971429  0.3337701
-#> 30 Item4 Item10 -0.3641851  0.3455481
-#> 31 Item5  Item6 -0.3874426  0.3315698
-#> 32 Item5  Item7 -0.4620253  0.4496595
-#> 33 Item5  Item8 -0.3712256  0.4384670
-#> 34 Item5  Item9 -0.3704415  0.4069529
-#> 35 Item5 Item10 -0.4049501  0.3196481
-#> 36 Item6  Item7 -0.4504065  0.3748283
-#> 37 Item6  Item8 -0.2495922  0.3668176
-#> 38 Item6  Item9 -0.3822401  0.3897638
-#> 39 Item6 Item10 -0.3070326  0.4840983
-#> 40 Item7  Item8 -0.4427245  0.3660965
-#> 41 Item7  Item9 -0.3649123  0.3639609
-#> 42 Item7 Item10 -0.3774802  0.2980132
-#> 43 Item8  Item9 -0.4102012  0.3160813
-#> 44 Item8 Item10 -0.4171975  0.3995774
-#> 45 Item9 Item10 -0.3581972  0.3491311
+#> 1  Item1  Item2 -0.2777321  0.3198758
+#> 2  Item1  Item3 -0.2571429  0.3843537
+#> 3  Item1  Item4 -0.2265372  0.3262195
+#> 4  Item1  Item5 -0.3109244  0.3537519
+#> 5  Item1  Item6 -0.2680723  0.3297003
+#> 6  Item1  Item7 -0.2089041  0.2947559
+#> 7  Item1  Item8 -0.3167702  0.3052264
+#> 8  Item1  Item9 -0.2711268  0.3800000
+#> 9  Item1 Item10 -0.2714777  0.2960000
+#> 10 Item2  Item3 -0.2605364  0.3693694
+#> 11 Item2  Item4 -0.2141653  0.3376906
+#> 12 Item2  Item5 -0.1967865  0.4179104
+#> 13 Item2  Item6 -0.3203540  0.2933912
+#> 14 Item2  Item7 -0.3580264  0.4016620
+#> 15 Item2  Item8 -0.2684564  0.3580705
+#> 16 Item2  Item9 -0.3421927  0.2688498
+#> 17 Item2 Item10 -0.2885662  0.2979177
+#> 18 Item3  Item4 -0.2500000  0.3216561
+#> 19 Item3  Item5 -0.2911392  0.2585670
+#> 20 Item3  Item6 -0.3357143  0.3543860
+#> 21 Item3  Item7 -0.3416537  0.3750000
+#> 22 Item3  Item8 -0.3453355  0.3333333
+#> 23 Item3  Item9 -0.2324723  0.3308271
+#> 24 Item3 Item10 -0.2238806  0.4440559
+#> 25 Item4  Item5 -0.2923077  0.3902848
+#> 26 Item4  Item6 -0.2087912  0.4170854
+#> 27 Item4  Item7 -0.3563636  0.2890365
+#> 28 Item4  Item8 -0.2226402  0.3563579
+#> 29 Item4  Item9 -0.3491311  0.2613241
+#> 30 Item4 Item10 -0.2740741  0.3381555
+#> 31 Item5  Item6 -0.2629969  0.3025335
+#> 32 Item5  Item7 -0.2527472  0.3256151
+#> 33 Item5  Item8 -0.3303965  0.3283358
+#> 34 Item5  Item9 -0.2671233  0.3651877
+#> 35 Item5 Item10 -0.2531876  0.3196481
+#> 36 Item6  Item7 -0.2467190  0.3983051
+#> 37 Item6  Item8 -0.2130584  0.3502235
+#> 38 Item6  Item9 -0.2437886  0.3966102
+#> 39 Item6 Item10 -0.2382609  0.3498350
+#> 40 Item7  Item8 -0.3460803  0.2953216
+#> 41 Item7  Item9 -0.2693498  0.3362319
+#> 42 Item7 Item10 -0.2040201  0.3078261
+#> 43 Item8  Item9 -0.2593918  0.3160813
+#> 44 Item8 Item10 -0.2667877  0.3750000
+#> 45 Item9 Item10 -0.2635379  0.3019197
 # }
 ```

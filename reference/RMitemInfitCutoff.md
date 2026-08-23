@@ -17,7 +17,7 @@ RMitemInfitCutoff(
   verbose = FALSE,
   seed = NULL,
   cutoff_method = "hdci",
-  hdci_width = 0.999,
+  hdci_width = 0.95,
   dgp = c("resample", "conditional")
 )
 ```
@@ -52,7 +52,9 @@ RMitemInfitCutoff(
 
 - seed:
 
-  Integer or `NULL`. Random seed for reproducibility.
+  Integer or `NULL`. Random seed for reproducibility. See
+  [easyRasch2-reproducibility](https://pgmj.github.io/easyRasch2/reference/easyRasch2-reproducibility.md)
+  for what this guarantees and how it interacts with `parallel`.
 
 - cutoff_method:
 
@@ -65,7 +67,19 @@ RMitemInfitCutoff(
 - hdci_width:
 
   Numeric. Width of the HDCI when `cutoff_method = "hdci"`. Default is
-  `0.999` (99.9% HDCI). Ignored when `cutoff_method = "quantile"`.
+  `0.95` (95% HDCI). Ignored when `cutoff_method = "quantile"`.
+
+  The interval is a **description** of where a fitting item's statistic
+  is expected to fall, not a decision rule. Flagging every item outside
+  a width-`w` interval tests all `k` items at once, so the family-wise
+  error rate is `1 - w^k`, which is 37% for a 95% interval over nine
+  items. Decisions should come from the corrected p-value instead
+  ([`RMitemInfit`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md)
+  with `p_value = NULL` and the full object returned here). The default
+  was `0.999` up to and including version 1.1.1, which needs roughly
+  5000 iterations before the interval reaches its stated width; `0.95`
+  reaches it by about 1000, so the band shown to readers means close to
+  what it says (Johansson, 2026).
 
 - dgp:
 
@@ -95,7 +109,13 @@ A list with components:
 
 - `actual_iterations`:
 
-  Number of successful iterations.
+  Number of successful iterations. Everything downstream rests on this
+  rather than on `iterations`, so it is the number to report.
+
+- `requested_iterations`:
+
+  The `iterations` argument, kept so callers can tell how many simulated
+  datasets were discarded.
 
 - `sample_n`:
 
@@ -147,6 +167,17 @@ Parallel processing is provided by the `mirai` package (optional).
 Install it with `install.packages("mirai")` to enable parallelisation.
 
 The `iarm` package must be installed (it is in Suggests, not Imports).
+
+## References
+
+Johansson, M. (2025). Detecting item misfit in Rasch models.
+*Educational Methods & Psychometrics, 3*(18).
+[doi:10.61186/emp.2025.5](https://doi.org/10.61186/emp.2025.5)
+
+Johansson, M. (2026). Simulation-based cutoffs for conditional item fit
+in Rasch models: Iterations, multiplicity correction, and decision
+stability. *PsyArXiv*.
+[doi:10.31234/osf.io/7pqz4_v2](https://doi.org/10.31234/osf.io/7pqz4_v2)
 
 ## See also
 

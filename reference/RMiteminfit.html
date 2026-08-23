@@ -11,7 +11,7 @@ mean person location."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,7 +34,7 @@ mean person location."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Conditional Item Infit MSQ</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/v1.1.1/R/conditional_infit.R" class="external-link"><code>R/conditional_infit.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/R/conditional_infit.R" class="external-link"><code>R/conditional_infit.R</code></a></small>
       <div class="d-none name"><code>RMiteminfit.Rd</code></div>
     </div>
 
@@ -49,7 +49,7 @@ mean person location.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RMitemInfit</span><span class="op">(</span></span>
 <span>  <span class="va">data</span>,</span>
 <span>  cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  p_value <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  p_value <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  correction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fwer"</span>, <span class="st">"fdr_bh"</span>, <span class="st">"fdr_by"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  output <span class="op">=</span> <span class="st">"kable"</span>,</span>
@@ -79,19 +79,33 @@ have columns <code>Item</code>, <code>infit_low</code>, and <code>infit_high</co
 <code>outfit_high</code> when <code>statistic = "outfit"</code>).
 When provided, adds columns <code>Infit_low</code>, <code>Infit_high</code>, and <code>Flagged</code>
 to the result. <code>Flagged</code> labels the misfit direction: <code>"overfit"</code>
-(infit below the range – more predictable than the model expects),
-<code>"underfit"</code> (above the range – noisier than expected), or <code>""</code> (within
+(infit below the range),
+<code>"underfit"</code> (above the range), or <code>""</code> (within
 range, no misfit).</p></li>
 </ul></dd>
 
 
 <dt id="arg-p-value">p_value<a class="anchor" aria-label="anchor" href="#arg-p-value"></a></dt>
-<dd><p>Logical. If <code>TRUE</code>, bootstrap p-values are computed from the
-simulated null distribution and added to the output. This requires
-<code>cutoff</code> to be the <strong>full</strong> <code><a href="RMitemInfitCutoff.html">RMitemInfitCutoff</a></code> object (which
-carries the per-item simulated values in its <code>$results</code> element); the
-summarised <code>$item_cutoffs</code> data.frame is not sufficient. Default <code>FALSE</code>,
-in which case behaviour is unchanged.</p></dd>
+<dd><p>Logical or <code>NULL</code>. Whether to compute bootstrap p-values
+from the simulated null distribution and flag on them.</p>
+<p><code>NULL</code> (the default) means <strong>use them when they are available</strong>: <code>TRUE</code>
+when <code>cutoff</code> is the full <code><a href="RMitemInfitCutoff.html">RMitemInfitCutoff</a></code> object, which
+carries the per-item simulated values in its <code>$results</code> element, and
+<code>FALSE</code> when <code>cutoff</code> is <code>NULL</code> or the summarised <code>$item_cutoffs</code>
+data.frame, neither of which can support a p-value. Explicit <code>TRUE</code> with
+an insufficient <code>cutoff</code> is an error rather than a silent downgrade.</p>
+<p>With <code>FALSE</code>, items are flagged against the interval instead, and a
+one-time message reports the family-wise error rate that implies. The
+interval describes where a fitting item's statistic is expected to fall.
+Using it as a decision rule tests all <code>k</code> items at once, so its width
+sets a family-wise error rate of <code>1 - width^k</code>, which is 37% for the
+default 95% interval over nine items. The corrected p-value targets
+<code>alpha</code> directly and needs far fewer iterations to do it (Johansson,
+2026).</p>
+<p>Up to and including version 1.1.1 the default was <code>FALSE</code>, so <code>Flagged</code>
+came from the interval. Existing scripts that pass the full cutoff object
+will now flag on the corrected p-value instead and may report different
+items.</p></dd>
 
 
 <dt id="arg-correction">correction<a class="anchor" aria-label="anchor" href="#arg-correction"></a></dt>
@@ -223,6 +237,9 @@ of hypotheses simultaneously. <em>Journal of Statistical Theory and Practice,
 19</em>(6). <a href="https://doi.org/10.1007/s42519-024-00412-4" class="external-link">doi:10.1007/s42519-024-00412-4</a></p>
 <p>Westfall, P. H., &amp; Young, S. S. (1993). <em>Resampling-Based Multiple Testing</em>.
 Wiley.</p>
+<p>Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
+Rasch models: Iterations, multiplicity correction, and decision stability.
+<em>PsyArXiv</em>. <a href="https://doi.org/10.31234/osf.io/7pqz4_v2" class="external-link">doi:10.31234/osf.io/7pqz4_v2</a></p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -266,14 +283,17 @@ Wiley.</p>
 <span class="r-in"><span>                statistic <span class="op">=</span> <span class="st">"outfit"</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="op">}</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations &gt;= 1000 in RMitemInfitCutoff() for reliable p-values.</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations &gt;= 1000 in RMitemInfitCutoff() for reliable p-values.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Bootstrap p-values are based on 100 iterations, below the calibrated floor of 400.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> Below 400 the Westfall-Young correction is mildly liberal under the null, so the family-wise error rate is above the nominal level.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> See Johansson (2026), doi:10.31234/osf.io/7pqz4_v2.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> Raise `iterations` in RMitemInfitCutoff().</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">This message is displayed once per session.</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>    Item Outfit_MSQ Outfit_low Outfit_high  p_outfit padj_outfit Flagged</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item1  1.1294533      0.558       2.040 0.3762376   0.7722772        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2  0.9381845      0.547       1.615 0.7128713   0.7821782        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item3  0.8125048      0.627       1.440 0.3465347   0.6534653        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4  1.2755158      0.525       1.535 0.1683168   0.4851485        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item5  0.9035259      0.517       2.357 0.5742574   0.7821782        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 Item1  1.1294533      0.558       1.366 0.3762376   0.7722772        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Item2  0.9381845      0.661       1.399 0.7128713   0.7821782        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 Item3  0.8125048      0.694       1.381 0.3465347   0.6534653        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 Item4  1.2755158      0.583       1.379 0.1683168   0.4851485        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Item5  0.9035259      0.517       1.457 0.5742574   0.7821782        </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Relative_location</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1        0.03566442</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2       -0.47593330</span>

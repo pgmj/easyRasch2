@@ -12,13 +12,13 @@ empirical percentiles.
 ``` r
 RMlocdepQ3Cutoff(
   data,
-  iterations = 500,
+  iterations = 400,
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,
   seed = NULL,
   cutoff_method = "hdci",
-  hdci_width = 0.99,
+  hdci_width = 0.95,
   estimator = c("CML", "MML"),
   dgp = c("resample", "conditional")
 )
@@ -33,7 +33,9 @@ RMlocdepQ3Cutoff(
 
 - iterations:
 
-  Integer. Number of simulation iterations (default 500).
+  Integer. Number of simulation iterations (default 400). 400 is the
+  calibrated floor for the Westfall-Young correction (Johansson, 2026)
+  and the count a 95\\ 1000 to 2000 for a final analysis.
 
 - parallel:
 
@@ -53,7 +55,9 @@ RMlocdepQ3Cutoff(
 
 - seed:
 
-  Integer or `NULL`. Random seed for reproducibility.
+  Integer or `NULL`. Random seed for reproducibility. See
+  [easyRasch2-reproducibility](https://pgmj.github.io/easyRasch2/reference/easyRasch2-reproducibility.md)
+  for what this guarantees and how it interacts with `parallel`.
 
 - cutoff_method:
 
@@ -68,7 +72,11 @@ RMlocdepQ3Cutoff(
 - hdci_width:
 
   Numeric in (0, 1). Width of the HDCI when `cutoff_method = "hdci"`.
-  Default `0.99`. Ignored when `cutoff_method = "quantile"`.
+  Default `0.95`, was `0.99` before 1.2.0. The interval describes where
+  a fitting pair's \\Q_3\\ is expected to fall and is no longer the
+  default decision rule, so the width is chosen to converge at the
+  default iteration count rather than to imply an error rate. Ignored
+  when `cutoff_method = "quantile"`.
 
 - estimator:
 

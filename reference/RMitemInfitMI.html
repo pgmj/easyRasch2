@@ -11,7 +11,7 @@ imputed dataset and pools the results using Rubin's rules."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,7 +34,7 @@ imputed dataset and pools the results using Rubin's rules."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Conditional Item Infit MSQ for Multiply Imputed Data</h1>
-      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/v1.1.1/R/conditional_infit_mi.R" class="external-link"><code>R/conditional_infit_mi.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/R/conditional_infit_mi.R" class="external-link"><code>R/conditional_infit_mi.R</code></a></small>
       <div class="d-none name"><code>RMitemInfitMI.Rd</code></div>
     </div>
 
@@ -143,6 +143,18 @@ least two successful imputations are required to estimate between-imputation
 variance.</p>
 <p>The <code>mice</code> and <code>iarm</code> packages must be installed (they are in Suggests, not
 Imports).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="flagging-differs-from-the-complete-data-function">Flagging differs from the complete-data function<a class="anchor" aria-label="anchor" href="#flagging-differs-from-the-complete-data-function"></a></h2>
+
+
+<p><code><a href="RMiteminfit.html">RMitemInfit</a></code> flags on the Westfall-Young corrected p-value by
+default. This function has no p-value path and flags against the interval,
+so the two are not directly comparable. Combining bootstrap p-values across
+imputations is planned but needs calibration of its own, since Johansson
+(2026) studied complete data. Until then <code><a href="RMitemInfitCutoffMI.html">RMitemInfitCutoffMI</a></code>
+keeps <code>hdci_width = 0.999</code>, a width suited to a decision rule, and the
+family-wise error rate of that rule is <code>1 - 0.999^k</code> over <code>k</code> items.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
