@@ -504,7 +504,7 @@ RMlocdepGamma <- function(
   # previous column set.
   ld_digits <- c(
     gamma = 3, padj_bh = 3, gamma_low = 3, gamma_high = 3,
-    p_gamma = 4, padj_gamma = 4
+    p_gamma = 4, padj_gamma = 4, gamma_pair = 3
   )
   result_list <- lapply(result_list, function(d) {
     .round_display(d[, setdiff(names(d), c("se", "lower", "upper")),
@@ -529,9 +529,9 @@ RMlocdepGamma <- function(
       n_clause,
       ". One-sided bootstrap p-values for excess positive LD from ",
       cutoff_n_iter,
-      " iterations, computed on gamma_pair, the larger of the two ",
-      "conditioning directions, and repeated across both tables (replacing ",
-      "the asymptotic p-values). Multiplicity correction: ",
+      " iterations, computed on Gamma pair (max), the larger of the pair's ",
+      "two conditioning directions, and repeated across both tables ",
+      "(replacing the asymptotic p-values). Multiplicity correction: ",
       .correction_label(correction),
       ". Flagged at padj < ",
       alpha,
@@ -594,13 +594,13 @@ RMlocdepGamma <- function(
     "Partial gamma",
     "Adj. p-value (BH)",
     "p-value sign.",
-    "Gamma pair"
+    "Gamma pair (max)"
   )
   col_names_cutoff <- c(
     "Item 1",
     "Item 2",
     "Partial gamma",
-    "Gamma pair",
+    "Gamma pair (max)",
     "Adj. p-value (BH)",
     "p-value sign.",
     "Gamma low",
@@ -611,7 +611,7 @@ RMlocdepGamma <- function(
     "Item 1",
     "Item 2",
     "Partial gamma",
-    "Gamma pair",
+    "Gamma pair (max)",
     "Gamma low",
     "Gamma high",
     "p",

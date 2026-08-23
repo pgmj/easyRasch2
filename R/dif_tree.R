@@ -774,8 +774,11 @@ RMdifTree <- function(
   }
 
   # output == "kable"
-  # Display rounding (the dataframe output above stays unrounded)
-  df <- .round_display(df, c(EffectSize = 4, SE = 4))
+  # Display rounding (the dataframe output above stays unrounded). Three
+  # decimals, as elsewhere for a statistic: the ETS Delta boundaries these
+  # effect sizes are classified against sit at 1.0 and 1.5, so a fourth
+  # decimal decides nothing.
+  df <- .round_display(df, c(EffectSize = 3, SE = 3))
   kbl <- render_effectsize_kable(
     df,
     n_persons = nrow(combined),

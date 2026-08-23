@@ -9,39 +9,44 @@
 <a href="https://buymeacoffee.com/pgmj" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
 <!-- badges: end -->
 
-`easyRasch2` is an R package for Rasch measurement theory
-analysis workflows. It is the successor to
-[`easyRasch`](https://pgmj.github.io/easyRasch/), offering a lightweight and consistent structure with proper namespacing and minimal dependencies.
+`easyRasch2` is an R package for Rasch measurement theory analysis workflows. It
+is the successor to [`easyRasch`](https://pgmj.github.io/easyRasch/), offering a
+lightweight and consistent structure with proper namespacing and minimal
+dependencies.
 
 A central design choice is **simulation-based critical values** for various fit
 statistics. Rather than relying on rule-of-thumb cutoffs, most diagnostics
 are paired with a parametric-bootstrap function that generates an empirical
 null distribution from the fitted Rasch / PCM model and the observed
-sample.
+sample (Johansson, 2025, 2026).
 
-The [Get Started](https://pgmj.github.io/easyRasch2/articles/easyRasch2.html) link above contains a short introduction. For broader Rasch-analysis tutorials, see the
-[vignette](https://pgmj.github.io/raschrvignette/RaschRvign.html) for the
-archived sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
+The [Get Started](https://pgmj.github.io/easyRasch2/articles/easyRasch2.html)
+link above contains a short introduction. For broader Rasch-analysis tutorials,
+see the [vignette](https://pgmj.github.io/raschrvignette/RaschRvign.html) for
+the archived sibling package [`easyRasch`](https://pgmj.github.io/easyRasch/).
 
 ## Statement of need
 
-A complete Rasch analysis requires many separate procedures — item fit, local
+A complete Rasch analysis requires many separate procedures: item fit, local
 dependence, dimensionality, differential item functioning, reliability,
-targeting, and more. In R these are spread across packages with differing data formats,
-argument conventions, and output objects, which raises the barrier to entry and
-can make analyses hard to reproduce. A further problem is that fit statistics
-(item fit MSQ, Yen's $Q_3$ residuals, the first residual-PCA contrast, CFA fit indices) are
-usually judged against fixed rule-of-thumb cutoffs that are known to depend on
-sample size, number of items and other factors such as targeting, and the number of response categories.
+targeting, and more. In R these are spread across packages with differing data
+formats, argument conventions, and output objects, which raises the barrier to
+entry and can make analyses hard to reproduce. A further problem is that fit
+statistics (item fit MSQ, Yen's $Q_3$ residuals, the first residual-PCA
+contrast, CFA fit indices) are usually judged against fixed rule-of-thumb
+cutoffs that are known to depend on sample size, number of items and other
+factors such as targeting, and the number of response categories.
 
 `easyRasch2` targets applied researchers and students validating rating scales
-and tests in health, education, and psychology using modern psychometric methods. It provides a single,
-consistently named interface across the whole workflow with publication-ready
-output, and — as its distinguishing feature — replaces rule-of-thumb cutoffs
-with sample-specific critical values obtained by parametric bootstrap from the
-fitted Rasch/PCM model (Johansson, 2025). Several methods, including the
-polytomous Martin-Löf test with Monte Carlo *p*-values (Christensen & Kreiner, 2007) and the bootstrap
-item-restscore test, are not available in other R packages.
+and tests in health, education, and psychology using modern psychometric
+methods. It provides a single, consistently named interface across the whole
+workflow with publication-ready output. Its distinguishing feature is that it
+replaces rule-of-thumb cutoffs with sample-specific critical values obtained by
+parametric bootstrap from the fitted Rasch/PCM model (Johansson, 2025, 2026).
+Item fit and local dependence flag on a multiplicity-corrected bootstrap
+*p*-value. Several methods, including the polytomous Martin-Löf test with Monte
+Carlo *p*-values (Christensen & Kreiner, 2007) and the bootstrap item-restscore
+test, are not available in other R packages.
 
 ## Installation
 
@@ -69,8 +74,10 @@ remotes::install_github("pgmj/easyRasch2")
 - **Inference**: simulation-based cutoffs throughout. Item fit and local
   dependence flag on multiplicity-corrected bootstrap *p*-values whenever the
   full cutoff object is supplied, using Westfall–Young family-wise correction
-  (default) or FDR alternatives (Ferreira, 2024). Pass `p_value = FALSE` to
-  flag against the simulated interval instead.
+  (default) or FDR alternatives (Ferreira, 2024; Johansson, 2026). Pass
+  `p_value = FALSE` to flag against the simulated interval instead, which
+  tests every item or pair at once and so sets a family-wise error rate of
+  `1 - width^m` implicitly.
 - **Output**: `knitr::kable()` for tables (Quarto-friendly), `ggplot2`
   for figures, and `"dataframe"` output options for downstream use.
   Every caption reports the estimation sample size and missing-data policy.
@@ -80,9 +87,11 @@ remotes::install_github("pgmj/easyRasch2")
 
 ### Item fit
 
-- `RMitemInfit()` — conditional infit MSQ, flagged on multiplicity-corrected bootstrap *p*-values
-  with family-wise (Westfall–Young) or FDR multiple-comparison correction
-- `RMitemInfitCutoff()` + `RMitemInfitPlot()` — simulation-based cutoffs and plot
+- `RMitemInfit()` — conditional infit MSQ, flagged on multiplicity-corrected
+  bootstrap *p*-values with family-wise (Westfall–Young) or FDR
+  multiple-comparison correction
+- `RMitemInfitCutoff()` + `RMitemInfitPlot()` — simulation-based cutoffs and
+  plot
 - `RMitemInfitMI()` + `RMitemInfitCutoffMI()` — multiple-imputation variants
 - `RMitemRestscore()` — item-restscore with Goodman-Kruskal's $\gamma$ (gamma)
 - `RMitemRestscoreBoot()` — non-parametric bootstrap of item-restscore fit
@@ -99,14 +108,16 @@ remotes::install_github("pgmj/easyRasch2")
 
 ### Dimensionality / unidimensionality
 
-- `RMdimResidualPCA()` + `RMdimResidualPCACutoff()` — PCA of standardized residuals,
-  with simulation-based first-contrast cutoff (Chou & Wang, 2010) and an
-  optional bootstrap *p*-value
+- `RMdimResidualPCA()` + `RMdimResidualPCACutoff()` — PCA of standardized
+  residuals, with simulation-based first-contrast cutoff (Chou & Wang, 2010) and
+  an optional bootstrap *p*-value
 - `RMdimMartinLof()` + `RMdimMartinLofResiduals()` — Martin-Löf LR test
-  (Christensen & Kreiner, 2007), supports polytomous data with Monte Carlo *p*-values
-- `RMdimCFACutoff()` + `RMdimCFA()` + `RMdimCFAPlot()` — posterior-predictive CFA
-  fit-index and per-item loading checks under PCM unidimensionality (via `lavaan`
-  WLSMV) with simulation-based cutoffs and optional bootstrap *p*-values
+  (Christensen & Kreiner, 2007), supports polytomous data with Monte Carlo
+  *p*-values
+- `RMdimCFACutoff()` + `RMdimCFA()` + `RMdimCFAPlot()` — posterior-predictive
+  CFA fit-index and per-item loading checks under PCM unidimensionality (via
+  `lavaan` WLSMV) with simulation-based cutoffs and optional bootstrap
+  *p*-values
 
 ### Differential item functioning
 
@@ -221,6 +232,9 @@ RMdifTree(pcmdat2, covariates = covs)
 - Johansson, M. (2025). Detecting item misfit in Rasch models.
   *Educational Methods & Psychometrics, 3*(18).
   <https://doi.org/10.61186/emp.2025.5>
+- Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
+  Rasch models: Iterations, multiplicity correction, and decision stability.
+  *PsyArXiv*. <https://doi.org/10.31234/osf.io/7pqz4_v2>
 - Kreiner, S. (2011). A note on item-restscore association in Rasch models.
   *Applied Psychological Measurement, 35*(7), 557–561.
   <https://doi.org/10.1177/0146621611410227>
@@ -254,7 +268,10 @@ the LLM and tested and bug fixed by me.
 [`effecttree`](https://github.com/mirka-henninger/effecttree) packages for
 the effect-size and ETS-classification algorithms.
 
-[Magnus Johansson](https://ki.se/en/people/magnus-johansson-3) is a licensed psychologist with a PhD in behavior analysis. He works as a research specialist focused on psychometrics and statistics at Karolinska Institutet, Department of Clinical Neuroscience, Center for Psychiatry Research.
+[Magnus Johansson](https://ki.se/en/people/magnus-johansson-3) is a licensed
+psychologist with a PhD in behavior analysis. He works as a research specialist
+focused on psychometrics and statistics at Karolinska Institutet, Department of
+Clinical Neuroscience, Center for Psychiatry Research.
 
 - ORCID: [0000-0003-1669-592X](https://orcid.org/0000-0003-1669-592X)
 - Bluesky: [@pgmj.bsky.social](https://bsky.app/profile/pgmj.bsky.social) 

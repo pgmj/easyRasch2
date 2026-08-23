@@ -84,7 +84,7 @@ We then move on to complementary descriptors that are commonly reported alongsid
 For a more extensive treatment of Rasch analysis in R, see
 <https://pgmj.github.io/raschrvignette/RaschRvign.html>. For a Bayesian sibling package, see <https://pgmj.github.io/easyRaschBayes/>.
 
-> **NOTE:** all simulation-based functions use a low number of iterations to make this vignette render faster. You should use more iterations for actual analysis work. For most methods, 500-1500 will be useful, except for conditional infit, where lower numbers can be optimal, depending on sample size [@johansson_detecting_2025]. If you plan to use `p_value = TRUE`, use at least 1000 iterations.
+> **NOTE:** all simulation-based functions use a low number of iterations to make this vignette render faster. You should use more iterations for actual analysis work. 400 is the calibrated floor for the multiplicity-corrected *p*-values and is the package default, while 1000 to 2000 is advisable for a final analysis [@johansson_simulationbased_2026]. An earlier recommendation, that fewer iterations could improve detection for conditional infit at small samples, is withdrawn: that advantage came from an expected range that had not converged, and it was paid for with an inflated family-wise error rate. A false discovery rate correction (`correction = "fdr_bh"` or `"fdr_by"`) needs far more iterations than the default family-wise one, because a bootstrap *p*-value can be no smaller than $1/(B+1)$.
 
 To get faster simulations, please make use of `options(mc.cores = 4)`, where `4` should be replaced with the number of high performance CPU cores your computer has available. This setting is automatically applied by all functions that can use parallel processing.
 
@@ -158,15 +158,15 @@ diagnostics that can be combined for a robust conclusion:
 It is important to note that the `RMitemInfit()` function uses **conditional**
 infit, which is both robust to different sample sizes and makes ZSTD unnecessary
 [@muller_item_2020]. Müller also questions the usefulness of outfit, and my
-simulation study [@johansson_detecting_2025] reached the same conclusion. Thus,
-outfit is not reported.
+simulation studies [@johansson_detecting_2025;johansson_simulationbased_2026]
+reached the same conclusion. Thus, outfit is not reported.
 
 Conditional item infit mean-square statistics flag items whose response
 patterns deviate from the Rasch expectation. With `RMitemInfitCutoff()`, per-item
 highest-density intervals serve as the reference instead of rule-of-thumb cutoffs
-[@johansson_detecting_2025]. Bootstrap *p*-values are also available via `p_value = TRUE`, with family-wise error rate (FWER; the default) or false discovery rate (FDR) correction.
+[@johansson_detecting_2025]. Passing the `RMitemInfitCutoff()` object to RMitemInfit() flags items on a multiplicity-corrected bootstrap *p*-value, with family-wise error rate (FWER; the default) or false discovery rate (FDR) correction, and the interval is reported alongside as a description of where a fitting item's statistic is expected to fall [@johansson_simulationbased_2026].
 
-> **NOTE:** All functions that use simulation-based cutoffs (except `RMitemInfitMI()`) have an optional `p_value = TRUE` for their table outputs.
+> **NOTE:** `RMitemInfit()`, `RMlocdepQ3()` and `RMlocdepGamma()` use the corrected *p*-value whenever the full cutoff object is supplied. The other functions with simulation-based cutoffs take `p_value = TRUE` as an opt-in, and `RMitemInfitMI()` has no *p*-value path, so it always flags against the interval.
 
 ```{r infit}
 infit_cut <- RMitemInfitCutoff(items, iterations = 100, parallel = FALSE,
@@ -198,14 +198,14 @@ overfitting and possibly redundant item. Overfitting items will often also show
 issues with local dependency.
 
 Compared to infit, item-restscore more often flags overfit items (based on
-experience), and less often flags underfit items (based on a simulation study
+experience), and, under some conditions, less often flags underfit items (based on a simulation study
 [@johansson_detecting_2025]).
 
 ```{r itemrestscore}
 RMitemRestscore(items)
 ```
 
-Similarly to infit, item-restscore found items 2 and 4 to be overfit and 8 to be underfit. It also found item 6 to be overfit. These methods are best used together.
+Similarly to infit, item-restscore found items 2 and 4 to be overfit and 8 to be underfit. It also found item 6 to be overfit. The two methods are best used together.
 
 ### CFA-based cutoffs for CFI / RMSEA and item loadings
 
@@ -306,7 +306,7 @@ item pairs, conditional on the rest-score. Note that this function evaluates bot
 RMlocdepGamma(items, n_pairs = 6)
 ```
 
-You can also get simulation-based thresholds for partial gamma LD, using `RMlocdepGammaCutoff()`, which can be used with `RMlocdepGamma()` and also to plot the results with `RMlocdepGammaPlot()`
+You can also get simulation-based thresholds for partial gamma LD, using `RMlocdepGammaCutoff()`, which can be used with `RMlocdepGamma()` and also to plot the results with `RMlocdepGammaPlot()`. Supplying the cutoff object switches the table from the asymptotic *p*-values shown above to multiplicity-corrected bootstrap ones, and adds a `gamma_pair` column: each pair is tested once, on the larger of its two rest-score directions, so both tables carry the same result for a pair.
 
 Item pairs flagged by both $Q_3$ and partial gamma are
 the strongest candidates for further inspection or possible item

@@ -140,7 +140,7 @@ Johansson, M. (2025). Detecting item misfit in Rasch models.
 
 Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
 Rasch models: Iterations, multiplicity correction, and decision stability.
-\emph{PsyArXiv}. \doi{10.31234/osf.io/7pqz4_v1}
+\emph{PsyArXiv}. \doi{10.31234/osf.io/7pqz4_v2}
 }
 \seealso{
 \code{\link{RMitemInfit}}

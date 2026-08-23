@@ -274,7 +274,7 @@
         " object and leave `p_value = NULL` to flag on the Westfall-Young ",
         "corrected p-value, which targets .05 directly at 400 iterations."
       ),
-      i = "See Johansson (2026), doi:10.31234/osf.io/7pqz4_v1."
+      i = "See Johansson (2026), doi:10.31234/osf.io/7pqz4_v2."
     ),
     .frequency = "once",
     .frequency_id = id
@@ -328,7 +328,7 @@
           requested
         ))
       },
-      i = "See Johansson (2026), doi:10.31234/osf.io/7pqz4_v1.",
+      i = "See Johansson (2026), doi:10.31234/osf.io/7pqz4_v2.",
       i = paste0("Raise `iterations` in ", fn, ".")
     ),
     .frequency = "once",

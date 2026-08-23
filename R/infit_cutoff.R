@@ -93,7 +93,7 @@
 #'
 #' Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
 #' Rasch models: Iterations, multiplicity correction, and decision stability.
-#' *PsyArXiv*. \doi{10.31234/osf.io/7pqz4_v1}
+#' *PsyArXiv*. \doi{10.31234/osf.io/7pqz4_v2}
 #'
 #' @seealso \code{\link{RMitemInfit}}
 #'

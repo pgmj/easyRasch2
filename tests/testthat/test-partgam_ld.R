@@ -344,10 +344,11 @@ test_that("RMlocdepGamma p_value adds one-sided p per pair, mirrored across dire
   expect_equal(res$direction2$flagged, res$direction1$flagged[m])
 
   # kable renders with the correction label and names the tested statistic
+  # by the header the reader sees, not by the internal column name.
   suppressMessages(kbl <- RMlocdepGamma(df, cutoff = cuts, p_value = TRUE))
   expect_s3_class(kbl, "RMlocdepGamma")
   expect_match(kbl$.combined, "Westfall-Young")
-  expect_match(kbl$.combined, "larger of the two")
+  expect_match(kbl$.combined, "Gamma pair (max)", fixed = TRUE)
 })
 
 test_that("RMlocdepGamma p_value correction runs on the full family before n_pairs", {

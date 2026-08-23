@@ -1,4 +1,4 @@
-# easyRasch2 1.1.1.9004 (development version)
+# easyRasch2 1.2.0
 
 ## Breaking changes
 
