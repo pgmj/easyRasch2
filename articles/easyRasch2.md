@@ -162,9 +162,10 @@ It is important to note that the
 function uses **conditional** infit, which is both robust to different
 sample sizes and makes ZSTD unnecessary ([Müller
 2020](#ref-muller_item_2020)). Müller also questions the usefulness of
-outfit, and my simulation studies \[Johansson
-([2025](#ref-johansson_detecting_2025));johansson_simulationbased_2026\]
-reached the same conclusion. Thus, outfit is not reported.
+outfit, and my simulation studies ([Johansson
+2025](#ref-johansson_detecting_2025),
+[2026](#ref-johansson_simulationbased_2026)) reached the same
+conclusion. Thus, outfit is not reported.
 
 Conditional item infit mean-square statistics flag items whose response
 patterns deviate from the Rasch expectation. With
