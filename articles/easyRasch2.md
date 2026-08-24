@@ -462,9 +462,12 @@ function
 
 Local independence (LD) can be assessed with multiple methods. Yen’s Q_3
 statistic ([Yen 1984](#ref-yen_scaling_1984)) is the correlation between
-person-item standardized residuals for every item pair. Pair-wise Q_3
-values above the simulation-based cutoff flag LD ([Christensen et al.
-2017](#ref-christensen2017)).
+person-item standardized residuals for every item pair. There are two
+ways to evaluate LD with Q_3, both generated with a run of
+[`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md).
+One is to determine a global simulation-based cutoff, where Q_3 values
+in the residual correlation matrix above the cutoff flag LD
+([Christensen et al. 2017](#ref-christensen2017)).
 
 ``` r
 
@@ -491,10 +494,16 @@ Dynamic cut-off: 0.031 (mean Q3 -0.109 + 0.14). Global simulation cutoff
 the cut-off may indicate local dependence; see the per-pair table for
 detail. n = 600 respondents. {.table}
 
-For a more powerful Q_3 test, one can use the simulated cutoffs object
-to plot the expected range of residual correlations for each item-pair
-and compare with the observed value. We’ll limit the output to the 6
-item-pairs that deviate the most.
+For a more powerful Q_3 test, supply the same cutoffs object to
+[`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md).
+Each item pair is then judged against its own simulated null
+distribution and flagged on a multiplicity-corrected bootstrap
+*p*-value, which controls the family-wise error rate across all pairs
+([Johansson 2026](#ref-johansson_simulationbased_2026)). This is the
+default whenever the full cutoffs object is provided, accessed with
+`q3_results$pairs`. The per-pair expected range is reported alongside as
+a reference, and it can be helpful to plot it against the observed
+value. We’ll limit the output to the 6 item-pairs that deviate the most.
 
 ``` r
 

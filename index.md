@@ -138,9 +138,9 @@ remotes::install_github("pgmj/easyRasch2")
 - [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFACutoff.md) +
   [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFA.md) +
   [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFAPlot.md)
-  — posterior-predictive CFA fit-index and per-item loading checks under
-  PCM unidimensionality (via `lavaan` WLSMV) with simulation-based
-  cutoffs and optional bootstrap *p*-values
+  — CFA fit-indices and per-item loading checks under PCM
+  unidimensionality (via `lavaan` WLSMV) with simulation-based cutoffs
+  and optional bootstrap *p*-values
 
 ### Differential item functioning
 

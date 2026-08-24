@@ -55,7 +55,7 @@
       <h1>A Rasch analysis workflow with easyRasch2</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/v1.2.0/vignettes/easyRasch2.Rmd" class="external-link"><code>vignettes/easyRasch2.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/vignettes/easyRasch2.Rmd" class="external-link"><code>vignettes/easyRasch2.Rmd</code></a></small>
       <div class="d-none name"><code>easyRasch2.Rmd</code></div>
     </div>
 
@@ -806,8 +806,11 @@ using the diagnostic function
 <p>Local independence (LD) can be assessed with multiple methods. Yen’s
 <span class="math inline">Q_3</span> statistic <span class="citation">(<a href="#ref-yen_scaling_1984">Yen 1984</a>)</span>
 is the correlation between person-item standardized residuals for every
-item pair. Pair-wise <span class="math inline">Q_3</span> values above
-the simulation-based cutoff flag LD <span class="citation">(<a href="#ref-christensen2017">Christensen et al. 2017</a>)</span>.</p>
+item pair. There are two ways to evaluate LD with <span class="math inline">Q_3</span>, both generated with a run of
+<code><a href="../reference/RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code>. One is to determine a global
+simulation-based cutoff, where <span class="math inline">Q_3</span>
+values in the residual correlation matrix above the cutoff flag LD <span class="citation">(<a href="#ref-christensen2017">Christensen et al.
+2017</a>)</span>.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">q3_cut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>                           seed <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
@@ -964,11 +967,16 @@ the per-pair table for detail. n = 600 respondents.</caption>
 </tr>
 </tbody>
 </table>
-<p>For a more powerful <span class="math inline">Q_3</span> test, one
-can use the simulated cutoffs object to plot the expected range of
-residual correlations for each item-pair and compare with the observed
-value. We’ll limit the output to the 6 item-pairs that deviate the
-most.</p>
+<p>For a more powerful <span class="math inline">Q_3</span> test, supply
+the same cutoffs object to <code><a href="../reference/RMlocdepQ3.html">RMlocdepQ3()</a></code>. Each item pair is
+then judged against its own simulated null distribution and flagged on a
+multiplicity-corrected bootstrap <em>p</em>-value, which controls the
+family-wise error rate across all pairs <span class="citation">(<a href="#ref-johansson_simulationbased_2026">Johansson 2026</a>)</span>.
+This is the default whenever the full cutoffs object is provided,
+accessed with <code>q3_results$pairs</code>. The per-pair expected range
+is reported alongside as a reference, and it can be helpful to plot it
+against the observed value. We’ll limit the output to the 6 item-pairs
+that deviate the most.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">q3_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMlocdepQ3plot.html">RMlocdepQ3Plot</a></span><span class="op">(</span>simfit <span class="op">=</span> <span class="va">q3_cut</span>, data <span class="op">=</span> <span class="va">items</span>, n_pairs <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
 <span><span class="va">q3_plots</span><span class="op">$</span><span class="va">pairs</span></span></code></pre></div>

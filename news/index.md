@@ -2,6 +2,8 @@
 
 ## easyRasch2 1.2.0
 
+CRAN release: 2026-08-23
+
 ### Breaking changes
 
 - **[`RMitemInfit()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md),

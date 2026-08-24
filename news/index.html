@@ -30,11 +30,11 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/pgmj/easyRasch2/blob/v1.2.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.2.0" id="easyrasch2-120">easyRasch2 1.2.0<a class="anchor" aria-label="anchor" href="#easyrasch2-120"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.2.0" id="easyrasch2-120">easyRasch2 1.2.0<a class="anchor" aria-label="anchor" href="#easyrasch2-120"></a></h2><p class="text-muted">CRAN release: 2026-08-23</p>
 <div class="section level3">
 <h3 id="breaking-changes-1-2-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-2-0"></a></h3>
 <ul><li><p><strong><code><a href="../reference/RMiteminfit.html">RMitemInfit()</a></code>, <code><a href="../reference/RMlocdepQ3.html">RMlocdepQ3()</a></code> and <code><a href="../reference/RMlocdepGamma.html">RMlocdepGamma()</a></code> now flag on the multiplicity-corrected p-value rather than on the simulated interval.</strong> <code>p_value</code> defaults to <code>NULL</code>, meaning <code>TRUE</code> when <code>cutoff</code> is the full cutoff object and <code>FALSE</code> otherwise, so calls that pass no cutoff or a bare cutoff table are unchanged. Flagging against an interval tests every item or pair at once and sets a family-wise error rate of <code>1 - width^m</code>, which the corrected p-value targets directly instead. Tables gain the <code>p_</code> and <code>padj_</code> columns. <strong>Flagged items and pairs change.</strong> Pass <code>p_value = FALSE</code> for the old behaviour. Follows Johansson (2026), <a href="https://doi.org/10.31234/osf.io/7pqz4_v2" class="external-link uri">https://doi.org/10.31234/osf.io/7pqz4_v2</a>.</p></li>
