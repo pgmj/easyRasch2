@@ -5,6 +5,7 @@ on:
     branches: [main, master]
     paths-ignore:
       - 'paper/**'
+      - 'vignettes/**'
   pull_request:
 
 name: test-coverage

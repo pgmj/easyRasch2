@@ -163,7 +163,7 @@ diagnostics that can be combined for a robust conclusion:
 It is important to note that the `RMitemInfit()` function uses **conditional**
 infit, which is both robust to different sample sizes and makes ZSTD unnecessary
 [@muller_item_2020]. Müller also questions the usefulness of outfit, and my
-simulation studies [@johansson_detecting_2025;johansson_simulationbased_2026]
+simulation studies [@johansson_detecting_2025;@johansson_simulationbased_2026]
 reached the same conclusion. Thus, outfit is not reported.
 
 Conditional item infit mean-square statistics flag items whose response

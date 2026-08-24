@@ -5,9 +5,11 @@ on:
     branches: [main, master]
     paths-ignore:
       - 'paper/**'
+      - 'vignettes/**'
   pull_request:
     paths-ignore:
       - 'paper/**'
+      - 'vignettes/**'
 
 name: R-CMD-check
 

@@ -6,10 +6,12 @@ on:
     paths-ignore:
       - 'paper/**'
       - 'tests/**'
+      - 'vignettes/**'
   pull_request:
     paths-ignore:
       - 'paper/**'
       - 'tests/**'
+      - 'vignettes/**'
   release:
     types: [published]
   workflow_dispatch:
