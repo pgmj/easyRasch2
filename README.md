@@ -114,8 +114,8 @@ remotes::install_github("pgmj/easyRasch2")
 - `RMdimMartinLof()` + `RMdimMartinLofResiduals()` — Martin-Löf LR test
   (Christensen & Kreiner, 2007), supports polytomous data with Monte Carlo
   *p*-values
-- `RMdimCFACutoff()` + `RMdimCFA()` + `RMdimCFAPlot()` — posterior-predictive
-  CFA fit-index and per-item loading checks under PCM unidimensionality (via
+- `RMdimCFACutoff()` + `RMdimCFA()` + `RMdimCFAPlot()` — 
+  CFA fit-indices and per-item loading checks under PCM unidimensionality (via
   `lavaan` WLSMV) with simulation-based cutoffs and optional bootstrap
   *p*-values
 
