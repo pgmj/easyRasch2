@@ -173,6 +173,10 @@ remotes::install_github("pgmj/easyRasch2")
   [`RMUreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMUreliability.md)
   — Cronbach’s α, PSI, marginal reliability, and Relative Measurement
   Uncertainty from plausible values
+- [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md)
+  — conditional SEM, test information, or conditional reliability across
+  the latent scale, with the respondent distribution behind it and an
+  optional bootstrap band
 - [`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md)
   — Wright-map style person-item targeting plot
 - [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md)

@@ -15,7 +15,7 @@ via RMUreliability() applied to plausible values from mirt::fscores()."><meta na
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.2.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.2.0.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -159,17 +159,23 @@ by non-parametric bootstrap (resampling respondents; all three indices are
 recomputed natively per resample, no model is refitted by <code>mirt</code>). The RMU
 interval is the HDCI of correlations across plausible-value draws, averaged
 over <code>rmu_iter</code> random splits of the draws.</p>
-<p>Marginal reliability is the native Green (1984) coefficient,
-\(1 - \overline{1/I(\theta)}/\sigma^2\), where the test information
-\(I(\theta)\) is summed from the CML item parameters and the average error
-variance is taken over the estimated normal latent density \(N(0,
-\sigma^2)\) (\(\sigma\) from marginal ML). Unlike <code><a href="https://philchalmers.github.io/mirt/reference/marginal_rxx.html" class="external-link">mirt::marginal_rxx()</a></code>,
-which assumes \(N(0,1)\), this integrates over the estimated latent
-variance, so it is correct on the Rasch logit scale (where \(\sigma\)
-is typically well above 1, and the \(N(0,1)\) assumption
-underestimates reliability). It is the model-based complement to the
-sample-based PSI; a large gap between the two flags an off-target or
-non-normal sample.</p>
+<p>Marginal reliability is the latent-density-weighted mean of the conditional
+reliability curve, \(\int \sigma^2/(\sigma^2 + 1/I(\theta))\,
+g(\theta)\,d\theta\), where the test information \(I(\theta)\) is summed from
+the CML item parameters and \(g\) is the estimated normal latent density
+\(N(0, \sigma^2)\) (\(\sigma\) from marginal ML). Integrating over the
+estimated latent variance, rather than the \(N(0,1)\) assumed by
+<code><a href="https://philchalmers.github.io/mirt/reference/marginal_rxx.html" class="external-link">mirt::marginal_rxx()</a></code>, keeps it correct on the Rasch logit scale, where
+\(\sigma\) is typically well above 1 and the \(N(0,1)\) assumption
+underestimates reliability.</p>
+<p>It is the model-based complement to the sample-based PSI, and the two are
+now the same coefficient by two routes: PSI divides by the observed spread
+of the WLE estimates, marginal reliability by the fitted latent density. A
+large gap between them therefore does flag an off-target or non-normal
+sample. Through version 1.2.0 this row used Green's subtractive
+\(1 - \overline{1/I(\theta)}/\sigma^2\) instead, under which much of the
+PSI-to-marginal gap was an artefact of the differing formulas rather than a
+property of the sample. See <code>dev/TODO-reliability-form.md</code>.</p>
 <p>PSI is the WLE-based separation reliability,
 \(1 - \overline{SEM^2} / \mathrm{Var}(\hat\theta)\), computed from CML item
 thresholds (<code>psychotools</code>) and Warm's WLE person locations / analytic SEMs.
@@ -180,6 +186,13 @@ noticeably for scales with many extreme scorers, e.g. dichotomous items.)</p>
 <p>RMU is from Bignardi, Kievit, &amp; Bürkner (2025), modified here to use mirt
 plausible values rather than fully Bayesian posterior draws (see Mislevy,
 1991, for the plausible-values framework).</p>
+<p>Marginal reliability here is the subtractive Green/Lord coefficient. Milanzi
+et al. (2015) show that this form can fall below zero when the average error
+variance exceeds the trait variance, which happens with few items or a
+narrow sample, and it is floored at 0 above. <code><a href="RMreliabilityCurve.html">RMreliabilityCurve()</a></code> reports
+the same quantity in the bounded ratio form alongside this one, so the two
+can be compared directly. See <code>dev/TODO-reliability-form.md</code> for the open
+question of which form this row should use.</p>
 <p>Bootstrap iterations that fail to converge are silently dropped.</p>
     </div>
     <div class="section level2">
@@ -197,10 +210,14 @@ from Complex Samples. <em>Psychometrika, 56</em>(2), 177-196.
 <p>Adams, R. J. (2005). Reliability as a measurement design effect.
 <em>Studies in Educational Evaluation, 31</em>(2), 162-172.
 <a href="https://doi.org/10.1016/j.stueduc.2005.05.008" class="external-link">doi:10.1016/j.stueduc.2005.05.008</a></p>
+<p>Milanzi, E., Molenberghs, G., Alonso, A., Verbeke, G., &amp; De Boeck, P.
+(2015). Reliability measures in item response theory: Manifest versus latent
+correlation functions. <em>British Journal of Mathematical and Statistical
+Psychology, 68</em>(1), 43-64. <a href="https://doi.org/10.1111/bmsp.12033" class="external-link">doi:10.1111/bmsp.12033</a></p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="RMUreliability.html">RMUreliability()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="RMUreliability.html">RMUreliability()</a></code>, <code><a href="RMreliabilityCurve.html">RMreliabilityCurve()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -220,12 +237,12 @@ from Complex Samples. <em>Psychometrika, 56</em>(2), 177-196.
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Table: Reliability for 20 items, n = 100 respondents. PSI is the WLE-based separation reliability and excludes min/max scoring respondents.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Metric           | Estimate| Lower (95% HDCI)| Upper (95% HDCI)|Notes                       |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |:----------------|--------:|----------------:|----------------:|:---------------------------|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Cronbach's alpha |    0.754|            0.701|            0.813|25 bootstrap resamples      |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |PSI              |    0.725|            0.673|            0.768|25 bootstrap resamples      |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Marginal         |    0.695|            0.602|            0.769|25 bootstrap resamples      |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |RMU (WLE)        |    0.753|            0.684|            0.817|1000 PVs, 50 RMU iterations |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Metric                | Estimate| Lower (95% HDCI)| Upper (95% HDCI)|Notes                       |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |:---------------------|--------:|----------------:|----------------:|:---------------------------|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Cronbach's alpha      |    0.754|            0.701|            0.813|25 bootstrap resamples      |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |PSI                   |    0.725|            0.673|            0.768|25 bootstrap resamples      |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Marginal (ratio form) |    0.769|            0.717|            0.817|25 bootstrap resamples      |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |RMU (WLE)             |    0.753|            0.684|            0.817|1000 PVs, 50 RMU iterations |</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.2.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.2.0.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,14 +36,14 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="easyrasch2-development-version">easyRasch2 (development version)<a class="anchor" aria-label="anchor" href="#easyrasch2-development-version"></a></h2>
 <div class="section level3">
-<h3 id="breaking-changes-development-version">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version"></a></h3>
-<ul><li>
-<strong><code><a href="../reference/RMtargeting.html">RMtargeting()</a></code> now draws response-category bands in its bottom panel.</strong> Each item is one bar partitioned into its response categories, so the panel reads against the person histogram directly. Threshold estimates and confidence intervals stay, as a coloured error-bar row below each bar. Categories that are never the most likely response collapse to a red tick and each threshold reversal gets a red span, so disordering is visible without a separate check. Pass <code>panel = "thresholds"</code> for the previous dot-and-whisker panel. Estimates are unchanged.</li>
+<h3 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<ul><li><p>New <code><a href="../reference/RMreliabilityCurve.html">RMreliabilityCurve()</a></code> plots conditional measurement precision across the latent scale: conditional SEM, test information, or conditional reliability, with the respondent distribution behind the curve and an optional bootstrap band. Optional <code>benchmark</code> shades the region reaching a given reliability and reports the percentage of respondents inside it. <code>output = "kable"</code> gives a summary table, <code>"dataframe"</code> the curve. Its reliability axis uses the bounded ratio form, which differs from the Green form in <code><a href="../reference/RMreliability.html">RMreliability()</a></code>; both marginal values are reported so the gap is visible. Existing results are unchanged.</p></li>
+<li><p><code><a href="../reference/RMtargeting.html">RMtargeting()</a></code> gains <code>category_labels</code> for the band legend, <code>row_gap</code> for the vertical spacing of the item rows, and <code>viridis_option</code>, <code>viridis_begin</code> and <code>viridis_end</code> for the band palette.</p></li>
 </ul></div>
 <div class="section level3">
-<h3 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
-<ul><li>
-<code><a href="../reference/RMtargeting.html">RMtargeting()</a></code> gains <code>category_labels</code> for the band legend, <code>row_gap</code> for the vertical spacing of the item rows, and <code>viridis_option</code>, <code>viridis_begin</code> and <code>viridis_end</code> for the band palette.</li>
+<h3 id="breaking-changes-development-version">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version"></a></h3>
+<ul><li><p><strong><code><a href="../reference/RMreliability.html">RMreliability()</a></code>’s marginal reliability now uses the bounded ratio form and the row is renamed “Marginal (ratio form)”.</strong> It was Green’s subtractive <code>1 - mean(SEM^2)/sigma^2</code>, which leaves (0, 1) when the average error variance exceeds the trait variance, and was floored at 0. It is now the latent-density-weighted mean of <code>sigma^2 / (sigma^2 + SEM(theta)^2)</code>, the same coefficient <code><a href="../reference/RMreliabilityCurve.html">RMreliabilityCurve()</a></code> plots and PSI estimates from the observed spread. <strong>Results move</strong>, upward, and more so on short scales or narrow samples (phq9 .862 to .886, <code>eRm::raschdat1[, 1:20]</code> .695 to .769). The superseded value is still available as the <code>marginal_green</code> attribute of <code>RMreliabilityCurve(output = "dataframe")</code>. Rationale and simulation evidence in <code>dev/TODO-reliability-form.md</code>.</p></li>
+<li><p><strong><code><a href="../reference/RMtargeting.html">RMtargeting()</a></code> now draws response-category bands in its bottom panel.</strong> Each item is one bar partitioned into its response categories, so the panel reads against the person histogram directly. Threshold estimates and confidence intervals stay, as a coloured error-bar row below each bar. Categories that are never the most likely response collapse to a red tick and each threshold reversal gets a red span, so disordering is visible without a separate check. Pass <code>panel = "thresholds"</code> for the previous dot-and-whisker panel. Estimates are unchanged.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>

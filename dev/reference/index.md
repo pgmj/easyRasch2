@@ -117,6 +117,8 @@ Targeting and other plots/tables
   : Raw-Score to Logit Score Transformation Table
 - [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
   : Reliability metrics for a Rasch model
+- [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md)
+  : Conditional measurement precision across the latent scale
 - [`RMUreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMUreliability.md)
   : Relative Measurement Uncertainty (RMU)
 
