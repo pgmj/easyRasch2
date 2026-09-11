@@ -228,7 +228,7 @@ Testing*. Wiley.
 Johansson, M. (2026). Simulation-based cutoffs for conditional item fit
 in Rasch models: Iterations, multiplicity correction, and decision
 stability. *PsyArXiv*.
-[doi:10.31234/osf.io/7pqz4_v1](https://doi.org/10.31234/osf.io/7pqz4_v1)
+[doi:10.31234/osf.io/7pqz4_v2](https://doi.org/10.31234/osf.io/7pqz4_v2)
 
 ## See also
 
@@ -274,7 +274,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 }
 #> Bootstrap p-values are based on 100 iterations, below the calibrated floor of 400.
 #> ℹ Below 400 the Westfall-Young correction is mildly liberal under the null, so the family-wise error rate is above the nominal level.
-#> ℹ See Johansson (2026), doi:10.31234/osf.io/7pqz4_v1.
+#> ℹ See Johansson (2026), doi:10.31234/osf.io/7pqz4_v2.
 #> ℹ Raise `iterations` in RMitemInfitCutoff().
 #> This message is displayed once per session.
 #>    Item Outfit_MSQ Outfit_low Outfit_high  p_outfit padj_outfit Flagged

@@ -32,11 +32,17 @@ sibling package, see <https://pgmj.github.io/easyRaschBayes/>.
 
 > **NOTE:** all simulation-based functions use a low number of
 > iterations to make this vignette render faster. You should use more
-> iterations for actual analysis work. For most methods, 500-1500 will
-> be useful, except for conditional infit, where lower numbers can be
-> optimal, depending on sample size ([Johansson
-> 2025](#ref-johansson_detecting_2025)). If you plan to use
-> `p_value = TRUE`, use at least 1000 iterations.
+> iterations for actual analysis work. 400 is the calibrated floor for
+> the multiplicity-corrected *p*-values and is the package default,
+> while 1000 to 2000 is advisable for a final analysis ([Johansson
+> 2026](#ref-johansson_simulationbased_2026)). An earlier
+> recommendation, that fewer iterations could improve detection for
+> conditional infit at small samples, is withdrawn: that advantage came
+> from an expected range that had not converged, and it was paid for
+> with an inflated family-wise error rate. A false discovery rate
+> correction (`correction = "fdr_bh"` or `"fdr_by"`) needs far more
+> iterations than the default family-wise one, because a bootstrap
+> *p*-value can be no smaller than 1/(B+1).
 
 To get faster simulations, please make use of `options(mc.cores = 4)`,
 where `4` should be replaced with the number of high performance CPU
@@ -156,22 +162,35 @@ It is important to note that the
 function uses **conditional** infit, which is both robust to different
 sample sizes and makes ZSTD unnecessary ([Müller
 2020](#ref-muller_item_2020)). Müller also questions the usefulness of
-outfit, and my simulation study ([Johansson
-2025](#ref-johansson_detecting_2025)) reached the same conclusion. Thus,
-outfit is not reported.
+outfit, and my simulation studies ([Johansson
+2025](#ref-johansson_detecting_2025),
+[2026](#ref-johansson_simulationbased_2026)) reached the same
+conclusion. Thus, outfit is not reported.
 
 Conditional item infit mean-square statistics flag items whose response
 patterns deviate from the Rasch expectation. With
 [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md),
 per-item highest-density intervals serve as the reference instead of
 rule-of-thumb cutoffs ([Johansson 2025](#ref-johansson_detecting_2025)).
-Bootstrap *p*-values are also available via `p_value = TRUE`, with
-family-wise error rate (FWER; the default) or false discovery rate (FDR)
-correction.
+Passing the
+[`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
+object to RMitemInfit() flags items on a multiplicity-corrected
+bootstrap *p*-value, with family-wise error rate (FWER; the default) or
+false discovery rate (FDR) correction, and the interval is reported
+alongside as a description of where a fitting item’s statistic is
+expected to fall ([Johansson
+2026](#ref-johansson_simulationbased_2026)).
 
-> **NOTE:** All functions that use simulation-based cutoffs (except
-> [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md))
-> have an optional `p_value = TRUE` for their table outputs.
+> **NOTE:**
+> [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
+> [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
+> and
+> [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
+> use the corrected *p*-value whenever the full cutoff object is
+> supplied. The other functions with simulation-based cutoffs take
+> `p_value = TRUE` as an opt-in, and
+> [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
+> has no *p*-value path, so it always flags against the interval.
 
 ``` r
 
@@ -180,22 +199,26 @@ infit_cut <- RMitemInfitCutoff(items, iterations = 100, parallel = FALSE,
 RMitemInfit(items, cutoff = infit_cut)
 ```
 
-| Item | Infit MSQ | Infit low | Infit high | Flagged  | Relative location |
-|:-----|----------:|----------:|-----------:|:---------|------------------:|
-| q1   |     0.946 |     0.883 |      1.143 |          |             -0.56 |
-| q2   |     0.778 |     0.883 |      1.107 | overfit  |             -0.76 |
-| q3   |     1.234 |     0.878 |      1.194 | underfit |             -0.83 |
-| q4   |     0.835 |     0.867 |      1.178 | overfit  |             -1.48 |
-| q5   |     1.069 |     0.900 |      1.110 |          |             -0.58 |
-| q6   |     0.895 |     0.858 |      1.219 |          |             -0.76 |
-| q7   |     0.986 |     0.899 |      1.153 |          |             -0.66 |
-| q8   |     1.260 |     0.856 |      1.136 | underfit |              0.97 |
-| q9   |     1.315 |     0.842 |      1.199 | underfit |              0.79 |
+| Item | Infit MSQ | Infit low | Infit high |      p | p (adj) | Flagged  | Relative location |
+|:-----|----------:|----------:|-----------:|-------:|--------:|:---------|------------------:|
+| q1   |     0.946 |     0.911 |      1.097 | 0.2871 |  0.4554 |          |             -0.56 |
+| q2   |     0.778 |     0.924 |      1.107 | 0.0099 |  0.0099 | overfit  |             -0.76 |
+| q3   |     1.234 |     0.897 |      1.107 | 0.0099 |  0.0198 | underfit |             -0.83 |
+| q4   |     0.835 |     0.893 |      1.098 | 0.0198 |  0.0396 | overfit  |             -1.48 |
+| q5   |     1.069 |     0.917 |      1.102 | 0.1881 |  0.4356 |          |             -0.58 |
+| q6   |     0.895 |     0.926 |      1.097 | 0.0297 |  0.1386 |          |             -0.76 |
+| q7   |     0.986 |     0.919 |      1.101 | 0.7624 |  0.7624 |          |             -0.66 |
+| q8   |     1.260 |     0.880 |      1.119 | 0.0099 |  0.0099 | underfit |              0.97 |
+| q9   |     1.315 |     0.842 |      1.107 | 0.0099 |  0.0099 | underfit |              0.79 |
 
-MSQ values based on conditional estimation. n = 600 respondents. Cutoff
-values based on 100 simulation iterations (99.9% HDCI). Flagged: overfit
-= infit below range (more predictable); underfit = above range
-(noisier). {.table}
+MSQ values based on conditional estimation. n = 600 respondents.
+Two-sided bootstrap p-values from 100 iterations, multiplicity
+correction: Westfall-Young step-down (FWER). Flagged on the corrected
+p-value at alpha = 0.05. p-values cannot be smaller than 1/(100+1) =
+0.0099. This is below the calibrated floor of 400, where the correction
+is mildly liberal and the family-wise error rate sits above the nominal
+level (Johansson, 2026). Flagged: underfit (infit \> 1) / overfit (infit
+\< 1). {.table}
 
 You can also get a plot summarizing simulated and observed item infit,
 using
@@ -241,8 +264,9 @@ overfitting and possibly redundant item. Overfitting items will often
 also show issues with local dependency.
 
 Compared to infit, item-restscore more often flags overfit items (based
-on experience), and less often flags underfit items (based on a
-simulation study ([Johansson 2025](#ref-johansson_detecting_2025))).
+on experience), and, under some conditions, less often flags underfit
+items (based on a simulation study ([Johansson
+2025](#ref-johansson_detecting_2025))).
 
 ``` r
 
@@ -267,8 +291,8 @@ local dependence); underfit = below (under-discrimination, often
 multidimensionality/noise). {.table}
 
 Similarly to infit, item-restscore found items 2 and 4 to be overfit and
-8 to be underfit. It also found item 6 to be overfit. These methods are
-best used together.
+8 to be underfit. It also found item 6 to be overfit. The two methods
+are best used together.
 
 ### CFA-based cutoffs for CFI / RMSEA and item loadings
 
@@ -439,9 +463,12 @@ function
 
 Local independence (LD) can be assessed with multiple methods. Yen’s Q_3
 statistic ([Yen 1984](#ref-yen_scaling_1984)) is the correlation between
-person-item standardized residuals for every item pair. Pair-wise Q_3
-values above the simulation-based cutoff flag LD ([Christensen et al.
-2017](#ref-christensen2017)).
+person-item standardized residuals for every item pair. There are two
+ways to evaluate LD with Q_3, both generated with a run of
+[`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md).
+One is to determine a global simulation-based cutoff, where Q_3 values
+in the residual correlation matrix above the cutoff flag LD
+([Christensen et al. 2017](#ref-christensen2017)).
 
 ``` r
 
@@ -468,10 +495,16 @@ Dynamic cut-off: 0.031 (mean Q3 -0.109 + 0.14). Global simulation cutoff
 the cut-off may indicate local dependence; see the per-pair table for
 detail. n = 600 respondents. {.table}
 
-For a more powerful Q_3 test, one can use the simulated cutoffs object
-to plot the expected range of residual correlations for each item-pair
-and compare with the observed value. We’ll limit the output to the 6
-item-pairs that deviate the most.
+For a more powerful Q_3 test, supply the same cutoffs object to
+[`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md).
+Each item pair is then judged against its own simulated null
+distribution and flagged on a multiplicity-corrected bootstrap
+*p*-value, which controls the family-wise error rate across all pairs
+([Johansson 2026](#ref-johansson_simulationbased_2026)). This is the
+default whenever the full cutoffs object is provided, accessed with
+`q3_results$pairs`. The per-pair expected range is reported alongside as
+a reference, and it can be helpful to plot it against the observed
+value. We’ll limit the output to the 6 item-pairs that deviate the most.
 
 ``` r
 
@@ -503,27 +536,27 @@ output to the 6 item-pairs with largest LD deviations.
 RMlocdepGamma(items, n_pairs = 6)
 ```
 
-| Item 1 | Item 2 | Partial gamma | Adj. p-value (BH) | p-value sign. |
-|:-------|:-------|--------------:|------------------:|:--------------|
-| q1     | q2     |         0.531 |             0.000 | \*\*\*        |
-| q4     | q9     |        -0.381 |             0.000 | \*\*\*        |
-| q2     | q9     |         0.332 |             0.001 | \*\*\*        |
-| q2     | q8     |        -0.323 |             0.001 | \*\*\*        |
-| q7     | q8     |         0.303 |             0.001 | \*\*\*        |
-| q6     | q9     |         0.287 |             0.009 | \*\*          |
+| Item 1 | Item 2 | Partial gamma | Adj. p-value (BH) | p-value sign. | Gamma pair (max) |
+|:-------|:-------|--------------:|------------------:|:--------------|-----------------:|
+| q1     | q2     |         0.531 |             0.000 | \*\*\*        |            0.577 |
+| q4     | q9     |        -0.381 |             0.000 | \*\*\*        |           -0.381 |
+| q2     | q9     |         0.332 |             0.001 | \*\*\*        |            0.332 |
+| q2     | q8     |        -0.323 |             0.001 | \*\*\*        |           -0.323 |
+| q7     | q8     |         0.303 |             0.001 | \*\*\*        |            0.303 |
+| q6     | q9     |         0.287 |             0.009 | \*\*          |            0.287 |
 
 Partial gamma LD analysis. n = 600 respondents. Positive gamma indicates
 positive local dependence between items. Showing top 6 of 36 pairs by
 \|gamma\|. Direction 1: rest score = total - Item2. {.table}
 
-| Item 1 | Item 2 | Partial gamma | Adj. p-value (BH) | p-value sign. |
-|:-------|:-------|--------------:|------------------:|:--------------|
-| q2     | q1     |         0.577 |             0.000 | \*\*\*        |
-| q9     | q4     |        -0.453 |             0.000 | \*\*\*        |
-| q8     | q2     |        -0.415 |             0.000 | \*\*\*        |
-| q4     | q3     |         0.361 |             0.000 | \*\*\*        |
-| q5     | q3     |         0.303 |             0.000 | \*\*\*        |
-| q9     | q2     |         0.291 |             0.007 | \*\*          |
+| Item 1 | Item 2 | Partial gamma | Adj. p-value (BH) | p-value sign. | Gamma pair (max) |
+|:-------|:-------|--------------:|------------------:|:--------------|-----------------:|
+| q2     | q1     |         0.577 |             0.000 | \*\*\*        |            0.577 |
+| q9     | q4     |        -0.453 |             0.000 | \*\*\*        |           -0.381 |
+| q8     | q2     |        -0.415 |             0.000 | \*\*\*        |           -0.323 |
+| q4     | q3     |         0.361 |             0.000 | \*\*\*        |            0.361 |
+| q5     | q3     |         0.303 |             0.000 | \*\*\*        |            0.303 |
+| q9     | q2     |         0.291 |             0.007 | \*\*          |            0.332 |
 
 Partial gamma LD analysis. n = 600 respondents. Positive gamma indicates
 positive local dependence between items. Showing top 6 of 36 pairs by
@@ -535,7 +568,12 @@ You can also get simulation-based thresholds for partial gamma LD, using
 which can be used with
 [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
 and also to plot the results with
-[`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaPlot.md)
+[`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaPlot.md).
+Supplying the cutoff object switches the table from the asymptotic
+*p*-values shown above to multiplicity-corrected bootstrap ones, and
+adds a `gamma_pair` column: each pair is tested once, on the larger of
+its two rest-score directions, so both tables carry the same result for
+a pair.
 
 Item pairs flagged by both Q_3 and partial gamma are the strongest
 candidates for further inspection or possible item revision. Some argue
@@ -733,17 +771,17 @@ RMdifTree(items, covariates = phq9$gender)
 
 **Node 1 – gender: Female vs Male (n left = 426, n right = 143)**
 
-| Item   |  EffectSize |         SE | Class | Flagged |
-|:-------|------------:|-----------:|:------|:--------|
-| **q1** |  **0.2508** | **0.1045** | **B** | **yes** |
-| **q2** |  **0.4113** | **0.0939** | **C** | **yes** |
-| q3     |      0.0637 |     0.1031 | A     | no      |
-| q4     |     -0.0923 |     0.1137 | A     | no      |
-| **q5** | **-0.2857** | **0.0925** | **B** | **yes** |
-| q6     |     -0.1553 |     0.1048 | A     | no      |
-| q7     |     -0.0747 |     0.1023 | A     | no      |
-| q8     |     -0.1118 |     0.1018 | A     | no      |
-| q9     |      0.1804 |     0.0999 | A     | no      |
+| Item   | EffectSize |        SE | Class | Flagged |
+|:-------|-----------:|----------:|:------|:--------|
+| **q1** |  **0.251** | **0.104** | **B** | **yes** |
+| **q2** |  **0.411** | **0.094** | **C** | **yes** |
+| q3     |      0.064 |     0.103 | A     | no      |
+| q4     |     -0.092 |     0.114 | A     | no      |
+| **q5** | **-0.286** | **0.092** | **B** | **yes** |
+| q6     |     -0.155 |     0.105 | A     | no      |
+| q7     |     -0.075 |     0.102 | A     | no      |
+| q8     |     -0.112 |     0.102 | A     | no      |
+| q9     |      0.180 |     0.100 | A     | no      |
 
 Partial Credit Tree (9 items). n = 569 of 600 respondents (complete DIF
 covariates). Effect size: partial gamma (B/C thresholds = 0.21 / 0.31).
@@ -1001,6 +1039,11 @@ Series* 1986 (2): i–24.
 Johansson, Magnus. 2025. “Detecting Item Misfit in Rasch Models.”
 *Educational Methods & Psychometrics* 3 (18).
 <https://doi.org/10.61186/emp.2025.5>.
+
+Johansson, Magnus. 2026. “Simulation-Based Cutoffs for Conditional Item
+Fit in Rasch Models: Iterations, Multiplicity Correction, and Decision
+Stability.” *PsyArXiv*, ahead of print.
+<https://doi.org/10.31234/osf.io/7pqz4_v2>.
 
 Kreiner, Svend. 2007. “Validity and Objectivity: Reflections on the Role
 and Nature of Rasch Models.” *Nordic Psychology* 59 (3): 268–98.

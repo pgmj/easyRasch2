@@ -139,13 +139,14 @@ while large negative values suggest negative LD.
 
 The `iarm` package must be installed (it is in Suggests, not Imports).
 
-**Bootstrap p-values.** When `p_value = TRUE`, each pair's observed
-partial gamma (canonical direction) is compared against its simulated
-null distribution (from `cutoff$results`, simulated under local
-independence). The per-pair statistic is the residual studentised by the
-bootstrap mean and SD; the marginal p-value is the one-sided Monte-Carlo
-p-value `(1 + #\{t* >= t\}) / (B + 1)` for excess *positive* LD
-(redundancy, the diagnostic target — matching
+**Bootstrap p-values.** When `p_value = TRUE`, each pair is tested once,
+on the larger of its two rest-score directions (the `gamma_pair`
+column), against its simulated null distribution (from `cutoff$results`,
+simulated under local independence and built from that same maximum).
+The per-pair statistic is the residual studentised by the bootstrap mean
+and SD; the marginal p-value is the one-sided Monte-Carlo p-value
+`(1 + #\{t* >= t\}) / (B + 1)` for excess *positive* LD (redundancy, the
+diagnostic target — matching
 [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)),
 so it can be no smaller than `1 / (B + 1)`. The band still shows both
 bounds for reference. `correction = "fwer"` uses the Westfall-Young
@@ -227,7 +228,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 }
 #> Bootstrap p-values are based on 100 iterations, below the calibrated floor of 400.
 #> ℹ Below 400 the Westfall-Young correction is mildly liberal under the null, so the family-wise error rate is above the nominal level.
-#> ℹ See Johansson (2026), doi:10.31234/osf.io/7pqz4_v1.
+#> ℹ See Johansson (2026), doi:10.31234/osf.io/7pqz4_v2.
 #> ℹ Raise `iterations` in RMlocdepGammaCutoff().
 #> This message is displayed once per session.
 #> $direction1

@@ -8,21 +8,29 @@ Produces a three-panel targeting plot with a shared logit scale x-axis:
 2.  **Middle**: Inverted histogram of item threshold locations, with the
     same summary annotations.
 
-3.  **Bottom**: Dot-and-whisker plot of individual item thresholds with
-    confidence intervals based on threshold standard errors.
+3.  **Bottom**: one bar per item, either partitioned into
+    response-category bands (`panel = "categories"`, the default) or
+    drawn as a dot-and-whisker plot of the individual thresholds
+    (`panel = "thresholds"`).
 
 ## Usage
 
 ``` r
 RMtargeting(
   data,
+  panel = c("categories", "thresholds"),
   robust = FALSE,
   sort_items = c("data", "location"),
   bins,
   xlim = c(-4, 4),
   ci_level = 0.95,
+  category_labels = NULL,
   person_fill = "#0072B2",
   threshold_fill = "#D55E00",
+  viridis_option = "G",
+  viridis_begin = 0.9,
+  viridis_end = 0.2,
+  row_gap = NULL,
   height_ratios = c(3, 2, 5),
   output = "patchwork"
 )
@@ -35,6 +43,14 @@ RMtargeting(
   A data.frame or matrix of item responses. Items must be scored
   starting at 0 (non-negative integers). Missing values (`NA`) are
   allowed.
+
+- panel:
+
+  Character string selecting the bottom panel. `"categories"` (the
+  default) draws each item as a bar partitioned into response-category
+  bands, with the threshold estimates and their confidence intervals
+  below it. `"thresholds"` draws the dot-and-whisker plot of item
+  thresholds that was the only option before version 1.3.0.
 
 - robust:
 
@@ -64,14 +80,37 @@ RMtargeting(
   Numeric. Confidence level for the item threshold error bars. Default
   is `0.95` (95% CI). Set to `NULL` to hide error bars.
 
+- category_labels:
+
+  Optional character vector of labels for the response categories, in
+  ascending order and one per category. Used for the legend of the
+  `"categories"` panel. Default `NULL` uses the category scores.
+
 - person_fill:
 
   Fill colour for the person histogram. Default `"#0072B2"` (blue).
 
 - threshold_fill:
 
-  Fill colour for the item threshold histogram. Default `"#D55E00"`
-  (vermillion).
+  Fill colour for the item threshold histogram, and for the
+  dot-and-whisker panel. Default `"#D55E00"` (vermillion).
+
+- viridis_option:
+
+  Character. Viridis palette option for the category bands. Default
+  `"G"` (mako).
+
+- viridis_begin, viridis_end:
+
+  Numeric in \\\[0, 1\]\\. Start and end points of the viridis palette
+  for the category bands. Defaults `0.9` and `0.2`, which runs the
+  palette from light to dark so that higher categories are darker.
+
+- row_gap:
+
+  Numeric. Vertical spacing between item rows in the `"categories"`
+  panel. Default `NULL` uses `1`, widened to `1.18` when at least one
+  category collapses, so that its label has room above the bar.
 
 - height_ratios:
 
@@ -90,13 +129,16 @@ RMtargeting(
 - If `output = "patchwork"`: a `patchwork` object (combined `ggplot`).
 
 - If `output = "list"`: a named list with elements `p1` (person
-  histogram), `p2` (threshold histogram), and `p3` (item threshold
-  dot-whisker plot).
+  histogram), `p2` (threshold histogram), and `p3` (the bottom panel
+  selected by `panel`).
 
 ## Details
 
 Together, the top and middle panels form a back-to-back histogram that
 makes it easy to assess whether the test is well-targeted to the sample.
+The bottom panel places the items on the same scale, so the category
+bands show which response is the most likely one at the locations where
+the persons actually sit.
 
 **Estimation method selection.** The function checks whether any item
 response category has fewer than 3 observations. If all categories have
@@ -123,6 +165,19 @@ responders are located rather than dropped.
 intervals: threshold estimate ± z × SE, where z is the standard normal
 quantile corresponding to `ci_level`.
 
+**Category bands.** With `panel = "categories"`, each band spans the
+locations at which its response category is the most likely response.
+When an item's thresholds are ordered these boundaries are the Andrich
+thresholds themselves. When they are not, the disordered run is pooled
+by averaging and the categories it skips over, which are never the most
+likely response at any location, collapse to a red tick labelled with
+the category number. Red arrows below the bar give the size of each
+threshold reversal in logits. Ordered thresholds therefore leave no red
+marks at all.
+
+The two outer bands are open-ended and fade towards the panel edge,
+since the lowest and highest categories have no outer boundary.
+
 The `ggplot2` and `patchwork` packages must be installed (they are in
 Suggests, not Imports).
 
@@ -148,8 +203,15 @@ if (requireNamespace("ggplot2", quietly = TRUE) &&
   )
   colnames(sim_data) <- paste0("Item", 1:8)
 
-  # Default: mean/SD, data order, 95% CI
+  # Default: category bands, mean/SD, data order, 95% CI
   RMtargeting(sim_data)
+
+  # Category bands with labels
+  RMtargeting(sim_data, category_labels = c("Never", "Sometimes",
+                                            "Often", "Always"))
+
+  # The dot-and-whisker panel
+  RMtargeting(sim_data, panel = "thresholds")
 
   # Robust (median/MAD), sorted by location, 84% CI
   RMtargeting(sim_data, robust = TRUE, sort_items = "location",

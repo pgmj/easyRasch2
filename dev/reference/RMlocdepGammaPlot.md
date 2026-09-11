@@ -60,9 +60,11 @@ Uses
 (when `data` is supplied) with `point_interval = "median_hdci"` and
 `.width = c(0.66, 0.95, 0.99)`.
 
-The plot shows one row per item pair (labelled as "Item1 - Item2"). Only
-direction 1 (rest score = total - Item2) is plotted, matching the
-convention used in the simulation.
+The plot shows one row per item pair (labelled as "Item1 - Item2"). The
+observed overlay is the larger of the pair's two rest-score directions,
+matching the statistic
+[`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
+tests and the simulated null.
 
 When `data` is **not** supplied, the function plots the simulated
 partial gamma distributions as dot-interval plots using

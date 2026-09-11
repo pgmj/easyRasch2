@@ -209,6 +209,11 @@ number of hypotheses simultaneously. *Journal of Statistical Theory and
 Practice, 19*(6).
 [doi:10.1007/s42519-024-00412-4](https://doi.org/10.1007/s42519-024-00412-4)
 
+Johansson, M. (2026). Simulation-based cutoffs for conditional item fit
+in Rasch models: Iterations, multiplicity correction, and decision
+stability. *PsyArXiv*.
+[doi:10.31234/osf.io/7pqz4_v2](https://doi.org/10.31234/osf.io/7pqz4_v2)
+
 ## Examples
 
 ``` r

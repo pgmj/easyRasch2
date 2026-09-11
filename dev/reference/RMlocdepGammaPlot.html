@@ -11,7 +11,7 @@ gamma values computed from real data via partgam_LD."><meta name="robots" conten
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.1.9004</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.2.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,9 +93,9 @@ than the number of available pairs are silently capped.</p></dd>
     <p>Uses <code><a href="https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html" class="external-link">ggdist::stat_dotsinterval()</a></code> (when <code>data</code> is not supplied) or
 <code><a href="https://mjskay.github.io/ggdist/reference/stat_dots.html" class="external-link">ggdist::stat_dots()</a></code> (when <code>data</code> is supplied) with
 <code>point_interval = "median_hdci"</code> and <code>.width = c(0.66, 0.95, 0.99)</code>.</p>
-<p>The plot shows one row per item pair (labelled as "Item1 - Item2"). Only
-direction 1 (rest score = total - Item2) is plotted, matching the
-convention used in the simulation.</p>
+<p>The plot shows one row per item pair (labelled as "Item1 - Item2"). The
+observed overlay is the larger of the pair's two rest-score directions,
+matching the statistic <code><a href="RMlocdepGamma.html">RMlocdepGamma()</a></code> tests and the simulated null.</p>
 <p>When <code>data</code> is <strong>not</strong> supplied, the function plots the simulated partial
 gamma distributions as dot-interval plots using
 <code><a href="https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html" class="external-link">ggdist::stat_dotsinterval()</a></code> with median and Highest Density Continuous

@@ -13,7 +13,7 @@ items in the pair)."><meta name="robots" content="noindex"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.1.9004</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.2.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -168,9 +168,10 @@ data.frames.</p>
 positive LD (items share variance beyond the latent trait), while large
 negative values suggest negative LD.</p>
 <p>The <code>iarm</code> package must be installed (it is in Suggests, not Imports).</p>
-<p><strong>Bootstrap p-values.</strong> When <code>p_value = TRUE</code>, each pair's observed
-partial gamma (canonical direction) is compared against its simulated null
-distribution (from <code>cutoff$results</code>, simulated under local independence).
+<p><strong>Bootstrap p-values.</strong> When <code>p_value = TRUE</code>, each pair is tested
+once, on the larger of its two rest-score directions (the <code>gamma_pair</code>
+column), against its simulated null distribution (from <code>cutoff$results</code>,
+simulated under local independence and built from that same maximum).
 The per-pair statistic is the residual studentised by the bootstrap mean
 and SD; the marginal p-value is the one-sided Monte-Carlo p-value
 <code>(1 + #\{t* &gt;= t\}) / (B + 1)</code> for excess <em>positive</em> LD (redundancy, the
@@ -249,7 +250,7 @@ Wiley.</p>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Bootstrap p-values are based on 100 iterations, below the calibrated floor of 400.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> Below 400 the Westfall-Young correction is mildly liberal under the null, so the family-wise error rate is above the nominal level.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> See Johansson (2026), doi:10.31234/osf.io/7pqz4_v1.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> See Johansson (2026), doi:10.31234/osf.io/7pqz4_v2.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> Raise `iterations` in RMlocdepGammaCutoff().</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">This message is displayed once per session.</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $direction1</span>
