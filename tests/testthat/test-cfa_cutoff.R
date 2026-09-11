@@ -150,6 +150,39 @@ test_that("Same seed produces identical simulated distributions", {
   expect_equal(res1$simulated_loadings, res2$simulated_loadings)
 })
 
+test_that("Item names that are not syntactic R names give the same fit", {
+  skip_on_cran()
+  skip_if_not_installed("lavaan")
+  skip_if_not_installed("eRm")
+  data("raschdat1", package = "eRm")
+
+  plain_df <- raschdat1[, 1:8]
+  odd_df <- plain_df
+  names(odd_df) <- c("Item 1", "Q3 reversed", "3 months", "x y",
+                     "I-5", "I 6", "7", "ok")
+
+  plain <- RMdimCFACutoff(plain_df, iterations = 5, parallel = FALSE, seed = 42)
+  odd <- RMdimCFACutoff(odd_df, iterations = 5, parallel = FALSE, seed = 42)
+
+  # lavaan is fitted under placeholder names, so the numbers must not move
+  expect_equal(odd$actual_iterations, plain$actual_iterations)
+  expect_equal(odd$cutoffs, plain$cutoffs)
+  expect_equal(odd$loading_cutoffs[, c("low", "high")],
+               plain$loading_cutoffs[, c("low", "high")])
+
+  # ... and the item names must survive, not the placeholders
+  expect_equal(odd$item_names, names(odd_df))
+  expect_equal(odd$loading_cutoffs$Item, names(odd_df))
+  expect_equal(colnames(odd$simulated_loadings),
+               c("iteration", names(odd_df)))
+
+  odd_obs <- RMdimCFA(odd_df, cutoff = odd, output = "dataframe")
+  plain_obs <- RMdimCFA(plain_df, cutoff = plain, output = "dataframe")
+  expect_equal(odd_obs$loadings$Item, names(odd_df))
+  expect_equal(odd_obs$loadings$Observed, plain_obs$loadings$Observed)
+  expect_equal(odd_obs$fit$Observed, plain_obs$fit$Observed)
+})
+
 # ---------------------------------------------------------------------
 # RMdimCFA (tables)
 # ---------------------------------------------------------------------

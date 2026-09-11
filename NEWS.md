@@ -1,3 +1,32 @@
+# easyRasch2 (development version)
+
+## Breaking changes
+
+- **`RMtargeting()` now draws response-category bands in its bottom panel.**
+  Each item is one bar partitioned into its response categories, so the panel
+  reads against the person histogram directly. Threshold estimates and
+  confidence intervals stay, as a coloured error-bar row below each bar.
+  Categories that are never the most likely response collapse to a red tick
+  and each threshold reversal gets a red span, so disordering is visible
+  without a separate check. Pass `panel = "thresholds"` for the previous
+  dot-and-whisker panel. Estimates are unchanged.
+
+## New features
+
+- `RMtargeting()` gains `category_labels` for the band legend, `row_gap` for
+  the vertical spacing of the item rows, and `viridis_option`,
+  `viridis_begin` and `viridis_end` for the band palette.
+
+## Bug fixes
+
+- `RMdimCFACutoff()` and `RMdimCFA()` failed whenever an item name was not a
+  syntactic R name, such as `Item 1` or `3 months`. lavaan's model syntax
+  cannot express those names, and neither back-quoting nor double-quoting
+  parses, so every simulation iteration returned a parser error and the
+  cutoff simulation aborted. The CFA is now fitted under placeholder names
+  and the loadings mapped back. Results for syntactic item names are
+  unchanged.
+
 # easyRasch2 1.2.0
 
 ## Breaking changes

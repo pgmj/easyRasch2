@@ -55,9 +55,10 @@ Ignored when \code{cutoff_method = "quantile"}.}
 A list with components:
 \describe{
 \item{\code{results}}{data.frame with columns \code{iteration}, \code{Item1}, \code{Item2},
-and \code{gamma} (one row per item pair per successful iteration). Contains
-results from direction 1 only (rest score = total - Item2), which is
-the conventional direction.}
+and \code{gamma} (one row per item pair per successful iteration). \code{gamma} is
+the larger of the pair's two rest-score directions, the statistic
+\code{RMlocdepGamma()} tests. Rows are keyed by the sorted pair order, with
+\code{Item1} before \code{Item2} in column order.}
 \item{\code{pair_cutoffs}}{data.frame with per-pair cutoff summaries: \code{Item1},
 \code{Item2}, \code{gamma_low}, \code{gamma_high}. Bounds are computed using the method
 specified by \code{cutoff_method}.}
@@ -92,12 +93,12 @@ WLE person locations.
 \item Simulates item response data under a Rasch model (dichotomous via
 \code{psychotools::rrm()} or polytomous via an internal partial credit
 simulator).
-\item Computes partial gamma for every item pair in the canonical
-rest-score direction. The coefficients are identical to those of
-\code{iarm::partgam_LD()}, but are computed by a vectorised internal, since
-\code{iarm} also derives the asymptotic standard error and confidence
-interval that a simulated null does not need and costs roughly two
-orders of magnitude more per iteration.
+\item Computes partial gamma for every item pair in both rest-score
+directions and keeps the larger. The coefficients are identical to
+those of \code{iarm::partgam_LD()}, but are computed by a vectorised
+internal, since \code{iarm} also derives the asymptotic standard error and
+confidence interval that a simulated null does not need and costs
+roughly two orders of magnitude more per iteration.
 }
 
 Because the data are simulated under the Rasch model, items are locally

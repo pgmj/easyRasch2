@@ -43,9 +43,9 @@ Uses \code{ggdist::stat_dotsinterval()} (when \code{data} is not supplied) or
 \code{ggdist::stat_dots()} (when \code{data} is supplied) with
 \code{point_interval = "median_hdci"} and \code{.width = c(0.66, 0.95, 0.99)}.
 
-The plot shows one row per item pair (labelled as "Item1 - Item2"). Only
-direction 1 (rest score = total - Item2) is plotted, matching the
-convention used in the simulation.
+The plot shows one row per item pair (labelled as "Item1 - Item2"). The
+observed overlay is the larger of the pair's two rest-score directions,
+matching the statistic \code{RMlocdepGamma()} tests and the simulated null.
 
 When \code{data} is \strong{not} supplied, the function plots the simulated partial
 gamma distributions as dot-interval plots using

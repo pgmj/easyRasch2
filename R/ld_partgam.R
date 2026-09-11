@@ -90,9 +90,10 @@
 #'
 #' The `iarm` package must be installed (it is in Suggests, not Imports).
 #'
-#' \strong{Bootstrap p-values.} When `p_value = TRUE`, each pair's observed
-#' partial gamma (canonical direction) is compared against its simulated null
-#' distribution (from `cutoff$results`, simulated under local independence).
+#' \strong{Bootstrap p-values.} When `p_value = TRUE`, each pair is tested
+#' once, on the larger of its two rest-score directions (the `gamma_pair`
+#' column), against its simulated null distribution (from `cutoff$results`,
+#' simulated under local independence and built from that same maximum).
 #' The per-pair statistic is the residual studentised by the bootstrap mean
 #' and SD; the marginal p-value is the one-sided Monte-Carlo p-value
 #' `(1 + #\{t* >= t\}) / (B + 1)` for excess *positive* LD (redundancy, the
@@ -410,12 +411,12 @@ RMlocdepGamma <- function(
     cutoff$canonical_key <- NULL
   }
 
-  # --- Bootstrap p-values (one test per pair, canonical direction) ------------
+  # --- Bootstrap p-values (one test per pair) ---------------------------------
   # Computed BEFORE the n_pairs display filter so the multiplicity correction
-  # always runs over the full family of pairs. The simulated null holds the
-  # direction-1 gammas only, so the observed statistic is the direction-1
-  # (canonical) gamma; the resulting p-value is keyed by the unordered pair
-  # and repeated in the direction-2 table.
+  # always runs over the full family of pairs. Both the observed statistic and
+  # the simulated null are the larger of a pair's two rest-score directions, so
+  # the two are the same functional; the resulting p-value is keyed by the
+  # unordered pair and repeated in the direction-2 table.
   if (p_value) {
     canon_key <- function(a, b) {
       paste(pmin(a, b), pmax(a, b), sep = "___")
@@ -743,9 +744,10 @@ knit_print.RMlocdepGamma <- function(x, ...) {
 #' @return A list with components:
 #' \describe{
 #'   \item{`results`}{data.frame with columns `iteration`, `Item1`, `Item2`,
-#'     and `gamma` (one row per item pair per successful iteration). Contains
-#'     results from direction 1 only (rest score = total - Item2), which is
-#'     the conventional direction.}
+#'     and `gamma` (one row per item pair per successful iteration). `gamma` is
+#'     the larger of the pair's two rest-score directions, the statistic
+#'     `RMlocdepGamma()` tests. Rows are keyed by the sorted pair order, with
+#'     `Item1` before `Item2` in column order.}
 #'   \item{`pair_cutoffs`}{data.frame with per-pair cutoff summaries: `Item1`,
 #'     `Item2`, `gamma_low`, `gamma_high`. Bounds are computed using the method
 #'     specified by `cutoff_method`.}
@@ -772,12 +774,12 @@ knit_print.RMlocdepGamma <- function(x, ...) {
 #'   \item Simulates item response data under a Rasch model (dichotomous via
 #'     `psychotools::rrm()` or polytomous via an internal partial credit
 #'     simulator).
-#'   \item Computes partial gamma for every item pair in the canonical
-#'     rest-score direction. The coefficients are identical to those of
-#'     `iarm::partgam_LD()`, but are computed by a vectorised internal, since
-#'     `iarm` also derives the asymptotic standard error and confidence
-#'     interval that a simulated null does not need and costs roughly two
-#'     orders of magnitude more per iteration.
+#'   \item Computes partial gamma for every item pair in both rest-score
+#'     directions and keeps the larger. The coefficients are identical to
+#'     those of `iarm::partgam_LD()`, but are computed by a vectorised
+#'     internal, since `iarm` also derives the asymptotic standard error and
+#'     confidence interval that a simulated null does not need and costs
+#'     roughly two orders of magnitude more per iteration.
 #' }
 #'
 #' Because the data are simulated under the Rasch model, items are locally
@@ -1066,8 +1068,7 @@ RMlocdepGammaCutoff <- function(
 #' @param direction `1` enumerates pairs with `Item1` before `Item2` in column
 #'   order, `2` the reverse. The rest score always excludes `Item2`, so the two
 #'   directions give the two conditional independence hypotheses of Kreiner and
-#'   Christensen (2004). Direction 1 is the canonical one stored by
-#'   [RMlocdepGammaCutoff()].
+#'   Christensen (2004). [RMlocdepGammaCutoff()] stores the larger of the two.
 #' @param strata When `TRUE`, adds the stratum sign-homogeneity columns
 #'   described in `.partgam_strata_summary()`. Off by default, since the
 #'   bootstrap needs the coefficient alone and calls this once per iteration.
@@ -1501,9 +1502,9 @@ run_partgam_LD_sim_sequential <- function(
 #' @return A `ggplot` object.
 #'
 #' @details
-#' The plot shows one row per item pair (labelled as "Item1 - Item2"). Only
-#' direction 1 (rest score = total - Item2) is plotted, matching the
-#' convention used in the simulation.
+#' The plot shows one row per item pair (labelled as "Item1 - Item2"). The
+#' observed overlay is the larger of the pair's two rest-score directions,
+#' matching the statistic `RMlocdepGamma()` tests and the simulated null.
 #'
 #' When `data` is **not** supplied, the function plots the simulated partial
 #' gamma distributions as dot-interval plots using

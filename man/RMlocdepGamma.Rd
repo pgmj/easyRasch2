@@ -116,9 +116,10 @@ negative values suggest negative LD.
 
 The \code{iarm} package must be installed (it is in Suggests, not Imports).
 
-\strong{Bootstrap p-values.} When \code{p_value = TRUE}, each pair's observed
-partial gamma (canonical direction) is compared against its simulated null
-distribution (from \code{cutoff$results}, simulated under local independence).
+\strong{Bootstrap p-values.} When \code{p_value = TRUE}, each pair is tested
+once, on the larger of its two rest-score directions (the \code{gamma_pair}
+column), against its simulated null distribution (from \code{cutoff$results},
+simulated under local independence and built from that same maximum).
 The per-pair statistic is the residual studentised by the bootstrap mean
 and SD; the marginal p-value is the one-sided Monte-Carlo p-value
 \verb{(1 + #\\\{t* >= t\\\}) / (B + 1)} for excess \emph{positive} LD (redundancy, the

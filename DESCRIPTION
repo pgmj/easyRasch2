@@ -1,6 +1,6 @@
 Package: easyRasch2
 Title: Psychometric Analysis with Rasch Measurement Theory
-Version: 1.2.0
+Version: 1.2.0.9000
 Authors@R: c(
     person("Magnus", "Johansson",
            role = c("aut", "cre"),
@@ -44,6 +44,7 @@ Depends:
     R (>= 4.1.0)
 Imports:
     graphics,
+    grDevices,
     knitr,
     mirt,
     psychotools (>= 0.7-3),

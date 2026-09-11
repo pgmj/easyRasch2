@@ -7,15 +7,25 @@
 #'     (or ±1 MAD).
 #'   \item \strong{Middle}: Inverted histogram of item threshold locations,
 #'     with the same summary annotations.
-#'   \item \strong{Bottom}: Dot-and-whisker plot of individual item thresholds
-#'     with confidence intervals based on threshold standard errors.
+#'   \item \strong{Bottom}: one bar per item, either partitioned into
+#'     response-category bands (`panel = "categories"`, the default) or drawn
+#'     as a dot-and-whisker plot of the individual thresholds
+#'     (`panel = "thresholds"`).
 #' }
 #'
 #' Together, the top and middle panels form a back-to-back histogram that
 #' makes it easy to assess whether the test is well-targeted to the sample.
+#' The bottom panel places the items on the same scale, so the category bands
+#' show which response is the most likely one at the locations where the
+#' persons actually sit.
 #'
 #' @param data A data.frame or matrix of item responses. Items must be scored
 #'   starting at 0 (non-negative integers). Missing values (`NA`) are allowed.
+#' @param panel Character string selecting the bottom panel. `"categories"`
+#'   (the default) draws each item as a bar partitioned into response-category
+#'   bands, with the threshold estimates and their confidence intervals below
+#'   it. `"thresholds"` draws the dot-and-whisker plot of item thresholds that
+#'   was the only option before version 1.3.0.
 #' @param robust Logical. If `FALSE` (the default), histogram annotations use
 #'   mean ± SD. If `TRUE`, median ± MAD is used instead.
 #' @param sort_items Character string controlling item ordering on the y-axis
@@ -29,10 +39,22 @@
 #'   values fall outside these limits.
 #' @param ci_level Numeric. Confidence level for the item threshold error bars.
 #'   Default is `0.95` (95% CI). Set to `NULL` to hide error bars.
+#' @param category_labels Optional character vector of labels for the response
+#'   categories, in ascending order and one per category. Used for the legend
+#'   of the `"categories"` panel. Default `NULL` uses the category scores.
 #' @param person_fill Fill colour for the person histogram. Default
 #'   `"#0072B2"` (blue).
-#' @param threshold_fill Fill colour for the item threshold histogram. Default
-#'   `"#D55E00"` (vermillion).
+#' @param threshold_fill Fill colour for the item threshold histogram, and for
+#'   the dot-and-whisker panel. Default `"#D55E00"` (vermillion).
+#' @param viridis_option Character. Viridis palette option for the category
+#'   bands. Default `"G"` (mako).
+#' @param viridis_begin,viridis_end Numeric in \eqn{[0, 1]}. Start and end
+#'   points of the viridis palette for the category bands. Defaults `0.9` and
+#'   `0.2`, which runs the palette from light to dark so that higher
+#'   categories are darker.
+#' @param row_gap Numeric. Vertical spacing between item rows in the
+#'   `"categories"` panel. Default `NULL` uses `1`, widened to `1.18` when at
+#'   least one category collapses, so that its label has room above the bar.
 #' @param height_ratios Numeric vector of length 3 specifying the relative
 #'   heights of the top (person), middle (threshold), and bottom (dot-whisker)
 #'   panels. Default `c(3, 2, 5)`.
@@ -43,7 +65,8 @@
 #' @return
 #' * If `output = "patchwork"`: a `patchwork` object (combined `ggplot`).
 #' * If `output = "list"`: a named list with elements `p1` (person histogram),
-#'   `p2` (threshold histogram), and `p3` (item threshold dot-whisker plot).
+#'   `p2` (threshold histogram), and `p3` (the bottom panel selected by
+#'   `panel`).
 #'
 #' @details
 #' \strong{Estimation method selection.}
@@ -69,6 +92,18 @@
 #' intervals: threshold estimate ± z × SE, where z is the standard normal
 #' quantile corresponding to `ci_level`.
 #'
+#' \strong{Category bands.} With `panel = "categories"`, each band spans the
+#' locations at which its response category is the most likely response. When
+#' an item's thresholds are ordered these boundaries are the Andrich
+#' thresholds themselves. When they are not, the disordered run is pooled by
+#' averaging and the categories it skips over, which are never the most likely
+#' response at any location, collapse to a red tick labelled with the category
+#' number. Red arrows below the bar give the size of each threshold reversal in
+#' logits. Ordered thresholds therefore leave no red marks at all.
+#'
+#' The two outer bands are open-ended and fade towards the panel edge, since
+#' the lowest and highest categories have no outer boundary.
+#'
 #' The `ggplot2` and `patchwork` packages must be installed (they are in
 #' Suggests, not Imports).
 #'
@@ -90,8 +125,15 @@
 #'   )
 #'   colnames(sim_data) <- paste0("Item", 1:8)
 #'
-#'   # Default: mean/SD, data order, 95% CI
+#'   # Default: category bands, mean/SD, data order, 95% CI
 #'   RMtargeting(sim_data)
+#'
+#'   # Category bands with labels
+#'   RMtargeting(sim_data, category_labels = c("Never", "Sometimes",
+#'                                             "Often", "Always"))
+#'
+#'   # The dot-and-whisker panel
+#'   RMtargeting(sim_data, panel = "thresholds")
 #'
 #'   # Robust (median/MAD), sorted by location, 84% CI
 #'   RMtargeting(sim_data, robust = TRUE, sort_items = "location",
@@ -111,13 +153,19 @@
 #' }
 RMtargeting <- function(
   data,
+  panel = c("categories", "thresholds"),
   robust = FALSE,
   sort_items = c("data", "location"),
   bins,
   xlim = c(-4, 4),
   ci_level = 0.95,
+  category_labels = NULL,
   person_fill = "#0072B2",
   threshold_fill = "#D55E00",
+  viridis_option = "G",
+  viridis_begin = 0.9,
+  viridis_end = 0.2,
+  row_gap = NULL,
   height_ratios = c(3, 2, 5),
   output = "patchwork"
 ) {
@@ -147,6 +195,7 @@ RMtargeting <- function(
     }
   }
 
+  panel <- match.arg(panel)
   sort_items <- match.arg(sort_items)
   output <- match.arg(output, c("patchwork", "list"))
 
@@ -393,7 +442,7 @@ RMtargeting <- function(
     )
   }
 
-  caption_text <- er2_caption(paste0(
+  caption_body <- paste0(
     "Person location ",
     tolower(center_label),
     ": ",
@@ -416,11 +465,82 @@ RMtargeting <- function(
       n_total,
       if (has_na) "incomplete responses retained" else character()
     ),
-    ".\n",
-    ci_caption
-  ))
+    "."
+  )
 
-  if (is_dicho) {
+  # The threshold panel keeps its own wording; the category panel describes
+  # its extra marks instead, and says the same thing about the intervals.
+  caption_text <- er2_caption(paste0(caption_body, "\n", ci_caption))
+
+  if (panel == "categories") {
+    # Integer threshold index, needed by the band helpers
+    item_thresholds$k <- as.integer(sub("^T", "", item_thresholds$Threshold))
+    n_cat <- max(item_thresholds$k) + 1L
+
+    if (is.null(category_labels)) {
+      category_labels <- as.character(seq_len(n_cat) - 1L)
+    } else if (length(category_labels) != n_cat) {
+      stop(
+        "`category_labels` must have one label per response category.\n",
+        "The data have ", n_cat, " categories and ",
+        length(category_labels), " labels were supplied.",
+        call. = FALSE
+      )
+    }
+
+    fills <- scales::viridis_pal(
+      option = viridis_option,
+      begin = viridis_begin,
+      end = viridis_end
+    )(n_cat)
+
+    bands_preview <- .category_bands(
+      item_thresholds, as.character(item_order), xlim
+    )
+    # The collapsed-category label needs headroom above the bar, so open the
+    # row spacing only when there is something to label.
+    if (is.null(row_gap)) {
+      row_gap <- if (is.null(bands_preview$drops)) 1 else 1.18
+    }
+
+    band_caption <- paste(
+      "Bands span the locations at which each response category is the most",
+      "likely response. Outer bands fade because they are open-ended."
+    )
+    if (show_ci) {
+      band_caption <- paste(
+        band_caption,
+        sprintf(paste(
+          "Points and intervals below each bar are the Andrich thresholds with",
+          "%d%% confidence intervals, coloured by the category entered."
+        ), round(ci_level * 100))
+      )
+    }
+    if (!is.null(bands_preview$drops)) {
+      band_caption <- paste(
+        band_caption,
+        "A red tick marks a category that is never the most likely response,",
+        "labelled with its number."
+      )
+    }
+    if (!is.null(.threshold_reversals(item_thresholds, as.character(item_order)))) {
+      band_caption <- paste(
+        band_caption,
+        "Red arrows give the size in logits of each threshold reversal."
+      )
+    }
+
+    p3 <- .targeting_category_panel(
+      thr = item_thresholds,
+      item_order = as.character(item_order),
+      xlim = xlim,
+      category_labels = category_labels,
+      fills = fills,
+      show_ci = show_ci,
+      row_gap = row_gap,
+      caption_text = er2_caption(paste(caption_body, band_caption))
+    )
+  } else if (is_dicho) {
     p3 <- ggplot2::ggplot(
       item_thresholds,
       ggplot2::aes(x = .data$Location, y = .data$Item)
@@ -622,4 +742,381 @@ RMtargeting <- function(
 
   # Person locations are estimated downstream by WLE from these thresholds.
   list(thresholds = thresh_df, erm_out = NULL)
+}
+
+
+#' Modal-category boundaries for one item
+#'
+#' For a PCM item with Andrich thresholds \eqn{\tau_1 \dots \tau_m},
+#' \eqn{\log P(X = k \mid \theta)} is \eqn{k\theta - S_k} up to a constant,
+#' with \eqn{S_k = \sum_{j \le k} \tau_j} and \eqn{S_0 = 0}. Category `k` is
+#' the most likely response where that line is the upper envelope of the
+#' \eqn{m + 1} lines, which happens when the point \eqn{(k, S_k)} lies on the
+#' lower convex hull of \eqn{\{(k, S_k)\}}. The boundary between two
+#' consecutive hull vertices \eqn{k < l} falls at \eqn{(S_l - S_k)/(l - k)},
+#' the mean of the thresholds they span.
+#'
+#' So when the thresholds are ordered the boundaries are the thresholds
+#' themselves, and when they are not, a disordered run is pooled by averaging
+#' and the categories it skips over are those that are never the most likely
+#' response at any location. Closed form, no grid search.
+#'
+#' @param tau Numeric vector of Andrich thresholds for one item.
+#' @return A list with `cats` (categories that are modal somewhere),
+#'   `dropped` (categories that never are) and `bounds` (the boundary
+#'   locations between consecutive elements of `cats`).
+#' @noRd
+.modal_boundaries <- function(tau) {
+  s_cum <- c(0, cumsum(tau))
+  k_idx <- seq_along(s_cum) - 1L
+  hull <- 1L
+  for (i in 2:length(s_cum)) {
+    while (length(hull) >= 2L) {
+      a <- hull[length(hull) - 1L]
+      b <- hull[length(hull)]
+      above <- (s_cum[b] - s_cum[a]) * (k_idx[i] - k_idx[a]) >=
+        (s_cum[i] - s_cum[a]) * (k_idx[b] - k_idx[a])
+      if (above) hull <- hull[-length(hull)] else break
+    }
+    hull <- c(hull, i)
+  }
+  vert <- k_idx[hull]
+  list(
+    cats    = vert,
+    dropped = setdiff(k_idx, vert),
+    bounds  = diff(s_cum[hull]) / diff(k_idx[hull])
+  )
+}
+
+
+#' Category bands and collapsed categories for every item
+#'
+#' @param thr A data.frame with `Item`, `k` (integer threshold index) and
+#'   `Location`.
+#' @param item_levels Character vector of item names, in plotting order
+#'   (first level at the bottom of the panel).
+#' @param xlim Numeric length 2. Used to close the two open-ended outer bands.
+#' @return A list with `bands` (Item, cat, xmin, xmax) and `drops`
+#'   (Item, cat, x), the latter `NULL` when no category collapses.
+#' @noRd
+.category_bands <- function(thr, item_levels, xlim) {
+  taus <- split(thr$Location[order(thr$Item, thr$k)],
+                factor(thr$Item[order(thr$Item, thr$k)], levels = item_levels))
+  bands <- list()
+  drops <- list()
+  for (it in item_levels) {
+    tau <- as.numeric(taus[[it]])
+    mb <- .modal_boundaries(tau)
+    bands[[it]] <- data.frame(
+      Item = it,
+      cat  = mb$cats,
+      xmin = c(xlim[1], mb$bounds),
+      xmax = c(mb$bounds, xlim[2]),
+      stringsAsFactors = FALSE
+    )
+    if (length(mb$dropped)) {
+      s_cum <- c(0, cumsum(tau))
+      drops[[it]] <- data.frame(
+        Item = it,
+        cat  = mb$dropped,
+        x    = vapply(mb$dropped, function(cc) {
+          lo <- max(mb$cats[mb$cats < cc])
+          hi <- min(mb$cats[mb$cats > cc])
+          (s_cum[hi + 1L] - s_cum[lo + 1L]) / (hi - lo)
+        }, numeric(1)),
+        stringsAsFactors = FALSE
+      )
+    }
+  }
+  list(
+    bands = do.call(rbind, bands),
+    drops = if (length(drops)) do.call(rbind, drops) else NULL
+  )
+}
+
+
+#' Reversed adjacent threshold pairs
+#'
+#' @inheritParams .category_bands
+#' @return A data.frame with `Item`, `k`, `lo`, `hi` and `gap`, or `NULL`
+#'   when every item has ordered thresholds.
+#' @noRd
+.threshold_reversals <- function(thr, item_levels) {
+  out <- lapply(item_levels, function(it) {
+    tau <- thr$Location[thr$Item == it][order(thr$k[thr$Item == it])]
+    d <- which(diff(tau) < 0)
+    if (!length(d)) return(NULL)
+    data.frame(
+      Item = it, k = d, lo = tau[d + 1L], hi = tau[d], gap = tau[d] - tau[d + 1L],
+      stringsAsFactors = FALSE
+    )
+  })
+  out <- do.call(rbind, out)
+  if (is.null(out) || !nrow(out)) NULL else out
+}
+
+
+#' Darken pale fills until they read as a thin line on white
+#'
+#' The lightest end of a sequential palette disappears when drawn as a 1 px
+#' error bar. Colours already below the luminance floor are returned unchanged.
+#'
+#' @param cols Character vector of colours.
+#' @param floor Numeric. Maximum perceived luminance on the 0-255 scale.
+#' @return A character vector of colours, same length as `cols`.
+#' @noRd
+.ci_contrast <- function(cols, floor = 130) {
+  vapply(cols, function(cl) {
+    v <- as.numeric(grDevices::col2rgb(cl)[, 1])
+    while (sum(v * c(0.299, 0.587, 0.114)) > floor) v <- v * 0.78
+    grDevices::rgb(v[1], v[2], v[3], maxColorValue = 255)
+  }, character(1), USE.NAMES = FALSE)
+}
+
+
+#' Pick readable label colour for text drawn on a filled band
+#'
+#' @param fills Character vector of band fill colours.
+#' @return A character vector of `"grey15"` / `"white"`.
+#' @noRd
+.band_label_colour <- function(fills) {
+  lum <- apply(grDevices::col2rgb(fills), 2, function(v) {
+    sum(v * c(0.299, 0.587, 0.114))
+  })
+  ifelse(lum > 145, "grey15", "white")
+}
+
+
+#' Build the response-category band panel
+#'
+#' @param thr A data.frame with `Item`, `k`, `Location`, `SE` and, when
+#'   `show_ci` is `TRUE`, `CI_low` and `CI_high`.
+#' @param item_order Character vector of item names, first level at the bottom.
+#' @param xlim Numeric length 2.
+#' @param category_labels Character vector of category labels, length `ncat`.
+#' @param fills Character vector of band fill colours, length `ncat`.
+#' @param show_ci Logical. Draw the threshold error-bar row.
+#' @param row_gap Numeric. Vertical spacing between item rows.
+#' @param caption_text Character. Pre-built caption.
+#' @return A `ggplot` object.
+#' @noRd
+.targeting_category_panel <- function(
+  thr,
+  item_order,
+  xlim,
+  category_labels,
+  fills,
+  show_ci,
+  row_gap,
+  caption_text
+) {
+  rev_col <- "#B2182B"
+  bar_h <- 0.52
+  hh <- bar_h / 2
+  yof <- function(x) match(as.character(x), item_order) * row_gap
+
+  bd <- .category_bands(thr, item_order, xlim)
+  b <- bd$bands
+  b$y <- yof(b$Item)
+  b$category <- factor(category_labels[b$cat + 1L], levels = category_labels)
+  b$fill <- fills[b$cat + 1L]
+
+  # Open-ended outer bands fade towards the panel edge, so the bar does not
+  # read as though the extreme categories stopped at the axis limits.
+  is_out <- b$cat == 0L | b$cat == max(b$cat)
+  n_step <- 40L
+  fade <- do.call(rbind, lapply(which(is_out), function(i) {
+    r <- b[i, ]
+    br <- seq(r$xmin, r$xmax, length.out = n_step + 1L)
+    data.frame(
+      y = r$y,
+      category = r$category,
+      alpha = if (r$cat == 0L) {
+        seq(0.22, 1, length.out = n_step)
+      } else {
+        seq(1, 0.22, length.out = n_step)
+      },
+      xmin = br[-length(br)],
+      xmax = br[-1],
+      stringsAsFactors = FALSE
+    )
+  }))
+
+  p <- ggplot2::ggplot() +
+    ggplot2::geom_rect(
+      data = fade,
+      ggplot2::aes(
+        xmin = .data$xmin, xmax = .data$xmax,
+        ymin = .data$y - hh, ymax = .data$y + hh,
+        fill = .data$category, alpha = .data$alpha
+      )
+    ) +
+    ggplot2::geom_rect(
+      data = b[!is_out, ],
+      ggplot2::aes(
+        xmin = .data$xmin, xmax = .data$xmax,
+        ymin = .data$y - hh, ymax = .data$y + hh,
+        fill = .data$category
+      )
+    )
+
+  # Hairline at every band join
+  joins <- b[b$xmin > xlim[1], ]
+  p <- p +
+    ggplot2::geom_segment(
+      data = joins,
+      ggplot2::aes(
+        x = .data$xmin, xend = .data$xmin,
+        y = .data$y - hh, yend = .data$y + hh
+      ),
+      colour = "white",
+      linewidth = 0.6,
+      show.legend = FALSE
+    )
+
+  # Category number inside the band, where the band is wide enough to hold it
+  lab <- b
+  lab$xc <- (pmax(lab$xmin, xlim[1]) + pmin(lab$xmax, xlim[2])) / 2
+  keep <- (pmin(lab$xmax, xlim[2]) - pmax(lab$xmin, xlim[1])) >
+    0.30 * diff(xlim) / 8
+  lab <- lab[keep, ]
+  if (nrow(lab)) {
+    p <- p +
+      ggplot2::geom_text(
+        data = lab,
+        ggplot2::aes(x = .data$xc, y = .data$y, label = .data$cat),
+        colour = .band_label_colour(lab$fill),
+        size = 3.1,
+        show.legend = FALSE
+      )
+  }
+
+  # Categories that are never the most likely response collapse to a tick.
+  # Red, to tie the tick to the reversal span that explains it, with a white
+  # halo so it stays visible against the dark end of the palette.
+  drops <- bd$drops
+  if (!is.null(drops)) {
+    drops <- drops[order(drops$Item, drops$cat), ]
+    key <- paste(drops$Item, round(drops$x, 8))
+    drops$label <- vapply(
+      key,
+      function(kk) paste(drops$cat[key == kk], collapse = ","),
+      character(1),
+      USE.NAMES = FALSE
+    )
+    drops <- drops[!duplicated(key), ]
+    drops$y <- yof(drops$Item)
+    p <- p +
+      ggplot2::geom_segment(
+        data = drops,
+        ggplot2::aes(
+          x = .data$x, xend = .data$x,
+          y = .data$y - hh - 0.06, yend = .data$y + hh + 0.06
+        ),
+        colour = "white", linewidth = 2.8, lineend = "butt", show.legend = FALSE
+      ) +
+      ggplot2::geom_segment(
+        data = drops,
+        ggplot2::aes(
+          x = .data$x, xend = .data$x,
+          y = .data$y - hh - 0.04, yend = .data$y + hh + 0.04
+        ),
+        colour = rev_col, linewidth = 1.7, lineend = "butt", show.legend = FALSE
+      ) +
+      ggplot2::geom_text(
+        data = drops,
+        ggplot2::aes(x = .data$x, y = .data$y + hh + 0.14, label = .data$label),
+        colour = rev_col, size = 2.7, fontface = "bold",
+        hjust = 0.5, vjust = 0, show.legend = FALSE
+      )
+  }
+
+  # Threshold estimates below the bar, coloured by the category the threshold
+  # gives entry to, so intervals that overlap can still be told apart. A white
+  # halo separates intervals from each other.
+  if (show_ci) {
+    ci <- thr
+    ci$y <- yof(ci$Item) - hh - 0.17
+    ci$col <- .ci_contrast(fills)[ci$k + 1L]
+    p <- p +
+      ggplot2::geom_errorbar(
+        data = ci,
+        ggplot2::aes(y = .data$y, xmin = .data$CI_low, xmax = .data$CI_high),
+        width = 0.17, linewidth = 2.1, colour = "white",
+        orientation = "y", show.legend = FALSE
+      ) +
+      ggplot2::geom_errorbar(
+        data = ci,
+        ggplot2::aes(y = .data$y, xmin = .data$CI_low, xmax = .data$CI_high),
+        width = 0.17, linewidth = 0.8, colour = ci$col,
+        orientation = "y", show.legend = FALSE
+      ) +
+      ggplot2::geom_point(
+        data = ci,
+        ggplot2::aes(x = .data$Location, y = .data$y),
+        colour = ci$col, size = 1.15, show.legend = FALSE
+      )
+  }
+
+  # Reversal spans, stacked under the threshold row so several on one item
+  # cannot overprint each other
+  revs <- .threshold_reversals(thr, item_order)
+  n_rev <- 0L
+  if (!is.null(revs)) {
+    revs <- revs[order(revs$Item, revs$k), ]
+    revs$row <- stats::ave(revs$k, revs$Item, FUN = seq_along)
+    n_rev <- max(revs$row)
+    revs$y <- yof(revs$Item) - hh - 0.32 - (revs$row - 1L) * 0.15
+    p <- p +
+      ggplot2::geom_segment(
+        data = revs,
+        ggplot2::aes(x = .data$lo, xend = .data$hi, y = .data$y, yend = .data$y),
+        colour = rev_col, linewidth = 0.8, show.legend = FALSE,
+        arrow = ggplot2::arrow(
+          ends = "both", length = ggplot2::unit(3, "pt"), type = "closed"
+        )
+      ) +
+      ggplot2::geom_text(
+        data = revs,
+        ggplot2::aes(
+          x = .data$hi, y = .data$y, label = sprintf("%.2f", .data$gap)
+        ),
+        colour = rev_col, size = 2.5, hjust = -0.3, vjust = 0.42,
+        show.legend = FALSE
+      )
+  }
+
+  y_bottom <- max(0.55, 0.32 + 0.15 * n_rev + 0.15)
+
+  p +
+    ggplot2::scale_fill_manual(
+      values = stats::setNames(fills, category_labels),
+      name = NULL,
+      drop = FALSE,
+      guide = ggplot2::guide_legend(
+        nrow = 1,
+        override.aes = list(alpha = 1)
+      )
+    ) +
+    ggplot2::scale_alpha_identity(guide = "none") +
+    ggplot2::scale_y_continuous(
+      breaks = seq_along(item_order) * row_gap,
+      labels = item_order,
+      expand = ggplot2::expansion(add = c(y_bottom, max(0.55, hh + 0.34)))
+    ) +
+    ggplot2::scale_x_continuous(
+      breaks = seq(xlim[1], xlim[2], by = 1),
+      expand = c(0, 0)
+    ) +
+    ggplot2::coord_cartesian(xlim = xlim) +
+    ggplot2::labs(x = "Location (logit scale)", y = NULL, caption = caption_text) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      legend.position = "bottom",
+      panel.grid.major.y = ggplot2::element_blank(),
+      panel.grid.minor = ggplot2::element_blank(),
+      plot.margin = ggplot2::margin(0, 5, 5, 5)
+    ) +
+    er2_axis_margins() +
+    er2_plot_caption()
 }

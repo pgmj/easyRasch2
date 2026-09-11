@@ -1410,13 +1410,25 @@ run_single_cfa_sim <- function(seed, data_list, obs_data = NULL) {
         return(fit_df)
       }
 
-      fmla <- paste0("F1 =~ ", paste(data_list$item_names, collapse = " + "))
+      # The fit runs under positional placeholders `V1...Vk` rather than the
+      # item names. lavaan's model syntax cannot express a name containing a
+      # space or starting with a digit ("Item 1", "3 months"), which real
+      # datasets carry often enough to matter, and neither back-quoting nor
+      # double-quoting parses (lavaan 0.6-21). Unnamed, every iteration
+      # returns a parser error and the whole cutoff simulation fails. The
+      # renaming leaves the fit itself unchanged; the loadings are mapped
+      # back to the item names on the way out.
+      item_names <- data_list$item_names
+      safe_names <- paste0("V", seq_along(item_names))
+      colnames(fit_df) <- safe_names
+
+      fmla <- paste0("F1 =~ ", paste(safe_names, collapse = " + "))
 
       fit <- suppressWarnings(suppressMessages(
         lavaan::cfa(
           model = fmla,
           data = fit_df,
-          ordered = data_list$item_names,
+          ordered = safe_names,
           estimator = data_list$estimator,
           warn = FALSE,
           verbose = FALSE
@@ -1429,7 +1441,10 @@ run_single_cfa_sim <- function(seed, data_list, obs_data = NULL) {
 
       suppressWarnings(list(
         fit = extract_cfa_fit(fit, data_list$estimator),
-        loadings = extract_cfa_loadings(fit, data_list$item_names)
+        loadings = stats::setNames(
+          extract_cfa_loadings(fit, safe_names),
+          item_names
+        )
       ))
     },
     error = function(e) as.character(conditionMessage(e))
