@@ -191,17 +191,24 @@ RMUreliability <- function(input_draws, level = 0.95, verbose = FALSE) {
 #'   `estimate`, `lower`, `upper`, `notes`.
 #'
 #' @details
-#' Marginal reliability is the native Green (1984) coefficient,
-#' \eqn{1 - \overline{1/I(\theta)}/\sigma^2}, where the test information
-#' \eqn{I(\theta)} is summed from the CML item parameters and the average error
-#' variance is taken over the estimated normal latent density \eqn{N(0,
-#' \sigma^2)} (\eqn{\sigma} from marginal ML). Unlike `mirt::marginal_rxx()`,
-#' which assumes \eqn{N(0,1)}, this integrates over the estimated latent
-#' variance, so it is correct on the Rasch logit scale (where \eqn{\sigma}
-#' is typically well above 1, and the \eqn{N(0,1)} assumption
-#' underestimates reliability). It is the model-based complement to the
-#' sample-based PSI; a large gap between the two flags an off-target or
-#' non-normal sample.
+#' Marginal reliability is the latent-density-weighted mean of the conditional
+#' reliability curve, \eqn{\int \sigma^2/(\sigma^2 + 1/I(\theta))\,
+#' g(\theta)\,d\theta}, where the test information \eqn{I(\theta)} is summed from
+#' the CML item parameters and \eqn{g} is the estimated normal latent density
+#' \eqn{N(0, \sigma^2)} (\eqn{\sigma} from marginal ML). Integrating over the
+#' estimated latent variance, rather than the \eqn{N(0,1)} assumed by
+#' `mirt::marginal_rxx()`, keeps it correct on the Rasch logit scale, where
+#' \eqn{\sigma} is typically well above 1 and the \eqn{N(0,1)} assumption
+#' underestimates reliability.
+#'
+#' It is the model-based complement to the sample-based PSI, and the two are
+#' now the same coefficient by two routes: PSI divides by the observed spread
+#' of the WLE estimates, marginal reliability by the fitted latent density. A
+#' large gap between them therefore does flag an off-target or non-normal
+#' sample. Through version 1.2.0 this row used Green's subtractive
+#' \eqn{1 - \overline{1/I(\theta)}/\sigma^2} instead, under which much of the
+#' PSI-to-marginal gap was an artefact of the differing formulas rather than a
+#' property of the sample. See `dev/TODO-reliability-form.md`.
 #'
 #' PSI is the WLE-based separation reliability,
 #' \eqn{1 - \overline{SEM^2} / \mathrm{Var}(\hat\theta)}, computed from CML item
@@ -214,6 +221,14 @@ RMUreliability <- function(input_draws, level = 0.95, verbose = FALSE) {
 #' RMU is from Bignardi, Kievit, & Bürkner (2025), modified here to use mirt
 #' plausible values rather than fully Bayesian posterior draws (see Mislevy,
 #' 1991, for the plausible-values framework).
+#'
+#' Marginal reliability here is the subtractive Green/Lord coefficient. Milanzi
+#' et al. (2015) show that this form can fall below zero when the average error
+#' variance exceeds the trait variance, which happens with few items or a
+#' narrow sample, and it is floored at 0 above. [RMreliabilityCurve()] reports
+#' the same quantity in the bounded ratio form alongside this one, so the two
+#' can be compared directly. See `dev/TODO-reliability-form.md` for the open
+#' question of which form this row should use.
 #'
 #' Bootstrap iterations that fail to converge are silently dropped.
 #'
@@ -235,7 +250,12 @@ RMUreliability <- function(input_draws, level = 0.95, verbose = FALSE) {
 #' *Studies in Educational Evaluation, 31*(2), 162-172.
 #' \doi{10.1016/j.stueduc.2005.05.008}
 #'
-#' @seealso [RMUreliability()]
+#' Milanzi, E., Molenberghs, G., Alonso, A., Verbeke, G., & De Boeck, P.
+#' (2015). Reliability measures in item response theory: Manifest versus latent
+#' correlation functions. *British Journal of Mathematical and Statistical
+#' Psychology, 68*(1), 43-64. \doi{10.1111/bmsp.12033}
+#'
+#' @seealso [RMUreliability()], [RMreliabilityCurve()]
 #'
 #' @export
 #'
@@ -461,7 +481,7 @@ RMreliability <- function(
     metric = c(
       "Cronbach's alpha",
       "PSI",
-      "Marginal",
+      "Marginal (ratio form)",
       paste0("RMU (", estim, ")")
     ),
     estimate = c(alpha, psi, marg_rel, rmu_summary$estimate),
@@ -541,14 +561,20 @@ RMreliability <- function(
 
 #' Native marginal reliability (CML test information over an assumed normal)
 #'
-#' Green's (1984) marginal reliability,
-#' \eqn{1 - \int [1/I(\theta)]\, g(\theta)\, d\theta / \sigma^2}, with the test
-#' information \eqn{I(\theta) = \sum_i \mathrm{Var}_i(\mathrm{score}\mid\theta)}
-#' summed from the CML item parameters and the expectation taken over a normal
-#' latent density \eqn{g(\theta) = N(0, \sigma^2)} whose SD is estimated by
-#' marginal maximum likelihood. Unlike `mirt::marginal_rxx()` (which assumes
-#' \eqn{N(0,1)}), this integrates over the *estimated* latent variance, so it is
-#' correct on the Rasch logit scale where \eqn{\sigma \neq 1}. Floored at 0.
+#' The latent-density-weighted mean of the conditional reliability curve,
+#' \eqn{\int \sigma^2 / (\sigma^2 + 1/I(\theta))\, g(\theta)\, d\theta}, with the
+#' test information \eqn{I(\theta) = \sum_i \mathrm{Var}_i(\mathrm{score}\mid\theta)}
+#' summed from the CML item parameters and \eqn{g(\theta) = N(0, \sigma^2)} whose
+#' SD is estimated by marginal maximum likelihood. Integrating over the
+#' *estimated* latent variance (rather than the \eqn{N(0,1)} assumed by
+#' `mirt::marginal_rxx()`) keeps it correct on the Rasch logit scale where
+#' \eqn{\sigma \neq 1}.
+#'
+#' This is the bounded ratio form. It replaced Green's subtractive
+#' \eqn{1 - \overline{1/I(\theta)}/\sigma^2} in the development version after the
+#' replication in `dev/milanzi_check.R`; see `dev/TODO-reliability-form.md` for
+#' the evidence and the decision. Being bounded in (0, 1) it needs no floor,
+#' where the subtractive form did.
 #'
 #' @param data Response matrix/data.frame (items from 0).
 #' @param thr_list Optional pre-fitted CML thresholds.
@@ -562,35 +588,11 @@ RMreliability <- function(
   if (is.null(thr_list)) {
     thr_list <- .fit_cml_thresholds(data_mat)
   }
-  ge <- seq(-6, 6, length.out = 81L)
-  sigma <- .estimate_prior_sd(
-    .grid_loglik(data_mat, .logp_tables(thr_list, ge), ge),
-    ge,
-    0
-  )
+  sigma <- .latent_sd(data_mat, thr_list)
   if (!is.finite(sigma) || sigma <= 0) {
     return(NA_real_)
   }
-  g <- seq(-6 * sigma, 6 * sigma, length.out = n_nodes)
-  I <- vapply(
-    g,
-    function(th) {
-      sum(vapply(
-        thr_list,
-        function(thr) {
-          cats <- 0:length(thr)
-          P <- .pcm_cat_probs(th, thr)
-          E <- sum(cats * P)
-          sum((cats - E)^2 * P)
-        },
-        numeric(1L)
-      ))
-    },
-    numeric(1L)
-  )
-  w <- stats::dnorm(g, 0, sigma)
-  w <- w / sum(w)
-  max(1 - sum(w * (1 / I)) / sigma^2, 0)
+  .marginal_summaries(thr_list, sigma, n_nodes = n_nodes)$ratio
 }
 
 #' Run a single reliability bootstrap iteration
@@ -665,6 +667,9 @@ run_reliability_boot_parallel <- function(
       # Native engine helpers used by .wle_psi() / .marginal_rxx() in the daemon.
       .wle_psi = .wle_psi,
       .marginal_rxx = .marginal_rxx,
+      .test_information = .test_information,
+      .latent_sd = .latent_sd,
+      .marginal_summaries = .marginal_summaries,
       .fit_cml_thresholds = .fit_cml_thresholds,
       .estimate_thetas = .estimate_thetas,
       .theta_wle = .theta_wle,

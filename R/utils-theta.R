@@ -216,6 +216,94 @@
   data.frame(theta = eap, sem = sd)
 }
 
+#' Test information at one or more theta values
+#'
+#' Fisher test information for a Rasch / partial credit model,
+#' \eqn{I(\theta) = \sum_i \mathrm{Var}_i(\mathrm{score} \mid \theta)}, summed
+#' over items from the centred Andrich thresholds. The conditional standard
+#' error of measurement follows as \eqn{1/\sqrt{I(\theta)}}.
+#'
+#' Extracted from `.marginal_rxx()` so that the same information curve backs
+#' the marginal coefficient, `RMreliabilityCurve()`, and (later) the
+#' conditional critical values in the change functions.
+#'
+#' @param thr_list List of centred Andrich threshold vectors, one per item.
+#' @param theta Numeric vector of latent locations.
+#' @return Numeric vector of test information, same length as `theta`.
+#' @keywords internal
+#' @noRd
+.test_information <- function(thr_list, theta) {
+  vapply(
+    theta,
+    function(th) {
+      sum(vapply(
+        thr_list,
+        function(thr) {
+          cats <- 0:length(thr)
+          P <- .pcm_cat_probs(th, thr)
+          E <- sum(cats * P)
+          sum((cats - E)^2 * P)
+        },
+        numeric(1L)
+      ))
+    },
+    numeric(1L)
+  )
+}
+
+#' Marginal-maximum-likelihood estimate of the latent SD under fixed items
+#'
+#' Convenience wrapper that builds the quadrature grid and log-likelihood
+#' matrix and hands them to `.estimate_prior_sd()`. Extracted from
+#' `.marginal_rxx()` so the reliability scalar and the conditional curve
+#' rescale by the same \eqn{\sigma}.
+#'
+#' @param data Numeric response matrix or data.frame (items from 0).
+#' @param thr_list List of centred Andrich threshold vectors.
+#' @param n_nodes Number of quadrature nodes for the grid.
+#' @param prior_mean Numeric prior mean.
+#' @return Numeric scalar: the estimated latent SD.
+#' @keywords internal
+#' @noRd
+.latent_sd <- function(data, thr_list, n_nodes = 81L, prior_mean = 0) {
+  data_mat <- as.matrix(data)
+  ge <- seq(-6, 6, length.out = n_nodes)
+  .estimate_prior_sd(
+    .grid_loglik(data_mat, .logp_tables(thr_list, ge), ge),
+    ge,
+    prior_mean
+  )
+}
+
+#' Latent-density-weighted marginal summaries of the precision curve
+#'
+#' The single place the marginal reliability scalars are formed, so that
+#' `.marginal_rxx()` (behind `RMreliability()`) and `RMreliabilityCurve()`
+#' cannot drift apart. All three are integrated over \eqn{N(0, \sigma^2)} on a
+#' \eqn{\pm 6\sigma} grid.
+#'
+#' @param thr_list List of Andrich threshold vectors.
+#' @param sigma Latent SD, from `.latent_sd()`.
+#' @param n_nodes Number of quadrature nodes.
+#' @return A list with `sem_average` (root mean error variance), `ratio` (the
+#'   density-weighted mean of the bounded reliability curve, which is what
+#'   both functions report) and `green` (the superseded subtractive
+#'   coefficient, retained for comparison).
+#' @keywords internal
+#' @noRd
+.marginal_summaries <- function(thr_list, sigma, n_nodes = 161L) {
+  g <- seq(-6 * sigma, 6 * sigma, length.out = n_nodes)
+  w <- stats::dnorm(g, 0, sigma)
+  w <- w / sum(w)
+  sem2 <- 1 / .test_information(thr_list, g)
+  sem2_bar <- sum(w * sem2)
+  list(
+    sem_average = sqrt(sem2_bar),
+    ratio = sum(w * (sigma^2 / (sigma^2 + sem2))),
+    green = 1 - sem2_bar / sigma^2
+  )
+}
+
 # ---------------------------------------------------------------------
 # Shared CML/WLE estimation engine (used by the Q3 local-dependence
 # functions; intended as the common entry point for migrating other

@@ -88,17 +88,24 @@ recomputed natively per resample, no model is refitted by \code{mirt}). The RMU
 interval is the HDCI of correlations across plausible-value draws, averaged
 over \code{rmu_iter} random splits of the draws.
 
-Marginal reliability is the native Green (1984) coefficient,
-\eqn{1 - \overline{1/I(\theta)}/\sigma^2}, where the test information
-\eqn{I(\theta)} is summed from the CML item parameters and the average error
-variance is taken over the estimated normal latent density \eqn{N(0,
-\sigma^2)} (\eqn{\sigma} from marginal ML). Unlike \code{mirt::marginal_rxx()},
-which assumes \eqn{N(0,1)}, this integrates over the estimated latent
-variance, so it is correct on the Rasch logit scale (where \eqn{\sigma}
-is typically well above 1, and the \eqn{N(0,1)} assumption
-underestimates reliability). It is the model-based complement to the
-sample-based PSI; a large gap between the two flags an off-target or
-non-normal sample.
+Marginal reliability is the latent-density-weighted mean of the conditional
+reliability curve, \eqn{\int \sigma^2/(\sigma^2 + 1/I(\theta))\,
+g(\theta)\,d\theta}, where the test information \eqn{I(\theta)} is summed from
+the CML item parameters and \eqn{g} is the estimated normal latent density
+\eqn{N(0, \sigma^2)} (\eqn{\sigma} from marginal ML). Integrating over the
+estimated latent variance, rather than the \eqn{N(0,1)} assumed by
+\code{mirt::marginal_rxx()}, keeps it correct on the Rasch logit scale, where
+\eqn{\sigma} is typically well above 1 and the \eqn{N(0,1)} assumption
+underestimates reliability.
+
+It is the model-based complement to the sample-based PSI, and the two are
+now the same coefficient by two routes: PSI divides by the observed spread
+of the WLE estimates, marginal reliability by the fitted latent density. A
+large gap between them therefore does flag an off-target or non-normal
+sample. Through version 1.2.0 this row used Green's subtractive
+\eqn{1 - \overline{1/I(\theta)}/\sigma^2} instead, under which much of the
+PSI-to-marginal gap was an artefact of the differing formulas rather than a
+property of the sample. See \code{dev/TODO-reliability-form.md}.
 
 PSI is the WLE-based separation reliability,
 \eqn{1 - \overline{SEM^2} / \mathrm{Var}(\hat\theta)}, computed from CML item
@@ -111,6 +118,14 @@ noticeably for scales with many extreme scorers, e.g. dichotomous items.)
 RMU is from Bignardi, Kievit, & Bürkner (2025), modified here to use mirt
 plausible values rather than fully Bayesian posterior draws (see Mislevy,
 1991, for the plausible-values framework).
+
+Marginal reliability here is the subtractive Green/Lord coefficient. Milanzi
+et al. (2015) show that this form can fall below zero when the average error
+variance exceeds the trait variance, which happens with few items or a
+narrow sample, and it is floored at 0 above. \code{\link[=RMreliabilityCurve]{RMreliabilityCurve()}} reports
+the same quantity in the bounded ratio form alongside this one, so the two
+can be compared directly. See \code{dev/TODO-reliability-form.md} for the open
+question of which form this row should use.
 
 Bootstrap iterations that fail to converge are silently dropped.
 }
@@ -145,7 +160,12 @@ from Complex Samples. \emph{Psychometrika, 56}(2), 177-196.
 Adams, R. J. (2005). Reliability as a measurement design effect.
 \emph{Studies in Educational Evaluation, 31}(2), 162-172.
 \doi{10.1016/j.stueduc.2005.05.008}
+
+Milanzi, E., Molenberghs, G., Alonso, A., Verbeke, G., & De Boeck, P.
+(2015). Reliability measures in item response theory: Manifest versus latent
+correlation functions. \emph{British Journal of Mathematical and Statistical
+Psychology, 68}(1), 43-64. \doi{10.1111/bmsp.12033}
 }
 \seealso{
-\code{\link[=RMUreliability]{RMUreliability()}}
+\code{\link[=RMUreliability]{RMUreliability()}}, \code{\link[=RMreliabilityCurve]{RMreliabilityCurve()}}
 }

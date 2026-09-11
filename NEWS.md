@@ -1,6 +1,34 @@
 # easyRasch2 (development version)
 
+## New features
+
+- New `RMreliabilityCurve()` plots conditional measurement precision across the
+  latent scale: conditional SEM, test information, or conditional reliability,
+  with the respondent distribution behind the curve and an optional bootstrap
+  band. Optional `benchmark` shades the region reaching a given reliability and
+  reports the percentage of respondents inside it. `output = "kable"` gives a
+  summary table, `"dataframe"` the curve. Its reliability axis uses the bounded
+  ratio form, which differs from the Green form in `RMreliability()`; both
+  marginal values are reported so the gap is visible. Existing results are
+  unchanged.
+
+- `RMtargeting()` gains `category_labels` for the band legend, `row_gap` for
+  the vertical spacing of the item rows, and `viridis_option`,
+  `viridis_begin` and `viridis_end` for the band palette.
+
 ## Breaking changes
+
+- **`RMreliability()`'s marginal reliability now uses the bounded ratio form
+  and the row is renamed "Marginal (ratio form)".** It was Green's subtractive
+  `1 - mean(SEM^2)/sigma^2`, which leaves (0, 1) when the average error
+  variance exceeds the trait variance, and was floored at 0. It is now the
+  latent-density-weighted mean of `sigma^2 / (sigma^2 + SEM(theta)^2)`, the
+  same coefficient `RMreliabilityCurve()` plots and PSI estimates from the
+  observed spread. **Results move**, upward, and more so on short scales or
+  narrow samples (phq9 .862 to .886, `eRm::raschdat1[, 1:20]` .695 to .769).
+  The superseded value is still available as the `marginal_green` attribute of
+  `RMreliabilityCurve(output = "dataframe")`. Rationale and simulation evidence
+  in `dev/TODO-reliability-form.md`.
 
 - **`RMtargeting()` now draws response-category bands in its bottom panel.**
   Each item is one bar partitioned into its response categories, so the panel
@@ -10,12 +38,6 @@
   and each threshold reversal gets a red span, so disordering is visible
   without a separate check. Pass `panel = "thresholds"` for the previous
   dot-and-whisker panel. Estimates are unchanged.
-
-## New features
-
-- `RMtargeting()` gains `category_labels` for the band legend, `row_gap` for
-  the vertical spacing of the item rows, and `viridis_option`,
-  `viridis_begin` and `viridis_end` for the band palette.
 
 ## Bug fixes
 

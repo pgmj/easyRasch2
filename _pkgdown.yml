@@ -86,6 +86,7 @@ reference:
       - RMitemHierarchy
       - RMscoreSE
       - RMreliability
+      - RMreliabilityCurve
       - RMUreliability
   - title: "Datasets"
     desc: "Package builtin data"

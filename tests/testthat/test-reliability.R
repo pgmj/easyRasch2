@@ -102,10 +102,38 @@ test_that("RMreliability with boot = TRUE (sequential) returns finite CIs", {
                        seed = 42, output = "dataframe")
   expect_s3_class(res, "data.frame")
   psi_row  <- res[res$metric == "PSI", ]
-  marg_row <- res[res$metric == "Marginal", ]
+  marg_row <- res[res$metric == "Marginal (ratio form)", ]
   expect_true(is.finite(psi_row$lower)  && is.finite(psi_row$upper))
   expect_true(is.finite(marg_row$lower) && is.finite(marg_row$upper))
   expect_match(psi_row$notes, "bootstrap resamples")
+})
+
+test_that("Marginal is the bounded ratio form, not Green's subtractive one", {
+  skip_on_cran()
+  # Six short dichotomous items on a narrow trait: the case where the
+  # subtractive form leaves (0, 1) and used to be floored at 0.
+  set.seed(11)
+  n <- 500
+  theta <- stats::rnorm(n, 0, 0.35)
+  b <- seq(-1, 1, length.out = 6L)
+  df <- as.data.frame(vapply(b, function(bi) {
+    stats::rbinom(n, 1L, stats::plogis(theta - bi))
+  }, numeric(n)))
+  colnames(df) <- paste0("I", seq_along(b))
+
+  thr <- easyRasch2:::.fit_cml_thresholds(as.matrix(df))
+  sigma <- easyRasch2:::.latent_sd(as.matrix(df), thr)
+  g <- seq(-6 * sigma, 6 * sigma, length.out = 161L)
+  w <- stats::dnorm(g, 0, sigma)
+  w <- w / sum(w)
+  sem2 <- 1 / easyRasch2:::.test_information(thr, g)
+
+  marg <- easyRasch2:::.marginal_rxx(df, thr_list = thr)
+  expect_equal(marg, sum(w * (sigma^2 / (sigma^2 + sem2))))
+  expect_gt(marg, 0)
+  expect_lt(marg, 1)
+  # the superseded form is negative here, and is no longer floored away
+  expect_lt(1 - sum(w * sem2) / sigma^2, 0)
 })
 
 # ---------------------------------------------------------------------
