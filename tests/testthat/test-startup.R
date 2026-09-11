@@ -30,8 +30,13 @@ test_that("the startup message is suppressible", {
 test_that("attaching the package touches no network resource", {
   # A version check at attach time was considered and rejected. This pins that
   # decision: the message must stay a literal string.
-  src <- readLines(testthat::test_path("..", "..", "R", "zzz.R"), warn = FALSE)
-  code <- grep("^\\s*#", src, value = TRUE, invert = TRUE)
+  #
+  # Inspect the installed function rather than R/zzz.R. R CMD check runs the
+  # tests against an installed copy of the package, where the source directory
+  # is absent and reading it fails with "cannot open the connection". Deparsing
+  # without "useSource" also drops comments, so no comment can trip the check.
+  code <- deparse(body(easyRasch2:::.onAttach),
+                  control = c("keepInteger", "keepNA"))
   expect_false(any(grepl(
     "available\\.packages|old\\.packages|download\\.file|url\\(|curl|httr|readLines\\(\\s*[\"']http",
     code
