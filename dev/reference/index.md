@@ -99,6 +99,15 @@ Per-respondent fit statistics with resampling-based p-values
 - [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonFit.md)
   : Person-Fit Statistics for a Rasch / Partial Credit Model
 
+## Individual change
+
+Single-subject change across two occasions
+
+- [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonChange.md)
+  : Single-subject change between two occasions
+- [`RMretestSD()`](https://pgmj.github.io/easyRasch2/dev/reference/RMretestSD.md)
+  : Occasion-to-occasion SD from a test-retest study
+
 ## Descriptive functions
 
 Targeting and other plots/tables

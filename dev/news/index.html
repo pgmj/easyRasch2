@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.2.0.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.2.0.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,6 +39,9 @@
 <h3 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
 <ul><li><p>New <code><a href="../reference/RMreliabilityCurve.html">RMreliabilityCurve()</a></code> plots conditional measurement precision across the latent scale: conditional SEM, test information, or conditional reliability, with the respondent distribution behind the curve and an optional bootstrap band. Optional <code>benchmark</code> shades the region reaching a given reliability and reports the percentage of respondents inside it. <code>output = "kable"</code> gives a summary table, <code>"dataframe"</code> the curve. Its reliability axis uses the bounded ratio form, which differs from the Green form in <code><a href="../reference/RMreliability.html">RMreliability()</a></code>; both marginal values are reported so the gap is visible. Existing results are unchanged.</p></li>
 <li><p><code><a href="../reference/RMtargeting.html">RMtargeting()</a></code> gains <code>category_labels</code> for the band legend, <code>row_gap</code> for the vertical spacing of the item rows, and <code>viridis_option</code>, <code>viridis_begin</code> and <code>viridis_end</code> for the band palette.</p></li>
+<li><p>New <code><a href="../reference/RMpersonChange.html">RMpersonChange()</a></code> tests, per respondent, whether their person location moved between two occasions by more than measurement error allows. <code>null</code> chooses the estimand: <code>"measurement"</code> (default) or <code>"retest"</code>, which needs a <code>retest_sd</code>. <code>retest_sd_tip</code> reports how much occasion noise each flagged result would tolerate. Single-respondent use requires <code>item_params</code> from an external calibration.</p></li>
+<li><p><code><a href="../reference/RMpersonChange.html">RMpersonChange()</a></code> obtains its critical values from the exact null by default (<code>critical = "exact"</code>). Because the sum score is sufficient, the null distribution of the change index enumerates over score pairs, so it needs no simulation and carries no Monte Carlo error. Incomplete data is enumerated within each missingness pattern and <code>null = "retest"</code> integrates the occasion deviations out by quadrature. <code>critical = "simulate"</code> remains available. The cutoff is well below 1.96 on short scales (about 1.70 at six items, 1.85 at twenty), so a normal reference is conservative.</p></li>
+<li><p>New <code><a href="../reference/RMretestSD.html">RMretestSD()</a></code> estimates the per-occasion SD of occasion-to-occasion fluctuation from a test-retest study, for use as <code>retest_sd</code>. Its measurement-error term is simulated rather than taken from the asymptotic standard errors, which are badly biased on short scales. Negative variance estimates are reported, not floored.</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="breaking-changes-development-version">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-development-version"></a></h3>

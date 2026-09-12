@@ -182,6 +182,15 @@ remotes::install_github("pgmj/easyRasch2")
 - [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md)
   — raw-score → logit transformation table (WLE / EAP)
 
+### Individual change
+
+- [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonChange.md)
+  — per-respondent change between two occasions, with the null stated
+  explicitly and critical values simulated rather than assumed normal
+- [`RMretestSD()`](https://pgmj.github.io/easyRasch2/dev/reference/RMretestSD.md)
+  — occasion-to-occasion SD from a test-retest study, the input to
+  `RMpersonChange(null = "retest")`
+
 ### Item & person parameters
 
 - [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemParameters.md)
