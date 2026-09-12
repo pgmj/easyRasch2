@@ -111,10 +111,14 @@
 #' numerator: a respondent who moves to an extreme score produces a large
 #' change and a large standard error together, and the ratio is damped. Both
 #' tails of the null are pulled in, so the critical value sits below 1.96, and
-#' the shortfall grows as the scale shortens. Enumerated values for one
-#' six-item family: 1.62 at four items, 1.70 at six, 1.79 at ten, 1.85 at
-#' twenty, 1.92 at forty. Referring the RCI to a normal null is conservative,
-#' and materially so on short scales.
+#' the shortfall grows as the scale shortens. Enumerated values for one family
+#' of items with four response categories: 1.62 at four items, 1.70 at six,
+#' 1.79 at ten, 1.85 at twenty, 1.92 at forty. Response categories matter much
+#' less than item count here, and almost all of their effect is the step from
+#' dichotomous to polytomous: at six items the value moves from 1.55 with two
+#' categories to 1.72 with three and only 1.78 with seven, while reliability
+#' over the same range climbs from about .60 to about .91. Referring the RCI to
+#' a normal null is conservative, and materially so on short scales.
 #'
 #' **How the null is obtained.** `critical = "exact"` enumerates it. Because
 #' the score is sufficient, \eqn{\hat\theta(r)} and \eqn{SE(r)} are
@@ -144,9 +148,9 @@
 #' change is distinguishable from the null. It is not a measure of how much
 #' someone changed, and the two orderings genuinely differ. Its value mixes two
 #' ingredients that it cannot separate: how far the respondent moved, and how
-#' precisely each of their two positions was pinned down. On a six-item scale
-#' scored 0 to 3 the standard error runs from 0.49 in the middle to 1.45 at the
-#' boundary, a factor of three within one instrument. A respondent going from
+#' precisely each of their two positions was pinned down. On a scale of six
+#' items with four response categories the standard error runs from 0.49 in the
+#' middle to 1.45 at the boundary, a factor of three within one instrument. A respondent going from
 #' the minimum to the maximum score moves 7.24 logits and scores RCI 3.53,
 #' while one going from 3 to 15 moves 3.11 logits and scores 3.59. The first
 #' traversed the whole scale, the second less than half of it, and the second
@@ -511,7 +515,59 @@ RMpersonChange <- function(
     return(.pc_kable(result, caption))
   }
 
-  .pc_plot(result, thr_list, sigma_retest, caption)
+  .pc_plot(
+    result, thr_list, sigma_retest, caption, method, theta_range, prior_sd,
+    key1 = apply(!is.na(mat_t1), 1L, function(z) paste0(which(z), collapse = ",")),
+    key2 = apply(!is.na(mat_t2), 1L, function(z) paste0(which(z), collapse = ","))
+  )
+}
+
+#' No-change band from the score-to-theta lookup
+#'
+#' For each attainable baseline score, finds the follow-up locations that would
+#' not be flagged. The result is one rectangle per baseline score, spanning to
+#' the midpoints of its neighbours on the x axis.
+#'
+#' @keywords internal
+#' @noRd
+.pc_band <- function(fig, key1, key2, thr_list, sigma_retest, method,
+                     theta_range, prior_sd, lims) {
+  # The dominant pair of answered-item sets; with complete data there is one.
+  key <- paste(key1, key2, sep = "|")
+  dom <- names(sort(table(key), decreasing = TRUE))[1L]
+  parts <- strsplit(dom, "|", fixed = TRUE)[[1L]]
+  a1 <- as.integer(strsplit(parts[1L], ",", fixed = TRUE)[[1L]])
+  a2 <- as.integer(strsplit(parts[2L], ",", fixed = TRUE)[[1L]])
+
+  l1 <- .pc_score_lookup(thr_list, a1, method, theta_range, prior_sd)
+  l2 <- .pc_score_lookup(thr_list, a2, method, theta_range, prior_sd)
+
+  cl <- stats::median(fig$crit_lower, na.rm = TRUE)
+  cu <- stats::median(fig$crit_upper, na.rm = TRUE)
+
+  x <- l1$theta
+  o <- order(x)
+  x <- x[o]
+  edges <- c(lims[1L], (x[-1L] + x[-length(x)]) / 2, lims[2L])
+
+  rows <- lapply(seq_along(x), function(i) {
+    idx <- o[i]
+    rci <- (l2$theta - l1$theta[idx]) /
+      sqrt(l1$sem[idx]^2 + l2$sem^2 + 2 * sigma_retest^2)
+    keep <- (!is.finite(cu) | rci <= cu) & (!is.finite(cl) | rci >= cl)
+    if (!any(keep)) {
+      return(NULL)
+    }
+    data.frame(
+      xmin = edges[i], xmax = edges[i + 1L],
+      lower = min(l2$theta[keep]), upper = max(l2$theta[keep]),
+      stringsAsFactors = FALSE, row.names = NULL
+    )
+  })
+  out <- do.call(rbind, rows[!vapply(rows, is.null, logical(1L))])
+  out$lower <- pmax(out$lower, lims[1L])
+  out$upper <- pmin(out$upper, lims[2L])
+  out
 }
 
 # ---------------------------------------------------------------------------
@@ -1214,14 +1270,27 @@ run_single_change_sim <- function(seed, sim_args) {
 
 #' Occasion 1 against occasion 2, with the no-change band
 #'
-#' The band is exact rather than smoothed: the conditional SEM at a given
-#' location is 1/sqrt(I(theta)), so the band half-width at theta is
-#' crit * sqrt(2/I(theta) + 2 * retest_sd^2), evaluated with both occasions at
-#' that location.
+#' The band is built from the same score-to-theta lookup the test uses, so a
+#' point lies outside it if and only if that respondent was flagged. An earlier
+#' version drew a smooth band of half-width crit * sqrt(2/I(theta)), placing
+#' both occasions at the baseline location; that disagreed with the
+#' classification for about a tenth of respondents, worst where a large change
+#' lands near a boundary and the follow-up standard error is much the larger of
+#' the two.
+#'
+#' Because attainable scores are discrete the band is a step function. It is
+#' widest away from the centre, where the standard error is large but the scale
+#' has not run out of room, and narrows again at the boundary itself because
+#' there are no further attainable scores to move to. With mixed missingness
+#' the band is drawn for the most common pair of answered-item sets, and under
+#' `conditional_crit = TRUE` it uses the median critical values, so in those
+#' two cases it is indicative rather than exact.
 #'
 #' @keywords internal
 #' @noRd
-.pc_plot <- function(result, thr_list, sigma_retest, caption) {
+.pc_plot <- function(result, thr_list, sigma_retest, caption,
+                     method = "WLE", theta_range = c(-10, 10),
+                     prior_sd = NULL, key1 = NULL, key2 = NULL) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop(
       "Package 'ggplot2' is required for output = \"ggplot\". ",
@@ -1232,6 +1301,8 @@ run_single_change_sim <- function(seed, sim_args) {
 
   finite <- is.finite(result$theta_t1) & is.finite(result$theta_t2)
   fig <- result[finite, , drop = FALSE]
+  key1 <- key1[finite]
+  key2 <- key2[finite]
   if (nrow(fig) == 0L) {
     stop("No respondent has finite locations at both occasions.", call. = FALSE)
   }
@@ -1239,26 +1310,17 @@ run_single_change_sim <- function(seed, sim_args) {
   rng <- range(c(fig$theta_t1, fig$theta_t2), na.rm = TRUE)
   pad <- 0.05 * diff(rng)
   lims <- c(rng[1L] - pad, rng[2L] + pad)
-  grid <- seq(lims[1L], lims[2L], length.out = 201L)
-  info <- .test_information(thr_list, grid)
-  half <- sqrt(2 / info + 2 * sigma_retest^2)
 
-  cl <- stats::median(fig$crit_lower, na.rm = TRUE)
-  cu <- stats::median(fig$crit_upper, na.rm = TRUE)
-  band <- data.frame(
-    theta = grid,
-    lower = grid + if (is.finite(cl)) cl * half else -Inf,
-    upper = grid + if (is.finite(cu)) cu * half else Inf,
-    stringsAsFactors = FALSE,
-    row.names = NULL
+  band <- .pc_band(
+    fig, key1, key2, thr_list, sigma_retest, method, theta_range, prior_sd,
+    lims
   )
-  band$lower[!is.finite(band$lower)] <- min(grid)
-  band$upper[!is.finite(band$upper)] <- max(grid)
 
   ggplot2::ggplot(fig, ggplot2::aes(x = .data$theta_t1, y = .data$theta_t2)) +
-    ggplot2::geom_ribbon(
+    ggplot2::geom_rect(
       data = band,
-      ggplot2::aes(x = .data$theta, ymin = .data$lower, ymax = .data$upper),
+      ggplot2::aes(xmin = .data$xmin, xmax = .data$xmax,
+                   ymin = .data$lower, ymax = .data$upper),
       inherit.aes = FALSE,
       fill = "grey70",
       alpha = 0.35

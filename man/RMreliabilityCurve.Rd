@@ -161,7 +161,7 @@ the pair (mean absolute error 0.015 against 0.018 for binary data, 0.010
 against 0.015 for polytomous).
 
 \code{\link[=RMreliability]{RMreliability()}} reports the same ratio-form coefficient in its
-"Marginal (ratio form)" row, so the scalar and the curve agree. The
+"Marginal (curve mean)" row, so the scalar and the curve agree. The
 superseded subtractive value is still returned as \code{marginal_green} for
 comparison with easyRasch2 1.2.0 and earlier, and with \code{mirt::marginal_rxx()}
 and similar software.

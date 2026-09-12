@@ -115,7 +115,7 @@
 #' against 0.015 for polytomous).
 #'
 #' [RMreliability()] reports the same ratio-form coefficient in its
-#' "Marginal (ratio form)" row, so the scalar and the curve agree. The
+#' "Marginal (curve mean)" row, so the scalar and the curve agree. The
 #' superseded subtractive value is still returned as `marginal_green` for
 #' comparison with easyRasch2 1.2.0 and earlier, and with `mirt::marginal_rxx()`
 #' and similar software.
@@ -318,7 +318,7 @@ RMreliabilityCurve <- function(
 
   # --- Marginal summaries ----------------------------------------------------
   # Same helper `.marginal_rxx()` uses, so `marginal_ratio` is the identical
-  # quantity to the "Marginal (ratio form)" row of RMreliability() by
+  # quantity to the "Marginal (curve mean)" row of RMreliability() by
   # construction rather than by coincidence. Independent of `n_nodes` and
   # `theta_range`, which govern the plotted grid only.
   marg <- .marginal_summaries(thr_list, sigma)
@@ -800,17 +800,21 @@ run_single_curve_boot <- function(seed, data_list) {
 #' @keywords internal
 #' @noRd
 .curve_kable <- function(curve_df, n_items, n_clause, method, fixed_params) {
-  sigma <- attr(curve_df, "sigma")
-  benchmark <- attr(curve_df, "benchmark")
-  bench_range <- attr(curve_df, "benchmark_range")
-  bench_pct <- attr(curve_df, "benchmark_percent")
-  n_ne <- attr(curve_df, "n_not_estimable")
+  # `attr()` partial-matches by default. When `benchmark` is NULL its attribute
+  # is absent, and a non-exact lookup would silently return `benchmark_percent`
+  # instead, printing a benchmark row that was never asked for. Every read here
+  # is therefore exact.
+  sigma <- attr(curve_df, "sigma", exact = TRUE)
+  benchmark <- attr(curve_df, "benchmark", exact = TRUE)
+  bench_range <- attr(curve_df, "benchmark_range", exact = TRUE)
+  bench_pct <- attr(curve_df, "benchmark_percent", exact = TRUE)
+  n_ne <- attr(curve_df, "n_not_estimable", exact = TRUE)
 
   best <- which.min(curve_df$sem)
 
   quantity <- c(
     "Latent SD (sigma)",
-    "Marginal reliability (ratio form, as in RMreliability)",
+    "Marginal reliability (curve mean, as in RMreliability)",
     "Marginal reliability (Green/Lord, superseded)",
     "Average SEM (logits)",
     "Minimum SEM (logits)",
@@ -818,9 +822,9 @@ run_single_curve_boot <- function(seed, data_list) {
   )
   value <- c(
     sprintf("%.3f", sigma),
-    sprintf("%.3f", attr(curve_df, "marginal_ratio")),
-    sprintf("%.3f", attr(curve_df, "marginal_green")),
-    sprintf("%.3f", attr(curve_df, "sem_average")),
+    sprintf("%.3f", attr(curve_df, "marginal_ratio", exact = TRUE)),
+    sprintf("%.3f", attr(curve_df, "marginal_green", exact = TRUE)),
+    sprintf("%.3f", attr(curve_df, "sem_average", exact = TRUE)),
     sprintf("%.3f", curve_df$sem[best]),
     sprintf("%.2f", curve_df$theta[best])
   )

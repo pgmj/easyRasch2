@@ -109,7 +109,7 @@ because it has to keep matching `.marginal_rxx()`.
 ## The decision
 
 **Option 3: switch to the ratio form, and rename the row so nothing is silently
-redefined.** `RMreliability()` now prints "Marginal (ratio form)".
+redefined.** `RMreliability()` now prints "Marginal (curve mean)".
 
 What settled it was not the accuracy margin on its own but the coherence of the
 table. PSI is `1 - mean(SEM^2)/Var(theta_hat)`, and since
@@ -142,14 +142,14 @@ duplicate it, and shipping a coefficient that has just been shown to leave
 
 **On the naming.** "Marginal reliability" names a specific formula in the
 literature and in mirt and TAM, so changing the formula under the same label
-would have been an interoperability trap. The row label carries "(ratio form)"
+would have been an interoperability trap. The row label carries "(curve mean)"
 so the difference is visible in the output itself, not only in the docs.
 
 **What was implemented.**
 
 - `.marginal_rxx()` is the density-weighted mean of the ratio curve. The floor
   at 0 is gone, being unnecessary for a bounded quantity.
-- The `RMreliability()` row is "Marginal (ratio form)"; Details rewritten and
+- The `RMreliability()` row is "Marginal (curve mean)". Details rewritten and
   the pre-1.2.0 behaviour named.
 - `RMreliabilityCurve()`'s `marginal_ratio` now agrees with it; the superseded
   subtractive value stays as `marginal_green`, labelled "Green/Lord,

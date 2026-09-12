@@ -479,6 +479,57 @@ test_that("kable and ggplot captions name the null in force", {
   expect_match(flat_caption(p), "no change beyond measurement error")
 })
 
+test_that("the plotted band agrees with the classification for every point", {
+  skip_on_cran()
+  skip_if_not_installed("ggplot2")
+  d <- make_pair(n = 250, shift = 0.7, seed = 9L, theta_sd = 1.6)
+  res <- RMpersonChange(d$t1, d$t2, item_params = d$thr, critical = "exact")
+
+  full <- paste(seq_along(d$thr), collapse = ",")
+  lims <- range(c(res$theta_t1, res$theta_t2)) + c(-0.2, 0.2)
+  band <- easyRasch2:::.pc_band(
+    res, rep(full, nrow(res)), rep(full, nrow(res)), d$thr, 0, "WLE",
+    c(-10, 10), NULL, lims
+  )
+
+  says <- vapply(seq_len(nrow(res)), function(i) {
+    j <- which(band$xmin <= res$theta_t1[i] & band$xmax >= res$theta_t1[i])[1L]
+    if (res$theta_t2[i] > band$upper[j] + 1e-9) {
+      "increase"
+    } else if (res$theta_t2[i] < band$lower[j] - 1e-9) {
+      "decrease"
+    } else {
+      "none detected"
+    }
+  }, character(1L))
+
+  # the figure must not contradict the table
+  expect_identical(says, as.character(res$change_class))
+})
+
+test_that("the band is narrowest in the middle and widest off centre", {
+  skip_on_cran()
+  skip_if_not_installed("ggplot2")
+  d <- make_pair(n = 200, theta_sd = 1.8, seed = 10L)
+  res <- RMpersonChange(d$t1, d$t2, item_params = d$thr, critical = "exact")
+  full <- paste(seq_along(d$thr), collapse = ",")
+  # wide limits, so nothing is clipped to the panel
+  band <- easyRasch2:::.pc_band(
+    res, rep(full, nrow(res)), rep(full, nrow(res)), d$thr, 0, "WLE",
+    c(-10, 10), NULL, c(-99, 99)
+  )
+  # the outermost rectangles take their x extent from the limits, not the data
+  inner <- band[-c(1L, nrow(band)), ]
+  inner$x <- rowMeans(inner[, c("xmin", "xmax")])
+  inner$width <- inner$upper - inner$lower
+
+  centre <- which.min(abs(inner$x))
+  expect_lt(inner$width[centre], max(inner$width))
+  # widest away from centre, where the standard error is large but the scale
+  # has not yet run out of room; it narrows again at the boundary itself
+  expect_gt(abs(inner$x[which.max(inner$width)]), abs(inner$x[centre]))
+})
+
 test_that("the caption reports the critical values actually in force", {
   skip_on_cran()
   d <- make_pair(n = 60)

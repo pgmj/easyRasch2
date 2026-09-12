@@ -194,7 +194,7 @@ test_that("the RMreliability table row equals the curve attribute", {
   df <- make_poly(n = 150L)
   tab <- RMreliability(df, draws = 30, rmu_iter = 3, seed = 1,
                        output = "dataframe")
-  row <- tab[tab$metric == "Marginal (ratio form)", ]
+  row <- tab[tab$metric == "Marginal (curve mean)", ]
   expect_equal(nrow(row), 1L)
   expect_equal(
     row$estimate,
@@ -394,10 +394,23 @@ test_that("output = 'kable' returns a summary table, not the curve", {
   res <- RMreliabilityCurve(df, benchmark = 0.6, output = "kable")
   expect_s3_class(res, "knitr_kable")
   txt <- paste(as.character(res), collapse = "\n")
-  expect_match(txt, "Marginal reliability \\(ratio form, as in RMreliability\\)")
+  expect_match(txt, "Marginal reliability \\(curve mean, as in RMreliability\\)")
   expect_match(txt, "Marginal reliability \\(Green/Lord, superseded\\)")
   expect_match(txt, "Theta range with reliability")
   expect_match(txt, "n = 300 respondents")
+})
+
+test_that("no benchmark means no benchmark rows in the summary", {
+  skip_on_cran()
+  df <- make_poly()
+  txt <- gsub("[[:space:]]+", " ",
+              paste(as.character(RMreliabilityCurve(df, output = "kable")),
+                    collapse = " "))
+  # attr() partial-matches by default, so an absent `benchmark` attribute used
+  # to return `benchmark_percent` and print a row reading ">= NA"
+  expect_false(grepl("Theta range with reliability", txt))
+  expect_false(grepl("Respondents located", txt))
+  expect_false(grepl("NA", txt))
 })
 
 test_that("output = 'ggplot' returns a plot for every statistic", {

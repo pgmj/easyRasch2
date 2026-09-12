@@ -17,12 +17,12 @@ library(knitr)
 
 ## Purpose
 
-`RMpersonChange()` ships `critical = "simulate"` rather than the conventional
+`RMpersonChange()` includes an option for `critical = "simulate"` rather than the conventional
 1.96, because the Rasch change index
 
 $$RCI = \frac{\hat\theta_2 - \hat\theta_1}{\sqrt{SE(\hat\theta_1)^2 + SE(\hat\theta_2)^2}}$$
 
-is not standard normal under the null when the scale is short. This note shows
+is not standard normal under the null when the scale is short (or, as we will see, when the scale is < ~80 items). This note shows
 that the null does not need simulating at all: for complete data it can be
 enumerated exactly. It also records what the exact critical value does across
 test length, sample skew and targeting, and one consequence for the RCI as a
@@ -51,9 +51,16 @@ deterministic lookups, the ones `RMscoreSE()` builds, and $P(r \mid \theta)$
 follows from the Lord-Wingersky recursion. Under the null the two occasions are
 independent given $\theta$, so the joint is $P(r_1 \mid \theta)P(r_2 \mid
 \theta)$ and the whole null is a discrete distribution over $(k+1)^2$ score
-pairs. For a six-item partial credit model that is 361 cells.
+pairs. For six items with four response categories that is 361 cells.
 
 ```{r exact-fns}
+# One threshold constructor for the whole note: k items, ncat response
+# categories, item locations spread over [-1.2, 1.2].
+mk <- function(k, ncat) {
+  lapply(seq(-1.2, 1.2, length.out = k),
+         function(b) b + seq(-0.9, 0.9, length.out = ncat - 1L))
+}
+
 # Lord-Wingersky: exact sum-score distribution given theta under a PCM
 score_dist <- function(thr_list, theta) {
   d <- 1
@@ -103,14 +110,14 @@ category counts, a right-skewed person distribution and a badly off-target one.
 
 | configuration | simulated | exact | difference |
 |---|---|---|---|
-| 6 polytomous items, symmetric theta | −1.695 / +1.695 | ±1.695 | 0.000 |
-| 6 polytomous items, skewed theta | −1.725 / +1.695 | ±1.695 | 0.030 |
-| 6 polytomous items, skewed and off target | −1.534 / +1.534 | ±1.522 | 0.012 |
-| 20 dichotomous items, symmetric | −1.798 / +1.798 | ±1.798 | 0.000 |
-| 20 dichotomous items, skewed | −1.798 / +1.798 | ±1.798 | 0.000 |
-| mixed 2/3/4 categories, symmetric | −1.721 / +1.721 | ±1.721 | 0.000 |
-| mixed 2/3/4 categories, skewed | −1.721 / +1.721 | ±1.721 | 0.000 |
-| 12 polytomous items, symmetric | −1.864 / +1.864 | ±1.862 | 0.002 |
+| 6 items, 4 categories, symmetric theta | −1.695 / +1.695 | ±1.695 | 0.000 |
+| 6 items, 4 categories, skewed theta | −1.725 / +1.695 | ±1.695 | 0.030 |
+| 6 items, 4 categories, skewed and off target | −1.534 / +1.534 | ±1.522 | 0.012 |
+| 20 items, 2 categories, symmetric | −1.798 / +1.798 | ±1.798 | 0.000 |
+| 20 items, 2 categories, skewed | −1.798 / +1.798 | ±1.798 | 0.000 |
+| 9 items, mixed 2/3/4 categories, symmetric | −1.721 / +1.721 | ±1.721 | 0.000 |
+| 9 items, mixed 2/3/4 categories, skewed | −1.721 / +1.721 | ±1.721 | 0.000 |
+| 12 items, 4 categories, symmetric | −1.864 / +1.864 | ±1.862 | 0.002 |
 
 The exact values are perfectly symmetric. That is the expected result: under the
 null the two occasions are exchangeable, so $\hat\theta_2 - \hat\theta_1$ is
@@ -126,15 +133,41 @@ differing in which items were answered.
 set.seed(1)
 theta <- rnorm(400, 0, 1.4)
 tab <- t(vapply(c(4, 6, 10, 20, 40), function(k) {
-  thr <- lapply(seq(-1.2, 1.2, length.out = k), function(b) b + c(-0.8, 0, 0.8))
-  c(items = k, exact_crit(thr, theta)[["upper"]])
+  c(items = k, exact_crit(mk(k, 4), theta)[["upper"]])
 }, numeric(2L)))
 kable(tab, digits = 3, col.names = c("Items", "Critical value"))
 ```
 
-Monotone in test length, converging on 1.96. Referring the RCI to a normal null
-is therefore conservative, and increasingly so the shorter the scale. On a
-six-item scale, using 1.96 instead of 1.695 is a materially stricter test.
+Monotone in test length, converging on 1.96, with the number of response
+categories held at four throughout. Referring the RCI to a normal null is
+therefore conservative, and increasingly so the shorter the scale. At six items
+and four categories, using 1.96 instead of 1.695 is a materially stricter test.
+
+Response categories have to be reported alongside item count, because a
+six-item scale with three categories and one with seven are not comparable
+instruments. They do not act on the two quantities in the same way:
+
+```{r by-cats}
+#| echo: true
+cats <- t(vapply(c(2, 3, 4, 5, 7), function(nc) {
+  thr <- mk(6, nc)
+  names(thr) <- paste0("I", seq_along(thr))
+  d <- as.data.frame(easyRasch2:::sim_partial_score(thr, theta))
+  colnames(d) <- names(thr)
+  rel <- RMreliabilityCurve(d, item_params = thr, output = "dataframe")
+  c(categories = nc,
+    critical = exact_crit(thr, theta)[["upper"]],
+    marginal = attr(rel, "marginal_ratio"))
+}, numeric(3L)))
+kable(cats, digits = 3,
+      col.names = c("Categories", "Critical value", "Marginal reliability"))
+```
+
+Reliability climbs steeply with categories, from about .60 at two to about .91
+at seven. The critical value does not follow it. Almost all of its movement is
+the step from dichotomous to polytomous, after which it is close to flat. So
+categories buy precision without much changing how far the null sits from
+1.96, while items move both. There is a section below with further discussion on reliability and conditional reliability.
 
 ## Skew and targeting
 
@@ -143,7 +176,7 @@ symmetric rows above agree to the third decimal in five of seven configurations.
 Targeting is what matters. Pushing the same skewed distribution 2.2 logits off
 target, so that 39.5% of respondents sit at an extreme score at one occasion or
 the other, drops the critical value from 1.695 to 1.522. The mechanism is the
-self-normalisation above: a floor-bound sample spends more of its time where the
+self-normalisation above: a floor-bound sample is located primarily where the
 statistic is most heavily damped.
 
 This also means the pooled critical value is a property of the sample as well as
@@ -173,6 +206,153 @@ logits, is available at no extra cost and is monotone in what happened. That is
 the same object as a conditional minimal detectable change, and connects to the
 score-level MDC table parked as a possible sibling function.
 
+## The no-change band in the figure
+
+The scatter plot of occasion 1 against occasion 2 draws a band covering the
+changes that would not be flagged. That band was built from a smooth
+approximation, half-width $c \cdot \sqrt{2/I(\theta)}$, which places **both**
+occasions at the baseline location. The test does not do that. It uses
+$SE(r_1)$ and $SE(r_2)$ at two different scores.
+
+On 300 respondents the two disagreed for 33 of them, 11 percent: 27 sat outside
+the drawn band without being flagged, and 6 sat inside it while flagged. The
+figure contradicted the table it accompanied.
+
+The mechanism shows in the worst case. A respondent moving from $\theta_1 =
+1.23$ to $\theta_2 = 3.62$ had a band built on $SE_{diff} = 0.79$, because
+information is high at 1.23, while the test used 1.56, because the follow-up
+score sits at the ceiling. The band was about half the width it should have
+been, in precisely the case the figure exists to display: a large change landing
+near a boundary.
+
+The band is now built from the same lookup the test uses. For each attainable
+baseline score, the follow-up locations that would not be flagged are read off
+directly, so a point lies outside the band if and only if that respondent was
+flagged. Verified at zero disagreements out of 300 and pinned by a regression
+test. Because attainable scores are discrete the band is a step function, which
+also makes the discreteness visible rather than hiding it behind a smooth curve.
+
+```{r figure}
+#| echo: true
+#| fig-width: 7
+#| fig-height: 7
+#| fig-cap: "Default `RMpersonChange()` figure. Three hundred respondents on a
+#|   scale of six items with four response categories, generated with a true
+#|   shift of 0.7 logits
+#|   between occasions. The grey band covers the follow-up locations that would
+#|   not be flagged from each baseline score, so a point lies outside it if and
+#|   only if that respondent was flagged. Its steps are the attainable scores,
+#|   and it is widest away from the centre."
+#| fig-alt: "Scatter plot of person location at occasion 1 against occasion 2,
+#|   both in logits from about -4 to 4. Points fall on a discrete grid because
+#|   attainable scores are discrete. A grey stepped band runs along the
+#|   diagonal, narrow near the centre of the scale and wider towards each end
+#|   before narrowing again at the extremes. Points inside the band are grey
+#|   and labelled as no detected change, points above it are green and labelled
+#|   as an increase, and one point below it is orange and labelled as a
+#|   decrease. Most points sit above the diagonal, reflecting the simulated
+#|   improvement."
+set.seed(1)
+thr_demo <- mk(6, 4)
+names(thr_demo) <- paste0("I", seq_along(thr_demo))
+
+theta_demo <- rnorm(300, 0, 1.6)
+t1 <- as.data.frame(easyRasch2:::sim_partial_score(thr_demo, theta_demo))
+t2 <- as.data.frame(easyRasch2:::sim_partial_score(thr_demo, theta_demo + 0.7))
+colnames(t1) <- colnames(t2) <- names(thr_demo)
+
+# Item parameters are estimated from the data here, as a reader would, so that
+# this figure and the reliability output below share one calibration.
+RMpersonChange(t1, t2, critical = "exact", output = "ggplot")
+```
+
+The band table below gives the same object numerically.
+
+```{r band}
+#| echo: true
+thr6 <- mk(6, 4)
+crit <- exact_crit(thr6, theta)
+
+band_rows <- function(thr_list, lo, hi) {
+  steps <- vapply(thr_list, length, integer(1L))
+  lut <- vapply(0:sum(steps), function(r) {
+    easyRasch2:::.theta_wle(
+      easyRasch2:::.score_pattern(r, steps), thr_list, c(-10, 10)
+    )
+  }, numeric(2L))
+  th <- lut[1L, ]
+  se <- lut[2L, ]
+  do.call(rbind, lapply(seq_along(th), function(i) {
+    rci <- (th - th[i]) / sqrt(se[i]^2 + se^2)
+    keep <- rci <= hi & rci >= lo
+    data.frame(baseline = th[i], lower = min(th[keep]), upper = max(th[keep]))
+  }))
+}
+
+b <- band_rows(thr6, crit[["lower"]], crit[["upper"]])
+b$width <- b$upper - b$lower
+kable(b, digits = 2, row.names = FALSE,
+      col.names = c("Baseline theta", "Lower", "Upper", "Width"))
+```
+
+The width is not monotone in distance from the centre, which is worth knowing
+before reading a figure. It peaks off centre, where the standard error is
+already large but the scale has not run out of room, and narrows again at the
+boundary itself because there are no further attainable scores to move to. For
+this scale, six items with four categories, the widest band is 3.62 logits at a
+baseline near $\pm 1.2$, against 2.47 at the centre and 2.39 at the extremes.
+
+Two cases remain indicative rather than exact, and are documented as such: with
+mixed missingness the band is drawn for the most common pair of answered-item
+sets, and under `conditional_crit = TRUE` it uses the median critical values.
+
+## What the change figure is resting on
+
+A change verdict is only as good as the precision behind it, and the reader of
+the figure above has no way to judge that from the figure alone. The same scale,
+six items with four response categories, summarised the two ways the package
+offers.
+
+```{r reliability-table}
+#| echo: true
+RMreliability(t1, draws = 200, rmu_iter = 10, seed = 1, boot = TRUE)
+```
+
+Marginal reliability near .85 is respectable for six items with four response
+categories, and the gap down to PSI is the ordinary one between a model-based
+coefficient integrated over the fitted latent density and a sample-based one
+computed from the observed spread of the estimates.
+
+The "Marginal (curve mean)" row and the dashed line in the curve below are the
+same number, the latent-density-weighted mean of the conditional reliability
+curve. `RMreliabilityCurve()` returns it as the `marginal_ratio` attribute, and
+the two agree to machine precision whenever both are given the same data and the
+same calibration.
+
+A single coefficient hides where that precision sits, which is the same point
+the stepped band makes in the change figure.
+
+```{r reliability-curve}
+#| echo: true
+#| fig-width: 8
+#| fig-height: 5
+#| fig-cap: "Conditional reliability across the scale for the same six items
+#|   with four response categories, with the region reaching .8 shaded and the
+#|   respondent distribution behind it."
+#| fig-alt: "Conditional reliability plotted against person location in logits.
+#|   The curve is an inverted U, peaking a little above 0.85 near the centre of
+#|   the scale and falling below 0.5 at both extremes. A shaded vertical band
+#|   marks the region where reliability reaches 0.8, covering roughly the middle
+#|   two thirds of the plotted range. A grey distribution along the bottom shows
+#|   where respondents fall, concentrated near the centre."
+RMreliabilityCurve(t1, statistic = "reliability", benchmark = 0.8)
+```
+
+Read Figure 1 and 2 together. Where this curve is high the band in the change
+figure is narrow and a modest change is detectable; where it falls away the band
+widens and only a large change clears it. The band narrowing again at the very
+extremes is not precision returning, it is the scale running out of scores.
+
 ## Scope and limits
 
 * **Complete data only.** Missing data breaks sufficiency of a single sum score.
@@ -198,10 +378,11 @@ independent, so the joint factorises and the retest null costs no more than the
 measurement null), and EAP is supported by holding the prior at the one the
 observed respondents were scored under.
 
-Having an exact reference immediately paid for itself: it exposed a bug in the
-simulation path, which had been re-estimating the EAP prior from each null
+Having an exact reference immediately paid for itself twice. It exposed a bug in
+the simulation path, which had been re-estimating the EAP prior from each null
 dataset rather than holding it at the observed one. That is now fixed, and the
-two paths agree to four decimals under EAP.
+two paths agree to four decimals under EAP. It also supplied the lookup needed
+to fix the figure, described in the next section.
 
 It also removes the one real objection to `conditional_crit = TRUE`: a
 per-respondent critical value from simulation rests on `sim_iter` draws, roughly

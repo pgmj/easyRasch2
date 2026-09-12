@@ -102,7 +102,7 @@ test_that("RMreliability with boot = TRUE (sequential) returns finite CIs", {
                        seed = 42, output = "dataframe")
   expect_s3_class(res, "data.frame")
   psi_row  <- res[res$metric == "PSI", ]
-  marg_row <- res[res$metric == "Marginal (ratio form)", ]
+  marg_row <- res[res$metric == "Marginal (curve mean)", ]
   expect_true(is.finite(psi_row$lower)  && is.finite(psi_row$upper))
   expect_true(is.finite(marg_row$lower) && is.finite(marg_row$upper))
   expect_match(psi_row$notes, "bootstrap resamples")
@@ -134,6 +134,19 @@ test_that("Marginal is the bounded ratio form, not Green's subtractive one", {
   expect_lt(marg, 1)
   # the superseded form is negative here, and is no longer floored away
   expect_lt(1 - sum(w * sem2) / sigma^2, 0)
+})
+
+test_that("the caption defines the marginal row, not just PSI", {
+  skip_on_cran()
+  skip_if_not_installed("ggdist")
+  df <- make_dichotomous(n = 120, k = 8)
+  k <- RMreliability(df, draws = 30, rmu_iter = 3, seed = 1)
+  txt <- gsub("[[:space:]]+", " ", paste(as.character(k), collapse = " "))
+  # the row label alone cannot carry the definition
+  expect_match(txt, "Marginal \\(curve mean\\)")
+  expect_match(txt, "latent-density-weighted mean")
+  # and PSI stays explained
+  expect_match(txt, "WLE-based separation reliability")
 })
 
 # ---------------------------------------------------------------------

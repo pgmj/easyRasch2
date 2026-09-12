@@ -481,7 +481,7 @@ RMreliability <- function(
     metric = c(
       "Cronbach's alpha",
       "PSI",
-      "Marginal (ratio form)",
+      "Marginal (curve mean)",
       paste0("RMU (", estim, ")")
     ),
     estimate = c(alpha, psi, marg_rel, rmu_summary$estimate),
@@ -515,7 +515,8 @@ RMreliability <- function(
       " items, ",
       .n_caption(n_persons, n_total),
       ". PSI is the WLE-based separation reliability and excludes min/max ",
-      "scoring respondents."
+      "scoring respondents. Marginal is the latent-density-weighted mean of ",
+      "the conditional reliability curve, sigma^2 / (sigma^2 + SEM(theta)^2)."
     )
   )
 }
