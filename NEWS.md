@@ -1,4 +1,4 @@
-# easyRasch2 (development version)
+# easyRasch2 1.3.0
 
 ## New features
 
