@@ -204,7 +204,7 @@ accurate of the pair (mean absolute error 0.015 against 0.018 for binary
 data, 0.010 against 0.015 for polytomous).
 
 [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
-reports the same ratio-form coefficient in its "Marginal (ratio form)"
+reports the same ratio-form coefficient in its "Marginal (curve mean)"
 row, so the scalar and the curve agree. The superseded subtractive value
 is still returned as `marginal_green` for comparison with easyRasch2
 1.2.0 and earlier, and with
@@ -274,7 +274,7 @@ RMreliabilityCurve(phq9[, 1:9], benchmark = 0.8, output = "kable")
 #> |Quantity                                               |Value         |
 #> |:------------------------------------------------------|:-------------|
 #> |Latent SD (sigma)                                      |1.390         |
-#> |Marginal reliability (ratio form, as in RMreliability) |0.886         |
+#> |Marginal reliability (curve mean, as in RMreliability) |0.886         |
 #> |Marginal reliability (Green/Lord, superseded)          |0.862         |
 #> |Average SEM (logits)                                   |0.517         |
 #> |Minimum SEM (logits)                                   |0.396         |

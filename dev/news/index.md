@@ -6,89 +6,58 @@
 
 - New
   [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md)
-  plots conditional measurement precision across the latent scale:
-  conditional SEM, test information, or conditional reliability, with
-  the respondent distribution behind the curve and an optional bootstrap
-  band. Optional `benchmark` shades the region reaching a given
-  reliability and reports the percentage of respondents inside it.
-  `output = "kable"` gives a summary table, `"dataframe"` the curve. Its
-  reliability axis uses the bounded ratio form, which differs from the
-  Green form in
-  [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md);
-  both marginal values are reported so the gap is visible. Existing
-  results are unchanged.
-
-- [`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md)
-  gains `category_labels` for the band legend, `row_gap` for the
-  vertical spacing of the item rows, and `viridis_option`,
-  `viridis_begin` and `viridis_end` for the band palette.
+  plots conditional SEM, test information or conditional reliability
+  across the latent scale, with the respondent distribution behind it.
+  `benchmark` shades the region reaching a given reliability and reports
+  the percentage of respondents inside it.
 
 - New
   [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonChange.md)
-  tests, per respondent, whether their person location moved between two
-  occasions by more than measurement error allows. `null` chooses the
-  estimand: `"measurement"` (default) or `"retest"`, which needs a
-  `retest_sd`. `retest_sd_tip` reports how much occasion noise each
-  flagged result would tolerate. Single-respondent use requires
-  `item_params` from an external calibration.
-
-- [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonChange.md)
-  obtains its critical values from the exact null by default
-  (`critical = "exact"`). Because the sum score is sufficient, the null
-  distribution of the change index enumerates over score pairs, so it
-  needs no simulation and carries no Monte Carlo error. Incomplete data
-  is enumerated within each missingness pattern and `null = "retest"`
-  integrates the occasion deviations out by quadrature.
-  `critical = "simulate"` remains available. The cutoff is well below
-  1.96 on short scales (about 1.70 at six items, 1.85 at twenty), so a
-  normal reference is conservative.
+  tests, per respondent, whether a person location moved between two
+  occasions by more than measurement error allows. `null` selects the
+  estimand, `"measurement"` (default) or `"retest"`. Critical values
+  come from the exact null by default, needing no simulation, and are
+  well below 1.96 on short scales. `retest_sd_tip` reports how much
+  occasion noise each flagged result tolerates. Single-respondent use
+  needs `item_params` from an external calibration.
 
 - New
   [`RMretestSD()`](https://pgmj.github.io/easyRasch2/dev/reference/RMretestSD.md)
   estimates the per-occasion SD of occasion-to-occasion fluctuation from
-  a test-retest study, for use as `retest_sd`. Its measurement-error
-  term is simulated rather than taken from the asymptotic standard
-  errors, which are badly biased on short scales. Negative variance
-  estimates are reported, not floored.
+  a test-retest study, for use as `RMpersonChange(retest_sd =)`.
+  Negative variance estimates are reported, not floored.
+
+- [`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md)
+  gains `category_labels`, `row_gap`, `viridis_option`, `viridis_begin`
+  and `viridis_end`.
 
 ### Breaking changes
 
-- **[`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)’s
-  marginal reliability now uses the bounded ratio form and the row is
-  renamed “Marginal (ratio form)”.** It was Green’s subtractive
-  `1 - mean(SEM^2)/sigma^2`, which leaves (0, 1) when the average error
-  variance exceeds the trait variance, and was floored at 0. It is now
-  the latent-density-weighted mean of
-  `sigma^2 / (sigma^2 + SEM(theta)^2)`, the same coefficient
-  [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md)
-  plots and PSI estimates from the observed spread. **Results move**,
-  upward, and more so on short scales or narrow samples (phq9 .862 to
-  .886, `eRm::raschdat1[, 1:20]` .695 to .769). The superseded value is
-  still available as the `marginal_green` attribute of
-  `RMreliabilityCurve(output = "dataframe")`. Rationale and simulation
-  evidence in `dev/TODO-reliability-form.md`.
-
 - **[`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md)
-  now draws response-category bands in its bottom panel.** Each item is
-  one bar partitioned into its response categories, so the panel reads
-  against the person histogram directly. Threshold estimates and
-  confidence intervals stay, as a coloured error-bar row below each bar.
-  Categories that are never the most likely response collapse to a red
-  tick and each threshold reversal gets a red span, so disordering is
-  visible without a separate check. Pass `panel = "thresholds"` for the
+  now draws response-category bands in its bottom panel**, with
+  threshold estimates and confidence intervals as a coloured error-bar
+  row beneath. Categories that are never most likely, and threshold
+  reversals, are marked in red. Pass `panel = "thresholds"` for the
   previous dot-and-whisker panel. Estimates are unchanged.
+
+- **[`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)’s
+  marginal reliability changes formula, and the row is renamed “Marginal
+  (curve mean)”.** It is now the latent-density-weighted mean of
+  `sigma^2 / (sigma^2 + SEM(theta)^2)` rather than Green’s subtractive
+  coefficient, which could fall below zero and was floored there.
+  **Results move upward**, more so on short scales (phq9 .862 to .886,
+  `eRm::raschdat1[, 1:20]` .695 to .769). The superseded value is the
+  `marginal_green` attribute of
+  `RMreliabilityCurve(output = "dataframe")`.
 
 ### Bug fixes
 
 - [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md)
   and
   [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
-  failed whenever an item name was not a syntactic R name, such as
-  `Item 1` or `3 months`. lavaan’s model syntax cannot express those
-  names, and neither back-quoting nor double-quoting parses, so every
-  simulation iteration returned a parser error and the cutoff simulation
-  aborted. The CFA is now fitted under placeholder names and the
-  loadings mapped back. Results for syntactic item names are unchanged.
+  failed when an item name was not a syntactic R name, such as `Item 1`.
+  The CFA is now fitted under placeholder names and the loadings mapped
+  back. Results for syntactic names are unchanged.
 
 ## easyRasch2 1.2.0
 

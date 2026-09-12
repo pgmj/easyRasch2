@@ -202,9 +202,14 @@ independent of its numerator: a respondent who moves to an extreme score
 produces a large change and a large standard error together, and the
 ratio is damped. Both tails of the null are pulled in, so the critical
 value sits below 1.96, and the shortfall grows as the scale shortens.
-Enumerated values for one six-item family: 1.62 at four items, 1.70 at
-six, 1.79 at ten, 1.85 at twenty, 1.92 at forty. Referring the RCI to a
-normal null is conservative, and materially so on short scales.
+Enumerated values for one family of items with four response categories:
+1.62 at four items, 1.70 at six, 1.79 at ten, 1.85 at twenty, 1.92 at
+forty. Response categories matter much less than item count here, and
+almost all of their effect is the step from dichotomous to polytomous:
+at six items the value moves from 1.55 with two categories to 1.72 with
+three and only 1.78 with seven, while reliability over the same range
+climbs from about .60 to about .91. Referring the RCI to a normal null
+is conservative, and materially so on short scales.
 
 **How the null is obtained.** `critical = "exact"` enumerates it.
 Because the score is sufficient, \\\hat\theta(r)\\ and \\SE(r)\\ are
@@ -236,13 +241,13 @@ a change is distinguishable from the null. It is not a measure of how
 much someone changed, and the two orderings genuinely differ. Its value
 mixes two ingredients that it cannot separate: how far the respondent
 moved, and how precisely each of their two positions was pinned down. On
-a six-item scale scored 0 to 3 the standard error runs from 0.49 in the
-middle to 1.45 at the boundary, a factor of three within one instrument.
-A respondent going from the minimum to the maximum score moves 7.24
-logits and scores RCI 3.53, while one going from 3 to 15 moves 3.11
-logits and scores 3.59. The first traversed the whole scale, the second
-less than half of it, and the second has the larger statistic. Both
-statements are correct about their own question.
+a scale of six items with four response categories the standard error
+runs from 0.49 in the middle to 1.45 at the boundary, a factor of three
+within one instrument. A respondent going from the minimum to the
+maximum score moves 7.24 logits and scores RCI 3.53, while one going
+from 3 to 15 moves 3.11 logits and scores 3.59. The first traversed the
+whole scale, the second less than half of it, and the second has the
+larger statistic. Both statements are correct about their own question.
 
 In a group comparison every case shares one standard error, so ordering
 by the test statistic matches ordering by effect. Here the scale factor
