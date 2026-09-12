@@ -433,6 +433,27 @@ test_that("the plot caption reports n and the estimation source", {
   expect_match(cap, "property of the items")
 })
 
+test_that("x-axis breaks sit on whole logits with a half-logit minor", {
+  skip_on_cran()
+  skip_if_not_installed("ggplot2")
+  df <- make_poly()
+  b <- ggplot2::ggplot_build(RMreliabilityCurve(df, n_nodes = 41L))
+  major <- b$layout$panel_params[[1L]]$x$breaks
+  minor <- b$layout$panel_params[[1L]]$x$minor_breaks
+  major <- major[is.finite(major)]
+  minor <- minor[is.finite(minor)]
+
+  expect_true(all(major == round(major)))
+  expect_true(all(diff(sort(major)) == 1))
+  expect_true(all(diff(sort(minor)) == 0.5))
+  # and a narrower requested range still lands on whole logits
+  b2 <- ggplot2::ggplot_build(
+    RMreliabilityCurve(df, theta_range = c(-2, 2), n_nodes = 41L)
+  )
+  m2 <- b2$layout$panel_params[[1L]]$x$breaks
+  expect_equal(m2[is.finite(m2)], c(-2, -1, 0, 1, 2))
+})
+
 test_that("the caption names the statistic actually plotted", {
   skip_on_cran()
   skip_if_not_installed("ggplot2")

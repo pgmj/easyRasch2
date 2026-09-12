@@ -1012,6 +1012,15 @@ run_single_curve_boot <- function(seed, data_list) {
   p +
     ggplot2::geom_line(linewidth = 0.9) +
     ggplot2::coord_cartesian(ylim = c(y_min, y_max)) +
+    # A logit is the unit the reader reasons in, so major gridlines sit on
+    # whole logits with a minor line at each half. Both are computed from the
+    # panel limits rather than the data, so they stay put under `theta_range`.
+    ggplot2::scale_x_continuous(
+      breaks = function(l) seq(ceiling(l[1L]), floor(l[2L]), by = 1),
+      minor_breaks = function(l) {
+        seq(ceiling(l[1L] * 2) / 2, floor(l[2L] * 2) / 2, by = 0.5)
+      }
+    ) +
     ggplot2::labs(
       x = "Person location (logits)",
       y = y_lab,

@@ -1345,6 +1345,20 @@ run_single_change_sim <- function(seed, sim_args) {
     # The band flares where information collapses, so the panel is held to the
     # range of the data rather than to the range of the band.
     ggplot2::coord_equal(xlim = lims, ylim = lims) +
+    # Both axes are person locations, so both get major gridlines on whole
+    # logits and a minor line at each half, as in RMreliabilityCurve().
+    ggplot2::scale_x_continuous(
+      breaks = function(l) seq(ceiling(l[1L]), floor(l[2L]), by = 1),
+      minor_breaks = function(l) {
+        seq(ceiling(l[1L] * 2) / 2, floor(l[2L] * 2) / 2, by = 0.5)
+      }
+    ) +
+    ggplot2::scale_y_continuous(
+      breaks = function(l) seq(ceiling(l[1L]), floor(l[2L]), by = 1),
+      minor_breaks = function(l) {
+        seq(ceiling(l[1L] * 2) / 2, floor(l[2L] * 2) / 2, by = 0.5)
+      }
+    ) +
     ggplot2::labs(
       x = "Person location, occasion 1 (logits)",
       y = "Person location, occasion 2 (logits)",

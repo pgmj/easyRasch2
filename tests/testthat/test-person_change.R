@@ -507,6 +507,24 @@ test_that("the plotted band agrees with the classification for every point", {
   expect_identical(says, as.character(res$change_class))
 })
 
+test_that("both axes break on whole logits, matching RMreliabilityCurve", {
+  skip_on_cran()
+  skip_if_not_installed("ggplot2")
+  d <- make_pair(n = 150, theta_sd = 1.6, seed = 12L)
+  b <- ggplot2::ggplot_build(
+    RMpersonChange(d$t1, d$t2, item_params = d$thr, critical = "exact",
+                   output = "ggplot")
+  )
+  pp <- b$layout$panel_params[[1L]]
+  for (ax in list(pp$x, pp$y)) {
+    major <- ax$breaks[is.finite(ax$breaks)]
+    minor <- ax$minor_breaks[is.finite(ax$minor_breaks)]
+    expect_true(all(major == round(major)))
+    expect_true(all(diff(sort(major)) == 1))
+    expect_true(all(diff(sort(minor)) == 0.5))
+  }
+})
+
 test_that("the band is narrowest in the middle and widest off centre", {
   skip_on_cran()
   skip_if_not_installed("ggplot2")
