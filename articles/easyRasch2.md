@@ -22,7 +22,8 @@ alongside the four criteria above:
 
 - Targeting — how well person and item locations overlap on the latent
   continuum.
-- Reliability — how precisely the scale separates respondents.
+- Reliability — how precisely the scale separates respondents, overall
+  and at each point on the scale.
 - Person fit — unexpected response patterns.
 - Item and person parameters — estimates for reuse in scoring.
 
@@ -501,10 +502,10 @@ Each item pair is then judged against its own simulated null
 distribution and flagged on a multiplicity-corrected bootstrap
 *p*-value, which controls the family-wise error rate across all pairs
 ([Johansson 2026](#ref-johansson_simulationbased_2026)). This is the
-default whenever the full cutoffs object is provided, accessed with
-`q3_results$pairs`. The per-pair expected range is reported alongside as
-a reference, and it can be helpful to plot it against the observed
-value. We’ll limit the output to the 6 item-pairs that deviate the most.
+default whenever the full cutoffs object is provided. The per-pair
+expected range is reported alongside as a reference, and it can be
+helpful to plot it against the observed value. We’ll limit the output to
+the 6 item-pairs that deviate the most.
 
 ``` r
 
@@ -631,6 +632,10 @@ RMitemHierarchy(items, item_labels = item_desc)
 \*Item-hierarchy\*](figures/rasch-threshold-hierarchy-1.png)
 
 **Figure 7.** *Item-hierarchy*
+
+The same disordering is visible in the bottom panel of the targeting
+plot further down, which marks never-modal categories and threshold
+reversals in red.
 
 ## 4. Invariance / no DIF
 
@@ -824,9 +829,13 @@ demonstration purposes.
 
 ## Targeting
 
-A targeting plot summarizes how well the item-threshold distribution
-matches the distribution of person locations on the latent scale — a
-Wright-map style display.
+A targeting plot is a Wright-map style display of how well the item
+thresholds match the distribution of person locations on the latent
+scale. The top panel is a histogram of person locations and the middle
+one a histogram of item threshold locations. The bottom panel draws each
+item as a bar partitioned into its response categories, with the
+threshold estimates and their confidence intervals below it. Each band
+spans the locations at which its category is the most likely response.
 
 ``` r
 
@@ -838,15 +847,30 @@ targeting\*](figures/rasch-targeting-1.png)
 
 **Figure 11.** *Person-item targeting*
 
+That bottom panel doubles as a check on criterion 3 above. A category
+that is never the most likely response at any location collapses to a
+red tick labelled with its category number, and red arrows below the bar
+give the size of each threshold reversal in logits, so ordered
+thresholds leave no red marks at all. For the dot-and-whisker display of
+item thresholds used before version 1.3.0, pass `panel = "thresholds"`.
+
 ## Reliability
 
+Reliability is reported two ways here: as summary coefficients for the
+scale as a whole, and as a curve showing how precision varies along the
+latent continuum.
+
+### Summary coefficients
+
 [`RMreliability()`](https://pgmj.github.io/easyRasch2/reference/RMreliability.md)
-reports four reliability metrics: person separation reliability (PSI);
-Relative Measurement Uncertainty (RMU) estimate derived from posterior
-person-location uncertainty using plausible values; Cronbach’s alpha;
-and marginal reliability. PSI, alpha and marginal can use bootstrap for
-confidence intervals. All reliability metrics range from 0 to 1, with
-higher values indicating better separation/precision.
+reports four metrics, in the order they appear in the output. Cronbach’s
+alpha, the person separation index (PSI), marginal reliability, and
+Relative Measurement Uncertainty (RMU), the last derived from posterior
+person-location uncertainty using plausible values. Marginal reliability
+is the latent-density-weighted mean of the conditional reliability curve
+shown below. Alpha, PSI and marginal can use a bootstrap for confidence
+intervals. All four range from 0 to 1, with higher values indicating
+better separation and precision.
 
 ``` r
 
@@ -858,12 +882,43 @@ RMreliability(items, draws = 200, rmu_iter = 20, parallel = FALSE,
 |:---|---:|---:|---:|:---|
 | Cronbach’s alpha | 0.886 | NA | NA | no bootstrap |
 | PSI | 0.838 | NA | NA | no bootstrap |
-| Marginal | 0.862 | NA | NA | no bootstrap |
+| Marginal (curve mean) | 0.886 | NA | NA | no bootstrap |
 | RMU (WLE) | 0.881 | 0.867 | 0.895 | 200 PVs, 20 RMU iterations |
 
 Reliability for 9 items, n = 600 respondents. PSI is the WLE-based
 separation reliability and excludes min/max scoring respondents.
-{.table}
+Marginal is the latent-density-weighted mean of the conditional
+reliability curve, sigma^2 / (sigma^2 + SEM(theta)^2). {.table}
+
+### Conditional reliability
+
+A single coefficient implies that every respondent is measured with the
+same precision, which is rarely the case. Test information is highest
+where the item thresholds are concentrated and falls away towards the
+extremes, so the same scale can separate respondents well in the middle
+of its range and poorly at either end.
+[`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/reference/RMreliabilityCurve.md)
+shows that directly.
+
+``` r
+
+RMreliabilityCurve(items, statistic = "reliability", benchmark = 0.8)
+```
+
+![\*\*Figure 12.\*\* \*Conditional reliability across the latent
+continuum\*](figures/rasch-relcurve-1.png)
+
+**Figure 12.** *Conditional reliability across the latent continuum*
+
+The `benchmark` argument shades the region where the scale reaches a
+stated level and reports the share of respondents inside it, which is
+usually the practical question behind the figure. The dashed line is the
+marginal reliability from the table above, and the distribution behind
+the curve is the same set of person locations as the targeting plot. The
+default `statistic = "sem"` plots the conditional standard error in
+logits instead, which is the quantity to use when reporting the
+precision of an individual score. Test information is also available,
+using `statistic = "information"`.
 
 ## Item and person parameters
 
@@ -927,10 +982,10 @@ estimates with associated standard errors, use
 RMscoreSE(items, output = "ggplot")
 ```
 
-![\*\*Figure 12.\*\* \*Sum-score to WLE conversion with 95%
+![\*\*Figure 13.\*\* \*Sum-score to WLE conversion with 95%
 CIs\*](figures/rasch-scoreSE-1.png)
 
-**Figure 12.** *Sum-score to WLE conversion with 95% CIs*
+**Figure 13.** *Sum-score to WLE conversion with 95% CIs*
 
 ``` r
 
@@ -985,10 +1040,10 @@ pfit <- RMpersonFit(items, iterations = 100, output = "ggplot", seed = 7)
 pfit$lz
 ```
 
-![\*\*Figure 13.\*\* \*Person fit with the lz
+![\*\*Figure 14.\*\* \*Person fit with the lz
 statistic\*](figures/rasch-personfit-1.png)
 
-**Figure 13.** *Person fit with the lz statistic*
+**Figure 14.** *Person fit with the lz statistic*
 
 ## Where to next
 

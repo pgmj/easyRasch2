@@ -17,7 +17,7 @@ critical values."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -126,9 +126,10 @@ Ignored when <code>cutoff_method = "quantile"</code>.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with components:</p><dl><dt><code>results</code></dt>
 <dd><p>data.frame with columns <code>iteration</code>, <code>Item1</code>, <code>Item2</code>,
-and <code>gamma</code> (one row per item pair per successful iteration). Contains
-results from direction 1 only (rest score = total - Item2), which is
-the conventional direction.</p></dd>
+and <code>gamma</code> (one row per item pair per successful iteration). <code>gamma</code> is
+the larger of the pair's two rest-score directions, the statistic
+<code><a href="RMlocdepGamma.html">RMlocdepGamma()</a></code> tests. Rows are keyed by the sorted pair order, with
+<code>Item1</code> before <code>Item2</code> in column order.</p></dd>
 
 <dt><code>pair_cutoffs</code></dt>
 <dd><p>data.frame with per-pair cutoff summaries: <code>Item1</code>,
@@ -173,12 +174,12 @@ WLE person locations.</p></li>
 <li><p>Simulates item response data under a Rasch model (dichotomous via
 <code><a href="https://rdrr.io/pkg/psychotools/man/rrm.html" class="external-link">psychotools::rrm()</a></code> or polytomous via an internal partial credit
 simulator).</p></li>
-<li><p>Computes partial gamma for every item pair in the canonical
-rest-score direction. The coefficients are identical to those of
-<code><a href="https://rdrr.io/pkg/iarm/man/partgam_LD.html" class="external-link">iarm::partgam_LD()</a></code>, but are computed by a vectorised internal, since
-<code>iarm</code> also derives the asymptotic standard error and confidence
-interval that a simulated null does not need and costs roughly two
-orders of magnitude more per iteration.</p></li>
+<li><p>Computes partial gamma for every item pair in both rest-score
+directions and keeps the larger. The coefficients are identical to
+those of <code><a href="https://rdrr.io/pkg/iarm/man/partgam_LD.html" class="external-link">iarm::partgam_LD()</a></code>, but are computed by a vectorised
+internal, since <code>iarm</code> also derives the asymptotic standard error and
+confidence interval that a simulated null does not need and costs
+roughly two orders of magnitude more per iteration.</p></li>
 </ol><p>Because the data are simulated under the Rasch model, items are locally
 independent by construction. The distribution of partial gamma values
 across iterations provides empirical critical values per item pair. Values

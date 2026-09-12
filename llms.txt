@@ -173,10 +173,23 @@ remotes::install_github("pgmj/easyRasch2")
   [`RMUreliability()`](https://pgmj.github.io/easyRasch2/reference/RMUreliability.md)
   — Cronbach’s α, PSI, marginal reliability, and Relative Measurement
   Uncertainty from plausible values
+- [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/reference/RMreliabilityCurve.md)
+  — conditional SEM, test information, or conditional reliability across
+  the latent scale, with the respondent distribution behind it and an
+  optional bootstrap band
 - [`RMtargeting()`](https://pgmj.github.io/easyRasch2/reference/RMtargeting.md)
   — Wright-map style person-item targeting plot
 - [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/reference/RMscoreSE.md)
   — raw-score → logit transformation table (WLE / EAP)
+
+### Individual change
+
+- [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/reference/RMpersonChange.md)
+  — per-respondent change between two occasions, with the null stated
+  explicitly and critical values simulated rather than assumed normal
+- [`RMretestSD()`](https://pgmj.github.io/easyRasch2/reference/RMretestSD.md)
+  — occasion-to-occasion SD from a test-retest study, the input to
+  `RMpersonChange(null = "retest")`
 
 ### Item & person parameters
 
@@ -425,6 +438,15 @@ Per-respondent fit statistics with resampling-based p-values
 - [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/reference/RMpersonFit.md)
   : Person-Fit Statistics for a Rasch / Partial Credit Model
 
+## Individual change
+
+Single-subject change across two occasions
+
+- [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/reference/RMpersonChange.md)
+  : Single-subject change between two occasions
+- [`RMretestSD()`](https://pgmj.github.io/easyRasch2/reference/RMretestSD.md)
+  : Occasion-to-occasion SD from a test-retest study
+
 ## Descriptive functions
 
 Targeting and other plots/tables
@@ -443,6 +465,8 @@ Targeting and other plots/tables
   : Raw-Score to Logit Score Transformation Table
 - [`RMreliability()`](https://pgmj.github.io/easyRasch2/reference/RMreliability.md)
   : Reliability metrics for a Rasch model
+- [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/reference/RMreliabilityCurve.md)
+  : Conditional measurement precision across the latent scale
 - [`RMUreliability()`](https://pgmj.github.io/easyRasch2/reference/RMUreliability.md)
   : Relative Measurement Uncertainty (RMU)
 

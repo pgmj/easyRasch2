@@ -82,9 +82,11 @@ A list with components:
 - `results`:
 
   data.frame with columns `iteration`, `Item1`, `Item2`, and `gamma`
-  (one row per item pair per successful iteration). Contains results
-  from direction 1 only (rest score = total - Item2), which is the
-  conventional direction.
+  (one row per item pair per successful iteration). `gamma` is the
+  larger of the pair's two rest-score directions, the statistic
+  [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGamma.md)
+  tests. Rows are keyed by the sorted pair order, with `Item1` before
+  `Item2` in column order.
 
 - `pair_cutoffs`:
 
@@ -136,8 +138,9 @@ For each simulation iteration the function:
     [`psychotools::rrm()`](https://rdrr.io/pkg/psychotools/man/rrm.html)
     or polytomous via an internal partial credit simulator).
 
-3.  Computes partial gamma for every item pair in the canonical
-    rest-score direction. The coefficients are identical to those of
+3.  Computes partial gamma for every item pair in both rest-score
+    directions and keeps the larger. The coefficients are identical to
+    those of
     [`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html),
     but are computed by a vectorised internal, since `iarm` also derives
     the asymptotic standard error and confidence interval that a

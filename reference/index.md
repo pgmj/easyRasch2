@@ -99,6 +99,15 @@ Per-respondent fit statistics with resampling-based p-values
 - [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/reference/RMpersonFit.md)
   : Person-Fit Statistics for a Rasch / Partial Credit Model
 
+## Individual change
+
+Single-subject change across two occasions
+
+- [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/reference/RMpersonChange.md)
+  : Single-subject change between two occasions
+- [`RMretestSD()`](https://pgmj.github.io/easyRasch2/reference/RMretestSD.md)
+  : Occasion-to-occasion SD from a test-retest study
+
 ## Descriptive functions
 
 Targeting and other plots/tables
@@ -117,6 +126,8 @@ Targeting and other plots/tables
   : Raw-Score to Logit Score Transformation Table
 - [`RMreliability()`](https://pgmj.github.io/easyRasch2/reference/RMreliability.md)
   : Reliability metrics for a Rasch model
+- [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/reference/RMreliabilityCurve.md)
+  : Conditional measurement precision across the latent scale
 - [`RMUreliability()`](https://pgmj.github.io/easyRasch2/reference/RMUreliability.md)
   : Relative Measurement Uncertainty (RMU)
 

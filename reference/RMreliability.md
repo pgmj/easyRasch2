@@ -125,17 +125,26 @@ indices are recomputed natively per resample, no model is refitted by
 plausible-value draws, averaged over `rmu_iter` random splits of the
 draws.
 
-Marginal reliability is the native Green (1984) coefficient, \\1 -
-\overline{1/I(\theta)}/\sigma^2\\, where the test information
-\\I(\theta)\\ is summed from the CML item parameters and the average
-error variance is taken over the estimated normal latent density \\N(0,
-\sigma^2)\\ (\\\sigma\\ from marginal ML). Unlike
+Marginal reliability is the latent-density-weighted mean of the
+conditional reliability curve, \\\int \sigma^2/(\sigma^2 +
+1/I(\theta))\\ g(\theta)\\d\theta\\, where the test information
+\\I(\theta)\\ is summed from the CML item parameters and \\g\\ is the
+estimated normal latent density \\N(0, \sigma^2)\\ (\\\sigma\\ from
+marginal ML). Integrating over the estimated latent variance, rather
+than the \\N(0,1)\\ assumed by
 [`mirt::marginal_rxx()`](https://philchalmers.github.io/mirt/reference/marginal_rxx.html),
-which assumes \\N(0,1)\\, this integrates over the estimated latent
-variance, so it is correct on the Rasch logit scale (where \\\sigma\\ is
-typically well above 1, and the \\N(0,1)\\ assumption underestimates
-reliability). It is the model-based complement to the sample-based PSI;
-a large gap between the two flags an off-target or non-normal sample.
+keeps it correct on the Rasch logit scale, where \\\sigma\\ is typically
+well above 1 and the \\N(0,1)\\ assumption underestimates reliability.
+
+It is the model-based complement to the sample-based PSI, and the two
+are now the same coefficient by two routes: PSI divides by the observed
+spread of the WLE estimates, marginal reliability by the fitted latent
+density. A large gap between them therefore does flag an off-target or
+non-normal sample. Through version 1.2.0 this row used Green's
+subtractive \\1 - \overline{1/I(\theta)}/\sigma^2\\ instead, under which
+much of the PSI-to-marginal gap was an artefact of the differing
+formulas rather than a property of the sample. See
+`dev/TODO-reliability-form.md`.
 
 PSI is the WLE-based separation reliability, \\1 - \overline{SEM^2} /
 \mathrm{Var}(\hat\theta)\\, computed from CML item thresholds
@@ -150,6 +159,15 @@ e.g. dichotomous items.)
 RMU is from Bignardi, Kievit, & Bürkner (2025), modified here to use
 mirt plausible values rather than fully Bayesian posterior draws (see
 Mislevy, 1991, for the plausible-values framework).
+
+Marginal reliability here is the subtractive Green/Lord coefficient.
+Milanzi et al. (2015) show that this form can fall below zero when the
+average error variance exceeds the trait variance, which happens with
+few items or a narrow sample, and it is floored at 0 above.
+[`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/reference/RMreliabilityCurve.md)
+reports the same quantity in the bounded ratio form alongside this one,
+so the two can be compared directly. See `dev/TODO-reliability-form.md`
+for the open question of which form this row should use.
 
 Bootstrap iterations that fail to converge are silently dropped.
 
@@ -173,9 +191,16 @@ Adams, R. J. (2005). Reliability as a measurement design effect.
 *Studies in Educational Evaluation, 31*(2), 162-172.
 [doi:10.1016/j.stueduc.2005.05.008](https://doi.org/10.1016/j.stueduc.2005.05.008)
 
+Milanzi, E., Molenberghs, G., Alonso, A., Verbeke, G., & De Boeck, P.
+(2015). Reliability measures in item response theory: Manifest versus
+latent correlation functions. *British Journal of Mathematical and
+Statistical Psychology, 68*(1), 43-64.
+[doi:10.1111/bmsp.12033](https://doi.org/10.1111/bmsp.12033)
+
 ## See also
 
-[`RMUreliability()`](https://pgmj.github.io/easyRasch2/reference/RMUreliability.md)
+[`RMUreliability()`](https://pgmj.github.io/easyRasch2/reference/RMUreliability.md),
+[`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/reference/RMreliabilityCurve.md)
 
 ## Examples
 
@@ -193,13 +218,13 @@ if (requireNamespace("ggdist", quietly = TRUE) &&
 }
 #> 
 #> 
-#> Table: Reliability for 20 items, n = 100 respondents. PSI is the WLE-based separation reliability and excludes min/max scoring respondents.
+#> Table: Reliability for 20 items, n = 100 respondents. PSI is the WLE-based separation reliability and excludes min/max scoring respondents. Marginal is the latent-density-weighted mean of the conditional reliability curve, sigma^2 / (sigma^2 + SEM(theta)^2).
 #> 
-#> |Metric           | Estimate| Lower (95% HDCI)| Upper (95% HDCI)|Notes                       |
-#> |:----------------|--------:|----------------:|----------------:|:---------------------------|
-#> |Cronbach's alpha |    0.754|            0.701|            0.813|25 bootstrap resamples      |
-#> |PSI              |    0.725|            0.673|            0.768|25 bootstrap resamples      |
-#> |Marginal         |    0.695|            0.602|            0.769|25 bootstrap resamples      |
-#> |RMU (WLE)        |    0.753|            0.684|            0.817|1000 PVs, 50 RMU iterations |
+#> |Metric                | Estimate| Lower (95% HDCI)| Upper (95% HDCI)|Notes                       |
+#> |:---------------------|--------:|----------------:|----------------:|:---------------------------|
+#> |Cronbach's alpha      |    0.754|            0.701|            0.813|25 bootstrap resamples      |
+#> |PSI                   |    0.725|            0.673|            0.768|25 bootstrap resamples      |
+#> |Marginal (curve mean) |    0.769|            0.717|            0.817|25 bootstrap resamples      |
+#> |RMU (WLE)             |    0.753|            0.684|            0.817|1000 PVs, 50 RMU iterations |
 # }
 ```

@@ -139,13 +139,14 @@ while large negative values suggest negative LD.
 
 The `iarm` package must be installed (it is in Suggests, not Imports).
 
-**Bootstrap p-values.** When `p_value = TRUE`, each pair's observed
-partial gamma (canonical direction) is compared against its simulated
-null distribution (from `cutoff$results`, simulated under local
-independence). The per-pair statistic is the residual studentised by the
-bootstrap mean and SD; the marginal p-value is the one-sided Monte-Carlo
-p-value `(1 + #\{t* >= t\}) / (B + 1)` for excess *positive* LD
-(redundancy, the diagnostic target — matching
+**Bootstrap p-values.** When `p_value = TRUE`, each pair is tested once,
+on the larger of its two rest-score directions (the `gamma_pair`
+column), against its simulated null distribution (from `cutoff$results`,
+simulated under local independence and built from that same maximum).
+The per-pair statistic is the residual studentised by the bootstrap mean
+and SD; the marginal p-value is the one-sided Monte-Carlo p-value
+`(1 + #\{t* >= t\}) / (B + 1)` for excess *positive* LD (redundancy, the
+diagnostic target — matching
 [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md)),
 so it can be no smaller than `1 / (B + 1)`. The band still shows both
 bounds for reference. `correction = "fwer"` uses the Westfall-Young

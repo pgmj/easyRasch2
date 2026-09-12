@@ -1,5 +1,64 @@
 # Changelog
 
+## easyRasch2 1.3.0
+
+### New features
+
+- New
+  [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/reference/RMreliabilityCurve.md)
+  plots conditional SEM, test information or conditional reliability
+  across the latent scale, with the respondent distribution behind it.
+  `benchmark` shades the region reaching a given reliability and reports
+  the percentage of respondents inside it.
+
+- New
+  [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/reference/RMpersonChange.md)
+  tests, per respondent, whether a person location moved between two
+  occasions by more than measurement error allows. `null` selects the
+  estimand, `"measurement"` (default) or `"retest"`. Critical values
+  come from the exact null by default, needing no simulation, and are
+  well below 1.96 on short scales. `retest_sd_tip` reports how much
+  occasion noise each flagged result tolerates. Single-respondent use
+  needs `item_params` from an external calibration.
+
+- New
+  [`RMretestSD()`](https://pgmj.github.io/easyRasch2/reference/RMretestSD.md)
+  estimates the per-occasion SD of occasion-to-occasion fluctuation from
+  a test-retest study, for use as `RMpersonChange(retest_sd =)`.
+  Negative variance estimates are reported, not floored.
+
+- [`RMtargeting()`](https://pgmj.github.io/easyRasch2/reference/RMtargeting.md)
+  gains `category_labels`, `row_gap`, `viridis_option`, `viridis_begin`
+  and `viridis_end`.
+
+### Breaking changes
+
+- **[`RMtargeting()`](https://pgmj.github.io/easyRasch2/reference/RMtargeting.md)
+  now draws response-category bands in its bottom panel**, with
+  threshold estimates and confidence intervals as a coloured error-bar
+  row beneath. Categories that are never most likely, and threshold
+  reversals, are marked in red. Pass `panel = "thresholds"` for the
+  previous dot-and-whisker panel. Estimates are unchanged.
+
+- **[`RMreliability()`](https://pgmj.github.io/easyRasch2/reference/RMreliability.md)’s
+  marginal reliability changes formula, and the row is renamed “Marginal
+  (curve mean)”.** It is now the latent-density-weighted mean of
+  `sigma^2 / (sigma^2 + SEM(theta)^2)` rather than Green’s subtractive
+  coefficient, which could fall below zero and was floored there.
+  **Results move upward**, more so on short scales (phq9 .862 to .886,
+  `eRm::raschdat1[, 1:20]` .695 to .769). The superseded value is the
+  `marginal_green` attribute of
+  `RMreliabilityCurve(output = "dataframe")`.
+
+### Bug fixes
+
+- [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFACutoff.md)
+  and
+  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFA.md)
+  failed when an item name was not a syntactic R name, such as `Item 1`.
+  The CFA is now fitted under placeholder names and the loadings mapped
+  back. Results for syntactic names are unchanged.
+
 ## easyRasch2 1.2.0
 
 CRAN release: 2026-08-23

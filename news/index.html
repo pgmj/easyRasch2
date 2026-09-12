@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,26 @@
       <small>Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.3.0" id="easyrasch2-130">easyRasch2 1.3.0<a class="anchor" aria-label="anchor" href="#easyrasch2-130"></a></h2>
+<div class="section level3">
+<h3 id="new-features-1-3-0">New features<a class="anchor" aria-label="anchor" href="#new-features-1-3-0"></a></h3>
+<ul><li><p>New <code><a href="../reference/RMreliabilityCurve.html">RMreliabilityCurve()</a></code> plots conditional SEM, test information or conditional reliability across the latent scale, with the respondent distribution behind it. <code>benchmark</code> shades the region reaching a given reliability and reports the percentage of respondents inside it.</p></li>
+<li><p>New <code><a href="../reference/RMpersonChange.html">RMpersonChange()</a></code> tests, per respondent, whether a person location moved between two occasions by more than measurement error allows. <code>null</code> selects the estimand, <code>"measurement"</code> (default) or <code>"retest"</code>. Critical values come from the exact null by default, needing no simulation, and are well below 1.96 on short scales. <code>retest_sd_tip</code> reports how much occasion noise each flagged result tolerates. Single-respondent use needs <code>item_params</code> from an external calibration.</p></li>
+<li><p>New <code><a href="../reference/RMretestSD.html">RMretestSD()</a></code> estimates the per-occasion SD of occasion-to-occasion fluctuation from a test-retest study, for use as <code>RMpersonChange(retest_sd =)</code>. Negative variance estimates are reported, not floored.</p></li>
+<li><p><code><a href="../reference/RMtargeting.html">RMtargeting()</a></code> gains <code>category_labels</code>, <code>row_gap</code>, <code>viridis_option</code>, <code>viridis_begin</code> and <code>viridis_end</code>.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="breaking-changes-1-3-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-3-0"></a></h3>
+<ul><li><p><strong><code><a href="../reference/RMtargeting.html">RMtargeting()</a></code> now draws response-category bands in its bottom panel</strong>, with threshold estimates and confidence intervals as a coloured error-bar row beneath. Categories that are never most likely, and threshold reversals, are marked in red. Pass <code>panel = "thresholds"</code> for the previous dot-and-whisker panel. Estimates are unchanged.</p></li>
+<li><p><strong><code><a href="../reference/RMreliability.html">RMreliability()</a></code>’s marginal reliability changes formula, and the row is renamed “Marginal (curve mean)”.</strong> It is now the latent-density-weighted mean of <code>sigma^2 / (sigma^2 + SEM(theta)^2)</code> rather than Green’s subtractive coefficient, which could fall below zero and was floored there. <strong>Results move upward</strong>, more so on short scales (phq9 .862 to .886, <code>eRm::raschdat1[, 1:20]</code> .695 to .769). The superseded value is the <code>marginal_green</code> attribute of <code>RMreliabilityCurve(output = "dataframe")</code>.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-3-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-3-0"></a></h3>
+<ul><li>
+<code><a href="../reference/RMdimCFACutoff.html">RMdimCFACutoff()</a></code> and <code><a href="../reference/RMdimCFA.html">RMdimCFA()</a></code> failed when an item name was not a syntactic R name, such as <code>Item 1</code>. The CFA is now fitted under placeholder names and the loadings mapped back. Results for syntactic names are unchanged.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.2.0" id="easyrasch2-120">easyRasch2 1.2.0<a class="anchor" aria-label="anchor" href="#easyrasch2-120"></a></h2><p class="text-muted">CRAN release: 2026-08-23</p>
 <div class="section level3">
