@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.2.0.9005</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.2.0.9006</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -103,7 +103,8 @@ reported alongside the four criteria above:</p>
 <ul>
 <li>Targeting — how well person and item locations overlap on the latent
 continuum.</li>
-<li>Reliability — how precisely the scale separates respondents.</li>
+<li>Reliability — how precisely the scale separates respondents, overall
+and at each point on the scale.</li>
 <li>Person fit — unexpected response patterns.</li>
 <li>Item and person parameters — estimates for reuse in scoring.</li>
 </ul>
@@ -973,11 +974,10 @@ the same cutoffs object to <code><a href="../reference/RMlocdepQ3.html">RMlocdep
 then judged against its own simulated null distribution and flagged on a
 multiplicity-corrected bootstrap <em>p</em>-value, which controls the
 family-wise error rate across all pairs <span class="citation">(<a href="#ref-johansson_simulationbased_2026">Johansson 2026</a>)</span>.
-This is the default whenever the full cutoffs object is provided,
-accessed with <code>q3_results$pairs</code>. The per-pair expected range
-is reported alongside as a reference, and it can be helpful to plot it
-against the observed value. We’ll limit the output to the 6 item-pairs
-that deviate the most.</p>
+This is the default whenever the full cutoffs object is provided. The
+per-pair expected range is reported alongside as a reference, and it can
+be helpful to plot it against the observed value. We’ll limit the output
+to the 6 item-pairs that deviate the most.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">q3_plots</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMlocdepQ3plot.html">RMlocdepQ3Plot</a></span><span class="op">(</span>simfit <span class="op">=</span> <span class="va">q3_cut</span>, data <span class="op">=</span> <span class="va">items</span>, n_pairs <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
 <span><span class="va">q3_plots</span><span class="op">$</span><span class="va">pairs</span></span></code></pre></div>
@@ -1203,6 +1203,9 @@ order.</p>
 <strong>Figure 7.</strong> <em>Item-hierarchy</em>
 </p>
 </div>
+<p>The same disordering is visible in the bottom panel of the targeting
+plot further down, which marks never-modal categories and threshold
+reversals in red.</p>
 </div>
 <div class="section level2">
 <h2 id="invariance-no-dif">4. Invariance / no DIF<a class="anchor" aria-label="anchor" href="#invariance-no-dif"></a>
@@ -1565,9 +1568,14 @@ demonstration purposes.</p>
 <div class="section level2">
 <h2 id="targeting">Targeting<a class="anchor" aria-label="anchor" href="#targeting"></a>
 </h2>
-<p>A targeting plot summarizes how well the item-threshold distribution
-matches the distribution of person locations on the latent scale — a
-Wright-map style display.</p>
+<p>A targeting plot is a Wright-map style display of how well the item
+thresholds match the distribution of person locations on the latent
+scale. The top panel is a histogram of person locations and the middle
+one a histogram of item threshold locations. The bottom panel draws each
+item as a bar partitioned into its response categories, with the
+threshold estimates and their confidence intervals below it. Each band
+spans the locations at which its category is the most likely
+response.</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMtargeting.html">RMtargeting</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
@@ -1575,30 +1583,47 @@ Wright-map style display.</p>
 <strong>Figure 11.</strong> <em>Person-item targeting</em>
 </p>
 </div>
+<p>That bottom panel doubles as a check on criterion 3 above. A category
+that is never the most likely response at any location collapses to a
+red tick labelled with its category number, and red arrows below the bar
+give the size of each threshold reversal in logits, so ordered
+thresholds leave no red marks at all. For the dot-and-whisker display of
+item thresholds used before version 1.3.0, pass
+<code>panel = "thresholds"</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="reliability">Reliability<a class="anchor" aria-label="anchor" href="#reliability"></a>
 </h2>
-<p><code><a href="../reference/RMreliability.html">RMreliability()</a></code> reports four reliability metrics: person
-separation reliability (PSI); Relative Measurement Uncertainty (RMU)
-estimate derived from posterior person-location uncertainty using
-plausible values; Cronbach’s alpha; and marginal reliability. PSI, alpha
-and marginal can use bootstrap for confidence intervals. All reliability
-metrics range from 0 to 1, with higher values indicating better
-separation/precision.</p>
+<p>Reliability is reported two ways here: as summary coefficients for
+the scale as a whole, and as a curve showing how precision varies along
+the latent continuum.</p>
+<div class="section level3">
+<h3 id="summary-coefficients">Summary coefficients<a class="anchor" aria-label="anchor" href="#summary-coefficients"></a>
+</h3>
+<p><code><a href="../reference/RMreliability.html">RMreliability()</a></code> reports four metrics, in the order they
+appear in the output. Cronbach’s alpha, the person separation index
+(PSI), marginal reliability, and Relative Measurement Uncertainty (RMU),
+the last derived from posterior person-location uncertainty using
+plausible values. Marginal reliability is the latent-density-weighted
+mean of the conditional reliability curve shown below. Alpha, PSI and
+marginal can use a bootstrap for confidence intervals. All four range
+from 0 to 1, with higher values indicating better separation and
+precision.</p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMreliability.html">RMreliability</a></span><span class="op">(</span><span class="va">items</span>, draws <span class="op">=</span> <span class="fl">200</span>, rmu_iter <span class="op">=</span> <span class="fl">20</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>              seed <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Reliability for 9 items, n = 600 respondents. PSI is the
 WLE-based separation reliability and excludes min/max scoring
-respondents.</caption>
+respondents. Marginal is the latent-density-weighted mean of the
+conditional reliability curve, sigma^2 / (sigma^2 +
+SEM(theta)^2).</caption>
 <colgroup>
-<col width="19%">
-<col width="10%">
-<col width="19%">
-<col width="19%">
-<col width="31%">
+<col width="23%">
+<col width="9%">
+<col width="18%">
+<col width="18%">
+<col width="29%">
 </colgroup>
 <thead><tr class="header">
 <th align="left">Metric</th>
@@ -1623,8 +1648,8 @@ respondents.</caption>
 <td align="left">no bootstrap</td>
 </tr>
 <tr class="odd">
-<td align="left">Marginal</td>
-<td align="right">0.862</td>
+<td align="left">Marginal (curve mean)</td>
+<td align="right">0.886</td>
 <td align="right">NA</td>
 <td align="right">NA</td>
 <td align="left">no bootstrap</td>
@@ -1639,12 +1664,41 @@ respondents.</caption>
 </tbody>
 </table>
 </div>
+<div class="section level3">
+<h3 id="conditional-reliability">Conditional reliability<a class="anchor" aria-label="anchor" href="#conditional-reliability"></a>
+</h3>
+<p>A single coefficient implies that every respondent is measured with
+the same precision, which is rarely the case. Test information is
+highest where the item thresholds are concentrated and falls away
+towards the extremes, so the same scale can separate respondents well in
+the middle of its range and poorly at either end.
+<code><a href="../reference/RMreliabilityCurve.html">RMreliabilityCurve()</a></code> shows that directly.</p>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMreliabilityCurve.html">RMreliabilityCurve</a></span><span class="op">(</span><span class="va">items</span>, statistic <span class="op">=</span> <span class="st">"reliability"</span>, benchmark <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="figures/rasch-relcurve-1.png" alt="**Figure 12.** *Conditional reliability across the latent continuum*" width="100%"><p class="caption">
+<strong>Figure 12.</strong> <em>Conditional reliability across the
+latent continuum</em>
+</p>
+</div>
+<p>The <code>benchmark</code> argument shades the region where the scale
+reaches a stated level and reports the share of respondents inside it,
+which is usually the practical question behind the figure. The dashed
+line is the marginal reliability from the table above, and the
+distribution behind the curve is the same set of person locations as the
+targeting plot. The default <code>statistic = "sem"</code> plots the
+conditional standard error in logits instead, which is the quantity to
+use when reporting the precision of an individual score. Test
+information is also available, using
+<code>statistic = "information"</code>.</p>
+</div>
+</div>
 <div class="section level2">
 <h2 id="item-and-person-parameters">Item and person parameters<a class="anchor" aria-label="anchor" href="#item-and-person-parameters"></a>
 </h2>
 <p>Item (threshold) locations can be easily summarized in wide or long
 format, with or without SEs.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemParameters.html">RMitemParameters</a></span><span class="op">(</span><span class="va">items</span>, format <span class="op">=</span> <span class="st">"wide"</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Item thresholds via CML (Andrich thresholds, logit scale). SE
@@ -1760,7 +1814,7 @@ value and SE for each individual, below reduced to only print the first
 <code>easyRasch2</code> can be output as dataframes instead, if so
 desired. The option <code>output = "file"</code> makes it easy to export
 estimated latent scores for each respondent to a CSV file.</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ppar</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMpersonParameters.html">RMpersonParameters</a></span><span class="op">(</span><span class="va">items</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">ppar</span>, <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="co">#&gt;         theta       sem sum_score n_answered extreme</span></span>
@@ -1781,15 +1835,15 @@ estimated latent scores for each respondent to a CSV file.</p>
 <p>For converting ordinal sum-scores to interval-scaled person-location
 estimates with associated standard errors, use
 <code><a href="../reference/RMscoreSE.html">RMscoreSE()</a></code>.</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMscoreSE.html">RMscoreSE</a></span><span class="op">(</span><span class="va">items</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-scoreSE-1.png" alt="**Figure 12.** *Sum-score to WLE conversion with 95% CIs*" width="100%"><p class="caption">
-<strong>Figure 12.</strong> <em>Sum-score to WLE conversion with 95%
+<img src="figures/rasch-scoreSE-1.png" alt="**Figure 13.** *Sum-score to WLE conversion with 95% CIs*" width="100%"><p class="caption">
+<strong>Figure 13.</strong> <em>Sum-score to WLE conversion with 95%
 CIs</em>
 </p>
 </div>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMscoreSE.html">RMscoreSE</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Person locations via Warm’s WLE (CML item parameters). n = 600
@@ -1950,12 +2004,12 @@ a posteriori).</p>
 </h2>
 <p>Conditional person infit/outfit MSQ and the <span class="math inline">\ell_z</span> statistic are implemented, with
 Monte-Carlo resampling for <em>p</em>-values.</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMpersonFit.html">RMpersonFit</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, output <span class="op">=</span> <span class="st">"ggplot"</span>, seed <span class="op">=</span> <span class="fl">7</span><span class="op">)</span></span>
 <span><span class="va">pfit</span><span class="op">$</span><span class="va">lz</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-personfit-1.png" alt="**Figure 13.** *Person fit with the lz statistic*" width="100%"><p class="caption">
-<strong>Figure 13.</strong> <em>Person fit with the lz statistic</em>
+<img src="figures/rasch-personfit-1.png" alt="**Figure 14.** *Person fit with the lz statistic*" width="100%"><p class="caption">
+<strong>Figure 14.</strong> <em>Person fit with the lz statistic</em>
 </p>
 </div>
 </div>
