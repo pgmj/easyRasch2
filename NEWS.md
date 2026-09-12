@@ -24,6 +24,12 @@
 
 ## Breaking changes
 
+- **`RMtargeting()` now draws response-category bands in its bottom panel**,
+  with threshold estimates and confidence intervals as a coloured error-bar row
+  beneath. Categories that are never most likely, and threshold reversals, are
+  marked in red. Pass `panel = "thresholds"` for the previous dot-and-whisker
+  panel. Estimates are unchanged.
+
 - **`RMreliability()`'s marginal reliability changes formula, and the row is
   renamed "Marginal (curve mean)".** It is now the latent-density-weighted mean
   of `sigma^2 / (sigma^2 + SEM(theta)^2)` rather than Green's subtractive
@@ -32,11 +38,6 @@
   .695 to .769). The superseded value is the `marginal_green` attribute of
   `RMreliabilityCurve(output = "dataframe")`.
 
-- **`RMtargeting()` now draws response-category bands in its bottom panel**,
-  with threshold estimates and confidence intervals as a coloured error-bar row
-  beneath. Categories that are never most likely, and threshold reversals, are
-  marked in red. Pass `panel = "thresholds"` for the previous dot-and-whisker
-  panel. Estimates are unchanged.
 
 ## Bug fixes
 
