@@ -76,6 +76,11 @@ reference:
     desc: "Per-respondent fit statistics with resampling-based p-values"
     contents:
       - RMpersonFit
+  - title: "Individual change"
+    desc: "Single-subject change across two occasions"
+    contents:
+      - RMpersonChange
+      - RMretestSD
   - title: "Descriptive functions"
     desc: "Targeting and other plots/tables"
     contents:

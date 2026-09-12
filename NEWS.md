@@ -15,6 +15,28 @@
 - `RMtargeting()` gains `category_labels` for the band legend, `row_gap` for
   the vertical spacing of the item rows, and `viridis_option`,
   `viridis_begin` and `viridis_end` for the band palette.
+  
+- New `RMpersonChange()` tests, per respondent, whether their person location
+  moved between two occasions by more than measurement error allows. `null`
+  chooses the estimand: `"measurement"` (default) or `"retest"`, which needs a
+  `retest_sd`. `retest_sd_tip` reports how much occasion noise each flagged
+  result would tolerate. Single-respondent use requires `item_params` from an
+  external calibration.
+
+- `RMpersonChange()` obtains its critical values from the exact null by
+  default (`critical = "exact"`). Because the sum score is sufficient, the null
+  distribution of the change index enumerates over score pairs, so it needs no
+  simulation and carries no Monte Carlo error. Incomplete data is enumerated
+  within each missingness pattern and `null = "retest"` integrates the occasion
+  deviations out by quadrature. `critical = "simulate"` remains available. The
+  cutoff is well below 1.96 on short scales (about 1.70 at six items, 1.85 at
+  twenty), so a normal reference is conservative.
+
+- New `RMretestSD()` estimates the per-occasion SD of occasion-to-occasion
+  fluctuation from a test-retest study, for use as `retest_sd`. Its
+  measurement-error term is simulated rather than taken from the asymptotic
+  standard errors, which are badly biased on short scales. Negative variance
+  estimates are reported, not floored.
 
 ## Breaking changes
 

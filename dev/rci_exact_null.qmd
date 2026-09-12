@@ -1,0 +1,219 @@
+---
+title: "An exact null for the Rasch change index"
+subtitle: "Why the RCI critical value is not 1.96, and how to compute it without simulating"
+author: "Magnus Johansson"
+date: today
+---
+
+```{r setup}
+#| include: false
+if (requireNamespace("devtools", quietly = TRUE) && file.exists("../DESCRIPTION")) {
+  suppressMessages(devtools::load_all("..", quiet = TRUE))
+} else {
+  library(easyRasch2)
+}
+library(knitr)
+```
+
+## Purpose
+
+`RMpersonChange()` ships `critical = "simulate"` rather than the conventional
+1.96, because the Rasch change index
+
+$$RCI = \frac{\hat\theta_2 - \hat\theta_1}{\sqrt{SE(\hat\theta_1)^2 + SE(\hat\theta_2)^2}}$$
+
+is not standard normal under the null when the scale is short. This note shows
+that the null does not need simulating at all: for complete data it can be
+enumerated exactly. It also records what the exact critical value does across
+test length, sample skew and targeting, and one consequence for the RCI as a
+statistic.
+
+## Why the null is not N(0, 1)
+
+Two mechanisms, both weakening as test information grows.
+
+**Self-normalisation.** $SE(\hat\theta_1)$ and $SE(\hat\theta_2)$ are
+deterministic functions of the realised scores, so the denominator is not
+independent of the numerator. A respondent who moves to an extreme score
+produces a large numerator and a large denominator together, and the ratio is
+damped. Both tails of the null are pulled in, so the critical value sits
+**below** 1.96. In a t-test the denominator is independent of the numerator;
+here it is not, which is why the t reference does not help either.
+
+**Discreteness.** With complete data the sum score is sufficient, so
+$\hat\theta$ takes only as many values as there are scores and the null is
+discrete rather than continuous.
+
+## Exact enumeration
+
+Sufficiency is what makes this tractable. $\hat\theta(r)$ and $SE(r)$ are
+deterministic lookups, the ones `RMscoreSE()` builds, and $P(r \mid \theta)$
+follows from the Lord-Wingersky recursion. Under the null the two occasions are
+independent given $\theta$, so the joint is $P(r_1 \mid \theta)P(r_2 \mid
+\theta)$ and the whole null is a discrete distribution over $(k+1)^2$ score
+pairs. For a six-item partial credit model that is 361 cells.
+
+```{r exact-fns}
+# Lord-Wingersky: exact sum-score distribution given theta under a PCM
+score_dist <- function(thr_list, theta) {
+  d <- 1
+  for (thr in thr_list) {
+    p <- easyRasch2:::.pcm_cat_probs(theta, thr)
+    nd <- numeric(length(d) + length(p) - 1L)
+    for (a in seq_along(d)) {
+      nd[a + seq_along(p) - 1L] <- nd[a + seq_along(p) - 1L] + d[a] * p
+    }
+    d <- nd
+  }
+  d                                   # index is score + 1
+}
+
+# Exact null distribution of the RCI, pooled over a set of person locations
+exact_crit <- function(thr_list, thetas, alpha = 0.05) {
+  steps <- vapply(thr_list, length, integer(1L))
+  lut <- vapply(0:sum(steps), function(r) {
+    easyRasch2:::.theta_wle(
+      easyRasch2:::.score_pattern(r, steps), thr_list, c(-10, 10)
+    )
+  }, numeric(2L))
+  th <- lut[1L, ]
+  se <- lut[2L, ]
+  rci <- outer(seq_along(th), seq_along(th),
+               function(i, j) (th[j] - th[i]) / sqrt(se[i]^2 + se[j]^2))
+  w <- matrix(0, length(th), length(th))
+  for (t in thetas) {
+    d <- score_dist(thr_list, t)
+    w <- w + outer(d, d)
+  }
+  w <- w / sum(w)
+  o <- order(as.numeric(rci))
+  v <- as.numeric(rci)[o]
+  cw <- cumsum(as.numeric(w)[o])
+  c(lower = v[which(cw >= alpha / 2)[1L]],
+    upper = v[which(cw >= 1 - alpha / 2)[1L]])
+}
+```
+
+## Validation against simulation
+
+Run by `dev/` scratch scripts at `sim_iter` 2000 to 4000, n = 200, alpha = .05
+two-sided. The simulated and exact values agree to within Monte Carlo error in
+every configuration tried, including dichotomous items, items with unequal
+category counts, a right-skewed person distribution and a badly off-target one.
+
+| configuration | simulated | exact | difference |
+|---|---|---|---|
+| 6 polytomous items, symmetric theta | −1.695 / +1.695 | ±1.695 | 0.000 |
+| 6 polytomous items, skewed theta | −1.725 / +1.695 | ±1.695 | 0.030 |
+| 6 polytomous items, skewed and off target | −1.534 / +1.534 | ±1.522 | 0.012 |
+| 20 dichotomous items, symmetric | −1.798 / +1.798 | ±1.798 | 0.000 |
+| 20 dichotomous items, skewed | −1.798 / +1.798 | ±1.798 | 0.000 |
+| mixed 2/3/4 categories, symmetric | −1.721 / +1.721 | ±1.721 | 0.000 |
+| mixed 2/3/4 categories, skewed | −1.721 / +1.721 | ±1.721 | 0.000 |
+| 12 polytomous items, symmetric | −1.864 / +1.864 | ±1.862 | 0.002 |
+
+The exact values are perfectly symmetric. That is the expected result: under the
+null the two occasions are exchangeable, so $\hat\theta_2 - \hat\theta_1$ is
+symmetric about zero however skewed $\hat\theta$ itself is. The residual
+asymmetry in the simulated column is Monte Carlo noise. Asymmetry becomes real
+only when exchangeability fails, which in practice means the two occasions
+differing in which items were answered.
+
+## The critical value tracks test information
+
+```{r by-length}
+#| echo: true
+set.seed(1)
+theta <- rnorm(400, 0, 1.4)
+tab <- t(vapply(c(4, 6, 10, 20, 40), function(k) {
+  thr <- lapply(seq(-1.2, 1.2, length.out = k), function(b) b + c(-0.8, 0, 0.8))
+  c(items = k, exact_crit(thr, theta)[["upper"]])
+}, numeric(2L)))
+kable(tab, digits = 3, col.names = c("Items", "Critical value"))
+```
+
+Monotone in test length, converging on 1.96. Referring the RCI to a normal null
+is therefore conservative, and increasingly so the shorter the scale. On a
+six-item scale, using 1.96 instead of 1.695 is a materially stricter test.
+
+## Skew and targeting
+
+Sample skew on its own barely moves the pooled critical value: the skewed and
+symmetric rows above agree to the third decimal in five of seven configurations.
+Targeting is what matters. Pushing the same skewed distribution 2.2 logits off
+target, so that 39.5% of respondents sit at an extreme score at one occasion or
+the other, drops the critical value from 1.695 to 1.522. The mechanism is the
+self-normalisation above: a floor-bound sample spends more of its time where the
+statistic is most heavily damped.
+
+This also means the pooled critical value is a property of the sample as well as
+the items, which is worth stating wherever it is reported.
+
+## A consequence for the RCI as a statistic
+
+Because the denominator is a function of the same scores as the numerator, the
+RCI does not order respondents by how much they changed. A concrete pair from
+the six-item scale above:
+
+| | score change | change in logits | RCI |
+|---|---|---|---|
+| A | 0 → 18 | 7.24 | 3.53 |
+| B | 3 → 15 | 3.11 | 3.60 |
+
+Respondent A moved the full width of the scale, 4.14 logits further than B, and
+scores lower on the RCI. Both are far past any critical value so nothing turns
+on it here, but it shows that the RCI is a standardised distance from the null
+rather than a measure of change, and should not be read as the latter.
+
+The constructive version: since the critical value has to be computed from the
+item parameters anyway, the normalisation buys nothing that a location-specific
+threshold on the raw change would not. The same enumeration gives the null of
+$\hat\theta_2 - \hat\theta_1$ directly, so a conditional critical **change**, in
+logits, is available at no extra cost and is monotone in what happened. That is
+the same object as a conditional minimal detectable change, and connects to the
+score-level MDC table parked as a possible sibling function.
+
+## Scope and limits
+
+* **Complete data only.** Missing data breaks sufficiency of a single sum score.
+  Each distinct missingness pattern has its own score distribution and its own
+  lookup, so the enumeration still works but per pattern.
+* **`null = "retest"` needs quadrature.** The occasion deviations are
+  continuous, so the joint becomes a double integral over $u_1, u_2$ rather than
+  a pure sum. Still deterministic and cheap at, say, 21 nodes a side.
+* **EAP is fine.** On complete data an EAP estimate is also a function of the
+  sum score.
+* Validated here for WLE with CML thresholds. Not yet checked against MML item
+  parameters.
+
+## Implemented
+
+Shipped as `critical = "exact"`, now the default in `RMpersonChange()`, in
+`R/person_change_exact.R`. Measured against a 4000-iteration simulation on the
+same data: critical values agree to within Monte Carlo error, p-values correlate
+at 0.9998, classifications are identical, and the exact path takes 0.08 s
+against 13.7 s. Incomplete data is enumerated within each missingness pattern,
+`null = "retest"` integrates the occasion deviations out by quadrature (they are
+independent, so the joint factorises and the retest null costs no more than the
+measurement null), and EAP is supported by holding the prior at the one the
+observed respondents were scored under.
+
+Having an exact reference immediately paid for itself: it exposed a bug in the
+simulation path, which had been re-estimating the EAP prior from each null
+dataset rather than holding it at the observed one. That is now fixed, and the
+two paths agree to four decimals under EAP.
+
+It also removes the one real objection to `conditional_crit = TRUE`: a
+per-respondent critical value from simulation rests on `sim_iter` draws, roughly
+25 of which land in each tail at alpha = .05, whereas $P(r \mid \theta_i)$ is
+available per respondent for free.
+
+It would also sharpen the planned simulation study, whose first aim is the
+realised Type I error of the simulated critical value. Much of the noise in that
+comparison disappears if the reference is exact.
+
+## Reproduction
+
+Scratch scripts used for the simulated column are not part of the package. The
+exact computation is self-contained in the `exact-fns` chunk above and needs
+only `easyRasch2:::.pcm_cat_probs()`, `:::.theta_wle()` and `:::.score_pattern()`.

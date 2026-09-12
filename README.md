@@ -145,6 +145,14 @@ remotes::install_github("pgmj/easyRasch2")
 - `RMtargeting()` — Wright-map style person-item targeting plot
 - `RMscoreSE()` — raw-score → logit transformation table (WLE / EAP)
 
+### Individual change
+
+- `RMpersonChange()` — per-respondent change between two occasions, with the
+  null stated explicitly and critical values simulated rather than assumed
+  normal
+- `RMretestSD()` — occasion-to-occasion SD from a test-retest study, the input
+  to `RMpersonChange(null = "retest")`
+
 ### Item & person parameters
 
 - `RMitemParameters()` — item difficulty / threshold locations in long or wide
