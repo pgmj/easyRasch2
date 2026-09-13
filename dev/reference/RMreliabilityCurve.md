@@ -151,8 +151,15 @@ RMreliabilityCurve(
   curve, matching
   [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)),
   `marginal_green` (the superseded subtractive coefficient),
-  `sem_average` (root mean error variance), `benchmark`,
+  `sem_average` (root mean error variance), `latent_mean`, `benchmark`,
   `benchmark_range`, `benchmark_percent` and `n_not_estimable`.
+
+  `latent_mean` and `sigma` are estimated together. Before 1.3.1 the
+  mean was held at 0 and \\\sigma\\ absorbed any distance between the
+  sample and the item locations: on simulated data with a true SD of
+  0.90, shifting the sample 2 logits off target returned 2.02 rather
+  than 0.96, and pushed marginal reliability from 0.81 up to 0.90 when
+  it should have fallen to 0.73. Well-targeted samples are unaffected.
 
 - If `output = "kable"`: a `knitr_kable` summary table of those
   quantities.
@@ -174,7 +181,8 @@ circulate:
 \mathrm{and} \qquad \rho(\theta) = 1 -
 \frac{SEM(\theta)^2}{\sigma^2}\$\$
 
-with \\\sigma\\ the latent SD estimated by marginal maximum likelihood.
+with \\\sigma\\ the latent SD estimated by marginal maximum likelihood,
+jointly with the latent mean \\\mu\\ (see the `latent_mean` attribute).
 This function uses the first, the ratio form, for three reasons. It is
 bounded in (0, 1), whereas the subtractive form returns negative values
 whenever \\SEM(\theta) \> \sigma\\, which is common at the floor of a
@@ -273,13 +281,13 @@ RMreliabilityCurve(phq9[, 1:9], benchmark = 0.8, output = "kable")
 #> 
 #> |Quantity                                               |Value         |
 #> |:------------------------------------------------------|:-------------|
-#> |Latent SD (sigma)                                      |1.390         |
-#> |Marginal reliability (curve mean, as in RMreliability) |0.886         |
-#> |Marginal reliability (Green/Lord, superseded)          |0.862         |
-#> |Average SEM (logits)                                   |0.517         |
+#> |Latent SD (sigma)                                      |1.306         |
+#> |Marginal reliability (curve mean, as in RMreliability) |0.876         |
+#> |Marginal reliability (Green/Lord, superseded)          |0.845         |
+#> |Average SEM (logits)                                   |0.514         |
 #> |Minimum SEM (logits)                                   |0.396         |
-#> |Theta at minimum SEM                                   |0.26          |
-#> |Theta range with reliability >= 0.80                   |-2.40 to 2.50 |
+#> |Theta at minimum SEM                                   |0.25          |
+#> |Theta range with reliability >= 0.80                   |-2.20 to 2.36 |
 #> |Respondents located in that range                      |91.3%         |
 # }
 ```

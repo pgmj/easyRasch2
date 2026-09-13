@@ -17,7 +17,7 @@ either."><meta name="robots" content="noindex"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.2.0.9006</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -197,8 +197,14 @@ columns <code>theta</code>, <code>information</code>, <code>sem</code>, <code>re
 <code>marginal_ratio</code> (the latent-density-weighted mean of the reliability
 curve, matching <code><a href="RMreliability.html">RMreliability()</a></code>), <code>marginal_green</code> (the superseded
 subtractive coefficient), <code>sem_average</code> (root mean error variance),
-<code>benchmark</code>,
-<code>benchmark_range</code>, <code>benchmark_percent</code> and <code>n_not_estimable</code>.</p></li>
+<code>latent_mean</code>, <code>benchmark</code>,
+<code>benchmark_range</code>, <code>benchmark_percent</code> and <code>n_not_estimable</code>.</p>
+<p><code>latent_mean</code> and <code>sigma</code> are estimated together. Before 1.3.1 the mean
+was held at 0 and \(\sigma\) absorbed any distance between the sample
+and the item locations: on simulated data with a true SD of 0.90, shifting
+the sample 2 logits off target returned 2.02 rather than 0.96, and pushed
+marginal reliability from 0.81 up to 0.90 when it should have fallen to
+0.73. Well-targeted samples are unaffected.</p></li>
 <li><p>If <code>output = "kable"</code>: a <code>knitr_kable</code> summary table of those quantities.</p></li>
 </ul></div>
     <div class="section level2">
@@ -213,7 +219,8 @@ matters where people actually are, but it does not enter the curve.</p>
 <p>$$\rho(\theta) = \frac{\sigma^2}{\sigma^2 + SEM(\theta)^2}
   \qquad \mathrm{and} \qquad
   \rho(\theta) = 1 - \frac{SEM(\theta)^2}{\sigma^2}$$</p>
-<p>with \(\sigma\) the latent SD estimated by marginal maximum likelihood.
+<p>with \(\sigma\) the latent SD estimated by marginal maximum likelihood,
+jointly with the latent mean \(\mu\) (see the <code>latent_mean</code> attribute).
 This function uses the first, the ratio form, for three reasons. It is
 bounded in (0, 1), whereas the subtractive form returns negative values
 whenever \(SEM(\theta) &gt; \sigma\), which is common at the floor of a
@@ -297,13 +304,13 @@ Psychology, 68</em>(1), 43-64. <a href="https://doi.org/10.1111/bmsp.12033" clas
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |Quantity                                               |Value         |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |:------------------------------------------------------|:-------------|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Latent SD (sigma)                                      |1.390         |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Marginal reliability (curve mean, as in RMreliability) |0.886         |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Marginal reliability (Green/Lord, superseded)          |0.862         |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Average SEM (logits)                                   |0.517         |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Latent SD (sigma)                                      |1.306         |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Marginal reliability (curve mean, as in RMreliability) |0.876         |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Marginal reliability (Green/Lord, superseded)          |0.845         |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Average SEM (logits)                                   |0.514         |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |Minimum SEM (logits)                                   |0.396         |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Theta at minimum SEM                                   |0.26          |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Theta range with reliability &gt;= 0.80                   |-2.40 to 2.50 |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Theta at minimum SEM                                   |0.25          |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Theta range with reliability &gt;= 0.80                   |-2.20 to 2.36 |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |Respondents located in that range                      |91.3%         |</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
