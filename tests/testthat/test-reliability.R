@@ -122,9 +122,10 @@ test_that("Marginal is the bounded ratio form, not Green's subtractive one", {
   colnames(df) <- paste0("I", seq_along(b))
 
   thr <- easyRasch2:::.fit_cml_thresholds(as.matrix(df))
-  sigma <- easyRasch2:::.latent_sd(as.matrix(df), thr)
-  g <- seq(-6 * sigma, 6 * sigma, length.out = 161L)
-  w <- stats::dnorm(g, 0, sigma)
+  lat <- easyRasch2:::.latent_moments(as.matrix(df), thr)
+  sigma <- lat$sd
+  g <- seq(lat$mean - 6 * sigma, lat$mean + 6 * sigma, length.out = 161L)
+  w <- stats::dnorm(g, lat$mean, sigma)
   w <- w / sum(w)
   sem2 <- 1 / easyRasch2:::.test_information(thr, g)
 

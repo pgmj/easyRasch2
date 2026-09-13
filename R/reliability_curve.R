@@ -68,8 +68,15 @@
 #'   `marginal_ratio` (the latent-density-weighted mean of the reliability
 #'   curve, matching [RMreliability()]), `marginal_green` (the superseded
 #'   subtractive coefficient), `sem_average` (root mean error variance),
-#'   `benchmark`,
+#'   `latent_mean`, `benchmark`,
 #'   `benchmark_range`, `benchmark_percent` and `n_not_estimable`.
+#'
+#'   `latent_mean` and `sigma` are estimated together. Before 1.3.1 the mean
+#'   was held at 0 and \eqn{\sigma} absorbed any distance between the sample
+#'   and the item locations: on simulated data with a true SD of 0.90, shifting
+#'   the sample 2 logits off target returned 2.02 rather than 0.96, and pushed
+#'   marginal reliability from 0.81 up to 0.90 when it should have fallen to
+#'   0.73. Well-targeted samples are unaffected.
 #' * If `output = "kable"`: a `knitr_kable` summary table of those quantities.
 #'
 #' @details
@@ -86,7 +93,8 @@
 #'   \qquad \mathrm{and} \qquad
 #'   \rho(\theta) = 1 - \frac{SEM(\theta)^2}{\sigma^2}}
 #'
-#' with \eqn{\sigma} the latent SD estimated by marginal maximum likelihood.
+#' with \eqn{\sigma} the latent SD estimated by marginal maximum likelihood,
+#' jointly with the latent mean \eqn{\mu} (see the `latent_mean` attribute).
 #' This function uses the first, the ratio form, for three reasons. It is
 #' bounded in (0, 1), whereas the subtractive form returns negative values
 #' whenever \eqn{SEM(\theta) > \sigma}, which is common at the floor of a
@@ -299,19 +307,23 @@ RMreliabilityCurve <- function(
     thr_list <- .fit_cml_thresholds(data_mat)
   }
 
-  # --- Latent SD -------------------------------------------------------------
-  sigma <- .latent_sd(data_mat, thr_list)
+  # --- Latent distribution ---------------------------------------------------
+  # Mean and SD are estimated together. Holding the mean at 0 made the SD
+  # absorb any mistargeting, which inflated every quantity below.
+  lat <- .latent_moments(data_mat, thr_list)
+  sigma <- lat$sd
+  mu <- lat$mean
   if (!is.finite(sigma) || sigma <= 0) {
     stop(
-      "The latent SD could not be estimated, so the reliability scaling is ",
-      "undefined. Check for items with no variation.",
+      "The latent distribution could not be estimated, so the reliability ",
+      "scaling is undefined. Check for items with no variation.",
       call. = FALSE
     )
   }
 
   # --- The curve -------------------------------------------------------------
   if (is.null(theta_range)) {
-    theta_range <- c(-3 * sigma, 3 * sigma)
+    theta_range <- c(mu - 3 * sigma, mu + 3 * sigma)
   }
   grid <- seq(theta_range[1L], theta_range[2L], length.out = n_nodes)
   curve <- .curve_stats(thr_list, grid, sigma)
@@ -321,7 +333,7 @@ RMreliabilityCurve <- function(
   # quantity to the "Marginal (curve mean)" row of RMreliability() by
   # construction rather than by coincidence. Independent of `n_nodes` and
   # `theta_range`, which govern the plotted grid only.
-  marg <- .marginal_summaries(thr_list, sigma)
+  marg <- .marginal_summaries(thr_list, sigma, mu = mu)
   sem_bar <- marg$sem_average
   marginal_ratio <- marg$ratio
   marginal_green <- marg$green
@@ -385,6 +397,7 @@ RMreliabilityCurve <- function(
     curve_df$reliability_upper <- band$reliability[, 2L]
   }
 
+  attr(curve_df, "latent_mean") <- mu
   attr(curve_df, "sigma") <- sigma
   attr(curve_df, "marginal_ratio") <- marginal_ratio
   attr(curve_df, "marginal_green") <- marginal_green
@@ -566,7 +579,7 @@ RMreliabilityCurve <- function(
 #'
 #' Resamples respondents, recomputes the curve on the same theta grid, and
 #' takes a pointwise HDCI. When `item_params` were supplied by the user the
-#' thresholds are held fixed and only the latent SD is resampled.
+#' thresholds are held fixed and only the latent distribution is resampled.
 #'
 #' @return A list with `band` (a list of two-column matrices, one per
 #'   statistic) and `n_ok` (successful iterations).
@@ -687,11 +700,11 @@ run_single_curve_boot <- function(seed, data_list) {
       } else {
         .fit_cml_thresholds(dat_b)
       }
-      sigma_b <- .latent_sd(dat_b, thr_b)
-      if (!is.finite(sigma_b) || sigma_b <= 0) {
-        return("Latent SD not estimable for this resample")
+      lat_b <- .latent_moments(dat_b, thr_b)
+      if (!is.finite(lat_b$sd) || lat_b$sd <= 0) {
+        return("Latent distribution not estimable for this resample")
       }
-      .curve_stats(thr_b, data_list$grid, sigma_b)
+      .curve_stats(thr_b, data_list$grid, lat_b$sd)
     },
     error = function(e) as.character(conditionMessage(e))
   )
@@ -724,11 +737,12 @@ run_single_curve_boot <- function(seed, data_list) {
       run_single_curve_boot = run_single_curve_boot,
       .curve_stats = .curve_stats,
       .test_information = .test_information,
-      .latent_sd = .latent_sd,
+      .latent_moments = .latent_moments,
       .fit_cml_thresholds = .fit_cml_thresholds,
       .pcm_cat_probs = .pcm_cat_probs,
       .center_thresholds = .center_thresholds,
       .estimate_prior_sd = .estimate_prior_sd,
+      .estimate_prior_moments = .estimate_prior_moments,
       .logp_tables = .logp_tables,
       .grid_loglik = .grid_loglik
     )

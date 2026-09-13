@@ -45,17 +45,71 @@ test_that(".test_information is positive and peaks near the item locations", {
   expect_gt(info[2L], info[3L])
 })
 
-test_that(".latent_sd reproduces the inline prior-SD estimate", {
+test_that(".latent_moments estimates the mean instead of assuming it", {
   df <- make_poly()
   thr_list <- easyRasch2:::.fit_cml_thresholds(as.matrix(df))
-  ge <- seq(-6, 6, length.out = 81L)
-  inline <- easyRasch2:::.estimate_prior_sd(
+  lat <- easyRasch2:::.latent_moments(as.matrix(df), thr_list)
+
+  expect_true(is.finite(lat$mean))
+  expect_gt(lat$sd, 0)
+
+  # Against the same data with the mean held at 0, which is what the SD-only
+  # estimator behind the EAP prior still does. The two agree only when the
+  # sample happens to sit on the item origin.
+  ge <- seq(-10, 10, length.out = 81L)
+  fixed <- easyRasch2:::.estimate_prior_sd(
     easyRasch2:::.grid_loglik(
       as.matrix(df), easyRasch2:::.logp_tables(thr_list, ge), ge
     ),
     ge, 0
   )
-  expect_identical(easyRasch2:::.latent_sd(as.matrix(df), thr_list), inline)
+  expect_equal(lat$sd, fixed, tolerance = 0.05)
+})
+
+test_that("the latent SD no longer absorbs mistargeting", {
+  skip_on_cran()
+  # The bug fixed in 1.3.1: with the mean held at 0, a normal density could
+  # only reach an off-target sample by widening, so the SD grew with the
+  # shift. Estimating the mean, the SD is a property of the spread alone.
+  set.seed(4)
+  thr_list <- lapply(seq(-1.2, 1.2, length.out = 6L),
+                     function(b) b + c(-0.8, 0, 0.8))
+  names(thr_list) <- paste0("I", seq_along(thr_list))
+  draw <- function(shift) {
+    theta <- stats::rnorm(800L, shift, 0.9)
+    as.data.frame(vapply(thr_list, function(d) {
+      eta <- cbind(0, t(vapply(theta, function(th) cumsum(th - d),
+                               numeric(length(d)))))
+      pr <- exp(eta - apply(eta, 1L, max))
+      pr <- pr / rowSums(pr)
+      apply(pr, 1L, function(p) sample.int(length(p), 1L, prob = p)) - 1
+    }, numeric(800L)))
+  }
+
+  on_target <- easyRasch2:::.latent_moments(
+    as.matrix(draw(0)), thr_list)
+  off_target <- easyRasch2:::.latent_moments(
+    as.matrix(draw(2)), thr_list)
+
+  # The mean moves with the sample and the SD does not.
+  expect_gt(off_target$mean - on_target$mean, 1.5)
+  expect_equal(off_target$sd, on_target$sd, tolerance = 0.25)
+  expect_equal(on_target$sd, 0.9, tolerance = 0.2)
+})
+
+test_that("marginal reliability falls as the sample moves off target", {
+  skip_on_cran()
+  # Before 1.3.1 it rose, because the inflated SD entered the numerator of
+  # sigma^2 / (sigma^2 + SEM^2). Direction is the point, not the value.
+  thr_list <- lapply(seq(-1.2, 1.2, length.out = 6L),
+                     function(b) b + c(-0.8, 0, 0.8))
+  sem2 <- function(mu, sigma) {
+    g <- seq(mu - 6 * sigma, mu + 6 * sigma, length.out = 161L)
+    w <- stats::dnorm(g, mu, sigma)
+    w <- w / sum(w)
+    sum(w * (sigma^2 / (sigma^2 + 1 / easyRasch2:::.test_information(thr_list, g))))
+  }
+  expect_gt(sem2(0, 0.9), sem2(2, 0.9))
 })
 
 # ---------------------------------------------------------------------
@@ -164,8 +218,8 @@ test_that("both functions read the marginal off the same shared helper", {
   skip_on_cran()
   df <- make_poly()
   thr <- easyRasch2:::.fit_cml_thresholds(as.matrix(df))
-  sigma <- easyRasch2:::.latent_sd(as.matrix(df), thr)
-  marg <- easyRasch2:::.marginal_summaries(thr, sigma)
+  lat <- easyRasch2:::.latent_moments(as.matrix(df), thr)
+  marg <- easyRasch2:::.marginal_summaries(thr, lat$sd, mu = lat$mean)
   res <- RMreliabilityCurve(df, output = "dataframe", n_nodes = 41L)
 
   expect_identical(easyRasch2:::.marginal_rxx(df), marg$ratio)
@@ -207,11 +261,13 @@ test_that("marginal_ratio is the weighted curve mean, not the ratio of averages"
   df <- make_poly()
   res <- RMreliabilityCurve(df, output = "dataframe", n_nodes = 41L)
   sigma <- attr(res, "sigma")
+  mu <- attr(res, "latent_mean")
 
-  # Rebuild both candidates on the integration grid the function uses
+  # Rebuild both candidates on the integration grid the function uses, which
+  # is centred on the estimated latent mean rather than on zero.
   thr <- easyRasch2:::.fit_cml_thresholds(as.matrix(df))
-  wide <- seq(-6 * sigma, 6 * sigma, length.out = 161L)
-  w <- stats::dnorm(wide, 0, sigma)
+  wide <- seq(mu - 6 * sigma, mu + 6 * sigma, length.out = 161L)
+  w <- stats::dnorm(wide, mu, sigma)
   w <- w / sum(w)
   sem2 <- 1 / easyRasch2:::.test_information(thr, wide)
 
@@ -289,12 +345,15 @@ test_that("the ratio form is bounded where the Green form need not be", {
   expect_gt(attr(res, "marginal_ratio"), 0)
 })
 
-test_that("theta_range defaults to +/- 3 sigma and can be overridden", {
+test_that("theta_range defaults to the latent mean +/- 3 sigma", {
   skip_on_cran()
   df <- make_poly()
   res <- RMreliabilityCurve(df, output = "dataframe", n_nodes = 41L)
   sigma <- attr(res, "sigma")
-  expect_equal(range(res$theta), c(-3 * sigma, 3 * sigma))
+  mu <- attr(res, "latent_mean")
+  # Centred on the estimated mean since 1.3.1. On an off-target sample the
+  # old zero-centred range could miss the respondents entirely.
+  expect_equal(range(res$theta), c(mu - 3 * sigma, mu + 3 * sigma))
 
   res2 <- RMreliabilityCurve(df, output = "dataframe", n_nodes = 41L,
                              theta_range = c(-2, 2))

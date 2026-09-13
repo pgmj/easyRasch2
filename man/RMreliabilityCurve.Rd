@@ -105,8 +105,15 @@ columns \code{theta}, \code{information}, \code{sem}, \code{reliability}, plus
 \code{marginal_ratio} (the latent-density-weighted mean of the reliability
 curve, matching \code{\link[=RMreliability]{RMreliability()}}), \code{marginal_green} (the superseded
 subtractive coefficient), \code{sem_average} (root mean error variance),
-\code{benchmark},
+\code{latent_mean}, \code{benchmark},
 \code{benchmark_range}, \code{benchmark_percent} and \code{n_not_estimable}.
+
+\code{latent_mean} and \code{sigma} are estimated together. Before 1.3.1 the mean
+was held at 0 and \eqn{\sigma} absorbed any distance between the sample
+and the item locations: on simulated data with a true SD of 0.90, shifting
+the sample 2 logits off target returned 2.02 rather than 0.96, and pushed
+marginal reliability from 0.81 up to 0.90 when it should have fallen to
+0.73. Well-targeted samples are unaffected.
 \item If \code{output = "kable"}: a \code{knitr_kable} summary table of those quantities.
 }
 }
@@ -132,7 +139,8 @@ matters where people actually are, but it does not enter the curve.
   \qquad \mathrm{and} \qquad
   \rho(\theta) = 1 - \frac{SEM(\theta)^2}{\sigma^2}}
 
-with \eqn{\sigma} the latent SD estimated by marginal maximum likelihood.
+with \eqn{\sigma} the latent SD estimated by marginal maximum likelihood,
+jointly with the latent mean \eqn{\mu} (see the \code{latent_mean} attribute).
 This function uses the first, the ratio form, for three reasons. It is
 bounded in (0, 1), whereas the subtractive form returns negative values
 whenever \eqn{SEM(\theta) > \sigma}, which is common at the floor of a

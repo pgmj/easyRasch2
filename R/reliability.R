@@ -195,17 +195,64 @@ RMUreliability <- function(input_draws, level = 0.95, verbose = FALSE) {
 #' reliability curve, \eqn{\int \sigma^2/(\sigma^2 + 1/I(\theta))\,
 #' g(\theta)\,d\theta}, where the test information \eqn{I(\theta)} is summed from
 #' the CML item parameters and \eqn{g} is the estimated normal latent density
-#' \eqn{N(0, \sigma^2)} (\eqn{\sigma} from marginal ML). Integrating over the
-#' estimated latent variance, rather than the \eqn{N(0,1)} assumed by
-#' `mirt::marginal_rxx()`, keeps it correct on the Rasch logit scale, where
-#' \eqn{\sigma} is typically well above 1 and the \eqn{N(0,1)} assumption
-#' underestimates reliability.
+#' \eqn{N(\mu, \sigma^2)}, **both** parameters coming from marginal ML with
+#' the items held fixed. Integrating over the estimated latent distribution,
+#' rather than the \eqn{N(0,1)} assumed by `mirt::marginal_rxx()`, keeps it
+#' correct on the Rasch logit scale, where \eqn{\sigma} is typically well
+#' above 1 and the \eqn{N(0,1)} assumption underestimates reliability.
+#'
+#' Through version 1.3.0 \eqn{\mu} was held at 0 rather than estimated. That
+#' is an assumption, not a consequence of centring the item thresholds, which
+#' fixes the *item* mean and says nothing about where the respondents sit. A
+#' normal density pinned to 0 can only reach an off-target sample by widening,
+#' so \eqn{\sigma} absorbed the mistargeting and marginal reliability **rose**
+#' as targeting worsened. See the note under Value in [RMreliabilityCurve()]
+#' for the size of the effect.
 #'
 #' It is the model-based complement to the sample-based PSI, and the two are
 #' now the same coefficient by two routes: PSI divides by the observed spread
 #' of the WLE estimates, marginal reliability by the fitted latent density. A
 #' large gap between them therefore does flag an off-target or non-normal
-#' sample. Through version 1.2.0 this row used Green's subtractive
+#' sample, and since 1.3.1 both move in the same direction when targeting
+#' worsens rather than apart.
+#'
+#' **How this relates to the published coefficients.** Three things are worth
+#' being explicit about, because the reported value is not any of the
+#' coefficients the literature names.
+#'
+#' *It is the mean of a curve, not a ratio of averages.* The classical
+#' latent-scale reliability is a single variance ratio,
+#' \eqn{\sigma^2/(\sigma^2 + \overline{SEM^2})} (Milanzi et al., 2015,
+#' section 3.2, where the error variance is a constant). What is reported here
+#' averages the ratio over the latent density instead. Since
+#' \eqn{\sigma^2/(\sigma^2 + x)} is convex in \eqn{x}, the mean of the curve
+#' is the **larger** of the two by Jensen's inequality. The choice was made on
+#' accuracy, not convention: averaging the curve tracked the exact
+#' expected-sum-score reliability more closely than the ratio of averages in
+#' both arms of an internal replication (mean absolute error 0.015 against
+#' 0.018 for binary data, 0.010 against 0.015 for polytomous).
+#'
+#' *It is a latent-scale quantity checked against a manifest criterion.*
+#' Milanzi et al. (2015) argue that interest usually lies in the reliability of
+#' observed scores rather than latent ones, and that latent coefficients run
+#' consistently higher. This one was therefore validated against the exact
+#' expected-sum-score reliability, \eqn{Var(\mu)/(Var(\mu) + Var(\epsilon))},
+#' rather than assumed to match it, and tracked it to within about 0.02 across
+#' the conditions tested. It remains a latent-scale coefficient that
+#' approximates a manifest one, not a manifest coefficient.
+#'
+#' *Milanzi et al. recommend something this package does not implement.* Their
+#' conclusion favours Taylor-series manifest reliability measures, which
+#' approximate \eqn{Var(\mu)} and \eqn{Var(\epsilon)} on the observed-score
+#' scale directly rather than working from test information. In the same
+#' internal replication those were the most accurate of the estimators
+#' compared (0.012). They are cited here for their criticism of the subtractive
+#' coefficient, which this package acted on, and not for their remedy, which it
+#' has not adopted.
+#'
+#' The superseded subtractive coefficient is Milanzi et al.'s equation (12),
+#' attributed there to Lord (1980), and is still available as the
+#' `marginal_green` attribute of [RMreliabilityCurve()]. Through version 1.2.0 this row used Green's subtractive
 #' \eqn{1 - \overline{1/I(\theta)}/\sigma^2} instead, under which much of the
 #' PSI-to-marginal gap was an artefact of the differing formulas rather than a
 #' property of the sample. See `dev/TODO-reliability-form.md`.
@@ -580,8 +627,8 @@ RMreliability <- function(
 #' @param data Response matrix/data.frame (items from 0).
 #' @param thr_list Optional pre-fitted CML thresholds.
 #' @param n_nodes Number of quadrature nodes.
-#' @return Marginal reliability (numeric), or `NA` if the latent SD is not
-#'   estimable.
+#' @return Marginal reliability (numeric), or `NA` if the latent distribution
+#'   is not estimable.
 #' @keywords internal
 #' @noRd
 .marginal_rxx <- function(data, thr_list = NULL, n_nodes = 161L) {
@@ -589,11 +636,11 @@ RMreliability <- function(
   if (is.null(thr_list)) {
     thr_list <- .fit_cml_thresholds(data_mat)
   }
-  sigma <- .latent_sd(data_mat, thr_list)
-  if (!is.finite(sigma) || sigma <= 0) {
+  lat <- .latent_moments(data_mat, thr_list)
+  if (!is.finite(lat$sd) || lat$sd <= 0) {
     return(NA_real_)
   }
-  .marginal_summaries(thr_list, sigma, n_nodes = n_nodes)$ratio
+  .marginal_summaries(thr_list, lat$sd, mu = lat$mean, n_nodes = n_nodes)$ratio
 }
 
 #' Run a single reliability bootstrap iteration
@@ -669,7 +716,7 @@ run_reliability_boot_parallel <- function(
       .wle_psi = .wle_psi,
       .marginal_rxx = .marginal_rxx,
       .test_information = .test_information,
-      .latent_sd = .latent_sd,
+      .latent_moments = .latent_moments,
       .marginal_summaries = .marginal_summaries,
       .fit_cml_thresholds = .fit_cml_thresholds,
       .estimate_thetas = .estimate_thetas,
@@ -677,6 +724,7 @@ run_reliability_boot_parallel <- function(
       .pcm_cat_probs = .pcm_cat_probs,
       .center_thresholds = .center_thresholds,
       .estimate_prior_sd = .estimate_prior_sd,
+      .estimate_prior_moments = .estimate_prior_moments,
       .logp_tables = .logp_tables,
       .grid_loglik = .grid_loglik
     )

@@ -251,39 +251,108 @@
   )
 }
 
-#' Marginal-maximum-likelihood estimate of the latent SD under fixed items
+#' Marginal-maximum-likelihood estimate of the latent distribution
 #'
-#' Convenience wrapper that builds the quadrature grid and log-likelihood
-#' matrix and hands them to `.estimate_prior_sd()`. Extracted from
-#' `.marginal_rxx()` so the reliability scalar and the conditional curve
-#' rescale by the same \eqn{\sigma}.
+#' Estimates **both** the mean and the SD of the latent distribution by
+#' marginal maximum likelihood with the item parameters held fixed.
+#'
+#' Before 1.3.1 only the SD was estimated, with the mean held at 0. That is an
+#' assumption rather than a consequence of centring the thresholds: grand-mean
+#' centring fixes the *item* mean at 0 and says nothing about where the
+#' respondents sit, and the distance between the two is targeting. With the
+#' mean held at 0 a normal density has to reach an off-target sample by
+#' widening, so \eqn{\sigma} absorbed the mistargeting and came out too large,
+#' which inflated every quantity resting on it. Verified on simulated data
+#' with a true SD of 0.90: shifting the sample 2 logits off target returned
+#' 2.02 with the mean fixed and 0.96 with it free.
+#'
+#' The grid is built in two passes. The first is wide and fixed, to find the
+#' mean without assuming where it is; the second re-centres on that estimate so
+#' the quadrature covers the distribution it is integrating. One pass on a
+#' fixed grid cannot do both.
 #'
 #' @param data Numeric response matrix or data.frame (items from 0).
 #' @param thr_list List of centred Andrich threshold vectors.
 #' @param n_nodes Number of quadrature nodes for the grid.
-#' @param prior_mean Numeric prior mean.
-#' @return Numeric scalar: the estimated latent SD.
+#' @return A list with `mean` and `sd`, or both `NA_real_` when the
+#'   optimisation does not return usable values.
 #' @keywords internal
 #' @noRd
-.latent_sd <- function(data, thr_list, n_nodes = 81L, prior_mean = 0) {
+.latent_moments <- function(data, thr_list, n_nodes = 81L) {
   data_mat <- as.matrix(data)
-  ge <- seq(-6, 6, length.out = n_nodes)
-  .estimate_prior_sd(
-    .grid_loglik(data_mat, .logp_tables(thr_list, ge), ge),
-    ge,
-    prior_mean
+
+  fit_on <- function(grid) {
+    loglik <- .grid_loglik(data_mat, .logp_tables(thr_list, grid), grid)
+    .estimate_prior_moments(loglik, grid)
+  }
+
+  first <- fit_on(seq(-10, 10, length.out = n_nodes))
+  if (!is.finite(first$mean) || !is.finite(first$sd) || first$sd <= 0) {
+    return(list(mean = NA_real_, sd = NA_real_))
+  }
+
+  span <- max(6 * first$sd, 3)
+  second <- fit_on(seq(first$mean - span, first$mean + span,
+                       length.out = n_nodes))
+  if (!is.finite(second$mean) || !is.finite(second$sd) || second$sd <= 0) {
+    return(first)
+  }
+  second
+}
+
+#' Marginal-maximum-likelihood estimate of the latent mean and SD
+#'
+#' The two-parameter counterpart of `.estimate_prior_sd()`, which optimises the
+#' SD alone against a fixed mean and is still what the EAP prior uses.
+#'
+#' The SD is optimised on the log scale and bounded to the same `[0.05, 5]`
+#' interval `.estimate_prior_sd()` searches. The floor matters: data with no
+#' latent variance at all, such as responses drawn at random, drives an
+#' unbounded search to a SD of zero and every quantity resting on it to `NaN`.
+#' The old estimator floored it implicitly through `optimize()`'s interval, and
+#' keeping the same bound keeps degenerate data behaving as it did. The mean is
+#' bounded to the quadrature grid, outside which the integral is not evaluated.
+#'
+#' @param loglik Person-by-node log-likelihood matrix from `.grid_loglik()`.
+#' @param grid Numeric quadrature nodes.
+#' @return A list with `mean` and `sd`.
+#' @keywords internal
+#' @noRd
+.estimate_prior_moments <- function(loglik, grid) {
+  dgrid <- if (length(grid) > 1L) mean(diff(grid)) else 1
+  neg_marg_ll <- function(par) {
+    lprior <- stats::dnorm(grid, mean = par[1L], sd = exp(par[2L]),
+                           log = TRUE)
+    M  <- sweep(loglik, 2L, lprior, `+`)
+    mx <- apply(M, 1L, max)
+    person_ll <- mx + log(rowSums(exp(M - mx)) * dgrid)
+    out <- -sum(person_ll[is.finite(person_ll)])
+    if (!is.finite(out)) .Machine$double.xmax else out
+  }
+  lo <- c(min(grid), log(0.05))
+  hi <- c(max(grid), log(5))
+  opt <- try(
+    stats::optim(c(0, 0), neg_marg_ll, method = "L-BFGS-B",
+                 lower = lo, upper = hi),
+    silent = TRUE
   )
+  if (inherits(opt, "try-error") || !all(is.finite(opt$par))) {
+    return(list(mean = NA_real_, sd = NA_real_))
+  }
+  list(mean = opt$par[1L], sd = exp(opt$par[2L]))
 }
 
 #' Latent-density-weighted marginal summaries of the precision curve
 #'
 #' The single place the marginal reliability scalars are formed, so that
 #' `.marginal_rxx()` (behind `RMreliability()`) and `RMreliabilityCurve()`
-#' cannot drift apart. All three are integrated over \eqn{N(0, \sigma^2)} on a
-#' \eqn{\pm 6\sigma} grid.
+#' cannot drift apart. All three are integrated over
+#' \eqn{N(\mu, \sigma^2)} on a \eqn{\mu \pm 6\sigma} grid. Before 1.3.1
+#' \eqn{\mu} was held at 0 rather than estimated; see `.latent_moments()`.
 #'
 #' @param thr_list List of Andrich threshold vectors.
-#' @param sigma Latent SD, from `.latent_sd()`.
+#' @param sigma Latent SD, from `.latent_moments()`.
+#' @param mu Latent mean, from `.latent_moments()`.
 #' @param n_nodes Number of quadrature nodes.
 #' @return A list with `sem_average` (root mean error variance), `ratio` (the
 #'   density-weighted mean of the bounded reliability curve, which is what
@@ -291,9 +360,9 @@
 #'   coefficient, retained for comparison).
 #' @keywords internal
 #' @noRd
-.marginal_summaries <- function(thr_list, sigma, n_nodes = 161L) {
-  g <- seq(-6 * sigma, 6 * sigma, length.out = n_nodes)
-  w <- stats::dnorm(g, 0, sigma)
+.marginal_summaries <- function(thr_list, sigma, mu = 0, n_nodes = 161L) {
+  g <- seq(mu - 6 * sigma, mu + 6 * sigma, length.out = n_nodes)
+  w <- stats::dnorm(g, mu, sigma)
   w <- w / sum(w)
   sem2 <- 1 / .test_information(thr_list, g)
   sem2_bar <- sum(w * sem2)
