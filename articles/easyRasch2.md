@@ -882,7 +882,7 @@ RMreliability(items, draws = 200, rmu_iter = 20, parallel = FALSE,
 |:---|---:|---:|---:|:---|
 | Cronbach’s alpha | 0.886 | NA | NA | no bootstrap |
 | PSI | 0.838 | NA | NA | no bootstrap |
-| Marginal (curve mean) | 0.886 | NA | NA | no bootstrap |
+| Marginal (curve mean) | 0.876 | NA | NA | no bootstrap |
 | RMU (WLE) | 0.881 | 0.867 | 0.895 | 200 PVs, 20 RMU iterations |
 
 Reliability for 9 items, n = 600 respondents. PSI is the WLE-based

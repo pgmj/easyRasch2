@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,11 +30,22 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/pgmj/easyRasch2/blob/v1.3.0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.3.0" id="easyrasch2-130">easyRasch2 1.3.0<a class="anchor" aria-label="anchor" href="#easyrasch2-130"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.3.1" id="easyrasch2-131">easyRasch2 1.3.1<a class="anchor" aria-label="anchor" href="#easyrasch2-131"></a></h2><p class="text-muted">CRAN release: 2026-09-13</p>
+<div class="section level3">
+<h3 id="bug-fix-1-3-1">Bug fix<a class="anchor" aria-label="anchor" href="#bug-fix-1-3-1"></a></h3>
+<ul><li>
+<p><strong><code><a href="../reference/RMreliability.html">RMreliability()</a></code> and <code><a href="../reference/RMreliabilityCurve.html">RMreliabilityCurve()</a></code> now estimate the latent distribution’s mean instead of holding it at 0.</strong> With the mean pinned, the latent SD absorbed any mistargeting, so marginal reliability rose as targeting worsened. It now falls, as PSI does.</p>
+<p><strong>Values move downward for off-target samples</strong> and barely at all for well-targeted ones, where the <code><a href="https://rdrr.io/pkg/eRm/man/eRm.data.html" class="external-link">eRm::pcmdat2</a></code> example changes in the fourth decimal. On simulated data 2 logits off target, marginal reliability fell from .902 to .726 and the latent SD from 2.02 to 0.96 against a true 0.90.</p>
+<p><code><a href="../reference/RMreliabilityCurve.html">RMreliabilityCurve()</a></code> gains a <code>latent_mean</code> attribute, and its default <code>theta_range</code> is now centred on that mean rather than on zero. The EAP prior is unchanged, so person estimates are unaffected.</p>
+</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.3.0" id="easyrasch2-130">easyRasch2 1.3.0<a class="anchor" aria-label="anchor" href="#easyrasch2-130"></a></h2><p class="text-muted">CRAN release: 2026-09-12</p>
 <div class="section level3">
 <h3 id="new-features-1-3-0">New features<a class="anchor" aria-label="anchor" href="#new-features-1-3-0"></a></h3>
 <ul><li><p>New <code><a href="../reference/RMreliabilityCurve.html">RMreliabilityCurve()</a></code> plots conditional SEM, test information or conditional reliability across the latent scale, with the respondent distribution behind it. <code>benchmark</code> shades the region reaching a given reliability and reports the percentage of respondents inside it.</p></li>

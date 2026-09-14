@@ -129,22 +129,73 @@ Marginal reliability is the latent-density-weighted mean of the
 conditional reliability curve, \\\int \sigma^2/(\sigma^2 +
 1/I(\theta))\\ g(\theta)\\d\theta\\, where the test information
 \\I(\theta)\\ is summed from the CML item parameters and \\g\\ is the
-estimated normal latent density \\N(0, \sigma^2)\\ (\\\sigma\\ from
-marginal ML). Integrating over the estimated latent variance, rather
-than the \\N(0,1)\\ assumed by
+estimated normal latent density \\N(\mu, \sigma^2)\\, **both**
+parameters coming from marginal ML with the items held fixed.
+Integrating over the estimated latent distribution, rather than the
+\\N(0,1)\\ assumed by
 [`mirt::marginal_rxx()`](https://philchalmers.github.io/mirt/reference/marginal_rxx.html),
 keeps it correct on the Rasch logit scale, where \\\sigma\\ is typically
 well above 1 and the \\N(0,1)\\ assumption underestimates reliability.
+
+Through version 1.3.0 \\\mu\\ was held at 0 rather than estimated. That
+is an assumption, not a consequence of centring the item thresholds,
+which fixes the *item* mean and says nothing about where the respondents
+sit. A normal density pinned to 0 can only reach an off-target sample by
+widening, so \\\sigma\\ absorbed the mistargeting and marginal
+reliability **rose** as targeting worsened. See the note under Value in
+[`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/reference/RMreliabilityCurve.md)
+for the size of the effect.
 
 It is the model-based complement to the sample-based PSI, and the two
 are now the same coefficient by two routes: PSI divides by the observed
 spread of the WLE estimates, marginal reliability by the fitted latent
 density. A large gap between them therefore does flag an off-target or
-non-normal sample. Through version 1.2.0 this row used Green's
-subtractive \\1 - \overline{1/I(\theta)}/\sigma^2\\ instead, under which
-much of the PSI-to-marginal gap was an artefact of the differing
-formulas rather than a property of the sample. See
-`dev/TODO-reliability-form.md`.
+non-normal sample, and since 1.3.1 both move in the same direction when
+targeting worsens rather than apart.
+
+**How this relates to the published coefficients.** Three things are
+worth being explicit about, because the reported value is not any of the
+coefficients the literature names.
+
+*It is the mean of a curve, not a ratio of averages.* The classical
+latent-scale reliability is a single variance ratio,
+\\\sigma^2/(\sigma^2 + \overline{SEM^2})\\ (Milanzi et al., 2015,
+section 3.2, where the error variance is a constant). What is reported
+here averages the ratio over the latent density instead. Since
+\\\sigma^2/(\sigma^2 + x)\\ is convex in \\x\\, the mean of the curve is
+the **larger** of the two by Jensen's inequality. The choice was made on
+accuracy, not convention: averaging the curve tracked the exact
+expected-sum-score reliability more closely than the ratio of averages
+in both arms of an internal replication (mean absolute error 0.015
+against 0.018 for binary data, 0.010 against 0.015 for polytomous).
+
+*It is a latent-scale quantity checked against a manifest criterion.*
+Milanzi et al. (2015) argue that interest usually lies in the
+reliability of observed scores rather than latent ones, and that latent
+coefficients run consistently higher. This one was therefore validated
+against the exact expected-sum-score reliability, \\Var(\mu)/(Var(\mu) +
+Var(\epsilon))\\, rather than assumed to match it, and tracked it to
+within about 0.02 across the conditions tested. It remains a
+latent-scale coefficient that approximates a manifest one, not a
+manifest coefficient.
+
+*Milanzi et al. recommend something this package does not implement.*
+Their conclusion favours Taylor-series manifest reliability measures,
+which approximate \\Var(\mu)\\ and \\Var(\epsilon)\\ on the
+observed-score scale directly rather than working from test information.
+In the same internal replication those were the most accurate of the
+estimators compared (0.012). They are cited here for their criticism of
+the subtractive coefficient, which this package acted on, and not for
+their remedy, which it has not adopted.
+
+The superseded subtractive coefficient is Milanzi et al.'s equation
+(12), attributed there to Lord (1980), and is still available as the
+`marginal_green` attribute of
+[`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/reference/RMreliabilityCurve.md).
+Through version 1.2.0 this row used Green's subtractive \\1 -
+\overline{1/I(\theta)}/\sigma^2\\ instead, under which much of the
+PSI-to-marginal gap was an artefact of the differing formulas rather
+than a property of the sample. See `dev/TODO-reliability-form.md`.
 
 PSI is the WLE-based separation reliability, \\1 - \overline{SEM^2} /
 \mathrm{Var}(\hat\theta)\\, computed from CML item thresholds
@@ -224,7 +275,7 @@ if (requireNamespace("ggdist", quietly = TRUE) &&
 #> |:---------------------|--------:|----------------:|----------------:|:---------------------------|
 #> |Cronbach's alpha      |    0.754|            0.701|            0.813|25 bootstrap resamples      |
 #> |PSI                   |    0.725|            0.673|            0.768|25 bootstrap resamples      |
-#> |Marginal (curve mean) |    0.769|            0.717|            0.817|25 bootstrap resamples      |
+#> |Marginal (curve mean) |    0.748|            0.699|            0.798|25 bootstrap resamples      |
 #> |RMU (WLE)             |    0.753|            0.684|            0.817|1000 PVs, 50 RMU iterations |
 # }
 ```
