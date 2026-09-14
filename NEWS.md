@@ -1,6 +1,6 @@
-# easyRasch2 1.3.0.9000
+# easyRasch2 1.3.1
 
-## Bug fixes
+## Bug fix
 
 - **`RMreliability()` and `RMreliabilityCurve()` now estimate the latent
   distribution's mean instead of holding it at 0.** With the mean pinned, the
@@ -15,15 +15,6 @@
   `RMreliabilityCurve()` gains a `latent_mean` attribute, and its default
   `theta_range` is now centred on that mean rather than on zero. The EAP prior
   is unchanged, so person estimates are unaffected.
-
-## Documentation
-
-- `?RMreliability` now states how the reported coefficient relates to the
-  published ones. It averages the conditional reliability curve rather than
-  forming the single latent-scale variance ratio, and is the larger of the two.
-  Milanzi et al. (2015) are cited for their criticism of the subtractive
-  coefficient, not for the Taylor-series measures they recommend, which this
-  package does not implement.
 
 # easyRasch2 1.3.0
 

@@ -1,31 +1,20 @@
-# easyRasch2 1.3.0
+# easyRasch2 1.3.1
 
 ## Submission
 
-This is a minor update (1.2.0 -> 1.3.0). The minor version is bumped because
-the value of one reported statistic changes and one figure changes its default
-panel.
+Apologies for submitting one day after 1.3.0. The reliability functionality
+added in that release contains a bug that returns incorrect values, and it
+seems better to correct it at once than to leave it in place.
 
-`RMreliability()`'s marginal reliability is now the latent-density-weighted
-mean of the conditional reliability curve, sigma^2 / (sigma^2 + SEM(theta)^2),
-rather than Green's subtractive coefficient. The subtractive form falls below
-zero whenever the average error variance exceeds the trait variance, which
-happens with few items or a narrow sample, and was floored at zero. Values
-therefore move upward, more so on short scales. The row is renamed
-"Marginal (curve mean)" so the change is visible in the output itself, and the
-previous value is still available as the `marginal_green` attribute of
-`RMreliabilityCurve()`.
+`RMreliability()` and `RMreliabilityCurve()` integrate the conditional
+reliability over an estimated normal latent density. Only its SD was estimated,
+with the mean held at zero, so the SD absorbed any mistargeting and marginal
+reliability rose as a sample became less well targeted, when it should fall. It
+was overstated by up to .18 in the case checked. Well-targeted samples are
+essentially unaffected. Every existing test used well-targeted data, which is
+why none of them caught it, and tests for the off-target behaviour are added.
 
-`RMtargeting()` now draws response-category bands in its bottom panel. Estimates
-are unchanged and `panel = "thresholds"` restores the previous panel.
-
-The release adds three exported functions: `RMreliabilityCurve()` for
-conditional measurement precision across the scale, and `RMpersonChange()` with
-`RMretestSD()` for assessing change in individual respondents between two
-occasions.
-
-There are no CRAN reverse dependencies. The `easyRasch2jmv` module for jamovi
-depends on this package but is not distributed through CRAN.
+No interface changes. There are no CRAN reverse dependencies.
 
 ## Test environments
 
