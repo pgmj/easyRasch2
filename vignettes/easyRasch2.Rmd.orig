@@ -456,7 +456,7 @@ its response categories, with the threshold estimates and their confidence
 intervals below it. Each band spans the locations at which its category is the
 most likely response.
 
-```{r targeting, fig.cap = "Person-item targeting", fig.height = 6}
+```{r targeting, fig.cap = "Person-item targeting", fig.height = 8}
 RMtargeting(items)
 ```
 

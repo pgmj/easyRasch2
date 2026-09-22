@@ -16,9 +16,9 @@ format:
     toc-depth: 2
     papersize: a4
     margin:
-      x: 2cm
+      x: 2.8cm
       y: 2cm
-    fontsize: 9pt
+    fontsize: 10.5pt
     df-print: kable
     fig-width: 8
     fig-height: 5
