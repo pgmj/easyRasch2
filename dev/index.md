@@ -14,7 +14,7 @@ model and the observed sample (Johansson, 2025, 2026).
 
 The [Get
 Started](https://pgmj.github.io/easyRasch2/articles/easyRasch2.html)
-link above contains a short introduction. For broader Rasch-analysis
+link contains a short introduction. For broader Rasch-analysis
 tutorials, see the
 [vignette](https://pgmj.github.io/raschrvignette/RaschRvign.html) for
 the archived sibling package
