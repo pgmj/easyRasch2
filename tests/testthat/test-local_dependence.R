@@ -447,12 +447,55 @@ test_that("RMlocdepQ3Plot observed overlay drops all-NA respondents", {
   set.seed(42)
   df <- as.data.frame(matrix(sample(0:2, 60 * 6, replace = TRUE), nrow = 60))
   colnames(df) <- paste0("i", 1:6)
-  simfit <- RMlocdepQ3Cutoff(df, iterations = 5, parallel = FALSE, seed = 1)
+  # Blank the row before simulating, so the cutoff and the overlay use the
+  # same respondents and the sample-size check stays quiet.
   df[3, ] <- NA
+  simfit <- suppressMessages(
+    RMlocdepQ3Cutoff(df, iterations = 5, parallel = FALSE, seed = 1)
+  )
 
   expect_message(
     p <- RMlocdepQ3Plot(simfit, data = df),
     "no responses dropped"
   )
   expect_s3_class(p$pairs, "ggplot")
+})
+
+test_that("resample DGP keeps each respondent's missingness pattern", {
+  skip_on_cran()
+  # I1 is answered by only 40 of 250 respondents. If the simulated data kept
+  # every cell, pairs with I1 would vary as little as the others. With the
+  # pattern carried along they rest on 40 respondents and vary far more.
+  set.seed(7)
+  df <- as.data.frame(matrix(rbinom(250 * 6, 1, 0.5), nrow = 250))
+  colnames(df) <- paste0("i", 1:6)
+  df$i1[41:250] <- NA
+  simfit <- suppressMessages(
+    RMlocdepQ3Cutoff(df, iterations = 25, parallel = FALSE, seed = 1)
+  )
+  pr <- simfit$pair_results
+  with_i1 <- pr$Item1 == "i1" | pr$Item2 == "i1"
+  sd_pair <- function(rows) {
+    mean(tapply(pr$Q3[rows], paste(pr$Item1, pr$Item2)[rows], stats::sd))
+  }
+  expect_gt(sd_pair(with_i1) / sd_pair(!with_i1), 1.8)
+})
+
+test_that("resample DGP with missing data agrees across parallel and sequential", {
+  skip_on_cran()
+  skip_if_not_installed("mirai")
+  set.seed(8)
+  df <- as.data.frame(matrix(sample(0:2, 200 * 5, replace = TRUE), 200))
+  colnames(df) <- paste0("i", 1:5)
+  m <- as.matrix(df)
+  m[sample(length(m), 100)] <- NA
+  df <- as.data.frame(m)
+  s <- suppressMessages(
+    RMlocdepQ3Cutoff(df, iterations = 6, parallel = FALSE, seed = 1)
+  )
+  p <- suppressMessages(
+    RMlocdepQ3Cutoff(df, iterations = 6, parallel = TRUE, n_cores = 2,
+                     seed = 1)
+  )
+  expect_identical(s$pair_results, p$pair_results)
 })

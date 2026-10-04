@@ -1,11 +1,19 @@
 # Deferred: speed up `.estimate_prior_moments()`
 
-**Not applied.** Patch in `dev/perf-latent-moments.patch`, against
-`R/utils-theta.R` as released in 1.3.1. Apply with:
+**Applied 2026-09-30** in the development version after 1.3.1, with one
+addition the patch lacked: a log-space fallback for rows whose products all
+underflow to 0. Without it such respondents became `-Inf` and were dropped by
+the `is.finite()` filter, which makes a narrow, far-off candidate prior look
+better. It does not happen on ordinary scales (log-likelihood ranges of a few
+hundred), but on a 150-item scale 259 of 300 respondents underflowed at a
+prior of N(-8, 0.05^2). With the fallback the objective matches the log-space
+one to 3e-9 relative across 10 test datasets, the estimated moments match to
+1e-6, and `RMreliability()` output is identical. Measured on a 300 x 10 PCM
+dataset: `.latent_moments()` 0.050 s to 0.020 s per call, a 100-iteration
+`RMreliabilityCurve(boot = TRUE)` 5.5 s to 2.5 s. Regression test in
+`test-reliability_curve.R`.
 
-```
-git apply dev/perf-latent-moments.patch
-```
+The original patch is kept below for reference.
 
 ## Why
 

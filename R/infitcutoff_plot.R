@@ -251,6 +251,11 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
   # Respondents with no responses at all break the CML fit below
   # (psychotools errors on all-NA rows); drop them, as in RMitemInfit().
   data <- .drop_empty_respondents(data)
+  .check_cutoff_sample(
+    simfit$sample_n,
+    nrow(stats::na.omit(data)),
+    "RMitemInfitCutoff()"
+  )
 
   # rgl workaround
   old_rgl <- getOption("rgl.useNULL")

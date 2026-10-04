@@ -299,9 +299,11 @@ RMdimCFACutoff <- function(
     } else {
       "(no message captured)"
     }
+    ec <- .extreme_only_categories(data_mat)
     stop(
-      "All CFA simulation iterations failed. Example: ",
-      sample_msg,
+      "All CFA simulation iterations failed. ",
+      if (nrow(ec) > 0L) .extreme_only_message(ec) else
+        paste0("Example: ", sample_msg),
       call. = FALSE
     )
   }
@@ -625,6 +627,7 @@ RMdimCFA <- function(
     n_total_cfa,
     if (has_na_cfa) "complete cases" else character()
   )
+  .check_cutoff_sample(cutoff$sample_n, nrow(data), "RMdimCFACutoff()")
 
   item_names <- cutoff$item_names
   if (!setequal(names(data), item_names)) {
@@ -1061,6 +1064,7 @@ RMdimCFAPlot <- function(simfit, data, percentile = NULL) {
   # Observed fit + loadings from the data
   validate_response_data(data)
   data <- stats::na.omit(as.data.frame(data))
+  .check_cutoff_sample(simfit$sample_n, nrow(data), "RMdimCFACutoff()")
   if (!setequal(names(data), simfit$item_names)) {
     stop(
       "Item names in `data` do not match those used for the cutoff.",
@@ -1430,6 +1434,10 @@ run_single_cfa_sim <- function(seed, data_list, obs_data = NULL) {
           data = fit_df,
           ordered = safe_names,
           estimator = data_list$estimator,
+          # Parameter standard errors are never read, only the fit indices
+          # and standardized loadings. The scaled test does not depend on
+          # them, so skipping them leaves every stored value unchanged.
+          se = "none",
           warn = FALSE,
           verbose = FALSE
         )
@@ -1464,7 +1472,14 @@ run_single_cfa_sim <- function(seed, data_list, obs_data = NULL) {
 #' @keywords internal
 #' @noRd
 extract_cfa_fit <- function(fit, estimator = NULL) {
-  fm <- lavaan::fitMeasures(fit)
+  # Only the indices read below. `robust = FALSE` skips the .robust variants,
+  # which for ordinal data refit the model (lavaan >= 0.6-13) and are never
+  # used here.
+  fm <- lavaan::fitMeasures(
+    fit,
+    c("cfi.scaled", "rmsea.scaled", "cfi", "rmsea", "srmr"),
+    fm.args = list(robust = FALSE)
+  )
   pick_scaled <- function(name) {
     key_s <- paste0(name, ".scaled")
     if (key_s %in% names(fm) && is.finite(fm[[key_s]])) {
@@ -1486,7 +1501,14 @@ extract_cfa_fit <- function(fit, estimator = NULL) {
 #' @keywords internal
 #' @noRd
 extract_cfa_loadings <- function(fit, item_names) {
-  ss <- lavaan::standardizedSolution(fit)
+  # Point estimates only: the delta-method SEs, z and CIs are never used.
+  ss <- lavaan::standardizedSolution(
+    fit,
+    se = FALSE,
+    zstat = FALSE,
+    pvalue = FALSE,
+    ci = FALSE
+  )
   lam <- ss[ss$op == "=~", , drop = FALSE]
   v <- stats::setNames(as.numeric(lam$est.std), lam$rhs)
   # Keep names so callers can index by item (observed-side lookups rely on it).

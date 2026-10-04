@@ -438,7 +438,8 @@ RMitemParameters <- function(
 #' @param data Response data.frame.
 #' @param is_poly Logical; polytomous data.
 #' @return Invisibly `NULL`; emits a warning when sparse categories or
-#'   zero-variance items are found.
+#'   zero-variance items are found, and a second one naming categories used
+#'   only by respondents with a zero or perfect score.
 #' @keywords internal
 #' @noRd
 .sparsity_warning <- function(data, is_poly) {
@@ -464,6 +465,10 @@ RMitemParameters <- function(
       "CML estimates may be unstable; consider estimator = \"MML\".",
       call. = FALSE
     )
+  }
+  ec <- .extreme_only_categories(data)
+  if (nrow(ec) > 0L) {
+    warning(.extreme_only_message(ec), call. = FALSE)
   }
   invisible(NULL)
 }

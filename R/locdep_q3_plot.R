@@ -218,6 +218,12 @@ RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     # .q3_residual_matrix() (psychotools errors on all-NA rows); drop them,
     # as RMlocdepQ3() and RMlocdepQ3Cutoff() do.
     data <- .drop_empty_respondents(data)
+    .check_cutoff_sample(
+      simfit$sample_n,
+      nrow(data),
+      "RMlocdepQ3Cutoff()",
+      policy = "respondents with at least one response"
+    )
 
     # Same estimator as the simulated cut-off (stored in simfit$estimator).
     q3_mat <- .q3_residual_matrix(data, estimator = estimator)

@@ -80,6 +80,7 @@
 #' [RMdifGammaCutoff()], [RMdimCFACutoff()], [RMdimMartinLof()],
 #' [RMdimResidualPCACutoff()], [RMitemInfitCutoff()],
 #' [RMitemInfitCutoffMI()], [RMitemRestscoreBoot()],
+#' [RMitemRestscoreCutoff()],
 #' [RMlocdepGammaCutoff()], [RMlocdepQ3Cutoff()], [RMpersonFit()] and
 #' [RMreliability()].
 #'

@@ -1,0 +1,406 @@
+---
+title: "Validation of RMitemRestscoreCutoff()"
+subtitle: "Nested null simulation of the bootstrap item-restscore test"
+author: "Magnus Johansson"
+date: today
+---
+
+## Purpose
+
+`restscore_asymptotic_null.qmd` showed that the asymptotic item-restscore test
+in `iarm::item_restscore()` is miscalibrated under a true Rasch model. With BH
+over the items, the chance of at least one false flag ranged from 30.5 percent
+(20 dichotomous items, n = 150, mistargeted by 1.5 logits) down to about
+1 percent (9 polytomous items, n ≥ 1000). Underfit was flagged too rarely in
+every cell.
+
+`RMitemRestscoreCutoff()` replaces the asymptotic reference distribution with a
+parametric bootstrap that refits the model in every iteration. Studentising the
+observed minus expected difference by the bootstrap mean and SD should remove
+both causes identified in the null study, the small-sample bias and the
+correlation between observed and expected gamma. This study tests that claim
+in the cells where the asymptotic test did worst, and compares the two
+data-generating processes (`dgp = "resample"` and `"conditional"`).
+
+## Design
+
+Each simulated dataset is generated under a true Rasch model, exactly as in
+the null study, and then analysed the way a user would:
+
+1. `RMitemRestscoreCutoff(d, iterations = 400, dgp = ...)`, the package
+   default number of iterations.
+2. `RMitemRestscore(d, cutoff = co)` with `correction = "fwer"` (the
+   default), `"fdr_bh"` and `"none"`.
+3. `RMitemRestscore(d)` without a cutoff, the asymptotic BH rule, on the same
+   dataset for a paired comparison.
+
+**Cells.** Chosen from the null study to span its worst liberal and most
+conservative results.
+
+| cell | items | μ | n | asymptotic BH family-wise rate |
+|---|---|---|---|---|
+| `dich_mis_150` | 20 dichotomous | 1.5 | 150 | 30.5% |
+| `dich_tgt_300` | 20 dichotomous | 0 | 300 | 6.2% |
+| `poly_tgt_150` | 9 × 4 categories | 0 | 150 | 4.2% |
+| `poly_tgt_1000` | 9 × 4 categories | 0 | 1000 | 0.9% |
+
+**Arms.** Both DGPs in every cell, on the same datasets.
+
+**Replications.** 500 datasets per cell. The Monte Carlo SE of a 5 percent
+family-wise rate is then 0.97 points, so rates between 3.1 and 6.9 percent are
+consistent with nominal.
+
+**Outcomes.**
+
+- Family-wise rate: at least one item flagged, for WY (FWER), BH and the
+  asymptotic rule.
+- Per-item marginal rejection at α = .05, split by direction (overfit and
+  underfit, nominal 2.5 percent each). This tests whether the asymmetry of the
+  asymptotic test is gone.
+- The distribution of marginal p-values, which should be uniform.
+
+**Cost.** About 0.1 s per bootstrap iteration, so 40 s per dataset and arm.
+4 cells × 2 arms × 500 datasets is about 45 CPU-hours, or 4.5 hours on
+10 cores. Results are saved per cell and arm, so an interrupted render resumes
+where it stopped. Set `R_DATASETS` lower for a quick run.
+
+```{r setup}
+suppressMessages({
+  devtools::load_all("..", quiet = TRUE)
+  library(parallel)
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+})
+options(rgl.useNULL = TRUE)
+
+R_DATASETS <- 500
+B          <- 400
+THETA_SD   <- 1.5
+NCORES     <- 10
+RES_DIR    <- "restscore_cutoff_validation"
+dir.create(RES_DIR, showWarnings = FALSE)
+```
+
+### Cells and data generation
+
+The item sets and the generator are the same as in the null study.
+
+```{r cells}
+item_sets <- list(
+  dich = as.list(seq(-2, 2, length.out = 20)),
+  poly = lapply(seq(-1.5, 1.5, length.out = 9), function(l) l + c(-1.2, 0, 1.2))
+)
+
+cells <- data.frame(
+  cell = c("dich_mis_150", "dich_tgt_300", "poly_tgt_150", "poly_tgt_1000"),
+  set  = c("dich", "dich", "poly", "poly"),
+  mu   = c(1.5, 0, 0, 0),
+  n    = c(150, 300, 150, 1000),
+  stringsAsFactors = FALSE
+)
+arms <- c("resample", "conditional")
+cells
+
+sim_pcm <- function(theta, thr) {
+  n <- length(theta)
+  sapply(thr, function(d) {
+    m <- length(d)
+    eta <- outer(theta, 0:m) -
+      matrix(c(0, cumsum(d)), n, m + 1, byrow = TRUE)
+    p <- exp(eta - apply(eta, 1, max))
+    p <- p / rowSums(p)
+    cp <- p %*% upper.tri(diag(m + 1), diag = TRUE)
+    rowSums(runif(n) > cp)
+  })
+}
+```
+
+### One dataset
+
+A dataset with an unobserved category is regenerated rather than discarded,
+since the question is how the bootstrap behaves on data the package can fit.
+The number of redraws is recorded.
+
+```{r onedataset}
+one_dataset <- function(rep, cell_row, dgp) {
+  thr <- item_sets[[cell_row$set]]
+  seed <- 1e6 * match(cell_row$cell, cells$cell) + rep
+  set.seed(seed)
+  redraws <- 0L
+  repeat {
+    d <- as.data.frame(sim_pcm(rnorm(cell_row$n, cell_row$mu, THETA_SD), thr))
+    names(d) <- paste0("I", seq_along(thr))
+    full <- all(mapply(function(x, m) all(tabulate(x + 1, m + 1) > 0),
+                       d, lengths(thr)))
+    if (full) break
+    redraws <- redraws + 1L
+  }
+
+  out <- tryCatch({
+    co <- suppressMessages(RMitemRestscoreCutoff(
+      d, iterations = B, parallel = FALSE, seed = seed,
+      cutoff_method = "quantile", dgp = dgp
+    ))
+    run <- function(correction) {
+      suppressMessages(RMitemRestscore(
+        d, cutoff = co, correction = correction, output = "dataframe"
+      ))
+    }
+    fw <- run("fwer")
+    bh <- run("fdr_bh")
+    nc <- run("none")
+    asy <- suppressMessages(RMitemRestscore(d, output = "dataframe"))
+    data.frame(
+      rep = rep,
+      item = fw$Item,
+      difference = fw$Difference,
+      p = fw$p_restscore,
+      flag_marginal = nc$Flagged,
+      padj_fwer = fw$padj_restscore,
+      padj_bh = bh$padj_restscore,
+      flag_asy = asy$Flagged,
+      actual_iterations = co$actual_iterations,
+      redraws = redraws,
+      stringsAsFactors = FALSE
+    )
+  }, error = function(e) NULL)
+  out
+}
+```
+
+### Run
+
+One file per cell and arm. Delete a file to re-run that part.
+
+```{r run}
+timing <- list()
+for (i in seq_len(nrow(cells))) {
+  for (dgp in arms) {
+    f <- file.path(RES_DIR, paste0(cells$cell[i], "_", dgp, ".rds"))
+    if (file.exists(f)) next
+    t0 <- Sys.time()
+    res <- mclapply(seq_len(R_DATASETS),
+                    function(r) one_dataset(r, cells[i, ], dgp),
+                    mc.cores = NCORES, mc.preschedule = FALSE)
+    saveRDS(list(res = res,
+                 elapsed_min = as.numeric(Sys.time() - t0, units = "mins")),
+            f)
+  }
+}
+
+long <- do.call(rbind, lapply(seq_len(nrow(cells)), function(i) {
+  do.call(rbind, lapply(arms, function(dgp) {
+    f <- file.path(RES_DIR, paste0(cells$cell[i], "_", dgp, ".rds"))
+    x <- readRDS(f)
+    ok <- Filter(Negate(is.null), x$res)
+    if (length(ok) == 0) return(NULL)
+    cbind(cell = cells$cell[i], dgp = dgp, do.call(rbind, ok),
+          elapsed_min = x$elapsed_min, failed = length(x$res) - length(ok))
+  }))
+}))
+long$cell <- factor(long$cell, levels = cells$cell)
+
+long |>
+  group_by(cell, dgp) |>
+  summarise(datasets = n_distinct(rep),
+            failed = first(failed),
+            redraws = sum(redraws[!duplicated(rep)]),
+            min_iterations = min(actual_iterations),
+            minutes = round(first(elapsed_min), 1),
+            .groups = "drop")
+```
+
+## Results
+
+### Family-wise rate
+
+Proportion of datasets with at least one flagged item, nominal 5 percent. The
+asymptotic column is the same in both arms, since it does not use the
+bootstrap.
+
+```{r fwer}
+fw <- long |>
+  group_by(cell, dgp, rep) |>
+  summarise(wy = any(padj_fwer < .05),
+            bh = any(padj_bh < .05),
+            asymptotic = any(flag_asy != ""),
+            .groups = "drop") |>
+  group_by(cell, dgp) |>
+  summarise(datasets = n(),
+            across(c(wy, bh, asymptotic), \(x) round(100 * mean(x), 1)),
+            .groups = "drop")
+fw
+```
+
+### Per-item rejection by direction
+
+Marginal bootstrap p-value below .05 (`correction = "none"`), split by the
+direction label, against the same split for the asymptotic test with BH. The
+bootstrap should give 2.5 percent in each direction.
+
+```{r tails}
+long |>
+  group_by(cell, dgp) |>
+  summarise(boot_over = 100 * mean(flag_marginal == "overfit"),
+            boot_under = 100 * mean(flag_marginal == "underfit"),
+            asy_over = 100 * mean(flag_asy == "overfit"),
+            asy_under = 100 * mean(flag_asy == "underfit"),
+            .groups = "drop") |>
+  mutate(across(where(is.numeric), \(x) round(x, 2)))
+```
+
+The asymptotic columns are BH-adjusted and so not directly comparable in
+level with the marginal bootstrap columns. What matters is the ratio of the
+two tails within each method.
+
+### Marginal p-values
+
+Under the null the marginal p-values should be uniform. With B = 400 the
+smallest attainable value is 1/401, so the histogram is coarse at the left
+edge.
+
+```{r phist, fig.height = 5}
+long |>
+  ggplot(aes(p)) +
+  geom_histogram(breaks = seq(0, 1, 0.05), fill = "steelblue",
+                 colour = "white") +
+  geom_hline(aes(yintercept = n / 20),
+             data = long |> count(cell, dgp),
+             linetype = "dashed", colour = "grey40") +
+  facet_grid(dgp ~ cell) +
+  labs(x = "Marginal bootstrap p-value", y = "Count") +
+  theme_minimal()
+```
+
+### Additional checks
+
+**Paired DGP comparison.** Both arms analyse the same datasets, so the
+difference between them is a paired comparison. The table counts datasets
+flagged by WY under one DGP and not the other.
+
+```{r paired}
+fw_rep <- long |>
+  group_by(cell, dgp, rep) |>
+  summarise(wy = any(padj_fwer < .05), bh = any(padj_bh < .05),
+            asymptotic = any(flag_asy != ""), .groups = "drop")
+fw_rep |>
+  select(cell, dgp, rep, wy) |>
+  pivot_wider(names_from = dgp, values_from = wy) |>
+  filter(!is.na(resample), !is.na(conditional)) |>
+  group_by(cell) |>
+  summarise(resample_only = sum(resample & !conditional),
+            conditional_only = sum(!resample & conditional),
+            both = sum(resample & conditional), .groups = "drop")
+fw_rep |>
+  group_by(dgp) |>
+  summarise(datasets = n(), wy = round(100 * mean(wy), 2),
+            bh = round(100 * mean(bh), 2), .groups = "drop")
+```
+
+**The `dich_tgt_300` draw.** The asymptotic rate in this cell is 10.0
+percent against 6.2 percent over 4000 datasets in the null study. The
+package path and a direct `iarm::item_restscore()` call agree on every one
+of the 500 datasets, and the null study's seeds give 6.4 percent through the
+package path (checked outside this document), so the method is the same and
+the 500 datasets are a high draw. Whether that carries over to the bootstrap
+arms shows in the WY rate split by the asymptotic decision on the same
+dataset.
+
+```{r carryover}
+fw_rep |>
+  group_by(cell, dgp, asymptotic) |>
+  summarise(datasets = n(), wy = round(100 * mean(wy), 1),
+            .groups = "drop") |>
+  pivot_wider(names_from = asymptotic, values_from = c(datasets, wy),
+              names_glue = "{.value}_asy_{asymptotic}")
+```
+
+**Skew of the null.** Under the null the observed difference across the
+500 datasets is a draw from the same distribution the bootstrap estimates,
+so its per-item skewness shows the shape the two-sided |t| test folds. The
+second number is the correlation over items between skewness and the
+underfit-minus-overfit marginal rejection rate.
+
+```{r skew}
+skew <- function(x) { x <- x - mean(x); mean(x^3) / mean(x^2)^1.5 }
+sk <- long |>
+  filter(dgp == "conditional") |>
+  group_by(cell, item) |>
+  summarise(skew = skew(difference),
+            asym = 100 * (mean(flag_marginal == "underfit") -
+                            mean(flag_marginal == "overfit")),
+            .groups = "drop")
+sk |>
+  group_by(cell) |>
+  summarise(mean_skew = round(mean(skew), 3),
+            mean_asym = round(mean(asym), 2), .groups = "drop")
+round(cor(sk$skew, sk$asym), 2)
+```
+
+**Iterations kept.** WY rate by whether all 400 iterations succeeded.
+
+```{r iterations}
+long |>
+  group_by(dgp, rep, cell) |>
+  summarise(wy = any(padj_fwer < .05),
+            full = first(actual_iterations) == B, .groups = "drop") |>
+  group_by(dgp, full) |>
+  summarise(datasets = n(), wy = round(100 * mean(wy), 2), .groups = "drop")
+```
+
+## Interpretation
+
+**1. The bootstrap removes the miscalibration of the asymptotic test.** In
+the worst cell of the null study, 20 dichotomous items mistargeted by 1.5
+logits at n = 150, the asymptotic BH rule flagged at least one item in 29.6
+percent of datasets. On the same datasets the bootstrap gave 4.2 percent
+(WY) and 2.8 percent (BH) with the conditional DGP. In the most conservative
+cell, 9 polytomous items at n = 1000, the asymptotic rate of 0.8 percent rose
+to 5.6 percent (WY). The marginal p-values are close to uniform in every cell
+and arm, and the underfit tail, which the asymptotic test almost never
+rejected (0.00 to 0.03 percent per item), now rejects 2.6 to 3.4 percent.
+
+**2. The conditional DGP is calibrated and the resample DGP is somewhat
+liberal.** Pooled over the four cells (2000 datasets per arm), the WY
+family-wise rate was 5.0 percent with the conditional DGP and 6.35 percent
+with resample, and BH gave 4.2 and 5.45 percent. Resample was higher in all
+four cells, and the paired comparison leaves little room for chance: 43
+datasets were flagged by WY under resample only and 16 under conditional only.
+The marginal rejection rates show the same pattern (resample 4.9 to 5.9
+percent, conditional 4.6 to 5.3). The mechanism has not been measured. A
+likely candidate is that resampled WLE locations do not reproduce the score
+distribution the observed gamma is conditioned on, which the conditional DGP
+holds fixed by construction.
+
+**3. `dich_tgt_300` is a high draw, not a calibration failure.** The 500
+datasets in this cell gave the asymptotic test 10.0 percent against a
+long-run 6.2 percent, and datasets the asymptotic test flagged were also
+flagged by the bootstrap WY in 30 percent of cases, against 4.2 percent for
+the rest. The bootstrap rates in this cell (6.8 conditional, 9.2 resample)
+are therefore inflated by the same draw. Reweighting the two groups to the
+long-run asymptotic rate gives roughly 5.8 and 8.3 percent, a rough figure
+that leaves the conditional arm within Monte Carlo error and the resample
+arm still above it.
+
+**4. The two directions do not get equal shares of α.** The marginal test
+rejects at about the nominal total, but the underfit tail takes more than
+half of it (2.6 to 3.4 percent against 1.8 to 2.7 for overfit). The null
+distribution of the difference is left-skewed, since gamma is bounded at 1,
+and a two-sided test on |t| splits α evenly only under symmetry. The
+asymmetry follows the skewness across cells (largest for mistargeted
+dichotomous items, smallest for polytomous items at n = 1000) and across
+items (correlation −0.79). An equal-tailed p-value would remove it. That
+change touches `.bootstrap_pvalues()`, which the other cutoff functions
+share, and is not decided.
+
+**5. Failed iterations did not affect the rate.** Some datasets kept fewer
+than 400 iterations (down to 258 in `poly_tgt_150`), because simulated
+datasets with an unobserved category are rejected. The WY rate was not
+higher in datasets with fewer iterations.
+
+**Implications.** The bootstrap test should replace the asymptotic test as
+the recommended path, and the conditional DGP is the better default for
+`RMitemRestscoreCutoff()`, at 1.2 to 1.6 times the run time of resample. The
+study used 400 iterations throughout, so it supports 400 as adequate but says
+nothing about fewer.

@@ -56,10 +56,30 @@ $\hat\theta_A$ and $\hat\theta_B$ take only as many values as there are subtest
 scores and the null is a distribution over $(k_A+1) \times (k_B+1)$ cells.
 
 Conditional independence, which is what makes the enumeration possible, also
-carries over. In the change case the two occasions were independent given
-$\theta$ because they were separate administrations. Here the item sets are
-disjoint, so local independence gives $P(r_A, r_B \mid \theta) = P(r_A \mid
-\theta)\,P(r_B \mid \theta)$.
+carries over, but it has a different standing in the two settings. In the change
+case it is an auxiliary assumption. The null there is that $\theta$ did not
+move, and carry-over between two administrations of the same items can be
+present while $\theta$ is fixed, so separate administration does not deliver
+conditional independence on its own. `dev/rci_exact_null.qmd` has a section on
+what happens when it fails. Here the item sets are disjoint, so local
+independence gives $P(r_A, r_B \mid \theta) = P(r_A \mid \theta)\,P(r_B \mid
+\theta)$, and that statement is the null hypothesis rather than a condition
+attached to it. A failure is what the protocol exists to detect, so enumerating
+under it is the right move.
+
+What the protocol cannot do is say which kind of failure it found. Marais and
+Andrich [@marais2008a] separate **trait dependence**, where a person parameter
+beyond $\theta$ enters the responses, from **response dependence**, where the
+response to one item governs the response to another. Only the first is
+multidimensionality. Two locally dependent items in the same subtest reduce the
+information that subtest carries below what the model assumes, so $SE_A$
+understates the spread of $\hat\theta_A$ and $|t|$ is inflated, pushing the
+protocol toward rejection in the same way a second dimension would. That follows
+from the information rather than from anything measured here. It leaves the size
+calculations below untouched, since those hold under a null with no dependence
+of either kind, but it bears on what a rejection supports: that the item set
+fails local independence, not the stronger claim of multidimensionality that the
+procedure's name carries.
 
 ## Conditioning on the total score removes the latent distribution
 
@@ -76,6 +96,13 @@ assumption and no plug-in person estimate. Numerically it is easier to evaluate
 $P(r_A \mid \theta)P(r_B \mid \theta)$ at any convenient $\theta$ and normalise
 within each total score, which gives the same ratio. Invariance is checked below
 rather than assumed.
+
+Sufficiency and the recursion divide the work. Sufficiency is what makes the
+ratio free of $\theta$, and it also fixes the value of $t$ in every cell, since
+$\hat\theta$ and $SE$ are functions of the subtest score alone. Neither of
+those says what the $\gamma$ terms are, and a quantile needs them. Computing
+them is what Lord-Wingersky does, as exact combinatorics rather than
+estimation.
 
 ```{r exact-fns}
 # Thresholds: k items, ncat response categories, locations spread over
@@ -251,7 +278,7 @@ damped.
 The effective test length here is the subtest, not the scale, which is what
 makes the protocol worse than the change case rather than equivalent to it. The
 RCI note's length table reads 1.644 at 4 items, 1.725 at 6, 1.815 at 10 and
-1.868 at 20, four categories throughout. A 20-item scale splitting 10/10 is
+1.868 at 20, four categories throughout and persons from $N(0, 1.4)$. A 20-item scale splitting 10/10 is
 governed by two 10-item instruments. The published recommendation to use the
 protocol with at least 12 item response thresholds [@tennant2006; @horton2010]
 amounts to four items at four categories, which is the worst row of that

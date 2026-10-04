@@ -92,6 +92,7 @@ will not see the stream it would have seen without one. Use
 \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}}, \code{\link[=RMdimCFACutoff]{RMdimCFACutoff()}}, \code{\link[=RMdimMartinLof]{RMdimMartinLof()}},
 \code{\link[=RMdimResidualPCACutoff]{RMdimResidualPCACutoff()}}, \code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}},
 \code{\link[=RMitemInfitCutoffMI]{RMitemInfitCutoffMI()}}, \code{\link[=RMitemRestscoreBoot]{RMitemRestscoreBoot()}},
+\code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}},
 \code{\link[=RMlocdepGammaCutoff]{RMlocdepGammaCutoff()}}, \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}, \code{\link[=RMpersonFit]{RMpersonFit()}} and
 \code{\link[=RMreliability]{RMreliability()}}.
 

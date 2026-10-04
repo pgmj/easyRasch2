@@ -1,0 +1,45 @@
+[31m
+
+processing file: dif_partgam_fast_validation.qmd
+[39m1/11             
+2/11 [setup]     
+3/11             
+4/11 [cases]     
+5/11             
+6/11 [run-matrix]
+7/11             
+8/11 [sign-check]
+9/11             
+10/11 [timing]    
+11/11             
+[31moutput file: dif_partgam_fast_validation.knit.md
+
+[39m[1mpandoc [22m
+  to: typst
+  output-file: dif_partgam_fast_validation.typ
+  standalone: true
+  shift-heading-level-by: -1
+  default-image-extension: svg
+  wrap: none
+  citeproc: false
+  toc: true
+  toc-depth: 2
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  papersize: a4
+  margin:
+    x: 2.8cm
+    'y': 2cm
+  fontsize: 10.5pt
+  title: Vectorised partial gamma for DIF
+  subtitle: Validation against iarm::partgam_DIF() before any package change
+  author: Magnus Johansson
+  date: today
+  
+[typst]: Compiling dif_partgam_fast_validation.typ to dif_partgam_fast_validation.pdf...DONE
+
+Output created: dif_partgam_fast_validation.pdf
+

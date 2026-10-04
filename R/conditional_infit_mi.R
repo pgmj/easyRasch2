@@ -165,6 +165,7 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable", sort) {
   cutoff_method <- NULL
   cutoff_hdci_width <- NULL
   cutoff_n_imp <- NULL
+  cutoff_sample_n <- NULL
   if (!is.null(cutoff)) {
     if (
       is.list(cutoff) &&
@@ -175,6 +176,7 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable", sort) {
       cutoff_method <- cutoff$cutoff_method
       cutoff_hdci_width <- cutoff$hdci_width
       cutoff_n_imp <- cutoff$n_imputations
+      cutoff_sample_n <- cutoff$sample_n
       cutoff <- cutoff$item_cutoffs
     }
     if (!is.data.frame(cutoff)) {
@@ -282,6 +284,16 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable", sort) {
       call. = FALSE
     )
   }
+
+  # Imputed datasets have no missing values, so the sample is every row. A
+  # cutoff from RMitemInfitCutoff() on the incomplete data was simulated at
+  # the complete-case n and is too wide for the imputed data.
+  .check_cutoff_sample(
+    cutoff_sample_n,
+    n_complete_first,
+    "RMitemInfitCutoffMI()",
+    policy = "rows per imputed dataset"
+  )
 
   successful <- per_imp[!vapply(per_imp, is.null, logical(1L))]
   m_ok <- length(successful)

@@ -85,10 +85,12 @@ test_that("RMitemInfitPlot observed overlay drops all-NA respondents", {
   set.seed(42)
   df <- as.data.frame(matrix(sample(0:2, 60 * 6, replace = TRUE), nrow = 60))
   colnames(df) <- paste0("i", 1:6)
+  # Blank the row before simulating, so the cutoff and the overlay use the
+  # same respondents and the sample-size check stays quiet.
+  df[3, ] <- NA
   simfit <- suppressWarnings(
     RMitemInfitCutoff(df, iterations = 5, parallel = FALSE, seed = 1)
   )
-  df[3, ] <- NA
 
   expect_message(p <- RMitemInfitPlot(simfit, data = df),
                  "no responses dropped")

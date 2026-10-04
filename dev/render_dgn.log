@@ -1,0 +1,49 @@
+[31m
+
+processing file: dif_gamma_null_groups.qmd
+[39m1/15             
+2/15 [setup]     
+3/15             
+4/15 [generators]
+5/15             
+6/15 [nulls]     
+7/15             
+8/15 [run]       
+9/15             
+10/15 [results]   
+11/15             
+12/15 [fig-rates] 
+13/15             
+14/15 [runtime]   
+15/15             
+[31moutput file: dif_gamma_null_groups.knit.md
+
+[39m[1mpandoc [22m
+  to: typst
+  output-file: dif_gamma_null_groups.typ
+  standalone: true
+  shift-heading-level-by: -1
+  default-image-extension: svg
+  wrap: none
+  citeproc: false
+  toc: true
+  toc-depth: 2
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  papersize: a4
+  margin:
+    x: 2.8cm
+    'y': 2cm
+  fontsize: 10.5pt
+  title: Partial gamma DIF null with unequal groups
+  subtitle: Does random group assignment in RMdifGammaCutoff() hold the error rate when groups differ in θ?
+  author: Magnus Johansson
+  date: today
+  
+[typst]: Compiling dif_gamma_null_groups.typ to dif_gamma_null_groups.pdf...DONE
+
+Output created: dif_gamma_null_groups.pdf
+

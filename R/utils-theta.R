@@ -286,7 +286,9 @@
     .estimate_prior_moments(loglik, grid)
   }
 
-  first <- fit_on(seq(-10, 10, length.out = n_nodes))
+  # The first pass only has to find the mean, so it runs on a coarser grid:
+  # its cost is linear in the node count and its answer is refined anyway.
+  first <- fit_on(seq(-10, 10, length.out = max(41L, n_nodes %/% 2L)))
   if (!is.finite(first$mean) || !is.finite(first$sd) || first$sd <= 0) {
     return(list(mean = NA_real_, sd = NA_real_))
   }
@@ -313,6 +315,17 @@
 #' keeping the same bound keeps degenerate data behaving as it did. The mean is
 #' bounded to the quadrature grid, outside which the integral is not evaluated.
 #'
+#' Two parameters mean many more objective evaluations than the SD-only search
+#' needed, so the person-by-node likelihood is exponentiated **once** per call
+#' rather than once per evaluation. Writing `E = exp(loglik - offset)`, each
+#' evaluation is then the matrix-vector product `E %*% w` with
+#' `w = dnorm(grid, mu, sigma)`, which is one BLAS call instead of a `sweep()`,
+#' a full `exp()` and a row-wise `apply()`. The offset is a fixed upper bound on
+#' each row's maximum, so the log-sum-exp stays stable without recomputing the
+#' row maxima for every candidate. On long scales a narrow candidate prior far
+#' from a respondent can still underflow every product to 0; those rows are
+#' recomputed in log space, so the objective equals the log-space one.
+#'
 #' @param loglik Person-by-node log-likelihood matrix from `.grid_loglik()`.
 #' @param grid Numeric quadrature nodes.
 #' @return A list with `mean` and `sd`.
@@ -320,15 +333,37 @@
 #' @noRd
 .estimate_prior_moments <- function(loglik, grid) {
   dgrid <- if (length(grid) > 1L) mean(diff(grid)) else 1
+
+  # Row maxima of the log-likelihood, plus the largest log-density any
+  # candidate prior can contribute, bound the row maxima of loglik + lprior
+  # from above. Subtracting that keeps every exponential at or below 1.
+  row_max_raw <- do.call(pmax, as.data.frame(loglik))
+  row_max <- row_max_raw
+  row_max[!is.finite(row_max)] <- 0
+  max_lprior <- stats::dnorm(0, 0, 0.05, log = TRUE)
+  offset <- row_max + max_lprior
+  expl <- exp(loglik - offset)
+  expl[!is.finite(expl)] <- 0
+
   neg_marg_ll <- function(par) {
-    lprior <- stats::dnorm(grid, mean = par[1L], sd = exp(par[2L]),
-                           log = TRUE)
-    M  <- sweep(loglik, 2L, lprior, `+`)
-    mx <- apply(M, 1L, max)
-    person_ll <- mx + log(rowSums(exp(M - mx)) * dgrid)
+    w <- stats::dnorm(grid, mean = par[1L], sd = exp(par[2L]))
+    person_ll <- offset + log(as.numeric(expl %*% w) * dgrid)
+    # A narrow candidate prior far from a respondent can make every product
+    # underflow to 0, giving -Inf where the log-space sum is merely very
+    # negative. Dropping such rows would make the candidate look better, so
+    # they are recomputed in log space, exactly as before the speed-up.
+    under <- !is.finite(person_ll) & is.finite(row_max_raw)
+    if (any(under)) {
+      lprior <- stats::dnorm(grid, mean = par[1L], sd = exp(par[2L]),
+                             log = TRUE)
+      M  <- sweep(loglik[under, , drop = FALSE], 2L, lprior, `+`)
+      mx <- apply(M, 1L, max)
+      person_ll[under] <- mx + log(rowSums(exp(M - mx)) * dgrid)
+    }
     out <- -sum(person_ll[is.finite(person_ll)])
     if (!is.finite(out)) .Machine$double.xmax else out
   }
+
   lo <- c(min(grid), log(0.05))
   hi <- c(max(grid), log(5))
   opt <- try(

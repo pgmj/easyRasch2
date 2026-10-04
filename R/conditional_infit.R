@@ -370,6 +370,9 @@ RMitemInfit <- function(
 
   # --- Count complete cases ---------------------------------------------------
   n_complete <- nrow(stats::na.omit(data))
+  if (!is.null(cutoff_full)) {
+    .check_cutoff_sample(cutoff_full$sample_n, n_complete, "RMitemInfitCutoff()")
+  }
   n_clause <- .n_caption(
     n_complete,
     n_total,

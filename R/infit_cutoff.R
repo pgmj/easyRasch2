@@ -260,7 +260,7 @@ RMitemInfitCutoff <- function(
   successful <- results_raw[ok]
 
   if (length(successful) == 0L) {
-    stop("All simulation iterations failed. Check your data.", call. = FALSE)
+    stop(.all_sims_failed_message(data_mat), call. = FALSE)
   }
 
   actual_iterations <- length(successful)

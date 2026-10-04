@@ -39,6 +39,8 @@ reference:
     desc: "Item-restscore correlation analysis"
     contents:
       - RMitemRestscore
+      - RMitemRestscoreCutoff
+      - RMitemRestscorePlot
       - RMitemRestscoreBoot
   - title: "Local Dependence (LD)"
     desc: "Q3 residual correlations & partial gammal LD with simulation-based cutoffs"

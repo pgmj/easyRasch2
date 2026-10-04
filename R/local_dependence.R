@@ -301,6 +301,14 @@ RMlocdepQ3 <- function(
   has_na <- anyNA(data)
   data <- .drop_empty_respondents(data)
   n_used <- nrow(data)
+  if (!is.null(cutoff_full)) {
+    .check_cutoff_sample(
+      cutoff_full$sample_n,
+      n_used,
+      "RMlocdepQ3Cutoff()",
+      policy = "respondents with at least one response"
+    )
+  }
 
   # The CML engine (psychotools) can choke or destabilise on sparse / zero-
   # variance response categories; warn (and point to estimator = "MML") before
@@ -840,7 +848,10 @@ RMlocdepQ3 <- function(
 #' @param dgp Character. Data-generating process for the parametric bootstrap.
 #'   `"resample"` (default) draws person locations by resampling the WLE
 #'   estimates with replacement and simulates responses under the model -- a
-#'   *marginal* null. `"conditional"` instead simulates each respondent's
+#'   *marginal* null. Each resampled respondent keeps their pattern of
+#'   missing responses, so incomplete data are simulated as incomplete and the
+#'   pairwise-complete \eqn{Q_3} of the null rests on as many respondents per
+#'   pair as the observed one. `"conditional"` instead simulates each respondent's
 #'   pattern from the exact Rasch conditional distribution given their observed
 #'   total score (and answered items), with item parameters fixed -- a
 #'   *conditional* null that fixes the score margin and needs no latent
@@ -1029,9 +1040,22 @@ RMlocdepQ3Cutoff <- function(
     estimator = estimator
   )
   if (dgp == "resample") {
-    # Marginal DGP: resample WLE thetas with replacement, then simulate data
+    # Marginal DGP: resample respondents with replacement, then simulate data
     # parametrically under the model (items and thetas on a common scale).
+    # A respondent carries both their WLE theta and their missingness pattern,
+    # so that incomplete respondents stay incomplete in the simulated data.
+    # The observed Q3 is a pairwise-complete correlation, and a complete
+    # simulated dataset would give every pair more respondents than the
+    # observed one has, making the null too narrow. The WLE pool keeps one
+    # finite theta per row (the mask is subset the same way), and for complete
+    # data the draws are identical to resampling the thetas directly.
     sim_data_list$thetas <- wle_thetas
+    if (anyNA(data_mat)) {
+      theta_rows <- which(is.finite(
+        .estimate_thetas(data_mat, thr_list, method = "WLE")$theta
+      ))
+      sim_data_list$na_mask <- is.na(data_mat)[theta_rows, , drop = FALSE]
+    }
     if (is_polytomous) {
       sim_data_list$deltaslist <- thr_list
     } else {
@@ -1069,7 +1093,7 @@ RMlocdepQ3Cutoff <- function(
   successful <- results_raw[ok]
 
   if (length(successful) == 0L) {
-    stop("All simulation iterations failed. Check your data.", call. = FALSE)
+    stop(.all_sims_failed_message(data_mat), call. = FALSE)
   }
 
   actual_iterations <- length(successful)
@@ -1249,28 +1273,33 @@ run_single_q3_sim <- function(seed, data_list) {
       # --- Generate one simulated dataset under the chosen DGP -----------------
       if (identical(data_list$dgp, "conditional")) {
         sim_df <- .sim_cond_dataset(data_list)
-      } else if (data_list$type == "dichotomous") {
-        thetas_res <- sample(
-          data_list$thetas,
-          size = data_list$sample_n,
-          replace = TRUE
-        )
-        sim_df <- as.data.frame(
-          psychotools::rrm(
-            theta = thetas_res,
-            beta = data_list$item_params
-          )$data
-        )
       } else {
-        thetas_res <- sample(
-          data_list$thetas,
+        # Resample respondents: row indices, so each draw carries its theta
+        # and (when the data are incomplete) its missingness pattern.
+        # sample(x, size, replace = TRUE) draws x[sample.int(length(x), ...)],
+        # so complete data reproduce the earlier theta-only draws exactly.
+        idx <- sample.int(
+          length(data_list$thetas),
           size = data_list$sample_n,
           replace = TRUE
         )
-        sim_df <- as.data.frame(sim_partial_score(
-          data_list$deltaslist,
-          thetas_res
-        ))
+        thetas_res <- data_list$thetas[idx]
+        sim_df <- if (data_list$type == "dichotomous") {
+          as.data.frame(
+            psychotools::rrm(
+              theta = thetas_res,
+              beta = data_list$item_params
+            )$data
+          )
+        } else {
+          as.data.frame(sim_partial_score(
+            data_list$deltaslist,
+            thetas_res
+          ))
+        }
+        if (!is.null(data_list$na_mask)) {
+          sim_df[data_list$na_mask[idx, , drop = FALSE]] <- NA
+        }
       }
 
       # --- Validate the simulated dataset (estimable refit) --------------------

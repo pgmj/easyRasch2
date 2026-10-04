@@ -97,6 +97,40 @@ test_that("the latent SD no longer absorbs mistargeting", {
   expect_equal(on_target$sd, 0.9, tolerance = 0.2)
 })
 
+test_that("the precomputed-exponential objective matches the log-space one", {
+  skip_on_cran()
+  # .estimate_prior_moments() exponentiates the likelihood once per call for
+  # speed. Its optimum must equal the one the original log-space objective
+  # gives, including on a long scale where a narrow prior far from a
+  # respondent underflows the fast path and the log-space fallback is used.
+  log_space <- function(loglik, grid) {
+    dgrid <- mean(diff(grid))
+    f <- function(par) {
+      lprior <- stats::dnorm(grid, par[1L], exp(par[2L]), log = TRUE)
+      M <- sweep(loglik, 2L, lprior, `+`)
+      mx <- apply(M, 1L, max)
+      pl <- mx + log(rowSums(exp(M - mx)) * dgrid)
+      out <- -sum(pl[is.finite(pl)])
+      if (!is.finite(out)) .Machine$double.xmax else out
+    }
+    opt <- stats::optim(c(0, 0), f, method = "L-BFGS-B",
+                        lower = c(min(grid), log(0.05)),
+                        upper = c(max(grid), log(5)))
+    list(mean = opt$par[1L], sd = exp(opt$par[2L]))
+  }
+  check <- function(df) {
+    dm <- as.matrix(df)
+    thr <- easyRasch2:::.fit_cml_thresholds(dm)
+    grid <- seq(-10, 10, length.out = 81L)
+    ll <- easyRasch2:::.grid_loglik(dm, easyRasch2:::.logp_tables(thr, grid),
+                                    grid)
+    expect_equal(easyRasch2:::.estimate_prior_moments(ll, grid),
+                 log_space(ll, grid), tolerance = 1e-6)
+  }
+  check(make_poly())
+  check(make_poly(n = 200, k = 150, seed = 3L, theta_sd = 1))
+})
+
 test_that("marginal reliability falls as the sample moves off target", {
   skip_on_cran()
   # Before 1.3.1 it rose, because the inflated SD entered the numerator of

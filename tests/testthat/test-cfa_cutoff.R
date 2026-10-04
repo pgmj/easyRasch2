@@ -348,3 +348,39 @@ test_that("RMdimCFAPlot rejects non-RMdimCFACutoff input", {
   expect_error(RMdimCFAPlot(list(foo = 1), data = data.frame(a = 1)),
                regexp = "must be the result returned by RMdimCFACutoff")
 })
+
+# ---------------------------------------------------------------------
+# The trimmed lavaan calls return what the full ones do
+# ---------------------------------------------------------------------
+test_that("fit indices and loadings match a full lavaan fit", {
+  skip_on_cran()
+  skip_if_not_installed("lavaan")
+  # run_single_cfa_sim() skips parameter SEs, the .robust fit indices and the
+  # SEs of the standardized solution, none of which the package reads. The
+  # values it keeps must equal those from a default fit.
+  set.seed(2)
+  df <- as.data.frame(
+    sim_partial_score(
+      lapply(seq(-1.2, 1.2, length.out = 6), function(l) l + c(-0.8, 0, 0.8)),
+      stats::rnorm(300)
+    )
+  )
+  nm <- paste0("V", 1:6)
+  colnames(df) <- nm
+  fit <- suppressWarnings(lavaan::cfa(
+    paste0("F1 =~ ", paste(nm, collapse = " + ")),
+    data = df, ordered = nm, estimator = "WLSMV", warn = FALSE
+  ))
+  fm <- lavaan::fitMeasures(fit)
+  ss <- lavaan::standardizedSolution(fit)
+  full_loadings <- ss$est.std[ss$op == "=~"]
+
+  res <- run_single_cfa_sim(
+    1L,
+    data_list = list(item_names = nm, estimator = "WLSMV"),
+    obs_data = df
+  )
+  expect_equal(res$fit,
+               unname(c(fm[["cfi.scaled"]], fm[["rmsea.scaled"]], fm[["srmr"]])))
+  expect_equal(unname(res$loadings), full_loadings)
+})

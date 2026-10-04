@@ -3,6 +3,7 @@ title: "An exact null for the Rasch change index"
 subtitle: "Why the RCI critical value is not 1.96, and how to compute it without simulating"
 author: "Magnus Johansson"
 date: today
+bibliography: rci-refs.bib
 ---
 
 ```{r setup}
@@ -22,7 +23,9 @@ library(knitr)
 
 $$RCI = \frac{\hat\theta_2 - \hat\theta_1}{\sqrt{SE(\hat\theta_1)^2 + SE(\hat\theta_2)^2}}$$
 
-is not standard normal under the null when the scale is short (or, as we will see, when the scale is < ~80 items). This note shows
+is not standard normal under the null. The departure is largest on short
+scales and fades only slowly, so that even at 60 items with four response
+categories the critical value is still around 1.93. This note shows
 that the null does not need simulating at all: for complete data it can be
 enumerated exactly. It also records what the exact critical value does across
 test length, sample skew and targeting, and one consequence for the RCI as a
@@ -36,9 +39,9 @@ Two mechanisms, both weakening as test information grows.
 deterministic functions of the realised scores, so the denominator is not
 independent of the numerator. A respondent who moves to an extreme score
 produces a large numerator and a large denominator together, and the ratio is
-damped. Both tails of the null are pulled in, so the critical value sits
-**below** 1.96. In a t-test the denominator is independent of the numerator;
-here it is not, which is why the t reference does not help either.
+damped. Both tails of the null are pulled in, so the critical value falls
+**below** 1.96. In a t-test the denominator is independent of the numerator.
+Here it is not, which is why the t reference does not help either.
 
 **Discreteness.** With complete data the sum score is sufficient, so
 $\hat\theta$ takes only as many values as there are scores and the null is
@@ -52,6 +55,18 @@ follows from the Lord-Wingersky recursion. Under the null the two occasions are
 independent given $\theta$, so the joint is $P(r_1 \mid \theta)P(r_2 \mid
 \theta)$ and the whole null is a discrete distribution over $(k+1)^2$ score
 pairs. For six items with four response categories that is 361 cells.
+
+The two ingredients do different jobs and the enumeration needs both.
+Sufficiency fixes the **value** of the statistic in every cell, because
+$\hat\theta$ and $SE$ are functions of the score alone, and no probability
+enters that map. A quantile also needs the **weight** on each cell, which is
+$P(r \mid \theta)$, and that is not deterministic. Lord-Wingersky computes it
+rather than estimating it: the recursion is the elementary symmetric function
+identity in probability form, the same object CML estimation runs on, and it
+replaces an enumeration over $\prod_i (m_i + 1)$ response patterns, 4096 here
+and around $10^{12}$ at twenty items. Nothing in this note is simulated, which
+is what "exact" refers to. Nor is there a closed-form expression for the
+critical value. It is read off the enumerated distribution as a quantile.
 
 ```{r exact-fns}
 # One threshold constructor for the whole note: k items, ncat response
@@ -107,6 +122,10 @@ Run by `dev/` scratch scripts at `sim_iter` 2000 to 4000, n = 200, alpha = .05
 two-sided. The simulated and exact values agree to within Monte Carlo error in
 every configuration tried, including dichotomous items, items with unequal
 category counts, a right-skewed person distribution and a badly off-target one.
+Each configuration was run on its own simulated sample, so the values are not
+comparable with the length table below, which uses a different person
+distribution. The 12-item row sitting near the 20-item value there is an
+instance of that, not a property of test length.
 
 | configuration | simulated | exact | difference |
 |---|---|---|---|
@@ -138,10 +157,19 @@ tab <- t(vapply(c(4, 6, 10, 20, 40), function(k) {
 kable(tab, digits = 3, col.names = c("Items", "Critical value"))
 ```
 
-Monotone in test length, converging on 1.96, with the number of response
-categories held at four throughout. Referring the RCI to a normal null is
+Person locations are a sample of 400 from $N(0, 1.4)$, and the number of
+response categories is held at four throughout. The critical value is monotone
+in test length, converging on 1.96. Referring the RCI to a normal null is
 therefore conservative, and increasingly so the shorter the scale. At six items
-and four categories, using 1.96 instead of 1.695 is a materially stricter test.
+and four categories, using 1.96 instead of 1.725 is a materially stricter test.
+
+The convergence is slow. Extending the same setup, integrated over $N(0, 1.4)$
+by quadrature rather than sampled, the value is 1.933 at 60 items, 1.949 at 200
+and 1.956 at 600, and does not reach 1.96 in that range. It is within 0.03 of
+1.96 from about 60 items, where the size of a 1.96 test is roughly .047 and the
+difference no longer matters. Dichotomous items converge more slowly and not
+monotonically, because of discreteness: 1.734 at 10 items, 1.720 at 20, 1.926
+at 100 and 1.953 at 600. Computed in `dev/rci_crit_by_length.R`.
 
 Response categories have to be reported alongside item count, because a
 six-item scale with three categories and one with seven are not comparable
@@ -166,7 +194,7 @@ kable(cats, digits = 3,
 Reliability climbs steeply with categories, from about .60 at two to about .91
 at seven. The critical value does not follow it. Almost all of its movement is
 the step from dichotomous to polytomous, after which it is close to flat. So
-categories buy precision without much changing how far the null sits from
+categories add precision without much changing how far the null lies from
 1.96, while items move both. There is a section below with further discussion on reliability and conditional reliability.
 
 ## Skew and targeting
@@ -174,13 +202,85 @@ categories buy precision without much changing how far the null sits from
 Sample skew on its own barely moves the pooled critical value: the skewed and
 symmetric rows above agree to the third decimal in five of seven configurations.
 Targeting is what matters. Pushing the same skewed distribution 2.2 logits off
-target, so that 39.5% of respondents sit at an extreme score at one occasion or
+target, so that 39.5% of respondents are at an extreme score at one occasion or
 the other, drops the critical value from 1.695 to 1.522. The mechanism is the
 self-normalisation above: a floor-bound sample is located primarily where the
 statistic is most heavily damped.
 
 This also means the pooled critical value is a property of the sample as well as
 the items, which is worth stating wherever it is reported.
+
+Recalibrating on each sample, which is what the function does, keeps the test
+close to its nominal level even when targeting is poor. **Carrying a critical
+value across samples does not.** Applying a value calibrated on a well-targeted
+sample to one sitting two logits off target gave a realised size of .028 against
+a nominal .05 on six items, where recalibrating on that sample held .042. Quote
+the value with the sample it came from, and recalibrate rather than reusing a
+published figure.
+
+## Can the sample dependence be removed?
+
+Conditioning on the total score is what removed the latent distribution from the
+subtest problem in the companion note, and the same argument applies here. Under
+the null the two occasions are independent given $\theta$ and use the same
+items, so
+
+$$P(r_1 = a \mid r_1 + r_2 = s) = \frac{\gamma(a)\,\gamma(s-a)}{\gamma_2(s)}$$
+
+where $\gamma_2$ is the elementary symmetric function of the item set counted
+twice. The ratio is free of $\theta$, verified to between 2.2e-16 and 3.9e-16
+across four configurations including dichotomous and mixed-category scales. A
+per-respondent null is therefore available with no latent density and no plug-in
+person estimate.
+
+It is not worth using. Conditioning on the total leaves few attainable pairs, so
+the discrete test falls short of its nominal level. Mean achievable size at
+$\alpha = .05$, weighted by the two-occasion score distribution of an $N(0, 1)$
+sample:
+
+| Scale | strict p | mid-p | cannot reject (%) |
+|---|---|---|---|
+| 6 items, 4 cat | 0.0174 | 0.0493 | 1.4 |
+| 12 items, 4 cat | 0.0260 | 0.0524 | 0.2 |
+| 20 items, 4 cat | 0.0312 | 0.0526 | 0.0 |
+| 20 items, 2 cat | 0.0261 | 0.0341 | 1.2 |
+| 40 items, 4 cat | 0.0335 | 0.0482 | 0.0 |
+
+A mid-p correction recovers the level, overshooting slightly on the middle
+scales. The degeneracy is minor: respondents whose total admits no rejection
+whatever are at most 1.4 percent of an on-target sample, because extreme totals
+are rare.
+
+What settles it is that neither version improves on what the function already
+does. The case with no sample to pool over, and the one this construction was
+meant to serve, is a single respondent measured against external item
+parameters. Exact size given that respondent's true location, six items with
+four categories:
+
+| true $\theta$ | plug-in | strict | mid-p |
+|---|---|---|---|
+| -3 | .0195 | .0080 | .0265 |
+| -2 | .0492 | .0196 | .0355 |
+| -1 | .0473 | .0163 | .0489 |
+| 0 | .0428 | .0184 | .0540 |
+| +2 | .0492 | .0196 | .0355 |
+| +3 | .0195 | .0080 | .0265 |
+
+The plug-in holds between .043 and .051 through the middle of the scale and
+turns conservative only in the tails, where the scale runs out of scores. Exact
+power at a true location of zero on twenty items tells the same story: at a
+change of one logit it is .618 for the plug-in, .626 for mid-p and .537 for
+strict, and mid-p's small edge tracks its slightly larger size rather than any
+real gain.
+
+The negative result is worth recording because it accounts for something this
+note otherwise reports without explanation. The conditional null given the total
+does not depend on $\theta$ at all, so an error in a plug-in $\hat\theta$
+reaches the critical value only through the weighting. That is why
+`conditional_crit = TRUE` performs as well as it does from a single respondent's
+own two estimates, and why the pooled default survives poor targeting once it is
+recalibrated. The default is unchanged. Worked out in
+`dev/conditional_total_null.R`.
 
 ## A consequence for the RCI as a statistic
 
@@ -199,7 +299,7 @@ on it here, but it shows that the RCI is a standardised distance from the null
 rather than a measure of change, and should not be read as the latter.
 
 The constructive version: since the critical value has to be computed from the
-item parameters anyway, the normalisation buys nothing that a location-specific
+item parameters anyway, the normalisation adds nothing that a location-specific
 threshold on the raw change would not. The same enumeration gives the null of
 $\hat\theta_2 - \hat\theta_1$ directly, so a conditional critical **change**, in
 logits, is available at no extra cost and is monotone in what happened. That is
@@ -221,7 +321,7 @@ figure contradicted the table it accompanied.
 The mechanism shows in the worst case. A respondent moving from $\theta_1 =
 1.23$ to $\theta_2 = 3.62$ had a band built on $SE_{diff} = 0.79$, because
 information is high at 1.23, while the test used 1.56, because the follow-up
-score sits at the ceiling. The band was about half the width it should have
+score is at the ceiling. The band was about half the width it should have
 been, in precisely the case the figure exists to display: a large change landing
 near a boundary.
 
@@ -329,7 +429,7 @@ curve. `RMreliabilityCurve()` returns it as the `marginal_ratio` attribute, and
 the two agree to machine precision whenever both are given the same data and the
 same calibration.
 
-A single coefficient hides where that precision sits, which is the same point
+A single coefficient hides where that precision lies, which is the same point
 the stepped band makes in the change figure.
 
 ```{r reliability-curve}
@@ -349,9 +449,205 @@ RMreliabilityCurve(t1, statistic = "reliability", benchmark = 0.8)
 ```
 
 Read Figure 1 and 2 together. Where this curve is high the band in the change
-figure is narrow and a modest change is detectable; where it falls away the band
+figure is narrow and a modest change is detectable. Where it falls away the band
 widens and only a large change clears it. The band narrowing again at the very
 extremes is not precision returning, it is the scale running out of scores.
+
+## Response dependence between occasions
+
+Everything above assumes the two occasions are independent given $\theta$. That
+is a conditional statement, and it is compatible with the two estimates being
+strongly correlated marginally, which they are. Both measure the same person,
+and that shared $\theta$ is what makes their difference interpretable. The
+assumption concerns what is left once $\theta$ is accounted for.
+
+What it rules out is carry-over: a time-2 answer depending on the time-1 answer
+to the same item beyond what $\theta$ explains. Administering the occasions
+separately does not deliver conditional independence on its own.
+Marais [@marais2009] models the failure by shifting the time-2 difficulty of item $j$ by
+$(1 - 2x_{j1})d$, so a positive response at time 1 makes that item easier at
+time 2 and a negative one makes it harder. Marais and Andrich [@marais2008a] separate this
+**response dependence** from **trait dependence**, which is multidimensionality.
+Only the second is a failure of unidimensionality, and the two call for
+different remedies.
+
+This matters here in a way it does not for the companion note on the PCA/t-test
+protocol. There, conditional independence between the two item subsets is the
+null hypothesis, so a failure of it is what the test exists to detect. Here it
+is an auxiliary assumption: the null is that $\theta$ did not change, and
+carry-over can be present while $\theta$ is fixed.
+
+```{r carryover-setup}
+#| echo: true
+# Marais's model, generalised to polytomous items by shifting every threshold
+# of item j by (1 - 2 * x_j1 / m_j) * d, which reduces to her dichotomous form
+# when m_j = 1. Shifting all thresholds by s is the same as shifting theta by
+# -s, so the shift is applied as an effective theta.
+rpcm <- function(theta_eff, thr) {
+  m <- length(thr)
+  num <- matrix(0, length(theta_eff), m + 1L); cs <- cumsum(thr)
+  for (k in seq_len(m)) num[, k + 1L] <- k * theta_eff - cs[k]
+  num <- exp(num - apply(num, 1L, max))
+  cp <- t(apply(num / rowSums(num), 1L, cumsum))
+  max.col(cp >= runif(length(theta_eff)), ties.method = "first") - 1L
+}
+
+sim_pair <- function(thr_list, theta1, theta2, d = 0) {
+  k <- length(thr_list); n <- length(theta1)
+  mj <- vapply(thr_list, length, integer(1L))
+  x1 <- vapply(seq_len(k), function(j) rpcm(theta1, thr_list[[j]]), integer(n))
+  sh <- if (d == 0) matrix(0, n, k) else (1 - 2 * sweep(x1, 2L, mj, "/")) * d
+  x2 <- vapply(seq_len(k), function(j)
+          rpcm(theta2 - sh[, j], thr_list[[j]]), integer(n))
+  list(t1 = x1, t2 = x2)
+}
+
+# Wider item spread than mk() above, following Marais's [-2.5, 2.5]
+mk_wide <- function(k, ncat) {
+  lapply(seq(-2.5, 2.5, length.out = k),
+         function(b) b + seq(-0.9, 0.9, length.out = ncat - 1L))
+}
+
+score_lut <- function(thr_list) {
+  steps <- vapply(thr_list, length, integer(1L))
+  vapply(0:sum(steps), function(r)
+    easyRasch2:::.theta_wle(easyRasch2:::.score_pattern(r, steps),
+                            thr_list, c(-10, 10)), numeric(2L))[1L, ]
+}
+```
+
+The mechanism is easiest to see with no true change at all. Holding every
+respondent at one location and generating both occasions from it, the mean
+observed change should be zero at every location, and is when $d = 0$. Twenty
+items, four categories, item locations over [-2.5, 2.5], 4000 respondents per
+cell, change in logits.
+
+```{r drift}
+#| echo: true
+set.seed(808)
+thr_d <- mk_wide(20, 4); th_lut <- score_lut(thr_d)
+grid_t <- seq(-2.5, 2.5, by = 0.5)
+drift <- sapply(c(0, 0.5, 1, 1.5), function(d)
+  sapply(grid_t, function(t0) {
+    p <- sim_pair(thr_d, rep(t0, 4000), rep(t0, 4000), d = d)
+    mean(th_lut[rowSums(p$t2) + 1L] - th_lut[rowSums(p$t1) + 1L])
+  }))
+dimnames(drift) <- list(sprintf("%.1f", grid_t),
+                        paste0("d = ", c(0, 0.5, 1, 1.5)))
+kable(drift, digits = 3)
+```
+
+Carry-over produces an antisymmetric **outward drift**: zero at the item mean,
+pushing respondents further out the further out they already are, and reaching
+almost half a logit at the ends by $d = 1.5$. This is the individual-level
+mechanism behind the group-level result Marais reports [@marais2009], where easy items
+put the sample above the item mean, everyone drifts up, and a group mean shows
+change that did not happen.
+
+### What it does to the test
+
+The remaining results come from `dev/carryover_dependence.R`, which is not run
+at render time. That script also validates the generator against Marais's
+published Table 4, reproducing her mean same-item residual correlations of
+-0.01, 0.14, 0.31 and 0.47 as -0.02, 0.13, 0.28 and 0.44.
+
+With no true change, and critical values calibrated under independence as this
+note recommends, the test becomes conservative rather than liberal. The
+standard deviation of the RCI falls from about 0.97 to between 0.63 and 0.73,
+so the exact critical values are too wide for the null actually in force.
+Type I error against a nominal .05, on-target sample:
+
+| Scale | d = 0 | d = 0.5 | d = 1 | d = 1.5 |
+|---|---|---|---|---|
+| 20 items, 4 cat | .0487 | .0267 | .0133 | .0074 |
+| 6 items, 4 cat | .0509 | .0261 | .0121 | .0056 |
+| 25 items, 2 cat | .0488 | .0262 | .0103 | .0032 |
+
+The direction of the false positives is the part that does damage. At $d = 0$
+they split evenly, as they must. As dependence grows they polarise, because the
+drift carries each respondent away from the item mean and the sign of that
+movement is fixed by where the respondent already was. Twenty items with four
+categories, on target:
+
+| d | share "increase" among those above the items | share "decrease" among those below |
+|---|---|---|
+| 0 | 0.51 | 0.49 |
+| 0.5 | 0.75 | 0.75 |
+| 1.0 | 0.88 | 0.89 |
+| 1.5 | 0.97 | 1.00 |
+
+With a real change the same drift manufactures a severity gradient. Simulating
+a uniform improvement of 0.5 logits for every respondent on twenty items with
+four categories, the estimated change in logits comes out as:
+
+| d | overall | below items | near items | above items | above - below |
+|---|---|---|---|---|---|
+| 0 | 0.498 | 0.497 | 0.498 | 0.496 | -0.001 |
+| 0.5 | 0.436 | 0.349 | 0.431 | 0.544 | 0.195 |
+| 1.0 | 0.374 | 0.225 | 0.368 | 0.551 | 0.326 |
+| 1.5 | 0.324 | 0.138 | 0.316 | 0.547 | 0.409 |
+
+A flat treatment effect reads as a 0.41 logit gradient in baseline severity, and
+a reader with no access to $d$ has no way to tell that apart from a real
+interaction between treatment and baseline. Power falls at the same time, from
+.189 to .043 on twenty items and from .083 to .013 on six.
+
+### Why `null = "retest"` does not help
+
+`retest_sd` adds an independent occasion deviation at each administration. That
+is symmetric extra variance, and it widens an already conservative null. The
+drift above is an antisymmetric shift in the conditional mean, which extra
+variance does not touch. The two estimands in `RMpersonChange()` are both
+defined under conditional independence, so neither covers this.
+
+### Detecting it
+
+Racking the two occasions into one analysis of $2k$ items and screening the
+same-item pairs against `RMlocdepQ3Cutoff()` finds it well below the level that
+does damage. Twenty items, four categories, $n = 500$:
+
+| d | pairs flagged of 20 | runs flagging any |
+|---|---|---|
+| 0 | 0.0 | 0% |
+| 0.5 | 3.3 | 100% |
+| 1.0 | 14.2 | 100% |
+
+Marais [@marais2009] judged $d = 0.5$ likely to pass unnoticed and $d = 1$
+possibly so, working from raw residual correlations and from differential item
+functioning by occasion, neither of which carried a calibrated reference.
+Against a simulation-based cutoff the lowest level she studied is caught in all
+25 runs, with a clean zero under the null. Her conclusion about detectability
+reflects the diagnostics available at the time rather than a limit of the data.
+
+Two details decide whether this works in practice. **The statistic has to be
+centred on the cross-occasion pairs**, not Yen-corrected against every pair.
+Subtracting the mean of all off-diagonal $Q3$ mixes within-occasion pairs into
+the reference and costs power: at $d = 0.5$ the two centrings detect in 96 and
+100 percent of runs respectively, and the gap widens when real change is also
+present.
+
+**Heterogeneous true change does not masquerade as carry-over**, which was the
+objection worth settling before recommending the screen at all. Both act on the
+cross-occasion block, so it is not obvious on paper that they separate. They do,
+because carry-over is item-specific and change is not:
+
+| condition | same-item | other cross-occasion | contrast | within-occasion |
+|---|---|---|---|---|
+| no change, no carry-over | -0.004 | 0.000 | -0.004 | 0.000 |
+| uniform change +0.5 | -0.004 | 0.000 | -0.004 | 0.000 |
+| change SD 0.6 | -0.039 | -0.034 | -0.005 | 0.036 |
+| carry-over d = 0.5 | 0.147 | -0.005 | 0.152 | -0.004 |
+| carry-over d = 1.0 | 0.274 | -0.008 | 0.281 | -0.007 |
+| both, d = 1 and SD 0.6 | 0.224 | -0.032 | 0.255 | 0.020 |
+
+Uniform change is absorbed into the time-2 item locations and leaves no trace,
+which is the property Marais relies on for the rack analysis. Change that varies
+between respondents is a second person dimension: it lifts the within-occasion
+pairs, depresses the cross-occasion block as a whole, and leaves the contrast
+flat. Carry-over lifts the same-item pairs and nothing else. When both are
+present the two signatures add without interfering. Screened against the
+simulated cutoff, no run out of five flagged a single pair under heterogeneous
+change at SD 0.6 or SD 1.0, so the screen does not confuse the two.
 
 ## Scope and limits
 
@@ -365,6 +661,9 @@ extremes is not precision returning, it is the scale running out of scores.
   sum score.
 * Validated here for WLE with CML thresholds. Not yet checked against MML item
   parameters.
+* **Conditional independence between occasions is assumed, not tested.** The
+  enumeration is correct under it and says nothing about carry-over. See the
+  section above, and screen for it before relying on a change verdict.
 
 ## Implemented
 
@@ -389,7 +688,7 @@ per-respondent critical value from simulation rests on `sim_iter` draws, roughly
 25 of which land in each tail at alpha = .05, whereas $P(r \mid \theta_i)$ is
 available per respondent for free.
 
-It would also sharpen the planned simulation study, whose first aim is the
+It would also improve the planned simulation study, whose first aim is the
 realised Type I error of the simulated critical value. Much of the noise in that
 comparison disappears if the reference is exact.
 

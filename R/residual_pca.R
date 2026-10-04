@@ -175,6 +175,14 @@ RMdimResidualPCA <- function(
     }
   }
 
+  if (!is.null(cutoff_full)) {
+    .check_cutoff_sample(
+      cutoff_full$sample_n,
+      nrow(data),
+      "RMdimResidualPCACutoff()"
+    )
+  }
+
   # --- p-value prerequisites --------------------------------------------------
   if (p_value) {
     if (is.null(cutoff_full) || is.null(cutoff_full$results)) {
@@ -640,8 +648,7 @@ RMdimResidualPCACutoff <- function(
       "(no message captured)"
     }
     stop(
-      "All simulation iterations failed. Example: ",
-      sample_msg,
+      .all_sims_failed_message(data_mat, paste0("Example: ", sample_msg)),
       call. = FALSE
     )
   }

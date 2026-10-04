@@ -1,0 +1,306 @@
+---
+title: "Uniform-shift CML for DIF"
+subtitle: "Validation of the prototype estimator behind the planned RMdifImpact()"
+author: "Magnus Johansson"
+date: today
+params:
+  run_recovery: false
+---
+
+## Purpose
+
+The planned DIF impact function (`dev/dif-impact-design.md`, Part B) needs a
+split model in which each DIF item has its own location in each group while
+the remaining items anchor the scale. `psychotools::pcmodel()` cannot fit an
+item-split dataset (see `dev/psychotools-na-bug/`), and a free split has two
+further drawbacks. It adds one parameter per threshold instead of one per item,
+and it fails when a category is empty in one group.
+
+The prototype in `dev/dif_shift_cml.R` fits a **uniform-shift** model instead.
+Item thresholds are shared, and group 2 has every threshold of a DIF item
+shifted by $d_i$. With two groups the conditional likelihood is the sum of the
+two groups' PCM conditional likelihoods, so it is built from category counts
+and score distributions per group and the elementary symmetric functions from
+`psychotools::elementary_symmetric_functions()`.
+
+This note checks four things before the estimator is used anywhere else:
+
+1. With no DIF items it reproduces `pcmodel()`.
+2. The analytic gradient matches numerical derivatives.
+3. With one DIF item and a large sample it agrees with a free split (patched
+   `pcmodel()` and `eRm::PCM()`), and it fits a category that is empty in one
+   group, where the free split cannot.
+4. Recovery: bias, SE calibration and CI coverage of $\hat d$ by group size
+   and item location. This part is a simulation and runs only with
+   `params$run_recovery = TRUE`.
+
+```{r}
+#| label: setup
+library(psychotools)
+source("dif_shift_cml.R")
+set.seed(20261003)
+
+thr_items <- function(locs, steps) {
+  out <- lapply(locs, function(l) l + steps)
+  names(out) <- paste0("I", seq_along(locs))
+  out
+}
+```
+
+## 1. No DIF items: agreement with `pcmodel()`
+
+With an empty DIF set the shift model is the pooled PCM, and the group split
+does not change the conditional likelihood. The fit must match `pcmodel()`
+to optimiser tolerance.
+
+```{r}
+#| label: v1
+v1_cases <- list(
+  dich_k10_n300 = list(n = 300, thr = thr_items(seq(-2, 2, length.out = 10), 0)),
+  poly3_k8_n500 = list(n = 500, thr = thr_items(seq(-1.5, 1.5, length.out = 8), c(-0.5, 0.5))),
+  poly5_k6_n200 = list(n = 200, thr = thr_items(seq(-1, 1, length.out = 6), c(-1.2, -0.4, 0.4, 1.2))),
+  mixed_k7_n400 = list(n = 400, thr = c(
+    thr_items(c(-1, 0, 1), 0),
+    setNames(thr_items(c(-0.5, 0.5), c(-0.6, 0.6)), c("I4", "I5")),
+    setNames(thr_items(c(-0.8, 0.8), c(-1, 0, 1)), c("I6", "I7"))
+  ))
+)
+v1 <- do.call(rbind, lapply(names(v1_cases), function(nm) {
+  cs <- v1_cases[[nm]]
+  s <- sim_dif(cs$n / 2, cs$n / 2, cs$thr)
+  f <- shift_cml(s$X, s$g, hessian = FALSE)
+  p <- pcmodel(s$X, nullcats = "downcode")
+  data.frame(
+    case = nm,
+    loglik_diff = f$loglik - as.numeric(logLik(p)),
+    max_par_diff = max(abs(f$psi[-1] - coef(p))),
+    convergence = f$convergence
+  )
+}))
+v1
+```
+
+## 2. Gradient check
+
+Central differences with step $10^{-6}$ at random parameter values, with two
+DIF items, for dichotomous and polytomous data.
+
+```{r}
+#| label: v4
+grad_check <- function(s, dif) {
+  prep <- .shift_prep(s$X, s$g, dif)
+  par <- rnorm(prep$P - 1L + length(prep$dif_items), 0, 0.5)
+  h <- 1e-6
+  num <- vapply(seq_along(par), function(i) {
+    e <- replace(numeric(length(par)), i, h)
+    (.shift_negll(par + e, prep) - .shift_negll(par - e, prep)) / (2 * h)
+  }, numeric(1))
+  ana <- .shift_grad(par, prep)
+  c(max_abs = max(abs(num - ana)), max_rel = max(abs(num - ana) / pmax(1, abs(ana))))
+}
+s_d <- sim_dif(300, 300, v1_cases$dich_k10_n300$thr, dif = c(I3 = 0.5))
+s_p <- sim_dif(300, 300, v1_cases$poly5_k6_n200$thr, dif = c(I2 = 0.5))
+rbind(
+  dich = grad_check(s_d, c("I3", "I7")),
+  poly = grad_check(s_p, c("I2", "I5"))
+)
+```
+
+## 3. Agreement with a free split, and the sparse case
+
+### Large sample, uniform DIF
+
+Eight items with three categories, $n$ = 2000 per group, group 2 0.5 SD
+higher, $d = 0.8$ on I4. The free split fits I4 as two columns. Its mean
+threshold difference should agree closely with $\hat d$, and its
+log-likelihood can only be higher, since the shift model is nested in it.
+
+```{r}
+#| label: v2
+thr8 <- thr_items(seq(-1.5, 1.5, length.out = 8), c(-0.5, 0.5))
+s <- sim_dif(2000, 2000, thr8, dif = c(I4 = 0.8), mu2 = 0.5)
+f_shift <- shift_cml(s$X, s$g, "I4")
+sp <- split_items(s$X, s$g, "I4")
+f_free <- pcmodel_fixed(sp)
+tp <- threshpar(f_free)
+e_free <- eRm::PCM(sp)
+te <- eRm::thresholds(e_free)$threshtable[[1]]
+lr <- 2 * (as.numeric(logLik(f_free)) - f_shift$loglik)
+data.frame(
+  estimate = c("shift d-hat", "free split, pcmodel (patched)", "free split, eRm"),
+  d = c(f_shift$d, mean(tp$I4_g2 - tp$I4_g1), mean(te["I4_g2", -1] - te["I4_g1", -1])),
+  se = c(f_shift$se_d, NA, NA),
+  loglik = c(f_shift$loglik, as.numeric(logLik(f_free)), as.numeric(e_free$loglik))
+)
+c(LR_free_vs_shift = lr, df = 1, p = pchisq(lr, df = 1, lower.tail = FALSE))
+```
+
+The eRm log-likelihood is on a different constant from psychotools and is
+shown for completeness only. The LR statistic compares the two psychotools
+fits. Under a uniform-shift generating model it should be unremarkable.
+
+### Large sample, threshold-specific DIF
+
+The same design with only the second threshold of I4 shifted (by 0.8). Now
+the shift model is wrong for I4, the free split is right, and the LR test
+should detect it. This is the DSF case left for a later version, and this
+check shows what the shift model averages over.
+
+```{r}
+#| label: v2b
+thr_dsf <- thr8
+s2 <- sim_dif(2000, 2000, thr8, mu2 = 0.5)
+# Rebuild group 2 for I4 with only the upper threshold shifted.
+g2 <- s2$g == "g2"
+s2$X[g2, "I4"] <- sim_pcm(s2$theta[g2], list(I4 = thr8$I4 + c(0, 0.8)))
+f_shift2 <- shift_cml(s2$X, s2$g, "I4")
+f_free2 <- pcmodel_fixed(split_items(s2$X, s2$g, "I4"))
+tp2 <- threshpar(f_free2)
+lr2 <- 2 * (as.numeric(logLik(f_free2)) - f_shift2$loglik)
+list(
+  shift_d = f_shift2$d,
+  free_threshold_diffs = tp2$I4_g2 - tp2$I4_g1,
+  LR = c(stat = lr2, p = pchisq(lr2, df = 1, lower.tail = FALSE))
+)
+```
+
+### A category empty in one group
+
+A small focal group (n = 60) on a DIF item with four categories, where the top
+category is never used in group 2. Here the emptiness is forced by recoding
+group 2's top responses down one step, to make the demonstration
+deterministic. The shift model should still return a finite $\hat d$ with an
+SE, while the free split has no information on the top threshold in group 2.
+
+```{r}
+#| label: sparse
+thr_sp <- c(thr_items(seq(-1, 1, length.out = 7), c(-0.5, 0.5)),
+            list(I8 = 0.5 + c(-1, 0, 1)))
+s3 <- sim_dif(300, 60, thr_sp, dif = c(I8 = 0.4), mu2 = 0)
+g2 <- s3$g == "g2"
+s3$X[g2 & s3$X[, "I8"] == 3, "I8"] <- 2L
+table(group = s3$g, I8 = s3$X[, "I8"])
+
+f_sp <- shift_cml(s3$X, s3$g, "I8")
+c(d = f_sp$d, se = f_sp$se_d, convergence = f_sp$convergence)
+
+sp3 <- split_items(s3$X, s3$g, "I8")
+free_pc <- tryCatch(threshpar(pcmodel_fixed(sp3))[c("I8_g1", "I8_g2")],
+                    error = function(e) conditionMessage(e), warning = function(w) conditionMessage(w))
+free_erm <- tryCatch({
+  te3 <- eRm::thresholds(eRm::PCM(sp3))$threshtable[[1]]
+  te3[c("I8_g1", "I8_g2"), ]
+}, error = function(e) conditionMessage(e))
+list(pcmodel_free_split = free_pc, eRm_free_split = free_erm)
+```
+
+## 4. Recovery
+
+```{r}
+#| label: recovery-design
+rec_thr <- thr_items(seq(-2, 2, length.out = 8), c(-0.6, 0.6))
+rec_grid <- expand.grid(
+  sizes = c("150/150", "400/400", "600/150", "100/50"),
+  item = c("I5", "I8"), # I5 near the centre, I8 at +2 logits
+  d = c(0, 0.5),
+  stringsAsFactors = FALSE
+)
+rec_reps <- 500
+rec_file <- "dif_shift_cml_recovery.rds"
+```
+
+The design crosses four group-size splits (balanced and unbalanced), a DIF
+item near the centre of the person distribution (I5, location 0.29) or at
++2 logits (I8), and $d \in \{0, 0.5\}$. Group 1 has θ ~ N(0, 1), group 2
+θ ~ N(0.5, 1). Each of the `r nrow(rec_grid)` cells has `r rec_reps`
+replications. Outcomes: bias and empirical SD of $\hat d$, mean model SE and
+its ratio to the empirical SD, 95% Wald coverage, the share of replications
+where a category of the DIF item is empty in group 2, and failures (no
+convergence or no finite SE).
+
+```{r}
+#| label: recovery-run
+#| eval: !expr params$run_recovery
+one_rep <- function(cell, seed) {
+  set.seed(seed)
+  n <- as.integer(strsplit(cell$sizes, "/")[[1]])
+  dif <- setNames(cell$d, cell$item)
+  s <- sim_dif(n[1], n[2], rec_thr, dif = dif, mu2 = 0.5)
+  empty <- any(tabulate(s$X[s$g == "g2", cell$item] + 1L, nbins = 3L) == 0L)
+  f <- tryCatch(shift_cml(s$X, s$g, cell$item), error = function(e) NULL)
+  if (is.null(f)) return(c(d_hat = NA, se = NA, ok = 0, empty = empty))
+  c(d_hat = unname(f$d), se = unname(f$se_d),
+    ok = as.numeric(f$convergence == 0 && is.finite(f$se_d)), empty = empty)
+}
+t0 <- Sys.time()
+rec <- do.call(rbind, lapply(seq_len(nrow(rec_grid)), function(i) {
+  cell <- rec_grid[i, ]
+  res <- parallel::mclapply(seq_len(rec_reps), function(r) one_rep(cell, 1e5 * i + r),
+                            mc.cores = 10L)
+  data.frame(cell, do.call(rbind, res))
+}))
+attr(rec, "runtime") <- Sys.time() - t0
+saveRDS(rec, rec_file)
+```
+
+```{r}
+#| label: recovery-summary
+if (file.exists(rec_file)) {
+  rec <- readRDS(rec_file)
+  agg <- do.call(rbind, lapply(split(rec, rec[c("sizes", "item", "d")], drop = TRUE), function(x) {
+    y <- x[x$ok == 1, ]
+    data.frame(
+      sizes = x$sizes[1], item = x$item[1], d = x$d[1],
+      bias = mean(y$d_hat - y$d),
+      emp_sd = sd(y$d_hat),
+      mean_se = mean(y$se),
+      se_ratio = mean(y$se) / sd(y$d_hat),
+      coverage = mean(abs(y$d_hat - y$d) <= 1.96 * y$se),
+      empty_cat = mean(x$empty),
+      failed = mean(x$ok != 1)
+    )
+  }))
+  agg <- agg[order(agg$item, agg$d, agg$sizes), ]
+  rownames(agg) <- NULL
+  num <- c("bias", "emp_sd", "mean_se", "se_ratio", "coverage", "empty_cat", "failed")
+  agg[num] <- lapply(agg[num], round, 3)
+  names(agg)[names(agg) == "empty_cat"] <- "empty"
+  agg
+} else {
+  cat("Recovery not run. Render with -P run_recovery:true to run it.\n")
+}
+```
+
+## Findings
+
+Recovery run 2026-10-03, 16 cells × 500 replications, 13 seconds on 10 cores.
+The Monte Carlo SE of a coverage rate near .95 is about .010, and of the bias
+about SD/22.
+
+1. **The estimator reproduces `pcmodel()` and its gradient is right.** With no
+   DIF items the largest parameter difference is below $10^{-6}$ in all four
+   cases, and the analytic gradient agrees with central differences to below
+   $10^{-6}$.
+2. **It agrees with a free split when DIF is uniform.** At 2000 per group,
+   $\hat d$ = 0.746 against 0.745 from both the patched `pcmodel()` and eRm
+   free splits, and the LR test of the shift model against the free split is
+   unremarkable. When only one threshold carries the DIF, the LR test detects
+   it, so the shift model's adequacy can be checked against a free split
+   whenever the free split is estimable.
+3. **It handles a category that is empty in one group.** It returns a finite
+   $\hat d$ with an SE, while eRm returns `NA` for that threshold and the
+   patched `pcmodel()` drops it without notice. In the recovery run a
+   category of the off-target item was empty in the focal group in 12.4% of
+   replications at 100/50 with $d$ = 0.5, with no failures.
+4. **Recovery is good down to 100/50.** No replication failed. Bias is within
+   0.012 of zero for the central item. For the off-target item it reaches
+   0.050 at 100/50 and 0.024 at 600/150 with $d$ = 0.5, about 2.5 Monte Carlo
+   SEs, a small upward bias where the focal group is small and the item is
+   far from it. Model SEs track the empirical SD (ratio 0.93 to 1.10), and
+   Wald coverage is .928 to .968, within about 2.3 Monte Carlo SEs of .95
+   everywhere.
+
+The prototype is fit for use in the impact study. Two things to carry
+forward: the small-sample bias off target is the same direction as the
+noise-floor question (study item 3), and the SEs are good enough that a Wald
+interval for $\hat d$ can be reported directly.

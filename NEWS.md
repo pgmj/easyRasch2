@@ -1,3 +1,54 @@
+# easyRasch2 (development version)
+
+## New features
+
+- New `RMitemRestscoreCutoff()` builds a parametric bootstrap null for the
+  item-restscore test, refitting the model in every iteration, and
+  `RMitemRestscorePlot()` plots it. Passing the result to `RMitemRestscore()`
+  through its new `cutoff` argument flags items on Westfall-Young corrected
+  bootstrap p-values (`p_value`, `correction`, `alpha`, as in
+  `RMitemInfit()`). The default `dgp = "conditional"` held the nominal
+  family-wise rate in simulation, where `"resample"` was slightly liberal.
+  The asymptotic p-value from `iarm` is miscalibrated under
+  a true Rasch model: liberal for dichotomous items in small or mistargeted
+  samples, conservative for polytomous items, and too rarely flagging
+  underfit in both.
+
+  Output without `cutoff` keeps the same values, and its table caption and
+  help page now note the miscalibration. `cutoff` is now the second argument
+  of `RMitemRestscore()`, so a call passing `output` by position must name it.
+
+- Functions that take a simulation-based `cutoff` now warn when it was
+  simulated for a different sample size than the data being tested, since
+  the null distribution depends on n. `RMdifGamma()` also compares the group
+  sizes of `dif_var`. Applies to `RMitemInfit()`, `RMitemInfitMI()`,
+  `RMitemRestscore()`, `RMlocdepQ3()`, `RMlocdepGamma()`, `RMdifGamma()`,
+  `RMdimResidualPCA()`, `RMdimCFA()` and the matching `*Plot()` functions.
+  Results do not change.
+
+## Performance
+
+- The latent mean and SD behind `RMreliability()` and `RMreliabilityCurve()`
+  are estimated about 2.5 times faster, which brings `boot = TRUE` back to
+  its speed before 1.3.1. Results do not change.
+
+- `RMdimCFACutoff()`, `RMdimCFA()` and `RMdimCFAPlot()` run 1.4 to 2 times
+  faster by skipping lavaan output the package never reads (parameter SEs,
+  the .robust fit indices and SEs of the standardized loadings). Results do
+  not change.
+
+## Bug fix
+
+- `RMlocdepQ3Cutoff()` with the default `dgp = "resample"` now keeps each
+  resampled respondent's pattern of missing responses. It used to simulate
+  complete data, so with partial missingness the null gave every item pair
+  more respondents than the observed pairwise-complete Q3 had. Cutoffs were
+  too narrow and p-values too small. **Cutoffs move (wider) only for data with
+  missing responses.** Complete data and `dgp = "conditional"` give
+  identical results. At 30 percent missingness the old null flagged at least
+  one pair in 16.5 percent of datasets with no local dependence, and the
+  fix makes the cutoff several times slower there.
+
 # easyRasch2 1.3.1
 
 ## Bug fix

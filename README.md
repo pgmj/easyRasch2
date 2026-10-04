@@ -94,6 +94,8 @@ remotes::install_github("pgmj/easyRasch2")
   plot
 - `RMitemInfitMI()` + `RMitemInfitCutoffMI()` — multiple-imputation variants
 - `RMitemRestscore()` — item-restscore with Goodman-Kruskal's $\gamma$ (gamma)
+- `RMitemRestscoreCutoff()` + `RMitemRestscorePlot()` — parametric bootstrap
+  null for item-restscore, flagged on corrected bootstrap *p*-values
 - `RMitemRestscoreBoot()` — non-parametric bootstrap of item-restscore fit
 - `RMitemICCPlot()` - conditional item characteristic curves
 
@@ -148,8 +150,8 @@ remotes::install_github("pgmj/easyRasch2")
 ### Individual change
 
 - `RMpersonChange()` — per-respondent change between two occasions, with the
-  null stated explicitly and critical values simulated rather than assumed
-  normal
+  null stated explicitly and critical values from the exact null rather than
+  assumed normal
 - `RMretestSD()` — occasion-to-occasion SD from a test-retest study, the input
   to `RMpersonChange(null = "retest")`
 

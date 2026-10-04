@@ -54,6 +54,104 @@ validate_response_data <- function(data) {
   invisible(TRUE)
 }
 
+#' Response categories used only by extreme scorers
+#'
+#' CML conditions on the total score, so respondents with a zero or perfect
+#' score on the items they answered carry no information about the item
+#' parameters. A category observed only among them is empty in the data the
+#' model is estimated from: its threshold diverges, the covariance matrix of
+#' all thresholds degrades, and a parametric bootstrap built on those
+#' thresholds never generates the category again.
+#'
+#' @param data Numeric response matrix or data.frame (items from 0; `NA`
+#'   allowed). The top category of each item is its observed maximum.
+#' @return data.frame with columns `Item` and `Category`, one row per
+#'   affected category (zero rows when there are none).
+#' @keywords internal
+#' @noRd
+.extreme_only_categories <- function(data) {
+  data <- as.matrix(data)
+  empty <- data.frame(Item = character(0), Category = integer(0))
+  if (ncol(data) == 0L || all(is.na(data))) {
+    return(empty)
+  }
+  item_max <- suppressWarnings(apply(data, 2L, max, na.rm = TRUE))
+  item_max[!is.finite(item_max)] <- 0
+  answered <- !is.na(data)
+  raw <- rowSums(data, na.rm = TRUE)
+  possible <- as.numeric(answered %*% item_max)
+  extreme <- rowSums(answered) > 0L & (raw == 0 | raw == possible)
+  items <- colnames(data)
+  if (is.null(items)) {
+    items <- paste0("V", seq_len(ncol(data)))
+  }
+
+  out <- lapply(seq_len(ncol(data)), function(j) {
+    m <- item_max[j]
+    if (m < 1) {
+      return(NULL)
+    }
+    x <- data[, j]
+    all_n <- tabulate(x[!is.na(x)] + 1L, nbins = m + 1L)
+    inner_n <- tabulate(x[!is.na(x) & !extreme] + 1L, nbins = m + 1L)
+    cats <- which(all_n > 0L & inner_n == 0L) - 1L
+    if (length(cats) == 0L) {
+      return(NULL)
+    }
+    data.frame(Item = items[j], Category = as.integer(cats))
+  })
+  out <- do.call(rbind, out)
+  if (is.null(out)) empty else out
+}
+
+#' Message naming categories used only by extreme scorers
+#'
+#' @param ec Result of `.extreme_only_categories()`, at least one row.
+#' @return A single string.
+#' @keywords internal
+#' @noRd
+.extreme_only_message <- function(ec) {
+  per_item <- vapply(
+    unique(ec$Item),
+    function(it) {
+      cats <- ec$Category[ec$Item == it]
+      paste0(
+        it,
+        if (length(cats) == 1L) " (category " else " (categories ",
+        paste(cats, collapse = ", "),
+        ")"
+      )
+    },
+    character(1)
+  )
+  paste0(
+    "Response categories used only by respondents with a zero or perfect ",
+    "total score: ",
+    paste(per_item, collapse = ", "),
+    ". Conditional maximum likelihood leaves these respondents out, so the ",
+    "thresholds of these categories cannot be estimated. Consider merging ",
+    "each with its adjacent category."
+  )
+}
+
+#' Error message when every simulation iteration failed
+#'
+#' Names the most common cause, a category used only by extreme scorers,
+#' when it is present in the data the simulation was built from.
+#'
+#' @param data The response matrix the simulation was built from.
+#' @param detail Optional extra text appended to the generic message.
+#' @return A single string.
+#' @keywords internal
+#' @noRd
+.all_sims_failed_message <- function(data, detail = "Check your data.") {
+  ec <- .extreme_only_categories(data)
+  if (nrow(ec) > 0L) {
+    return(paste0("All simulation iterations failed. ", .extreme_only_message(ec)))
+  }
+  paste0("All simulation iterations failed. ", detail)
+}
+
 #' Build the standard estimation-sample-size caption clause
 #'
 #' Returns `"n = X respondents"`, appending ` of Y` only when respondents were
@@ -229,4 +327,71 @@ validate_response_data <- function(data) {
   utils::write.csv(df, file = filename, row.names = row.names)
   message("Wrote ", nrow(df), " row(s) to '", filename, "'.")
   invisible(df)
+}
+
+#' Warn when a cutoff object was simulated for a different sample
+#'
+#' A parametric-bootstrap null depends on the sample size it was simulated
+#' at, so a cutoff object built on one dataset and applied to another gives
+#' intervals and p-values for the wrong n, with no error. The consumer only
+#' checks that the item names match, which misses a changed set of
+#' respondents. This compares the respondents the consumer analyses with the
+#' `sample_n` the cutoff object recorded, using the same missing-data policy
+#' on both sides (complete cases for most functions, non-empty respondents
+#' for Q3), and for DIF also the group sizes, since the DIF null draws group
+#' membership with the observed proportions.
+#'
+#' Cutoff objects that do not record `sample_n` (made by older versions, or
+#' the bare interval data.frame) are skipped silently.
+#'
+#' @param cutoff_n `sample_n` stored in the cutoff object, or `NULL`.
+#' @param n_used Number of respondents the consumer analyses, counted under
+#'   the same policy as the cutoff function.
+#' @param fn Name of the cutoff function to re-run, e.g.
+#'   `"RMitemInfitCutoff()"`.
+#' @param policy Short description of what is counted, used in the message.
+#' @param groups_cutoff,groups_used Optional integer vectors of group sizes
+#'   (DIF), in the same level order.
+#' @return Invisibly `TRUE` when the samples agree or cannot be compared,
+#'   `FALSE` after warning.
+#' @keywords internal
+#' @noRd
+.check_cutoff_sample <- function(
+  cutoff_n,
+  n_used,
+  fn,
+  policy = "complete cases",
+  groups_cutoff = NULL,
+  groups_used = NULL
+) {
+  if (is.null(cutoff_n) || length(cutoff_n) != 1L || !is.finite(cutoff_n)) {
+    return(invisible(TRUE))
+  }
+  if (cutoff_n != n_used) {
+    warning(
+      "The cutoff was simulated for n = ", cutoff_n, " but `data` has n = ",
+      n_used, " (", policy, "). The null distribution depends on sample ",
+      "size, so the intervals and p-values do not apply to this data. ",
+      "Re-run ", fn, " on the data being tested.",
+      call. = FALSE
+    )
+    return(invisible(FALSE))
+  }
+  if (
+    !is.null(groups_cutoff) &&
+      !is.null(groups_used) &&
+      !identical(as.integer(groups_cutoff), as.integer(groups_used))
+  ) {
+    warning(
+      "The cutoff was simulated with group sizes ",
+      paste(groups_cutoff, collapse = "/"), " but `dif_var` has ",
+      paste(groups_used, collapse = "/"), ". The DIF null draws group ",
+      "membership with the simulated proportions, so the intervals and ",
+      "p-values do not apply to this grouping. Re-run ", fn,
+      " with the `dif_var` being tested.",
+      call. = FALSE
+    )
+    return(invisible(FALSE))
+  }
+  invisible(TRUE)
 }

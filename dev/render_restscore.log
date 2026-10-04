@@ -1,0 +1,57 @@
+[31m
+
+processing file: restscore_asymptotic_null.qmd
+[39m1/23           
+2/23 [setup]   
+3/23           
+4/23 [items]   
+5/23           
+6/23 [sim]     
+7/23           
+8/23 [onerep]  
+9/23           
+10/23 [run]     
+11/23           
+12/23 [tidy]    
+13/23           
+14/23 [peritem] 
+15/23           
+16/23 [fwer]    
+17/23           
+18/23 [sedecomp]
+19/23           
+20/23 [byitem]  
+21/23           
+22/23 [qq]      
+23/23           
+[31moutput file: restscore_asymptotic_null.knit.md
+
+[39m[1mpandoc [22m
+  to: typst
+  output-file: restscore_asymptotic_null.typ
+  standalone: true
+  shift-heading-level-by: -1
+  default-image-extension: svg
+  wrap: none
+  citeproc: false
+  toc: true
+  toc-depth: 2
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  papersize: a4
+  margin:
+    x: 2.8cm
+    'y': 2cm
+  fontsize: 10.5pt
+  title: Calibration of the asymptotic item-restscore test
+  subtitle: Null simulation of iarm::item_restscore() under a true Rasch model
+  author: Magnus Johansson
+  date: today
+  
+[typst]: Compiling restscore_asymptotic_null.typ to restscore_asymptotic_null.pdf...DONE
+
+Output created: restscore_asymptotic_null.pdf
+

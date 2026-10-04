@@ -4,12 +4,58 @@
 \alias{RMitemRestscore}
 \title{Item Restscore Analysis}
 \usage{
-RMitemRestscore(data, output = "kable", sort, p_adj = "BH")
+RMitemRestscore(
+  data,
+  cutoff = NULL,
+  p_value = NULL,
+  correction = c("fwer", "fdr_bh", "fdr_by", "none"),
+  alpha = 0.05,
+  output = "kable",
+  sort,
+  p_adj = "BH"
+)
 }
 \arguments{
 \item{data}{A data.frame or matrix of item responses. Items must be scored
 starting at 0 (non-negative integers). Missing values (\code{NA}) are allowed,
 but at least one complete case (row with no \code{NA}) must be present.}
+
+\item{cutoff}{Optional. Default \code{NULL}, which tests each item against the
+asymptotic normal reference distribution from \code{iarm::item_restscore()},
+adjusted by \code{p_adj}. Can be:
+\itemize{
+\item The return value of \code{\link{RMitemRestscoreCutoff}}: the parametric
+bootstrap null distribution of the observed minus expected gamma.
+Adds the columns \code{Diff_low} and \code{Diff_high} (the descriptive interval),
+and, with \code{p_value} resolving to \code{TRUE}, \code{p_restscore} and
+\code{padj_restscore}.
+\item The \verb{$item_cutoffs} data.frame from \code{\link{RMitemRestscoreCutoff}}
+directly (columns \code{Item}, \code{diff_low}, \code{diff_high}). Items are then
+flagged against the interval.
+}
+
+With a \code{cutoff}, the asymptotic \code{p_adjusted} column is dropped and
+\code{p_adj} is ignored.}
+
+\item{p_value}{Logical or \code{NULL}. Whether to compute bootstrap p-values
+from the simulated null distribution and flag on them.
+
+\code{NULL} (the default) means \strong{use them when they are available}: \code{TRUE}
+when \code{cutoff} is the full \code{\link{RMitemRestscoreCutoff}} object,
+which carries the per-item simulated values in its \verb{$results} element,
+and \code{FALSE} otherwise. Explicit \code{TRUE} without the full object is an
+error rather than a silent downgrade. With \code{FALSE} and a \code{cutoff}, items
+are flagged against the interval instead, and a one-time message reports
+the family-wise error rate that implies.}
+
+\item{correction}{Character. Multiple-comparison correction applied across
+items when \code{p_value = TRUE}: \code{"fwer"} (default) for the Westfall-Young
+studentised-max step-down (family-wise error rate), \code{"fdr_bh"} /
+\code{"fdr_by"} for Benjamini-Hochberg / Benjamini-Yekutieli false discovery
+rate control, or \code{"none"} for uncorrected per-item p-values.}
+
+\item{alpha}{Numeric in (0, 1). Significance level for the \code{Flagged} column
+when \code{p_value = TRUE}. Default \code{0.05}.}
 
 \item{output}{Character string controlling the return value. Either
 \code{"kable"} (default) for a formatted \code{knitr::kable()} table, or
@@ -22,7 +68,7 @@ both over- and underfitting items appear near the top.}
 \item{p_adj}{Character string specifying the p-value adjustment method
 passed to \code{iarm::item_restscore()}. Default \code{"BH"} (Benjamini-Hochberg);
 use \code{"none"} for unadjusted p-values. Run \code{?stats::p.adjust} for the list
-of available methods.}
+of available methods. Only used when \code{cutoff = NULL}.}
 }
 \value{
 \itemize{
@@ -36,6 +82,12 @@ location relative to the sample mean person location.
 \code{Relative_location}. \code{Flagged} is \code{"overfit"} (observed above expected,
 adj. p < .05), \code{"underfit"} (below, adj. p < .05), or \code{""} (not flagged).
 }
+
+With a \code{cutoff}, \code{p_adjusted} is replaced by \code{Diff_low} and \code{Diff_high},
+followed by \code{p_restscore} (marginal two-sided bootstrap p-value) and
+\code{padj_restscore} (corrected p-value) when \code{p_value} resolves to \code{TRUE}.
+\code{Flagged} then reflects \code{padj_restscore < alpha}, or the interval when
+\code{p_value = FALSE}.
 
 The \code{Difference} column is signed (observed minus expected):
 \emph{positive} values indicate that the item correlates more strongly with
@@ -67,7 +119,61 @@ Relative item location is defined as the item's average location minus the
 sample mean person location, providing a measure of item targeting.
 
 The \code{iarm} package must be installed (it is in Suggests, not Imports).
+
+\strong{The asymptotic p-value is miscalibrated.} Without a \code{cutoff}, each
+item is tested with \code{(observed - expected) / SE} against the standard
+normal, where the SE is that of the observed gamma alone. The expected
+gamma is estimated from the same data and correlates with the observed
+one, so the SE is too large for the difference. The difference is also
+biased upwards in small samples. Under a true Rasch model the test
+therefore flags too many items as overfit in small samples and too few as
+underfit at every sample size, and the adjustment chosen in \code{p_adj} does
+not correct either. In simulation, 20 dichotomous items at n = 150 gave at
+least one BH-flagged item in 13 percent of datasets (30 percent when 1.5
+logits off target), almost all of them overfit, while 9 polytomous items
+at n = 1000 gave about 1 percent. Pass the object from
+\code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}} as \code{cutoff} for p-values from a parametric
+bootstrap null instead.
+
+\strong{Bootstrap p-values.} When \code{p_value = TRUE}, each item's observed
+\code{Difference} is compared against its simulated null distribution (from
+\code{cutoff$results}), studentised by the bootstrap mean and SD. Because the
+bootstrap mean is subtracted, the small-sample upward bias of the
+difference is removed, and because the bootstrap SD is used, the
+correlation between observed and expected gamma is accounted for. The
+marginal p-value is the two-sided Monte-Carlo p-value
+\verb{(1 + #\{|t*| >= |t|\}) / (B + 1)}, and \code{correction = "fwer"} applies the
+Westfall-Young studentised-max step-down across items (Ferreira, 2024).
+
+The two directions do not get equal shares of alpha. Gamma is bounded at
+1, so the null of \code{Difference} is left-skewed and a two-sided test on
+\verb{|t|} rejects more often in the long (underfit) tail. In simulation under
+a true Rasch model the total rate was nominal, but the per-item marginal
+rate was about 3 percent for underfit and 2 percent for overfit with 20
+dichotomous items at n = 150 and 1.5 logits off target, narrowing toward
+equal shares with polytomous items and larger samples.
+
+The direction in \code{Flagged} follows the studentised value, not the sign of
+\code{Difference}. At small sample sizes the null mean of \code{Difference} is
+slightly positive, so an item can be flagged \code{"underfit"} while its
+\code{Difference} is still just above zero. This is rare.
 }
+\section{Multiple comparisons}{
+
+The marginal p-value controls the error rate of a \emph{single} comparison: for
+one item (or item pair) decided on in advance it is the relevant value. But
+scanning all \emph{k} comparisons and flagging whichever fall below \code{alpha} tests
+\emph{k} hypotheses at once, so the chance of at least one false flag inflates to
+roughly \eqn{1 - (1 - \alpha)^k} (e.g. about 34\% for \emph{k} = 8 at
+\code{alpha = 0.05}) -- even when every marginal p-value is correctly calibrated.
+The corrected (adjusted) p-value controls this: \code{correction = "fwer"} bounds
+the probability of \emph{any} false flag (strict, lower power), while \code{"fdr_bh"} /
+\code{"fdr_by"} bound the expected \emph{proportion} of false flags among those raised
+(a more lenient middle ground). Rule of thumb: use the marginal p-value for a
+single pre-specified comparison, and a corrected p-value when screening the
+whole table -- the usual workflow.
+}
+
 \examples{
 \donttest{
 if (requireNamespace("iarm", quietly = TRUE)) {
@@ -86,6 +192,14 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 
   # Return as data.frame for further processing
   df <- RMitemRestscore(sim_data, output = "dataframe")
+
+  # Bootstrap null distribution, flagging on Westfall-Young corrected
+  # p-values (use 1000 or more iterations in a final analysis)
+  if (requireNamespace("ggdist", quietly = TRUE)) {
+    cutoff_res <- RMitemRestscoreCutoff(sim_data, iterations = 100,
+                                        parallel = FALSE, seed = 42)
+    RMitemRestscore(sim_data, cutoff = cutoff_res)
+  }
 }
 }
 }
@@ -93,4 +207,12 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 Kreiner, S. (2011). A Note on Item–Restscore Association in Rasch Models.
 \emph{Applied Psychological Measurement, 35}(7), 557–561.
 \doi{10.1177/0146621611410227}
+
+Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
+of hypotheses simultaneously. \emph{Journal of Statistical Theory and Practice,
+19}(6). \doi{10.1007/s42519-024-00412-4}
+}
+\seealso{
+\code{\link{RMitemRestscoreCutoff}},
+\code{\link{RMitemRestscorePlot}}
 }

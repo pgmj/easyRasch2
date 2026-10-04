@@ -336,6 +336,13 @@ RMlocdepGamma <- function(
   # see, but every decision below is taken on `gamma_pair`, so no p-value or
   # flag is ever attributed to a coefficient it was not computed from.
   data_complete <- data[stats::complete.cases(data), , drop = FALSE]
+  if (!is.null(cutoff_full)) {
+    .check_cutoff_sample(
+      cutoff_full$sample_n,
+      nrow(data_complete),
+      "RMlocdepGammaCutoff()"
+    )
+  }
   .obs1 <- .partgam_ld_gamma(data_complete, direction = 1L)
   .obs2 <- .partgam_ld_gamma(data_complete, direction = 2L)
   .pkey <- function(a, b) paste(pmin(a, b), pmax(a, b), sep = "___")
@@ -970,7 +977,7 @@ RMlocdepGammaCutoff <- function(
   successful <- results_raw[ok]
 
   if (length(successful) == 0L) {
-    stop("All simulation iterations failed. Check your data.", call. = FALSE)
+    stop(.all_sims_failed_message(data_mat), call. = FALSE)
   }
 
   actual_iterations <- length(successful)
@@ -1681,6 +1688,7 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     # of the two conditioning directions, so the observed overlay has to be the
     # same quantity rather than one direction's coefficient.
     dc <- data[stats::complete.cases(data), , drop = FALSE]
+    .check_cutoff_sample(simfit$sample_n, nrow(dc), "RMlocdepGammaCutoff()")
     o1 <- .partgam_ld_gamma(dc, direction = 1L)
     o2 <- .partgam_ld_gamma(dc, direction = 2L)
     pkey <- function(a, b) paste(pmin(a, b), pmax(a, b), sep = "___")

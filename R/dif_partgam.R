@@ -243,6 +243,21 @@ RMdifGamma <- function(
   options(rgl.useNULL = TRUE)
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
 
+  # --- Same sample as the cutoff? ---------------------------------------------
+  # The DIF null draws group membership with the simulated proportions, so
+  # the group sizes have to match as well as the total.
+  if (!is.null(cutoff_full)) {
+    cc_dif <- stats::complete.cases(as.data.frame(data)) & !is.na(dif_var)
+    .check_cutoff_sample(
+      cutoff_full$sample_n,
+      sum(cc_dif),
+      "RMdifGammaCutoff()",
+      policy = "complete cases in data and dif_var",
+      groups_cutoff = cutoff_full$dif_group_sizes,
+      groups_used = as.integer(table(dif_var[cc_dif]))
+    )
+  }
+
   # --- Compute partial gamma DIF via iarm -------------------------------------
   sink(nullfile())
   #on.exit(sink(), add = TRUE)
@@ -803,7 +818,7 @@ RMdifGammaCutoff <- function(
   successful <- results_raw[ok]
 
   if (length(successful) == 0L) {
-    stop("All simulation iterations failed. Check your data.", call. = FALSE)
+    stop(.all_sims_failed_message(data_mat), call. = FALSE)
   }
 
   actual_iterations <- length(successful)
@@ -1286,6 +1301,16 @@ RMdifGammaPlot <- function(simfit, data, dif_var) {
       call. = FALSE
     )
   }
+
+  cc_dif <- stats::complete.cases(as.data.frame(data)) & !is.na(dif_var)
+  .check_cutoff_sample(
+    simfit$sample_n,
+    sum(cc_dif),
+    "RMdifGammaCutoff()",
+    policy = "complete cases in data and dif_var",
+    groups_cutoff = simfit$dif_group_sizes,
+    groups_used = as.integer(table(dif_var[cc_dif]))
+  )
 
   # rgl workaround
   old_rgl <- getOption("rgl.useNULL")

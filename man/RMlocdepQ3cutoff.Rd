@@ -64,7 +64,10 @@ automatically.}
 \item{dgp}{Character. Data-generating process for the parametric bootstrap.
 \code{"resample"} (default) draws person locations by resampling the WLE
 estimates with replacement and simulates responses under the model -- a
-\emph{marginal} null. \code{"conditional"} instead simulates each respondent's
+\emph{marginal} null. Each resampled respondent keeps their pattern of
+missing responses, so incomplete data are simulated as incomplete and the
+pairwise-complete \eqn{Q_3} of the null rests on as many respondents per
+pair as the observed one. \code{"conditional"} instead simulates each respondent's
 pattern from the exact Rasch conditional distribution given their observed
 total score (and answered items), with item parameters fixed -- a
 \emph{conditional} null that fixes the score margin and needs no latent

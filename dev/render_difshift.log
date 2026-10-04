@@ -1,0 +1,53 @@
+[31m
+
+processing file: dif_shift_cml_validation.qmd
+[39m1/19                   
+2/19 [setup]           
+3/19                   
+4/19 [v1]              
+5/19                   
+6/19 [v4]              
+7/19                   
+8/19 [v2]              
+9/19                   
+10/19 [v2b]             
+11/19                   
+12/19 [sparse]          
+13/19                   
+14/19 [recovery-design] 
+15/19                   
+16/19 [recovery-run]    
+17/19                   
+18/19 [recovery-summary]
+19/19                   
+[31moutput file: dif_shift_cml_validation.knit.md
+
+[39m[1mpandoc [22m
+  to: typst
+  output-file: dif_shift_cml_validation.typ
+  standalone: true
+  shift-heading-level-by: -1
+  default-image-extension: svg
+  wrap: none
+  citeproc: false
+  toc: true
+  toc-depth: 2
+  variables: {}
+  
+[1mmetadata[22m
+  engines:
+    - path: /Applications/quarto/share/extension-subtrees/julia-engine/_extensions/julia-engine/julia-engine.js
+  papersize: a4
+  margin:
+    x: 2.8cm
+    'y': 2cm
+  fontsize: 10.5pt
+  title: Uniform-shift CML for DIF
+  subtitle: Validation of the prototype estimator behind the planned RMdifImpact()
+  author: Magnus Johansson
+  date: today
+  
+[typst]: Compiling dif_shift_cml_validation.typ to dif_shift_cml_validation.pdf...DONE
+
+Output created: dif_shift_cml_validation.pdf
+
