@@ -19,7 +19,7 @@ iterations in which each item is flagged.'><meta name="robots" content="noindex"
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.3.1.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.3.1.9002</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -140,10 +140,19 @@ successful iteration (<code>iteration</code>, <code>Item</code>, <code>item_rest
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Useful with large samples, where the asymptotic test underlying
-<code><a href="RMitemrestscore.html">RMitemRestscore</a></code> can flag items that are not practically
-misfitting; bootstrapping gives a more nuanced view of the probability of
-an item actually being misfit.</p>
+    <p>Each iteration uses the asymptotic test from <code><a href="https://rdrr.io/pkg/iarm/man/item_restscore.html" class="external-link">iarm::item_restscore()</a></code>
+with Benjamini-Hochberg adjustment, so the result inherits that test's
+calibration at the subsample size. Under a true Rasch model it flags too
+many items as overfit in small or mistargeted samples of dichotomous
+items, too few items of any kind in large polytomous samples, and too few
+underfitting items at every sample size (see <code><a href="RMitemrestscore.html">RMitemRestscore()</a></code>). The
+percentage is therefore how often that test flags an item in samples of
+size <code>samplesize</code>, not the probability that the item misfits, and it
+changes with <code>samplesize</code>. A low underfit percentage is weak evidence of
+fit. For a test of item fit, use <code><a href="RMitemRestscoreCutoff.html">RMitemRestscoreCutoff()</a></code> with
+<code><a href="RMitemrestscore.html">RMitemRestscore()</a></code>, whose bootstrap p-values are calibrated at the
+observed sample size. This function is best read as a description of how
+stable the asymptotic flags are across resamples.</p>
 <p>The full-sample model is fitted by CML via <code><a href="https://rdrr.io/pkg/psychotools/man/pcmodel.html" class="external-link">psychotools::pcmodel()</a></code> (a
 dichotomous item is a 2-category partial credit model), and item locations
 (mean of the grand-mean-centred CML Andrich thresholds) and the mean WLE

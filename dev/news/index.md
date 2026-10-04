@@ -124,6 +124,14 @@
   text on iterations now matches the console message and caption.
   Results are unchanged.
 
+- [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md)
+  documentation no longer presents it as a fix for large samples. It now
+  says that each iteration uses the miscalibrated asymptotic test, that
+  its percentages are flag rates at `samplesize` rather than
+  probabilities of misfit, and points to
+  [`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)
+  for testing. Results are unchanged.
+
 - **The asymptotic “Adj. p-value (BH)” column in
   [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
   and
