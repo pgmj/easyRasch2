@@ -188,13 +188,15 @@ whole table -- the usual workflow.
 Item infit and item-restscore both judge each item against expectations
 from a Rasch model fitted to all items, so misfitting items change what is
 expected of the others. A flag in one direction can therefore produce
-flags in the other. In simulation with seven polytomous items, two
-overfitting items led to about 6 percent of the fitting items being
-flagged as underfit, against about 1.5 percent with one overfitting item.
-The reverse effect was smaller: with underfitting items planted, 1 to 2
-percent of the fitting items were flagged as overfit. When items are
-flagged in both directions, consider removing the clearest misfit and
-testing again before interpreting the rest.
+flags in the other. Overfitting items can push fitting items into the
+underfit range, and underfitting items, for example from a second
+dimension, can make fitting items look overfit. How large the effect is
+depends on how strong the misfit is and how many items share it. In
+simulation with seven polytomous items, two overfitting items led to
+about 6 percent of the fitting items being flagged as underfit, and one
+or two mildly multidimensional items to 1 to 2 percent being flagged as
+overfit. When items are flagged in both directions, consider removing
+the clearest misfit and testing again before interpreting the rest.
 }
 
 \examples{

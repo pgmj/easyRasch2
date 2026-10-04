@@ -97,6 +97,7 @@ remotes::install_github("pgmj/easyRasch2")
 - `RMitemRestscoreCutoff()` + `RMitemRestscorePlot()` — parametric bootstrap
   null for item-restscore, flagged on corrected bootstrap *p*-values
 - `RMitemRestscoreBoot()` — non-parametric bootstrap of item-restscore fit
+  (descriptive; see its help page)
 - `RMitemICCPlot()` - conditional item characteristic curves
 
 ### Local dependence

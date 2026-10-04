@@ -82,6 +82,12 @@
   The `RMitemInfit()` text on iterations now matches the console message and
   caption. Results are unchanged.
 
+- `RMitemRestscoreBoot()` documentation no longer presents it as a fix for
+  large samples. It now says that each iteration uses the miscalibrated
+  asymptotic test, that its percentages are flag rates at `samplesize`
+  rather than probabilities of misfit, and points to
+  `RMitemRestscoreCutoff()` for testing. Results are unchanged.
+
 - **The asymptotic "Adj. p-value (BH)" column in `RMdifGamma()` and
   `RMlocdepGamma()` was a Bonferroni correction.** It came from `iarm`, which
   adjusts one p-value at a time whatever method is named. easyRasch2 now
