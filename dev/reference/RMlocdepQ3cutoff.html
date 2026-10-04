@@ -13,7 +13,7 @@ that distribution and returns empirical percentiles."><meta name="robots" conten
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.3.1.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.3.1.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -132,7 +132,10 @@ automatically.</p></dd>
 <dd><p>Character. Data-generating process for the parametric bootstrap.
 <code>"resample"</code> (default) draws person locations by resampling the WLE
 estimates with replacement and simulates responses under the model – a
-<em>marginal</em> null. <code>"conditional"</code> instead simulates each respondent's
+<em>marginal</em> null. Each resampled respondent keeps their pattern of
+missing responses, so incomplete data are simulated as incomplete and the
+pairwise-complete \(Q_3\) of the null rests on as many respondents per
+pair as the observed one. <code>"conditional"</code> instead simulates each respondent's
 pattern from the exact Rasch conditional distribution given their observed
 total score (and answered items), with item parameters fixed – a
 <em>conditional</em> null that fixes the score margin and needs no latent

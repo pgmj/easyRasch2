@@ -13,7 +13,7 @@ item locations relative to the sample mean person location."><meta name="robots"
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.3.1.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.3.1.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,7 +49,16 @@ item locations relative to the sample mean person location.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RMitemRestscore</span><span class="op">(</span><span class="va">data</span>, output <span class="op">=</span> <span class="st">"kable"</span>, <span class="va">sort</span>, p_adj <span class="op">=</span> <span class="st">"BH"</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RMitemRestscore</span><span class="op">(</span></span>
+<span>  <span class="va">data</span>,</span>
+<span>  cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  p_value <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  correction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fwer"</span>, <span class="st">"fdr_bh"</span>, <span class="st">"fdr_by"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
+<span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  output <span class="op">=</span> <span class="st">"kable"</span>,</span>
+<span>  <span class="va">sort</span>,</span>
+<span>  p_adj <span class="op">=</span> <span class="st">"BH"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -60,6 +69,46 @@ item locations relative to the sample mean person location.</p>
 <dd><p>A data.frame or matrix of item responses. Items must be scored
 starting at 0 (non-negative integers). Missing values (<code>NA</code>) are allowed,
 but at least one complete case (row with no <code>NA</code>) must be present.</p></dd>
+
+
+<dt id="arg-cutoff">cutoff<a class="anchor" aria-label="anchor" href="#arg-cutoff"></a></dt>
+<dd><p>Optional. Default <code>NULL</code>, which tests each item against the
+asymptotic normal reference distribution from <code><a href="https://rdrr.io/pkg/iarm/man/item_restscore.html" class="external-link">iarm::item_restscore()</a></code>,
+adjusted by <code>p_adj</code>. Can be:</p><ul><li><p>The return value of <code><a href="RMitemRestscoreCutoff.html">RMitemRestscoreCutoff</a></code>: the parametric
+bootstrap null distribution of the observed minus expected gamma.
+Adds the columns <code>Diff_low</code> and <code>Diff_high</code> (the descriptive interval),
+and, with <code>p_value</code> resolving to <code>TRUE</code>, <code>p_restscore</code> and
+<code>padj_restscore</code>.</p></li>
+<li><p>The <code>$item_cutoffs</code> data.frame from <code><a href="RMitemRestscoreCutoff.html">RMitemRestscoreCutoff</a></code>
+directly (columns <code>Item</code>, <code>diff_low</code>, <code>diff_high</code>). Items are then
+flagged against the interval.</p></li>
+</ul><p>With a <code>cutoff</code>, the asymptotic <code>p_adjusted</code> column is dropped and
+<code>p_adj</code> is ignored.</p></dd>
+
+
+<dt id="arg-p-value">p_value<a class="anchor" aria-label="anchor" href="#arg-p-value"></a></dt>
+<dd><p>Logical or <code>NULL</code>. Whether to compute bootstrap p-values
+from the simulated null distribution and flag on them.</p>
+<p><code>NULL</code> (the default) means <strong>use them when they are available</strong>: <code>TRUE</code>
+when <code>cutoff</code> is the full <code><a href="RMitemRestscoreCutoff.html">RMitemRestscoreCutoff</a></code> object,
+which carries the per-item simulated values in its <code>$results</code> element,
+and <code>FALSE</code> otherwise. Explicit <code>TRUE</code> without the full object is an
+error rather than a silent downgrade. With <code>FALSE</code> and a <code>cutoff</code>, items
+are flagged against the interval instead, and a one-time message reports
+the family-wise error rate that implies.</p></dd>
+
+
+<dt id="arg-correction">correction<a class="anchor" aria-label="anchor" href="#arg-correction"></a></dt>
+<dd><p>Character. Multiple-comparison correction applied across
+items when <code>p_value = TRUE</code>: <code>"fwer"</code> (default) for the Westfall-Young
+studentised-max step-down (family-wise error rate), <code>"fdr_bh"</code> /
+<code>"fdr_by"</code> for Benjamini-Hochberg / Benjamini-Yekutieli false discovery
+rate control, or <code>"none"</code> for uncorrected per-item p-values.</p></dd>
+
+
+<dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
+<dd><p>Numeric in (0, 1). Significance level for the <code>Flagged</code> column
+when <code>p_value = TRUE</code>. Default <code>0.05</code>.</p></dd>
 
 
 <dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
@@ -78,7 +127,7 @@ both over- and underfitting items appear near the top.</p></dd>
 <dd><p>Character string specifying the p-value adjustment method
 passed to <code><a href="https://rdrr.io/pkg/iarm/man/item_restscore.html" class="external-link">iarm::item_restscore()</a></code>. Default <code>"BH"</code> (Benjamini-Hochberg);
 use <code>"none"</code> for unadjusted p-values. Run <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">?stats::p.adjust</a></code> for the list
-of available methods.</p></dd>
+of available methods. Only used when <code>cutoff = NULL</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -93,7 +142,12 @@ location relative to the sample mean person location.</p></li>
 <code>Expected</code>, <code>Difference</code>, <code>p_adjusted</code>, <code>Flagged</code>, and
 <code>Relative_location</code>. <code>Flagged</code> is <code>"overfit"</code> (observed above expected,
 adj. p &lt; .05), <code>"underfit"</code> (below, adj. p &lt; .05), or <code>""</code> (not flagged).</p></li>
-</ul><p>The <code>Difference</code> column is signed (observed minus expected):
+</ul><p>With a <code>cutoff</code>, <code>p_adjusted</code> is replaced by <code>Diff_low</code> and <code>Diff_high</code>,
+followed by <code>p_restscore</code> (marginal two-sided bootstrap p-value) and
+<code>padj_restscore</code> (corrected p-value) when <code>p_value</code> resolves to <code>TRUE</code>.
+<code>Flagged</code> then reflects <code>padj_restscore &lt; alpha</code>, or the interval when
+<code>p_value = FALSE</code>.</p>
+<p>The <code>Difference</code> column is signed (observed minus expected):
 <em>positive</em> values indicate that the item correlates more strongly with
 the rest-score than the Rasch model predicts (over-discrimination /
 <em>overfit</em>, often associated with local dependence), and <em>negative</em>
@@ -115,12 +169,99 @@ person-location reference is the mean of the Warm WLE estimates.</p>
 <p>Relative item location is defined as the item's average location minus the
 sample mean person location, providing a measure of item targeting.</p>
 <p>The <code>iarm</code> package must be installed (it is in Suggests, not Imports).</p>
+<p><strong>The asymptotic p-value is miscalibrated.</strong> Without a <code>cutoff</code>, each
+item is tested with <code>(observed - expected) / SE</code> against the standard
+normal, where the SE is that of the observed gamma alone. The expected
+gamma is estimated from the same data and correlates with the observed
+one, so the SE is too large for the difference. The difference is also
+biased upwards in small samples. Under a true Rasch model the test
+therefore flags too many items as overfit in small samples and too few as
+underfit at every sample size, and the adjustment chosen in <code>p_adj</code> does
+not correct either. In simulation, 20 dichotomous items at n = 150 gave at
+least one BH-flagged item in 13 percent of datasets (30 percent when 1.5
+logits off target), almost all of them overfit, while 9 polytomous items
+at n = 1000 gave about 1 percent. Pass the object from
+<code><a href="RMitemRestscoreCutoff.html">RMitemRestscoreCutoff()</a></code> as <code>cutoff</code> for p-values from a parametric
+bootstrap null instead.</p>
+<p><strong>Bootstrap p-values.</strong> When <code>p_value = TRUE</code>, each item's observed
+<code>Difference</code> is compared against its simulated null distribution (from
+<code>cutoff$results</code>), studentised by the bootstrap mean and SD. Because the
+bootstrap mean is subtracted, the small-sample upward bias of the
+difference is removed, and because the bootstrap SD is used, the
+correlation between observed and expected gamma is accounted for. The
+marginal p-value is the two-sided Monte-Carlo p-value
+<code>(1 + #{|t*| &gt;= |t|}) / (B + 1)</code>, and <code>correction = "fwer"</code> applies the
+Westfall-Young studentised-max step-down across items (Ferreira, 2024).</p>
+<p>The two directions do not get equal shares of alpha. Gamma is bounded at
+1, so the null of <code>Difference</code> is left-skewed and a two-sided test on
+<code>|t|</code> rejects more often in the long (underfit) tail. In simulation under
+a true Rasch model the total rate was nominal, but the per-item marginal
+rate was about 3 percent for underfit and 2 percent for overfit with 20
+dichotomous items at n = 150 and 1.5 logits off target, narrowing toward
+equal shares with polytomous items and larger samples. With
+<code>correction = "fwer"</code>, over four such conditions, at least one item was
+flagged as underfit in 3.7 percent of datasets and as overfit in 1.6
+percent, 5.0 percent in total. An equal-tailed test, with alpha/2 for each
+direction, was evaluated and not adopted: it detected 2 to 3 percentage
+points fewer underfitting items and no more overfitting ones.</p>
+<p><strong>Reproducibility.</strong> The bootstrap p-values depend on the simulated
+null, so two analyses of the same data with different seeds can disagree
+about items near the decision boundary. In simulation, in conditions
+chosen to include such items, two seeds disagreed about the flag of at
+least one item in about 10 percent of analyses at 400 iterations and about
+6 percent at 1000 with <code>correction = "fwer"</code>, and in 13 and 11 percent with
+<code>correction = "fdr_bh"</code>. Set <code>seed</code> in <code><a href="RMitemRestscoreCutoff.html">RMitemRestscoreCutoff()</a></code> for a
+reproducible analysis, and use 1000 or more iterations for a final one.</p>
+<p>The direction in <code>Flagged</code> follows the studentised value, not the sign of
+<code>Difference</code>. At small sample sizes the null mean of <code>Difference</code> is
+slightly positive, so an item can be flagged <code>"underfit"</code> while its
+<code>Difference</code> is still just above zero. This is rare.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="multiple-comparisons">Multiple comparisons<a class="anchor" aria-label="anchor" href="#multiple-comparisons"></a></h2>
+
+
+<p>The marginal p-value controls the error rate of a <em>single</em> comparison: for
+one item (or item pair) decided on in advance it is the relevant value. But
+scanning all <em>k</em> comparisons and flagging whichever fall below <code>alpha</code> tests
+<em>k</em> hypotheses at once, so the chance of at least one false flag inflates to
+roughly \(1 - (1 - \alpha)^k\) (e.g. about 34% for <em>k</em> = 8 at
+<code>alpha = 0.05</code>) – even when every marginal p-value is correctly calibrated.
+The corrected (adjusted) p-value controls this: <code>correction = "fwer"</code> bounds
+the probability of <em>any</em> false flag (strict, lower power), while <code>"fdr_bh"</code> /
+<code>"fdr_by"</code> bound the expected <em>proportion</em> of false flags among those raised
+(a more lenient middle ground). Rule of thumb: use the marginal p-value for a
+single pre-specified comparison, and a corrected p-value when screening the
+whole table – the usual workflow.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="flags-depend-on-the-other-items">Flags depend on the other items<a class="anchor" aria-label="anchor" href="#flags-depend-on-the-other-items"></a></h2>
+
+
+<p>Item infit and item-restscore both judge each item against expectations
+from a Rasch model fitted to all items, so misfitting items change what is
+expected of the others. A flag in one direction can therefore produce
+flags in the other. In simulation with seven polytomous items, two
+overfitting items led to about 6 percent of the fitting items being
+flagged as underfit, against about 1.5 percent with one overfitting item.
+The reverse effect was smaller: with underfitting items planted, 1 to 2
+percent of the fitting items were flagged as overfit. When items are
+flagged in both directions, consider removing the clearest misfit and
+testing again before interpreting the rest.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Kreiner, S. (2011). A Note on Item–Restscore Association in Rasch Models.
 <em>Applied Psychological Measurement, 35</em>(7), 557–561.
 <a href="https://doi.org/10.1177/0146621611410227" class="external-link">doi:10.1177/0146621611410227</a></p>
+<p>Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
+of hypotheses simultaneously. <em>Journal of Statistical Theory and Practice,
+19</em>(6). <a href="https://doi.org/10.1007/s42519-024-00412-4" class="external-link">doi:10.1007/s42519-024-00412-4</a></p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="RMitemRestscoreCutoff.html">RMitemRestscoreCutoff</a></code>,
+<code><a href="RMitemRestscorePlot.html">RMitemRestscorePlot</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -142,10 +283,33 @@ sample mean person location, providing a measure of item targeting.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># Return as data.frame for further processing</span></span></span>
 <span class="r-in"><span>  <span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">RMitemRestscore</span><span class="op">(</span><span class="va">sim_data</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Bootstrap null distribution, flagging on Westfall-Young corrected</span></span></span>
+<span class="r-in"><span>  <span class="co"># p-values (use 1000 or more iterations in a final analysis)</span></span></span>
+<span class="r-in"><span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggdist"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="va">cutoff_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="RMitemRestscoreCutoff.html">RMitemRestscoreCutoff</a></span><span class="op">(</span><span class="va">sim_data</span>, iterations <span class="op">=</span> <span class="fl">100</span>,</span></span>
+<span class="r-in"><span>                                        parallel <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="fu">RMitemRestscore</span><span class="op">(</span><span class="va">sim_data</span>, cutoff <span class="op">=</span> <span class="va">cutoff_res</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">}</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Item-restscore associations. n = 200 respondents. Two-sided parametric bootstrap p-values for the difference from 100 iterations, conditional DGP, multiplicity correction: Westfall-Young step-down (FWER). p-values cannot be smaller than 1/(100+1) = 0.0099. This is below the calibrated floor of 400, where the correction is mildly liberal (Johansson, 2026). Flagged (adj. p &lt; 0.05): overfit = observed above expected (over-discrimination, often local dependence); underfit = below (under-discrimination, often multidimensionality/noise).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item  | Observed| Expected| Difference| Diff low| Diff high|      p| p (adj)|Flagged | Rel. location|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |:-----|--------:|--------:|----------:|--------:|---------:|------:|-------:|:-------|-------------:|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item1 |     0.00|     0.01|     -0.006|   -0.154|     0.147| 0.9604|  1.0000|        |         -0.23|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2 |     0.00|     0.01|     -0.016|   -0.148|     0.182| 0.7624|  1.0000|        |          0.13|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3 |    -0.01|     0.01|     -0.026|   -0.133|     0.169| 0.5446|  0.9802|        |         -0.01|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4 |    -0.05|     0.01|     -0.061|   -0.168|     0.187| 0.4950|  0.9802|        |         -0.05|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5 |     0.07|     0.01|      0.058|   -0.160|     0.215| 0.4554|  0.9802|        |          0.09|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item6 |    -0.04|     0.01|     -0.049|   -0.166|     0.166| 0.4653|  0.9802|        |         -0.09|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item7 |     0.15|     0.01|      0.136|   -0.159|     0.221| 0.1782|  0.6931|        |         -0.05|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item8 |    -0.01|     0.01|     -0.021|   -0.148|     0.171| 0.7822|  1.0000|        |         -0.03|</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

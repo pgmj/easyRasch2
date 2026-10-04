@@ -1,5 +1,142 @@
 # Changelog
 
+## easyRasch2 (development version)
+
+### New features
+
+- New
+  [`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)
+  builds a parametric bootstrap null for the item-restscore test,
+  refitting the model in every iteration, and
+  [`RMitemRestscorePlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscorePlot.md)
+  plots it. Passing the result to
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+  through its new `cutoff` argument flags items on Westfall-Young
+  corrected bootstrap p-values (`p_value`, `correction`, `alpha`, as in
+  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)).
+  The default `dgp = "conditional"` held the nominal family-wise rate in
+  simulation, where `"resample"` was slightly liberal. The asymptotic
+  p-value from `iarm` is miscalibrated under a true Rasch model: liberal
+  for dichotomous items in small or mistargeted samples, conservative
+  for polytomous items, and too rarely flagging underfit in both.
+
+  Output without `cutoff` keeps the same values, and its table caption
+  and help page now note the miscalibration. `cutoff` is now the second
+  argument of
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md),
+  so a call passing `output` by position must name it.
+
+- Functions that take a simulation-based `cutoff` now warn when it was
+  simulated for a different sample size than the data being tested,
+  since the null distribution depends on
+  n. [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
+  also compares the group sizes of `dif_var`. Applies to
+  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
+  [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md),
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md),
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md),
+  [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md),
+  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md),
+  [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md),
+  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
+  and the matching `*Plot()` functions. Results do not change.
+
+### Breaking changes
+
+- [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
+  now flags on Westfall-Young corrected bootstrap p-values whenever
+  `cutoff` is the full
+  [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+  object (`p_value = NULL`, as in
+  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
+  and
+  [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)).
+  Pass `p_value = FALSE` to flag against the interval.
+  [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+  now defaults to `iterations = 400` and `hdci_width = 0.95`, like the
+  other cutoff functions. **Results move for calls that relied on the
+  old defaults.**
+
+### Performance
+
+- The latent mean and SD behind
+  [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
+  and
+  [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md)
+  are estimated about 2.5 times faster, which brings `boot = TRUE` back
+  to its speed before 1.3.1. Results do not change.
+
+- [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md),
+  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
+  and
+  [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFAPlot.md)
+  run 1.4 to 2 times faster by skipping lavaan output the package never
+  reads (parameter SEs, the .robust fit indices and SEs of the
+  standardized loadings). Results do not change.
+
+- [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md),
+  [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+  and
+  [`RMdifGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaPlot.md)
+  compute partial gamma with a vectorised routine that reproduces
+  [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html)
+  exactly and is many times faster.
+  [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+  and
+  [`RMdifGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaPlot.md)
+  no longer need `iarm`. Results do not change.
+
+### Bug fixes
+
+- [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)
+  with the default `dgp = "resample"` now keeps each resampled
+  respondent’s pattern of missing responses. It used to simulate
+  complete data, so with partial missingness the null gave every item
+  pair more respondents than the observed pairwise-complete Q3 had.
+  Cutoffs were too narrow and p-values too small. **Cutoffs move (wider)
+  only for data with missing responses.** Complete data and
+  `dgp = "conditional"` give identical results. At 30 percent
+  missingness the old null flagged at least one pair in 16.5 percent of
+  datasets with no local dependence, and the fix makes the cutoff
+  several times slower there.
+
+- **[`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+  no longer assigns simulated respondents to groups at random.** That
+  null gave both groups the same latent distribution and was too narrow
+  when the groups differed, so items were flagged for DIF too often. The
+  new `dgp` argument keeps each respondent’s group and total score,
+  either by redrawing response patterns given the score
+  (`"conditional"`, the default) or by permuting group labels within
+  score strata (`"permutation"`, much faster). **Cutoffs and p-values
+  move**, most when the groups differ in their trait level.
+
+### Other changes
+
+- [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+  and
+  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
+  documentation now explains that misfit in one direction can produce
+  flags in the other, and
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+  reports how the family-wise error rate splits between underfit and
+  overfit and how often bootstrap flags change with the seed. The
+  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
+  text on iterations now matches the console message and caption.
+  Results are unchanged.
+
+- **The asymptotic “Adj. p-value (BH)” column in
+  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
+  and
+  [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
+  was a Bonferroni correction.** It came from `iarm`, which adjusts one
+  p-value at a time whatever method is named. easyRasch2 now applies the
+  Benjamini-Hochberg adjustment across items (DIF) or across all tests
+  in both directions (local dependence), and the significance stars
+  follow it. **Adjusted p-values move (smaller) and more items or pairs
+  can get stars**. The p-value in
+  [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md)’s
+  partial gamma annotation changes the same way.
+
 ## easyRasch2 1.3.1
 
 CRAN release: 2026-09-13

@@ -28,6 +28,8 @@
 <url><loc>https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/dev/reference/RMitemParameters.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.html</loc></url>
+<url><loc>https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.html</loc></url>
+<url><loc>https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscorePlot.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.html</loc></url>
@@ -66,10 +68,13 @@
 <url><loc>https://pgmj.github.io/easyRasch2/dev/reference/run_partgam_sim_sequential.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/dev/reference/run_q3_sim_parallel.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/dev/reference/run_q3_sim_sequential.html</loc></url>
+<url><loc>https://pgmj.github.io/easyRasch2/dev/reference/run_restscore_sim_parallel.html</loc></url>
+<url><loc>https://pgmj.github.io/easyRasch2/dev/reference/run_restscore_sim_sequential.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/dev/reference/run_single_boot_restscore.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/dev/reference/run_single_infit_sim.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/dev/reference/run_single_partgam_LD_sim.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/dev/reference/run_single_partgam_sim.html</loc></url>
 <url><loc>https://pgmj.github.io/easyRasch2/dev/reference/run_single_q3_sim.html</loc></url>
+<url><loc>https://pgmj.github.io/easyRasch2/dev/reference/run_single_restscore_sim.html</loc></url>
 </urlset>
 

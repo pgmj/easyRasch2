@@ -106,6 +106,10 @@ remotes::install_github("pgmj/easyRasch2")
   — multiple-imputation variants
 - [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
   — item-restscore with Goodman-Kruskal’s \gamma (gamma)
+- [`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md) +
+  [`RMitemRestscorePlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscorePlot.md)
+  — parametric bootstrap null for item-restscore, flagged on corrected
+  bootstrap *p*-values
 - [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md)
   — non-parametric bootstrap of item-restscore fit
 - [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md) -
@@ -186,7 +190,8 @@ remotes::install_github("pgmj/easyRasch2")
 
 - [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonChange.md)
   — per-respondent change between two occasions, with the null stated
-  explicitly and critical values simulated rather than assumed normal
+  explicitly and critical values from the exact null rather than assumed
+  normal
 - [`RMretestSD()`](https://pgmj.github.io/easyRasch2/dev/reference/RMretestSD.md)
   — occasion-to-occasion SD from a test-retest study, the input to
   `RMpersonChange(null = "retest")`

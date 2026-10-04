@@ -4,7 +4,8 @@ Visualises the distribution of simulation-based partial gamma DIF values
 from
 [`RMdifGammaCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md),
 optionally overlaying observed partial gamma values computed from real
-data via [`partgam_DIF`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html).
+data with the same routine the simulation uses, which reproduces
+[`partgam_DIF`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html) exactly.
 
 ## Usage
 
@@ -56,8 +57,8 @@ with median and Highest Density Continuous Interval (HDCI) summaries.
 
 When `data` **is** supplied (along with `dif_var`), the function:
 
-1.  Computes observed partial gamma values via
-    [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html).
+1.  Computes observed partial gamma values (identical to
+    [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html)).
 
 2.  Overlays observed gamma values as orange diamond markers on the
     simulated distributions.
@@ -66,8 +67,8 @@ When `data` **is** supplied (along with `dif_var`), the function:
     black line segments, with thicker segments for the 66\\ black dots
     for the median.
 
-The `ggplot2`, `ggdist`, and optionally `iarm` packages must be
-installed (they are in Suggests, not Imports).
+The `ggplot2` and `ggdist` packages must be installed (they are in
+Suggests, not Imports).
 
 ## See also
 
@@ -78,8 +79,7 @@ installed (they are in Suggests, not Imports).
 
 ``` r
 # \donttest{
-if (requireNamespace("iarm", quietly = TRUE) &&
-    requireNamespace("ggdist", quietly = TRUE) &&
+if (requireNamespace("ggdist", quietly = TRUE) &&
     requireNamespace("ggplot2", quietly = TRUE)) {
   set.seed(42)
   sim_data <- as.data.frame(

@@ -104,10 +104,9 @@ RMlocdepGamma(
   (the second column); the two elements list each item pair in the two
   possible orders, so together they cover both rest-score directions for
   every pair. Each has columns "Item 1", "Item 2", "Partial gamma",
-  "Adj. p-value (BH)", and "p-value sign." (a star-string indicator from
-  [`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html)).
-  When `cutoff` is provided, additional columns "Gamma low", "Gamma
-  high", and "Flagged" are included.
+  "Adj. p-value (BH)", and "p-value sign." (stars for the BH-adjusted
+  p-value, as `iarm` shows them). When `cutoff` is provided, additional
+  columns "Gamma low", "Gamma high", and "Flagged" are included.
 
   The object has custom [`print()`](https://rdrr.io/r/base/print.html)
   and
@@ -138,6 +137,12 @@ suggest positive LD (items share variance beyond the latent trait),
 while large negative values suggest negative LD.
 
 The `iarm` package must be installed (it is in Suggests, not Imports).
+The asymptotic adjusted p-value is a Benjamini-Hochberg adjustment of
+the p-values from
+[`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html)
+over all \\k(k-1)\\ tests in both directions, applied by easyRasch2.
+iarm's own adjusted column is a Bonferroni correction whatever method is
+named, because iarm adjusts one p-value at a time, so it is not used.
 
 **Bootstrap p-values.** When `p_value = TRUE`, each pair is tested once,
 on the larger of its two rest-score directions (the `gamma_pair`

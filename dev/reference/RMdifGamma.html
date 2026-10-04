@@ -11,7 +11,7 @@ a single categorical DIF variable, controlling for the total score."><meta name=
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.3.1.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.3.1.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,7 @@ a single categorical DIF variable, controlling for the total score.</p>
 <span>  <span class="va">data</span>,</span>
 <span>  <span class="va">dif_var</span>,</span>
 <span>  cutoff <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  p_value <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  p_value <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  correction <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fwer"</span>, <span class="st">"fdr_bh"</span>, <span class="st">"fdr_by"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  output <span class="op">=</span> <span class="st">"kable"</span></span>
@@ -86,16 +86,21 @@ credible range) to the result.</p></li>
 
 
 <dt id="arg-p-value">p_value<a class="anchor" aria-label="anchor" href="#arg-p-value"></a></dt>
-<dd><p>Logical. When <code>TRUE</code>, adds two-sided bootstrap p-values
-(<code>p_gamma</code>, <code>padj_gamma</code>) comparing each item's observed partial gamma
-against its simulated null distribution, and <code>flagged</code> reflects
+<dd><p>Logical or <code>NULL</code>. When <code>TRUE</code>, adds two-sided bootstrap
+p-values (<code>p_gamma</code>, <code>padj_gamma</code>) comparing each item's observed partial
+gamma against its simulated null distribution, and <code>flagged</code> reflects
 <code>padj_gamma &lt; alpha</code> instead of the credible range. The asymptotic
 BH-adjusted p-value and star columns from <code><a href="https://rdrr.io/pkg/iarm/man/partgam_DIF.html" class="external-link">iarm::partgam_DIF()</a></code> are
 <strong>dropped</strong> in this mode (two p-value families in one table would invite
 double-reading); the simulated <code>gamma_low</code> / <code>gamma_high</code> band is kept as
-the effect-size reference. Requires the <strong>full</strong>
+the effect-size reference. <code>TRUE</code> requires the <strong>full</strong>
 <code><a href="RMdifGammaCutoff.html">RMdifGammaCutoff</a></code> object as <code>cutoff</code> (it carries the
-simulated distributions in <code>$results</code>). Default <code>FALSE</code>.</p></dd>
+simulated distributions in <code>$results</code>). <code>NULL</code>, the default, means <code>TRUE</code>
+when <code>cutoff</code> is that full object and <code>FALSE</code> otherwise, so calling with
+no cutoff keeps the asymptotic table unchanged. Pass <code>FALSE</code> to flag
+against the interval instead. The interval makes a poor decision rule,
+since its width sets a family-wise error rate of <code>1 - width^k</code> over all
+\(k\) items at once (Johansson, 2026).</p></dd>
 
 
 <dt id="arg-correction">correction<a class="anchor" aria-label="anchor" href="#arg-correction"></a></dt>
@@ -120,8 +125,8 @@ the corrected p-value. Default <code>0.05</code>. Ignored when <code>p_value = F
 
 <ul><li><p>If <code>output = "kable"</code>: a <code>knitr_kable</code> object with columns "Item",
 "Partial gamma", "SE", "Lower CI", "Upper CI", "Adj. p-value (BH)",
-and "p-value sign." (a star-string indicator from
-<code><a href="https://rdrr.io/pkg/iarm/man/partgam_DIF.html" class="external-link">iarm::partgam_DIF()</a></code>). When <code>cutoff</code> is provided, additional columns
+and "p-value sign." (stars for the BH-adjusted p-value, as <code>iarm</code>
+shows them). When <code>cutoff</code> is provided, additional columns
 "Gamma low", "Gamma high", and "Flagged" are included. With
 <code>p_value = TRUE</code>, the asymptotic p-value columns are replaced by
 bootstrap "p" and "p (adj)".</p></li>
@@ -142,22 +147,30 @@ not significantly different from 0.</p></li>
 \([-0.21, 0.21]\)), <em>or</em> not significantly outside \([-0.21, 0.21]\).</p></li>
 <li><p><strong>Moderate to large DIF</strong>: gamma outside \([-0.31, 0.31]\), <strong>and</strong>
 significantly outside \([-0.21, 0.21]\).</p></li>
-</ul><p>The <code>iarm</code> package must be installed (it is in Suggests, not Imports).</p>
+</ul><p>The <code>iarm</code> package must be installed (it is in Suggests, not Imports).
+The asymptotic adjusted p-value is a Benjamini-Hochberg adjustment over the
+items of the p-values from <code><a href="https://rdrr.io/pkg/iarm/man/partgam_DIF.html" class="external-link">iarm::partgam_DIF()</a></code>, applied by easyRasch2.
+iarm's own adjusted column is a Bonferroni correction whatever method is
+named, because iarm adjusts one p-value at a time, so it is not used.</p>
 <p><strong>Bootstrap p-values.</strong> When <code>p_value = TRUE</code>, each item's observed
 partial gamma is compared against its simulated null distribution (from
-<code>cutoff$results</code>, where the DIF variable is random by construction). The
+<code>cutoff$results</code>, simulated with no DIF by construction). The
 per-item statistic is the residual studentised by the bootstrap mean and
 SD; the marginal p-value is the two-sided Monte-Carlo p-value
 <code>(1 + #\{|t*| &gt;= |t|\}) / (B + 1)</code>, so it can be no smaller than
-<code>1 / (B + 1)</code>. <code>correction = "fwer"</code> uses the Westfall-Young
+<code>1 / (B + 1)</code>. The test is two-sided because DIF has no privileged
+direction: an item can favour either group. This differs from
+<code><a href="RMlocdepGamma.html">RMlocdepGamma()</a></code>, which tests one-sided for excess positive local
+dependence. <code>correction = "fwer"</code> uses the Westfall-Young
 studentised-max step-down, which exploits the bootstrap dependence among
-items (Ferreira, 2024); it is liberal when the simulation is small, so at
-least 1000 <code>iterations</code> in <code><a href="RMdifGammaCutoff.html">RMdifGammaCutoff()</a></code> are recommended (a warning
-is issued below that). Unlike the asymptotic p-values from
-<code><a href="https://rdrr.io/pkg/iarm/man/partgam_DIF.html" class="external-link">iarm::partgam_DIF()</a></code>, these are calibrated against the <em>simulated Rasch
-null</em> rather than the asymptotic SE; they are model-conditional and
-sample-size-sensitive, and are reported alongside the simulated
-effect-size band, not in place of it.</p>
+items (Ferreira, 2024); it is mildly liberal below 400 iterations in
+<code><a href="RMdifGammaCutoff.html">RMdifGammaCutoff()</a></code> (a message is issued below that). Unlike the
+asymptotic p-values from <code><a href="https://rdrr.io/pkg/iarm/man/partgam_DIF.html" class="external-link">iarm::partgam_DIF()</a></code>, these are calibrated
+against the <em>simulated Rasch null</em> rather than the asymptotic SE; they are
+model-conditional and sample-size-sensitive, and are reported alongside
+the simulated effect-size band, not in place of it. The observed partial
+gamma they test is computed by the same internal routine as the simulated
+values, which reproduces <code><a href="https://rdrr.io/pkg/iarm/man/partgam_DIF.html" class="external-link">iarm::partgam_DIF()</a></code> exactly.</p>
     </div>
     <div class="section level2">
     <h2 id="multiple-comparisons">Multiple comparisons<a class="anchor" aria-label="anchor" href="#multiple-comparisons"></a></h2>
@@ -187,6 +200,9 @@ of hypotheses simultaneously. <em>Journal of Statistical Theory and Practice,
 19</em>(6). <a href="https://doi.org/10.1007/s42519-024-00412-4" class="external-link">doi:10.1007/s42519-024-00412-4</a></p>
 <p>Westfall, P. H., &amp; Young, S. S. (1993). <em>Resampling-Based Multiple Testing</em>.
 Wiley.</p>
+<p>Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
+Rasch models: Iterations, multiplicity correction, and decision stability.
+<em>PsyArXiv</em>. <a href="https://doi.org/10.31234/osf.io/7pqz4_v2" class="external-link">doi:10.31234/osf.io/7pqz4_v2</a></p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -217,35 +233,40 @@ Wiley.</p>
 <span class="r-in"><span>                                   seed <span class="op">=</span> <span class="fl">42</span><span class="op">)</span></span></span>
 <span class="r-in"><span>    <span class="fu">RMdifGamma</span><span class="op">(</span><span class="va">sim_data</span>, <span class="va">dif_group</span>, cutoff <span class="op">=</span> <span class="va">cutoff_res</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span>    <span class="co"># Bootstrap p-values with family-wise (Westfall-Young) correction</span></span></span>
-<span class="r-in"><span>    <span class="co"># (use iterations &gt;= 1000 in real analyses for stable p-values)</span></span></span>
-<span class="r-in"><span>    <span class="fu">RMdifGamma</span><span class="op">(</span><span class="va">sim_data</span>, <span class="va">dif_group</span>, cutoff <span class="op">=</span> <span class="va">cutoff_res</span>, p_value <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>    <span class="co"># The full cutoff object switches on bootstrap p-values with the</span></span></span>
+<span class="r-in"><span>    <span class="co"># family-wise (Westfall-Young) correction; 100 iterations keeps the</span></span></span>
+<span class="r-in"><span>    <span class="co"># example quick, use the default 400 or more in real analyses</span></span></span>
+<span class="r-in"><span>    <span class="fu">RMdifGamma</span><span class="op">(</span><span class="va">sim_data</span>, <span class="va">dif_group</span>, cutoff <span class="op">=</span> <span class="va">cutoff_res</span>,</span></span>
 <span class="r-in"><span>               output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="op">}</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations &gt;= 1000 in RMdifGammaCutoff() for reliable p-values.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Bootstrap p-values are based on 100 iterations, below the calibrated floor of 400.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> Below 400 the Westfall-Young correction is mildly liberal under the null, so the family-wise error rate is above the nominal level.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> See Johansson (2026), doi:10.31234/osf.io/7pqz4_v2.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> Raise `iterations` in RMdifGammaCutoff().</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #555555;">This message is displayed once per session.</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      Item       gamma        se      lower     upper  gamma_low gamma_high</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1   Item1  0.02929936 0.1612158 -0.2866779 0.3452766 -0.3918869  0.4190476</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2   Item2 -0.16753927 0.1561349 -0.4735580 0.1384794 -0.3341646  0.2969502</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3   Item3  0.11111111 0.1681747 -0.2185053 0.4407275 -0.4043210  0.4864595</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4   Item4 -0.03045685 0.1545831 -0.3334342 0.2725205 -0.3377265  0.3954457</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5   Item5  0.07616708 0.1587018 -0.2348828 0.3872169 -0.3684211  0.3787375</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6   Item6  0.04239401 0.1562001 -0.2637526 0.3485406 -0.3467337  0.3541153</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7   Item7 -0.14560440 0.1603616 -0.4599073 0.1686985 -0.3906899  0.2727273</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8   Item8  0.01897019 0.1618599 -0.2982693 0.3362097 -0.3626374  0.3248998</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9   Item9 -0.14088398 0.1614016 -0.4572253 0.1754573 -0.3724247  0.4188101</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10 Item10  0.17777778 0.1556159 -0.1272237 0.4827792 -0.3863216  0.3540313</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1   Item1  0.02929936 0.1612158 -0.2866779 0.3452766 -0.2791519  0.3475936</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   Item2 -0.16753927 0.1561349 -0.4735580 0.1384794 -0.2672522  0.3369713</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3   Item3  0.11111111 0.1681747 -0.2185053 0.4407275 -0.4172185  0.2781790</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4   Item4 -0.03045685 0.1545831 -0.3334342 0.2725205 -0.3276904  0.2719986</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5   Item5  0.07616708 0.1587018 -0.2348828 0.3872169 -0.3374844  0.1909814</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6   Item6  0.04239401 0.1562001 -0.2637526 0.3485406 -0.2731989  0.3440197</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7   Item7 -0.14560440 0.1603616 -0.4599073 0.1686985 -0.3110048  0.3402597</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8   Item8  0.01897019 0.1618599 -0.2982693 0.3362097 -0.2474490  0.3723958</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9   Item9 -0.14088398 0.1614016 -0.4572253 0.1754573 -0.3283396  0.2865475</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 Item10  0.17777778 0.1556159 -0.1272237 0.4827792 -0.2857143  0.3036849</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      p_gamma padj_gamma flagged</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1.0000000  1.0000000   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2  0.2376238  0.9009901   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3  0.4554455  0.9801980   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4  0.9009901  1.0000000   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5  0.5742574  1.0000000   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6  0.9009901  1.0000000   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 7  0.4158416  0.9801980   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 8  0.9207921  1.0000000   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 9  0.5346535  0.9801980   FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 10 0.2178218  0.9009901   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  1.0000000   1.000000   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  0.2871287   0.950495   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  0.5247525   1.000000   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4  0.9009901   1.000000   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  0.5247525   1.000000   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  0.8415842   1.000000   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7  0.2871287   0.970297   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8  0.9207921   1.000000   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9  0.3960396   0.970297   FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10 0.2970297   0.950495   FALSE</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

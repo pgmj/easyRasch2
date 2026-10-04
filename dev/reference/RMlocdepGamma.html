@@ -13,7 +13,7 @@ items in the pair)."><meta name="robots" content="noindex"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.3.1.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.3.1.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -141,8 +141,8 @@ Item 2 (the second column); the two elements list each item pair in
 the two possible orders, so together they cover both rest-score
 directions for every pair. Each has columns "Item 1", "Item 2",
 "Partial gamma",
-"Adj. p-value (BH)", and "p-value sign." (a star-string indicator
-from <code><a href="https://rdrr.io/pkg/iarm/man/partgam_LD.html" class="external-link">iarm::partgam_LD()</a></code>). When <code>cutoff</code> is provided, additional
+"Adj. p-value (BH)", and "p-value sign." (stars for the BH-adjusted
+p-value, as <code>iarm</code> shows them). When <code>cutoff</code> is provided, additional
 columns "Gamma low", "Gamma high", and "Flagged" are included.</p>
 <p>The object has custom <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://rdrr.io/pkg/knitr/man/knit_print.html" class="external-link">knitr::knit_print()</a></code> methods:
 in the R console it prints the two tables stacked vertically; in a
@@ -167,7 +167,12 @@ data.frames.</p>
 <p>Values near 0 indicate no local dependence. Large positive values suggest
 positive LD (items share variance beyond the latent trait), while large
 negative values suggest negative LD.</p>
-<p>The <code>iarm</code> package must be installed (it is in Suggests, not Imports).</p>
+<p>The <code>iarm</code> package must be installed (it is in Suggests, not Imports).
+The asymptotic adjusted p-value is a Benjamini-Hochberg adjustment of the
+p-values from <code><a href="https://rdrr.io/pkg/iarm/man/partgam_LD.html" class="external-link">iarm::partgam_LD()</a></code> over all \(k(k-1)\) tests in both
+directions, applied by easyRasch2. iarm's own adjusted column is a
+Bonferroni correction whatever method is named, because iarm adjusts one
+p-value at a time, so it is not used.</p>
 <p><strong>Bootstrap p-values.</strong> When <code>p_value = TRUE</code>, each pair is tested
 once, on the larger of its two rest-score directions (the <code>gamma_pair</code>
 column), against its simulated null distribution (from <code>cutoff$results</code>,
