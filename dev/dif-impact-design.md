@@ -60,8 +60,18 @@ mean different things in different scales.
   1.0 ms against 15 to 60 ms, n = 300 to 1000). Random assignment is
   dropped.
 
-No package change yet. Points 1 to 5 can be implemented together when the
-hold on package changes is lifted.
+**IMPLEMENTED 2026-10-04 in 1.3.1.9001** (points 1 to 6, uncommitted):
+`RMdifGamma()` p_value = NULL with the LD-style notices and captions,
+`RMdifGammaCutoff()` 400/.95 + `dgp = c("conditional", "permutation")` +
+`requested_iterations`/`dgp` in the return value + no iarm dependency,
+`RMdifGammaPlot()` on the fast gamma, `.partgam_dif_gamma()` /
+`.partgam_dif_one()` internals, mirai exports. Shared `.check_cutoff_sample()`
+group-size message reworded (the null keeps observed groups); consumers drop
+unused factor levels. Tests: new `test-dif-flagging-defaults.R`, updated
+`test-partgam_dif.R`, DIF case added to `test-parallel-reproducibility.R`.
+Full suite 1621 expectations, 0 failures; R CMD check (no tests/vignettes,
+UTF-8) clean. NEWS merged into the dev section. Not done: vignette precompile
+(DIF numbers in the shipped .Rmd are from the old null), jamovi module.
 
 ### Original proposals
 

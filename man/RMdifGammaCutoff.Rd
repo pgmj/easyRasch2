@@ -7,13 +7,14 @@
 RMdifGammaCutoff(
   data,
   dif_var,
-  iterations = 250,
+  iterations = 400,
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,
   seed = NULL,
   cutoff_method = "hdci",
-  hdci_width = 0.99
+  hdci_width = 0.95,
+  dgp = c("conditional", "permutation")
 )
 }
 \arguments{
@@ -23,12 +24,10 @@ any \code{NA}) are used.}
 
 \item{dif_var}{A vector (factor, character, or integer) defining group
 membership for DIF analysis. Must have the same length as \code{nrow(data)}.
-The actual group labels are used to determine the number of groups and
-their relative sizes; during simulation, respondents are randomly assigned
-to groups with the same proportions, so there is no true DIF by
-construction.}
+Group membership is held fixed in every simulated dataset, so the group
+sizes and each group's distribution of total scores are those observed.}
 
-\item{iterations}{Integer. Number of simulation iterations (default 250).}
+\item{iterations}{Integer. Number of simulation iterations (default 400).}
 
 \item{parallel}{Logical. Use parallel processing via \code{mirai} if available
 (default \code{TRUE}).}
@@ -50,8 +49,20 @@ computed. Either \code{"hdci"} (default) for the Highest Density Interval via
 \code{stats::quantile()}.}
 
 \item{hdci_width}{Numeric. Width of the HDCI when \code{cutoff_method = "hdci"}.
-Default is \code{0.99} (99\\% HDCI). Ignored when
-\code{cutoff_method = "quantile"}.}
+Default is \code{0.95} (95\\% HDCI), matching \code{\link{RMitemInfitCutoff}}.
+Ignored when \code{cutoff_method = "quantile"}.}
+
+\item{dgp}{Character. How the null datasets are generated.
+\code{"conditional"} (default) draws each respondent's response pattern from
+the Rasch conditional distribution given their observed total score, with
+the CML item thresholds fixed, as the conditional option of
+\code{\link{RMitemRestscoreCutoff}} does. \code{"permutation"} keeps the
+observed responses and permutes group membership among respondents with
+the same total score, the Monte Carlo form of an exact conditional test of
+item-group independence given the score (Kreiner, 1987). It needs no item
+parameters, keeps any misfit elsewhere in the observed responses, and is
+25 to 60 times faster per iteration. Both held the nominal error rate in
+simulation, including when the groups differed by 1 SD.}
 }
 \value{
 A list with components:
@@ -62,66 +73,61 @@ A list with components:
 \code{gamma_low}, \code{gamma_high}. Bounds are computed using the method
 specified by \code{cutoff_method}.}
 \item{\code{actual_iterations}}{Number of successful iterations.}
+\item{\code{requested_iterations}}{Number of iterations asked for.}
 \item{\code{sample_n}}{Number of complete cases used.}
 \item{\code{sample_n_total}}{Number of respondents in the raw input data,
 before removing rows with \code{NA} in \code{data} or \code{dif_var}.}
 \item{\code{sample_has_na}}{Logical. Whether \code{data} or \code{dif_var} contained
 any missing values.}
-\item{\code{sample_summary}}{Summary statistics of estimated person
-parameters.}
+\item{\code{sample_summary}}{Summary statistics of the WLE person locations,
+or \code{NULL} when the model could not be fitted with
+\code{dgp = "permutation"}.}
 \item{\code{item_names}}{Character vector of item names from data.}
-\item{\code{dif_group_sizes}}{Named integer vector of group sizes used in the
-simulation (matches proportions in the observed \code{dif_var}).}
+\item{\code{dif_group_sizes}}{Integer vector of group sizes, held fixed in
+every simulated dataset.}
 \item{\code{cutoff_method}}{The method used to compute cutoffs (\code{"hdci"} or
 \code{"quantile"}).}
 \item{\code{hdci_width}}{The HDCI width used (only meaningful when
 \code{cutoff_method = "hdci"}).}
+\item{\code{dgp}}{The data-generating process used.}
 }
 }
 \description{
-Uses parametric bootstrap simulation to determine appropriate cutoff values
-for partial gamma DIF analysis via \code{\link[iarm]{partgam_DIF}}. Under
-a correctly fitting Rasch model where the DIF variable is unrelated to item
-responses (i.e., no true DIF), this function generates the expected
-distribution of absolute partial gamma values per item, providing empirical
-critical values.
+Simulates the distribution of the partial gamma DIF coefficient for each
+item when there is no DIF, to give empirical critical values and the
+simulated null behind the bootstrap p-values in \code{\link{RMdifGamma}}.
+Every simulated dataset keeps each respondent's observed group membership
+and total score, so the null reflects the observed group sizes and any
+difference between the groups' latent distributions.
 }
 \details{
-For each simulation iteration the function:
-\enumerate{
-\item Resamples person parameters (thetas) with replacement from the
-WLE person locations.
-\item Simulates item response data under a Rasch model (dichotomous via
-\code{psychotools::rrm()} or polytomous via an internal partial credit
-simulator).
-\item Creates a random DIF variable by sampling group labels with the
-same proportions as the observed \code{dif_var}, so there is \strong{no true DIF}
-by construction.
-\item Computes partial gamma DIF statistics via
-\code{iarm::partgam_DIF()}.
-}
+Partial gamma conditions on the total score, and under the Rasch model the
+response to an item is independent of group membership given the total
+score. Both data-generating processes preserve each respondent's group and
+total score, so the simulated null has the observed distribution of groups
+across score strata. An earlier version assigned simulated respondents to
+groups at random, which gave both groups the same latent distribution.
+When a minority group differed from the majority by 1 SD, that null was too
+narrow and flagged at least one item in about 14 percent of datasets with
+no DIF, against a nominal 5 percent.
 
-The distribution of partial gamma values across iterations provides
-empirical critical values per item. Values from real data that fall
-outside these bounds suggest DIF that exceeds what would be expected by
-chance under a correctly fitting Rasch model. Failed iterations (e.g.,
-due to convergence issues or degenerate data) are silently discarded.
+For each iteration the function draws one null dataset (see \code{dgp}) and
+computes partial gamma for every item. The computation reproduces
+\code{iarm::partgam_DIF()} exactly but is vectorised, so \code{iarm} is not needed
+here. Iterations that fail are discarded and reported through
+\code{actual_iterations}.
 
-The generating model uses CML item thresholds via \code{psychotools::pcmodel()}
-(a dichotomous item is a 2-category PCM) and WLE person locations,
-consistent with the rest of the package; responses are simulated with
-\code{psychotools::rrm()} (dichotomous) or an internal partial credit score
-simulator (polytomous).
+The conditional data-generating process uses CML item thresholds from
+\code{psychotools::pcmodel()} (a dichotomous item is a 2-category PCM). The
+group order follows the levels of \code{dif_var} (alphabetical for character
+vectors), which sets the sign of gamma as in \code{iarm::partgam_DIF()}.
 
 Parallel processing is provided by the \code{mirai} package (optional). Install
 it with \code{install.packages("mirai")} to enable parallelisation.
-
-The \code{iarm} package must be installed (it is in Suggests, not Imports).
 }
 \examples{
 \donttest{
-if (requireNamespace("iarm", quietly = TRUE) &&
-    requireNamespace("ggdist", quietly = TRUE)) {
+if (requireNamespace("ggdist", quietly = TRUE)) {
   set.seed(42)
   sim_data <- as.data.frame(
     matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
@@ -134,6 +140,12 @@ if (requireNamespace("iarm", quietly = TRUE) &&
                                  iterations = 100, parallel = FALSE,
                                  seed = 42)
   cutoff_res$item_cutoffs
+
+  # The permutation null needs no item parameters and is much faster
+  perm_res <- RMdifGammaCutoff(sim_data, dif_var = dif_sex,
+                               iterations = 100, parallel = FALSE,
+                               seed = 42, dgp = "permutation")
+  perm_res$item_cutoffs
 }
 }
 }
@@ -147,7 +159,12 @@ Henninger, M., Radek, J., Debelak, R., & Strobl, C. (2025).
 Partial credit trees meet the partial gamma coefficient for quantifying
 DIF and DSF in polytomous items. \emph{Behaviormetrika, 52}, 221--257.
 \doi{10.1007/s41237-024-00252-3}
+
+Kreiner, S. (1987). Analysis of multidimensional contingency tables by
+exact conditional tests: Techniques and strategies. \emph{Scandinavian Journal
+of Statistics, 14}(2), 97--112.
 }
 \seealso{
-\code{\link[iarm]{partgam_DIF}}
+\code{\link[iarm]{partgam_DIF}}, \code{\link{RMdifGamma}},
+\code{\link{RMdifGammaPlot}}
 }

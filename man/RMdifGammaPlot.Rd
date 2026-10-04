@@ -27,7 +27,8 @@ A \code{ggplot} object.
 \description{
 Visualises the distribution of simulation-based partial gamma DIF values
 from \code{\link{RMdifGammaCutoff}}, optionally overlaying observed partial
-gamma values computed from real data via \code{\link[iarm]{partgam_DIF}}.
+gamma values computed from real data with the same routine the simulation
+uses, which reproduces \code{\link[iarm]{partgam_DIF}} exactly.
 }
 \details{
 Uses \code{ggdist::stat_dotsinterval()} (when \code{data} is not supplied) or
@@ -41,8 +42,8 @@ Interval (HDCI) summaries.
 
 When \code{data} \strong{is} supplied (along with \code{dif_var}), the function:
 \enumerate{
-\item Computes observed partial gamma values via
-\code{iarm::partgam_DIF()}.
+\item Computes observed partial gamma values (identical to
+\code{iarm::partgam_DIF()}).
 \item Overlays observed gamma values as orange diamond markers on the
 simulated distributions.
 \item Shows per-item cutoff intervals (from \code{simfit$item_cutoffs}) as
@@ -50,13 +51,12 @@ black line segments, with thicker segments for the 66\\% interval and
 black dots for the median.
 }
 
-The \code{ggplot2}, \code{ggdist}, and optionally \code{iarm} packages must be installed
-(they are in Suggests, not Imports).
+The \code{ggplot2} and \code{ggdist} packages must be installed (they are in
+Suggests, not Imports).
 }
 \examples{
 \donttest{
-if (requireNamespace("iarm", quietly = TRUE) &&
-    requireNamespace("ggdist", quietly = TRUE) &&
+if (requireNamespace("ggdist", quietly = TRUE) &&
     requireNamespace("ggplot2", quietly = TRUE)) {
   set.seed(42)
   sim_data <- as.data.frame(

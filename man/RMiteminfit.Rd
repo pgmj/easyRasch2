@@ -155,13 +155,17 @@ than Bonferroni/Holm (Ferreira, 2024); its validity rests on subset
 pivotality. \code{"fdr_bh"}/\code{"fdr_by"} apply Benjamini-Hochberg / Benjamini-
 Yekutieli instead. These are model-conditional, sample-size-sensitive
 p-values and are reported alongside the simulated effect-size band, not in
-place of it. p-values can be no smaller than \code{1 / (B + 1)}, and the
-studentised-max (FWER) correction is \emph{liberal} when the simulation is small
-(the bootstrap mean/SD used for studentisation are then too noisy). At
-least 1000 \code{iterations} in \code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}} are recommended -- in
-simulations the family-wise error rate is then controlled at the nominal
-level -- and a warning is issued when the simulation is smaller. The
-marginal p-values are well calibrated even at a few hundred iterations.
+place of it. p-values can be no smaller than \code{1 / (B + 1)}. Below 400
+\code{iterations} in \code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}} the studentised-max (FWER)
+correction is mildly liberal, because the bootstrap mean and SD used for
+studentisation are too noisy, and a message says so. From 400 iterations
+the family-wise error rate is at the nominal level, and more iterations
+improve reproducibility instead: two analysts using different seeds
+disagree about at least one item roughly 10 percent of the time at 400
+iterations against 4 percent at 2000 (Johansson, 2026). The table caption
+notes this below 1000 iterations, so use 1000 to 2000 for a final
+analysis. The marginal p-values are well calibrated even at a few hundred
+iterations.
 }
 \section{Multiple comparisons}{
 
@@ -177,6 +181,20 @@ the probability of \emph{any} false flag (strict, lower power), while \code{"fdr
 (a more lenient middle ground). Rule of thumb: use the marginal p-value for a
 single pre-specified comparison, and a corrected p-value when screening the
 whole table -- the usual workflow.
+}
+
+\section{Flags depend on the other items}{
+
+Item infit and item-restscore both judge each item against expectations
+from a Rasch model fitted to all items, so misfitting items change what is
+expected of the others. A flag in one direction can therefore produce
+flags in the other. In simulation with seven polytomous items, two
+overfitting items led to about 6 percent of the fitting items being
+flagged as underfit, against about 1.5 percent with one overfitting item.
+The reverse effect was smaller: with underfitting items planted, 1 to 2
+percent of the fitting items were flagged as overfit. When items are
+flagged in both directions, consider removing the clearest misfit and
+testing again before interpreting the rest.
 }
 
 \examples{

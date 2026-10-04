@@ -123,7 +123,21 @@
 #' a true Rasch model the total rate was nominal, but the per-item marginal
 #' rate was about 3 percent for underfit and 2 percent for overfit with 20
 #' dichotomous items at n = 150 and 1.5 logits off target, narrowing toward
-#' equal shares with polytomous items and larger samples.
+#' equal shares with polytomous items and larger samples. With
+#' `correction = "fwer"`, over four such conditions, at least one item was
+#' flagged as underfit in 3.7 percent of datasets and as overfit in 1.6
+#' percent, 5.0 percent in total. An equal-tailed test, with alpha/2 for each
+#' direction, was evaluated and not adopted: it detected 2 to 3 percentage
+#' points fewer underfitting items and no more overfitting ones.
+#'
+#' \strong{Reproducibility.} The bootstrap p-values depend on the simulated
+#' null, so two analyses of the same data with different seeds can disagree
+#' about items near the decision boundary. In simulation, in conditions
+#' chosen to include such items, two seeds disagreed about the flag of at
+#' least one item in about 10 percent of analyses at 400 iterations and about
+#' 6 percent at 1000 with `correction = "fwer"`, and in 13 and 11 percent with
+#' `correction = "fdr_bh"`. Set `seed` in [RMitemRestscoreCutoff()] for a
+#' reproducible analysis, and use 1000 or more iterations for a final one.
 #'
 #' The direction in `Flagged` follows the studentised value, not the sign of
 #' `Difference`. At small sample sizes the null mean of `Difference` is
@@ -131,6 +145,7 @@
 #' `Difference` is still just above zero. This is rare.
 #'
 #' @inheritSection RMitemInfit Multiple comparisons
+#' @inheritSection RMitemInfit Flags depend on the other items
 #'
 #' @references
 #' Kreiner, S. (2011). A Note on Item–Restscore Association in Rasch Models.

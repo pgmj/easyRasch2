@@ -79,8 +79,8 @@ Item 2 (the second column); the two elements list each item pair in
 the two possible orders, so together they cover both rest-score
 directions for every pair. Each has columns "Item 1", "Item 2",
 "Partial gamma",
-"Adj. p-value (BH)", and "p-value sign." (a star-string indicator
-from \code{iarm::partgam_LD()}). When \code{cutoff} is provided, additional
+"Adj. p-value (BH)", and "p-value sign." (stars for the BH-adjusted
+p-value, as \code{iarm} shows them). When \code{cutoff} is provided, additional
 columns "Gamma low", "Gamma high", and "Flagged" are included.
 
 The object has custom \code{print()} and \code{knitr::knit_print()} methods:
@@ -115,6 +115,11 @@ positive LD (items share variance beyond the latent trait), while large
 negative values suggest negative LD.
 
 The \code{iarm} package must be installed (it is in Suggests, not Imports).
+The asymptotic adjusted p-value is a Benjamini-Hochberg adjustment of the
+p-values from \code{iarm::partgam_LD()} over all \eqn{k(k-1)} tests in both
+directions, applied by easyRasch2. iarm's own adjusted column is a
+Bonferroni correction whatever method is named, because iarm adjusts one
+p-value at a time, so it is not used.
 
 \strong{Bootstrap p-values.} When \code{p_value = TRUE}, each pair is tested
 once, on the larger of its two rest-score directions (the \code{gamma_pair}

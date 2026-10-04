@@ -122,3 +122,31 @@ test_that("RMpersonFit gives identical results in both paths", {
   )
   expect_equal(par, seq)
 })
+
+test_that("RMdifGammaCutoff gives identical results in both paths", {
+  skip_if_no_mirai()
+  skip_if_not_installed("ggdist")
+  df <- make_dich()
+  set.seed(4)
+  grp <- sample(c("a", "b"), nrow(df), replace = TRUE)
+  for (dgp in c("conditional", "permutation")) {
+    par <- RMdifGammaCutoff(
+      df,
+      grp,
+      iterations = 30L,
+      parallel = TRUE,
+      n_cores = 2L,
+      seed = 1L,
+      dgp = dgp
+    )
+    seq <- RMdifGammaCutoff(
+      df,
+      grp,
+      iterations = 30L,
+      parallel = FALSE,
+      seed = 1L,
+      dgp = dgp
+    )
+    expect_equal(par$results, seq$results, info = dgp)
+  }
+})

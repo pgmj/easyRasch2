@@ -100,7 +100,9 @@ test_that("RMdifGamma accepts an RMdifGammaCutoff result and adds Flagged column
     parallel = FALSE,
     seed = 1L
   )
-  res <- RMdifGamma(df, grp, cutoff = cuts, output = "dataframe")
+  res <- suppressMessages(
+    RMdifGamma(df, grp, cutoff = cuts, output = "dataframe")
+  )
   expect_true("flagged" %in% names(res))
   expect_type(res$flagged, "logical")
 })
@@ -200,7 +202,10 @@ test_that("RMdifGamma band flag matches gamma vs bounds", {
     parallel = FALSE,
     seed = 1L
   )
-  res <- RMdifGamma(df, grp, cutoff = cuts, output = "dataframe")
+  # Interval flagging is opt-in since the full object switches on p-values.
+  res <- suppressMessages(
+    RMdifGamma(df, grp, cutoff = cuts, p_value = FALSE, output = "dataframe")
+  )
   expect_equal(
     res$flagged,
     res$gamma < res$gamma_low | res$gamma > res$gamma_high
@@ -257,7 +262,8 @@ test_that("RMdifGamma p_value replaces asymptotic p columns and flags at alpha",
     parallel = FALSE,
     seed = 1L
   )
-  expect_warning(
+  rlang::reset_message_verbosity("easyRasch2_low_iterations_dif")
+  expect_message(
     res <- RMdifGamma(
       df,
       grp,
@@ -265,7 +271,7 @@ test_that("RMdifGamma p_value replaces asymptotic p columns and flags at alpha",
       p_value = TRUE,
       output = "dataframe"
     ),
-    regexp = "only 10 simulation iterations"
+    regexp = "below the calibrated floor of 400"
   )
   expect_named(
     res,
@@ -291,7 +297,7 @@ test_that("RMdifGamma p_value replaces asymptotic p columns and flags at alpha",
   expect_equal(res$flagged, !is.na(res$padj_gamma) & res$padj_gamma < 0.05)
 
   # kable renders with the correction label
-  suppressWarnings(
+  suppressMessages(
     kbl <- RMdifGamma(df, grp, cutoff = cuts, p_value = TRUE)
   )
   expect_s3_class(kbl, "knitr_kable")
@@ -311,7 +317,7 @@ test_that("RMdifGamma p_value correction variants run and 'none' is marginal", {
     parallel = FALSE,
     seed = 1L
   )
-  suppressWarnings({
+  suppressMessages(suppressWarnings({
     none <- RMdifGamma(
       df,
       grp,
@@ -328,7 +334,7 @@ test_that("RMdifGamma p_value correction variants run and 'none' is marginal", {
       correction = "fdr_bh",
       output = "dataframe"
     )
-  })
+  }))
   expect_equal(none$p_gamma, none$padj_gamma)
   expect_true(all(bh$padj_gamma >= bh$p_gamma, na.rm = TRUE))
 })

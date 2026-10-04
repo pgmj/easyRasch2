@@ -151,7 +151,21 @@ The two directions do not get equal shares of alpha. Gamma is bounded at
 a true Rasch model the total rate was nominal, but the per-item marginal
 rate was about 3 percent for underfit and 2 percent for overfit with 20
 dichotomous items at n = 150 and 1.5 logits off target, narrowing toward
-equal shares with polytomous items and larger samples.
+equal shares with polytomous items and larger samples. With
+\code{correction = "fwer"}, over four such conditions, at least one item was
+flagged as underfit in 3.7 percent of datasets and as overfit in 1.6
+percent, 5.0 percent in total. An equal-tailed test, with alpha/2 for each
+direction, was evaluated and not adopted: it detected 2 to 3 percentage
+points fewer underfitting items and no more overfitting ones.
+
+\strong{Reproducibility.} The bootstrap p-values depend on the simulated
+null, so two analyses of the same data with different seeds can disagree
+about items near the decision boundary. In simulation, in conditions
+chosen to include such items, two seeds disagreed about the flag of at
+least one item in about 10 percent of analyses at 400 iterations and about
+6 percent at 1000 with \code{correction = "fwer"}, and in 13 and 11 percent with
+\code{correction = "fdr_bh"}. Set \code{seed} in \code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}} for a
+reproducible analysis, and use 1000 or more iterations for a final one.
 
 The direction in \code{Flagged} follows the studentised value, not the sign of
 \code{Difference}. At small sample sizes the null mean of \code{Difference} is
@@ -172,6 +186,20 @@ the probability of \emph{any} false flag (strict, lower power), while \code{"fdr
 (a more lenient middle ground). Rule of thumb: use the marginal p-value for a
 single pre-specified comparison, and a corrected p-value when screening the
 whole table -- the usual workflow.
+}
+
+\section{Flags depend on the other items}{
+
+Item infit and item-restscore both judge each item against expectations
+from a Rasch model fitted to all items, so misfitting items change what is
+expected of the others. A flag in one direction can therefore produce
+flags in the other. In simulation with seven polytomous items, two
+overfitting items led to about 6 percent of the fitting items being
+flagged as underfit, against about 1.5 percent with one overfitting item.
+The reverse effect was smaller: with underfitting items planted, 1 to 2
+percent of the fitting items were flagged as overfit. When items are
+flagged in both directions, consider removing the clearest misfit and
+testing again before interpreting the rest.
 }
 
 \examples{

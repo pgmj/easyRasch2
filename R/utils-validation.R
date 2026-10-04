@@ -385,9 +385,9 @@ validate_response_data <- function(data) {
     warning(
       "The cutoff was simulated with group sizes ",
       paste(groups_cutoff, collapse = "/"), " but `dif_var` has ",
-      paste(groups_used, collapse = "/"), ". The DIF null draws group ",
-      "membership with the simulated proportions, so the intervals and ",
-      "p-values do not apply to this grouping. Re-run ", fn,
+      paste(groups_used, collapse = "/"), ". The DIF null keeps each ",
+      "respondent's observed group, so the intervals and p-values do not ",
+      "apply to this grouping. Re-run ", fn,
       " with the `dif_var` being tested.",
       call. = FALSE
     )

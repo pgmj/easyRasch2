@@ -533,3 +533,22 @@
   }
   padj
 }
+
+#' Significance stars in the style of iarm
+#'
+#' Reproduces the star string `iarm` attaches to its adjusted p-values
+#' (`symnum()` with cutpoints .001, .01, .05 and .10), trimmed of padding, so
+#' that a column easyRasch2 adjusts itself reads like the one it replaces.
+#'
+#' @param p Numeric vector of adjusted p-values.
+#' @return Character vector, `""` above .10 and for `NA`.
+#' @keywords internal
+#' @noRd
+.p_stars <- function(p) {
+  out <- character(length(p))
+  out[!is.na(p) & p < 0.10] <- "."
+  out[!is.na(p) & p < 0.05] <- "*"
+  out[!is.na(p) & p < 0.01] <- "**"
+  out[!is.na(p) & p < 0.001] <- "***"
+  out
+}

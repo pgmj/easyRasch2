@@ -19,16 +19,21 @@
 #'   When provided, adds columns `Gamma_low`, `Gamma_high`, and `Flagged`
 #'   (logical; `TRUE` when the observed partial gamma falls outside the
 #'   credible range) to the result.
-#' @param p_value Logical. When `TRUE`, adds two-sided bootstrap p-values
-#'   (`p_gamma`, `padj_gamma`) comparing each item's observed partial gamma
-#'   against its simulated null distribution, and `flagged` reflects
+#' @param p_value Logical or `NULL`. When `TRUE`, adds two-sided bootstrap
+#'   p-values (`p_gamma`, `padj_gamma`) comparing each item's observed partial
+#'   gamma against its simulated null distribution, and `flagged` reflects
 #'   `padj_gamma < alpha` instead of the credible range. The asymptotic
 #'   BH-adjusted p-value and star columns from `iarm::partgam_DIF()` are
 #'   **dropped** in this mode (two p-value families in one table would invite
 #'   double-reading); the simulated `gamma_low` / `gamma_high` band is kept as
-#'   the effect-size reference. Requires the **full**
+#'   the effect-size reference. `TRUE` requires the **full**
 #'   \code{\link{RMdifGammaCutoff}} object as `cutoff` (it carries the
-#'   simulated distributions in `$results`). Default `FALSE`.
+#'   simulated distributions in `$results`). `NULL`, the default, means `TRUE`
+#'   when `cutoff` is that full object and `FALSE` otherwise, so calling with
+#'   no cutoff keeps the asymptotic table unchanged. Pass `FALSE` to flag
+#'   against the interval instead. The interval makes a poor decision rule,
+#'   since its width sets a family-wise error rate of `1 - width^k` over all
+#'   \eqn{k} items at once (Johansson, 2026).
 #' @param correction Character. Multiplicity correction for the bootstrap
 #'   p-values: `"fwer"` (default; Westfall-Young studentised-max step-down),
 #'   `"fdr_bh"`, `"fdr_by"`, or `"none"`. Ignored when `p_value = FALSE`.
@@ -41,8 +46,8 @@
 #' @return
 #' * If `output = "kable"`: a `knitr_kable` object with columns "Item",
 #'   "Partial gamma", "SE", "Lower CI", "Upper CI", "Adj. p-value (BH)",
-#'   and "p-value sign." (a star-string indicator from
-#'   `iarm::partgam_DIF()`). When `cutoff` is provided, additional columns
+#'   and "p-value sign." (stars for the BH-adjusted p-value, as `iarm`
+#'   shows them). When `cutoff` is provided, additional columns
 #'   "Gamma low", "Gamma high", and "Flagged" are included. With
 #'   `p_value = TRUE`, the asymptotic p-value columns are replaced by
 #'   bootstrap "p" and "p (adj)".
@@ -66,22 +71,30 @@
 #'   significantly outside \eqn{[-0.21, 0.21]}.
 #'
 #' The `iarm` package must be installed (it is in Suggests, not Imports).
+#' The asymptotic adjusted p-value is a Benjamini-Hochberg adjustment over the
+#' items of the p-values from `iarm::partgam_DIF()`, applied by easyRasch2.
+#' iarm's own adjusted column is a Bonferroni correction whatever method is
+#' named, because iarm adjusts one p-value at a time, so it is not used.
 #'
 #' \strong{Bootstrap p-values.} When `p_value = TRUE`, each item's observed
 #' partial gamma is compared against its simulated null distribution (from
-#' `cutoff$results`, where the DIF variable is random by construction). The
+#' `cutoff$results`, simulated with no DIF by construction). The
 #' per-item statistic is the residual studentised by the bootstrap mean and
 #' SD; the marginal p-value is the two-sided Monte-Carlo p-value
 #' `(1 + #\{|t*| >= |t|\}) / (B + 1)`, so it can be no smaller than
-#' `1 / (B + 1)`. `correction = "fwer"` uses the Westfall-Young
+#' `1 / (B + 1)`. The test is two-sided because DIF has no privileged
+#' direction: an item can favour either group. This differs from
+#' [RMlocdepGamma()], which tests one-sided for excess positive local
+#' dependence. `correction = "fwer"` uses the Westfall-Young
 #' studentised-max step-down, which exploits the bootstrap dependence among
-#' items (Ferreira, 2024); it is liberal when the simulation is small, so at
-#' least 1000 `iterations` in [RMdifGammaCutoff()] are recommended (a warning
-#' is issued below that). Unlike the asymptotic p-values from
-#' `iarm::partgam_DIF()`, these are calibrated against the *simulated Rasch
-#' null* rather than the asymptotic SE; they are model-conditional and
-#' sample-size-sensitive, and are reported alongside the simulated
-#' effect-size band, not in place of it.
+#' items (Ferreira, 2024); it is mildly liberal below 400 iterations in
+#' [RMdifGammaCutoff()] (a message is issued below that). Unlike the
+#' asymptotic p-values from `iarm::partgam_DIF()`, these are calibrated
+#' against the *simulated Rasch null* rather than the asymptotic SE; they are
+#' model-conditional and sample-size-sensitive, and are reported alongside
+#' the simulated effect-size band, not in place of it. The observed partial
+#' gamma they test is computed by the same internal routine as the simulated
+#' values, which reproduces `iarm::partgam_DIF()` exactly.
 #'
 #' @inheritSection RMitemInfit Multiple comparisons
 #'
@@ -97,6 +110,10 @@
 #'
 #' Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple Testing*.
 #' Wiley.
+#'
+#' Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
+#' Rasch models: Iterations, multiplicity correction, and decision stability.
+#' *PsyArXiv*. \doi{10.31234/osf.io/7pqz4_v2}
 #'
 #' @seealso \code{\link{RMdifGammaCutoff}}
 #'
@@ -125,9 +142,10 @@
 #'                                    seed = 42)
 #'     RMdifGamma(sim_data, dif_group, cutoff = cutoff_res)
 #'
-#'     # Bootstrap p-values with family-wise (Westfall-Young) correction
-#'     # (use iterations >= 1000 in real analyses for stable p-values)
-#'     RMdifGamma(sim_data, dif_group, cutoff = cutoff_res, p_value = TRUE,
+#'     # The full cutoff object switches on bootstrap p-values with the
+#'     # family-wise (Westfall-Young) correction; 100 iterations keeps the
+#'     # example quick, use the default 400 or more in real analyses
+#'     RMdifGamma(sim_data, dif_group, cutoff = cutoff_res,
 #'                output = "dataframe")
 #'   }
 #' }
@@ -136,7 +154,7 @@ RMdifGamma <- function(
   data,
   dif_var,
   cutoff = NULL,
-  p_value = FALSE,
+  p_value = NULL,
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
   alpha = 0.05,
   output = "kable"
@@ -216,9 +234,23 @@ RMdifGamma <- function(
     }
   }
 
-  # --- p-value prerequisites --------------------------------------------------
+  # --- Resolve p_value --------------------------------------------------------
+  # NULL means "use the corrected p-value when the simulations are available",
+  # as in RMlocdepGamma() and RMitemInfit(). The bare $item_cutoffs, or no
+  # cutoff at all, leaves nothing to compute a p-value from and resolves to
+  # FALSE, which keeps the asymptotic table as it was.
+  if (!is.null(p_value) && (!is.logical(p_value) || length(p_value) != 1L ||
+    is.na(p_value))) {
+    stop("`p_value` must be TRUE, FALSE, or NULL.", call. = FALSE)
+  }
+  have_sims <- !is.null(cutoff_full) && !is.null(cutoff_full$results)
+  if (is.null(p_value)) {
+    p_value <- have_sims
+  }
+  n_items_total <- if (!is.null(cutoff)) nrow(cutoff) else NULL
+
   if (p_value) {
-    if (is.null(cutoff_full) || is.null(cutoff_full$results)) {
+    if (!have_sims) {
       stop(
         "`p_value = TRUE` requires the full RMdifGammaCutoff() object (it ",
         "carries the simulated distributions in $results); a NULL cutoff or ",
@@ -226,16 +258,32 @@ RMdifGamma <- function(
         call. = FALSE
       )
     }
-    if (!is.null(cutoff_n_iter) && cutoff_n_iter < 1000L) {
-      warning(
-        "Bootstrap p-values are based on only ",
+    # Below 400 the correction itself is off. Between 400 and 1000 only
+    # reproducibility improves, which the table caption reports instead.
+    if (!is.null(cutoff_n_iter) && cutoff_n_iter < 400L) {
+      .notify_low_iterations(
         cutoff_n_iter,
-        " simulation iterations. With few iterations the studentised-max ",
-        "(FWER) correction is liberal and small p-values are imprecise; ",
-        "use iterations >= 1000 in RMdifGammaCutoff() for reliable p-values.",
-        call. = FALSE
+        cutoff_full$requested_iterations,
+        fn = "RMdifGammaCutoff()",
+        id = "easyRasch2_low_iterations_dif"
       )
     }
+    .warn_fdr_floor(
+      cutoff_n_iter,
+      n_items_total,
+      correction,
+      alpha,
+      unit = "items",
+      fn = "RMdifGammaCutoff()"
+    )
+  } else if (!is.null(cutoff_full)) {
+    .notify_band_flagging(
+      if (identical(cutoff_method, "quantile")) 0.95 else cutoff_hdci_width,
+      n_items_total,
+      unit = "items",
+      fn = "RMdifGammaCutoff()",
+      id = "easyRasch2_band_flagging_dif"
+    )
   }
 
   # --- rgl workaround ---------------------------------------------------------
@@ -244,8 +292,8 @@ RMdifGamma <- function(
   on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
 
   # --- Same sample as the cutoff? ---------------------------------------------
-  # The DIF null draws group membership with the simulated proportions, so
-  # the group sizes have to match as well as the total.
+  # The DIF null keeps each respondent's observed group, so the group sizes
+  # have to match as well as the total.
   if (!is.null(cutoff_full)) {
     cc_dif <- stats::complete.cases(as.data.frame(data)) & !is.na(dif_var)
     .check_cutoff_sample(
@@ -254,7 +302,7 @@ RMdifGamma <- function(
       "RMdifGammaCutoff()",
       policy = "complete cases in data and dif_var",
       groups_cutoff = cutoff_full$dif_group_sizes,
-      groups_used = as.integer(table(dif_var[cc_dif]))
+      groups_used = as.integer(table(droplevels(factor(dif_var[cc_dif]))))
     )
   }
 
@@ -270,12 +318,17 @@ RMdifGamma <- function(
     gamma = as.numeric(pgam_raw$gamma),
     se = as.numeric(pgam_raw$se),
     pvalue = as.numeric(pgam_raw$pvalue),
-    padj_bh = as.numeric(pgam_raw[[6]]),
-    Significance = trimws(as.character(pgam_raw$sig)),
+    # iarm adjusts one p-value at a time (p.adjust() with n = k on a single
+    # value), which makes its "BH" column a Bonferroni correction whatever
+    # method is named. The Benjamini-Hochberg adjustment is applied here
+    # across all items instead, and the stars are recomputed from it.
+    padj_bh = stats::p.adjust(as.numeric(pgam_raw$pvalue), method = "BH"),
+    Significance = "",
     lower = as.numeric(pgam_raw$lower),
     upper = as.numeric(pgam_raw$upper),
     stringsAsFactors = FALSE
   )
+  pgam_df$Significance <- .p_stars(pgam_df$padj_bh)
 
   # Keep output columns (unrounded; the kable path rounds a display copy)
   result_df <- pgam_df[, c(
@@ -312,8 +365,11 @@ RMdifGamma <- function(
       result_df$gamma > result_df$gamma_high
 
     if (p_value) {
-      # Compare observed gamma (unrounded, from iarm) to its simulated null
-      # (cutoff_full$results). Two-sided: DIF in either direction matters.
+      # Compare the observed gamma to its simulated null (cutoff_full$results).
+      # Two-sided: DIF in either direction matters. The observed value comes
+      # from the same vectorised routine as the simulated ones, so the two
+      # cannot diverge. It equals iarm's gamma exactly
+      # (dev/dif_partgam_fast_validation.qmd).
       sim_items <- unique(cutoff_full$results$Item)
       if (!setequal(data_items, sim_items)) {
         stop(
@@ -327,10 +383,8 @@ RMdifGamma <- function(
         list(cutoff_full$results$iteration, cutoff_full$results$Item),
         function(x) x[1L]
       )
-      observed <- stats::setNames(
-        as.numeric(pgam_raw$gamma),
-        as.character(pgam_raw$Item)
-      )
+      obs_fast <- .partgam_dif_gamma(as.data.frame(data), dif_var)
+      observed <- stats::setNames(obs_fast$gamma, obs_fast$Item)
       pv <- .bootstrap_pvalues(
         observed,
         sim_mat,
@@ -409,7 +463,10 @@ RMdifGamma <- function(
       cutoff_n_iter,
       "+1) = ",
       round(1 / (cutoff_n_iter + 1), 4),
-      ". Positive gamma indicates higher scores in higher DIF group levels."
+      ". The interval is shown as description and is not the decision rule.",
+      " Positive gamma indicates higher scores in higher DIF group levels.",
+      .iteration_note(cutoff_n_iter),
+      .attrition_clause(cutoff_n_iter, cutoff_full$requested_iterations)
     )
   } else if (is.null(cutoff)) {
     caption_text <- paste0(
@@ -431,7 +488,13 @@ RMdifGamma <- function(
         paste0(iter_part, " (", method_label, ").")
       } else {
         paste0(iter_part, ".")
-      }
+      },
+      .band_error_clause(
+        if (identical(cutoff_method, "quantile")) 0.95 else cutoff_hdci_width,
+        n_items_total,
+        unit = "items"
+      ),
+      .attrition_clause(cutoff_n_iter, cutoff_full$requested_iterations)
     )
   } else {
     caption_text <- paste0(
@@ -514,23 +577,21 @@ RMdifGamma <- function(
 
 #' Simulation-Based Partial Gamma DIF Cutoff Determination
 #'
-#' Uses parametric bootstrap simulation to determine appropriate cutoff values
-#' for partial gamma DIF analysis via \code{\link[iarm]{partgam_DIF}}. Under
-#' a correctly fitting Rasch model where the DIF variable is unrelated to item
-#' responses (i.e., no true DIF), this function generates the expected
-#' distribution of absolute partial gamma values per item, providing empirical
-#' critical values.
+#' Simulates the distribution of the partial gamma DIF coefficient for each
+#' item when there is no DIF, to give empirical critical values and the
+#' simulated null behind the bootstrap p-values in \code{\link{RMdifGamma}}.
+#' Every simulated dataset keeps each respondent's observed group membership
+#' and total score, so the null reflects the observed group sizes and any
+#' difference between the groups' latent distributions.
 #'
 #' @param data A data.frame or matrix of item responses. Items must be scored
 #'   starting at 0 (non-negative integers). Only complete cases (rows without
 #'   any `NA`) are used.
 #' @param dif_var A vector (factor, character, or integer) defining group
 #'   membership for DIF analysis. Must have the same length as `nrow(data)`.
-#'   The actual group labels are used to determine the number of groups and
-#'   their relative sizes; during simulation, respondents are randomly assigned
-#'   to groups with the same proportions, so there is no true DIF by
-#'   construction.
-#' @param iterations Integer. Number of simulation iterations (default 250).
+#'   Group membership is held fixed in every simulated dataset, so the group
+#'   sizes and each group's distribution of total scores are those observed.
+#' @param iterations Integer. Number of simulation iterations (default 400).
 #' @param parallel Logical. Use parallel processing via `mirai` if available
 #'   (default `TRUE`).
 #' @param n_cores Integer or `NULL`. Number of parallel workers. When `NULL`,
@@ -546,8 +607,19 @@ RMdifGamma <- function(
 #'   `ggdist::hdci()`, or `"quantile"` for the 2.5th/97.5th percentiles via
 #'   `stats::quantile()`.
 #' @param hdci_width Numeric. Width of the HDCI when `cutoff_method = "hdci"`.
-#'   Default is `0.99` (99\% HDCI). Ignored when
-#'   `cutoff_method = "quantile"`.
+#'   Default is `0.95` (95\% HDCI), matching \code{\link{RMitemInfitCutoff}}.
+#'   Ignored when `cutoff_method = "quantile"`.
+#' @param dgp Character. How the null datasets are generated.
+#'   `"conditional"` (default) draws each respondent's response pattern from
+#'   the Rasch conditional distribution given their observed total score, with
+#'   the CML item thresholds fixed, as the conditional option of
+#'   \code{\link{RMitemRestscoreCutoff}} does. `"permutation"` keeps the
+#'   observed responses and permutes group membership among respondents with
+#'   the same total score, the Monte Carlo form of an exact conditional test of
+#'   item-group independence given the score (Kreiner, 1987). It needs no item
+#'   parameters, keeps any misfit elsewhere in the observed responses, and is
+#'   25 to 60 times faster per iteration. Both held the nominal error rate in
+#'   simulation, including when the groups differed by 1 SD.
 #'
 #' @return A list with components:
 #' \describe{
@@ -557,53 +629,49 @@ RMdifGamma <- function(
 #'     `gamma_low`, `gamma_high`. Bounds are computed using the method
 #'     specified by `cutoff_method`.}
 #'   \item{`actual_iterations`}{Number of successful iterations.}
+#'   \item{`requested_iterations`}{Number of iterations asked for.}
 #'   \item{`sample_n`}{Number of complete cases used.}
 #'   \item{`sample_n_total`}{Number of respondents in the raw input data,
 #'     before removing rows with `NA` in `data` or `dif_var`.}
 #'   \item{`sample_has_na`}{Logical. Whether `data` or `dif_var` contained
 #'     any missing values.}
-#'   \item{`sample_summary`}{Summary statistics of estimated person
-#'     parameters.}
+#'   \item{`sample_summary`}{Summary statistics of the WLE person locations,
+#'     or `NULL` when the model could not be fitted with
+#'     `dgp = "permutation"`.}
 #'   \item{`item_names`}{Character vector of item names from data.}
-#'   \item{`dif_group_sizes`}{Named integer vector of group sizes used in the
-#'     simulation (matches proportions in the observed `dif_var`).}
+#'   \item{`dif_group_sizes`}{Integer vector of group sizes, held fixed in
+#'     every simulated dataset.}
 #'   \item{`cutoff_method`}{The method used to compute cutoffs (`"hdci"` or
 #'     `"quantile"`).}
 #'   \item{`hdci_width`}{The HDCI width used (only meaningful when
 #'     `cutoff_method = "hdci"`).}
+#'   \item{`dgp`}{The data-generating process used.}
 #' }
 #'
 #' @details
-#' For each simulation iteration the function:
-#' \enumerate{
-#'   \item Resamples person parameters (thetas) with replacement from the
-#'     WLE person locations.
-#'   \item Simulates item response data under a Rasch model (dichotomous via
-#'     `psychotools::rrm()` or polytomous via an internal partial credit
-#'     simulator).
-#'   \item Creates a random DIF variable by sampling group labels with the
-#'     same proportions as the observed `dif_var`, so there is **no true DIF**
-#'     by construction.
-#'   \item Computes partial gamma DIF statistics via
-#'     `iarm::partgam_DIF()`.
-#' }
+#' Partial gamma conditions on the total score, and under the Rasch model the
+#' response to an item is independent of group membership given the total
+#' score. Both data-generating processes preserve each respondent's group and
+#' total score, so the simulated null has the observed distribution of groups
+#' across score strata. An earlier version assigned simulated respondents to
+#' groups at random, which gave both groups the same latent distribution.
+#' When a minority group differed from the majority by 1 SD, that null was too
+#' narrow and flagged at least one item in about 14 percent of datasets with
+#' no DIF, against a nominal 5 percent.
 #'
-#' The distribution of partial gamma values across iterations provides
-#' empirical critical values per item. Values from real data that fall
-#' outside these bounds suggest DIF that exceeds what would be expected by
-#' chance under a correctly fitting Rasch model. Failed iterations (e.g.,
-#' due to convergence issues or degenerate data) are silently discarded.
+#' For each iteration the function draws one null dataset (see `dgp`) and
+#' computes partial gamma for every item. The computation reproduces
+#' `iarm::partgam_DIF()` exactly but is vectorised, so `iarm` is not needed
+#' here. Iterations that fail are discarded and reported through
+#' `actual_iterations`.
 #'
-#' The generating model uses CML item thresholds via `psychotools::pcmodel()`
-#' (a dichotomous item is a 2-category PCM) and WLE person locations,
-#' consistent with the rest of the package; responses are simulated with
-#' `psychotools::rrm()` (dichotomous) or an internal partial credit score
-#' simulator (polytomous).
+#' The conditional data-generating process uses CML item thresholds from
+#' `psychotools::pcmodel()` (a dichotomous item is a 2-category PCM). The
+#' group order follows the levels of `dif_var` (alphabetical for character
+#' vectors), which sets the sign of gamma as in `iarm::partgam_DIF()`.
 #'
 #' Parallel processing is provided by the `mirai` package (optional). Install
 #' it with `install.packages("mirai")` to enable parallelisation.
-#'
-#' The `iarm` package must be installed (it is in Suggests, not Imports).
 #'
 #' @references
 #' Bjorner, J. B., Kreiner, S., Ware, J. E., Damsgaard, M. T., &
@@ -616,14 +684,18 @@ RMdifGamma <- function(
 #' DIF and DSF in polytomous items. *Behaviormetrika, 52*, 221--257.
 #' \doi{10.1007/s41237-024-00252-3}
 #'
-#' @seealso \code{\link[iarm]{partgam_DIF}}
+#' Kreiner, S. (1987). Analysis of multidimensional contingency tables by
+#' exact conditional tests: Techniques and strategies. *Scandinavian Journal
+#' of Statistics, 14*(2), 97--112.
+#'
+#' @seealso \code{\link[iarm]{partgam_DIF}}, \code{\link{RMdifGamma}},
+#'   \code{\link{RMdifGammaPlot}}
 #'
 #' @export
 #'
 #' @examples
 #' \donttest{
-#' if (requireNamespace("iarm", quietly = TRUE) &&
-#'     requireNamespace("ggdist", quietly = TRUE)) {
+#' if (requireNamespace("ggdist", quietly = TRUE)) {
 #'   set.seed(42)
 #'   sim_data <- as.data.frame(
 #'     matrix(sample(0:1, 200 * 10, replace = TRUE), nrow = 200, ncol = 10)
@@ -636,34 +708,34 @@ RMdifGamma <- function(
 #'                                  iterations = 100, parallel = FALSE,
 #'                                  seed = 42)
 #'   cutoff_res$item_cutoffs
+#'
+#'   # The permutation null needs no item parameters and is much faster
+#'   perm_res <- RMdifGammaCutoff(sim_data, dif_var = dif_sex,
+#'                                iterations = 100, parallel = FALSE,
+#'                                seed = 42, dgp = "permutation")
+#'   perm_res$item_cutoffs
 #' }
 #' }
 RMdifGammaCutoff <- function(
   data,
   dif_var,
-  iterations = 250,
+  iterations = 400,
   parallel = TRUE,
   n_cores = NULL,
   verbose = FALSE,
   seed = NULL,
   cutoff_method = "hdci",
-  hdci_width = 0.99
+  hdci_width = 0.95,
+  dgp = c("conditional", "permutation")
 ) {
   cutoff_method <- match.arg(cutoff_method, c("hdci", "quantile"))
+  dgp <- match.arg(dgp)
 
   if (cutoff_method == "hdci" && !requireNamespace("ggdist", quietly = TRUE)) {
     stop(
       "Package 'ggdist' is required when cutoff_method = \"hdci\" but is not installed.\n",
       "Install it with: install.packages(\"ggdist\")\n",
       "Alternatively, use cutoff_method = \"quantile\" to avoid this dependency.",
-      call. = FALSE
-    )
-  }
-
-  if (!requireNamespace("iarm", quietly = TRUE)) {
-    stop(
-      "Package 'iarm' is required for RMdifGammaCutoff() but is not installed.\n",
-      "Install it with: install.packages(\"iarm\")",
       call. = FALSE
     )
   }
@@ -685,11 +757,6 @@ RMdifGammaCutoff <- function(
     )
   }
 
-  # rgl workaround (iarm depends on vcdExtra -> rgl)
-  old_rgl <- getOption("rgl.useNULL")
-  options(rgl.useNULL = TRUE)
-  on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
-
   # Only complete cases (both data and dif_var). Record the raw total and
   # whether anything was dropped so callers (e.g. RMdifGammaPlot) can report
   # the sample in the standard `n = X of Y respondents` form.
@@ -706,11 +773,13 @@ RMdifGammaCutoff <- function(
     )
   }
 
-  # Determine DIF group structure (labels and proportions)
-  dif_table <- table(dif_var)
-  dif_levels <- names(dif_table)
-  dif_proportions <- as.numeric(dif_table) / sum(dif_table)
-  n_dif_groups <- length(dif_levels)
+  # Group structure. factor() keeps the level order of a factor and sorts a
+  # character or numeric vector, which is the coding iarm::partgam_DIF() uses
+  # and so sets the sign of gamma.
+  dif_factor <- factor(dif_var)
+  dif_factor <- droplevels(dif_factor)
+  dif_table <- table(dif_factor)
+  n_dif_groups <- length(dif_table)
 
   if (n_dif_groups < 2L) {
     stop(
@@ -758,42 +827,42 @@ RMdifGammaCutoff <- function(
   sim_seeds <- sample.int(.Machine$integer.max, iterations)
 
   data_mat <- as.matrix(data)
+  storage.mode(data_mat) <- "integer"
   sample_n <- nrow(data_mat)
-  is_polytomous <- max(data_mat, na.rm = TRUE) > 1L
-
   item_names_vec <- colnames(data_mat)
+  if (is.null(item_names_vec)) {
+    item_names_vec <- paste0("V", seq_len(ncol(data_mat)))
+    colnames(data_mat) <- item_names_vec
+  }
 
-  # Generating model: CML item thresholds (psychotools) + WLE person locations,
-  # consistent with the rest of the package, replacing eRm CML +
-  # eRm::person.parameter() (MLE). Thetas form the pool resampled with
-  # replacement to build each simulated dataset; a dichotomous item is a
-  # 2-category PCM, so its centred threshold is the item difficulty for rrm().
-  pool <- .wle_theta_pool(data_mat)
-  thr_list <- pool$thr_list
-  thetas <- pool$thetas
-
-  if (is_polytomous) {
-    sim_data_list <- list(
-      type = "polytomous",
-      thetas = thetas,
-      deltaslist = thr_list,
-      n_items = ncol(data_mat),
-      sample_n = sample_n,
-      item_names = item_names_vec,
-      dif_levels = dif_levels,
-      dif_proportions = dif_proportions
-    )
+  # The conditional DGP needs the CML thresholds. The permutation DGP needs no
+  # model, so a failed fit there only loses the person-location summary.
+  pool <- if (dgp == "conditional") {
+    .wle_theta_pool(data_mat)
   } else {
-    sim_data_list <- list(
-      type = "dichotomous",
-      thetas = thetas,
-      item_params = unlist(thr_list, use.names = FALSE),
-      n_items = ncol(data_mat),
-      sample_n = sample_n,
-      item_names = item_names_vec,
-      dif_levels = dif_levels,
-      dif_proportions = dif_proportions
-    )
+    tryCatch(.wle_theta_pool(data_mat), error = function(e) NULL)
+  }
+
+  sim_data_list <- list(
+    dgp = dgp,
+    sample_n = sample_n,
+    n_items = ncol(data_mat),
+    item_names = item_names_vec,
+    dif_factor = dif_factor
+  )
+  if (dgp == "conditional") {
+    # Each respondent keeps their group and total score; their response
+    # pattern is redrawn from the Rasch conditional distribution given that
+    # score. Respondents are grouped by score so each group is drawn in one
+    # batch, and the rows (and so the group labels) stay where they are.
+    sim_data_list$thr_list <- pool$thr_list
+    sim_data_list$cond_groups <- .cond_groups(data_mat, pool$thr_list)
+  } else {
+    # Responses stay as observed; group labels are permuted within strata of
+    # the total score. Strata with a single respondent cannot change.
+    sim_data_list$data_mat <- data_mat
+    strata <- split(seq_len(sample_n), rowSums(data_mat))
+    sim_data_list$strata <- strata[lengths(strata) > 1L]
   }
 
   if (use_parallel) {
@@ -838,8 +907,18 @@ RMdifGammaCutoff <- function(
     rbind,
     lapply(item_names, function(item) {
       sub <- results_df[results_df$Item == item, ]
+      g <- sub$gamma[is.finite(sub$gamma)]
+      if (length(g) == 0L) {
+        return(data.frame(
+          Item = item,
+          gamma_low = NA_real_,
+          gamma_high = NA_real_,
+          stringsAsFactors = FALSE,
+          row.names = NULL
+        ))
+      }
       if (cutoff_method == "hdci") {
-        gamma_interval <- ggdist::hdci(sub$gamma, .width = hdci_width)
+        gamma_interval <- ggdist::hdci(g, .width = hdci_width)
         data.frame(
           Item = item,
           gamma_low = gamma_interval[1L, 1L],
@@ -850,8 +929,8 @@ RMdifGammaCutoff <- function(
       } else {
         data.frame(
           Item = item,
-          gamma_low = stats::quantile(sub$gamma, 0.025, na.rm = TRUE),
-          gamma_high = stats::quantile(sub$gamma, 0.975, na.rm = TRUE),
+          gamma_low = stats::quantile(g, 0.025),
+          gamma_high = stats::quantile(g, 0.975),
           stringsAsFactors = FALSE,
           row.names = NULL
         )
@@ -864,15 +943,121 @@ RMdifGammaCutoff <- function(
     results = results_df,
     item_cutoffs = item_cutoffs,
     actual_iterations = actual_iterations,
+    requested_iterations = iterations,
     sample_n = sample_n,
     sample_n_total = n_total,
     sample_has_na = has_na,
-    sample_summary = summary(thetas),
+    sample_summary = if (is.null(pool)) NULL else summary(pool$thetas),
     item_names = item_names_vec,
     dif_group_sizes = as.integer(dif_table),
     cutoff_method = cutoff_method,
-    hdci_width = hdci_width
+    hdci_width = hdci_width,
+    dgp = dgp
   )
+}
+
+# ---------------------------------------------------------------------------
+# Internal: vectorised partial gamma for DIF
+# ---------------------------------------------------------------------------
+
+#' Partial gamma DIF coefficient for every item, coefficient only
+#'
+#' Vectorised implementation of Davis's (1967) partial gamma between each item
+#' and the grouping variable, conditioned on the total score. It returns the
+#' coefficient and nothing else, which is all the bootstrap needs, and is used
+#' for both the simulated null in [RMdifGammaCutoff()] and the observed
+#' statistic that [RMdifGamma()] tests against it, so the two cannot diverge.
+#' The `gamma`, `se`, `lower` and `upper` columns shown to users still come
+#' from `iarm::partgam_DIF()`.
+#'
+#' The coding follows `iarm::partgam_DIF()`, and agreement is exact
+#' (`dev/dif_partgam_fast_validation.qmd`, asserted in
+#' `tests/testthat/test-partgam_dif.R`): complete cases on the items and the
+#' grouping variable, the total score over all items (the item included), and
+#' groups ordered by the levels of `factor(dif_var)`, so three or more groups
+#' are treated as ordinal. Positive gamma means that respondents in
+#' higher-coded groups score higher on the item at the same total score.
+#'
+#' @details
+#' For one stratum with count matrix \eqn{N} (rows: item categories, columns:
+#' groups), \eqn{G_x} and \eqn{G_y} the strictly-upper indicator matrices of
+#' matching size and \eqn{A = G_x N}, the concordant count is
+#' \eqn{\sum N \circ (A G_y^T)} and the discordant count
+#' \eqn{\sum N \circ (A G_y)}. Each unordered pair of respondents is counted
+#' once, and the counts are pooled over strata.
+#'
+#' @param data data.frame or matrix of item responses scored from 0.
+#' @param dif_var Grouping variable, same length as `nrow(data)`.
+#' @return data.frame with `Item` and `gamma`, one row per item in column
+#'   order. `gamma` is `NA_real_` for an item with no concordant and no
+#'   discordant pair (a constant item), where `iarm::partgam_DIF()` errors for
+#'   the whole dataset.
+#' @keywords internal
+#' @noRd
+.partgam_dif_gamma <- function(data, dif_var) {
+  X <- as.matrix(data)
+  storage.mode(X) <- "integer"
+  items <- colnames(X)
+  if (is.null(items)) {
+    items <- paste0("I", seq_len(ncol(X)))
+  }
+  f <- if (is.factor(dif_var)) dif_var else factor(dif_var)
+  ok <- stats::complete.cases(X) & !is.na(f)
+  X <- X[ok, , drop = FALSE]
+  y <- as.integer(f[ok]) - 1L
+  my <- nlevels(f)
+  mx <- max(X) + 1L
+  score <- rowSums(X)
+  upper <- function(m) {
+    outer(seq_len(m), seq_len(m), function(a, b) as.numeric(b > a))
+  }
+  Gx <- upper(mx)
+  Gy <- upper(my)
+  tGy <- t(Gy)
+  data.frame(
+    Item = items,
+    gamma = vapply(
+      seq_len(ncol(X)),
+      function(i) .partgam_dif_one(X[, i], y, score, mx, my, Gx, Gy, tGy),
+      numeric(1L)
+    ),
+    stringsAsFactors = FALSE,
+    row.names = NULL
+  )
+}
+
+#' Partial gamma between one item and the grouping variable
+#'
+#' @param x Integer item responses scored from 0.
+#' @param y Integer group codes from 0.
+#' @param z Integer conditioning variable (the total score).
+#' @param mx,my Number of item categories and of groups.
+#' @param Gx,Gy,tGy Strictly-upper indicator matrices and the transpose of
+#'   `Gy`.
+#' @return The partial gamma, or `NA_real_` when no pair is concordant or
+#'   discordant.
+#' @keywords internal
+#' @noRd
+.partgam_dif_one <- function(x, y, z, mx, my, Gx, Gy, tGy) {
+  zc <- z - min(z) + 1L
+  nz <- max(zc)
+  counts <- tabulate(
+    (zc - 1L) * mx * my + y * mx + x + 1L,
+    nbins = mx * my * nz
+  )
+  dim(counts) <- c(mx, my, nz)
+  conc <- 0
+  disc <- 0
+  for (s in seq_len(nz)) {
+    N <- counts[, , s]
+    # A stratum holding fewer than two observations contributes no pairs.
+    if (sum(N) < 2L) next
+    A <- Gx %*% N
+    conc <- conc + sum(N * (A %*% tGy))
+    disc <- disc + sum(N * (A %*% Gy))
+  }
+  total <- conc + disc
+  if (total == 0) NA_real_ else (conc - disc) / total
 }
 
 # ---------------------------------------------------------------------------
@@ -898,76 +1083,20 @@ run_single_partgam_sim <- function(seed, data_list) {
     sample.kind = "Rejection"
   )
 
-  thetas_res <- sample(
-    data_list$thetas,
-    size = data_list$sample_n,
-    replace = TRUE
-  )
-
   tryCatch(
     {
-      if (data_list$type == "dichotomous") {
-        sim_mat <- psychotools::rrm(
-          theta = thetas_res,
-          beta = data_list$item_params
-        )
-        sim_df <- as.data.frame(sim_mat$data)
-        colnames(sim_df) <- data_list$item_names
-
-        pos_counts <- colSums(sim_df, na.rm = TRUE)
-        if (any(pos_counts < 8L)) {
-          return(
-            "validation_failed: fewer than 8 positive responses in at least one item"
-          )
-        }
+      if (identical(data_list$dgp, "conditional")) {
+        sim_mat <- as.matrix(.sim_cond_dataset(data_list))
+        groups <- data_list$dif_factor
       } else {
-        sim_mat <- sim_partial_score(data_list$deltaslist, thetas_res)
-        sim_df <- as.data.frame(sim_mat)
-        colnames(sim_df) <- data_list$item_names
-
-        n_cats <- vapply(
-          data_list$deltaslist,
-          function(d) length(d) + 1L,
-          integer(1L)
-        )
-        for (j in seq_len(ncol(sim_df))) {
-          tab <- tabulate(sim_df[[j]] + 1L, nbins = n_cats[j])
-          if (any(tab == 0L)) {
-            return("validation_failed: not all categories represented")
-          }
+        sim_mat <- data_list$data_mat
+        groups <- data_list$dif_factor
+        for (s in data_list$strata) {
+          groups[s] <- groups[s[sample.int(length(s))]]
         }
       }
-
-      # Create a random DIF variable with the same group proportions
-      # but no actual relationship to item responses (no true DIF)
-      random_dif <- sample(
-        data_list$dif_levels,
-        size = data_list$sample_n,
-        replace = TRUE,
-        prob = data_list$dif_proportions
-      )
-
-      # Compute partial gamma DIF via iarm.
-      # iarm::partgam_DIF() prints its result table to stdout on every call,
-      # which floods sequential runs (e.g. vignettes); silence it. `finally`
-      # restores the sink even if the call errors (the outer tryCatch then
-      # reports the failure as usual).
-      sink(nullfile())
-      pgam <- tryCatch(
-        iarm::partgam_DIF(sim_df, random_dif),
-        finally = sink()
-      )
-
-      # pgam is a data.frame with columns including "item" and "gamma"
-      # (column names may vary slightly; use positional or clean names)
-      pgam_df <- as.data.frame(pgam)
-
-      data.frame(
-        Item = data_list$item_names,
-        gamma = as.numeric(pgam_df[seq_along(data_list$item_names), "gamma"]),
-        stringsAsFactors = FALSE,
-        row.names = NULL
-      )
+      colnames(sim_mat) <- data_list$item_names
+      .partgam_dif_gamma(sim_mat, groups)
     },
     error = function(e) {
       as.character(conditionMessage(e))
@@ -1013,8 +1142,12 @@ run_partgam_sim_parallel <- function(
       seed = sim_seeds[sim],
       data_list = sim_data_list,
       run_single_partgam_sim = run_single_partgam_sim,
-      sim_partial_score = sim_partial_score,
-      sim_poly_item = sim_poly_item
+      .partgam_dif_gamma = .partgam_dif_gamma,
+      .partgam_dif_one = .partgam_dif_one,
+      # Conditional-DGP generators.
+      .sim_cond_dataset = .sim_cond_dataset,
+      .sim_conditional = .sim_conditional,
+      .esf_convolve = .esf_convolve
     )
   })
 
@@ -1084,7 +1217,8 @@ run_partgam_sim_sequential <- function(
 #'
 #' Visualises the distribution of simulation-based partial gamma DIF values
 #' from \code{\link{RMdifGammaCutoff}}, optionally overlaying observed partial
-#' gamma values computed from real data via \code{\link[iarm]{partgam_DIF}}.
+#' gamma values computed from real data with the same routine the simulation
+#' uses, which reproduces \code{\link[iarm]{partgam_DIF}} exactly.
 #'
 #' Uses `ggdist::stat_dotsinterval()` (when `data` is not supplied) or
 #' `ggdist::stat_dots()` (when `data` is supplied) with
@@ -1112,8 +1246,8 @@ run_partgam_sim_sequential <- function(
 #'
 #' When `data` **is** supplied (along with `dif_var`), the function:
 #' \enumerate{
-#'   \item Computes observed partial gamma values via
-#'     `iarm::partgam_DIF()`.
+#'   \item Computes observed partial gamma values (identical to
+#'     `iarm::partgam_DIF()`).
 #'   \item Overlays observed gamma values as orange diamond markers on the
 #'     simulated distributions.
 #'   \item Shows per-item cutoff intervals (from `simfit$item_cutoffs`) as
@@ -1121,8 +1255,8 @@ run_partgam_sim_sequential <- function(
 #'     black dots for the median.
 #' }
 #'
-#' The `ggplot2`, `ggdist`, and optionally `iarm` packages must be installed
-#' (they are in Suggests, not Imports).
+#' The `ggplot2` and `ggdist` packages must be installed (they are in
+#' Suggests, not Imports).
 #'
 #' @seealso \code{\link{RMdifGammaCutoff}}, \code{\link{RMdifGamma}}
 #'
@@ -1131,8 +1265,7 @@ run_partgam_sim_sequential <- function(
 #'
 #' @examples
 #' \donttest{
-#' if (requireNamespace("iarm", quietly = TRUE) &&
-#'     requireNamespace("ggdist", quietly = TRUE) &&
+#' if (requireNamespace("ggdist", quietly = TRUE) &&
 #'     requireNamespace("ggplot2", quietly = TRUE)) {
 #'   set.seed(42)
 #'   sim_data <- as.data.frame(
@@ -1274,14 +1407,6 @@ RMdifGammaPlot <- function(simfit, data, dif_var) {
   }
 
   # --- Case 2: observed data supplied -----------------------------------------
-  if (!requireNamespace("iarm", quietly = TRUE)) {
-    stop(
-      "Package 'iarm' is required to compute observed partial gamma but is not installed.\n",
-      "Install it with: install.packages(\"iarm\")",
-      call. = FALSE
-    )
-  }
-
   if (missing(dif_var)) {
     stop(
       "`dif_var` must be supplied when `data` is provided.",
@@ -1309,21 +1434,13 @@ RMdifGammaPlot <- function(simfit, data, dif_var) {
     "RMdifGammaCutoff()",
     policy = "complete cases in data and dif_var",
     groups_cutoff = simfit$dif_group_sizes,
-    groups_used = as.integer(table(dif_var[cc_dif]))
+    groups_used = as.integer(table(droplevels(factor(dif_var[cc_dif]))))
   )
 
-  # rgl workaround
-  old_rgl <- getOption("rgl.useNULL")
-  options(rgl.useNULL = TRUE)
-  on.exit(options(rgl.useNULL = old_rgl), add = TRUE)
-
-  sink(nullfile())
-  pgam_raw <- iarm::partgam_DIF(as.data.frame(data), dif_var)
-  sink()
-
+  obs <- .partgam_dif_gamma(as.data.frame(data), dif_var)
   observed_df <- data.frame(
-    Item = as.character(pgam_raw$Item),
-    observed_gamma = as.numeric(pgam_raw$gamma),
+    Item = obs$Item,
+    observed_gamma = obs$gamma,
     stringsAsFactors = FALSE
   )
 

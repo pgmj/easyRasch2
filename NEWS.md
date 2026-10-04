@@ -26,6 +26,15 @@
   `RMdimResidualPCA()`, `RMdimCFA()` and the matching `*Plot()` functions.
   Results do not change.
 
+## Breaking changes
+
+- `RMdifGamma()` now flags on Westfall-Young corrected bootstrap p-values
+  whenever `cutoff` is the full `RMdifGammaCutoff()` object (`p_value = NULL`,
+  as in `RMitemInfit()` and `RMlocdepGamma()`). Pass `p_value = FALSE` to flag
+  against the interval. `RMdifGammaCutoff()` now defaults to
+  `iterations = 400` and `hdci_width = 0.95`, like the other cutoff functions.
+  **Results move for calls that relied on the old defaults.**
+
 ## Performance
 
 - The latent mean and SD behind `RMreliability()` and `RMreliabilityCurve()`
@@ -37,7 +46,13 @@
   the .robust fit indices and SEs of the standardized loadings). Results do
   not change.
 
-## Bug fix
+- `RMdifGamma()`, `RMdifGammaCutoff()` and `RMdifGammaPlot()` compute
+  partial gamma with a vectorised routine that reproduces
+  `iarm::partgam_DIF()` exactly and is many times faster.
+  `RMdifGammaCutoff()` and `RMdifGammaPlot()` no longer need `iarm`. Results
+  do not change.
+
+## Bug fixes
 
 - `RMlocdepQ3Cutoff()` with the default `dgp = "resample"` now keeps each
   resampled respondent's pattern of missing responses. It used to simulate
@@ -48,6 +63,33 @@
   identical results. At 30 percent missingness the old null flagged at least
   one pair in 16.5 percent of datasets with no local dependence, and the
   fix makes the cutoff several times slower there.
+
+- **`RMdifGammaCutoff()` no longer assigns simulated respondents to groups at
+  random.** That null gave both groups the same latent distribution and was
+  too narrow when the groups differed, so items were flagged for DIF too
+  often. The new `dgp` argument keeps each respondent's group and total
+  score, either by redrawing response patterns given the score
+  (`"conditional"`, the default) or by permuting group labels within score
+  strata (`"permutation"`, much faster). **Cutoffs and p-values move**, most
+  when the groups differ in their trait level.
+
+## Other changes
+
+- `RMitemRestscore()` and `RMitemInfit()` documentation now explains that
+  misfit in one direction can produce flags in the other, and
+  `RMitemRestscore()` reports how the family-wise error rate splits between
+  underfit and overfit and how often bootstrap flags change with the seed.
+  The `RMitemInfit()` text on iterations now matches the console message and
+  caption. Results are unchanged.
+
+- **The asymptotic "Adj. p-value (BH)" column in `RMdifGamma()` and
+  `RMlocdepGamma()` was a Bonferroni correction.** It came from `iarm`, which
+  adjusts one p-value at a time whatever method is named. easyRasch2 now
+  applies the Benjamini-Hochberg adjustment across items (DIF) or across all
+  tests in both directions (local dependence), and the significance stars
+  follow it. **Adjusted p-values move (smaller) and more items or pairs can
+  get stars**. The p-value in `RMitemICCPlot()`'s partial gamma annotation
+  changes the same way.
 
 # easyRasch2 1.3.1
 

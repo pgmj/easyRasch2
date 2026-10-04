@@ -60,8 +60,8 @@
 #'   the two possible orders, so together they cover both rest-score
 #'   directions for every pair. Each has columns "Item 1", "Item 2",
 #'   "Partial gamma",
-#'   "Adj. p-value (BH)", and "p-value sign." (a star-string indicator
-#'   from `iarm::partgam_LD()`). When `cutoff` is provided, additional
+#'   "Adj. p-value (BH)", and "p-value sign." (stars for the BH-adjusted
+#'   p-value, as `iarm` shows them). When `cutoff` is provided, additional
 #'   columns "Gamma low", "Gamma high", and "Flagged" are included.
 #'
 #'   The object has custom `print()` and `knitr::knit_print()` methods:
@@ -89,6 +89,11 @@
 #' negative values suggest negative LD.
 #'
 #' The `iarm` package must be installed (it is in Suggests, not Imports).
+#' The asymptotic adjusted p-value is a Benjamini-Hochberg adjustment of the
+#' p-values from `iarm::partgam_LD()` over all \eqn{k(k-1)} tests in both
+#' directions, applied by easyRasch2. iarm's own adjusted column is a
+#' Bonferroni correction whatever method is named, because iarm adjusts one
+#' p-value at a time, so it is not used.
 #'
 #' \strong{Bootstrap p-values.} When `p_value = TRUE`, each pair is tested
 #' once, on the larger of its two rest-score directions (the `gamma_pair`
@@ -327,6 +332,23 @@ RMlocdepGamma <- function(
     direction1 = process_pgam_df(pgam_raw[[1]]),
     direction2 = process_pgam_df(pgam_raw[[2]])
   )
+
+  # iarm adjusts one p-value at a time (p.adjust() with n = k(k - 1) on a
+  # single value), which makes its "BH" column a Bonferroni correction
+  # whatever method is named. The Benjamini-Hochberg adjustment is applied
+  # here over the same family iarm intends, all k(k - 1) tests in both
+  # directions, and the stars are recomputed from it.
+  p_raw <- c(
+    as.numeric(pgam_raw[[1]][[5]]),
+    as.numeric(pgam_raw[[2]][[5]])
+  )
+  p_bh <- stats::p.adjust(p_raw, method = "BH")
+  n1 <- nrow(result_list$direction1)
+  result_list$direction1$padj_bh <- p_bh[seq_len(n1)]
+  result_list$direction2$padj_bh <- p_bh[n1 + seq_len(nrow(result_list$direction2))]
+  for (d in c("direction1", "direction2")) {
+    result_list[[d]]$Significance <- .p_stars(result_list[[d]]$padj_bh)
+  }
 
   # --- The tested pair statistic ----------------------------------------------
   # A pair is tested once, on the larger of its two conditioning directions,
