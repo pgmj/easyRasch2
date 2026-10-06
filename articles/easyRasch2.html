@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,7 @@
       <h1>A Rasch analysis workflow with easyRasch2</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/v1.3.1/vignettes/easyRasch2.Rmd" class="external-link"><code>vignettes/easyRasch2.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/vignettes/easyRasch2.Rmd" class="external-link"><code>vignettes/easyRasch2.Rmd</code></a></small>
       <div class="d-none name"><code>easyRasch2.Rmd</code></div>
     </div>
 
@@ -114,7 +114,10 @@ For a Bayesian sibling package, see <a href="https://pgmj.github.io/easyRaschBay
 number of iterations to make this vignette render faster. You should use
 more iterations for actual analysis work. 400 is the calibrated floor
 for the multiplicity-corrected <em>p</em>-values and is the package
-default, while 1000 to 2000 is advisable for a final analysis <span class="citation">(<a href="#ref-johansson_simulationbased_2026">Johansson 2026</a>)</span>.
+default, while 1000 to 2000 is advisable for a final analysis, since
+decisions about items near the decision boundary can change with the
+seed: at 400 iterations, two analyses with different seeds disagree
+about at least one item roughly 10 percent of the time <span class="citation">(<a href="#ref-johansson_simulationbased_2026">Johansson 2026</a>)</span>.
 An earlier recommendation, that fewer iterations could improve detection
 for conditional infit at small samples, is withdrawn: that advantage
 came from an expected range that had not converged, and it was paid for
@@ -251,9 +254,10 @@ expected to fall <span class="citation">(<a href="#ref-johansson_simulationbased
 2026</a>)</span>.</p>
 <blockquote>
 <p><strong>NOTE:</strong> <code><a href="../reference/RMiteminfit.html">RMitemInfit()</a></code>,
-<code><a href="../reference/RMlocdepQ3.html">RMlocdepQ3()</a></code> and <code><a href="../reference/RMlocdepGamma.html">RMlocdepGamma()</a></code> use the
+<code><a href="../reference/RMitemrestscore.html">RMitemRestscore()</a></code>, <code><a href="../reference/RMlocdepQ3.html">RMlocdepQ3()</a></code>,
+<code><a href="../reference/RMlocdepGamma.html">RMlocdepGamma()</a></code> and <code><a href="../reference/RMdifGamma.html">RMdifGamma()</a></code> use the
 corrected <em>p</em>-value whenever the full cutoff object is supplied.
-The other functions with simulation-based cutoffs take
+<code><a href="../reference/RMdimCFA.html">RMdimCFA()</a></code> and <code><a href="../reference/RMdimResidualPCA.html">RMdimResidualPCA()</a></code> take
 <code>p_value = TRUE</code> as an opt-in, and
 <code><a href="../reference/RMitemInfitMI.html">RMitemInfitMI()</a></code> has no <em>p</em>-value path, so it always
 flags against the interval.</p>
@@ -420,31 +424,51 @@ expected indicates underfit, that the item may not belong to the
 dimension. A higher than expected observed value indicates an
 overfitting and possibly redundant item. Overfitting items will often
 also show issues with local dependency.</p>
-<p>Compared to infit, item-restscore more often flags overfit items
-(based on experience), and, under some conditions, less often flags
-underfit items (based on a simulation study <span class="citation">(<a href="#ref-johansson_detecting_2025">Johansson 2025</a>)</span>).</p>
+<p>Without a cutoff, <code><a href="../reference/RMitemrestscore.html">RMitemRestscore()</a></code> uses an asymptotic
+<em>p</em>-value that is miscalibrated under the Rasch model: it flags
+too many items as overfit in small samples and too few as underfit at
+any sample size, which is in line with the asymptotic test detecting
+underfit less often than infit in an earlier simulation study <span class="citation">(<a href="#ref-johansson_detecting_2025">Johansson
+2025</a>)</span>. As for infit, passing the full
+<code><a href="../reference/RMitemRestscoreCutoff.html">RMitemRestscoreCutoff()</a></code> object instead flags items on a
+multiplicity-corrected bootstrap <em>p</em>-value, and in simulation
+this test was more sensitive than infit to overfit and about equally
+sensitive to underfit.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemrestscore.html">RMitemRestscore</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div>
-<table class="table">
-<caption>Item-restscore associations. n = 600 respondents. Flagged (adj.
-p &lt; .05): overfit = observed above expected (over-discrimination,
-often local dependence); underfit = below (under-discrimination, often
+<code class="sourceCode R"><span><span class="va">rs_cut</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMitemRestscoreCutoff.html">RMitemRestscoreCutoff</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>                                seed <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/RMitemrestscore.html">RMitemRestscore</a></span><span class="op">(</span><span class="va">items</span>, cutoff <span class="op">=</span> <span class="va">rs_cut</span><span class="op">)</span></span></code></pre></div>
+<table style="width:100%;" class="table">
+<caption>Item-restscore associations. n = 600 respondents. Two-sided
+parametric bootstrap p-values for the difference from 100 iterations,
+conditional DGP, multiplicity correction: Westfall-Young step-down
+(FWER). p-values cannot be smaller than 1/(100+1) = 0.0099. This is
+below the calibrated floor of 400, where the correction is mildly
+liberal (Johansson, 2026). Flagged (adj. p &lt; 0.05): overfit =
+observed above expected (over-discrimination, often local dependence);
+underfit = below (under-discrimination, often
 multidimensionality/noise).</caption>
 <colgroup>
-<col width="6%">
+<col width="5%">
+<col width="9%">
+<col width="9%">
 <col width="12%">
-<col width="12%">
-<col width="14%">
-<col width="24%">
-<col width="12%">
-<col width="18%">
+<col width="9%">
+<col width="10%">
+<col width="7%">
+<col width="8%">
+<col width="9%">
+<col width="15%">
 </colgroup>
 <thead><tr class="header">
 <th align="left">Item</th>
 <th align="right">Observed</th>
 <th align="right">Expected</th>
 <th align="right">Difference</th>
-<th align="right">Adj. p-value (BH)</th>
+<th align="right">Diff low</th>
+<th align="right">Diff high</th>
+<th align="right">p</th>
+<th align="right">p (adj)</th>
 <th align="left">Flagged</th>
 <th align="right">Rel. location</th>
 </tr></thead>
@@ -454,7 +478,10 @@ multidimensionality/noise).</caption>
 <td align="right">0.66</td>
 <td align="right">0.62</td>
 <td align="right">0.041</td>
-<td align="right">0.210</td>
+<td align="right">-0.032</td>
+<td align="right">0.036</td>
+<td align="right">0.0396</td>
+<td align="right">0.1089</td>
 <td align="left"></td>
 <td align="right">-0.56</td>
 </tr>
@@ -462,8 +489,11 @@ multidimensionality/noise).</caption>
 <td align="left">q2</td>
 <td align="right">0.72</td>
 <td align="right">0.62</td>
-<td align="right">0.103</td>
-<td align="right">0.000</td>
+<td align="right">0.102</td>
+<td align="right">-0.036</td>
+<td align="right">0.043</td>
+<td align="right">0.0099</td>
+<td align="right">0.0099</td>
 <td align="left">overfit</td>
 <td align="right">-0.76</td>
 </tr>
@@ -472,8 +502,11 @@ multidimensionality/noise).</caption>
 <td align="right">0.57</td>
 <td align="right">0.63</td>
 <td align="right">-0.059</td>
-<td align="right">0.085</td>
-<td align="left"></td>
+<td align="right">-0.032</td>
+<td align="right">0.036</td>
+<td align="right">0.0099</td>
+<td align="right">0.0198</td>
+<td align="left">underfit</td>
 <td align="right">-0.83</td>
 </tr>
 <tr class="even">
@@ -481,7 +514,10 @@ multidimensionality/noise).</caption>
 <td align="right">0.71</td>
 <td align="right">0.62</td>
 <td align="right">0.097</td>
-<td align="right">0.000</td>
+<td align="right">-0.052</td>
+<td align="right">0.043</td>
+<td align="right">0.0099</td>
+<td align="right">0.0099</td>
 <td align="left">overfit</td>
 <td align="right">-1.48</td>
 </tr>
@@ -490,7 +526,10 @@ multidimensionality/noise).</caption>
 <td align="right">0.62</td>
 <td align="right">0.62</td>
 <td align="right">-0.001</td>
-<td align="right">0.968</td>
+<td align="right">-0.035</td>
+<td align="right">0.040</td>
+<td align="right">0.7921</td>
+<td align="right">0.7921</td>
 <td align="left"></td>
 <td align="right">-0.58</td>
 </tr>
@@ -499,7 +538,10 @@ multidimensionality/noise).</caption>
 <td align="right">0.69</td>
 <td align="right">0.63</td>
 <td align="right">0.065</td>
-<td align="right">0.021</td>
+<td align="right">-0.035</td>
+<td align="right">0.037</td>
+<td align="right">0.0099</td>
+<td align="right">0.0099</td>
 <td align="left">overfit</td>
 <td align="right">-0.76</td>
 </tr>
@@ -508,7 +550,10 @@ multidimensionality/noise).</caption>
 <td align="right">0.64</td>
 <td align="right">0.62</td>
 <td align="right">0.020</td>
-<td align="right">0.476</td>
+<td align="right">-0.041</td>
+<td align="right">0.035</td>
+<td align="right">0.3069</td>
+<td align="right">0.4851</td>
 <td align="left"></td>
 <td align="right">-0.66</td>
 </tr>
@@ -517,7 +562,10 @@ multidimensionality/noise).</caption>
 <td align="right">0.55</td>
 <td align="right">0.63</td>
 <td align="right">-0.083</td>
-<td align="right">0.021</td>
+<td align="right">-0.044</td>
+<td align="right">0.041</td>
+<td align="right">0.0099</td>
+<td align="right">0.0099</td>
 <td align="left">underfit</td>
 <td align="right">0.97</td>
 </tr>
@@ -526,15 +574,23 @@ multidimensionality/noise).</caption>
 <td align="right">0.59</td>
 <td align="right">0.64</td>
 <td align="right">-0.046</td>
-<td align="right">0.151</td>
+<td align="right">-0.039</td>
+<td align="right">0.039</td>
+<td align="right">0.0198</td>
+<td align="right">0.0594</td>
 <td align="left"></td>
 <td align="right">0.79</td>
 </tr>
 </tbody>
 </table>
-<p>Similarly to infit, item-restscore found items 2 and 4 to be overfit
-and 8 to be underfit. It also found item 6 to be overfit. The two
-methods are best used together.</p>
+<p><code><a href="../reference/RMitemRestscorePlot.html">RMitemRestscorePlot()</a></code> shows the simulated and observed
+differences in a plot.</p>
+<p>Item-restscore found items 2, 4 and 6 to be overfit and items 3 and 8
+to be underfit. It agrees with infit on items 2, 3, 4 and 8, adds item 6
+as overfit, and leaves item 9, which infit found underfitting, just
+short of the threshold. The asymptotic test,
+<code>RMitemRestscore(items)</code> without a cutoff, misses the
+underfit of item 3. The two methods are best used together.</p>
 </div>
 <div class="section level3">
 <h3 id="cfa-based-cutoffs-for-cfi-rmsea-and-item-loadings">CFA-based cutoffs for CFI / RMSEA and item loadings<a class="anchor" aria-label="anchor" href="#cfa-based-cutoffs-for-cfi-rmsea-and-item-loadings"></a>
@@ -1042,7 +1098,7 @@ pairs by |gamma|. Direction 1: rest score = total - Item2.</caption>
 <td align="left">q2</td>
 <td align="left">q9</td>
 <td align="right">0.332</td>
-<td align="right">0.001</td>
+<td align="right">0.000</td>
 <td align="left">***</td>
 <td align="right">0.332</td>
 </tr>
@@ -1050,7 +1106,7 @@ pairs by |gamma|. Direction 1: rest score = total - Item2.</caption>
 <td align="left">q2</td>
 <td align="left">q8</td>
 <td align="right">-0.323</td>
-<td align="right">0.001</td>
+<td align="right">0.000</td>
 <td align="left">***</td>
 <td align="right">-0.323</td>
 </tr>
@@ -1058,7 +1114,7 @@ pairs by |gamma|. Direction 1: rest score = total - Item2.</caption>
 <td align="left">q7</td>
 <td align="left">q8</td>
 <td align="right">0.303</td>
-<td align="right">0.001</td>
+<td align="right">0.000</td>
 <td align="left">***</td>
 <td align="right">0.303</td>
 </tr>
@@ -1066,8 +1122,8 @@ pairs by |gamma|. Direction 1: rest score = total - Item2.</caption>
 <td align="left">q6</td>
 <td align="left">q9</td>
 <td align="right">0.287</td>
-<td align="right">0.009</td>
-<td align="left">**</td>
+<td align="right">0.001</td>
+<td align="left">***</td>
 <td align="right">0.287</td>
 </tr>
 </tbody>
@@ -1138,8 +1194,8 @@ shown in the reverse order to direction 1).</caption>
 <td align="left">q9</td>
 <td align="left">q2</td>
 <td align="right">0.291</td>
-<td align="right">0.007</td>
-<td align="left">**</td>
+<td align="right">0.001</td>
+<td align="left">***</td>
 <td align="right">0.332</td>
 </tr>
 </tbody>
@@ -1277,8 +1333,11 @@ the reliability of the <em>p</em>-values).</p>
 (complete cases). Two-sided bootstrap p-values from 100 iterations
 (replacing the asymptotic BH p-values); multiplicity correction:
 Westfall-Young step-down (FWER); flagged at padj &lt; 0.05. p-values
-cannot be smaller than 1/(100+1) = 0.0099. Positive gamma indicates
-higher scores in higher DIF group levels.</caption>
+cannot be smaller than 1/(100+1) = 0.0099. The interval is shown as
+description and is not the decision rule. Positive gamma indicates
+higher scores in higher DIF group levels. This is below the calibrated
+floor of 400, where the correction is mildly liberal and the family-wise
+error rate sits above the nominal level (Johansson, 2026).</caption>
 <colgroup>
 <col width="5%">
 <col width="16%">
@@ -1310,11 +1369,11 @@ higher scores in higher DIF group levels.</caption>
 <td align="right">0.104</td>
 <td align="right">0.046</td>
 <td align="right">0.456</td>
-<td align="right">-0.218</td>
-<td align="right">0.260</td>
-<td align="right">0.0198</td>
-<td align="right">0.0693</td>
-<td align="left">FALSE</td>
+<td align="right">-0.126</td>
+<td align="right">0.173</td>
+<td align="right">0.0099</td>
+<td align="right">0.0396</td>
+<td align="left">TRUE</td>
 </tr>
 <tr class="even">
 <td align="left">q2</td>
@@ -1322,8 +1381,8 @@ higher scores in higher DIF group levels.</caption>
 <td align="right">0.094</td>
 <td align="right">0.227</td>
 <td align="right">0.595</td>
-<td align="right">-0.241</td>
-<td align="right">0.205</td>
+<td align="right">-0.175</td>
+<td align="right">0.165</td>
 <td align="right">0.0099</td>
 <td align="right">0.0099</td>
 <td align="left">TRUE</td>
@@ -1334,10 +1393,10 @@ higher scores in higher DIF group levels.</caption>
 <td align="right">0.103</td>
 <td align="right">-0.138</td>
 <td align="right">0.266</td>
-<td align="right">-0.248</td>
-<td align="right">0.252</td>
-<td align="right">0.4752</td>
-<td align="right">0.6238</td>
+<td align="right">-0.167</td>
+<td align="right">0.187</td>
+<td align="right">0.5446</td>
+<td align="right">0.8713</td>
 <td align="left">FALSE</td>
 </tr>
 <tr class="even">
@@ -1346,10 +1405,10 @@ higher scores in higher DIF group levels.</caption>
 <td align="right">0.114</td>
 <td align="right">-0.315</td>
 <td align="right">0.131</td>
-<td align="right">-0.177</td>
-<td align="right">0.236</td>
-<td align="right">0.2574</td>
-<td align="right">0.5941</td>
+<td align="right">-0.185</td>
+<td align="right">0.217</td>
+<td align="right">0.4059</td>
+<td align="right">0.8713</td>
 <td align="left">FALSE</td>
 </tr>
 <tr class="odd">
@@ -1358,10 +1417,10 @@ higher scores in higher DIF group levels.</caption>
 <td align="right">0.092</td>
 <td align="right">-0.467</td>
 <td align="right">-0.104</td>
-<td align="right">-0.212</td>
-<td align="right">0.190</td>
-<td align="right">0.0099</td>
-<td align="right">0.0099</td>
+<td align="right">-0.148</td>
+<td align="right">0.171</td>
+<td align="right">0.0198</td>
+<td align="right">0.0297</td>
 <td align="left">TRUE</td>
 </tr>
 <tr class="even">
@@ -1370,10 +1429,10 @@ higher scores in higher DIF group levels.</caption>
 <td align="right">0.105</td>
 <td align="right">-0.361</td>
 <td align="right">0.050</td>
-<td align="right">-0.206</td>
-<td align="right">0.180</td>
-<td align="right">0.1782</td>
-<td align="right">0.5545</td>
+<td align="right">-0.164</td>
+<td align="right">0.167</td>
+<td align="right">0.0891</td>
+<td align="right">0.3564</td>
 <td align="left">FALSE</td>
 </tr>
 <tr class="odd">
@@ -1382,10 +1441,10 @@ higher scores in higher DIF group levels.</caption>
 <td align="right">0.102</td>
 <td align="right">-0.275</td>
 <td align="right">0.126</td>
-<td align="right">-0.219</td>
-<td align="right">0.214</td>
-<td align="right">0.4356</td>
-<td align="right">0.6238</td>
+<td align="right">-0.164</td>
+<td align="right">0.164</td>
+<td align="right">0.4554</td>
+<td align="right">0.8713</td>
 <td align="left">FALSE</td>
 </tr>
 <tr class="even">
@@ -1394,10 +1453,10 @@ higher scores in higher DIF group levels.</caption>
 <td align="right">0.102</td>
 <td align="right">-0.311</td>
 <td align="right">0.088</td>
-<td align="right">-0.181</td>
-<td align="right">0.241</td>
-<td align="right">0.2574</td>
-<td align="right">0.5941</td>
+<td align="right">-0.198</td>
+<td align="right">0.171</td>
+<td align="right">0.2772</td>
+<td align="right">0.6634</td>
 <td align="left">FALSE</td>
 </tr>
 <tr class="odd">
@@ -1406,10 +1465,10 @@ higher scores in higher DIF group levels.</caption>
 <td align="right">0.100</td>
 <td align="right">-0.015</td>
 <td align="right">0.376</td>
-<td align="right">-0.226</td>
-<td align="right">0.206</td>
-<td align="right">0.0495</td>
-<td align="right">0.2178</td>
+<td align="right">-0.237</td>
+<td align="right">0.181</td>
+<td align="right">0.0990</td>
+<td align="right">0.3960</td>
 <td align="left">FALSE</td>
 </tr>
 </tbody>
@@ -1555,8 +1614,11 @@ the strongest local dependence (with item 1), and the largest gender DIF
 recommended approach is iterative: remove a single item (for instance,
 an underfit item, or one item from an LD pair after reviewing item
 content), then re-run the full set of analyses, since fit indications
-for the remaining items change with every removal. When the sample is
-large enough, it is good practice to set aside a random holdout
+for the remaining items change with every removal. Some of the flags
+above may be consequences of others: overfitting items can push fitting
+items into the underfit range, and underfitting items, especially from a
+second dimension, can make fitting items look overfit. When the sample
+is large enough, it is good practice to set aside a random holdout
 subsample before the analysis, so that the final item set can be
 confirmed in data that played no part in the item-reduction
 decisions.</p>

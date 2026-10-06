@@ -37,8 +37,9 @@ columns added by
 
 ## Details
 
-Adapted (with permission, GPL-2/3) from
-<https://github.com/giac01/gbtoolbox/blob/main/R/reliability.R>.
+Adapted (with permission, GPL-2/3) from `rmu()`, formerly
+`reliability()`, in the 'gbtoolbox' package,
+<https://github.com/giac01/gbtoolbox>.
 
 The function silently returns 0 for any column pair where either side
 has zero variance (the correlation is undefined there).

@@ -22,16 +22,16 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/pgmj/easyRasch2/blob/v1.3.1/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/pgmj/easyRasch2/blob/main/DESCRIPTION)
 
 Johansson M (2026). *easyRasch2: Psychometric Analysis with Rasch
-Measurement Theory*. R package version 1.3.1,
+Measurement Theory*. R package version 1.4.0,
 <https://github.com/pgmj/easyRasch2>.
 
     @Manual{,
       title = {easyRasch2: Psychometric Analysis with Rasch Measurement Theory},
       author = {Magnus Johansson},
       year = {2026},
-      note = {R package version 1.3.1},
+      note = {R package version 1.4.0},
       url = {https://github.com/pgmj/easyRasch2},
     }

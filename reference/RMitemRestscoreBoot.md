@@ -94,10 +94,24 @@ RMitemRestscoreBoot(
 
 ## Details
 
-Useful with large samples, where the asymptotic test underlying
-[`RMitemRestscore`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md)
-can flag items that are not practically misfitting; bootstrapping gives
-a more nuanced view of the probability of an item actually being misfit.
+Each iteration uses the asymptotic test from
+[`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html)
+with Benjamini-Hochberg adjustment, so the result inherits that test's
+calibration at the subsample size. Under a true Rasch model it flags too
+many items as overfit in small or mistargeted samples of dichotomous
+items, too few items of any kind in large polytomous samples, and too
+few underfitting items at every sample size (see
+[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md)).
+The percentage is therefore how often that test flags an item in samples
+of size `samplesize`, not the probability that the item misfits, and it
+changes with `samplesize`. A low underfit percentage is weak evidence of
+fit. For a test of item fit, use
+[`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMitemRestscoreCutoff.md)
+with
+[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md),
+whose bootstrap p-values are calibrated at the observed sample size.
+This function is best read as a description of how stable the asymptotic
+flags are across resamples.
 
 The full-sample model is fitted by CML via
 [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)

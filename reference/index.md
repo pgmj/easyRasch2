@@ -27,6 +27,10 @@ Item-restscore correlation analysis
 
 - [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md)
   : Item Restscore Analysis
+- [`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMitemRestscoreCutoff.md)
+  : Simulation-Based Item-Restscore Null Distribution
+- [`RMitemRestscorePlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemRestscorePlot.md)
+  : Plot the Simulated Item-Restscore Null Distribution
 - [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/reference/RMitemRestscoreBoot.md)
   : Bootstrap Item-Restscore Misfit Detection
 

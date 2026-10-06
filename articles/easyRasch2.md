@@ -35,7 +35,10 @@ sibling package, see <https://pgmj.github.io/easyRaschBayes/>.
 > iterations to make this vignette render faster. You should use more
 > iterations for actual analysis work. 400 is the calibrated floor for
 > the multiplicity-corrected *p*-values and is the package default,
-> while 1000 to 2000 is advisable for a final analysis ([Johansson
+> while 1000 to 2000 is advisable for a final analysis, since decisions
+> about items near the decision boundary can change with the seed: at
+> 400 iterations, two analyses with different seeds disagree about at
+> least one item roughly 10 percent of the time ([Johansson
 > 2026](#ref-johansson_simulationbased_2026)). An earlier
 > recommendation, that fewer iterations could improve detection for
 > conditional infit at small samples, is withdrawn: that advantage came
@@ -184,12 +187,17 @@ expected to fall ([Johansson
 
 > **NOTE:**
 > [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/reference/RMiteminfit.md),
-> [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md)
-> and
+> [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md),
+> [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3.md),
 > [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGamma.md)
+> and
+> [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/reference/RMdifGamma.md)
 > use the corrected *p*-value whenever the full cutoff object is
-> supplied. The other functions with simulation-based cutoffs take
-> `p_value = TRUE` as an opt-in, and
+> supplied.
+> [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/reference/RMdimCFA.md)
+> and
+> [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/reference/RMdimResidualPCA.md)
+> take `p_value = TRUE` as an opt-in, and
 > [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitMI.md)
 > has no *p*-value path, so it always flags against the interval.
 
@@ -264,36 +272,57 @@ the dimension. A higher than expected observed value indicates an
 overfitting and possibly redundant item. Overfitting items will often
 also show issues with local dependency.
 
-Compared to infit, item-restscore more often flags overfit items (based
-on experience), and, under some conditions, less often flags underfit
-items (based on a simulation study ([Johansson
-2025](#ref-johansson_detecting_2025))).
+Without a cutoff,
+[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/reference/RMitemrestscore.md)
+uses an asymptotic *p*-value that is miscalibrated under the Rasch
+model: it flags too many items as overfit in small samples and too few
+as underfit at any sample size, which is in line with the asymptotic
+test detecting underfit less often than infit in an earlier simulation
+study ([Johansson 2025](#ref-johansson_detecting_2025)). As for infit,
+passing the full
+[`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMitemRestscoreCutoff.md)
+object instead flags items on a multiplicity-corrected bootstrap
+*p*-value, and in simulation this test was more sensitive than infit to
+overfit and about equally sensitive to underfit.
 
 ``` r
 
-RMitemRestscore(items)
+rs_cut <- RMitemRestscoreCutoff(items, iterations = 100, parallel = FALSE,
+                                seed = 8)
+RMitemRestscore(items, cutoff = rs_cut)
 ```
 
-| Item | Observed | Expected | Difference | Adj. p-value (BH) | Flagged  | Rel. location |
-|:-----|---------:|---------:|-----------:|------------------:|:---------|--------------:|
-| q1   |     0.66 |     0.62 |      0.041 |             0.210 |          |         -0.56 |
-| q2   |     0.72 |     0.62 |      0.103 |             0.000 | overfit  |         -0.76 |
-| q3   |     0.57 |     0.63 |     -0.059 |             0.085 |          |         -0.83 |
-| q4   |     0.71 |     0.62 |      0.097 |             0.000 | overfit  |         -1.48 |
-| q5   |     0.62 |     0.62 |     -0.001 |             0.968 |          |         -0.58 |
-| q6   |     0.69 |     0.63 |      0.065 |             0.021 | overfit  |         -0.76 |
-| q7   |     0.64 |     0.62 |      0.020 |             0.476 |          |         -0.66 |
-| q8   |     0.55 |     0.63 |     -0.083 |             0.021 | underfit |          0.97 |
-| q9   |     0.59 |     0.64 |     -0.046 |             0.151 |          |          0.79 |
+| Item | Observed | Expected | Difference | Diff low | Diff high | p | p (adj) | Flagged | Rel. location |
+|:---|---:|---:|---:|---:|---:|---:|---:|:---|---:|
+| q1 | 0.66 | 0.62 | 0.041 | -0.032 | 0.036 | 0.0396 | 0.1089 |  | -0.56 |
+| q2 | 0.72 | 0.62 | 0.102 | -0.036 | 0.043 | 0.0099 | 0.0099 | overfit | -0.76 |
+| q3 | 0.57 | 0.63 | -0.059 | -0.032 | 0.036 | 0.0099 | 0.0198 | underfit | -0.83 |
+| q4 | 0.71 | 0.62 | 0.097 | -0.052 | 0.043 | 0.0099 | 0.0099 | overfit | -1.48 |
+| q5 | 0.62 | 0.62 | -0.001 | -0.035 | 0.040 | 0.7921 | 0.7921 |  | -0.58 |
+| q6 | 0.69 | 0.63 | 0.065 | -0.035 | 0.037 | 0.0099 | 0.0099 | overfit | -0.76 |
+| q7 | 0.64 | 0.62 | 0.020 | -0.041 | 0.035 | 0.3069 | 0.4851 |  | -0.66 |
+| q8 | 0.55 | 0.63 | -0.083 | -0.044 | 0.041 | 0.0099 | 0.0099 | underfit | 0.97 |
+| q9 | 0.59 | 0.64 | -0.046 | -0.039 | 0.039 | 0.0198 | 0.0594 |  | 0.79 |
 
-Item-restscore associations. n = 600 respondents. Flagged (adj. p \<
-.05): overfit = observed above expected (over-discrimination, often
-local dependence); underfit = below (under-discrimination, often
-multidimensionality/noise). {.table}
+Item-restscore associations. n = 600 respondents. Two-sided parametric
+bootstrap p-values for the difference from 100 iterations, conditional
+DGP, multiplicity correction: Westfall-Young step-down (FWER). p-values
+cannot be smaller than 1/(100+1) = 0.0099. This is below the calibrated
+floor of 400, where the correction is mildly liberal (Johansson, 2026).
+Flagged (adj. p \< 0.05): overfit = observed above expected
+(over-discrimination, often local dependence); underfit = below
+(under-discrimination, often multidimensionality/noise). {.table
+style="width:100%;"}
 
-Similarly to infit, item-restscore found items 2 and 4 to be overfit and
-8 to be underfit. It also found item 6 to be overfit. The two methods
-are best used together.
+[`RMitemRestscorePlot()`](https://pgmj.github.io/easyRasch2/reference/RMitemRestscorePlot.md)
+shows the simulated and observed differences in a plot.
+
+Item-restscore found items 2, 4 and 6 to be overfit and items 3 and 8 to
+be underfit. It agrees with infit on items 2, 3, 4 and 8, adds item 6 as
+overfit, and leaves item 9, which infit found underfitting, just short
+of the threshold. The asymptotic test, `RMitemRestscore(items)` without
+a cutoff, misses the underfit of item 3. The two methods are best used
+together.
 
 ### CFA-based cutoffs for CFI / RMSEA and item loadings
 
@@ -541,10 +570,10 @@ RMlocdepGamma(items, n_pairs = 6)
 |:-------|:-------|--------------:|------------------:|:--------------|-----------------:|
 | q1     | q2     |         0.531 |             0.000 | \*\*\*        |            0.577 |
 | q4     | q9     |        -0.381 |             0.000 | \*\*\*        |           -0.381 |
-| q2     | q9     |         0.332 |             0.001 | \*\*\*        |            0.332 |
-| q2     | q8     |        -0.323 |             0.001 | \*\*\*        |           -0.323 |
-| q7     | q8     |         0.303 |             0.001 | \*\*\*        |            0.303 |
-| q6     | q9     |         0.287 |             0.009 | \*\*          |            0.287 |
+| q2     | q9     |         0.332 |             0.000 | \*\*\*        |            0.332 |
+| q2     | q8     |        -0.323 |             0.000 | \*\*\*        |           -0.323 |
+| q7     | q8     |         0.303 |             0.000 | \*\*\*        |            0.303 |
+| q6     | q9     |         0.287 |             0.001 | \*\*\*        |            0.287 |
 
 Partial gamma LD analysis. n = 600 respondents. Positive gamma indicates
 positive local dependence between items. Showing top 6 of 36 pairs by
@@ -557,7 +586,7 @@ positive local dependence between items. Showing top 6 of 36 pairs by
 | q8     | q2     |        -0.415 |             0.000 | \*\*\*        |           -0.323 |
 | q4     | q3     |         0.361 |             0.000 | \*\*\*        |            0.361 |
 | q5     | q3     |         0.303 |             0.000 | \*\*\*        |            0.303 |
-| q9     | q2     |         0.291 |             0.007 | \*\*          |            0.332 |
+| q9     | q2     |         0.291 |             0.001 | \*\*\*        |            0.332 |
 
 Partial gamma LD analysis. n = 600 respondents. Positive gamma indicates
 positive local dependence between items. Showing top 6 of 36 pairs by
@@ -716,22 +745,25 @@ RMdifGamma(items, cutoff = difpg, dif_var = phq9$gender, p_value = TRUE)
 
 | Item | Partial gamma | SE | Lower CI | Upper CI | Gamma low | Gamma high | p | p (adj) | Flagged |
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|:---|
-| q1 | 0.251 | 0.104 | 0.046 | 0.456 | -0.218 | 0.260 | 0.0198 | 0.0693 | FALSE |
-| q2 | 0.411 | 0.094 | 0.227 | 0.595 | -0.241 | 0.205 | 0.0099 | 0.0099 | TRUE |
-| q3 | 0.064 | 0.103 | -0.138 | 0.266 | -0.248 | 0.252 | 0.4752 | 0.6238 | FALSE |
-| q4 | -0.092 | 0.114 | -0.315 | 0.131 | -0.177 | 0.236 | 0.2574 | 0.5941 | FALSE |
-| q5 | -0.286 | 0.092 | -0.467 | -0.104 | -0.212 | 0.190 | 0.0099 | 0.0099 | TRUE |
-| q6 | -0.155 | 0.105 | -0.361 | 0.050 | -0.206 | 0.180 | 0.1782 | 0.5545 | FALSE |
-| q7 | -0.075 | 0.102 | -0.275 | 0.126 | -0.219 | 0.214 | 0.4356 | 0.6238 | FALSE |
-| q8 | -0.112 | 0.102 | -0.311 | 0.088 | -0.181 | 0.241 | 0.2574 | 0.5941 | FALSE |
-| q9 | 0.180 | 0.100 | -0.015 | 0.376 | -0.226 | 0.206 | 0.0495 | 0.2178 | FALSE |
+| q1 | 0.251 | 0.104 | 0.046 | 0.456 | -0.126 | 0.173 | 0.0099 | 0.0396 | TRUE |
+| q2 | 0.411 | 0.094 | 0.227 | 0.595 | -0.175 | 0.165 | 0.0099 | 0.0099 | TRUE |
+| q3 | 0.064 | 0.103 | -0.138 | 0.266 | -0.167 | 0.187 | 0.5446 | 0.8713 | FALSE |
+| q4 | -0.092 | 0.114 | -0.315 | 0.131 | -0.185 | 0.217 | 0.4059 | 0.8713 | FALSE |
+| q5 | -0.286 | 0.092 | -0.467 | -0.104 | -0.148 | 0.171 | 0.0198 | 0.0297 | TRUE |
+| q6 | -0.155 | 0.105 | -0.361 | 0.050 | -0.164 | 0.167 | 0.0891 | 0.3564 | FALSE |
+| q7 | -0.075 | 0.102 | -0.275 | 0.126 | -0.164 | 0.164 | 0.4554 | 0.8713 | FALSE |
+| q8 | -0.112 | 0.102 | -0.311 | 0.088 | -0.198 | 0.171 | 0.2772 | 0.6634 | FALSE |
+| q9 | 0.180 | 0.100 | -0.015 | 0.376 | -0.237 | 0.181 | 0.0990 | 0.3960 | FALSE |
 
 Partial gamma DIF analysis. n = 569 of 600 respondents (complete cases).
 Two-sided bootstrap p-values from 100 iterations (replacing the
 asymptotic BH p-values); multiplicity correction: Westfall-Young
 step-down (FWER); flagged at padj \< 0.05. p-values cannot be smaller
-than 1/(100+1) = 0.0099. Positive gamma indicates higher scores in
-higher DIF group levels. {.table}
+than 1/(100+1) = 0.0099. The interval is shown as description and is not
+the decision rule. Positive gamma indicates higher scores in higher DIF
+group levels. This is below the calibrated floor of 400, where the
+correction is mildly liberal and the family-wise error rate sits above
+the nominal level (Johansson, 2026). {.table}
 
 ### Rasch tree (model-based recursive partitioning)
 
@@ -818,8 +850,11 @@ the strongest local dependence (with item 1), and the largest gender DIF
 recommended approach is iterative: remove a single item (for instance,
 an underfit item, or one item from an LD pair after reviewing item
 content), then re-run the full set of analyses, since fit indications
-for the remaining items change with every removal. When the sample is
-large enough, it is good practice to set aside a random holdout
+for the remaining items change with every removal. Some of the flags
+above may be consequences of others: overfitting items can push fitting
+items into the underfit range, and underfitting items, especially from a
+second dimension, can make fitting items look overfit. When the sample
+is large enough, it is good practice to set aside a random holdout
 subsample before the analysis, so that the final item set can be
 confirmed in data that played no part in the item-reduction decisions.
 

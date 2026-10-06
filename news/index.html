@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,9 +30,40 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/pgmj/easyRasch2/blob/v1.3.1/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/pgmj/easyRasch2/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.4.0" id="easyrasch2-140">easyRasch2 1.4.0<a class="anchor" aria-label="anchor" href="#easyrasch2-140"></a></h2>
+<div class="section level3">
+<h3 id="new-features-1-4-0">New features<a class="anchor" aria-label="anchor" href="#new-features-1-4-0"></a></h3>
+<ul><li><p>New <code><a href="../reference/RMitemRestscoreCutoff.html">RMitemRestscoreCutoff()</a></code> simulates a parametric bootstrap null for the item-restscore test, and <code><a href="../reference/RMitemRestscorePlot.html">RMitemRestscorePlot()</a></code> plots it. Passed to <code><a href="../reference/RMitemrestscore.html">RMitemRestscore()</a></code> through the new <code>cutoff</code> argument, it flags items on Westfall-Young corrected bootstrap p-values, as in <code><a href="../reference/RMiteminfit.html">RMitemInfit()</a></code>. The asymptotic p-value from <code>iarm</code> is miscalibrated under a fitting Rasch model and rarely flags underfit. Output without <code>cutoff</code> is unchanged apart from a caption note. <strong><code>cutoff</code> is now the second argument of <code><a href="../reference/RMitemrestscore.html">RMitemRestscore()</a></code>, so a call passing <code>output</code> by position must name it.</strong></p></li>
+<li><p>Functions that take a simulation-based <code>cutoff</code> now warn when it was simulated for a different sample size than the data. <code><a href="../reference/RMdifGamma.html">RMdifGamma()</a></code> also compares group sizes. Results do not change.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="breaking-changes-1-4-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-4-0"></a></h3>
+<ul><li>
+<code><a href="../reference/RMdifGamma.html">RMdifGamma()</a></code> flags on Westfall-Young corrected bootstrap p-values when <code>cutoff</code> is the full <code><a href="../reference/RMdifGammaCutoff.html">RMdifGammaCutoff()</a></code> object. Pass <code>p_value = FALSE</code> to flag against the interval. <code><a href="../reference/RMdifGammaCutoff.html">RMdifGammaCutoff()</a></code> now defaults to <code>iterations = 400</code> and <code>hdci_width = 0.95</code>, like the other cutoff functions. <strong>Results move for calls that relied on the old defaults.</strong>
+</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-4-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-4-0"></a></h3>
+<ul><li><p><code><a href="../reference/RMdifGammaCutoff.html">RMdifGammaCutoff()</a></code> no longer assigns simulated respondents to groups at random, which made the null too narrow when the groups differed in trait level. The new <code>dgp</code> argument keeps each respondent’s group and total score, by redrawing responses given the score (<code>"conditional"</code>, the default) or by permuting group labels within score strata (<code>"permutation"</code>, faster). <strong>Cutoffs and p-values move.</strong></p></li>
+<li><p><code><a href="../reference/RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code> with <code>dgp = "resample"</code> now keeps each resampled respondent’s pattern of missing responses. <strong>Cutoffs move (wider) for data with missing responses</strong>, and the function is slower there.</p></li>
+<li><p>The “Adj. p-value (BH)” column of <code><a href="../reference/RMdifGamma.html">RMdifGamma()</a></code> and <code><a href="../reference/RMlocdepGamma.html">RMlocdepGamma()</a></code> was a Bonferroni adjustment inherited from <code>iarm</code>. It is now Benjamini-Hochberg across all tests. <strong>Adjusted p-values move (smaller)</strong>, and so does the p-value in the partial gamma annotation of <code><a href="../reference/RMitemICCPlot.html">RMitemICCPlot()</a></code>.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="performance-1-4-0">Performance<a class="anchor" aria-label="anchor" href="#performance-1-4-0"></a></h3>
+<p>Results do not change.</p>
+<ul><li><p><code><a href="../reference/RMreliability.html">RMreliability()</a></code> and <code><a href="../reference/RMreliabilityCurve.html">RMreliabilityCurve()</a></code> estimate the latent distribution about 2.5 times faster.</p></li>
+<li><p><code><a href="../reference/RMdimCFACutoff.html">RMdimCFACutoff()</a></code>, <code><a href="../reference/RMdimCFA.html">RMdimCFA()</a></code> and <code><a href="../reference/RMdimCFAPlot.html">RMdimCFAPlot()</a></code> run 1.4 to 2 times faster.</p></li>
+<li><p><code><a href="../reference/RMdifGamma.html">RMdifGamma()</a></code>, <code><a href="../reference/RMdifGammaCutoff.html">RMdifGammaCutoff()</a></code> and <code><a href="../reference/RMdifGammaPlot.html">RMdifGammaPlot()</a></code> compute partial gamma with a much faster vectorised routine. <code><a href="../reference/RMdifGammaCutoff.html">RMdifGammaCutoff()</a></code> and <code><a href="../reference/RMdifGammaPlot.html">RMdifGammaPlot()</a></code> no longer need <code>iarm</code>.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-1-4-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-4-0"></a></h3>
+<ul><li>The help pages of <code><a href="../reference/RMitemrestscore.html">RMitemRestscore()</a></code> and <code><a href="../reference/RMiteminfit.html">RMitemInfit()</a></code> explain that misfit in one direction can cause flags in the other. <code><a href="../reference/RMitemRestscoreBoot.html">RMitemRestscoreBoot()</a></code> no longer presents itself as a fix for large samples and points to <code><a href="../reference/RMitemRestscoreCutoff.html">RMitemRestscoreCutoff()</a></code> for testing.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.3.1" id="easyrasch2-131">easyRasch2 1.3.1<a class="anchor" aria-label="anchor" href="#easyrasch2-131"></a></h2><p class="text-muted">CRAN release: 2026-09-13</p>
 <div class="section level3">

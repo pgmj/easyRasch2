@@ -93,6 +93,7 @@ if that matters.
 [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoff.md),
 [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/reference/RMitemInfitCutoffMI.md),
 [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/reference/RMitemRestscoreBoot.md),
+[`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMitemRestscoreCutoff.md),
 [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGammaCutoff.md),
 [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepQ3cutoff.md),
 [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/reference/RMpersonFit.md)

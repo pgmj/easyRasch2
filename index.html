@@ -12,8 +12,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Psychometric Analysis with Rasch Measurement Theory">
-<meta name="description" content="Streamlines reproducible Rasch measurement theory analyses for ordinal item-response data, combining estimation routines from eRm, psychotools, mirt, iarm, and lavaan with consistent diagnostic, plotting, and reporting layers. Covers the four basic psychometric criteria summarised by Christensen et al. (2021) &lt;doi:10.1111/sms.13908&gt; -- unidimensionality, local independence, ordered response category thresholds, and invariance across subgroups -- together with item fit, targeting, reliability, category functioning, and descriptive item-response plots. A distinguishing feature is the use of simulation-based critical values to replace rule-of-thumb cutoffs for conditional infit mean-square, Yens Q3 local-dependence statistic, the largest residual-PCA eigenvalue, ordinal CFA fit indices, and partial-gamma DIF and local-dependence coefficients, optionally augmented with multiplicity-corrected bootstrap p-values. Outputs are knitr::kable() tables and ggplot2 figures suitable for direct inclusion in Quarto and R Markdown' reports.">
-<meta property="og:description" content="Streamlines reproducible Rasch measurement theory analyses for ordinal item-response data, combining estimation routines from eRm, psychotools, mirt, iarm, and lavaan with consistent diagnostic, plotting, and reporting layers. Covers the four basic psychometric criteria summarised by Christensen et al. (2021) &lt;doi:10.1111/sms.13908&gt; -- unidimensionality, local independence, ordered response category thresholds, and invariance across subgroups -- together with item fit, targeting, reliability, category functioning, and descriptive item-response plots. A distinguishing feature is the use of simulation-based critical values to replace rule-of-thumb cutoffs for conditional infit mean-square, Yens Q3 local-dependence statistic, the largest residual-PCA eigenvalue, ordinal CFA fit indices, and partial-gamma DIF and local-dependence coefficients, optionally augmented with multiplicity-corrected bootstrap p-values. Outputs are knitr::kable() tables and ggplot2 figures suitable for direct inclusion in Quarto and R Markdown' reports.">
+<meta name="description" content="Streamlines reproducible Rasch measurement theory analyses for ordinal item-response data, combining estimation routines from eRm, psychotools, mirt, iarm, and lavaan with consistent diagnostic, plotting, and reporting layers. Covers the four basic psychometric criteria summarised by Christensen et al. (2021) &lt;doi:10.1111/sms.13908&gt; -- unidimensionality, local independence, ordered response category thresholds, and invariance across subgroups -- together with item fit, targeting, reliability, category functioning, and descriptive item-response plots. A distinguishing feature is the use of simulation-based critical values to replace rule-of-thumb cutoffs for conditional infit mean-square, item-rest-score gamma, Yens Q3 local-dependence statistic, the largest residual-PCA eigenvalue, ordinal CFA fit indices, and partial-gamma DIF and local-dependence coefficients, optionally augmented with multiplicity-corrected bootstrap p-values. Outputs are knitr::kable() tables and ggplot2 figures suitable for direct inclusion in Quarto and R Markdown' reports.">
+<meta property="og:description" content="Streamlines reproducible Rasch measurement theory analyses for ordinal item-response data, combining estimation routines from eRm, psychotools, mirt, iarm, and lavaan with consistent diagnostic, plotting, and reporting layers. Covers the four basic psychometric criteria summarised by Christensen et al. (2021) &lt;doi:10.1111/sms.13908&gt; -- unidimensionality, local independence, ordered response category thresholds, and invariance across subgroups -- together with item fit, targeting, reliability, category functioning, and descriptive item-response plots. A distinguishing feature is the use of simulation-based critical values to replace rule-of-thumb cutoffs for conditional infit mean-square, item-rest-score gamma, Yens Q3 local-dependence statistic, the largest residual-PCA eigenvalue, ordinal CFA fit indices, and partial-gamma DIF and local-dependence coefficients, optionally augmented with multiplicity-corrected bootstrap p-values. Outputs are knitr::kable() tables and ggplot2 figures suitable for direct inclusion in Quarto and R Markdown' reports.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">easyRasch2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -103,7 +103,9 @@
 <li>
 <code><a href="reference/RMitemrestscore.html">RMitemRestscore()</a></code> — item-restscore with Goodman-Kruskal’s <span class="math inline">\gamma</span> (gamma)</li>
 <li>
-<code><a href="reference/RMitemRestscoreBoot.html">RMitemRestscoreBoot()</a></code> — non-parametric bootstrap of item-restscore fit</li>
+<code><a href="reference/RMitemRestscoreCutoff.html">RMitemRestscoreCutoff()</a></code> + <code><a href="reference/RMitemRestscorePlot.html">RMitemRestscorePlot()</a></code> — parametric bootstrap null for item-restscore, flagged on corrected bootstrap <em>p</em>-values</li>
+<li>
+<code><a href="reference/RMitemRestscoreBoot.html">RMitemRestscoreBoot()</a></code> — non-parametric bootstrap of item-restscore fit (descriptive; see its help page)</li>
 <li>
 <code><a href="reference/RMitemICCPlot.html">RMitemICCPlot()</a></code> - conditional item characteristic curves</li>
 </ul>
@@ -173,7 +175,7 @@
 </h3>
 <ul>
 <li>
-<code><a href="reference/RMpersonChange.html">RMpersonChange()</a></code> — per-respondent change between two occasions, with the null stated explicitly and critical values simulated rather than assumed normal</li>
+<code><a href="reference/RMpersonChange.html">RMpersonChange()</a></code> — per-respondent change between two occasions, with the null stated explicitly and critical values from the exact null rather than assumed normal</li>
 <li>
 <code><a href="reference/RMretestSD.html">RMretestSD()</a></code> — occasion-to-occasion SD from a test-retest study, the input to <code>RMpersonChange(null = "retest")</code>
 </li>

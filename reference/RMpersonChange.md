@@ -3,8 +3,8 @@
 Tests, for each respondent, whether their person location moved between
 two occasions by more than measurement error allows. The statistic is
 the Rasch change index, \\RCI = (\hat\theta_2 -
-\hat\theta_1)/SE\_{diff}\\, referred by default to a simulated rather
-than a normal null.
+\hat\theta_1)/SE\_{diff}\\, referred by default to its exact null
+distribution rather than a normal one.
 
 ## Usage
 
@@ -106,9 +106,10 @@ RMpersonChange(
 
 - conditional_crit:
 
-  Logical. If `TRUE`, critical values are simulated separately for each
-  respondent at their own location rather than pooled across the sample.
-  Default `FALSE`. Ignored when `critical` is numeric.
+  Logical. If `TRUE`, critical values are computed separately for each
+  respondent at their own location (enumerated or simulated, per
+  `critical`) rather than pooled across the sample. Default `FALSE`.
+  Ignored when `critical` is numeric.
 
 - sim_iter:
 
@@ -118,17 +119,19 @@ RMpersonChange(
 - parallel:
 
   Logical. Use `mirai` for the simulation if available. Default `TRUE`.
+  Only used when `critical = "simulate"`.
 
 - n_cores:
 
   Integer or `NULL`. Parallel workers. When `NULL`,
   `getOption("mc.cores")` is checked first; if neither is set, the
-  simulation runs sequentially.
+  simulation runs sequentially. Only used when `critical = "simulate"`.
 
 - seed:
 
   Integer or `NULL`. Random seed. See
   [easyRasch2-reproducibility](https://pgmj.github.io/easyRasch2/reference/easyRasch2-reproducibility.md).
+  Only used when `critical = "simulate"`.
 
 - theta_range:
 
@@ -138,6 +141,7 @@ RMpersonChange(
 - verbose:
 
   Logical. Print a progress bar for the simulation. Default `FALSE`.
+  Only used when `critical = "simulate"`.
 
 - output:
 
@@ -150,7 +154,7 @@ RMpersonChange(
   `extreme_t1`, `extreme_t2`, `change`, `se_diff`, `rci`, `p_value`,
   `crit_lower`, `crit_upper`, `change_class`, and `retest_sd_tip`.
   Attributes `null`, `retest_sd`, `anchor`, `alpha`, `direction`,
-  `critical` and `sim_iter` record the analysis.
+  `critical` and `sim_iter` (`NA` unless simulated) record the analysis.
 
 - If `output = "kable"`: the same content as a `knitr_kable`.
 
@@ -257,8 +261,8 @@ magnitude, in logits, and `rci` only for the decision. Do not rank
 respondents by `rci`, and do not compare RCIs across instruments or
 across regions of one scale as though they were a common currency.
 
-Simulating fixes the reference distribution, not the estimand. A
-simulated critical value under `null = "measurement"` is a well
+Replacing 1.96 fixes the reference distribution, not the estimand. An
+exact or simulated critical value under `null = "measurement"` is a well
 calibrated answer to the measurement-error question, not to the retest
 question.
 
@@ -277,13 +281,65 @@ Note that stacking puts each respondent in the data twice, so the item
 parameters' own standard errors are optimistic. That does not propagate
 into the person standard errors, which treat the thresholds as fixed.
 
+**Conditional independence between occasions.** Both nulls assume that,
+given \\\theta\\, the two response vectors are independent. That is a
+conditional statement, and it does not rule out the two estimates being
+strongly correlated, which they are, since both measure the same person.
+What it rules out is carry-over: a time-2 answer depending on the time-1
+answer to the same item beyond what \\\theta\\ explains. Administering
+the occasions separately does not deliver it.
+
+Carry-over does not make this test liberal. It makes it conservative,
+because positive carry-over shrinks the spread of the RCI below what the
+enumerated null assumes. The damage is in the direction of the verdicts.
+Under the model of Marais (2009), which shifts the time-2 location of an
+item by \\(1 - 2x\_{j1})d\\, the observed change acquires an outward
+drift that is zero at the item mean, positive above it and negative
+below it. On twenty items with four categories and no true change
+whatever, the simulated mean observed change reached +0.46 logits at
+\\\theta = 2.5\\ and -0.47 at \\\theta = -2.5\\ when \\d = 1.5\\. Two
+consequences follow. False positives stop dividing evenly by direction,
+reaching 97 percent "increase" among respondents above the items. And a
+uniform true change is read as a gradient in baseline severity: a real
+improvement of 0.50 logits for everyone came out as 0.14 for respondents
+below the items and 0.55 for those above. `null = "retest"` does not
+address this, since it adds symmetric variance while the drift is a
+shift in the conditional mean.
+
+Screen for it before relying on a change verdict. Bind the two occasions
+side by side into one analysis of 2k items, then compare the k same-item
+pairs against a simulated Q3 cutoff, centred on the other cross-occasion
+pairs:
+
+
+    rack <- cbind(data_t1, setNames(data_t2, paste0(names(data_t2), "_t2")))
+    k    <- ncol(data_t1)
+    ct   <- RMlocdepQ3Cutoff(rack)$suggested_cutoff
+    q3   <- as.matrix(RMlocdepQ3(rack, output = "dataframe"))
+    cr   <- q3[(k + 1):(2 * k), seq_len(k)]
+    same <- q3[cbind(k + seq_len(k), seq_len(k))] -
+              mean(cr[row(cr) != col(cr)], na.rm = TRUE)
+    sum(same > as.numeric(ct))
+
+Binding side by side rather than stacking is what makes the correlation
+computable, since `anchor = "stack"` puts the two occasions in different
+rows. In simulation this flags no pair when there is no carry-over and
+catches \\d = 0.5\\ in all 25 runs at `n = 500` on twenty items. Real
+change does not set it off: a uniform shift is absorbed into the time-2
+item locations, and change that varies between respondents lifts the
+within-occasion pairs rather than the same-item ones.
+
+A flag means the change verdicts should not be trusted, and in
+particular that any apparent relationship between baseline and change
+may be an artifact. The package offers no correction for it.
+
 **`retest_sd_tip`.** For a respondent whose change is flagged, this is
 the per-occasion retest SD that would bring their RCI back to the
 critical value, \\\sigma^2\_{tip} = (\mathrm{change}^2/c^2 - SE_1^2 -
 SE_2^2)/2\\. It is `NA` for respondents not flagged, for whom the
 question does not arise. The critical value is held fixed at the one in
 force, which is exact when `critical` is numeric and an approximation
-when it is simulated, since a simulated critical value drifts toward
+otherwise, since an exact or simulated critical value drifts toward
 \\\pm 1.96\\ as the added normal component smooths the discreteness.
 
 ## References
@@ -296,6 +352,9 @@ Jacobson, N. S., & Truax, P. (1991). Clinical significance: A
 statistical approach to defining meaningful change in psychotherapy
 research. *Journal of Consulting and Clinical Psychology, 59*(1), 12-19.
 [doi:10.1037/0022-006X.59.1.12](https://doi.org/10.1037/0022-006X.59.1.12)
+
+Marais, I. (2009). Response dependence and the measurement of change.
+*Journal of Applied Measurement, 10*(1), 17-29.
 
 Maassen, G. H. (2004). The standard error in the Jacobson and Truax
 Reliable Change Index. *Journal of Clinical and Experimental

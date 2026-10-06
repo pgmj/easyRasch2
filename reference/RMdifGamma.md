@@ -13,7 +13,7 @@ RMdifGamma(
   data,
   dif_var,
   cutoff = NULL,
-  p_value = FALSE,
+  p_value = NULL,
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
   alpha = 0.05,
   output = "kable"
@@ -53,18 +53,23 @@ RMdifGamma(
 
 - p_value:
 
-  Logical. When `TRUE`, adds two-sided bootstrap p-values (`p_gamma`,
-  `padj_gamma`) comparing each item's observed partial gamma against its
-  simulated null distribution, and `flagged` reflects
+  Logical or `NULL`. When `TRUE`, adds two-sided bootstrap p-values
+  (`p_gamma`, `padj_gamma`) comparing each item's observed partial gamma
+  against its simulated null distribution, and `flagged` reflects
   `padj_gamma < alpha` instead of the credible range. The asymptotic
   BH-adjusted p-value and star columns from
   [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html)
   are **dropped** in this mode (two p-value families in one table would
   invite double-reading); the simulated `gamma_low` / `gamma_high` band
-  is kept as the effect-size reference. Requires the **full**
+  is kept as the effect-size reference. `TRUE` requires the **full**
   [`RMdifGammaCutoff`](https://pgmj.github.io/easyRasch2/reference/RMdifGammaCutoff.md)
   object as `cutoff` (it carries the simulated distributions in
-  `$results`). Default `FALSE`.
+  `$results`). `NULL`, the default, means `TRUE` when `cutoff` is that
+  full object and `FALSE` otherwise, so calling with no cutoff keeps the
+  asymptotic table unchanged. Pass `FALSE` to flag against the interval
+  instead. The interval makes a poor decision rule, since its width sets
+  a family-wise error rate of `1 - width^k` over all \\k\\ items at once
+  (Johansson, 2026).
 
 - correction:
 
@@ -88,11 +93,10 @@ RMdifGamma(
 
 - If `output = "kable"`: a `knitr_kable` object with columns "Item",
   "Partial gamma", "SE", "Lower CI", "Upper CI", "Adj. p-value (BH)",
-  and "p-value sign." (a star-string indicator from
-  [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html)).
-  When `cutoff` is provided, additional columns "Gamma low", "Gamma
-  high", and "Flagged" are included. With `p_value = TRUE`, the
-  asymptotic p-value columns are replaced by bootstrap "p" and "p
+  and "p-value sign." (stars for the BH-adjusted p-value, as `iarm`
+  shows them). When `cutoff` is provided, additional columns "Gamma
+  low", "Gamma high", and "Flagged" are included. With `p_value = TRUE`,
+  the asymptotic p-value columns are replaced by bootstrap "p" and "p
   (adj)".
 
 - If `output = "dataframe"`: a data.frame with columns `Item`, `gamma`,
@@ -119,25 +123,36 @@ thresholds (Bjorner et al., 1998):
   significantly outside \\\[-0.21, 0.21\]\\.
 
 The `iarm` package must be installed (it is in Suggests, not Imports).
+The asymptotic adjusted p-value is a Benjamini-Hochberg adjustment over
+the items of the p-values from
+[`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html),
+applied by easyRasch2. iarm's own adjusted column is a Bonferroni
+correction whatever method is named, because iarm adjusts one p-value at
+a time, so it is not used.
 
 **Bootstrap p-values.** When `p_value = TRUE`, each item's observed
 partial gamma is compared against its simulated null distribution (from
-`cutoff$results`, where the DIF variable is random by construction). The
-per-item statistic is the residual studentised by the bootstrap mean and
-SD; the marginal p-value is the two-sided Monte-Carlo p-value
+`cutoff$results`, simulated with no DIF by construction). The per-item
+statistic is the residual studentised by the bootstrap mean and SD; the
+marginal p-value is the two-sided Monte-Carlo p-value
 `(1 + #\{|t*| >= |t|\}) / (B + 1)`, so it can be no smaller than
-`1 / (B + 1)`. `correction = "fwer"` uses the Westfall-Young
-studentised-max step-down, which exploits the bootstrap dependence among
-items (Ferreira, 2024); it is liberal when the simulation is small, so
-at least 1000 `iterations` in
+`1 / (B + 1)`. The test is two-sided because DIF has no privileged
+direction: an item can favour either group. This differs from
+[`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/reference/RMlocdepGamma.md),
+which tests one-sided for excess positive local dependence.
+`correction = "fwer"` uses the Westfall-Young studentised-max step-down,
+which exploits the bootstrap dependence among items (Ferreira, 2024); it
+is mildly liberal below 400 iterations in
 [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/reference/RMdifGammaCutoff.md)
-are recommended (a warning is issued below that). Unlike the asymptotic
-p-values from
+(a message is issued below that). Unlike the asymptotic p-values from
 [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html),
 these are calibrated against the *simulated Rasch null* rather than the
 asymptotic SE; they are model-conditional and sample-size-sensitive, and
 are reported alongside the simulated effect-size band, not in place of
-it.
+it. The observed partial gamma they test is computed by the same
+internal routine as the simulated values, which reproduces
+[`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html)
+exactly.
 
 ## Multiple comparisons
 
@@ -170,6 +185,11 @@ Practice, 19*(6).
 Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple
 Testing*. Wiley.
 
+Johansson, M. (2026). Simulation-based cutoffs for conditional item fit
+in Rasch models: Iterations, multiplicity correction, and decision
+stability. *PsyArXiv*.
+[doi:10.31234/osf.io/7pqz4_v2](https://doi.org/10.31234/osf.io/7pqz4_v2)
+
 ## See also
 
 [`RMdifGammaCutoff`](https://pgmj.github.io/easyRasch2/reference/RMdifGammaCutoff.md)
@@ -199,34 +219,39 @@ if (requireNamespace("iarm", quietly = TRUE)) {
                                    seed = 42)
     RMdifGamma(sim_data, dif_group, cutoff = cutoff_res)
 
-    # Bootstrap p-values with family-wise (Westfall-Young) correction
-    # (use iterations >= 1000 in real analyses for stable p-values)
-    RMdifGamma(sim_data, dif_group, cutoff = cutoff_res, p_value = TRUE,
+    # The full cutoff object switches on bootstrap p-values with the
+    # family-wise (Westfall-Young) correction; 100 iterations keeps the
+    # example quick, use the default 400 or more in real analyses
+    RMdifGamma(sim_data, dif_group, cutoff = cutoff_res,
                output = "dataframe")
   }
 }
-#> Warning: Bootstrap p-values are based on only 100 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations >= 1000 in RMdifGammaCutoff() for reliable p-values.
+#> Bootstrap p-values are based on 100 iterations, below the calibrated floor of 400.
+#> ℹ Below 400 the Westfall-Young correction is mildly liberal under the null, so the family-wise error rate is above the nominal level.
+#> ℹ See Johansson (2026), doi:10.31234/osf.io/7pqz4_v2.
+#> ℹ Raise `iterations` in RMdifGammaCutoff().
+#> This message is displayed once per session.
 #>      Item       gamma        se      lower     upper  gamma_low gamma_high
-#> 1   Item1  0.02929936 0.1612158 -0.2866779 0.3452766 -0.3918869  0.4190476
-#> 2   Item2 -0.16753927 0.1561349 -0.4735580 0.1384794 -0.3341646  0.2969502
-#> 3   Item3  0.11111111 0.1681747 -0.2185053 0.4407275 -0.4043210  0.4864595
-#> 4   Item4 -0.03045685 0.1545831 -0.3334342 0.2725205 -0.3377265  0.3954457
-#> 5   Item5  0.07616708 0.1587018 -0.2348828 0.3872169 -0.3684211  0.3787375
-#> 6   Item6  0.04239401 0.1562001 -0.2637526 0.3485406 -0.3467337  0.3541153
-#> 7   Item7 -0.14560440 0.1603616 -0.4599073 0.1686985 -0.3906899  0.2727273
-#> 8   Item8  0.01897019 0.1618599 -0.2982693 0.3362097 -0.3626374  0.3248998
-#> 9   Item9 -0.14088398 0.1614016 -0.4572253 0.1754573 -0.3724247  0.4188101
-#> 10 Item10  0.17777778 0.1556159 -0.1272237 0.4827792 -0.3863216  0.3540313
+#> 1   Item1  0.02929936 0.1612158 -0.2866779 0.3452766 -0.2791519  0.3475936
+#> 2   Item2 -0.16753927 0.1561349 -0.4735580 0.1384794 -0.2672522  0.3369713
+#> 3   Item3  0.11111111 0.1681747 -0.2185053 0.4407275 -0.4172185  0.2781790
+#> 4   Item4 -0.03045685 0.1545831 -0.3334342 0.2725205 -0.3276904  0.2719986
+#> 5   Item5  0.07616708 0.1587018 -0.2348828 0.3872169 -0.3374844  0.1909814
+#> 6   Item6  0.04239401 0.1562001 -0.2637526 0.3485406 -0.2731989  0.3440197
+#> 7   Item7 -0.14560440 0.1603616 -0.4599073 0.1686985 -0.3110048  0.3402597
+#> 8   Item8  0.01897019 0.1618599 -0.2982693 0.3362097 -0.2474490  0.3723958
+#> 9   Item9 -0.14088398 0.1614016 -0.4572253 0.1754573 -0.3283396  0.2865475
+#> 10 Item10  0.17777778 0.1556159 -0.1272237 0.4827792 -0.2857143  0.3036849
 #>      p_gamma padj_gamma flagged
-#> 1  1.0000000  1.0000000   FALSE
-#> 2  0.2376238  0.9009901   FALSE
-#> 3  0.4554455  0.9801980   FALSE
-#> 4  0.9009901  1.0000000   FALSE
-#> 5  0.5742574  1.0000000   FALSE
-#> 6  0.9009901  1.0000000   FALSE
-#> 7  0.4158416  0.9801980   FALSE
-#> 8  0.9207921  1.0000000   FALSE
-#> 9  0.5346535  0.9801980   FALSE
-#> 10 0.2178218  0.9009901   FALSE
+#> 1  1.0000000   1.000000   FALSE
+#> 2  0.2871287   0.950495   FALSE
+#> 3  0.5247525   1.000000   FALSE
+#> 4  0.9009901   1.000000   FALSE
+#> 5  0.5247525   1.000000   FALSE
+#> 6  0.8415842   1.000000   FALSE
+#> 7  0.2871287   0.970297   FALSE
+#> 8  0.9207921   1.000000   FALSE
+#> 9  0.3960396   0.970297   FALSE
+#> 10 0.2970297   0.950495   FALSE
 # }
 ```
