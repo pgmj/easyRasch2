@@ -34,8 +34,8 @@ cronbach_alpha <- function(data) {
 #' Pearson correlation across persons of paired columns from the two halves,
 #' summarised across pairs as a posterior mean with HDCI.
 #'
-#' Adapted (with permission, GPL-2/3) from
-#' \url{https://github.com/giac01/gbtoolbox/blob/main/R/reliability.R}.
+#' Adapted (with permission, GPL-2/3) from `rmu()`, formerly `reliability()`,
+#' in the 'gbtoolbox' package, \url{https://github.com/giac01/gbtoolbox}.
 #'
 #' @param input_draws Numeric matrix or data.frame of draws. Rows are
 #'   subjects; columns are draws. Must have at least two columns; ideally many.

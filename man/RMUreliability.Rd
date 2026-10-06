@@ -28,8 +28,8 @@ Pearson correlation across persons of paired columns from the two halves,
 summarised across pairs as a posterior mean with HDCI.
 }
 \details{
-Adapted (with permission, GPL-2/3) from
-\url{https://github.com/giac01/gbtoolbox/blob/main/R/reliability.R}.
+Adapted (with permission, GPL-2/3) from \code{rmu()}, formerly \code{reliability()},
+in the 'gbtoolbox' package, \url{https://github.com/giac01/gbtoolbox}.
 
 The function silently returns 0 for any column pair where either side has
 zero variance (the correlation is undefined there).

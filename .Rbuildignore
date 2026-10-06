@@ -16,6 +16,6 @@
 ^data-raw$
 ^CONTRIBUTING\.md$
 ^vignettes/precompile\.R$
-^vignettes/easyRasch2-workflow\.Rmd\.orig$
+^vignettes/easyRasch2\.Rmd\.orig$
 ^dev$
 ^paper$

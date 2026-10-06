@@ -1,24 +1,31 @@
-# easyRasch2 1.3.1
+# easyRasch2 1.4.0
 
 ## Submission
 
-Apologies for submitting one day after 1.3.0. The reliability functionality
-added in that release contains a bug that returns incorrect values, and it
-seems better to correct it at once than to leave it in place.
+This release adds a parametric bootstrap test for the item-restscore
+statistic (`RMitemRestscoreCutoff()`, `RMitemRestscorePlot()`), fixes two
+simulation nulls that were too narrow (`RMdifGammaCutoff()`, and
+`RMlocdepQ3Cutoff()` with missing data), and corrects a multiplicity
+adjustment that was labelled Benjamini-Hochberg but was Bonferroni. Details are
+in NEWS.md. It also adds a simulation-based alternative to the asymptotic 
+item-restscore test, which is miscalibrated under a fitting Rasch model.
 
-`RMreliability()` and `RMreliabilityCurve()` integrate the conditional
-reliability over an estimated normal latent density. Only its SD was estimated,
-with the mean held at zero, so the SD absorbed any mistargeting and marginal
-reliability rose as a sample became less well targeted, when it should fall. It
-was overstated by up to .18 in the case checked. Well-targeted samples are
-essentially unaffected. Every existing test used well-targeted data, which is
-why none of them caught it, and tests for the off-target behaviour are added.
+There are two small interface changes. `cutoff` is now the second argument of
+`RMitemRestscore()`, and `RMdifGammaCutoff()` has new defaults. Both are listed
+under "Breaking changes" in NEWS.md.
 
-No interface changes. There are no CRAN reverse dependencies.
+There are no CRAN reverse dependencies.
+
+I am aware of the number of recent updates (7 in the past 6 months) and
+apologise for the frequency. This release corrects results that the current
+CRAN version gets wrong: a DIF null distribution that flags items too often,
+a local-dependence null that is too narrow with missing data, and p-values
+labelled Benjamini-Hochberg that were Bonferroni-adjusted. I would rather not
+leave these in place until a later release.
 
 ## Test environments
 
-* Local: macOS v26.6.1, R v4.6.1
+* Local: macOS v26.6.2, R v4.6.1
 * R CMD check: macos-latest, windows-latest, ubuntu-latest
 * check_win_devel()
 

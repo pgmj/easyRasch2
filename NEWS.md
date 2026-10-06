@@ -1,106 +1,66 @@
-# easyRasch2 (development version)
+# easyRasch2 1.4.0
 
 ## New features
 
-- New `RMitemRestscoreCutoff()` builds a parametric bootstrap null for the
-  item-restscore test, refitting the model in every iteration, and
-  `RMitemRestscorePlot()` plots it. Passing the result to `RMitemRestscore()`
-  through its new `cutoff` argument flags items on Westfall-Young corrected
-  bootstrap p-values (`p_value`, `correction`, `alpha`, as in
-  `RMitemInfit()`). The default `dgp = "conditional"` held the nominal
-  family-wise rate in simulation, where `"resample"` was slightly liberal.
-  The asymptotic p-value from `iarm` is miscalibrated under
-  a true Rasch model: liberal for dichotomous items in small or mistargeted
-  samples, conservative for polytomous items, and too rarely flagging
-  underfit in both.
-
-  The gammas are computed without `iarm`, about 50 times faster per call
-  and about 5 times faster per iteration overall. With `cutoff`,
-  `RMitemRestscore()` takes its observed values from the same computation,
-  so they are no longer rounded (by up to 0.0005 in `iarm`'s output).
-
-  Output without `cutoff` keeps the same values, and its table caption and
-  help page now note the miscalibration. `cutoff` is now the second argument
-  of `RMitemRestscore()`, so a call passing `output` by position must name it.
+- New `RMitemRestscoreCutoff()` simulates a parametric bootstrap null for the
+  item-restscore test, and `RMitemRestscorePlot()` plots it. Passed to
+  `RMitemRestscore()` through the new `cutoff` argument, it flags items on
+  Westfall-Young corrected bootstrap p-values, as in `RMitemInfit()`. The
+  asymptotic p-value from `iarm` is miscalibrated under a fitting Rasch model
+  and rarely flags underfit. Output without `cutoff` is unchanged apart from
+  a caption note. **`cutoff` is now the second argument of
+  `RMitemRestscore()`, so a call passing `output` by position must name it.**
 
 - Functions that take a simulation-based `cutoff` now warn when it was
-  simulated for a different sample size than the data being tested, since
-  the null distribution depends on n. `RMdifGamma()` also compares the group
-  sizes of `dif_var`. Applies to `RMitemInfit()`, `RMitemInfitMI()`,
-  `RMitemRestscore()`, `RMlocdepQ3()`, `RMlocdepGamma()`, `RMdifGamma()`,
-  `RMdimResidualPCA()`, `RMdimCFA()` and the matching `*Plot()` functions.
-  Results do not change.
+  simulated for a different sample size than the data. `RMdifGamma()` also
+  compares group sizes. Results do not change.
 
 ## Breaking changes
 
-- `RMdifGamma()` now flags on Westfall-Young corrected bootstrap p-values
-  whenever `cutoff` is the full `RMdifGammaCutoff()` object (`p_value = NULL`,
-  as in `RMitemInfit()` and `RMlocdepGamma()`). Pass `p_value = FALSE` to flag
-  against the interval. `RMdifGammaCutoff()` now defaults to
-  `iterations = 400` and `hdci_width = 0.95`, like the other cutoff functions.
-  **Results move for calls that relied on the old defaults.**
-
-## Performance
-
-- The latent mean and SD behind `RMreliability()` and `RMreliabilityCurve()`
-  are estimated about 2.5 times faster, which brings `boot = TRUE` back to
-  its speed before 1.3.1. Results do not change.
-
-- `RMdimCFACutoff()`, `RMdimCFA()` and `RMdimCFAPlot()` run 1.4 to 2 times
-  faster by skipping lavaan output the package never reads (parameter SEs,
-  the .robust fit indices and SEs of the standardized loadings). Results do
-  not change.
-
-- `RMdifGamma()`, `RMdifGammaCutoff()` and `RMdifGammaPlot()` compute
-  partial gamma with a vectorised routine that reproduces
-  `iarm::partgam_DIF()` exactly and is many times faster.
-  `RMdifGammaCutoff()` and `RMdifGammaPlot()` no longer need `iarm`. Results
-  do not change.
+- `RMdifGamma()` flags on Westfall-Young corrected bootstrap p-values when
+  `cutoff` is the full `RMdifGammaCutoff()` object. Pass `p_value = FALSE` to
+  flag against the interval. `RMdifGammaCutoff()` now defaults to
+  `iterations = 400` and `hdci_width = 0.95`, like the other cutoff
+  functions. **Results move for calls that relied on the old defaults.**
 
 ## Bug fixes
 
-- `RMlocdepQ3Cutoff()` with the default `dgp = "resample"` now keeps each
-  resampled respondent's pattern of missing responses. It used to simulate
-  complete data, so with partial missingness the null gave every item pair
-  more respondents than the observed pairwise-complete Q3 had. Cutoffs were
-  too narrow and p-values too small. **Cutoffs move (wider) only for data with
-  missing responses.** Complete data and `dgp = "conditional"` give
-  identical results. At 30 percent missingness the old null flagged at least
-  one pair in 16.5 percent of datasets with no local dependence, and the
-  fix makes the cutoff several times slower there.
+- `RMdifGammaCutoff()` no longer assigns simulated respondents to groups at
+  random, which made the null too narrow when the groups differed in trait
+  level. The new `dgp` argument keeps each respondent's group and total score,
+  by redrawing responses given the score (`"conditional"`, the default) or by
+  permuting group labels within score strata (`"permutation"`, faster).
+  **Cutoffs and p-values move.**
 
-- **`RMdifGammaCutoff()` no longer assigns simulated respondents to groups at
-  random.** That null gave both groups the same latent distribution and was
-  too narrow when the groups differed, so items were flagged for DIF too
-  often. The new `dgp` argument keeps each respondent's group and total
-  score, either by redrawing response patterns given the score
-  (`"conditional"`, the default) or by permuting group labels within score
-  strata (`"permutation"`, much faster). **Cutoffs and p-values move**, most
-  when the groups differ in their trait level.
+- `RMlocdepQ3Cutoff()` with `dgp = "resample"` now keeps each resampled
+  respondent's pattern of missing responses. **Cutoffs move (wider) for data
+  with missing responses**, and the function is slower there.
 
-## Other changes
+- The "Adj. p-value (BH)" column of `RMdifGamma()` and `RMlocdepGamma()` was a
+  Bonferroni adjustment inherited from `iarm`. It is now Benjamini-Hochberg
+  across all tests. **Adjusted p-values move (smaller)**, and so does the
+  p-value in the partial gamma annotation of `RMitemICCPlot()`.
 
-- `RMitemRestscore()` and `RMitemInfit()` documentation now explains that
-  misfit in one direction can produce flags in the other, and
-  `RMitemRestscore()` reports how the family-wise error rate splits between
-  underfit and overfit and how often bootstrap flags change with the seed.
-  The `RMitemInfit()` text on iterations now matches the console message and
-  caption. Results are unchanged.
+## Performance
 
-- `RMitemRestscoreBoot()` documentation no longer presents it as a fix for
-  large samples. It now says that each iteration uses the miscalibrated
-  asymptotic test, that its percentages are flag rates at `samplesize`
-  rather than probabilities of misfit, and points to
-  `RMitemRestscoreCutoff()` for testing. Results are unchanged.
+Results do not change.
 
-- **The asymptotic "Adj. p-value (BH)" column in `RMdifGamma()` and
-  `RMlocdepGamma()` was a Bonferroni correction.** It came from `iarm`, which
-  adjusts one p-value at a time whatever method is named. easyRasch2 now
-  applies the Benjamini-Hochberg adjustment across items (DIF) or across all
-  tests in both directions (local dependence), and the significance stars
-  follow it. **Adjusted p-values move (smaller) and more items or pairs can
-  get stars**. The p-value in `RMitemICCPlot()`'s partial gamma annotation
-  changes the same way.
+- `RMreliability()` and `RMreliabilityCurve()` estimate the latent
+  distribution about 2.5 times faster.
+
+- `RMdimCFACutoff()`, `RMdimCFA()` and `RMdimCFAPlot()` run 1.4 to 2 times
+  faster.
+
+- `RMdifGamma()`, `RMdifGammaCutoff()` and `RMdifGammaPlot()` compute partial
+  gamma with a much faster vectorised routine. `RMdifGammaCutoff()` and
+  `RMdifGammaPlot()` no longer need `iarm`.
+
+## Documentation
+
+- The help pages of `RMitemRestscore()` and `RMitemInfit()` explain that
+  misfit in one direction can cause flags in the other.
+  `RMitemRestscoreBoot()` no longer presents itself as a fix for large
+  samples and points to `RMitemRestscoreCutoff()` for testing.
 
 # easyRasch2 1.3.1
 
