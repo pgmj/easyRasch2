@@ -38,6 +38,30 @@ test_that("returns the documented structure", {
   expect_true(all(res$item_cutoffs$diff_low < res$item_cutoffs$diff_high))
 })
 
+test_that(".restscore_gamma() reproduces iarm's observed and expected gamma", {
+  skip_if_not_installed("iarm")
+  for (d in list(make_dich(), make_poly())) {
+    fit <- psychotools::pcmodel(d, hessian = FALSE)
+    utils::capture.output(ref <- iarm::item_restscore(fit, p.adj = "none"))
+    fast <- .restscore_gamma(d, lapply(psychotools::threshpar(fit), cumsum))
+    # iarm rounds through format(digits = 3), at worst to three decimals
+    expect_lte(max(abs(fast[, "observed"] - as.numeric(ref[, "observed"]))),
+               5e-4 + 1e-12)
+    expect_lte(max(abs(fast[, "expected"] - as.numeric(ref[, "expected"]))),
+               5e-4 + 1e-12)
+  }
+})
+
+test_that(".restscore_gamma() refuses an item with an unobserved middle category", {
+  d <- make_poly()
+  d$I1[d$I1 == 1] <- 2L
+  fit <- suppressWarnings(psychotools::pcmodel(d, hessian = FALSE))
+  expect_error(
+    .restscore_gamma(d, lapply(psychotools::threshpar(fit), cumsum)),
+    "highest response"
+  )
+})
+
 test_that("the expected gamma varies across iterations (thresholds refitted)", {
   skip_on_cran()
   skip_if_not_installed("iarm")

@@ -327,3 +327,163 @@ as the default, with the conditional DGP as the alternative if consistency
 with the restscore cutoff is preferred. Random assignment should not remain
 an option, since it fails in a common design (a minority group with a
 different mean).
+
+## Follow-up: the asymptotic test
+
+Added 2026-10-05. Without a cutoff, `RMdifGamma()` reports the asymptotic
+p-values from `iarm::partgam_DIF()`, adjusted by Benjamini-Hochberg across
+items (no longer iarm's own column, which was a Bonferroni correction). The
+restscore asymptotic test is miscalibrated (`restscore_asymptotic_null.qmd`),
+but for reasons that do not apply here: partial gamma DIF tests gamma against
+0, with no expected value estimated from the data. Two concerns remain. The
+delta-method SE of gamma had the worst coverage of four interval types at
+small N in van der Ark and van Aert (2015), and approximate p-values are
+unreliable in large sparse tables (Kreiner, 1987), which a minority group with
+a different θ distribution produces in the extreme score strata.
+
+**Design.** The same 12 conditions as above, with 2000 new datasets each, no
+DIF. Each dataset is scored with `RMdifGamma()` without a cutoff (the
+package path, BH across items) and with the raw p-values from the same
+`iarm::partgam_DIF()` call.
+
+**Outcomes.**
+
+- Per-item marginal rejection (raw p < .05), pooled over items, and its split
+  by the sign of gamma (nominal .025 each).
+- Family-wise rate: share of datasets with any BH-adjusted p < .05. Under
+  the complete null, BH controls the family-wise rate at α. Monte Carlo SE
+  about .005 at 2000 datasets.
+- SE ratio: the mean asymptotic SE of gamma per item over the true SD of
+  gamma across the 2000 datasets, averaged over items. Below 1 means the SE
+  is too small and the test liberal.
+
+```{r}
+#| label: asymptotic-run
+asy_file <- file.path(out_dir, "asymptotic.rds")
+R_asy <- 2000L
+if (!file.exists(asy_file)) {
+  asy_one <- function(cond) {
+    o <- gen_observed(cond)
+    d <- as.data.frame(o$X)
+    sink(nullfile())
+    raw <- iarm::partgam_DIF(d, o$g)
+    sink()
+    pkg <- suppressMessages(RMdifGamma(d, dif_var = o$g, output = "dataframe"))
+    data.frame(
+      item = pkg$Item,
+      gamma = pkg$gamma,
+      se = pkg$se,
+      p = as.numeric(raw$pvalue)[match(pkg$Item, as.character(raw$Item))],
+      padj_bh = pkg$padj_bh,
+      stringsAsFactors = FALSE
+    )
+  }
+  RNGkind("L'Ecuyer-CMRG")
+  asy <- do.call(rbind, lapply(seq_len(nrow(grid)), function(i) {
+    cond <- grid[i, ]
+    set.seed(5000L + i)
+    res <- mclapply(seq_len(R_asy), function(r) {
+      out <- tryCatch(asy_one(cond), error = function(e) NULL)
+      if (!is.null(out)) out$rep <- r
+      out
+    }, mc.cores = cores)
+    res <- do.call(rbind, res)
+    cbind(cond[rep(1, nrow(res)), c("items", "delta", "sizes")], res)
+  }))
+  saveRDS(asy, asy_file)
+}
+asy <- readRDS(asy_file)
+```
+
+```{r}
+#| label: asymptotic-results
+asy_summ <- do.call(rbind, lapply(
+  split(asy, asy[c("items", "sizes", "delta")], drop = TRUE),
+  function(x) {
+    fw <- tapply(x$padj_bh, x$rep, function(p) any(p < 0.05, na.rm = TRUE))
+    true_sd <- tapply(x$gamma, x$item, stats::sd, na.rm = TRUE)
+    mean_se <- tapply(x$se, x$item, mean, na.rm = TRUE)
+    data.frame(
+      items = x$items[1], sizes = x$sizes[1], delta = x$delta[1],
+      reps = length(fw),
+      per_item = round(mean(x$p < 0.05, na.rm = TRUE), 3),
+      neg = round(mean(x$p < 0.05 & x$gamma < 0, na.rm = TRUE), 3),
+      pos = round(mean(x$p < 0.05 & x$gamma > 0, na.rm = TRUE), 3),
+      familywise_bh = round(mean(fw), 3),
+      se_ratio = round(mean(mean_se / true_sd), 3),
+      min_item_se_ratio = round(min(mean_se / true_sd), 3)
+    )
+  }
+))
+asy_summ <- asy_summ[order(asy_summ$items, asy_summ$sizes, asy_summ$delta), ]
+rownames(asy_summ) <- NULL
+asy_summ
+```
+
+Rejection at α/k, where the BH decision for the smallest p-value is made,
+and the shape of z = gamma / SE pooled over items.
+
+```{r}
+#| label: asymptotic-tail
+asy_tail <- do.call(rbind, lapply(
+  split(asy, asy[c("items", "sizes", "delta")], drop = TRUE),
+  function(x) {
+    k <- length(unique(x$item))
+    a <- 0.05 / k
+    z <- x$gamma / x$se
+    data.frame(
+      items = x$items[1], sizes = x$sizes[1], delta = x$delta[1],
+      alpha_k = round(a, 4),
+      rate_at_alpha_k = round(mean(x$p < a), 4),
+      ratio_to_nominal = round(mean(x$p < a) / a, 2),
+      sd_z = round(stats::sd(z), 3),
+      kurtosis_z = round(mean((z - mean(z))^4) / stats::var(z)^2, 2)
+    )
+  }
+))
+asy_tail <- asy_tail[order(asy_tail$items, asy_tail$sizes, asy_tail$delta), ]
+rownames(asy_tail) <- NULL
+asy_tail
+```
+
+### Findings for the asymptotic test
+
+All 24,000 datasets ran, with no missing p-values or SEs. The family-wise
+rate has a Monte Carlo SE of about .005 at 2000 datasets.
+
+1. **It is liberal for dichotomous items, mainly at the family-wise level.**
+   With 15 dichotomous items, the per-item rate was .057 to .062 against .05,
+   but at least one item was flagged after BH in .090 to .147 of datasets,
+   two to three times nominal. The worst cell was equal groups of 150 with a
+   1 SD difference (.147).
+2. **The cause is the shape of the statistic, not the size of the SE.** The
+   mean asymptotic SE was 1.00 to 1.02 times the true SD of gamma for the
+   dichotomous items, and no item fell below 0.97. But z = gamma / SE had a
+   kurtosis of 3.4 to 4.2 against 3 for the normal, so the normal reference
+   is close at p = .05 and too light in the far tail. At α/k = .0033, the
+   rate at which BH decides for the smallest p-value, the dichotomous items
+   were rejected 1.8 to 3.0 times as often as nominal. That is why the
+   family-wise rate suffers much more than the per-item rate. It fits
+   Kreiner's (1987) warning about approximate p-values in sparse tables:
+   dichotomous items give the sparsest item-by-score tables.
+3. **Polytomous items are close to nominal.** With 9 items of 4 categories,
+   the per-item rate was .044 to .051, the family-wise rate .050 to .065, and
+   the kurtosis of z 3.2 to 3.4. Only the Δ = 1 cells drift upward (.063 and
+   .065, rejection at α/k 1.3 times nominal).
+4. **The false flags are balanced between directions,** about .03 per item
+   for each sign of gamma in the dichotomous sets and .02 to .03 in the
+   polytomous sets. There is no directional bias of the kind found for the
+   item-restscore test.
+5. **A group difference adds to the excess** for dichotomous items with
+   equal groups (.107, .115 and .147 at Δ = 0, 0.5 and 1), less clearly with
+   480/120.
+
+**Scope.** Two item sets at 300 and 600 respondents. The tails should
+approach normal as the strata fill, so the excess is expected to shrink with
+larger samples, but that is not measured here.
+
+**Implication.** For dichotomous items, the asymptotic BH-adjusted p-values
+in `RMdifGamma()` flag too many items when there is no DIF, and the
+simulation-based cutoffs (`RMdifGammaCutoff()` with Westfall-Young p-values)
+should be preferred. For polytomous items in these conditions the asymptotic
+test is usable. The user decided on 2026-10-05 not to add a table note.

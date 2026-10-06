@@ -116,8 +116,10 @@ asymptotic reference distribution and absorbs both problems.
 The generating model is CML item parameters (via \code{psychotools}) with WLE
 person locations. For each iteration a dataset is simulated under the chosen
 \code{dgp}, the model is \strong{refitted} by CML (\code{psychotools::pcmodel()}), and the
-observed and expected item-restscore gamma are computed via
-\code{iarm::item_restscore()}. The refit matters: the expected gamma varies from
+observed and expected item-restscore gamma are computed as in
+\code{iarm::item_restscore()}, by a faster internal routine that skips the
+standard errors and the rounding of the printed values. The refit matters:
+the expected gamma varies from
 sample to sample because the thresholds do, and holding them fixed would
 reproduce the problem the bootstrap exists to solve. Failed iterations
 (e.g., degenerate simulated data) are silently discarded.

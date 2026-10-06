@@ -1,0 +1,204 @@
+---
+title: "Why S-X2 rejects too often under a true Rasch model"
+subtitle: "Null diagnostic of mirt::itemfit(fit_stats = \"S_X2\")"
+author: "Magnus Johansson"
+date: today
+---
+
+```{r setup}
+#| include: false
+suppressMessages({
+  library(dplyr)
+  library(tidyr)
+  library(knitr)
+})
+sim <- readRDS("sx2_null_diagnostic/results.rds")
+```
+
+## Purpose
+
+In an earlier comparison of S-X2 with infit (July 2026, since replaced by `sx2_comparison_v2.qmd`), uncorrected S-X2 from `mirt::itemfit()` rejected 6.9
+to 8.8 percent of items under a true Rasch model, against a nominal 5, and BH
+over 20 items flagged at least one item in 10.5 to 19 percent of datasets,
+rising with n. This note finds the cause. The design is in
+`sx2-null-diagnostic-design.md` and the simulation in `sx2_null_diagnostic.R`.
+
+mirt computes the degrees of freedom for each item as the number of score
+groups after collapsing, minus the item's own parameters, minus every estimated
+latent parameter. For `itemtype = "Rasch"` the latent variance is estimated, so
+each item loses one df that Orlando and Thissen's definition does not remove.
+The deduction is deliberate. mirt's NEWS lists it under version 1.20.1 as a df
+adjustment "for models where the latent trait hyper-parameters have been
+estimated". If S-X2 follows a chi-square on df + 1 and is referred to df, the
+rejection rate at .05 is 6.9 to 7.5 percent at the df values seen here.
+
+## Design
+
+Null only, with fresh data for every replication. Three item sets: 20
+dichotomous items evenly spaced on [-2, 2], the 20 dichotomous locations of the
+original study, and 9 items with four categories on [-1.5, 1.5]. Persons from
+$N(0, 1.5^2)$, n = 150, 500 and 2000, 2000 replications per cell. The Monte
+Carlo SE is about 0.5 points for a 5 percent rate, per item and family-wise.
+
+| Variant | Fit | Reference |
+|---|---|---|
+| V0 | Rasch, variance estimated | mirt default |
+| V1 | same as V0 | p recomputed on df + 1 |
+| V2 | same as V0, `mincell = 5` | mirt default |
+| V2c | same as V2 | p recomputed on df + 1 |
+| V3 | Rasch, variance fixed at the true 2.25 | mirt default, which then has no latent deduction |
+
+V1 tests the df. V3 removes the deduction and the estimation error in the
+variance together, so V1 against V3 separates the two. V2 tests stricter
+collapsing of sparse cells.
+
+```{r tidy}
+ok <- !vapply(sim$res, is.null, logical(1))
+long <- do.call(rbind, lapply(which(ok), function(i) {
+  g <- sim$grid[i, ]; m <- sim$res[[i]]
+  data.frame(set = g$set, n = g$n, rep = g$rep, item = seq_len(nrow(m)), m)
+})) |>
+  mutate(p_v1  = pchisq(S_v0, df_v0 + 1, lower.tail = FALSE),
+         p_v2c = pchisq(S_v2, df_v2 + 1, lower.tail = FALSE))
+
+pv <- long |>
+  select(set, n, rep, item, V0 = p_v0, V1 = p_v1, V2 = p_v2, V2c = p_v2c,
+         V3 = p_v3) |>
+  pivot_longer(V0:V3, names_to = "variant", values_to = "p")
+
+wide <- function(d, value) d |>
+  pivot_wider(names_from = n, values_from = all_of(value), names_prefix = "n = ")
+```
+
+No replication was discarded. `elapsed` is `r round(sim$elapsed_min, 1)`
+minutes on 10 cores, mirt `r sim$mirt_version`.
+
+## Results
+
+### The statistic is chi-square on df + 1
+
+If the reference is right, the mean of S-X2 equals its df and the variance is
+twice the df.
+
+```{r moments}
+long |>
+  group_by(set, n) |>
+  summarise(`mean S - df, V0` = mean(S_v0 - df_v0, na.rm = TRUE),
+            `mean S - df, V3` = mean(S_v3 - df_v3, na.rm = TRUE),
+            `var S / 2(df + 1), V0` = var(S_v0 - df_v0, na.rm = TRUE) /
+              (2 * mean(df_v0 + 1, na.rm = TRUE)),
+            `mean df, V0` = mean(df_v0, na.rm = TRUE), .groups = "drop") |>
+  kable(digits = 2)
+```
+
+Under mirt's df, S-X2 exceeds its df by 0.96 to 1.07 on average for
+dichotomous items, and its variance matches $2(\text{df} + 1)$ to within 5
+percent from n = 500. With the variance fixed, which takes away the deduction,
+the mean excess is within 0.07 of zero. The polytomous set shows the same
+pattern from n = 500. At n = 150 its excess is 1.66 under V0 and 0.64 under V3,
+so something else adds to the statistic there.
+
+### Per-item rejection
+
+```{r peritem}
+pv |>
+  group_by(set, variant, n) |>
+  summarise(rate = 100 * mean(p < .05, na.rm = TRUE), .groups = "drop") |>
+  wide("rate") |>
+  kable(digits = 2)
+```
+
+Adding the missing df brings every cell to nominal: V1 rejects 4.8 to 5.3
+percent of items against 6.0 to 7.5 under V0. V1 and V3 agree to within 0.2
+points in every cell, so estimating the latent variance costs nothing. The df
+is the whole of the per-item excess.
+
+Stricter collapsing on its own (V2) is worse than the default, because
+`mincell = 5` merges so many score groups at n = 150 that the df falls to about
+2, and a one-df shortfall weighs more at small df. With the df corrected (V2c)
+it is close to nominal for dichotomous items, but at n = 150 it leaves too few
+score groups to say much. For dichotomous items 239 to 278 of the 40,000
+item-replications at n = 150 had no df left.
+
+### The far tail and the family-wise rate
+
+BH over 20 items rejects on p-values near $.05 / 20$, so the family-wise rate
+depends on the far tail, not on the 5 percent point.
+
+```{r tail}
+pv |>
+  group_by(set, variant, n) |>
+  summarise(`per 1000` = 1000 * mean(p < .005, na.rm = TRUE), .groups = "drop") |>
+  wide("per 1000") |>
+  kable(digits = 1, caption = "Items with p < .005, per 1000 (nominal 5)")
+```
+
+```{r familywise}
+pv |>
+  group_by(set, variant, n, rep) |>
+  summarise(bh = any(p.adjust(p, "BH") < .05, na.rm = TRUE), .groups = "drop") |>
+  group_by(set, variant, n) |>
+  summarise(fw = 100 * mean(bh), .groups = "drop") |>
+  wide("fw") |>
+  kable(digits = 2, caption = "Datasets with at least one BH-flagged item (%)")
+```
+
+Correcting the df leaves part of the problem. Under V1, items reach p < .005 at
+6.4 to 7.7 per 1000 for dichotomous items against a nominal 5, and BH flags at
+least one item in 6.8 to 8.6 percent of datasets. That is down from 10.7 to
+12.5 under V0, but still above 5. The polytomous set is close to nominal under
+V1, at 4.3 to 6.5 percent. Under V0, V1 and V3, Bonferroni gives the same rates
+to within 0.3 points, as expected under a complete null. V2c removes the tail excess
+for dichotomous items (3.4 to 5.3 per 1000 and 3.6 to 5.9 percent
+family-wise), which points to sparse score groups as the source of what
+remains.
+
+### No rise with sample size
+
+Under V0 the family-wise rate is 10.7 to 12.5 percent at every n for both
+dichotomous sets, including the original locations. The rise to 19 percent at
+n = 2000 in the original study does not reproduce with fresh data. There, every
+replication was drawn from one master dataset of 10,000 respondents. Each such
+sample is, taken on its own, a random sample from the model, so the design does
+not bias the rates. It makes the replications dependent instead. At n = 2000
+the samples share about a fifth of their respondents, so any chance departure
+from the model in the master dataset appears in every replication, and the rate
+in a cell varies between master datasets by more than its Monte Carlo SE
+allows. The rise is most likely such a draw, and the same holds for the other
+methods in that study and for its per-item spread of 4.4 to 11.7 percent. Here,
+under V1 at n = 2000, per-item rates run from 4.0 to 6.0 percent, which is about
+what 2000 independent replications give by chance.
+
+## Interpretation
+
+**1. The per-item excess is mirt's df.** Removing the latent variance from
+every item's df makes S-X2 reject 6 to 7.5 percent of items at a nominal 5 under
+a true Rasch model. Adding the df back, or fixing the variance, gives 4.8 to
+5.3. Whether the adjustment is right for other models is not tested here, but
+for the Rasch and partial credit models it makes the test liberal.
+
+**2. A smaller tail excess remains, from sparse cells.** With the df corrected,
+20 dichotomous items still give 6.8 to 8.6 percent family-wise under BH.
+Stricter collapsing removes it, at the cost of most of the score groups at small
+n. Nine polytomous items are close to nominal.
+
+**3. The rise with n in the original study is most likely noise from its
+design.** Resampling one master dataset makes its replications dependent, so
+differences between sample sizes there are less certain than they look. With
+fresh data the rate does not rise with n.
+
+**For the revised comparison.** S-X2 should enter with the corrected df. Since
+the corrected test is still about 2 to 3.5 points over 5 percent family-wise
+for 20 dichotomous items, it should also be reported against its own null in
+the same run, or given a simulation-based cutoff, so that it is not compared
+with family-wise controlled methods at a higher error rate. Fresh data per
+replication is needed for every method.
+
+Whether to raise the df adjustment with the mirt maintainer is a separate
+decision.
+
+## Reference
+
+Orlando, M., & Thissen, D. (2000). Likelihood-based item-fit indices for
+dichotomous item response theory models. *Applied Psychological Measurement,
+24*(1), 50-64.

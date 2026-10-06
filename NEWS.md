@@ -14,6 +14,11 @@
   samples, conservative for polytomous items, and too rarely flagging
   underfit in both.
 
+  The gammas are computed without `iarm`, about 50 times faster per call
+  and about 5 times faster per iteration overall. With `cutoff`,
+  `RMitemRestscore()` takes its observed values from the same computation,
+  so they are no longer rounded (by up to 0.0005 in `iarm`'s output).
+
   Output without `cutoff` keeps the same values, and its table caption and
   help page now note the miscalibration. `cutoff` is now the second argument
   of `RMitemRestscore()`, so a call passing `output` by position must name it.

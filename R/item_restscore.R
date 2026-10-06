@@ -401,6 +401,23 @@ RMitemRestscore <- function(
   # The asymptotic p-value is replaced, never shown alongside: the interval
   # and (when available) the bootstrap p-value take its place.
   if (!is.null(cutoff)) {
+    # Recompute the observed statistic the way RMitemRestscoreCutoff() computes
+    # its null, so both sides are unrounded (iarm returns them through
+    # format(digits = 3)). Complete cases, refitted when needed, as iarm does.
+    # With an unobserved middle category .restscore_gamma() refuses the data,
+    # and the iarm values (expected NA for that item) are kept.
+    cc <- stats::na.omit(data_mat)
+    fit_cc <- if (has_na) psychotools::pcmodel(cc, hessian = FALSE) else fit
+    rs <- tryCatch(
+      .restscore_gamma(cc, lapply(psychotools::threshpar(fit_cc), cumsum)),
+      error = function(e) NULL
+    )
+    if (!is.null(rs)) {
+      i2$Observed <- rs[, "observed"]
+      i2$Expected <- rs[, "expected"]
+      i2$Difference <- i2$Observed - i2$Expected
+    }
+
     data_items <- i2$Item
     if (!setequal(data_items, cutoff$Item)) {
       stop(

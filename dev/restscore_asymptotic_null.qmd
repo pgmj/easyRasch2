@@ -38,19 +38,16 @@ The partial gamma LD and DIF functions already have simulation-based cutoffs.
 Item-restscore does not. `RMitemRestscoreBoot()` resamples the data and counts
 how often each item is flagged, which describes stability and not calibration.
 
-A hint already exists in `sx2_itemfit_sim.qmd`. Its $k = 0$ condition
-(20 dichotomous items, 200 replications) gives per-item false positive rates of
-0.07 to 0.73 percent, which that study reported as well calibrated. Recomputed
-as the proportion of replications with **at least one** BH-flagged item, the
-same results are 12.5, 5.5, 5.0, 2.0 and 1.5 percent at n = 150, 250, 500, 1000
-and 2000. Under a complete null, BH controls this family-wise rate at .05, so
-n = 150 is above nominal and n ≥ 1000 is below. With 200 replications the Monte
-Carlo SE is about 1.5 points, so this is a lead to follow up, not a finding.
+An earlier simulation hinted at this. It reported item-restscore as well
+calibrated from per-item false positive rates, but counted as the share of
+replications with at least one BH-flagged item, its small-sample rate was above
+5 percent. That study is not reported here, so this is the motivation for the
+check, not evidence.
 
 ## Design
 
 - **Item sets.** (a) 20 dichotomous items with locations evenly spaced on
-  [-2, 2], matching the S-X2 study. (b) 9 polytomous items with four categories,
+  [-2, 2], as in `sx2_comparison_v2.qmd`. (b) 9 polytomous items with four categories,
   locations evenly spaced on [-1.5, 1.5], and thresholds at location ± 1.2 and
   location + 0, as a PHQ-9-sized scale.
 - **Persons.** θ ~ N(μ, 1.5²), with μ = 0 (targeted) or μ = 1.5 (mistargeted),
@@ -363,8 +360,7 @@ probability that a true Rasch model gets at least one item flagged is:
 
 So the same test is liberal for dichotomous data at small n,
 especially when mistargeted, and conservative for polytomous data at every n.
-No single correction to the nominal level fixes both. The 13.5 percent at
-n = 150 reproduces the 12.5 percent recomputed from the S-X2 study.
+No single correction to the nominal level fixes both.
 BH and Bonferroni give nearly identical rates, as expected under a complete
 null.
 

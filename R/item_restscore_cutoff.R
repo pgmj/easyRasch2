@@ -89,8 +89,10 @@
 #' The generating model is CML item parameters (via `psychotools`) with WLE
 #' person locations. For each iteration a dataset is simulated under the chosen
 #' `dgp`, the model is **refitted** by CML (`psychotools::pcmodel()`), and the
-#' observed and expected item-restscore gamma are computed via
-#' `iarm::item_restscore()`. The refit matters: the expected gamma varies from
+#' observed and expected item-restscore gamma are computed as in
+#' `iarm::item_restscore()`, by a faster internal routine that skips the
+#' standard errors and the rounding of the printed values. The refit matters:
+#' the expected gamma varies from
 #' sample to sample because the thresholds do, and holding them fixed would
 #' reproduce the problem the bootstrap exists to solve. Failed iterations
 #' (e.g., degenerate simulated data) are silently discarded.
@@ -412,15 +414,13 @@ run_single_restscore_sim <- function(seed, data_list) {
 
       # CML refit, then observed and expected gamma. The refit is what makes
       # the expected gamma vary across iterations as it does across samples.
-      # iarm prints an empty line per call, which would otherwise repeat once
-      # per iteration in the console.
       model_fit <- psychotools::pcmodel(sim_df, hessian = FALSE)
-      utils::capture.output(
-        res_mat <- iarm::item_restscore(model_fit, p.adj = "none")
+      res_mat <- .restscore_gamma(
+        sim_df,
+        lapply(psychotools::threshpar(model_fit), cumsum)
       )
-      k <- length(data_list$item_names)
-      observed <- as.numeric(res_mat[seq_len(k), "observed"])
-      expected <- as.numeric(res_mat[seq_len(k), "expected"])
+      observed <- res_mat[, "observed"]
+      expected <- res_mat[, "expected"]
 
       data.frame(
         Item = data_list$item_names,
@@ -435,6 +435,91 @@ run_single_restscore_sim <- function(seed, data_list) {
       as.character(conditionMessage(e))
     }
   )
+}
+
+# ---------------------------------------------------------------------------
+# Internal: observed and expected item-restscore gamma
+# ---------------------------------------------------------------------------
+
+#' Observed and expected item-restscore gamma
+#'
+#' Computes the two gammas that `iarm::item_restscore()` reports, without its
+#' standard errors and p-values, which the bootstrap does not use. iarm's
+#' `pscore_poly()` recomputes two full sets of elementary symmetric functions
+#' for every cell of every item's restscore-by-category table. Here they are
+#' computed once for all items and once per item with that item left out,
+#' which makes the call about 50 times faster. The values agree with iarm's
+#' unrounded ones to machine precision. iarm itself returns them through
+#' `format(digits = 3)`, so they are rounded by an amount that depends on the
+#' smallest p-value in the same table.
+#'
+#' @param X Complete-case integer response matrix, scored from 0.
+#' @param coeff List of cumulative threshold parameters per item, as
+#'   `lapply(psychotools::threshpar(fit), cumsum)`.
+#' @return Matrix with columns `observed` and `expected`, one row per item.
+#' @keywords internal
+#' @noRd
+.restscore_gamma <- function(X, coeff) {
+  X <- as.matrix(X)
+  storage.mode(X) <- "integer"
+  k <- ncol(X)
+  mi <- vapply(coeff, length, integer(1L))
+  # pcmodel() drops the threshold of an unobserved middle category, so an
+  # item's top score can exceed its threshold count; the tables below would
+  # then be silently truncated.
+  if (!identical(unname(apply(X, 2L, max)), unname(mi))) {
+    stop(
+      "Each item's highest response must equal its number of thresholds.",
+      call. = FALSE
+    )
+  }
+  m <- sum(mi)
+  score <- rowSums(X)
+  score_n <- tabulate(score + 1L, nbins = m + 1L)
+  g_all <- psychotools::elementary_symmetric_functions(coeff)[[1L]]
+
+  observed <- expected <- numeric(k)
+  for (i in seq_len(k)) {
+    nx <- mi[i] + 1L
+    nr <- m - mi[i] + 1L
+    # Observed restscore (rows) by item response (columns)
+    N <- matrix(
+      tabulate((score - X[, i]) * nx + X[, i] + 1L, nbins = nr * nx),
+      ncol = nx,
+      byrow = TRUE
+    )
+    observed[i] <- .gk_gamma(N)
+
+    # Expected table: score-group sizes times the conditional probability of
+    # each response given the total score r + x,
+    # P(x | r + x) = w_x * gamma_r(rest) / gamma_{r+x}(all).
+    g_rest <- psychotools::elementary_symmetric_functions(coeff[-i])[[1L]]
+    w <- exp(-c(0, coeff[[i]]))
+    tot <- outer(0:(nr - 1L), 0:mi[i], `+`)
+    pmat <- outer(g_rest, w) / matrix(g_all[tot + 1L], ncol = nx)
+    nmat <- matrix(score_n[tot + 1L], ncol = nx)
+    expected[i] <- .gk_gamma(nmat * pmat)
+  }
+  cbind(observed = observed, expected = expected)
+}
+
+#' Goodman-Kruskal gamma of a two-way table
+#'
+#' Rows and columns are both taken as ordered. Each unordered pair of
+#' observations is counted once, as in `.partgam_one()`.
+#'
+#' @param N Numeric matrix of (possibly non-integer) counts.
+#' @return Gamma, or `NA_real_` when there are no concordant and no discordant
+#'   pairs.
+#' @keywords internal
+#' @noRd
+.gk_gamma <- function(N) {
+  upper <- function(d) outer(seq_len(d), seq_len(d), function(a, b) b > a) + 0
+  A <- upper(nrow(N)) %*% N
+  Gc <- upper(ncol(N))
+  conc <- sum(N * (A %*% t(Gc)))
+  disc <- sum(N * (A %*% Gc))
+  if (conc + disc == 0) NA_real_ else (conc - disc) / (conc + disc)
 }
 
 # ---------------------------------------------------------------------------
@@ -480,7 +565,9 @@ run_restscore_sim_parallel <- function(
       # Conditional-DGP generators (shared with the Q3 and infit cutoffs).
       .sim_cond_dataset = .sim_cond_dataset,
       .sim_conditional = .sim_conditional,
-      .esf_convolve = .esf_convolve
+      .esf_convolve = .esf_convolve,
+      .restscore_gamma = .restscore_gamma,
+      .gk_gamma = .gk_gamma
     )
   })
 

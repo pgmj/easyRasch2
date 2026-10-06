@@ -1,0 +1,539 @@
+---
+title: "S-X2 against conditional infit, revised"
+subtitle: "Detection and false flags at a common family-wise error rate"
+author: "Magnus Johansson"
+date: today
+---
+
+```{r setup}
+#| include: false
+suppressMessages({
+  library(dplyr)
+  library(tidyr)
+  library(knitr)
+  library(ggplot2)
+})
+fs <- list.files("sx2_comparison_v2", "\\.rds$", full.names = TRUE)
+L <- lapply(fs, readRDS)
+```
+
+## Purpose
+
+An earlier study (July 2026, since removed) compared the generalized S-X2 index with conditional
+infit and item-restscore and concluded that S-X2 is a large-sample complement
+to infit. A review of that study found seven problems. The two that matter most
+are that infit was run without multiplicity correction while S-X2 used BH, and
+that mirt's S-X2 p-values are liberal under a true Rasch model.
+`sx2_null_diagnostic.qmd` traced the second to a df one too small and found a
+smaller far-tail excess that remains after correcting it.
+
+This study asks the original question again with every method held to a
+family-wise error rate: does S-X2 detect misfit that infit misses, or flag fewer
+fitting items when several items misfit? The design and the decision rule were
+written before the run, in `sx2-comparison-v2-design.md`. The simulation is
+`sx2_comparison_v2.R`. Item-restscore is left out, since its comparison with
+infit is covered by `restscore_infit_power.qmd` and
+`restscore_power_conditional.qmd`.
+
+## Design
+
+- 20 dichotomous items, locations evenly spaced on [-2, 2].
+- Persons from a bivariate normal, both dimensions SD 1.5, correlation $\rho$.
+  Fitting items respond to the first dimension, misfitting items to the second.
+  Fresh data in every replication.
+- k = 1 misfitting item (nearest 0 logits) or k = 3 (nearest 0, -1 and -2).
+  $\rho$ = 0.15 is strong multidimensionality, 0.50 and 0.75 are subtle.
+- n = 150, 500, 1000 and 2000.
+- 500 replications in each null cell (k = 0), 200 in each misfit cell. The
+  Monte Carlo SE of a 5 percent family-wise rate is 1.0 point.
+
+| Label | Method |
+|---|---|
+| `infit_wy` | conditional infit, `RMitemInfitCutoff()` B = 400, Westfall-Young, the package default |
+| `infit_bh` | same bootstrap, BH on the marginal p |
+| `sx2_mirt` | S-X2, chi-square on mirt's df, BH |
+| `sx2_df1` | S-X2, chi-square on df + 1, BH |
+| `sx2_boot` | S-X2, parametric bootstrap B = 400, Westfall-Young |
+| `rmsea_boot` | RMSEA.S_X2, same bootstrap draws, Westfall-Young |
+| `rmsea_05` | RMSEA.S_X2 above a fixed .05 |
+
+```{r tidy}
+long <- do.call(rbind, lapply(L, function(x) do.call(rbind, lapply(seq_along(x$res), function(r) {
+  y <- x$res[[r]]
+  if (is.null(y$res)) return(NULL)
+  cbind(k = x$cell$k, rho = x$cell$rho, n = x$cell$n, rep = r, y$res)
+}))))
+
+methods <- c("infit_wy", "infit_bh", "sx2_mirt", "sx2_df1", "sx2_boot",
+             "rmsea_boot", "rmsea_05")
+
+adj <- long |>
+  group_by(k, rho, n, rep) |>
+  mutate(infit_wy = padj_infit, infit_bh = p.adjust(p_infit, "BH"),
+         sx2_mirt = p.adjust(p_mirt, "BH"), sx2_df1 = p.adjust(p_df1, "BH"),
+         sx2_boot = padj_sx2boot, rmsea_boot = padj_rmseaboot) |>
+  ungroup()
+
+flags <- adj |>
+  mutate(across(c(infit_wy, infit_bh, sx2_mirt, sx2_df1, sx2_boot, rmsea_boot),
+                \(p) p < .05),
+         rmsea_05 = rmsea > .05) |>
+  pivot_longer(all_of(methods), names_to = "method", values_to = "flag") |>
+  mutate(flag = coalesce(flag, FALSE),
+         method = factor(method, levels = methods))
+
+# kable with rho printed to two decimals, so digits = 1 does not round it
+kb <- function(d, ...) {
+  d <- mutate(d, across(any_of("rho"), \(x) sprintf("%.2f", x)))
+  kable(d, ...)
+}
+```
+
+Every replication returned results for every method. No bootstrap draw was
+dropped. easyRasch2 `r unique(sapply(L, \(x) x$easyRasch2))`, mirt
+`r unique(sapply(L, \(x) x$mirt))`, about 7.6 hours on 10 cores.
+
+## Results
+
+Each figure shows one method per colour and point shape, with the same colour
+for a method in every figure. The values behind every figure are in the
+appendix.
+
+```{r plot-setup}
+pal <- c(infit_wy = "#2a78d6", sx2_df1 = "#eb6834", sx2_boot = "#1baf7a",
+         sx2_mirt = "#eda100", rmsea_05 = "#e87ba4")
+shp <- c(infit_wy = 16, sx2_df1 = 17, sx2_boot = 15, sx2_mirt = 18,
+         rmsea_05 = 4)
+lab <- c(infit_wy = "Infit, Westfall-Young",
+         sx2_df1 = "S-X2, df + 1, BH",
+         sx2_boot = "S-X2, bootstrap, Westfall-Young",
+         sx2_mirt = "S-X2, mirt df, BH",
+         rmsea_05 = "RMSEA > .05")
+
+cell_lab <- function(d) d |>
+  mutate(cell = factor(sprintf("k = %d, rho = %.2f", k, rho),
+                       levels = c("k = 1, rho = 0.50", "k = 1, rho = 0.75",
+                                  "k = 3, rho = 0.15", "k = 3, rho = 0.50",
+                                  "k = 3, rho = 0.75")))
+
+rate_plot <- function(d, ylab) {
+  ggplot(d, aes(factor(n), v, colour = method, shape = method,
+                group = method)) +
+    geom_line(linewidth = 0.6) +
+    geom_point(size = 2.2) +
+    scale_colour_manual(values = pal, labels = lab, name = NULL) +
+    scale_shape_manual(values = shp, labels = lab, name = NULL) +
+    scale_y_continuous(limits = c(0, 100)) +
+    labs(x = "Sample size", y = ylab) +
+    theme_minimal(base_size = 11) +
+    theme(legend.position = "bottom", panel.grid.minor = element_blank()) +
+    guides(colour = guide_legend(nrow = 2), shape = guide_legend(nrow = 2))
+}
+
+fig_methods <- c("infit_wy", "sx2_df1", "sx2_boot", "rmsea_05")
+```
+
+### Under the null
+
+```{r}
+#| label: fig-null
+#| fig-width: 7
+#| fig-height: 4
+#| fig-cap: "Share of datasets with at least one flagged item under a true
+#|   Rasch model (k = 0, 500 datasets per n). The dashed line is the nominal 5
+#|   percent and the band covers two Monte Carlo SEs around it. RMSEA above .05
+#|   is left out, since it flags 99.2 percent of datasets at n = 150."
+#| fig-alt: "Line chart of family-wise false positive rate against sample size
+#|   for four methods. Infit with Westfall-Young stays at about 4 percent at
+#|   every n. The S-X2 bootstrap is about 6 percent at n = 150 and 500 and
+#|   about 4 to 5 percent at n = 1000 and 2000, inside or at the edge of the
+#|   band around 5 percent. S-X2 with df + 1 is 6 to 9 percent and S-X2 with
+#|   mirt's df is 9 to 12 percent, both above the band at every n."
+null_fw <- flags |>
+  filter(k == 0) |>
+  group_by(method, n, rep) |>
+  summarise(any = any(flag), .groups = "drop") |>
+  group_by(method, n) |>
+  summarise(v = 100 * mean(any), .groups = "drop")
+
+mcse <- 100 * 2 * sqrt(.05 * .95 / 500)
+null_fw |>
+  filter(method %in% c("infit_wy", "sx2_mirt", "sx2_df1", "sx2_boot")) |>
+  ggplot(aes(factor(n), v, colour = method, shape = method, group = method)) +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = 5 - mcse, ymax = 5 + mcse,
+           fill = "grey85", alpha = 0.6) +
+  geom_hline(yintercept = 5, linetype = "dashed", colour = "grey40") +
+  geom_line(linewidth = 0.6) +
+  geom_point(size = 2.2) +
+  scale_colour_manual(values = pal, labels = lab, name = NULL) +
+  scale_shape_manual(values = shp, labels = lab, name = NULL) +
+  scale_y_continuous(limits = c(0, 14), breaks = seq(0, 14, 2)) +
+  labs(x = "Sample size", y = "Datasets with any flag (%)") +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "bottom", panel.grid.minor = element_blank()) +
+  guides(colour = guide_legend(nrow = 2), shape = guide_legend(nrow = 2))
+```
+
+Infit with Westfall-Young holds 4.2 to 4.4 percent at every n. The S-X2
+bootstrap gives 6.2 and 6.6 percent at n = 150 and 500 and 4.8 and 3.8 percent
+at n = 1000 and 2000. The first two are 1.2 and 1.6 Monte Carlo SEs above 5, so
+it is at most slightly liberal at small n. With the df corrected, asymptotic
+S-X2 gives 5.8 to 9.0 percent, in line with the diagnostic. mirt's default gives
+8.8 to 12.4 percent, and RMSEA above .05 flags almost every dataset at n = 150
+and none at n = 2000 (@tbl-null).
+
+RMSEA with a bootstrap cutoff behaves like the S-X2 bootstrap in every cell of
+this study, as expected, since both are computed from the same draws and RMSEA
+is close to a monotone function of S-X2. It is left out of the figures. Infit
+with BH on the marginal bootstrap p is close to infit with Westfall-Young and is
+left out too. Both are in the appendix tables.
+
+### Detection of the misfitting items
+
+```{r}
+#| label: fig-detection
+#| fig-width: 8
+#| fig-height: 6
+#| fig-cap: "Detection of the misfitting items, averaged over the misfitting
+#|   items in each dataset. k is the number of misfitting items and rho the
+#|   correlation between the two dimensions, lower meaning stronger misfit."
+#| fig-alt: "Five panels, one per combination of number of misfitting items
+#|   and dimension correlation, each plotting detection rate from 0 to 100
+#|   percent against sample size for four methods. Detection rises with n in
+#|   every panel. Infit with Westfall-Young is highest or tied in every panel.
+#|   The S-X2 bootstrap and S-X2 with df + 1 lag behind infit most in the two
+#|   panels with rho = 0.75, catching up only where all methods reach 100
+#|   percent. RMSEA above .05 is high at n = 150 and falls with n in the rho =
+#|   0.75 panels."
+flags |>
+  filter(k > 0, misfit, method %in% fig_methods) |>
+  group_by(k, rho, n, method) |>
+  summarise(v = 100 * mean(flag), .groups = "drop") |>
+  cell_lab() |>
+  rate_plot("Detection (%)") +
+  facet_wrap(~ cell, nrow = 2)
+```
+
+Infit with Westfall-Young detects at least as much as the S-X2 bootstrap in
+every cell, and clearly more wherever detection is not saturated. The gap is
+largest for subtle misfit. At $\rho$ = 0.75 it is 80 against 47.5 percent with
+one misfitting item at n = 500, and 58 against 32 percent with three at
+n = 1000. The S-X2 bootstrap only catches up where both methods reach 100
+percent (@tbl-detection).
+
+The fixed RMSEA threshold detects more at n = 150 because it flags almost
+everything there, and falls to 1.3 percent at $\rho$ = 0.75 and n = 2000, as in
+the original study. A bootstrap cutoff for RMSEA recovers that, 68.7 percent in
+the same cell, which confirms the hypothesis in conclusion 5 of the original
+study. It does no better than the S-X2 bootstrap, though.
+
+### False flags on fitting items
+
+```{r}
+#| label: fig-falseflags
+#| fig-width: 8
+#| fig-height: 6
+#| fig-cap: "Share of datasets in which at least one fitting item is flagged.
+#|   Panels as in @fig-detection."
+#| fig-alt: "Five panels plotting the share of datasets with a falsely flagged
+#|   fitting item against sample size. With three misfitting items, infit with
+#|   Westfall-Young rises steeply with n, reaching 87 to 100 percent at
+#|   n = 2000 for rho 0.15 and 0.50, while the S-X2 bootstrap stays below 10
+#|   percent except at rho = 0.15 and n = 2000, where it reaches about 48
+#|   percent. With one misfitting item all methods except RMSEA stay low.
+#|   RMSEA above .05 is near 100 percent at n = 150 in every panel."
+flags |>
+  filter(k > 0, !misfit, method %in% fig_methods) |>
+  group_by(k, rho, n, method, rep) |>
+  summarise(any = any(flag), .groups = "drop") |>
+  group_by(k, rho, n, method) |>
+  summarise(v = 100 * mean(any), .groups = "drop") |>
+  cell_lab() |>
+  rate_plot("Datasets with a fitting item flagged (%)") +
+  facet_wrap(~ cell, nrow = 2)
+```
+
+This is where S-X2 differs. With three misfitting items, infit flags fitting
+items in a share of datasets that rises steeply with n: at $\rho$ = 0.50, 16
+percent at n = 500, 39.5 at 1000 and 87 at 2000. The S-X2 bootstrap stays at 2
+to 7.5 percent in the same cells. At $\rho$ = 0.15 infit flags fitting items in
+97 percent of datasets at n = 1000 against 6.5 for the S-X2 bootstrap, and only
+at n = 2000 does the S-X2 bootstrap also cascade, to 47.5 percent. With a single
+misfitting item the cascade is milder for infit, up to 21 percent at $\rho$ =
+0.50 and n = 2000, against 5 percent (@tbl-falseflags).
+
+The fitting items are fitting by construction, since they respond only to the
+first dimension. In the unidimensional model fitted to the whole set, the
+misfitting items distort the person locations, so fitting items can show misfit
+too. This is the cascade described in Johansson (2025). Flagging them is a false
+positive with respect to the data generating model.
+
+### Recovering the right items
+
+```{r}
+#| label: fig-perfect
+#| fig-width: 8
+#| fig-height: 6
+#| fig-cap: "Share of datasets in which every misfitting item is flagged and no
+#|   fitting item is. Panels as in @fig-detection."
+#| fig-alt: "Five panels plotting perfect recovery against sample size. With
+#|   three misfitting items at rho 0.15 and 0.50, the S-X2 bootstrap climbs to
+#|   about 93 percent at n = 1000 or 2000 while infit with Westfall-Young falls
+#|   towards zero at n = 2000. At rho = 0.75 infit is higher than the S-X2
+#|   bootstrap at every n. With one misfitting item both methods are high from
+#|   n = 500, and the S-X2 bootstrap is higher at n = 2000 for rho = 0.50."
+flags |>
+  filter(k > 0, method %in% fig_methods) |>
+  group_by(k, rho, n, method, rep) |>
+  summarise(v = all(flag[misfit]) & !any(flag[!misfit]), .groups = "drop") |>
+  group_by(k, rho, n, method) |>
+  summarise(v = 100 * mean(v), .groups = "drop") |>
+  cell_lab() |>
+  rate_plot("Perfect recovery (%)") +
+  facet_wrap(~ cell, nrow = 2)
+```
+
+The two effects trade off. With three misfitting items the S-X2 bootstrap
+recovers the right set far more often at n $\geq$ 1000 when misfit is strong or
+moderate: 93.5 against 3 percent at $\rho$ = 0.15 and n = 1000, and 92.5 against
+13 percent at $\rho$ = 0.50 and n = 2000. Infit is better at small n and for
+subtle misfit, where the S-X2 bootstrap misses too many of the misfitting items:
+41.5 against 26.5 percent at $\rho$ = 0.75 and n = 2000, and 47 against 30
+percent at $\rho$ = 0.50 and n = 500 (@tbl-perfect).
+
+### Detection by item location
+
+```{r}
+#| label: fig-location
+#| fig-width: 8
+#| fig-height: 5
+#| fig-cap: "Detection of each of the three misfitting items by its location
+#|   relative to the sample mean, for the two subtler conditions."
+#| fig-alt: "Two rows of three panels, rows for rho 0.50 and 0.75, columns for
+#|   misfitting items at about -2, -1 and 0 logits, each plotting detection
+#|   against sample size for infit with Westfall-Young and the S-X2 bootstrap.
+#|   Detection is lowest for the item at -2 logits in both rows. At rho = 0.75
+#|   infit is well above the S-X2 bootstrap for every item, most of all for the
+#|   two items nearer the centre."
+flags |>
+  filter(k == 3, misfit, rho > 0.15, method %in% c("infit_wy", "sx2_boot")) |>
+  mutate(location = factor(sprintf("item at %.2f logits", location),
+                           levels = sprintf("item at %.2f logits",
+                                            sort(unique(location)))),
+         rho = sprintf("rho = %.2f", rho)) |>
+  group_by(rho, n, location, method) |>
+  summarise(v = 100 * mean(flag), .groups = "drop") |>
+  rate_plot("Detection (%)") +
+  facet_grid(rho ~ location)
+```
+
+Both methods find it hardest to detect the item two logits below the sample
+mean, and the S-X2 bootstrap loses most relative to infit on the two items
+closer to the centre at $\rho$ = 0.75 (@tbl-location).
+
+### At a matched null error rate
+
+The S-X2 bootstrap is slightly above 5 percent under the null at small n and
+infit slightly below, which favours S-X2 in the comparisons above. In
+@tbl-matched each method's adjusted p-value threshold is set so that its
+family-wise rate in the null cell at the same n is 5 percent, and that threshold
+is applied to the misfit cells. The thresholds come from the same design, so
+they are an oracle.
+
+Matching the null error rate moves detection by at most 3.3 points. False flags
+move more where a threshold loosens, by up to 6.5 points for infit and 13.5 for
+the S-X2 bootstrap, both at $\rho$ = 0.15, where the cascade is steepest. Infit
+still detects more in every unsaturated cell, and the S-X2 bootstrap still flags
+far fewer fitting items when three items misfit.
+
+### Paired comparison
+
+Both methods were run on the same datasets, so their decisions can be compared
+item by item. @tbl-paired counts misfitting items detected by one method and
+not the other. Where the two methods disagree about a misfitting item, it is
+almost always infit that detects it. The largest counts in the other direction,
+15 to 17 out of 600, are in cells where infit alone detects 92 to 172.
+
+## Interpretation
+
+**1. Infit with Westfall-Young is calibrated and detects more.** It holds 4.2 to
+4.4 percent family-wise under the null and detects at least as much as the S-X2
+bootstrap and the df-corrected S-X2 in every cell, at nominal and at matched
+error rates. For subtle
+misfit and moderate n the difference is large. The original study's
+conclusion 1 survives the fair comparison.
+
+**2. The S-X2 bootstrap resists the cascade.** When three items misfit at
+n $\geq$ 1000, it rarely flags fitting items, while infit flags them in most
+datasets. Its advantage in recovering the right set of items is large where
+misfit is strong or moderate and n is large. The original study's conclusion 2
+survives, and the gap is wider than it reported. At $\rho$ = 0.15 and n = 2000
+infit with Westfall-Young flags 57.1 percent of fitting items, close to the 54.2
+percent the original found without multiplicity correction, while the S-X2
+bootstrap flags 3.7 percent against 16.9 for the original's asymptotic S-X2.
+Multiplicity control does not remove the cascade for infit, since the fitting
+items it flags there are far outside their null distribution.
+
+**3. Asymptotic S-X2 is liberal under the null, but resists the cascade.**
+With the df corrected it is still liberal under the null, 5.8 to 9.0 percent
+with BH and 5.8 to 8.6 with Holm, and with mirt's df it is 8.8 to 12.4. With BH
+it also cascades much more than the bootstrap version, to 28 percent at
+$\rho$ = 0.50 and n = 2000, but that is the correction, not the statistic. BH
+controls the false discovery rate and loosens its threshold once the misfitting
+items are rejected. Recomputed from the stored p-values with Holm, which
+controls the family-wise rate as Westfall-Young does, asymptotic S-X2 flags
+fitting items in 2.5, 4.5 and 9 percent of datasets at $\rho$ = 0.50 and
+n = 500, 1000 and 2000 with three misfitting items, against 2, 3.5 and 7.5 for
+the bootstrap, at the same or slightly higher detection. At $\rho$ = 0.15 and
+n = 1000 it is 11 against 6.5. Infit with Holm still cascades, 90.5 percent at
+$\rho$ = 0.15 and n = 1000 and 72.5 at $\rho$ = 0.50 and n = 2000. The
+resistance therefore belongs to the S-X2 statistic, and the bootstrap's
+contribution is calibration under the null. A likely reason is that the cascade
+leaves fitting items with small slope deviations, which infit, close to a
+one-df slope contrast, picks up while S-X2 spreads them over 15 to 17 df at
+n = 1000 and 2000. The book chapter uses Holm throughout for this reason.
+
+**4. RMSEA adds nothing beyond S-X2.** A bootstrap cutoff makes it usable, which
+confirms the original study's hypothesis, but it then behaves like the S-X2
+bootstrap. A fixed threshold of .05 remains unusable.
+
+**Against the decision rule.** The rule set before the run was that S-X2 is
+worth adding if its bootstrap version holds 5 percent under the null and, in a
+cell with $\rho$ = 0.50 or 0.75, detects misfit infit misses or flags clearly
+fewer fitting items, without a comparable loss elsewhere. The first two parts
+are met: the S-X2 bootstrap is at most slightly liberal at small n, and at
+$\rho$ = 0.50 with three misfitting items it flags fitting items in 3.5 against
+39.5 percent of datasets at n = 1000 and 7.5 against 87 at n = 2000, with
+detection 93.8 against 98 and 100 against 100. The third part is a judgement.
+At $\rho$ = 0.75 the S-X2 bootstrap detects much less than infit at every n up
+to 1000.
+
+So S-X2 is not a replacement for infit, and it is not a better default. Its use
+would be as a second opinion at large n: when infit flags many items, the S-X2
+bootstrap separates the items that misfit from those that are flagged because
+others do. The cost is a parametric bootstrap with a refit per draw, about 25
+to 40 seconds per analysis at B = 400 on one core for 20 items.
+
+## Scope and limits
+
+- Dichotomous items only. The diagnostic found S-X2 close to nominal for
+  polytomous items after the df correction, so a polytomous arm is the obvious
+  next step if S-X2 goes further.
+- One misfit mechanism, a second dimension. Other mechanisms, such as
+  discrimination different from the Rasch model, may favour either method.
+- S-X2 is computed by mirt under MML with a normal latent distribution, which
+  matches the data generation here and so favours it slightly.
+- The bootstrap uses mirt's df + 1 to put S-X2 on a common scale across draws.
+  The bootstrap reference does not depend on the df otherwise.
+
+## Appendix: result tables
+
+```{r}
+#| label: tbl-null
+#| tbl-cap: "Datasets with at least one flagged item under the null (%), k = 0."
+null_fw |>
+  pivot_wider(names_from = n, values_from = v, names_prefix = "n = ") |>
+  kb(digits = 1)
+```
+
+```{r}
+#| label: tbl-detection
+#| tbl-cap: "Detection, mean over the misfitting items (%)."
+main <- c("infit_wy", "infit_bh", "sx2_df1", "sx2_boot", "rmsea_05")
+flags |>
+  filter(k > 0, misfit, method %in% main) |>
+  group_by(k, rho, n, method) |>
+  summarise(v = 100 * mean(flag), .groups = "drop") |>
+  pivot_wider(names_from = method, values_from = v) |>
+  kb(digits = 1)
+```
+
+```{r}
+#| label: tbl-falseflags
+#| tbl-cap: "Datasets with at least one fitting item flagged (%)."
+flags |>
+  filter(k > 0, !misfit, method %in% main) |>
+  group_by(k, rho, n, method, rep) |>
+  summarise(any = any(flag), .groups = "drop") |>
+  group_by(k, rho, n, method) |>
+  summarise(v = 100 * mean(any), .groups = "drop") |>
+  pivot_wider(names_from = method, values_from = v) |>
+  kb(digits = 1)
+```
+
+```{r}
+#| label: tbl-perfect
+#| tbl-cap: "Perfect recovery: every misfitting item flagged and no fitting item (%)."
+flags |>
+  filter(k > 0, method %in% main) |>
+  group_by(k, rho, n, method, rep) |>
+  summarise(ok = all(flag[misfit]) & !any(flag[!misfit]), .groups = "drop") |>
+  group_by(k, rho, n, method) |>
+  summarise(v = 100 * mean(ok), .groups = "drop") |>
+  pivot_wider(names_from = method, values_from = v) |>
+  kb(digits = 1)
+```
+
+```{r}
+#| label: tbl-location
+#| tbl-cap: "Detection by item location, k = 3 (%)."
+flags |>
+  filter(k == 3, misfit, rho > 0.15, method %in% c("infit_wy", "sx2_boot")) |>
+  mutate(location = round(location, 2)) |>
+  group_by(rho, n, location, method) |>
+  summarise(v = 100 * mean(flag), .groups = "drop") |>
+  pivot_wider(names_from = method, values_from = v) |>
+  kb(digits = 1)
+```
+
+```{r}
+#| label: tbl-matched
+#| tbl-cap: "Detection and false flags with each method's threshold set to a 5
+#|   percent family-wise rate in the null cell at the same n (%)."
+thr <- adj |>
+  filter(k == 0) |>
+  select(n, rep, infit_wy, sx2_df1, sx2_boot) |>
+  pivot_longer(c(infit_wy, sx2_df1, sx2_boot), names_to = "method",
+               values_to = "padj") |>
+  group_by(method, n, rep) |>
+  summarise(mn = min(padj, na.rm = TRUE), .groups = "drop") |>
+  group_by(method, n) |>
+  summarise(c = quantile(mn, .05, type = 1), .groups = "drop")
+
+adj |>
+  filter(k > 0) |>
+  select(k, rho, n, rep, misfit, infit_wy, sx2_df1, sx2_boot) |>
+  pivot_longer(c(infit_wy, sx2_df1, sx2_boot), names_to = "method",
+               values_to = "padj") |>
+  left_join(thr, by = c("method", "n")) |>
+  mutate(flag = coalesce(padj <= c, FALSE)) |>
+  group_by(k, rho, n, method, rep) |>
+  summarise(det = mean(flag[misfit]), ff = any(flag[!misfit]), .groups = "drop") |>
+  group_by(k, rho, n, method) |>
+  summarise(det = 100 * mean(det), ff = 100 * mean(ff), .groups = "drop") |>
+  pivot_wider(names_from = method, values_from = c(det, ff)) |>
+  select(k, rho, n, det_infit_wy, det_sx2_boot, ff_infit_wy, ff_sx2_boot) |>
+  kb(digits = 1, col.names = c("k", "rho", "n", "Detection, infit",
+                               "Detection, S-X2 boot", "False flags, infit",
+                               "False flags, S-X2 boot"))
+```
+
+```{r}
+#| label: tbl-paired
+#| tbl-cap: "Misfitting items detected by one method and not the other, infit
+#|   with Westfall-Young against the S-X2 bootstrap, same datasets."
+flags |>
+  filter(k > 0, misfit, method %in% c("infit_wy", "sx2_boot")) |>
+  select(k, rho, n, rep, item, method, flag) |>
+  pivot_wider(names_from = method, values_from = flag) |>
+  group_by(k, rho, n) |>
+  summarise(`infit only` = sum(infit_wy & !sx2_boot),
+            `S-X2 boot only` = sum(!infit_wy & sx2_boot),
+            both = sum(infit_wy & sx2_boot), .groups = "drop") |>
+  kb()
+```
+
+## Reference
+
+Johansson, M. (2025). Detecting item misfit in Rasch models. *Educational
+Methods & Psychometrics, 3*(18). https://doi.org/10.61186/emp.2025.5

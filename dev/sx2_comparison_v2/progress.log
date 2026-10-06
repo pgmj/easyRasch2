@@ -1,0 +1,26 @@
+2026-10-04 22:50:14  start: 24 cells, B = 400, easyRasch2 1.3.1.9002, mirt 1.46.1 
+2026-10-04 23:16:29  cell 1/24 k0_rhoNA_n150 done in 26.3 min, 0 reps without results 
+2026-10-04 23:48:20  cell 2/24 k0_rhoNA_n500 done in 31.8 min, 0 reps without results 
+2026-10-05 00:29:10  cell 3/24 k0_rhoNA_n1000 done in 40.8 min, 0 reps without results 
+2026-10-05 01:25:11  cell 4/24 k0_rhoNA_n2000 done in 56.0 min, 0 reps without results 
+2026-10-05 01:35:23  cell 5/24 k1_rho0.50_n150 done in 10.2 min, 0 reps without results 
+2026-10-05 01:45:40  cell 6/24 k1_rho0.75_n150 done in 10.3 min, 0 reps without results 
+2026-10-05 01:58:08  cell 7/24 k1_rho0.50_n500 done in 12.5 min, 0 reps without results 
+2026-10-05 02:10:41  cell 8/24 k1_rho0.75_n500 done in 12.5 min, 0 reps without results 
+2026-10-05 02:26:55  cell 9/24 k1_rho0.50_n1000 done in 16.2 min, 0 reps without results 
+2026-10-05 02:43:12  cell 10/24 k1_rho0.75_n1000 done in 16.3 min, 0 reps without results 
+2026-10-05 03:05:43  cell 11/24 k1_rho0.50_n2000 done in 22.5 min, 0 reps without results 
+2026-10-05 03:28:24  cell 12/24 k1_rho0.75_n2000 done in 22.7 min, 0 reps without results 
+2026-10-05 03:38:00  cell 13/24 k3_rho0.15_n150 done in 9.6 min, 0 reps without results 
+2026-10-05 03:47:53  cell 14/24 k3_rho0.50_n150 done in 9.9 min, 0 reps without results 
+2026-10-05 03:58:05  cell 15/24 k3_rho0.75_n150 done in 10.2 min, 0 reps without results 
+2026-10-05 04:10:00  cell 16/24 k3_rho0.15_n500 done in 11.9 min, 0 reps without results 
+2026-10-05 04:22:11  cell 17/24 k3_rho0.50_n500 done in 12.2 min, 0 reps without results 
+2026-10-05 04:34:37  cell 18/24 k3_rho0.75_n500 done in 12.4 min, 0 reps without results 
+2026-10-05 04:50:05  cell 19/24 k3_rho0.15_n1000 done in 15.5 min, 0 reps without results 
+2026-10-05 05:06:10  cell 20/24 k3_rho0.50_n1000 done in 16.1 min, 0 reps without results 
+2026-10-05 05:22:25  cell 21/24 k3_rho0.75_n1000 done in 16.2 min, 0 reps without results 
+2026-10-05 05:44:23  cell 22/24 k3_rho0.15_n2000 done in 22.0 min, 0 reps without results 
+2026-10-05 06:06:36  cell 23/24 k3_rho0.50_n2000 done in 22.2 min, 0 reps without results 
+2026-10-05 06:29:04  cell 24/24 k3_rho0.75_n2000 done in 22.5 min, 0 reps without results 
+2026-10-05 06:29:04  all cells done 

@@ -74,7 +74,7 @@ ALPHA    <- 0.05
 
 ### Data generation
 
-Identical to `sx2_itemfit_sim.qmd`, which follows Johansson (2025): 20
+Follows Johansson (2025): 20
 dichotomous items, locations `runif(20, -2, 2)`, person locations bivariate
 normal with SD 1.5 and inter-dimensional correlation 0.15, misfit induced by
 loading items on the second dimension, misfitting items at approximately 0, -1
