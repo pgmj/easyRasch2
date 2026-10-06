@@ -172,12 +172,13 @@ The generating model is CML item parameters (via `psychotools`) with WLE
 person locations. For each iteration a dataset is simulated under the
 chosen `dgp`, the model is **refitted** by CML
 ([`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)),
-and the observed and expected item-restscore gamma are computed via
-[`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html).
-The refit matters: the expected gamma varies from sample to sample
-because the thresholds do, and holding them fixed would reproduce the
-problem the bootstrap exists to solve. Failed iterations (e.g.,
-degenerate simulated data) are silently discarded.
+and the observed and expected item-restscore gamma are computed as in
+[`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html),
+by a faster internal routine that skips the standard errors and the
+rounding of the printed values. The refit matters: the expected gamma
+varies from sample to sample because the thresholds do, and holding them
+fixed would reproduce the problem the bootstrap exists to solve. Failed
+iterations (e.g., degenerate simulated data) are silently discarded.
 
 Parallel processing is provided by the `mirai` package (optional).
 Install it with `install.packages("mirai")` to enable parallelisation.
@@ -232,9 +233,9 @@ if (requireNamespace("iarm", quietly = TRUE) &&
 #> 
 #> |Item   | Observed| Expected| Difference| Diff low| Diff high|      p| p (adj)|Flagged | Rel. location|
 #> |:------|--------:|--------:|----------:|--------:|---------:|------:|-------:|:-------|-------------:|
-#> |Item1  |     0.02|     0.03|     -0.006|   -0.173|     0.176| 0.9901|  1.0000|        |         -0.22|
-#> |Item2  |     0.04|     0.03|      0.009|   -0.155|     0.174| 0.9703|  1.0000|        |          0.14|
-#> |Item3  |     0.05|     0.03|      0.013|   -0.196|     0.151| 0.9010|  1.0000|        |          0.00|
+#> |Item1  |     0.02|     0.03|     -0.006|   -0.174|     0.176| 1.0000|  1.0000|        |         -0.22|
+#> |Item2  |     0.04|     0.03|      0.008|   -0.155|     0.174| 0.9703|  1.0000|        |          0.14|
+#> |Item3  |     0.05|     0.03|      0.013|   -0.195|     0.151| 0.9010|  1.0000|        |          0.00|
 #> |Item4  |    -0.08|     0.03|     -0.110|   -0.135|     0.183| 0.2574|  0.8614|        |         -0.04|
 #> |Item5  |     0.02|     0.03|     -0.012|   -0.175|     0.167| 0.9703|  1.0000|        |          0.10|
 #> |Item6  |    -0.05|     0.03|     -0.083|   -0.172|     0.142| 0.1980|  0.8614|        |         -0.08|
