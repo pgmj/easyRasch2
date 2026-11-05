@@ -79,16 +79,17 @@
 #' \strong{Bootstrap p-values.} When `p_value = TRUE`, each item's observed
 #' partial gamma is compared against its simulated null distribution (from
 #' `cutoff$results`, simulated with no DIF by construction). The
-#' per-item statistic is the residual studentised by the bootstrap mean and
-#' SD; the marginal p-value is the two-sided Monte-Carlo p-value
+#' per-item statistic is the residual studentised by the mean and SD of the
+#' observed and simulated values together; the marginal p-value is the two-sided Monte-Carlo p-value
 #' `(1 + #\{|t*| >= |t|\}) / (B + 1)`, so it can be no smaller than
 #' `1 / (B + 1)`. The test is two-sided because DIF has no privileged
 #' direction: an item can favour either group. This differs from
 #' [RMlocdepGamma()], which tests one-sided for excess positive local
 #' dependence. `correction = "fwer"` uses the Westfall-Young
 #' studentised-max step-down, which exploits the bootstrap dependence among
-#' items (Ferreira, 2024); it is mildly liberal below 400 iterations in
-#' [RMdifGammaCutoff()] (a message is issued below that). Unlike the
+#' items (Ferreira, 2024). It controls the family-wise error rate at any
+#' number of iterations in [RMdifGammaCutoff()], but below 400 decisions
+#' depend on the seed and a message says so. Unlike the
 #' asymptotic p-values from `iarm::partgam_DIF()`, these are calibrated
 #' against the *simulated Rasch null* rather than the asymptotic SE; they are
 #' model-conditional and sample-size-sensitive, and are reported alongside
@@ -258,8 +259,8 @@ RMdifGamma <- function(
         call. = FALSE
       )
     }
-    # Below 400 the correction itself is off. Between 400 and 1000 only
-    # reproducibility improves, which the table caption reports instead.
+    # Below 400 decisions depend on the seed enough to say so on the
+    # console. Between 400 and 1000 the table caption reports it instead.
     if (!is.null(cutoff_n_iter) && cutoff_n_iter < 400L) {
       .notify_low_iterations(
         cutoff_n_iter,

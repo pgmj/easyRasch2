@@ -65,13 +65,15 @@ value, the expected reference from the simulation, and a flag.
 }
 \details{
 \strong{Bootstrap p-values.} The per-comparison statistic is the residual
-studentised by the bootstrap mean and SD. Marginal p-values are Monte-Carlo,
+studentised by the mean and SD of the observed and simulated values
+together. Marginal p-values are Monte-Carlo,
 \code{(1 + count) / (B + 1)}, so they can be no smaller than \code{1 / (B + 1)}.
 \code{correction = "fwer"} uses the Westfall-Young studentised-max step-down,
 which exploits the bootstrap dependence among the statistics (Ferreira,
-2024); it is liberal when the simulation is small, so at least 1000
-\code{iterations} in \code{\link[=RMdimCFACutoff]{RMdimCFACutoff()}} are recommended (a warning is issued
-below that). These p-values are model-conditional and sample-size-sensitive
+2024). It controls the family-wise error rate at any number of
+iterations, but small p-values are imprecise and decisions depend on the
+seed when the simulation is small, so at least 1000 \code{iterations} in
+\code{\link[=RMdimCFACutoff]{RMdimCFACutoff()}} are recommended (a warning is issued below that). These p-values are model-conditional and sample-size-sensitive
 and are reported alongside the simulated expected ranges, not in place of
 them.
 }

@@ -2,10 +2,10 @@
 #
 # Shared by the simulation-cutoff functions that compare an observed per-item
 # (or per-pair) statistic against a parametric-bootstrap null distribution.
-# The per-comparison statistic is the residual studentised by the *bootstrap*
-# mean and SD, putting all comparisons on equal footing for the family-wise
-# maximum (Ferreira, 2024) without invoking the Wilson-Hilferty / ZSTD
-# transform criticised by Müller (2020).
+# The per-comparison statistic is the residual studentised by the mean and SD
+# of the observed and simulated values together, putting all comparisons on
+# equal footing for the family-wise maximum (Ferreira, 2024) without invoking
+# the Wilson-Hilferty / ZSTD transform criticised by Müller (2020).
 
 #' Bootstrap p-values with optional multiplicity correction
 #'
@@ -18,6 +18,15 @@
 #' @param tail `"two.sided"` (default; deviations in either direction are
 #'   extreme, e.g. infit over/underfit) or `"upper"` (only large positive
 #'   values are extreme, e.g. excess Q3 local dependence).
+#' @param moments Where the studentising mean and SD come from. `"joint"`
+#'   (default) uses all `B + 1` values, the observed one included. Every
+#'   dataset is then scored on the same scale, so under the null the `B + 1`
+#'   statistics are exchangeable, and the marginal p-value and the first step
+#'   of the step-down are exact Monte Carlo tests at any `B`. `"simulated"`
+#'   uses the `B` simulated values only, the rule before easyRasch2 1.4.0.9000.
+#'   It scores the observed value against moments it did not contribute to,
+#'   which makes the family-wise correction liberal at small `B`. Kept so that
+#'   the Johansson (2026) simulation scripts can reproduce published results.
 #' @return A data.frame with columns `name`, `p` (marginal Monte-Carlo
 #'   p-value), and `padj` (corrected p-value). Comparisons whose simulated
 #'   values have no variance return `NA`.
@@ -27,19 +36,22 @@
   observed,
   sim,
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
-  tail = c("two.sided", "upper")
+  tail = c("two.sided", "upper"),
+  moments = c("joint", "simulated")
 ) {
   correction <- match.arg(correction)
   tail <- match.arg(tail)
+  moments <- match.arg(moments)
   nm <- names(observed)
   sim <- sim[, nm, drop = FALSE]
   B <- nrow(sim)
 
-  m <- colMeans(sim, na.rm = TRUE)
-  s <- apply(sim, 2L, stats::sd, na.rm = TRUE)
+  ref <- if (moments == "joint") rbind(observed, sim) else sim
+  m <- colMeans(ref, na.rm = TRUE)
+  s <- apply(ref, 2L, stats::sd, na.rm = TRUE)
   s[!is.finite(s) | s < 1e-8] <- NA_real_ # guard zero-variance comparisons
 
-  # Studentise observed and simulated by the bootstrap mean / SD; the test
+  # Studentise observed and simulated by the same mean / SD; the test
   # statistic is |t| (two-sided) or t (upper tail).
   t_obs <- (observed - m) / s
   t_sim <- sweep(sweep(sim, 2L, m, `-`), 2L, s, `/`)
@@ -284,11 +296,12 @@
 
 #' One-time console notice that the bootstrap ran too few iterations
 #'
-#' Below 400 iterations the Westfall-Young rule is mildly liberal under the
-#' null (Johansson, 2026, measured 6.8% at 100 iterations against a nominal
-#' 5%, and 4.3% at 400). Between 400 and 1000 the error rate is trustworthy
-#' and only reproducibility improves further, which the table caption covers
-#' instead.
+#' The joint studentisation in `.bootstrap_pvalues()` keeps the
+#' Westfall-Young error rate at the nominal level at any number of
+#' iterations, so the notice is about reproducibility. Below 400 the
+#' p-values are coarse and two analysts using different seeds disagree often
+#' enough to interrupt over. Between 400 and 1000 the table caption covers
+#' the same point instead.
 #'
 #' @param n_iter Number of completed iterations.
 #' @param requested Number of iterations asked for, or `NULL`. When the two
@@ -310,12 +323,13 @@
   rlang::inform(
     c(
       sprintf(
-        "Bootstrap p-values are based on %d iterations, below the calibrated floor of 400.",
+        "Bootstrap p-values are based on %d iterations, below the recommended 400.",
         n_iter
       ),
       i = paste(
-        "Below 400 the Westfall-Young correction is mildly liberal under the",
-        "null, so the family-wise error rate is above the nominal level."
+        "The family-wise error rate is controlled at any number of",
+        "iterations, but with few of them the p-values are coarse and which",
+        "comparisons get flagged depends on the seed."
       ),
       if (lost) {
         c(i = sprintf(
@@ -339,12 +353,12 @@
 
 #' Caption sentence about the iteration count
 #'
-#' The second tier of the two-tier treatment. Below 400 the correction itself
-#' is mildly liberal, which the console also reports through
-#' `.notify_low_iterations()`. Between 400 and 1000 the error rate is
-#' trustworthy and only reproducibility keeps improving, which is a caption
-#' matter rather than something to interrupt over. At 1000 and above the
-#' caption says nothing.
+#' The second tier of the two-tier treatment. Error rates are controlled at
+#' any number of iterations, so both tiers are about reproducibility. Below
+#' 400 decisions depend on the seed enough that the console also reports it
+#' through `.notify_low_iterations()`. Between 400 and 1000 they still depend
+#' on it somewhat, which is a caption matter rather than something to
+#' interrupt over. At 1000 and above the caption says nothing.
 #'
 #' The measured seed-disagreement percentages in `RMitemInfit()`'s caption are
 #' for items and are not repeated here, since the equivalent quantity for item
@@ -360,14 +374,14 @@
   }
   if (n_iter < 400L) {
     return(paste0(
-      " This is below the calibrated floor of 400, where the correction is",
-      " mildly liberal and the family-wise error rate sits above the nominal",
-      " level (Johansson, 2026)."
+      " This is below the recommended 400. Error rates are controlled, but",
+      " decisions depend on the seed, so use 1000 to 2000 for a final",
+      " analysis (Johansson, 2026)."
     ))
   }
   if (n_iter < 1000L) {
     return(paste0(
-      " Error rates are calibrated at this many iterations, but decisions are",
+      " Error rates are controlled at this many iterations, but decisions are",
       " still somewhat seed-dependent, so use 1000 to 2000 for a final",
       " analysis (Johansson, 2026)."
     ))

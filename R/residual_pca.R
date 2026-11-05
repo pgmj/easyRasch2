@@ -311,7 +311,8 @@ RMdimResidualPCA <- function(
   # --- One-sided bootstrap p-value for the first contrast ---------------------
   # The simulated null is the distribution of the *largest* eigenvalue, so the
   # p-value applies to PC1 only. Reuses the shared helper (studentisation is
-  # monotone per column, so it does not change the single-column p-value);
+  # monotone per column, so neither choice of moments changes the
+  # single-column upper-tail p-value);
   # correction = "none" because the max eigenvalue is one family-wise test.
   p_pc1 <- NULL
   if (p_value) {

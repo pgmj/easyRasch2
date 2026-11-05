@@ -1,0 +1,263 @@
+---
+title: "FWB intervals for conditional infit MSQ"
+subtitle: "Coverage of the population MSQ, item by item and simultaneously"
+author: "Magnus Johansson"
+date: today
+---
+
+```{r setup}
+#| include: false
+suppressMessages({
+  library(dplyr)
+  library(tidyr)
+  library(knitr)
+})
+fs <- list.files("fwb_msq_coverage", pattern = "_n[0-9]+[.]rds$",
+                 full.names = TRUE)
+L <- lapply(fs, readRDS)
+d <- bind_rows(L) |>
+  mutate(role = case_when(cond == "null" ~ "null",
+                          misfit ~ "misfitting",
+                          TRUE ~ "fitting, others misfit"),
+         role = factor(role, levels = c("null", "fitting, others misfit",
+                                        "misfitting")),
+         cond = factor(cond, levels = c("null", "xdim50_k1", "xdim15_k3",
+                                        "xdim75_k3")))
+B <- unique(vapply(L, function(x) attr(x, "B"), numeric(1)))
+minutes <- sum(vapply(L, function(x) attr(x, "minutes"), numeric(1)))
+failed <- sum(vapply(L, function(x) length(attr(x, "failed")), integer(1)))
+kb <- function(x, ...) kable(x, ...)
+```
+
+## Purpose
+
+An effect-size floor on infit judges each item by an interval for its
+population MSQ against a band of practical fit, $[1 - \delta, 1 + \delta]$,
+instead of testing MSQ = 1. That needs an interval for the observed MSQ under
+the data as they are, not under the null. The fractional weighted bootstrap
+(FWB) gives every respondent a random positive weight with mean 1, refits the
+model by CML with those weights, and recomputes infit. Its percentile interval
+reflects the sampling variability of the observed MSQ, including the
+re-estimation of the thresholds, and nobody drops out of a draw, so no
+category empties.
+
+This note checks whether the intervals cover the population MSQ for three
+kinds of item: items under a true Rasch model, misfitting items, and fitting
+items distorted by the cascade when other items misfit. It also checks
+simultaneous intervals that use one max-type constant over all items, the
+infit analogue of Q3max*. The simulation is `fwb_msq_coverage.R`.
+
+## Design
+
+- **Datasets.** Regenerated from `conditional_rmsd_partA.qmd` with its seeds:
+  20 dichotomous items evenly spaced on [-2, 2], theta ~ N(0, 1.5^2), and
+  misfitting items that respond to a second dimension. Each dataset was
+  checked against Part A's cached infit.
+- **Conditions.** Null; one misfitting item at rho = .50; three misfitting
+  items at rho = .15 (the strongest cascade) and at rho = .75 (subtle misfit).
+- **Sample sizes.** 500, 2,000, 5,000. 200 datasets per cell.
+- **FWB.** `r B` draws per dataset, exponential weights normalised to mean 1,
+  weighted CML refit with `psychotools::pcmodel()`, infit from the conditional
+  moments with the same weights.
+- **Intervals.** Per item, the 2.5 and 97.5 percentiles of the draws.
+  Simultaneous: in each draw take the largest standardised departure over
+  items, $\max_i |\text{MSQ}_{bi} - \text{MSQ}_i| / \text{SD}_i$, and use its
+  95th percentile $c$ as one constant for all items, giving
+  $\text{MSQ}_i \pm c \cdot \text{SD}_i$.
+- **Target.** Each item's population MSQ, its Part A mean at n = 20,000
+  (300 datasets). Its Monte Carlo SE is about .0005.
+
+The Monte Carlo SE of a 95 percent coverage rate is 1.5 points for one item
+over 200 datasets. Rates pooled over items are more precise but not
+independent, since items share datasets.
+
+## Checks
+
+```{r checks}
+d |>
+  group_by(cond, n) |>
+  summarise(datasets = n_distinct(rep),
+            max_match_error = signif(max(match_err), 2),
+            min_draws_ok = min(draws_ok), .groups = "drop") |>
+  kb()
+```
+
+`r failed` datasets failed. About `r round(minutes)` minutes on 10 cores.
+
+## Coverage, item by item
+
+Share of items whose interval contains the population MSQ (%), by kind of
+item. Nominal is 95.
+
+```{r coverage}
+d |>
+  group_by(role, cond, n) |>
+  summarise(percentile = 100 * mean(pop >= lo & pop <= hi),
+            simultaneous = 100 * mean(pop >= slo & pop <= shi),
+            .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = c(percentile, simultaneous),
+              names_glue = "{.value} n={n}") |>
+  kb(digits = 1)
+```
+
+Coverage of the misfitting items one by one, since they differ in targeting
+(0, -1 and -2 logits in the three-item conditions).
+
+```{r coverage-misfit}
+d |>
+  filter(misfit) |>
+  group_by(cond, item, n) |>
+  summarise(pop = mean(pop),
+            percentile = 100 * mean(pop >= lo & pop <= hi),
+            .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = percentile,
+              names_prefix = "n = ") |>
+  kb(digits = c(0, 0, 3, 1, 1, 1))
+```
+
+## Simultaneous coverage
+
+Share of datasets in which every item's simultaneous interval contains its
+population MSQ (%). Nominal is 95. The mean of $c$ is shown for reference
+(1.96 would be the per-item constant).
+
+```{r simultaneous}
+d |>
+  group_by(cond, n, rep) |>
+  summarise(all = all(pop >= slo & pop <= shi), cmax = first(cmax),
+            .groups = "drop") |>
+  group_by(cond, n) |>
+  summarise(all_covered = 100 * mean(all), mean_c = mean(cmax),
+            .groups = "drop") |>
+  kb(digits = c(0, 0, 1, 2))
+```
+
+## Where misses come from
+
+Coverage can fail because the observed MSQ is biased at that n, or because
+the FWB spread is too narrow. The table compares the mean observed MSQ with
+the population value, and the mean FWB SD with the SD of the observed MSQ
+over datasets, which is its real sampling SD at that n.
+
+```{r spread}
+d |>
+  group_by(role, cond, n, item) |>
+  summarise(bias = mean(obs) - first(pop), true_sd = sd(obs),
+            fwb_sd = mean(fwb_sd), .groups = "drop") |>
+  group_by(role, cond, n) |>
+  summarise(mean_abs_bias = mean(abs(bias)), max_abs_bias = max(abs(bias)),
+            sd_ratio = mean(fwb_sd / true_sd), .groups = "drop") |>
+  kb(digits = c(0, 0, 0, 4, 4, 2))
+```
+
+A ratio near 1 means the FWB spread matches the real one.
+
+## The floor in practice
+
+Decisions with the simultaneous intervals against a band $[1 - \delta,
+1 + \delta]$, for two illustrative values of $\delta$. These are not
+recommendations, since $\delta$ should come from impact. An item's population
+value is "within tolerance" when $|\text{MSQ} - 1| < \delta$. The table gives
+the share of items with each decision (%).
+
+```{r floor}
+expand_grid(delta = c(0.05, 0.10)) |>
+  group_by(delta) |>
+  group_modify(function(x, key) {
+    dl <- key$delta
+    d |>
+      mutate(truth = ifelse(abs(pop - 1) < dl, "within tolerance",
+                            "beyond tolerance"),
+             decision = case_when(slo >= 1 - dl & shi <= 1 + dl ~ "inside",
+                                  shi < 1 - dl | slo > 1 + dl ~ "outside",
+                                  TRUE ~ "undecided"))
+  }) |>
+  ungroup() |>
+  count(delta, cond, role, truth, n, decision, name = "k") |>
+  group_by(delta, cond, role, truth, n) |>
+  mutate(items = sum(k), pct = 100 * k / sum(k)) |>
+  select(-k) |>
+  pivot_wider(names_from = decision, values_from = pct, values_fill = 0) |>
+  mutate(delta = sprintf("%.2f", delta)) |>
+  select(delta, cond, role, truth, n, items, any_of(c("inside", "undecided",
+                                                      "outside"))) |>
+  arrange(delta, cond, role, truth, n) |>
+  kb(digits = 1)
+```
+
+For comparison, the share of fitting items that a test against MSQ = 1 would
+flag with these same simultaneous intervals (interval excludes 1), in the
+conditions where other items misfit:
+
+```{r test-vs-1}
+d |>
+  filter(role == "fitting, others misfit") |>
+  group_by(cond, n) |>
+  summarise(flagged_vs_1 = 100 * mean(slo > 1 | shi < 1), .groups = "drop") |>
+  pivot_wider(names_from = n, values_from = flagged_vs_1,
+              names_prefix = "n = ") |>
+  kb(digits = 1)
+```
+
+## Interpretation
+
+Written 2026-10-12 after the run. 2,400 datasets, none failed, every dataset
+identical to Part A (largest difference in infit 1.3e-13).
+
+**1. The FWB spread matches the real sampling spread.** The mean FWB SD over
+the SD of the observed MSQ across datasets is 0.97 to 1.03 in every cell with
+many items behind it, for null, cascade-affected and misfitting items alike.
+The two single-item cells (one misfitting item at rho = .50) give 0.90 to
+1.08, where the empirical SD itself rests on 200 values. The observed MSQ is
+nearly unbiased for its population value, with a mean absolute bias of .001 to
+.004 and at most .007. So FWB does what the floor needs: it measures how
+uncertain the observed MSQ is, under the data as they are.
+
+**2. Per-item coverage is close to nominal, slightly under.** The percentile
+interval covers the population MSQ for 93.6 to 95.0 percent of items in the
+pooled rows, and 89.5 to 95.5 percent for single misfitting items, where the
+Monte Carlo SE is 1.5 points. The shortfall of about one point is consistent
+with estimating 2.5 and 97.5 percentiles from 200 draws, which makes the
+interval slightly too short. More draws, or an SD-based interval (observed MSQ plus or minus 1.96 FWB SDs),
+would remove most of it.
+
+**3. Simultaneous coverage is close to nominal.** The share of datasets with
+every item covered is 91.0 to 95.5 percent (mean about 93.5). The constant $c$
+is about 3.0 at every n, close to the Bonferroni value for 20 items (3.02),
+because the items' departures are nearly independent across draws. With
+$c$ from 200 draws its 95th percentile is noisy, and B = 1,000 would be the
+first thing to try before calling the shortfall real.
+
+**4. The floor stops the cascade.** With three strongly misfitting items
+(rho = .15), the fitting items have population MSQ about 0.92. A test against
+MSQ = 1, using these same simultaneous intervals, flags them at 11, 59 and
+94 percent at n = 500, 2,000 and 5,000. With $\delta = .10$ the floor flags
+none of them at any n. They are mostly undecided, because 0.92 lies near the
+boundary at 0.90, and the share cleared as inside grows with n (0 to 31
+percent). The misfitting items in the same datasets are declared outside in
+83, 100 and 100 percent.
+
+**5. The floor turns large n into a positive finding.** Under a true Rasch
+model, with $\delta = .10$, items are cleared as practically fitting in 0, 64
+and 99.8 percent of cases at n = 500, 2,000 and 5,000. No null item was ever
+declared outside. A test cannot give this kind of result.
+
+**6. Small misfit near the boundary stays undecided.** At rho = .75 the
+misfitting items have population MSQ 1.09 to 1.14. With $\delta = .10$, the
+two above 1.10 are declared outside in 0.2, 2.8 and 18 percent and are
+otherwise undecided. The one at 1.09 is never cleared and is falsely declared
+outside in at most 1 percent. Undecided is the honest answer for an item
+within a few hundredths of the tolerance.
+
+**7. The choice of $\delta$ sets the sample size the floor needs.** With
+$\delta = .05$ the simultaneous half-width (about 3 SDs, .048 at n = 5,000)
+is as wide as the band, so even null items are cleared only 12 percent of the
+time at n = 5,000, and the cascade items at 0.92 count as beyond tolerance
+and are declared outside in up to 10 percent. A narrower band needs a larger
+sample before it can clear anything. For 20 dichotomous items, n = 5,000
+supports a band of about $\pm .10$ and n = 2,000 only partly.
+
+**Limits.** Dichotomous items, 20 items, normal theta, second-dimension
+misfit only. B = 200 draws. The values of $\delta$ are illustrations, not
+recommendations. In use, $\delta$ should come from impact, and the shortfall
+in simultaneous coverage should be rechecked with more draws.

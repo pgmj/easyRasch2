@@ -1,0 +1,726 @@
+---
+title: "Impact-calibrated infit bands, validation"
+subtitle: "Upper side of the band from second-dimension misfit, against a same-item counterfactual"
+author: "Magnus Johansson"
+date: today
+---
+
+```{r setup}
+#| include: false
+suppressMessages({
+  library(dplyr)
+  library(tidyr)
+  library(knitr)
+  library(ggplot2)
+})
+fs <- list.files("infit_impact_validation", pattern = "_rho[0-9]{3}(_n[0-9]{5})?[.]rds$",
+                 full.names = TRUE)
+L <- lapply(fs, readRDS)
+S_all <- bind_rows(lapply(L, `[[`, "summary")) |>
+  mutate(target = factor(target, levels = c("on", "mid", "off")))
+S <- S_all |> filter(n == 20000)
+minutes <- sum(vapply(L, `[[`, numeric(1), "minutes"))
+failed <- sum(vapply(L, function(x) length(x$failed), integer(1)))
+
+# Metric F from the pooled conditional-bias sums: largest absolute difference
+# in conditional bias between (a) and (b), in units of the mean SEM at that
+# theta, over theta values with at least 200 persons.
+Ftab <- bind_rows(lapply(L, function(x) {
+  f <- x$fsum
+  f <- f[f$n >= 200, ]
+  d <- (f$bias_a - f$bias_b) / f$n
+  sem <- f$sem_b / f$n
+  j <- which.max(abs(d) / sem)
+  data.frame(design = x$base_info$design, target = x$base_info$target,
+             n = x$base_info$n, rho = x$summary$rho[1], F_sem = abs(d[j]) / sem[j],
+             F_logit = abs(d[j]), F_theta = f$theta[j])
+})) |>
+  mutate(target = factor(target, levels = c("on", "mid", "off")))
+
+cell_all <- S_all |>
+  group_by(design, target, item, rel_loc, n, rho) |>
+  summarise(msq = mean(msq), other_min = mean(other_msq_min),
+            other_max = mean(other_msq_max),
+            A_rmse_ratio = mean(rmse_a / rmse_b),
+            keep_vs_remove = mean(rmse_a / rmse_c),
+            B_shift = mean(shift_mean), B_gt1 = mean(shift_gt1),
+            C_kl = mean(kl_mean), C_kl_shift_share = mean(kl_shift) / mean(kl_mean),
+            E_wle = mean(E_wle), E_sum = mean(E_sum),
+            spear_wle_a = mean(spear_a), spear_sum_a = mean(spear_sum_a),
+            reps = n(), .groups = "drop") |>
+  left_join(Ftab, by = c("design", "target", "n", "rho"))
+cell <- cell_all |> filter(n == 20000)
+kb <- function(x, ...) kable(x, ...)
+```
+
+## Purpose
+
+An effect-size floor judges an item's infit by an FWB interval for its
+population MSQ against a band $[1 - \delta_i^-, 1 + \delta_i^+]$. This study
+calibrates the upper side, $\delta_i^+$, from the consequences of misfit for
+person scores, and checks that the calibration behaves. The design and the
+decisions behind it are in `infit-impact-delta-design.md`. The simulation is
+`infit_impact_validation.R`.
+
+## Design
+
+- **Counterfactual.** For a target item $i$ and correlation $\rho$, datasets
+  (a) item $i$ responds to $\theta_2$, (b) item $i$ responds to $\theta_1$,
+  and (c) item $i$ removed share every person and every uniform draw. Impact
+  of the misfit is (a) against (b), both judged against the true
+  $\theta_1$. (a) against (c) is the keep-or-remove comparison.
+- **Group pair.** A random half of the sample is shifted by 0.5 SD on the
+  item-specific factor of $\theta_2$, with $\theta_1$ unchanged, for metric E.
+- **Analysis.** CML refit, WLE with SEM, linked to the generating scale
+  through the items other than $i$. Sum scores alongside.
+- **Designs.** `d20`: 20 dichotomous items evenly spaced on [-2, 2] (the
+  Part A design), targets at about 0, -1 and -2 logits from the person mean.
+  `phq9`: the package data, 9 items with 4 categories, targets nearest the
+  person mean, at the median distance, and farthest away.
+- **Persons.** Resampled WLE from a base dataset (2,000 respondents for d20,
+  the complete phq9 cases), as in the `dgp = "resample"` cutoffs.
+- **Grid.** $\rho$ = .3, .5, .6, .7, .8, .85, .9, .95 and 1. $\rho = 1$ is
+  the fitting item, where every impact must be zero.
+- **Size.** n = 20,000 per dataset as a population proxy, 40 replicates per
+  cell. For the on-target items only, also n = 2,000 and 5,000, to check
+  whether the impact estimates move with n. All tables except the stability
+  section use n = 20,000.
+
+**Impact metrics** (section 5 of the design note):
+
+| | Metric | Units |
+|---|---|---|
+| A | RMSE of $\hat\theta - \theta_1$, (a) over (b) | ratio |
+| B | mean $|\hat\theta_a - \hat\theta_b| / \text{SEM}_b$, and the share above 1 | SEM |
+| C | mean KL between $N(\hat\theta_a, \text{SEM}_a^2)$ and $N(\hat\theta_b, \text{SEM}_b^2)$ | nats |
+| E | spurious group difference per SD of group difference on the item-specific factor | SD of $\theta_1$ (WLE) or of the sum score |
+| F | largest difference in conditional bias $E(\hat\theta - \theta_1 \mid \theta_1)$ between (a) and (b) | SEM at that $\theta_1$ |
+
+## Checks
+
+```{r checks}
+S |>
+  group_by(design, target) |>
+  summarise(cells = n_distinct(rho), reps = n(),
+            impact_at_rho1 = max(abs(c(rmse_a[rho == 1] - rmse_b[rho == 1],
+                                       shift_mean[rho == 1], kl_mean[rho == 1],
+                                       E_wle[rho == 1]))),
+            msq_at_rho1 = mean(msq[rho == 1]), .groups = "drop") |>
+  kb(digits = 4)
+```
+
+`r failed` replicates failed. About `r round(minutes)` minutes on 10 cores.
+At $\rho = 1$ every impact must be exactly 0 and the MSQ near 1.
+
+## MSQ and impact by $\rho$
+
+```{r msq-impact}
+cell |>
+  select(design, target, rho, msq, other_min, other_max, A_rmse_ratio, B_shift,
+         B_gt1, C_kl, E_wle, E_sum, F_sem) |>
+  arrange(design, target, desc(rho)) |>
+  kb(digits = c(0, 0, 2, 3, 3, 3, 3, 3, 3, 4, 3, 3, 3))
+```
+
+`other_min` and `other_max` are the lowest and highest MSQ among the other
+items in dataset (a): the cascade caused by one misfitting item.
+
+```{r impact-fig, fig.height = 7}
+cell |>
+  select(design, target, msq, A_rmse_ratio, B_shift, C_kl, E_wle, F_sem) |>
+  mutate(A_rmse_ratio = A_rmse_ratio - 1) |>
+  pivot_longer(c(A_rmse_ratio, B_shift, C_kl, E_wle, F_sem),
+               names_to = "metric") |>
+  ggplot(aes(msq, value, colour = target, linetype = design)) +
+  geom_line() + geom_point(size = 1.2) +
+  facet_wrap(~ metric, scales = "free_y", ncol = 2) +
+  labs(x = "Population MSQ of the misfitting item", y = "Impact",
+       colour = "Target", linetype = "Design") +
+  theme_minimal(base_size = 10) +
+  theme(legend.position = "bottom")
+```
+
+A for this figure is the RMSE ratio minus 1.
+
+**Monotonicity.** The calibration inverts impact as a function of MSQ, which
+needs impact to rise as MSQ rises. Rank correlation over the grid, per item
+and metric (1 means perfectly monotone):
+
+```{r monotone}
+cell |>
+  group_by(design, target) |>
+  summarise(across(c(A_rmse_ratio, B_shift, C_kl, E_wle, F_sem),
+                   \(v) cor(msq, v, method = "spearman")),
+            .groups = "drop") |>
+  kb(digits = 2)
+```
+
+## Calibrated $\delta^+$
+
+For each item and metric, the MSQ at which impact reaches the tolerance,
+read by linear interpolation along the grid, minus 1. `>` means the tolerance
+was not reached within the grid (the largest MSQ reached is shown). The
+tolerances are illustrations of what a user might choose.
+
+```{r delta}
+tol <- tribble(
+  ~metric,        ~tau,  ~label,
+  "A_rmse_ratio", 1.025, "A: RMSE +2.5%",
+  "A_rmse_ratio", 1.05,  "A: RMSE +5%",
+  "B_shift",      0.25,  "B: mean shift 0.25 SEM",
+  "B_gt1",        0.05,  "B: 5% move > 1 SEM",
+  "C_kl",         0.03,  "C: KL 0.03",
+  "E_wle",        0.05,  "E: 0.05 SD per SD",
+  "E_wle",        0.10,  "E: 0.10 SD per SD",
+  "F_sem",        0.25,  "F: 0.25 SEM"
+)
+invert <- function(msq, v, tau) {
+  o <- order(msq); msq <- msq[o]; v <- v[o]
+  j <- which(v >= tau)[1]
+  if (is.na(j)) return(sprintf(">%.2f", max(msq) - 1))
+  if (j == 1) return(sprintf("%.2f", msq[1] - 1))
+  x <- msq[j - 1] + (tau - v[j - 1]) * (msq[j] - msq[j - 1]) / (v[j] - v[j - 1])
+  sprintf("%.2f", x - 1)
+}
+cell |>
+  group_by(design, target, rel_loc) |>
+  group_modify(function(d, key) {
+    tibble(label = tol$label,
+           delta = mapply(function(m, t) invert(d$msq, d[[m]], t),
+                          tol$metric, tol$tau))
+  }) |>
+  ungroup() |>
+  pivot_wider(names_from = label, values_from = delta) |>
+  kb(digits = 2)
+```
+
+## Keep or remove
+
+RMSE with the misfitting item kept, over RMSE with it removed (dataset c).
+Below 1, keeping the item measures $\theta_1$ better despite the misfit. The
+table shows the ratio by $\rho$ and the MSQ at which it crosses 1.
+
+```{r keep-remove}
+cell |>
+  select(design, target, rho, msq, keep_vs_remove) |>
+  pivot_wider(names_from = rho, values_from = c(msq, keep_vs_remove),
+              names_glue = "{.value}_{rho}") |>
+  select(design, target, starts_with("keep_vs_remove")) |>
+  kb(digits = 3)
+
+cell |>
+  group_by(design, target) |>
+  summarise(msq_where_equal = {
+    o <- order(msq); m <- msq[o]; k <- keep_vs_remove[o]
+    j <- which(k >= 1)[1]
+    if (is.na(j)) NA_real_ else if (j == 1) m[1] else
+      m[j - 1] + (1 - k[j - 1]) * (m[j] - m[j - 1]) / (k[j] - k[j - 1])
+  }, .groups = "drop") |>
+  kb(digits = 3)
+```
+
+## Sum score
+
+With complete data the WLE is a monotone function of the sum score, so their
+rank correlations with $\theta_1$ should agree. Metric E differs between the
+two because the WLE stretches the scale at the extremes.
+
+```{r sumscore}
+cell |>
+  filter(rho %in% c(0.3, 0.5, 0.7, 0.9)) |>
+  select(design, target, rho, spear_wle_a, spear_sum_a, E_wle, E_sum) |>
+  kb(digits = 4)
+```
+
+## Stability in n
+
+On-target items only. If an impact metric is estimated without bias, its
+mean at n = 2,000 and 5,000 matches n = 20,000. The squared and absolute
+metrics (B, C, F) could be biased upward at small n by estimation noise that
+does not cancel between datasets (a) and (b).
+
+```{r stability}
+cell_all |>
+  filter(target == "on", rho %in% c(0.3, 0.5, 0.7, 0.85, 0.95, 1)) |>
+  select(design, rho, n, msq, A_rmse_ratio, B_shift, B_gt1, C_kl, E_wle,
+         F_sem) |>
+  arrange(design, desc(rho), n) |>
+  kb(digits = c(0, 2, 0, 3, 3, 3, 3, 4, 3, 3))
+```
+
+## Overfit arm: the lower side, $\delta^-$
+
+Added 2026-10-12. Item $i$ responds to $\theta_1$ with discrimination
+$a \geq 1$ (GPCM) at the same location, against the same item with $a = 1$.
+Grid: $a$ = 1, 1.15, 1.3, 1.5, 1.75, 2, 2.5 and 3. Same designs, targets,
+n = 20,000 and 40 replicates. Metric E is not defined, since there is no
+second dimension. Metric D, the true error SD over the reported SEM, is added
+for this arm only: overfit is classically said to make reported precision
+wrong, and the other metrics cannot show that. D is shown as the ratio of
+(a) to (b), so 1 means the steep item does not change how honest the
+reported SEM is.
+
+```{r slope-load}
+fs_s <- list.files("infit_impact_validation", pattern = "_slope[0-9]{3}[.]rds$",
+                   full.names = TRUE)
+Ls <- lapply(fs_s, readRDS)
+Ss <- bind_rows(lapply(Ls, `[[`, "summary")) |>
+  mutate(target = factor(target, levels = c("on", "mid", "off")))
+Fs <- bind_rows(lapply(Ls, function(x) {
+  f <- x$fsum; f <- f[f$n >= 200, ]
+  d <- (f$bias_a - f$bias_b) / f$n; sem <- f$sem_b / f$n
+  j <- which.max(abs(d) / sem)
+  data.frame(design = x$base_info$design, target = x$base_info$target,
+             slope = x$summary$rho[1], F_sem = abs(d[j]) / sem[j],
+             F_theta = f$theta[j])
+})) |>
+  mutate(target = factor(target, levels = c("on", "mid", "off")))
+cell_s <- Ss |>
+  rename(slope = rho) |>
+  group_by(design, target, rel_loc, slope) |>
+  summarise(msq = mean(msq), other_min = mean(other_msq_min),
+            other_max = mean(other_msq_max),
+            A_rmse_ratio = mean(rmse_a / rmse_b),
+            keep_vs_remove = mean(rmse_a / rmse_c),
+            B_shift = mean(shift_mean), B_gt1 = mean(shift_gt1),
+            C_kl = mean(kl_mean), D_ratio = mean(D_a / D_b), D_b = mean(D_b),
+            reps = n(), .groups = "drop") |>
+  left_join(Fs, by = c("design", "target", "slope"))
+```
+
+`r sum(vapply(Ls, function(x) length(x$failed), integer(1)))` replicates
+failed.
+
+```{r slope-table}
+cell_s |>
+  select(design, target, slope, msq, other_min, other_max, A_rmse_ratio,
+         B_shift, B_gt1, C_kl, D_ratio, F_sem, keep_vs_remove) |>
+  arrange(design, target, slope) |>
+  kb(digits = c(0, 0, 2, 3, 3, 3, 3, 3, 4, 4, 3, 3, 3))
+```
+
+`other_min` and `other_max` show the cascade from one steep item, which now
+pushes the other items toward *underfit*.
+
+**Calibrated $\delta^-$.** The departure $1 - \text{MSQ}$ at which impact
+reaches the tolerance, read along the grid. `>` means not reached.
+
+```{r delta-minus}
+tol_s <- tol |> filter(!grepl("^E", label))
+invert_low <- function(msq, v, tau) {
+  dev <- 1 - msq
+  o <- order(dev); dev <- dev[o]; v <- v[o]
+  j <- which(v >= tau)[1]
+  if (is.na(j)) return(sprintf(">%.2f", max(dev)))
+  if (j == 1) return(sprintf("%.2f", dev[1]))
+  x <- dev[j - 1] + (tau - v[j - 1]) * (dev[j] - dev[j - 1]) / (v[j] - v[j - 1])
+  sprintf("%.2f", x)
+}
+cell_s |>
+  group_by(design, target, rel_loc) |>
+  group_modify(function(d, key) {
+    tibble(label = tol_s$label,
+           delta = mapply(function(m, t) invert_low(d$msq, d[[m]], t),
+                          tol_s$metric, tol_s$tau))
+  }) |>
+  ungroup() |>
+  pivot_wider(names_from = label, values_from = delta) |>
+  kb(digits = 2)
+```
+
+## Joint arm: three misfitting items
+
+Added 2026-10-12. The three target items respond to one shared $\theta_2$
+with correlation $\rho$, as in Part A. The counterfactual has all three
+fitting, and dataset (c) removes all three. The question is how much larger
+the joint impact is than the impact of each item alone, which decides how
+lenient per-item bands are when several items misfit.
+
+```{r joint-load}
+load_mech <- function(pattern) {
+  fl <- list.files("infit_impact_validation", pattern = pattern, full.names = TRUE)
+  lst <- lapply(fl, readRDS)
+  list(L = lst, S = bind_rows(lapply(lst, `[[`, "summary")),
+       F = bind_rows(lapply(lst, function(x) {
+         f <- x$fsum; f <- f[f$n >= 200, ]
+         d <- (f$bias_a - f$bias_b) / f$n; sem <- f$sem_b / f$n
+         j <- which.max(abs(d) / sem)
+         data.frame(design = x$base_info$design, target = x$base_info$target,
+                    par = x$summary$rho[1], F_sem = abs(d[j]) / sem[j])
+       })))
+}
+J <- load_mech("_jointrho[0-9]{3}[.]rds$")
+cell_j <- J$S |>
+  rename(par = rho) |>
+  group_by(design, par) |>
+  summarise(msq_1 = mean(msq_1), msq_2 = mean(msq_2), msq_3 = mean(msq_3),
+            other_min = mean(other_msq_min), other_max = mean(other_msq_max),
+            A_rmse_ratio = mean(rmse_a / rmse_b),
+            keep_vs_remove = mean(rmse_a / rmse_c),
+            B_shift = mean(shift_mean), C_kl = mean(kl_mean),
+            E_wle = mean(E_wle), D_ratio = mean(D_a / D_b), .groups = "drop") |>
+  left_join(J$F |> select(design, par, F_sem), by = c("design", "par"))
+cell_j |>
+  arrange(design, desc(par)) |>
+  kb(digits = c(0, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 3, 3, 3))
+```
+
+`r sum(vapply(J$L, function(x) length(x$failed), integer(1)))` replicates
+failed. `msq_1` to `msq_3` are the on, mid and off target items (for d20, the
+items near 0, -1 and -2 logits).
+
+**Joint against single.** For each $\rho$, the joint impact next to the sum
+of the three single-item impacts from the main arm. A ratio above 1 means the
+items do more harm together than separately.
+
+```{r joint-vs-single}
+single_sum <- cell |>
+  group_by(design, rho) |>
+  summarise(A_single_sum = sum(A_rmse_ratio - 1), C_single_sum = sum(C_kl),
+            E_single_sum = sum(E_wle), F_single_max = max(F_sem),
+            .groups = "drop") |>
+  rename(par = rho)
+cell_j |>
+  left_join(single_sum, by = c("design", "par")) |>
+  filter(par < 1) |>
+  transmute(design, rho = par, A_joint = A_rmse_ratio - 1, A_single_sum,
+            C_joint = C_kl, C_single_sum, C_ratio = C_kl / C_single_sum,
+            E_joint = E_wle, E_single_sum, F_joint = F_sem, F_single_max) |>
+  arrange(design, desc(rho)) |>
+  kb(digits = c(0, 2, 4, 4, 4, 4, 2, 3, 3, 3, 3))
+```
+
+**Joint band.** The mean MSQ of the three items at which the joint impact
+reaches the tolerance, minus 1.
+
+```{r joint-delta}
+cell_j |>
+  mutate(msq = (msq_1 + msq_2 + msq_3) / 3) |>
+  group_by(design) |>
+  group_modify(function(d, key) {
+    tibble(label = tol$label,
+           delta = mapply(function(m, t) invert(d$msq, d[[m]], t),
+                          tol$metric, tol$tau))
+  }) |>
+  ungroup() |>
+  pivot_wider(names_from = label, values_from = delta) |>
+  kb()
+```
+
+## Local dependence arm: response dependence
+
+Added 2026-10-12. Uniform response dependence as in the log-linear Rasch
+model: item $j$, the item nearest the target item $i$ in location, responds
+to $\theta_1 + \lambda x_i$, so a higher score on item $i$ makes item $j$
+easier. The counterfactual is the same pair without dependence ($\lambda =
+0$), and dataset (c) removes item $j$. Grid: $\lambda$ = 0, 0.25, 0.5, 0.75,
+1, 1.5 and 2. Metric E is not defined. Metric D (true error over reported
+SEM) is included, since this is where reported precision may become too
+optimistic.
+
+```{r ld-table}
+D_ld <- load_mech("_ldlambda[0-9]{3}[.]rds$")
+cell_ld <- D_ld$S |>
+  rename(par = rho) |>
+  mutate(target = factor(target, levels = c("on", "mid", "off"))) |>
+  group_by(design, target, item, ld_partner, par) |>
+  summarise(msq_j = mean(msq), msq_i = mean(msq_partner),
+            other_min = mean(other_msq_min), other_max = mean(other_msq_max),
+            A_rmse_ratio = mean(rmse_a / rmse_b),
+            keep_vs_remove = mean(rmse_a / rmse_c),
+            B_shift = mean(shift_mean), B_gt1 = mean(shift_gt1),
+            C_kl = mean(kl_mean), D_ratio = mean(D_a / D_b), .groups = "drop") |>
+  left_join(D_ld$F |> mutate(target = factor(target, levels = c("on", "mid", "off"))) |>
+              select(design, target, par, F_sem),
+            by = c("design", "target", "par"))
+cell_ld |>
+  rename(lambda = par) |>
+  arrange(design, target, lambda) |>
+  kb(digits = c(0, 0, 0, 0, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 3, 3))
+```
+
+`r sum(vapply(D_ld$L, function(x) length(x$failed), integer(1)))` replicates
+failed. `item` is the target $i$ and `ld_partner` the dependent item $j$.
+`msq_j` is the dependent item's MSQ and `msq_i` the target's. A `D_ratio`
+below 1 means the reported SEM understates the true error once the
+dependence is present.
+
+**Calibrated $\delta^-$ from response dependence**, on the dependent item's
+MSQ, as $1 - \text{MSQ}$.
+
+```{r ld-delta}
+tol_ld <- bind_rows(tol |> filter(!grepl("^E", label)),
+                    tibble(metric = "D_gap", tau = 0.05,
+                           label = "D: SEM 5% too optimistic"))
+cell_ld |>
+  mutate(D_gap = 1 - D_ratio) |>
+  group_by(design, target) |>
+  group_modify(function(d, key) {
+    tibble(label = tol_ld$label,
+           delta = mapply(function(m, t) invert_low(d$msq_j, d[[m]], t),
+                          tol_ld$metric, tol_ld$tau))
+  }) |>
+  ungroup() |>
+  pivot_wider(names_from = label, values_from = delta) |>
+  kb()
+```
+
+## Impact intervals
+
+The floor turns a tolerance into a band and asks whether an item's MSQ
+interval lies inside it. The reverse is also possible: map the item's FWB
+interval for its MSQ through the impact curve, giving an interval for the
+item's *impact* in the metric's own units. No tolerance is needed to report
+it, and the user can judge the consequence directly.
+
+The impact curve for an item combines the overfit arm (MSQ below 1, slope
+mechanism) and the main arm (MSQ above 1, second dimension), with impact 0 at
+MSQ = 1. Because impact is smallest at 1, an MSQ interval that contains 1
+maps to an impact interval starting at 0. Otherwise the endpoints map to the
+endpoints.
+
+The demonstration uses the FWB intervals from `fwb_msq_coverage.qmd`
+(d20 design, normal persons), mapped through the d20 curves calibrated here
+(resampled WLE persons, base SD 1.58 against 1.5, so the curves are close
+but not identical). The items are the one misfitting item at 0 logits
+($\rho = .50$, population MSQ 1.38) and, for contrast, a fitting item under
+the null.
+
+```{r impact-intervals}
+curve_for <- function(dsg, tgt, metric) {
+  up <- cell |> filter(design == dsg, target == tgt) |>
+    select(msq, v = all_of(metric))
+  lo <- cell_s |> filter(design == dsg, target == tgt) |>
+    select(msq, v = all_of(metric))
+  bind_rows(lo, up, tibble(msq = 1, v = 0)) |>
+    group_by(msq) |> summarise(v = mean(v), .groups = "drop") |>
+    arrange(msq)
+}
+impact_interval <- function(cv, lo, hi) {
+  g <- seq(lo, hi, length.out = 200)
+  v <- approx(cv$msq, cv$v, xout = g, rule = 2)$y
+  c(min(v), max(v))
+}
+fwb <- bind_rows(lapply(list.files("fwb_msq_coverage",
+                                   pattern = "_n[0-9]+[.]rds$", full.names = TRUE),
+                        readRDS))
+demo <- bind_rows(
+  fwb |> filter(cond == "xdim50_k1", item == 11) |> mutate(case = "misfitting, 0 logits"),
+  fwb |> filter(cond == "null", item == 11) |> mutate(case = "fitting (null), 0 logits")
+)
+metrics_demo <- c(C_kl = "KL", F_sem = "F (SEM)", B_shift = "B (SEM)")
+bind_rows(lapply(names(metrics_demo), function(m) {
+  cv <- curve_for("d20", "on", m)
+  demo |>
+    rowwise() |>
+    mutate(iv = list(impact_interval(cv, lo, hi)),
+           true_v = approx(cv$msq, cv$v, xout = pop, rule = 2)$y) |>
+    ungroup() |>
+    mutate(metric = metrics_demo[[m]], low = vapply(iv, `[`, 1, 1),
+           high = vapply(iv, `[`, 1, 2))
+})) |>
+  group_by(case, metric, n) |>
+  summarise(msq_interval = sprintf("%.2f to %.2f", median(lo), median(hi)),
+            impact_interval = sprintf("%.3f to %.3f", median(low), median(high)),
+            true_impact = sprintf("%.3f", median(true_v)),
+            coverage = 100 * mean(true_v >= low - 1e-9 & true_v <= high + 1e-9),
+            .groups = "drop") |>
+  arrange(case, metric, n) |>
+  kb(digits = 1)
+```
+
+The intervals are medians over the 200 datasets per cell, and coverage is the
+share of datasets whose impact interval contains the impact at the item's
+population MSQ. Because the mapping is monotone on each side of 1, coverage
+follows the coverage of the MSQ interval.
+
+## Relation to Part A
+
+Part A used the d20 design with normal persons and three misfitting items. Its
+misfitting items had population MSQ 1.43 (0 logits), 1.37 (-1) and 1.27 (-2)
+at $\rho = .15$, 1.27, 1.23 and 1.17 at $\rho = .50$, and 1.14, 1.12 and 1.09 at
+$\rho = .75$. With one misfitting item at $\rho = .50$, the item at 0 logits had
+1.38. Comparing these with the calibrated $\delta^+$ shows which of them the
+floor would flag at each tolerance.
+
+The cascade-affected items in Part A had MSQ about 0.92, which is overfit. Whether
+the floor clears them depends on $\delta^-$, the lower side of the band, which
+second-dimension misfit cannot calibrate. That check needs an overfit
+mechanism (for example a slope above 1) and is not part of this study.
+
+## Interpretation
+
+Written 2026-10-12 after the run. 90 cells (54 at n = 20,000, 36 for the
+stability check), 3,600 replicates, none failed, a few minutes on 10 cores. At
+$\rho = 1$ every impact metric is exactly 0 and the MSQ is 1.00, as the
+counterfactual requires.
+
+**1. The calibration does not depend on n.** For the on-target items, every
+metric at n = 2,000 and 5,000 agrees with n = 20,000 within Monte Carlo
+noise, at every $\rho$. Because (a) and (b) share all data except item $i$,
+estimation noise cancels and does not inflate the absolute or squared
+metrics. So the calibration can run at a moderate n.
+
+**2. In a 20-item test, one second-dimension item barely affects accuracy or
+individual scores.** Even at $\rho = .3$ (MSQ about 1.5), RMSE against
+$\theta_1$ rises by at most 1 percent, the mean score shift is 0.11 to 0.17
+SEM, and almost nobody moves by more than 1 SEM. Tolerances on A and B are
+not reached within the grid. Metric A is nearly flat for d20, which is why
+its rank correlation with MSQ is only 0.6 to 0.7, and it cannot be inverted
+there.
+
+**3. The metrics that do respond in a long test are KL, group bias and
+conditional bias.** For d20, KL reaches .03 at MSQ 1.29 to 1.39. The
+spurious group difference reaches 0.05 SD per SD of the item-specific factor
+only for the on-target item, at MSQ 1.41. The worst conditional bias reaches
+0.25 SEM at MSQ 1.53 (on target), 1.40 (mid) and 1.26 (off target). KL
+responds before the mean shift does, because it squares the shift and is
+driven by the persons who move most.
+
+**4. Targeting runs in opposite directions for different metrics.** The
+off-target item has the smallest MSQ and the smallest average impact (B, C,
+E), but the largest conditional bias (F): its misfit concentrates on the
+persons it is targeted at, in the tail. For a scale used against a cut-point
+in that tail, the off-target item is the one that matters.
+
+**5. A 9-item polytomous scale is far more sensitive.** For phq9, every
+metric reaches its tolerance: RMSE +2.5 percent at MSQ 1.36 to 1.42, mean
+shift 0.25 SEM at 1.40 to 1.46, KL .03 at 1.17 to 1.20, group bias 0.05 SD at
+1.20 to 1.29, and conditional bias 0.25 SEM at 1.22 to 1.28. The band is
+narrower because each item carries more of the score.
+
+**6. The calibrated bands depend on test length and on the tolerance, not
+mainly on the item.** Within a design the three items give similar
+$\delta^+$ for most metrics (for example KL .03: 0.29 to 0.39 for d20, 0.17 to
+0.20 for phq9). Across designs and metrics $\delta^+$ ranges from about 0.17
+to more than 0.5. This is the consequence-based version of the Part A
+finding that no fixed band works everywhere.
+
+**7. Keeping a misfitting item is usually better than removing it.** In d20
+the RMSE with the item kept is 1.5 to 2.5 percent lower than with it
+removed at every $\rho$, down to .3. In phq9 keeping is better until MSQ
+about 1.5 ($\rho$ about .6). This is more favourable to keeping than the
+linear-composite heuristic in the memory notes (crossover near $\rho = .72$
+for 20 items), so that heuristic should not be relied on for IRT scoring.
+
+**8. The sum score behaves like the WLE.** With complete data, the rank
+correlations with $\theta_1$ are identical, as expected. The group bias in
+sum-score SD units is close to the WLE value, slightly smaller in d20.
+
+**9. One misfitting item already causes a cascade.** In phq9 at $\rho = .3$
+the other items fall to MSQ 0.87 to 0.89, on the overfit side. Whether the
+floor clears them depends on $\delta^-$, from the overfit arm below.
+
+**Overfit arm (added 2026-10-12).** 48 cells, 1,920 replicates, none failed.
+
+**10. A steep item does less harm than an equally large underfit.** A slope
+of 3 brings the MSQ down to 0.64 to 0.72 in d20 and about 0.60 in phq9. In
+d20 none of the tolerances is reached within the grid (departures up to 0.28
+to 0.36), except conditional bias for the off-target item (0.25 SEM at
+1 − MSQ = 0.21). In phq9, KL reaches .03 at 0.25 to 0.29, RMSE +2.5 percent at
+0.29 to 0.37, and conditional bias 0.25 SEM at 0.19 to 0.28. Compared with the
+upper side for phq9 (KL .03 at 0.17 to 0.20), the band is wider below 1 than
+above: roughly [0.72, 1.18] for KL .03.
+
+**11. Reported precision stays honest.** The ratio of true error to reported
+SEM with the steep item, over the same with a fitting item (metric D), is
+0.99 to 1.00 throughout. The claim that overfit makes the SEM or reliability
+too optimistic does not hold for a steep slope. It is more likely a property
+of redundancy between items (local dependence), which this arm does not
+generate.
+
+**12. A steep item costs a little accuracy, and keeping it still beats
+removing it.** RMSE rises by up to 2 percent (d20) and 4 percent (phq9) at a
+slope of 3, because Rasch scoring gives the item the same weight as the
+others when it deserves more. Keeping it is still better than removing it in
+every cell except the d20 off-target item at a slope of 3, where the two are
+equal.
+
+**13. The cascade from a steep item goes the other way.** One steep item
+pushes the other items' MSQ up, to at most 1.04 (d20) and 1.06 (phq9), well
+inside any upper band calibrated here.
+
+**Joint arm (added 2026-10-12).** 18 cells, 720 replicates.
+
+**14. Misfitting items do more harm together than separately, and their MSQ
+shows less of it.** With three items on a shared second dimension, KL is 1.2
+to 1.5 times the sum of the three single-item KLs in d20, and 1.4 to 1.7 times
+in phq9. Conditional bias is well above the largest single-item value. Accuracy
+(A), flat for single items in d20, rises by up to 12 percent jointly, and by up
+to 65 percent in phq9. Group bias (E) is roughly additive. At the same time,
+each item's MSQ is *smaller* than when it misfits alone (d20 at $\rho = .3$:
+1.39, 1.34 and 1.25 jointly, against 1.54, 1.52 and 1.43 alone), because the
+misfitting items now make up part of the total score that defines the
+expected responses.
+
+**15. So per-item bands fail when a coherent group of items misfits.** The
+joint band on the items' mean MSQ is 0.01 to 0.04 in phq9 for every metric
+except the share moving more than 1 SEM
+(three of nine items on a second dimension), and 0.02 (KL) to 0.18 in d20.
+The impact is large while the MSQ hardly moves. This is not a calibration
+problem that a tighter band can fix: a subscale shows up in dimensionality
+diagnostics (residual PCA, Martin-Löf, Q3 clusters) better than in item fit.
+In the joint condition the reported SEM also becomes too optimistic as a
+measure of error in $\theta_1$ (metric D up to 1.21 in d20 and 2.07 in phq9),
+because the scores measure a composite.
+
+**16. Removing a coherent misfitting group can pay off.** In d20, keeping the
+three items is better than removing them down to $\rho$ about .5. In phq9,
+removing them is better below $\rho$ of about .75. At $\rho = .6$ the RMSE is
+14 percent higher with the three items kept than with them removed.
+
+**Response dependence arm (added 2026-10-12).** 42 cells, 1,680 replicates.
+
+**17. Response dependence produces overfit in the dependent item, with small
+consequences.** At $\lambda = 2$ the dependent item's MSQ falls to 0.86 to
+0.87 in d20 and 0.78 to 0.85 in phq9, and the target item's to 0.93 to 0.98.
+In d20 no tolerance is reached except RMSE +2.5 percent for the off-target
+pair. In phq9 KL reaches .03 at $1 - \text{MSQ}$ = 0.13 to 0.18 and RMSE +2.5
+percent at 0.12 to 0.13. Per unit of MSQ departure, response dependence
+harms more than a steep slope (phq9 KL .03 at 0.25 to 0.29 for the slope),
+so the lower band it implies is narrower, about 0.85 in phq9.
+
+**18. One dependent pair barely changes reported precision.** Metric D is
+1.01 to 1.02 in d20 and at most 1.04 in phq9, so the SEM is at most 4 percent
+too optimistic. The 5 percent tolerance is not reached. The optimism about
+precision that local dependence is known for needs more than one pair, or a
+stronger dependence.
+
+**19. MSQ is not monotone in the strength of dependence.** In phq9 the
+dependent item's MSQ is lowest at $\lambda$ around 1 to 1.5 and rises again
+at 2, while KL and the score shift keep growing. The inversion along the grid
+reads the first crossing, which is right for moderate dependence, but MSQ is
+a poor guide to strong dependence. Q3 or the log-linear dependence parameter
+itself would be.
+
+**Impact intervals.**
+
+**20. The mapping works and reads naturally.** For the misfitting item at 0
+logits ($\rho = .50$, normal persons), the median interval at n = 2,000 is a
+KL of .032 to .041, a mean score shift of 0.12 to 0.15 SEM, and a worst
+conditional bias of 0.13 to 0.20 SEM, around the true values .036, 0.135 and
+0.160. For a fitting item the intervals start at 0 and end at .011 (KL),
+0.04 (B) and 0.03 (F) at n = 2,000. Coverage is 90.5 to 96.5 percent,
+inherited from the MSQ interval, since the mapping is monotone on each side
+of 1. This coverage does not test the impact curve itself, which was
+calibrated on resampled WLE persons while the FWB data used normal persons.
+
+**Relation to Part A.** With KL .03 as the tolerance, the d20 bands are about
+1.29 (0 logits), 1.31 (-1) and 1.39 (-2) on the upper side, and wider than
+0.28 to 0.36 below 1 (the tolerance is not reached within the grid). Part A's
+misfitting items at $\rho = .15$ (1.43, 1.37, 1.27) would be flagged at 0 and
+-1 logits but not at -2, and its items at $\rho = .50$ and .75 would not be
+flagged at all. Its cascade-affected items, at MSQ about 0.92, lie far inside
+the lower band and would be cleared at any n large enough to make the
+interval narrow. So with impact-calibrated bands the cascade does not lead to
+flags. The calibration treats one misfitting item at a time, while Part A had
+three. Several misfitting items together have a larger joint impact than
+each alone, so per-item bands are too lenient when several items misfit. A
+joint calibration, or recalibration after the worst item is dealt with, is
+needed for that case.
+
+**Limits.** Four mechanisms (second dimension, steep slope, three items on a
+shared second dimension, and response dependence between one pair), two
+designs, and resampled WLE persons with a discrete distribution. The joint
+and dependence arms use one configuration each (three items, one pair). The
+tolerances are illustrations.

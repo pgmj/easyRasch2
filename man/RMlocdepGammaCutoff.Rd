@@ -21,9 +21,9 @@ starting at 0 (non-negative integers). Only complete cases (rows without
 any \code{NA}) are used.}
 
 \item{iterations}{Integer. Number of simulation iterations (default 400,
-was 250 before 1.2.0). 400 is the calibrated floor for the Westfall-Young
-correction (Johansson, 2026) and the count a 95\\% interval needs to
-converge. Use 1000 to 2000 for a final analysis.}
+was 250 before 1.2.0). 400 is the recommended floor for reproducible
+Westfall-Young decisions (Johansson, 2026) and the count a 95\\% interval
+needs to converge. Use 1000 to 2000 for a final analysis.}
 
 \item{parallel}{Logical. Use parallel processing via \code{mirai} if available
 (default \code{TRUE}).}

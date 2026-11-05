@@ -502,13 +502,15 @@ compute_cfa_loading_flagged <- function(observed_loadings, loading_cutoffs) {
 #'
 #' @details
 #' \strong{Bootstrap p-values.} The per-comparison statistic is the residual
-#' studentised by the bootstrap mean and SD. Marginal p-values are Monte-Carlo,
+#' studentised by the mean and SD of the observed and simulated values
+#' together. Marginal p-values are Monte-Carlo,
 #' `(1 + count) / (B + 1)`, so they can be no smaller than `1 / (B + 1)`.
 #' `correction = "fwer"` uses the Westfall-Young studentised-max step-down,
 #' which exploits the bootstrap dependence among the statistics (Ferreira,
-#' 2024); it is liberal when the simulation is small, so at least 1000
-#' `iterations` in [RMdimCFACutoff()] are recommended (a warning is issued
-#' below that). These p-values are model-conditional and sample-size-sensitive
+#' 2024). It controls the family-wise error rate at any number of
+#' iterations, but small p-values are imprecise and decisions depend on the
+#' seed when the simulation is small, so at least 1000 `iterations` in
+#' [RMdimCFACutoff()] are recommended (a warning is issued below that). These p-values are model-conditional and sample-size-sensitive
 #' and are reported alongside the simulated expected ranges, not in place of
 #' them.
 #'
@@ -591,8 +593,8 @@ RMdimCFA <- function(
     warning(
       "Bootstrap p-values are based on only ",
       cutoff$actual_iterations,
-      " simulation iterations. With few iterations the studentised-max ",
-      "(FWER) correction is liberal and small p-values are imprecise; ",
+      " simulation iterations. With few iterations small p-values are ",
+      "imprecise and decisions depend on the seed; ",
       "use iterations >= 1000 in RMdimCFACutoff() for reliable p-values.",
       call. = FALSE
     )

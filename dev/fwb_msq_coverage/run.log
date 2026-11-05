@@ -1,0 +1,13 @@
+null n=500: 200 datasets, 1.1 min, max match error 9.8e-15
+xdim50_k1 n=500: 200 datasets, 1.1 min, max match error 1.1e-14
+xdim15_k3 n=500: 200 datasets, 1.1 min, max match error 1.3e-14
+xdim75_k3 n=500: 200 datasets, 1.1 min, max match error 1e-14
+null n=2000: 200 datasets, 2.9 min, max match error 3.4e-14
+xdim50_k1 n=2000: 200 datasets, 2.9 min, max match error 4.2e-14
+xdim15_k3 n=2000: 200 datasets, 2.9 min, max match error 5.1e-14
+xdim75_k3 n=2000: 200 datasets, 2.9 min, max match error 3.6e-14
+null n=5000: 200 datasets, 7.2 min, max match error 1e-13
+xdim50_k1 n=5000: 200 datasets, 7.2 min, max match error 1.2e-13
+xdim15_k3 n=5000: 200 datasets, 7.3 min, max match error 1.3e-13
+xdim75_k3 n=5000: 200 datasets, 7.2 min, max match error 9e-14
+done

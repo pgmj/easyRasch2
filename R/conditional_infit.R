@@ -117,7 +117,8 @@
 #' \strong{Bootstrap p-values.} When `p_value = TRUE`, each item's observed
 #' infit (or outfit, per `statistic`) is compared against its simulated null
 #' distribution (from `cutoff$results`). The per-item statistic is the residual studentised by
-#' the bootstrap mean and SD -- deliberately the empirical SD rather than the
+#' the mean and SD of the observed and simulated values together --
+#' deliberately the empirical SD rather than the
 #' Wilson-Hilferty / ZSTD transform, which is uninformative for conditional
 #' MSQ (Müller, 2020). The marginal p-value is the two-sided Monte-Carlo
 #' p-value `(1 + #{|t*| >= |t|}) / (B + 1)`. For `correction = "fwer"` the
@@ -127,12 +128,12 @@
 #' pivotality. `"fdr_bh"`/`"fdr_by"` apply Benjamini-Hochberg / Benjamini-
 #' Yekutieli instead. These are model-conditional, sample-size-sensitive
 #' p-values and are reported alongside the simulated effect-size band, not in
-#' place of it. p-values can be no smaller than `1 / (B + 1)`. Below 400
-#' `iterations` in [RMitemInfitCutoff()] the studentised-max (FWER)
-#' correction is mildly liberal, because the bootstrap mean and SD used for
-#' studentisation are too noisy, and a message says so. From 400 iterations
-#' the family-wise error rate is at the nominal level, and more iterations
-#' improve reproducibility instead: two analysts using different seeds
+#' place of it. p-values can be no smaller than `1 / (B + 1)`. Because the
+#' observed value contributes to the mean and SD it is studentised by, the
+#' observed and simulated statistics are exchangeable under the null, and the
+#' family-wise error rate is at the nominal level at any number of
+#' `iterations` in [RMitemInfitCutoff()]. More iterations improve
+#' reproducibility instead, and a message says so below 400: two analysts using different seeds
 #' disagree about at least one item roughly 10 percent of the time at 400
 #' iterations against 4 percent at 2000 (Johansson, 2026). The table caption
 #' notes this below 1000 iterations, so use 1000 to 2000 for a final
@@ -329,8 +330,8 @@ RMitemInfit <- function(
         call. = FALSE
       )
     }
-    # Below 400 the correction itself is off. Between 400 and 1000 only
-    # reproducibility improves, which the table caption reports instead.
+    # Below 400 decisions depend on the seed enough to say so on the
+    # console. Between 400 and 1000 the table caption reports it instead.
     if (!is.null(cutoff_n_iter) && cutoff_n_iter < 400L) {
       .notify_low_iterations(cutoff_n_iter, cutoff_req_iter)
     }
@@ -560,21 +561,21 @@ RMitemInfit <- function(
       "+1) = ",
       round(1 / (cutoff_n_iter + 1), 4),
       ".",
-      # Two tiers. Below the calibrated floor the correction itself is off,
-      # which the console also reports. Between the floor and 1000 the error
-      # rate is trustworthy and only reproducibility keeps improving, which
-      # is a caption matter rather than something to interrupt over.
+      # Two tiers, both about reproducibility since the error rate is
+      # controlled at any number of iterations. Below 400 the console also
+      # reports it. Between 400 and 1000 it is a caption matter rather than
+      # something to interrupt over.
       if (is.null(cutoff_n_iter)) {
         ""
       } else if (cutoff_n_iter < 400L) {
         paste0(
-          " This is below the calibrated floor of 400, where the correction",
-          " is mildly liberal and the family-wise error rate sits above the",
-          " nominal level (Johansson, 2026)."
+          " This is below the recommended 400. Error rates are controlled,",
+          " but decisions depend on the seed, so use 1000 to 2000 for a final",
+          " analysis (Johansson, 2026)."
         )
       } else if (cutoff_n_iter < 1000L) {
         paste0(
-          " Error rates are calibrated at this many iterations, but decisions",
+          " Error rates are controlled at this many iterations, but decisions",
           " are still somewhat seed-dependent. Two analysts using different",
           " seeds disagree about at least one item roughly 10% of the time at",
           " 400 iterations against 4% at 2000, so use 1000 to 2000 for a final",

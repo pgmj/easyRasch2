@@ -271,7 +271,7 @@ test_that("RMdifGamma p_value replaces asymptotic p columns and flags at alpha",
       p_value = TRUE,
       output = "dataframe"
     ),
-    regexp = "below the calibrated floor of 400"
+    regexp = "below the recommended 400"
   )
   expect_named(
     res,

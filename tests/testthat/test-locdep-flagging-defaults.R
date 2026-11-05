@@ -135,7 +135,7 @@ test_that("fewer than 400 iterations triggers the calibration notice", {
   reset_notices()
   expect_message(
     suppressWarnings(RMlocdepQ3(df, cutoff = cu, output = "dataframe")),
-    regexp = "below the calibrated floor of 400"
+    regexp = "below the recommended 400"
   )
 })
 
@@ -164,7 +164,7 @@ test_that("captions name the basis of the flag in both branches", {
   expect_match(pv, "bootstrap p-values", fixed = TRUE)
   expect_match(pv, "not the decision rule", fixed = TRUE)
   # 40 is below 400, so the calibration sentence appears
-  expect_match(pv, "below the calibrated floor", fixed = TRUE)
+  expect_match(pv, "below the recommended 400", fixed = TRUE)
 
   reset_notices()
   bd <- flat(quiet(RMlocdepQ3(df, cutoff = cu, p_value = FALSE)))

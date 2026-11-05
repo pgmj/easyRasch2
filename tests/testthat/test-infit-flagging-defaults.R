@@ -131,7 +131,7 @@ test_that("fewer than 400 iterations triggers the calibration notice", {
   reset_notices()
   expect_message(
     RMitemInfit(df, cutoff = co, output = "dataframe"),
-    regexp = "below the calibrated floor of 400"
+    regexp = "below the recommended 400"
   )
 })
 

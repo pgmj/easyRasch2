@@ -1,3 +1,16 @@
+# easyRasch2 (development version)
+
+## Changes
+
+- Bootstrap p-values in `RMitemInfit()`, `RMitemRestscore()`, `RMdifGamma()`,
+  `RMlocdepQ3()`, `RMlocdepGamma()` and `RMdimCFA()` now studentize by the
+  mean and SD of the observed and simulated values together, which keeps the
+  Westfall-Young family-wise error rate at the nominal level at any number of
+  iterations. The notice below 400 iterations now concerns reproducibility
+  only. **Corrected p-values change, mostly below 1000 iterations. Two-sided
+  marginal p-values move slightly.** The typical change in a corrected 
+  p-value is about 0.001 at B = 400 and under 0.0005 at B = 1000.
+
 # easyRasch2 1.4.0
 
 ## New features

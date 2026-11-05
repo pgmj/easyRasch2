@@ -22,7 +22,7 @@ RMlocdepQ3Cutoff(
 starting at 0 (non-negative integers).}
 
 \item{iterations}{Integer. Number of simulation iterations (default 400).
-400 is the calibrated floor for the Westfall-Young correction
+400 is the recommended floor for reproducible Westfall-Young decisions
 (Johansson, 2026) and the count a 95\\% interval needs to converge. Use
 1000 to 2000 for a final analysis.}
 

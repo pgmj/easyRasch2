@@ -99,16 +99,17 @@
 #' once, on the larger of its two rest-score directions (the `gamma_pair`
 #' column), against its simulated null distribution (from `cutoff$results`,
 #' simulated under local independence and built from that same maximum).
-#' The per-pair statistic is the residual studentised by the bootstrap mean
-#' and SD; the marginal p-value is the one-sided Monte-Carlo p-value
+#' The per-pair statistic is the residual studentised by the mean and SD of
+#' the observed and simulated values together; the marginal p-value is the one-sided Monte-Carlo p-value
 #' `(1 + #\{t* >= t\}) / (B + 1)` for excess *positive* LD (redundancy, the
 #' diagnostic target — matching \code{\link{RMlocdepQ3}}), so it can be no
 #' smaller than `1 / (B + 1)`. The band still shows both bounds for
 #' reference. `correction = "fwer"` uses the Westfall-Young studentised-max
 #' step-down over the family of all pairs, which exploits the bootstrap
-#' dependence among them (Ferreira, 2024); it is liberal when the simulation
-#' is small, so at least 1000 `iterations` in [RMlocdepGammaCutoff()] are
-#' recommended (a warning is issued below that). Unlike the asymptotic
+#' dependence among them (Ferreira, 2024). It controls the family-wise error
+#' rate at any number of `iterations` in [RMlocdepGammaCutoff()], but below
+#' 400 decisions depend on the seed and a message says so, and 1000 to 2000
+#' are recommended for a final analysis. Unlike the asymptotic
 #' p-values from `iarm::partgam_LD()`, these are calibrated against the
 #' *simulated Rasch null* rather than the asymptotic SE; they are
 #' model-conditional and sample-size-sensitive, and are reported alongside
@@ -268,8 +269,8 @@ RMlocdepGamma <- function(
         call. = FALSE
       )
     }
-    # Below 400 the correction itself is off. Between 400 and 1000 only
-    # reproducibility improves, which the table caption reports instead.
+    # Below 400 decisions depend on the seed enough to say so on the
+    # console. Between 400 and 1000 the table caption reports it instead.
     if (!is.null(cutoff_n_iter) && cutoff_n_iter < 400L) {
       .notify_low_iterations(
         cutoff_n_iter,
@@ -746,9 +747,9 @@ knit_print.RMlocdepGamma <- function(x, ...) {
 #'   starting at 0 (non-negative integers). Only complete cases (rows without
 #'   any `NA`) are used.
 #' @param iterations Integer. Number of simulation iterations (default 400,
-#'   was 250 before 1.2.0). 400 is the calibrated floor for the Westfall-Young
-#'   correction (Johansson, 2026) and the count a 95\% interval needs to
-#'   converge. Use 1000 to 2000 for a final analysis.
+#'   was 250 before 1.2.0). 400 is the recommended floor for reproducible
+#'   Westfall-Young decisions (Johansson, 2026) and the count a 95\% interval
+#'   needs to converge. Use 1000 to 2000 for a final analysis.
 #' @param parallel Logical. Use parallel processing via `mirai` if available
 #'   (default `TRUE`).
 #' @param n_cores Integer or `NULL`. Number of parallel workers. When `NULL`,

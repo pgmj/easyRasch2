@@ -303,7 +303,7 @@ test_that("RMlocdepGamma p_value adds one-sided p per pair, mirrored across dire
       p_value = TRUE,
       output = "dataframe"
     ),
-    regexp = "below the calibrated floor of 400"
+    regexp = "below the recommended 400"
   )
   expected_cols <- c(
     "Item1",

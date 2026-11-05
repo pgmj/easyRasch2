@@ -145,7 +145,8 @@ The \code{iarm} package must be installed (it is in Suggests, not Imports).
 \strong{Bootstrap p-values.} When \code{p_value = TRUE}, each item's observed
 infit (or outfit, per \code{statistic}) is compared against its simulated null
 distribution (from \code{cutoff$results}). The per-item statistic is the residual studentised by
-the bootstrap mean and SD -- deliberately the empirical SD rather than the
+the mean and SD of the observed and simulated values together --
+deliberately the empirical SD rather than the
 Wilson-Hilferty / ZSTD transform, which is uninformative for conditional
 MSQ (Müller, 2020). The marginal p-value is the two-sided Monte-Carlo
 p-value \verb{(1 + #\{|t*| >= |t|\}) / (B + 1)}. For \code{correction = "fwer"} the
@@ -155,12 +156,12 @@ than Bonferroni/Holm (Ferreira, 2024); its validity rests on subset
 pivotality. \code{"fdr_bh"}/\code{"fdr_by"} apply Benjamini-Hochberg / Benjamini-
 Yekutieli instead. These are model-conditional, sample-size-sensitive
 p-values and are reported alongside the simulated effect-size band, not in
-place of it. p-values can be no smaller than \code{1 / (B + 1)}. Below 400
-\code{iterations} in \code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}} the studentised-max (FWER)
-correction is mildly liberal, because the bootstrap mean and SD used for
-studentisation are too noisy, and a message says so. From 400 iterations
-the family-wise error rate is at the nominal level, and more iterations
-improve reproducibility instead: two analysts using different seeds
+place of it. p-values can be no smaller than \code{1 / (B + 1)}. Because the
+observed value contributes to the mean and SD it is studentised by, the
+observed and simulated statistics are exchangeable under the null, and the
+family-wise error rate is at the nominal level at any number of
+\code{iterations} in \code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}}. More iterations improve
+reproducibility instead, and a message says so below 400: two analysts using different seeds
 disagree about at least one item roughly 10 percent of the time at 400
 iterations against 4 percent at 2000 (Johansson, 2026). The table caption
 notes this below 1000 iterations, so use 1000 to 2000 for a final

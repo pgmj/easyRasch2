@@ -109,9 +109,10 @@
 #'
 #' \strong{Bootstrap p-values.} When `p_value = TRUE`, each item's observed
 #' `Difference` is compared against its simulated null distribution (from
-#' `cutoff$results`), studentised by the bootstrap mean and SD. Because the
-#' bootstrap mean is subtracted, the small-sample upward bias of the
-#' difference is removed, and because the bootstrap SD is used, the
+#' `cutoff$results`), studentised by the mean and SD of the observed and
+#' simulated values together. Because that mean is subtracted, the
+#' small-sample upward bias of the difference is removed, and because that SD
+#' is used, the
 #' correlation between observed and expected gamma is accounted for. The
 #' marginal p-value is the two-sided Monte-Carlo p-value
 #' `(1 + #{|t*| >= |t|}) / (B + 1)`, and `correction = "fwer"` applies the
@@ -538,8 +539,8 @@ RMitemRestscore <- function(
         },
         if (cutoff_n_iter < 400L) {
           paste0(
-            " This is below the calibrated floor of 400, where the",
-            " correction is mildly liberal (Johansson, 2026)."
+            " This is below the recommended 400, where decisions depend on",
+            " the seed (Johansson, 2026)."
           )
         } else if (cutoff_n_iter < 1000L) {
           paste0(

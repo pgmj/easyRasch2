@@ -46,6 +46,43 @@ test_that(".bootstrap_pvalues handles zero-variance comparisons as NA", {
   expect_false(is.na(res$p[res$name == "I1"]))
 })
 
+test_that(".bootstrap_pvalues joint moments make the step-down exact", {
+  # Rotate each of the B + 1 rows into the observed slot. With joint moments
+  # every rotation scores all rows on the same scale, so the smallest
+  # adjusted p-values are the ranks 1..(B + 1) over B + 1. Moments from the
+  # simulated values alone break this.
+  set.seed(3)
+  B <- 59; k <- 6
+  x <- matrix(rnorm((B + 1) * k), B + 1, k,
+              dimnames = list(NULL, paste0("I", seq_len(k))))
+  min_padj <- function(tail, moments) {
+    vapply(seq_len(B + 1), function(r) {
+      min(easyRasch2:::.bootstrap_pvalues(
+        x[r, ], x[-r, , drop = FALSE], "fwer", tail = tail, moments = moments
+      )$padj)
+    }, numeric(1))
+  }
+  ranks <- seq_len(B + 1) / (B + 1)
+  for (tail in c("two.sided", "upper")) {
+    expect_equal(sort(min_padj(tail, "joint")), ranks)
+    expect_false(isTRUE(all.equal(sort(min_padj(tail, "simulated")), ranks)))
+  }
+})
+
+test_that(".bootstrap_pvalues upper-tail marginal p is the raw rank under both moments", {
+  set.seed(4)
+  sim <- matrix(rnorm(300 * 4, mean = 1:4), ncol = 4, byrow = TRUE,
+                dimnames = list(NULL, paste0("I", 1:4)))
+  observed <- setNames(c(1.5, 2, 4.2, 3), colnames(sim))
+  raw <- vapply(1:4, function(i) (1 + sum(sim[, i] >= observed[i])) / 301,
+                numeric(1))
+  j <- easyRasch2:::.bootstrap_pvalues(observed, sim, "none", tail = "upper")
+  s <- easyRasch2:::.bootstrap_pvalues(observed, sim, "none", tail = "upper",
+                                       moments = "simulated")
+  expect_equal(j$p, raw)
+  expect_equal(s$p, raw)
+})
+
 # ---------------------------------------------------------------------
 # RMitemInfit() integration
 # ---------------------------------------------------------------------
@@ -107,11 +144,11 @@ test_that("low iteration count triggers the calibration message", {
   df  <- sim_rasch_null()
   sim <- RMitemInfitCutoff(df, iterations = 200, parallel = FALSE, seed = 1)
   # Since 1.2.0 this is a once-per-session message rather than a warning, and
-  # the threshold is the calibrated floor of 400 rather than 1000.
+  # the threshold is the recommended 400 rather than 1000.
   rlang::reset_message_verbosity("easyRasch2_low_iterations")
   expect_message(RMitemInfit(df, cutoff = sim, p_value = TRUE,
                              output = "dataframe"),
-                 regexp = "below the calibrated floor of 400")
+                 regexp = "below the recommended 400")
 })
 
 test_that("invalid alpha is rejected", {

@@ -137,9 +137,10 @@ bootstrap null instead.
 
 \strong{Bootstrap p-values.} When \code{p_value = TRUE}, each item's observed
 \code{Difference} is compared against its simulated null distribution (from
-\code{cutoff$results}), studentised by the bootstrap mean and SD. Because the
-bootstrap mean is subtracted, the small-sample upward bias of the
-difference is removed, and because the bootstrap SD is used, the
+\code{cutoff$results}), studentised by the mean and SD of the observed and
+simulated values together. Because that mean is subtracted, the
+small-sample upward bias of the difference is removed, and because that SD
+is used, the
 correlation between observed and expected gamma is accounted for. The
 marginal p-value is the two-sided Monte-Carlo p-value
 \verb{(1 + #\{|t*| >= |t|\}) / (B + 1)}, and \code{correction = "fwer"} applies the

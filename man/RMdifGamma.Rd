@@ -106,16 +106,17 @@ named, because iarm adjusts one p-value at a time, so it is not used.
 \strong{Bootstrap p-values.} When \code{p_value = TRUE}, each item's observed
 partial gamma is compared against its simulated null distribution (from
 \code{cutoff$results}, simulated with no DIF by construction). The
-per-item statistic is the residual studentised by the bootstrap mean and
-SD; the marginal p-value is the two-sided Monte-Carlo p-value
+per-item statistic is the residual studentised by the mean and SD of the
+observed and simulated values together; the marginal p-value is the two-sided Monte-Carlo p-value
 \verb{(1 + #\\\{|t*| >= |t|\\\}) / (B + 1)}, so it can be no smaller than
 \code{1 / (B + 1)}. The test is two-sided because DIF has no privileged
 direction: an item can favour either group. This differs from
 \code{\link[=RMlocdepGamma]{RMlocdepGamma()}}, which tests one-sided for excess positive local
 dependence. \code{correction = "fwer"} uses the Westfall-Young
 studentised-max step-down, which exploits the bootstrap dependence among
-items (Ferreira, 2024); it is mildly liberal below 400 iterations in
-\code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}} (a message is issued below that). Unlike the
+items (Ferreira, 2024). It controls the family-wise error rate at any
+number of iterations in \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}}, but below 400 decisions
+depend on the seed and a message says so. Unlike the
 asymptotic p-values from \code{iarm::partgam_DIF()}, these are calibrated
 against the \emph{simulated Rasch null} rather than the asymptotic SE; they are
 model-conditional and sample-size-sensitive, and are reported alongside

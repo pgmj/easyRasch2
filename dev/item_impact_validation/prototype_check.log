@@ -1,0 +1,161 @@
+  design  mech par max_diff_summary max_diff_fsum
+1    d20  xdim 0.7                0             0
+2   phq9  xdim 0.5                0             0
+3    d20 slope 2.0                0             0
+4   phq9    ld 1.0                0             0
+5    d20 joint 0.6                0             0
+6   phq9 joint 0.6                0             0
+cached replicate, max abs difference: 0
+unit-weight vs direct conditional infit: 2e-15
+   design  mech  par   msq msq_cache      kl kl_cache  shift shift_cache  cbias
+1     d20  xdim 0.30 1.542     1.542 0.04716  0.04726 0.1705      0.1709 0.2429
+2     d20  xdim 0.50 1.391     1.398 0.03739  0.03744 0.1398      0.1397 0.1688
+3     d20  xdim 0.60 1.313     1.319 0.03241  0.03228 0.1228      0.1222 0.1391
+4     d20  xdim 0.70 1.242     1.246 0.02708  0.02718 0.1037      0.1040 0.0983
+5     d20  xdim 0.80 1.166     1.166 0.02162  0.02140 0.0833      0.0822 0.0655
+6     d20  xdim 0.85 1.127     1.125 0.01805  0.01846 0.0694      0.0710 0.0469
+7     d20  xdim 0.90 1.083     1.084 0.01483  0.01489 0.0568      0.0569 0.0373
+8     d20  xdim 0.95 1.049     1.042 0.01021  0.01038 0.0390      0.0393 0.0176
+9     d20  xdim 1.00 1.000     1.001 0.00000  0.00000 0.0000      0.0000 0.0000
+10   phq9  xdim 0.30 1.854     1.854 0.15669  0.15760 0.4270      0.4276 0.8723
+11   phq9  xdim 0.50 1.637     1.646 0.10721  0.10831 0.3459      0.3482 0.6370
+12   phq9  xdim 0.60 1.533     1.533 0.08546  0.08568 0.3033      0.3040 0.4965
+13   phq9  xdim 0.70 1.414     1.411 0.06475  0.06450 0.2555      0.2555 0.3601
+14   phq9  xdim 0.80 1.286     1.289 0.04566  0.04548 0.2027      0.2018 0.2699
+15   phq9  xdim 0.85 1.221     1.220 0.03640  0.03628 0.1705      0.1700 0.1723
+16   phq9  xdim 0.90 1.145     1.151 0.02751  0.02751 0.1330      0.1346 0.1301
+17   phq9  xdim 0.95 1.076     1.076 0.01810  0.01807 0.0896      0.0898 0.0580
+18   phq9  xdim 1.00 1.000     1.000 0.00000  0.00000 0.0000      0.0000 0.0000
+19    d20 slope 1.00 1.000     0.998 0.00000  0.00000 0.0000      0.0000 0.0000
+20    d20 slope 1.15 0.935     0.941 0.00416  0.00417 0.0157      0.0157 0.0226
+21    d20 slope 1.30 0.882     0.889 0.00758  0.00782 0.0292      0.0294 0.0425
+22    d20 slope 1.50 0.838     0.833 0.01158  0.01194 0.0447      0.0450 0.0633
+23    d20 slope 1.75 0.776     0.780 0.01619  0.01597 0.0608      0.0604 0.0833
+24    d20 slope 2.00 0.737     0.738 0.01974  0.01906 0.0743      0.0723 0.1025
+25    d20 slope 2.50 0.679     0.678 0.02369  0.02393 0.0905      0.0908 0.1327
+26    d20 slope 3.00 0.642     0.643 0.02775  0.02734 0.1051      0.1035 0.1458
+27   phq9    ld 0.00 1.000     1.002 0.00000  0.00000 0.0000      0.0000 0.0000
+28   phq9    ld 0.25 0.916     0.918 0.01733  0.01732 0.1304      0.1303 0.0557
+29   phq9    ld 0.50 0.873     0.867 0.02667  0.02632 0.1802      0.1799 0.0857
+30   phq9    ld 0.75 0.846     0.843 0.03458  0.03461 0.1976      0.1974 0.1061
+31   phq9    ld 1.00 0.831     0.830 0.04077  0.04064 0.1992      0.1993 0.1188
+32   phq9    ld 1.50 0.829     0.835 0.05226  0.05232 0.2358      0.2364 0.1096
+33   phq9    ld 2.00 0.850     0.852 0.06084  0.06164 0.2618      0.2630 0.0841
+   cbias_cache keep_remove keep_remove_cache seconds
+1       0.2546       0.984             0.985    5.71
+2       0.1706       0.979             0.978    5.71
+3       0.1305       0.978             0.977    5.71
+4       0.0997       0.975             0.976    5.71
+5       0.0654       0.974             0.975    5.71
+6       0.0518       0.975             0.975    5.71
+7       0.0325       0.976             0.975    5.71
+8       0.0173       0.976             0.976    5.71
+9       0.0000       0.976             0.975    5.71
+10      0.8660       1.113             1.108   10.97
+11      0.6106       1.036             1.037   10.97
+12      0.4994       1.004             1.007   10.97
+13      0.3701       0.984             0.983   10.97
+14      0.2543       0.966             0.964   10.97
+15      0.1869       0.957             0.958   10.97
+16      0.1230       0.954             0.953   10.97
+17      0.0646       0.955             0.953   10.97
+18      0.0000       0.954             0.952   10.97
+19      0.0000       0.974             0.976    4.32
+20      0.0232       0.977             0.976    4.32
+21      0.0427       0.978             0.977    4.32
+22      0.0638       0.978             0.979    4.32
+23      0.0855       0.980             0.980    4.32
+24      0.1009       0.981             0.981    4.32
+25      0.1259       0.982             0.982    4.32
+26      0.1437       0.983             0.983    4.32
+27      0.0000       0.953             0.952    6.75
+28      0.0562       0.967             0.967    6.75
+29      0.0910       0.977             0.978    6.75
+30      0.1068       0.986             0.985    6.75
+31      0.1142       0.989             0.990    6.75
+32      0.1052       0.996             0.995    6.75
+33      0.0766       1.000             0.999    6.75
+
+== null_d20: 7 s (fwb 7, calibration 0, group 0)
+ [1] item        msq         lo          hi          partner     kl_lo      
+ [7] kl_hi       shift_lo    shift_hi    group_lo    group_hi    cbias_lo   
+[13] cbias_hi    rmse_lo     rmse_hi     dsem_lo     dsem_hi     beyond_grid
+[19] turns_back  keep_remove
+<0 rows> (or 0-length row.names)
+
+== xdim_d20: 24 s (fwb 7, calibration 17, group 0)
+    item   msq    lo    hi partner   kl_lo   kl_hi shift_lo shift_hi group_lo
+V1     1 0.923 0.855 0.990      13 0.00056 0.00527  0.00443   0.0387       NA
+V11   11 1.429 1.337 1.521      NA 0.03353 0.04622  0.12574   0.1669   0.0477
+V20   20 0.918 0.837 0.999       2 0.00109 0.03858  0.00614   0.2425       NA
+    group_hi cbias_lo cbias_hi  rmse_lo rmse_hi   dsem_lo dsem_hi beyond_grid
+V1        NA  0.00592   0.0563  0.00118  0.0123  0.000703 0.00766        TRUE
+V11   0.0572  0.15516   0.2678  0.00180  0.0100  0.022051 0.04634       FALSE
+V20       NA  0.00292   0.1058 -0.00204  0.0219 -0.002739 0.01136        TRUE
+    turns_back keep_remove
+V1       FALSE       0.993
+V11      FALSE       0.982
+V20      FALSE       0.988
+truth (cached cell, n = 20,000, 40 replicates):
+  msq     kl shift  group cbias    rmse keep_remove
+1 1.4 0.0374  0.14 0.0496 0.171 0.00254       0.978
+
+== ld_phq9: 17 s (fwb 10, calibration 7, group 0)
+   item   msq    lo    hi partner  kl_lo  kl_hi shift_lo shift_hi group_lo
+q5    5 0.828 0.755 0.902       1 0.0135 0.0422    0.101     0.19       NA
+   group_hi cbias_lo cbias_hi rmse_lo rmse_hi dsem_lo dsem_hi beyond_grid
+q5       NA   0.0784    0.113  0.0157  0.0404 0.00912   0.031        TRUE
+   turns_back keep_remove
+q5       TRUE       0.991
+truth (cached cell, n = 20,000, 40 replicates):
+   msq     kl shift group cbias   rmse keep_remove
+1 0.83 0.0406 0.199    NA 0.114 0.0412        0.99
+
+== joint_d20: 58 s (fwb 7, calibration 29, group 22)
+    item   msq    lo    hi partner   kl_lo  kl_hi shift_lo shift_hi group_lo
+V1     1 1.112 1.026 1.197      NA 0.00688 0.0194  0.02427   0.0707   0.0105
+V6     6 1.207 1.118 1.297      NA 0.01673 0.0295  0.06356   0.1110   0.0259
+V11   11 1.250 1.168 1.331      NA 0.02174 0.0328  0.08396   0.1238   0.0353
+V14   14 0.935 0.874 0.997       2 0.00142 0.0322  0.00984   0.2209       NA
+V20   20 0.916 0.835 0.997       2 0.00321 0.0383  0.01825   0.2431       NA
+    group_hi cbias_lo cbias_hi   rmse_lo   rmse_hi   dsem_lo dsem_hi
+V1    0.0273  0.02942   0.1916 -0.003062 -4.22e-05  0.001478 0.00866
+V6    0.0414  0.06618   0.1883 -0.003249  1.31e-03  0.002668 0.01846
+V11   0.0482  0.07331   0.1532 -0.000966  1.47e-03  0.007810 0.02116
+V14       NA  0.00157   0.0747  0.000489  2.50e-02  0.000283 0.01636
+V20       NA  0.00794   0.1026 -0.001341  2.33e-02 -0.002383 0.01279
+    beyond_grid turns_back keep_remove
+V1        FALSE      FALSE       0.977
+V6        FALSE      FALSE       0.974
+V11       FALSE      FALSE       0.975
+V14       FALSE      FALSE       0.985
+V20        TRUE      FALSE       0.989
+truth (cached cell, n = 20,000, 40 replicates):
+  msq    kl shift group cbias   rmse keep_remove
+1 1.2 0.121 0.297 0.111 0.474 0.0571       0.984
+group rows:
+   items  msq   lo   hi kl_lo kl_hi shift_lo shift_hi group_lo group_hi
+1 1,6,11 1.19 1.16 1.21 0.104 0.132    0.266    0.319    0.106    0.121
+  cbias_lo cbias_hi rmse_lo rmse_hi keep_remove
+1    0.402    0.561  0.0402  0.0625       0.979
+Q3 cutoff: 0.09495371 
+Warning messages:
+1: In data.frame(case = nm, item = ov, msq = r0$table$msq[ov], partner = r0$table$partner[ov],  :
+  row names were found from a short variable and have been discarded
+2: In data.frame(case = nm, item = ov, msq = r0$table$msq[ov], partner = r0$table$partner[ov],  :
+  row names were found from a short variable and have been discarded
+
+== overfit side, dependence vs slope
+         case item   msq partner partner_q3 q3_cutoff        kl_dep
+1    xdim_d20    1 0.923      13     0.0517    0.0932 0.0006-0.0053
+2    xdim_d20   20 0.918       2     0.0307    0.0932 0.0011-0.0386
+99%   ld_phq9    5 0.828       1     0.3661    0.0808 0.0135-0.0422
+11  joint_d20   14 0.935       2     0.0607    0.0950 0.0014-0.0322
+21  joint_d20   20 0.916       2     0.0343    0.0950 0.0032-0.0383
+         kl_slope   shift_dep shift_slope beyond_slope
+1   0.0007-0.0104 0.004-0.039 0.004-0.056        FALSE
+2   0.0001-0.0131 0.006-0.243 0.001-0.066        FALSE
+99% 0.0078-0.0214 0.101-0.190 0.052-0.122        FALSE
+11  0.0003-0.0094 0.010-0.221 0.001-0.041        FALSE
+21  0.0003-0.0131 0.018-0.243 0.002-0.067        FALSE
+done

@@ -251,7 +251,7 @@ test_that("p-values from fewer than 400 iterations trigger a notice", {
   reset_notices()
   expect_message(
     RMdifGamma(d$df, d$grp, cutoff = cu, output = "dataframe"),
-    regexp = "below the calibrated floor"
+    regexp = "below the recommended 400"
   )
 })
 

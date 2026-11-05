@@ -99,13 +99,14 @@
 #' \strong{Bootstrap p-values.} When `p_value = TRUE`, the `$pairs` table also
 #' tests each observed \eqn{Q_3} against its simulated null (from `cutoff$pair_results`)
 #' with a one-sided (upper-tail) test for excess local dependence. The pair
-#' statistic is studentised by the bootstrap mean and SD; the marginal p-value
+#' statistic is studentised by the mean and SD of the observed and simulated
+#' values together; the marginal p-value
 #' is `(1 + #{Q3* >= Q3}) / (B + 1)`, and `correction` applies the family-wise
 #' (Westfall-Young step-down) or FDR adjustment across the \eqn{k(k-1)/2} pairs.
-#' As for item fit, the family-wise correction is liberal below 400
-#' `iterations` in [RMlocdepQ3Cutoff()], which is reported once per session,
-#' and between 400 and 1000 the table caption notes that decisions remain
-#' somewhat seed-dependent. A false discovery rate correction needs far more
+#' As for item fit, the family-wise error rate is controlled at any number of
+#' `iterations` in [RMlocdepQ3Cutoff()], but decisions depend on the seed.
+#' Below 400 iterations this is reported once per session, and between 400
+#' and 1000 the table caption notes it. A false discovery rate correction needs far more
 #' iterations than the family-wise one, because a bootstrap p-value cannot
 #' fall below `1/(B + 1)` and Benjamini-Hochberg compares the smallest against
 #' `alpha/m`. Over the 36 pairs of a nine-item scale that takes 720
@@ -257,8 +258,8 @@ RMlocdepQ3 <- function(
         call. = FALSE
       )
     }
-    # Below 400 the correction itself is off. Between 400 and 1000 only
-    # reproducibility improves, which the table caption reports instead.
+    # Below 400 decisions depend on the seed enough to say so on the
+    # console. Between 400 and 1000 the table caption reports it instead.
     if (
       !is.null(cutoff_full$actual_iterations) &&
         cutoff_full$actual_iterations < 400L
@@ -814,7 +815,7 @@ RMlocdepQ3 <- function(
 #' @param data A data.frame or matrix of item responses. Items must be scored
 #'   starting at 0 (non-negative integers).
 #' @param iterations Integer. Number of simulation iterations (default 400).
-#'   400 is the calibrated floor for the Westfall-Young correction
+#'   400 is the recommended floor for reproducible Westfall-Young decisions
 #'   (Johansson, 2026) and the count a 95\% interval needs to converge. Use
 #'   1000 to 2000 for a final analysis.
 #' @param parallel Logical. Use parallel processing via `mirai` if available

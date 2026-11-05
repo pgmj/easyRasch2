@@ -125,16 +125,17 @@ p-value at a time, so it is not used.
 once, on the larger of its two rest-score directions (the \code{gamma_pair}
 column), against its simulated null distribution (from \code{cutoff$results},
 simulated under local independence and built from that same maximum).
-The per-pair statistic is the residual studentised by the bootstrap mean
-and SD; the marginal p-value is the one-sided Monte-Carlo p-value
+The per-pair statistic is the residual studentised by the mean and SD of
+the observed and simulated values together; the marginal p-value is the one-sided Monte-Carlo p-value
 \verb{(1 + #\\\{t* >= t\\\}) / (B + 1)} for excess \emph{positive} LD (redundancy, the
 diagnostic target — matching \code{\link{RMlocdepQ3}}), so it can be no
 smaller than \code{1 / (B + 1)}. The band still shows both bounds for
 reference. \code{correction = "fwer"} uses the Westfall-Young studentised-max
 step-down over the family of all pairs, which exploits the bootstrap
-dependence among them (Ferreira, 2024); it is liberal when the simulation
-is small, so at least 1000 \code{iterations} in \code{\link[=RMlocdepGammaCutoff]{RMlocdepGammaCutoff()}} are
-recommended (a warning is issued below that). Unlike the asymptotic
+dependence among them (Ferreira, 2024). It controls the family-wise error
+rate at any number of \code{iterations} in \code{\link[=RMlocdepGammaCutoff]{RMlocdepGammaCutoff()}}, but below
+400 decisions depend on the seed and a message says so, and 1000 to 2000
+are recommended for a final analysis. Unlike the asymptotic
 p-values from \code{iarm::partgam_LD()}, these are calibrated against the
 \emph{simulated Rasch null} rather than the asymptotic SE; they are
 model-conditional and sample-size-sensitive, and are reported alongside

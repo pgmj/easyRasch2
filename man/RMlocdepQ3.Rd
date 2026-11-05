@@ -123,13 +123,14 @@ off and ranked.
 \strong{Bootstrap p-values.} When \code{p_value = TRUE}, the \verb{$pairs} table also
 tests each observed \eqn{Q_3} against its simulated null (from \code{cutoff$pair_results})
 with a one-sided (upper-tail) test for excess local dependence. The pair
-statistic is studentised by the bootstrap mean and SD; the marginal p-value
+statistic is studentised by the mean and SD of the observed and simulated
+values together; the marginal p-value
 is \verb{(1 + #\{Q3* >= Q3\}) / (B + 1)}, and \code{correction} applies the family-wise
 (Westfall-Young step-down) or FDR adjustment across the \eqn{k(k-1)/2} pairs.
-As for item fit, the family-wise correction is liberal below 400
-\code{iterations} in \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}, which is reported once per session,
-and between 400 and 1000 the table caption notes that decisions remain
-somewhat seed-dependent. A false discovery rate correction needs far more
+As for item fit, the family-wise error rate is controlled at any number of
+\code{iterations} in \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}, but decisions depend on the seed.
+Below 400 iterations this is reported once per session, and between 400
+and 1000 the table caption notes it. A false discovery rate correction needs far more
 iterations than the family-wise one, because a bootstrap p-value cannot
 fall below \code{1/(B + 1)} and Benjamini-Hochberg compares the smallest against
 \code{alpha/m}. Over the 36 pairs of a nine-item scale that takes 720
