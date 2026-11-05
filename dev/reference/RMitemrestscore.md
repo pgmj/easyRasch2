@@ -168,11 +168,11 @@ as `cutoff` for p-values from a parametric bootstrap null instead.
 
 **Bootstrap p-values.** When `p_value = TRUE`, each item's observed
 `Difference` is compared against its simulated null distribution (from
-`cutoff$results`), studentised by the bootstrap mean and SD. Because the
-bootstrap mean is subtracted, the small-sample upward bias of the
-difference is removed, and because the bootstrap SD is used, the
-correlation between observed and expected gamma is accounted for. The
-marginal p-value is the two-sided Monte-Carlo p-value
+`cutoff$results`), studentised by the mean and SD of the observed and
+simulated values together. Because that mean is subtracted, the
+small-sample upward bias of the difference is removed, and because that
+SD is used, the correlation between observed and expected gamma is
+accounted for. The marginal p-value is the two-sided Monte-Carlo p-value
 `(1 + #{|t*| >= |t|}) / (B + 1)`, and `correction = "fwer"` applies the
 Westfall-Young studentised-max step-down across items (Ferreira, 2024).
 
@@ -287,17 +287,17 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 #> 
 #> 
 #> 
-#> Table: Item-restscore associations. n = 200 respondents. Two-sided parametric bootstrap p-values for the difference from 100 iterations, conditional DGP, multiplicity correction: Westfall-Young step-down (FWER). p-values cannot be smaller than 1/(100+1) = 0.0099. This is below the calibrated floor of 400, where the correction is mildly liberal (Johansson, 2026). Flagged (adj. p < 0.05): overfit = observed above expected (over-discrimination, often local dependence); underfit = below (under-discrimination, often multidimensionality/noise).
+#> Table: Item-restscore associations. n = 200 respondents. Two-sided parametric bootstrap p-values for the difference from 100 iterations, conditional DGP, multiplicity correction: Westfall-Young step-down (FWER). p-values cannot be smaller than 1/(100+1) = 0.0099. This is below the recommended 400, where decisions depend on the seed (Johansson, 2026). Flagged (adj. p < 0.05): overfit = observed above expected (over-discrimination, often local dependence); underfit = below (under-discrimination, often multidimensionality/noise).
 #> 
 #> |Item  | Observed| Expected| Difference| Diff low| Diff high|      p| p (adj)|Flagged | Rel. location|
 #> |:-----|--------:|--------:|----------:|--------:|---------:|------:|-------:|:-------|-------------:|
 #> |Item1 |     0.00|     0.01|     -0.006|   -0.154|     0.147| 0.9604|  1.0000|        |         -0.23|
 #> |Item2 |     0.00|     0.01|     -0.016|   -0.148|     0.182| 0.7624|  1.0000|        |          0.13|
 #> |Item3 |    -0.01|     0.01|     -0.026|   -0.133|     0.169| 0.5446|  0.9802|        |         -0.01|
-#> |Item4 |    -0.05|     0.01|     -0.061|   -0.168|     0.187| 0.4950|  0.9802|        |         -0.05|
+#> |Item4 |    -0.05|     0.01|     -0.061|   -0.168|     0.187| 0.5050|  0.9802|        |         -0.05|
 #> |Item5 |     0.07|     0.01|      0.058|   -0.160|     0.215| 0.4554|  0.9802|        |          0.09|
-#> |Item6 |    -0.04|     0.01|     -0.049|   -0.166|     0.166| 0.4653|  0.9802|        |         -0.09|
-#> |Item7 |     0.15|     0.01|      0.136|   -0.159|     0.221| 0.1782|  0.6931|        |         -0.05|
+#> |Item6 |    -0.04|     0.01|     -0.049|   -0.166|     0.166| 0.4851|  0.9802|        |         -0.09|
+#> |Item7 |     0.15|     0.01|      0.136|   -0.159|     0.221| 0.1782|  0.7129|        |         -0.05|
 #> |Item8 |    -0.01|     0.01|     -0.021|   -0.148|     0.171| 0.7822|  1.0000|        |         -0.03|
 # }
 ```

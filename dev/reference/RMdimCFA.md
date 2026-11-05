@@ -87,12 +87,14 @@ data.frame (when `output = "dataframe"`).
 ## Details
 
 **Bootstrap p-values.** The per-comparison statistic is the residual
-studentised by the bootstrap mean and SD. Marginal p-values are
-Monte-Carlo, `(1 + count) / (B + 1)`, so they can be no smaller than
-`1 / (B + 1)`. `correction = "fwer"` uses the Westfall-Young
-studentised-max step-down, which exploits the bootstrap dependence among
-the statistics (Ferreira, 2024); it is liberal when the simulation is
-small, so at least 1000 `iterations` in
+studentised by the mean and SD of the observed and simulated values
+together. Marginal p-values are Monte-Carlo, `(1 + count) / (B + 1)`, so
+they can be no smaller than `1 / (B + 1)`. `correction = "fwer"` uses
+the Westfall-Young studentised-max step-down, which exploits the
+bootstrap dependence among the statistics (Ferreira, 2024). It controls
+the family-wise error rate at any number of iterations, but small
+p-values are imprecise and decisions depend on the seed when the
+simulation is small, so at least 1000 `iterations` in
 [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md)
 are recommended (a warning is issued below that). These p-values are
 model-conditional and sample-size-sensitive and are reported alongside
@@ -146,7 +148,7 @@ if (requireNamespace("lavaan", quietly = TRUE) &&
   # (use iterations >= 1000 in real analyses for stable p-values)
   RMdimCFA(raschdat1[, 1:8], cutoff = sim, p_value = TRUE)
 }
-#> Warning: Bootstrap p-values are based on only 50 simulation iterations. With few iterations the studentised-max (FWER) correction is liberal and small p-values are imprecise; use iterations >= 1000 in RMdimCFACutoff() for reliable p-values.
+#> Warning: Bootstrap p-values are based on only 50 simulation iterations. With few iterations small p-values are imprecise and decisions depend on the seed; use iterations >= 1000 in RMdimCFACutoff() for reliable p-values.
 #> $fit
 #> 
 #> 
@@ -154,9 +156,9 @@ if (requireNamespace("lavaan", quietly = TRUE) &&
 #> 
 #> |Index | Observed| Cutoff|Direction  |      p| p (adj)|Flagged |
 #> |:-----|--------:|------:|:----------|------:|-------:|:-------|
-#> |CFI   |   0.9894| 0.8380|< 1st pct  | 0.5098|  0.5098|        |
-#> |RMSEA |   0.0162| 0.0916|> 99th pct | 0.5098|  0.5098|        |
-#> |SRMR  |   0.1158| 0.1417|> 99th pct | 0.2941|  0.3137|        |
+#> |CFI   |   0.9894| 0.8380|< 1st pct  | 0.5098|  0.5294|        |
+#> |RMSEA |   0.0162| 0.0916|> 99th pct | 0.5098|  0.5294|        |
+#> |SRMR  |   0.1158| 0.1417|> 99th pct | 0.2941|  0.3333|        |
 #> 
 #> $loadings
 #> 
@@ -166,12 +168,12 @@ if (requireNamespace("lavaan", quietly = TRUE) &&
 #> |Item | Observed| Expected low| Expected high|      p| p (adj)|Flagged |
 #> |:----|--------:|------------:|-------------:|------:|-------:|:-------|
 #> |I1   |    0.520|        0.272|         0.938| 0.7255|  0.9804|        |
-#> |I2   |    0.441|        0.245|         0.850| 0.4314|  0.8235|        |
-#> |I3   |    0.641|        0.249|         0.833| 0.6275|  0.9412|        |
-#> |I4   |    0.718|        0.075|         0.873| 0.2745|  0.7843|        |
-#> |I5   |    0.303|        0.215|         0.857| 0.0588|  0.2157|        |
-#> |I6   |    0.182|        0.209|         0.747| 0.0196|  0.0392|below   |
-#> |I7   |    0.419|        0.291|         0.815| 0.2745|  0.7451|        |
+#> |I2   |    0.441|        0.245|         0.850| 0.4510|  0.8627|        |
+#> |I3   |    0.641|        0.249|         0.833| 0.6471|  0.9608|        |
+#> |I4   |    0.718|        0.075|         0.873| 0.2941|  0.7843|        |
+#> |I5   |    0.303|        0.215|         0.857| 0.0588|  0.3137|        |
+#> |I6   |    0.182|        0.209|         0.747| 0.0196|  0.0588|        |
+#> |I7   |    0.419|        0.291|         0.815| 0.2745|  0.7647|        |
 #> |I8   |    0.582|        0.250|         0.745| 0.8627|  0.9804|        |
 #> 
 # }

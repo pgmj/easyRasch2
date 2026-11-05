@@ -33,9 +33,9 @@ RMlocdepGammaCutoff(
 - iterations:
 
   Integer. Number of simulation iterations (default 400, was 250 before
-  1.2.0). 400 is the calibrated floor for the Westfall-Young correction
-  (Johansson, 2026) and the count a 95\\ converge. Use 1000 to 2000 for
-  a final analysis.
+  1.2.0). 400 is the recommended floor for reproducible Westfall-Young
+  decisions (Johansson, 2026) and the count a 95\\ needs to converge.
+  Use 1000 to 2000 for a final analysis.
 
 - parallel:
 

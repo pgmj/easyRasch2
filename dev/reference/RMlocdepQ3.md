@@ -161,20 +161,21 @@ can be read off and ranked.
 **Bootstrap p-values.** When `p_value = TRUE`, the `$pairs` table also
 tests each observed \\Q_3\\ against its simulated null (from
 `cutoff$pair_results`) with a one-sided (upper-tail) test for excess
-local dependence. The pair statistic is studentised by the bootstrap
-mean and SD; the marginal p-value is `(1 + #{Q3* >= Q3}) / (B + 1)`, and
-`correction` applies the family-wise (Westfall-Young step-down) or FDR
-adjustment across the \\k(k-1)/2\\ pairs. As for item fit, the
-family-wise correction is liberal below 400 `iterations` in
+local dependence. The pair statistic is studentised by the mean and SD
+of the observed and simulated values together; the marginal p-value is
+`(1 + #{Q3* >= Q3}) / (B + 1)`, and `correction` applies the family-wise
+(Westfall-Young step-down) or FDR adjustment across the \\k(k-1)/2\\
+pairs. As for item fit, the family-wise error rate is controlled at any
+number of `iterations` in
 [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md),
-which is reported once per session, and between 400 and 1000 the table
-caption notes that decisions remain somewhat seed-dependent. A false
-discovery rate correction needs far more iterations than the family-wise
-one, because a bootstrap p-value cannot fall below `1/(B + 1)` and
-Benjamini-Hochberg compares the smallest against `alpha/m`. Over the 36
-pairs of a nine-item scale that takes 720 iterations, and over the 190
-pairs of a twenty-item scale 3799, against 19 for Westfall-Young
-whatever the number of pairs.
+but decisions depend on the seed. Below 400 iterations this is reported
+once per session, and between 400 and 1000 the table caption notes it. A
+false discovery rate correction needs far more iterations than the
+family-wise one, because a bootstrap p-value cannot fall below
+`1/(B + 1)` and Benjamini-Hochberg compares the smallest against
+`alpha/m`. Over the 36 pairs of a nine-item scale that takes 720
+iterations, and over the 190 pairs of a twenty-item scale 3799, against
+19 for Westfall-Young whatever the number of pairs.
 
 ## Multiple comparisons
 
@@ -264,10 +265,10 @@ if (requireNamespace("ggdist", quietly = TRUE)) {
 }
 #>   Item1  Item2      Observed        Low         High       p_q3   padj_q3
 #> 1 Item4  Item8 -0.2765225048 -0.2377678  0.009937381 1.00000000 1.0000000
-#> 2 Item4  Item7  0.0285193666 -0.2183735  0.016194476 0.01960784 0.4509804
+#> 2 Item4  Item7  0.0285193666 -0.2183735  0.016194476 0.01960784 0.6274510
 #> 3 Item5  Item9 -0.2199294805 -0.2001671  0.032761639 1.00000000 1.0000000
-#> 4 Item4  Item6  0.0279341896 -0.2592712 -0.003896209 0.01960784 0.5098039
-#> 5 Item3 Item10  0.0005837293 -0.2339065  0.003444371 0.05882353 0.8823529
+#> 4 Item4  Item6  0.0279341896 -0.2592712 -0.003896209 0.01960784 0.6666667
+#> 5 Item3 Item10  0.0005837293 -0.2339065  0.003444371 0.05882353 0.9411765
 #>   Flagged
 #> 1        
 #> 2        

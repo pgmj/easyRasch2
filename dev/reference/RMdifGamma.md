@@ -133,18 +133,19 @@ a time, so it is not used.
 **Bootstrap p-values.** When `p_value = TRUE`, each item's observed
 partial gamma is compared against its simulated null distribution (from
 `cutoff$results`, simulated with no DIF by construction). The per-item
-statistic is the residual studentised by the bootstrap mean and SD; the
-marginal p-value is the two-sided Monte-Carlo p-value
-`(1 + #\{|t*| >= |t|\}) / (B + 1)`, so it can be no smaller than
-`1 / (B + 1)`. The test is two-sided because DIF has no privileged
-direction: an item can favour either group. This differs from
+statistic is the residual studentised by the mean and SD of the observed
+and simulated values together; the marginal p-value is the two-sided
+Monte-Carlo p-value `(1 + #\{|t*| >= |t|\}) / (B + 1)`, so it can be no
+smaller than `1 / (B + 1)`. The test is two-sided because DIF has no
+privileged direction: an item can favour either group. This differs from
 [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md),
 which tests one-sided for excess positive local dependence.
 `correction = "fwer"` uses the Westfall-Young studentised-max step-down,
-which exploits the bootstrap dependence among items (Ferreira, 2024); it
-is mildly liberal below 400 iterations in
-[`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
-(a message is issued below that). Unlike the asymptotic p-values from
+which exploits the bootstrap dependence among items (Ferreira, 2024). It
+controls the family-wise error rate at any number of iterations in
+[`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md),
+but below 400 decisions depend on the seed and a message says so. Unlike
+the asymptotic p-values from
 [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html),
 these are calibrated against the *simulated Rasch null* rather than the
 asymptotic SE; they are model-conditional and sample-size-sensitive, and
@@ -226,8 +227,8 @@ if (requireNamespace("iarm", quietly = TRUE)) {
                output = "dataframe")
   }
 }
-#> Bootstrap p-values are based on 100 iterations, below the calibrated floor of 400.
-#> ℹ Below 400 the Westfall-Young correction is mildly liberal under the null, so the family-wise error rate is above the nominal level.
+#> Bootstrap p-values are based on 100 iterations, below the recommended 400.
+#> ℹ The family-wise error rate is controlled at any number of iterations, but with few of them the p-values are coarse and which comparisons get flagged depends on the seed.
 #> ℹ See Johansson (2026), doi:10.31234/osf.io/7pqz4_v2.
 #> ℹ Raise `iterations` in RMdifGammaCutoff().
 #> This message is displayed once per session.
@@ -249,7 +250,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 #> 4  0.9009901   1.000000   FALSE
 #> 5  0.5247525   1.000000   FALSE
 #> 6  0.8415842   1.000000   FALSE
-#> 7  0.2871287   0.970297   FALSE
+#> 7  0.2970297   0.970297   FALSE
 #> 8  0.9207921   1.000000   FALSE
 #> 9  0.3960396   0.970297   FALSE
 #> 10 0.2970297   0.950495   FALSE

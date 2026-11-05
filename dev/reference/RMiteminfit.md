@@ -174,28 +174,28 @@ The `iarm` package must be installed (it is in Suggests, not Imports).
 **Bootstrap p-values.** When `p_value = TRUE`, each item's observed
 infit (or outfit, per `statistic`) is compared against its simulated
 null distribution (from `cutoff$results`). The per-item statistic is the
-residual studentised by the bootstrap mean and SD – deliberately the
-empirical SD rather than the Wilson-Hilferty / ZSTD transform, which is
-uninformative for conditional MSQ (Müller, 2020). The marginal p-value
-is the two-sided Monte-Carlo p-value `(1 + #{|t*| >= |t|}) / (B + 1)`.
-For `correction = "fwer"` the family-wise adjustment uses the
-Westfall-Young studentised-max step-down, which exploits the bootstrap
-dependence among items and is more powerful than Bonferroni/Holm
-(Ferreira, 2024); its validity rests on subset pivotality.
-`"fdr_bh"`/`"fdr_by"` apply Benjamini-Hochberg / Benjamini- Yekutieli
-instead. These are model-conditional, sample-size-sensitive p-values and
-are reported alongside the simulated effect-size band, not in place of
-it. p-values can be no smaller than `1 / (B + 1)`. Below 400
-`iterations` in
-[`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
-the studentised-max (FWER) correction is mildly liberal, because the
-bootstrap mean and SD used for studentisation are too noisy, and a
-message says so. From 400 iterations the family-wise error rate is at
-the nominal level, and more iterations improve reproducibility instead:
-two analysts using different seeds disagree about at least one item
-roughly 10 percent of the time at 400 iterations against 4 percent at
-2000 (Johansson, 2026). The table caption notes this below 1000
-iterations, so use 1000 to 2000 for a final analysis. The marginal
+residual studentised by the mean and SD of the observed and simulated
+values together – deliberately the empirical SD rather than the
+Wilson-Hilferty / ZSTD transform, which is uninformative for conditional
+MSQ (Müller, 2020). The marginal p-value is the two-sided Monte-Carlo
+p-value `(1 + #{|t*| >= |t|}) / (B + 1)`. For `correction = "fwer"` the
+family-wise adjustment uses the Westfall-Young studentised-max
+step-down, which exploits the bootstrap dependence among items and is
+more powerful than Bonferroni/Holm (Ferreira, 2024); its validity rests
+on subset pivotality. `"fdr_bh"`/`"fdr_by"` apply Benjamini-Hochberg /
+Benjamini- Yekutieli instead. These are model-conditional,
+sample-size-sensitive p-values and are reported alongside the simulated
+effect-size band, not in place of it. p-values can be no smaller than
+`1 / (B + 1)`. Because the observed value contributes to the mean and SD
+it is studentised by, the observed and simulated statistics are
+exchangeable under the null, and the family-wise error rate is at the
+nominal level at any number of `iterations` in
+[`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md).
+More iterations improve reproducibility instead, and a message says so
+below 400: two analysts using different seeds disagree about at least
+one item roughly 10 percent of the time at 400 iterations against 4
+percent at 2000 (Johansson, 2026). The table caption notes this below
+1000 iterations, so use 1000 to 2000 for a final analysis. The marginal
 p-values are well calibrated even at a few hundred iterations.
 
 ## Multiple comparisons
@@ -290,13 +290,13 @@ if (requireNamespace("iarm", quietly = TRUE)) {
                 statistic = "outfit", output = "dataframe")
   }
 }
-#> Bootstrap p-values are based on 100 iterations, below the calibrated floor of 400.
-#> ℹ Below 400 the Westfall-Young correction is mildly liberal under the null, so the family-wise error rate is above the nominal level.
+#> Bootstrap p-values are based on 100 iterations, below the recommended 400.
+#> ℹ The family-wise error rate is controlled at any number of iterations, but with few of them the p-values are coarse and which comparisons get flagged depends on the seed.
 #> ℹ See Johansson (2026), doi:10.31234/osf.io/7pqz4_v2.
 #> ℹ Raise `iterations` in RMitemInfitCutoff().
 #> This message is displayed once per session.
 #>    Item Outfit_MSQ Outfit_low Outfit_high  p_outfit padj_outfit Flagged
-#> 1 Item1  1.1294533      0.558       1.366 0.3762376   0.7722772        
+#> 1 Item1  1.1294533      0.558       1.366 0.3861386   0.7821782        
 #> 2 Item2  0.9381845      0.661       1.399 0.7128713   0.7821782        
 #> 3 Item3  0.8125048      0.694       1.381 0.3465347   0.6534653        
 #> 4 Item4  1.2755158      0.583       1.379 0.1683168   0.4851485        

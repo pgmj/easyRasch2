@@ -34,8 +34,9 @@ RMlocdepQ3Cutoff(
 - iterations:
 
   Integer. Number of simulation iterations (default 400). 400 is the
-  calibrated floor for the Westfall-Young correction (Johansson, 2026)
-  and the count a 95\\ 1000 to 2000 for a final analysis.
+  recommended floor for reproducible Westfall-Young decisions
+  (Johansson, 2026) and the count a 95\\ 1000 to 2000 for a final
+  analysis.
 
 - parallel:
 

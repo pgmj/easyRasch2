@@ -148,18 +148,19 @@ named, because iarm adjusts one p-value at a time, so it is not used.
 on the larger of its two rest-score directions (the `gamma_pair`
 column), against its simulated null distribution (from `cutoff$results`,
 simulated under local independence and built from that same maximum).
-The per-pair statistic is the residual studentised by the bootstrap mean
-and SD; the marginal p-value is the one-sided Monte-Carlo p-value
-`(1 + #\{t* >= t\}) / (B + 1)` for excess *positive* LD (redundancy, the
-diagnostic target — matching
+The per-pair statistic is the residual studentised by the mean and SD of
+the observed and simulated values together; the marginal p-value is the
+one-sided Monte-Carlo p-value `(1 + #\{t* >= t\}) / (B + 1)` for excess
+*positive* LD (redundancy, the diagnostic target — matching
 [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)),
 so it can be no smaller than `1 / (B + 1)`. The band still shows both
 bounds for reference. `correction = "fwer"` uses the Westfall-Young
 studentised-max step-down over the family of all pairs, which exploits
-the bootstrap dependence among them (Ferreira, 2024); it is liberal when
-the simulation is small, so at least 1000 `iterations` in
-[`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md)
-are recommended (a warning is issued below that). Unlike the asymptotic
+the bootstrap dependence among them (Ferreira, 2024). It controls the
+family-wise error rate at any number of `iterations` in
+[`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md),
+but below 400 decisions depend on the seed and a message says so, and
+1000 to 2000 are recommended for a final analysis. Unlike the asymptotic
 p-values from
 [`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html),
 these are calibrated against the *simulated Rasch null* rather than the
@@ -231,8 +232,8 @@ if (requireNamespace("iarm", quietly = TRUE)) {
                   output = "dataframe")
   }
 }
-#> Bootstrap p-values are based on 100 iterations, below the calibrated floor of 400.
-#> ℹ Below 400 the Westfall-Young correction is mildly liberal under the null, so the family-wise error rate is above the nominal level.
+#> Bootstrap p-values are based on 100 iterations, below the recommended 400.
+#> ℹ The family-wise error rate is controlled at any number of iterations, but with few of them the p-values are coarse and which comparisons get flagged depends on the seed.
 #> ℹ See Johansson (2026), doi:10.31234/osf.io/7pqz4_v2.
 #> ℹ Raise `iterations` in RMlocdepGammaCutoff().
 #> This message is displayed once per session.
@@ -284,7 +285,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 #> 44 Item8 Item10  0.044973545  0.044973545 0.1601356 -0.26888653  0.35883362
 #> 45 Item9 Item10  0.035761589  0.035761589 0.1655990 -0.28880658  0.36032976
 #>     gamma_low gamma_high    p_gamma padj_gamma flagged
-#> 1  -0.2777321  0.3198758 0.01980198  0.6534653   FALSE
+#> 1  -0.2777321  0.3198758 0.01980198  0.6930693   FALSE
 #> 2  -0.2571429  0.3843537 0.88118812  1.0000000   FALSE
 #> 3  -0.2265372  0.3262195 0.72277228  1.0000000   FALSE
 #> 4  -0.3109244  0.3537519 0.83168317  1.0000000   FALSE
@@ -310,7 +311,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 #> 24 -0.2238806  0.4440559 0.13861386  0.9900990   FALSE
 #> 25 -0.2923077  0.3902848 0.44554455  1.0000000   FALSE
 #> 26 -0.2087912  0.4170854 0.11881188  0.9900990   FALSE
-#> 27 -0.3563636  0.2890365 0.01980198  0.1881188   FALSE
+#> 27 -0.3563636  0.2890365 0.01980198  0.2871287   FALSE
 #> 28 -0.2226402  0.3563579 0.99009901  1.0000000   FALSE
 #> 29 -0.3491311  0.2613241 0.69306931  1.0000000   FALSE
 #> 30 -0.2740741  0.3381555 0.74257426  1.0000000   FALSE
@@ -326,7 +327,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 #> 40 -0.3460803  0.2953216 0.89108911  1.0000000   FALSE
 #> 41 -0.2693498  0.3362319 0.58415842  1.0000000   FALSE
 #> 42 -0.2040201  0.3078261 0.53465347  1.0000000   FALSE
-#> 43 -0.2593918  0.3160813 0.01980198  0.4950495   FALSE
+#> 43 -0.2593918  0.3160813 0.01980198  0.6039604   FALSE
 #> 44 -0.2667877  0.3750000 0.47524752  1.0000000   FALSE
 #> 45 -0.2635379  0.3019197 0.48514851  1.0000000   FALSE
 #> 
@@ -378,7 +379,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 #> 44 Item10 Item8 -0.047044632  0.044973545 0.1605876 -0.36179047  0.26770120
 #> 45 Item10 Item9 -0.069047619  0.035761589 0.1606941 -0.38400232  0.24590708
 #>     gamma_low gamma_high    p_gamma padj_gamma flagged
-#> 1  -0.2777321  0.3198758 0.01980198  0.6534653   FALSE
+#> 1  -0.2777321  0.3198758 0.01980198  0.6930693   FALSE
 #> 2  -0.2571429  0.3843537 0.88118812  1.0000000   FALSE
 #> 3  -0.2605364  0.3693694 0.91089109  1.0000000   FALSE
 #> 4  -0.2265372  0.3262195 0.72277228  1.0000000   FALSE
@@ -396,7 +397,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 #> 16 -0.2089041  0.2947559 0.87128713  1.0000000   FALSE
 #> 17 -0.3580264  0.4016620 0.82178218  1.0000000   FALSE
 #> 18 -0.3416537  0.3750000 0.20792079  0.9900990   FALSE
-#> 19 -0.3563636  0.2890365 0.01980198  0.1881188   FALSE
+#> 19 -0.3563636  0.2890365 0.01980198  0.2871287   FALSE
 #> 20 -0.2527472  0.3256151 0.10891089  0.9900990   FALSE
 #> 21 -0.2467190  0.3983051 0.30693069  1.0000000   FALSE
 #> 22 -0.3167702  0.3052264 0.16831683  0.9900990   FALSE
@@ -413,7 +414,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 #> 33 -0.2671233  0.3651877 0.96039604  1.0000000   FALSE
 #> 34 -0.2437886  0.3966102 0.10891089  0.9900990   FALSE
 #> 35 -0.2693498  0.3362319 0.58415842  1.0000000   FALSE
-#> 36 -0.2593918  0.3160813 0.01980198  0.4950495   FALSE
+#> 36 -0.2593918  0.3160813 0.01980198  0.6039604   FALSE
 #> 37 -0.2714777  0.2960000 0.66336634  1.0000000   FALSE
 #> 38 -0.2885662  0.2979177 0.46534653  1.0000000   FALSE
 #> 39 -0.2238806  0.4440559 0.13861386  0.9900990   FALSE
