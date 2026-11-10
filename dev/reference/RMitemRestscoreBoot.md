@@ -85,12 +85,16 @@ RMitemRestscoreBoot(
   number of complete cases.
 
 - If `output = "dataframe"`: a data.frame with one row per item ×
-  classification combination (`Item`, `item_restscore`, `n`, `percent`,
-  `Infit_MSQ`, `Relative_location`), including `"no misfit"` rows.
+  classification combination (`Item`, `item_restscore`, `n`, `n_tested`,
+  `percent`, `Infit_MSQ`, `Relative_location`), including `"no misfit"`
+  rows. `percent` is `n` out of `n_tested`, the resamples in which the
+  item could be tested, and `NA` when it never could.
 
 - If `output = "raw"`: a long data.frame with one row per item ×
   successful iteration (`iteration`, `Item`, `item_restscore`, `diff`,
-  `diff_abs`), where `diff = expected - observed`.
+  `diff_abs`), where `diff = expected - observed`. Rows for an item that
+  could not be tested in that resample have `NA` in `item_restscore`,
+  `diff` and `diff_abs`.
 
 ## Details
 
@@ -135,8 +139,17 @@ it now uses the WLE person mean (finite at extreme scores) rather than
 the `eRm` MLE mean.
 
 Iterations that fail (e.g., due to convergence issues on a degenerate
-bootstrap sample) are silently discarded; the caption /
-`actual_iterations` reflects only successful runs.
+bootstrap sample) are discarded, and the caption and `actual_iterations`
+count only successful runs. A polytomous item that is constant in a
+resample makes that resample fail. A dichotomous item that is constant,
+or a polytomous item with an empty middle category, cannot be tested in
+that resample: it is left out of that item's percentages, and the other
+items keep the resample. Its percentages are then based on fewer
+resamples, which the caption lists. When the left-out item is a constant
+dichotomous item, the Benjamini-Hochberg adjustment in that resample
+covers only the items tested there, since iarm drops the item before
+testing. An item with an empty lowest category is shifted to start at 0
+by psychotools and is still tested.
 
 Parallel processing is provided by the `mirai` package (optional).
 Install it with `install.packages("mirai")` to enable parallelisation.
@@ -246,6 +259,11 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
 #> 
 #> 
 #> 
+#> Warning: RMitemRestscoreBoot() flags items with the asymptotic item-restscore test, which is miscalibrated under the Rasch model.
+#> ℹ It flags too many items as overfit in small or mistargeted dichotomous samples and too few as underfit at any sample size.
+#> ℹ The percentages are flag rates at `samplesize`, not probabilities of misfit.
+#> ℹ For a calibrated test, use RMitemRestscoreCutoff() with RMitemRestscore().
+#> This warning is displayed once per session.
 #> 
 #> 
 #> 

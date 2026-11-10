@@ -173,7 +173,7 @@ RMpersonParameters(dat, output = "dataframe") |> head()
 eap <- RMpersonParameters(dat, method = "EAP", output = "dataframe")
 attr(eap, "prior")
 #>      mean        sd estimated 
-#> 0.0000000 0.1600477 1.0000000 
+#> 0.0000000 0.1600579 1.0000000 
 
 # EAP with a fixed N(0, 1) prior
 RMpersonParameters(dat, method = "EAP", prior_sd = 1, output = "dataframe") |>
@@ -189,6 +189,6 @@ RMpersonParameters(dat, method = "EAP", prior_sd = 1, output = "dataframe") |>
 # Write the person-location table to a CSV (also returned invisibly)
 RMpersonParameters(dat, output = "file",
                    filename = tempfile(fileext = ".csv"))
-#> Wrote 200 row(s) to '/tmp/RtmpbM1ARL/file1c971cd85da.csv'.
+#> Wrote 200 row(s) to '/tmp/RtmphdBD3W/file1acf45c47408.csv'.
 # }
 ```

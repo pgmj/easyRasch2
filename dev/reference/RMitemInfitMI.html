@@ -11,7 +11,7 @@ imputed dataset and pools the results using Rubin's rules."><meta name="robots" 
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -138,7 +138,13 @@ of imputation-related variability rather than a trustworthy inferential
 standard error. For item misfit decisions, prefer the simulation-based
 cutoffs from <code><a href="RMitemInfitCutoffMI.html">RMitemInfitCutoffMI</a></code>.</p>
 <p>Imputed datasets that cause model convergence failures are dropped with a
-warning. If all imputations fail, the function stops with an error. At
+warning. So are imputed datasets in which an item lacks its lowest or a
+middle response category, which can happen with <code>polr</code>, <code>polyreg</code> or
+<code>norm</code> imputation of a rare category. The warning names the items, since
+the pooled results then come only from imputations that filled the
+category. If every imputation lacks the category (as with <code>pmm</code> when the
+observed data lack it), the function stops naming the item. If all
+imputations fail, the function stops with an error. At
 least two successful imputations are required to estimate between-imputation
 variance.</p>
 <p>The <code>mice</code> and <code>iarm</code> packages must be installed (they are in Suggests, not

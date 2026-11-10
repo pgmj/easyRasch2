@@ -1,6 +1,6 @@
 # Relative Measurement Uncertainty (RMU)
 
-Bayesian-style reliability estimate (Bignardi, Kievit & Bürkner, 2025)
+Bayesian-style reliability estimate (Bignardi, Kievit & Bürkner, 2026)
 computed from a matrix of posterior or plausible-value draws. The
 columns of `input_draws` are split at random into two halves;
 reliability is the Pearson correlation across persons of paired columns
@@ -48,10 +48,9 @@ Requires the `ggdist` package (Suggests).
 
 ## References
 
-Bignardi, G., Kievit, R., & Bürkner, P. C. (2025). A general method for
+Bignardi, G., Kievit, R., & Bürkner, P. C. (2026). A general method for
 estimating reliability using Bayesian Measurement Uncertainty.
-*PsyArXiv*.
-[doi:10.31234/osf.io/h54k8_v1](https://doi.org/10.31234/osf.io/h54k8_v1)
+*PsyArXiv*. <https://osf.io/preprints/psyarxiv/h54k8>
 
 ## See also
 

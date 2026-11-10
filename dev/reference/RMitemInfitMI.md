@@ -121,9 +121,15 @@ decisions, prefer the simulation-based cutoffs from
 [`RMitemInfitCutoffMI`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md).
 
 Imputed datasets that cause model convergence failures are dropped with
-a warning. If all imputations fail, the function stops with an error. At
-least two successful imputations are required to estimate
-between-imputation variance.
+a warning. So are imputed datasets in which an item lacks its lowest or
+a middle response category, which can happen with `polr`, `polyreg` or
+`norm` imputation of a rare category. The warning names the items, since
+the pooled results then come only from imputations that filled the
+category. If every imputation lacks the category (as with `pmm` when the
+observed data lack it), the function stops naming the item. If all
+imputations fail, the function stops with an error. At least two
+successful imputations are required to estimate between-imputation
+variance.
 
 The `mice` and `iarm` packages must be installed (they are in Suggests,
 not Imports).

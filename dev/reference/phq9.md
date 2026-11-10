@@ -3,10 +3,11 @@
 A processed subsample of the Patient Health Questionnaire 9-item (PHQ-9)
 depression screener from the U.S. National Health and Nutrition
 Examination Survey (NHANES), September 2024 release. Six hundred
-respondents were drawn at random from the cycle's PHQ-9 module subject
-to having complete responses on all nine items, while retaining a
-realistic share of respondents with a sum-score of zero (n = 8) so that
-floor behaviour can be illustrated in a Rasch analysis.
+respondents with complete responses on all nine items were sampled from
+the cycle's PHQ-9 module. Respondents with a sum score of zero were
+reduced by hand to 8, so the sample has much higher symptom levels than
+the NHANES population and is not representative of it. The same data are
+included in the easyRaschBayes package.
 
 ## Usage
 

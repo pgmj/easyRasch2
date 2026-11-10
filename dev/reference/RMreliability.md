@@ -207,7 +207,7 @@ reliability. (Earlier versions used
 values can differ, most noticeably for scales with many extreme scorers,
 e.g. dichotomous items.)
 
-RMU is from Bignardi, Kievit, & Bürkner (2025), modified here to use
+RMU is from Bignardi, Kievit, & Bürkner (2026), modified here to use
 mirt plausible values rather than fully Bayesian posterior draws (see
 Mislevy, 1991, for the plausible-values framework).
 
@@ -220,14 +220,16 @@ reports the same quantity in the bounded ratio form alongside this one,
 so the two can be compared directly. See `dev/TODO-reliability-form.md`
 for the open question of which form this row should use.
 
-Bootstrap iterations that fail to converge are silently dropped.
+Bootstrap resamples that cannot be fitted are dropped, with a message
+giving how many and why. The usual reason is a sparse lowest or middle
+response category that is absent from the resample, so the interval
+leaves such resamples out.
 
 ## References
 
-Bignardi, G., Kievit, R., & Bürkner, P. C. (2025). A general method for
+Bignardi, G., Kievit, R., & Bürkner, P. C. (2026). A general method for
 estimating reliability using Bayesian Measurement Uncertainty.
-*PsyArXiv*.
-[doi:10.31234/osf.io/h54k8_v1](https://doi.org/10.31234/osf.io/h54k8_v1)
+*PsyArXiv*. <https://osf.io/preprints/psyarxiv/h54k8>
 
 Green, B. F., Bock, R. D., Humphreys, L. G., Linn, R. L., & Reckase, M.
 D. (1984). Technical Guidelines for Assessing Computerized Adaptive

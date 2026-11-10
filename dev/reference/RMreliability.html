@@ -15,7 +15,7 @@ via RMUreliability() applied to plausible values from mirt::fscores()."><meta na
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9001</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -224,7 +224,7 @@ Respondents with extreme (min/max) raw scores are excluded – their boundary
 estimates would inflate the person variance and overstate reliability.
 (Earlier versions used <code><a href="https://rdrr.io/pkg/eRm/man/SepRel.html" class="external-link">eRm::SepRel()</a></code> with MLE; the values can differ, most
 noticeably for scales with many extreme scorers, e.g. dichotomous items.)</p>
-<p>RMU is from Bignardi, Kievit, &amp; Bürkner (2025), modified here to use mirt
+<p>RMU is from Bignardi, Kievit, &amp; Bürkner (2026), modified here to use mirt
 plausible values rather than fully Bayesian posterior draws (see Mislevy,
 1991, for the plausible-values framework).</p>
 <p>Marginal reliability here is the subtractive Green/Lord coefficient. Milanzi
@@ -234,13 +234,16 @@ narrow sample, and it is floored at 0 above. <code><a href="RMreliabilityCurve.h
 the same quantity in the bounded ratio form alongside this one, so the two
 can be compared directly. See <code>dev/TODO-reliability-form.md</code> for the open
 question of which form this row should use.</p>
-<p>Bootstrap iterations that fail to converge are silently dropped.</p>
+<p>Bootstrap resamples that cannot be fitted are dropped, with a message
+giving how many and why. The usual reason is a sparse lowest or middle
+response category that is absent from the resample, so the interval
+leaves such resamples out.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Bignardi, G., Kievit, R., &amp; Bürkner, P. C. (2025). A general method for
+    <p>Bignardi, G., Kievit, R., &amp; Bürkner, P. C. (2026). A general method for
 estimating reliability using Bayesian Measurement Uncertainty. <em>PsyArXiv</em>.
-<a href="https://doi.org/10.31234/osf.io/h54k8_v1" class="external-link">doi:10.31234/osf.io/h54k8_v1</a></p>
+<a href="https://osf.io/preprints/psyarxiv/h54k8" class="external-link">https://osf.io/preprints/psyarxiv/h54k8</a></p>
 <p>Green, B. F., Bock, R. D., Humphreys, L. G., Linn, R. L., &amp; Reckase, M. D.
 (1984). Technical Guidelines for Assessing Computerized Adaptive Tests.
 <em>Journal of Educational Measurement, 21</em>(4), 347–360.

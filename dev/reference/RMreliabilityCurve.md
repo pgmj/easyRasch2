@@ -97,6 +97,9 @@ RMreliabilityCurve(
 - boot_iter:
 
   Integer. Bootstrap iterations when `boot = TRUE`. Default `200`.
+  Resamples that cannot be fitted, usually because a sparse lowest or
+  middle response category is absent from them, are dropped with a
+  message giving how many and why.
 
 - conf_int:
 

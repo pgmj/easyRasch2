@@ -20,6 +20,83 @@
   slightly.** The typical change in a corrected p-value is about 0.001
   at B = 400 and under 0.0005 at B = 1000.
 
+- Docs - the `phq9` description no longer calls the share of zero sum
+  scores realistic. Zero sum scores were reduced by hand to 8, so the
+  sample is not representative of the NHANES population.
+
+- [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md)
+  warns once per session that its flags come from the miscalibrated
+  asymptotic test, and its caption now says so. The caption also
+  described the bootstrap percentages as infit. Results do not change.
+
+- `RMreliability(boot = TRUE)` and `RMreliabilityCurve(boot = TRUE)` now
+  say how many bootstrap resamples were dropped and why, naming the item
+  when a sparse category was absent from a resample. Results do not
+  change.
+
+### Bug fixes
+
+- Every function that fits a Rasch or partial credit model (CML, MML or
+  eRm) now stops with a message naming the item when an item has one
+  response category, or an empty lowest or interior category. Such items
+  were silently dropped or renumbered, which paired thresholds with the
+  wrong items: e.g. WLE estimates pushed to the boundary in
+  [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md),
+  SEs over 100 logits in
+  [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md).
+  Switching to `estimator = "MML"` did not help, and the warning that
+  suggested it is gone. An empty top category is still allowed.
+  [`RMdifTree()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md)
+  is not covered.
+
+- [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md),
+  [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md)
+  and
+  [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
+  use complete cases only, and now stop naming the item when a category
+  occurs only in incomplete responses.
+  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
+  returned infit 0 for every item in that case.
+
+- [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
+  skips an imputed dataset in which an item lacks its lowest or a middle
+  category (possible with `polr` or `polyreg` imputation), with a
+  warning naming the item, and stops only when every imputation lacks
+  it.
+
+- [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md)
+  matches results to items by name. A resample in which a dichotomous
+  item was constant used to be dropped whole. Now only that item is left
+  out of it, as is a polytomous item with an empty middle category in
+  the resample (for a constant dichotomous item, the BH adjustment in
+  that resample then covers the other items only). Its percentages use
+  the resamples in which it could be tested (new `n_tested` column,
+  listed in the caption when fewer), and an item never testable gets
+  `NA` instead of `NaN`. **Percentages can change for data with a very
+  sparse item.**
+
+- `RMitemParameters(estimator = "MML")` standard errors and Wald
+  intervals now refer to the centred thresholds when `center = TRUE`
+  (the default). They were 2-19% too large. **MML SEs and CIs usually
+  get smaller. Locations and CML results do not change.**
+
+- `method = "EAP"`
+  (e.g. [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonChange.md))
+  now returns `NA` for a respondent with no answered items, as WLE does,
+  instead of the prior mean.
+
+- WLE estimates beyond `theta_range` are now placed at the correct
+  boundary. Before, a respondent who answered only very hard or very
+  easy items could be put at the opposite end.
+
+- The latent mean and SD behind
+  [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
+  and
+  [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md),
+  and the estimated EAP prior SD, use normalised prior weights. Results
+  move by at most about 1e-4.
+
 ## easyRasch2 1.4.0
 
 CRAN release: 2026-10-06

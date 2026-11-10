@@ -37,9 +37,9 @@ RMitemParameters(
   (a dichotomous item is a 2-category PCM); `"MML"` uses
   [`mirt::mirt()`](https://philchalmers.github.io/mirt/reference/mirt.html)
   with `itemtype = "Rasch"`. CML is preferred for Rasch measurement; MML
-  can be more robust when data are sparse. When `estimator = "CML"` and
-  sparse response categories are detected, a warning suggests switching
-  to MML.
+  can be more robust when data are sparse. Neither estimator can fit an
+  item with one response category or an empty lowest or interior
+  category (see Details).
 
 - format:
 
@@ -96,12 +96,22 @@ locations at which adjacent response categories are equally probable) on
 the logit difficulty scale, matching
 [`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md).
 
-**Standard errors.** For the CML path, threshold SEs are the square
-roots of the diagonal of the threshold-parameter covariance from
-`psychotools::threshpar(vcov = TRUE)`. For the MML path, SEs come from
-the mirt parameter covariance, propagated by the delta method through
-the linear threshold map. Confidence intervals are Wald intervals and
-are symmetric on the logit scale.
+**Standard errors.** For the CML path, threshold SEs come from the
+threshold-parameter covariance of `psychotools::threshpar(vcov = TRUE)`.
+For the MML path, they come from the mirt parameter covariance,
+propagated by the delta method through the linear threshold map. With
+`center = TRUE` the SEs are those of the centred thresholds, computed
+from the full covariance. This changes nothing for CML, whose thresholds
+are already sum-zero, and usually makes MML SEs smaller than on mirt's
+own scale, where the latent mean is fixed at 0. Confidence intervals are
+Wald intervals and are symmetric on the logit scale.
+
+**Response categories.** Both estimators stop with a message naming the
+item when an item has one response category, or an empty lowest or
+interior category. Such categories have no threshold that the data can
+estimate. Merge them with an adjacent category, or remove the item. An
+empty top category is allowed: the item is then fitted with one
+threshold fewer.
 
 ## References
 
@@ -175,6 +185,6 @@ RMitemParameters(dich, output = "dataframe")
 # Write the parameter table to a CSV (also returned invisibly)
 RMitemParameters(poly, output = "file",
                  filename = tempfile(fileext = ".csv"))
-#> Wrote 10 row(s) to '/tmp/RtmpbM1ARL/file1c971eff8e7c.csv'.
+#> Wrote 10 row(s) to '/tmp/RtmphdBD3W/file1acf296414ad.csv'.
 # }
 ```

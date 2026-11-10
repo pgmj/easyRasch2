@@ -55,11 +55,13 @@ by all functions that can use parallel processing.
 
 ## Data
 
-The bundled `phq9` dataset is a 600-respondent random subsample of the
-PHQ-9 module from the U.S. National Health and Nutrition Examination
-Survey (NHANES, September 2024 release) with complete responses on all
-nine items. NHANES microdata are released to the public domain by the
-U.S. federal government.
+The bundled `phq9` dataset is a 600-respondent subsample of the PHQ-9
+module from the U.S. National Health and Nutrition Examination Survey
+(NHANES, September 2024 release) with complete responses on all nine
+items. Respondents with a sum score of zero were reduced to 8, so
+symptom levels are much higher than in the NHANES population. NHANES
+microdata are released to the public domain by the U.S. federal
+government.
 
 ``` r
 
