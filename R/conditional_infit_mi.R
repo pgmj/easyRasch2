@@ -74,7 +74,13 @@
 #' cutoffs from \code{\link{RMitemInfitCutoffMI}}.
 #'
 #' Imputed datasets that cause model convergence failures are dropped with a
-#' warning. If all imputations fail, the function stops with an error. At
+#' warning. So are imputed datasets in which an item lacks its lowest or a
+#' middle response category, which can happen with `polr`, `polyreg` or
+#' `norm` imputation of a rare category. The warning names the items, since
+#' the pooled results then come only from imputations that filled the
+#' category. If every imputation lacks the category (as with `pmm` when the
+#' observed data lack it), the function stops naming the item. If all
+#' imputations fail, the function stops with an error. At
 #' least two successful imputations are required to estimate between-imputation
 #' variance.
 #'
@@ -209,6 +215,10 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable", sort) {
   per_imp <- vector("list", m)
   n_failed <- 0L
   n_complete_first <- NULL
+  # Category errors per imputation. With pmm, a category absent from the
+  # observed data is absent from every imputation; polr, polyreg or norm can
+  # fill a rare category in some imputations and not others.
+  cat_errors <- list()
 
   for (i in seq_len(m)) {
     completed_data <- .mi_completed_to_numeric(
@@ -227,7 +237,7 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable", sort) {
         # rest of the package. The conditional infit/outfit statistic from iarm
         # is engine-invariant; only the relative-location reference shifts
         # slightly (WLE vs eRm MLE person mean).
-        fit <- psychotools::pcmodel(completed_data)
+        fit <- .cml_fit(completed_data) # shared category check
         thr_list <- .center_thresholds(lapply(
           psychotools::threshpar(fit),
           as.numeric
@@ -251,6 +261,11 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable", sort) {
         )
       },
       error = function(e) {
+        # Collected, and reported once after the loop.
+        if (inherits(e, "easyRasch2_category_error")) {
+          cat_errors[[length(cat_errors) + 1L]] <<- e
+          return(NULL)
+        }
         warning(
           sprintf(
             "Model fitting failed for imputation %d: %s",
@@ -275,6 +290,10 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable", sort) {
     }
   }
 
+  # Every imputation lacked a category: the full message, with the remedy.
+  if (length(cat_errors) == m) {
+    stop(cat_errors[[1L]])
+  }
   if (n_failed == m) {
     stop(
       "Model fitting failed for all ",
@@ -298,21 +317,37 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable", sort) {
   successful <- per_imp[!vapply(per_imp, is.null, logical(1L))]
   m_ok <- length(successful)
 
+  cat_note <- if (length(cat_errors) > 0L) {
+    counts <- table(unlist(lapply(cat_errors, `[[`, "items")))
+    paste0(
+      length(cat_errors), " of ", m, " imputed datasets lacked a response ",
+      "category, so item thresholds could not be estimated in them (",
+      paste0(names(counts), " in ", as.integer(counts), collapse = ", "),
+      "). They were skipped, so the pooled results come only from ",
+      "imputations that filled that category. Consider merging the sparse ",
+      "category with an adjacent one."
+    )
+  }
+
   if (m_ok < 2L) {
     stop(
       "Only ",
       m_ok,
       " imputation(s) succeeded. At least 2 are required ",
       "to estimate between-imputation variance.",
+      if (!is.null(cat_note)) paste0(" ", cat_note),
       call. = FALSE
     )
   }
 
-  if (n_failed > 0L) {
+  if (!is.null(cat_note)) {
+    warning(cat_note, call. = FALSE)
+  }
+  if (n_failed > length(cat_errors)) {
     warning(
       sprintf(
         "%d of %d imputed datasets failed and were excluded.",
-        n_failed,
+        n_failed - length(cat_errors),
         m
       ),
       call. = FALSE

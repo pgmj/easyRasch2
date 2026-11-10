@@ -291,6 +291,9 @@ RMscoreSE <- function(
     )
   }
 
+  # Shared category check: mirt renumbers items with an empty lowest or
+  # interior category, which would mislabel the score-to-theta table.
+  .check_response_categories(data)
   mirt_fit <- suppressMessages(
     mirt::mirt(
       data = as.data.frame(data),

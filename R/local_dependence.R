@@ -311,19 +311,18 @@ RMlocdepQ3 <- function(
     )
   }
 
-  # The CML engine (psychotools) can choke or destabilise on sparse / zero-
-  # variance response categories; warn (and point to estimator = "MML") before
-  # fitting, consistent with RMitemParameters(). Not needed for the MML path.
-  if (estimator == "CML") {
-    .sparsity_warning(data, is_poly = max(as.matrix(data), na.rm = TRUE) > 1L)
-  }
-
   # --- Compute Q3 residual correlations ---------------------------------------
   # .q3_residual_matrix() returns a symmetric Q3 matrix with an NA diagonal,
   # computed under the chosen estimator (CML/WLE residual correlations, or
   # mirt's MML Q3). The same routine is used for the simulated Q3 in
   # RMlocdepQ3Cutoff(), so observed and simulated values are comparable.
   resid_mat <- .q3_residual_matrix(data, estimator = estimator)
+  # Warn about categories used only by extreme scorers (they carry no
+  # information in CML), after the fit so that data stopped by the category
+  # check do not warn first.
+  if (estimator == "CML") {
+    .sparsity_warning(data)
+  }
 
   # Mean of the off-diagonal correlations (diagonal already NA).
   mean_resid <- mean(resid_mat, na.rm = TRUE)
@@ -518,6 +517,9 @@ RMlocdepQ3 <- function(
 ) {
   estimator <- match.arg(estimator)
   if (estimator == "MML") {
+    # mirt renumbers items with an empty lowest or interior category; the CML
+    # path gets the same check through .fit_cml_thresholds().
+    .check_response_categories(data)
     mirt_fit <- if (fast) {
       mirt::mirt(
         data,
@@ -1417,6 +1419,8 @@ run_q3_sim_parallel <- function(
       .q3_residual_matrix = .q3_residual_matrix,
       .rasch_std_residuals = .rasch_std_residuals,
       .fit_cml_thresholds = .fit_cml_thresholds,
+      .cml_fit = .cml_fit,
+      .check_response_categories = .check_response_categories,
       .estimate_thetas = .estimate_thetas,
       .theta_wle = .theta_wle,
       .pcm_cat_probs = .pcm_cat_probs,

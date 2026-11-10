@@ -380,3 +380,53 @@ test_that("RMitemParameters dataframe output is unrounded and wide location = me
   expect_identical(sort(l$location), sort(unlist(w[, t_cols], use.names = FALSE)))
   expect_false(all(l$se == round(l$se, 4)))
 })
+
+# Code review 2026-11-10 (dev/code-review/item_parameters.md, IP1, IP2, IP4)
+
+test_that("both estimators stop on reshaped items, naming the item (IP1, IP2)", {
+  df <- make_polytomous()
+  mid <- df
+  mid[mid$I1 == 1, "I1"] <- 2
+  low <- df
+  low[low$I1 == 0, "I1"] <- 1
+  con <- df
+  con$I2 <- 0L
+  for (est in c("CML", "MML")) {
+    expect_error(suppressWarnings(RMitemParameters(mid, estimator = est, output = "dataframe")),
+                 "I1 \\(empty category 1\\)")
+    expect_error(suppressWarnings(RMitemParameters(low, estimator = est, output = "dataframe")),
+                 "I1 \\(empty category 0\\)")
+    expect_error(suppressWarnings(RMpersonParameters(con, estimator = est, output = "dataframe")),
+                 "I2 \\(only category 0\\)")
+  }
+  # The CML wrapper must not add its "try MML" advice to this error.
+  err <- tryCatch(suppressWarnings(RMitemParameters(mid, output = "dataframe")),
+                  error = function(e) conditionMessage(e))
+  expect_false(grepl("try estimator", err))
+})
+
+test_that("an empty top category is still fitted, with one threshold fewer", {
+  df <- make_polytomous()
+  df[df$I1 == 2, "I1"] <- 1
+  res <- suppressWarnings(RMitemParameters(df, output = "dataframe"))
+  expect_equal(sum(res$item == "I1"), 1L)
+})
+
+test_that("centred MML SEs are the SEs of the centred thresholds (IP4)", {
+  skip_if_not_installed("mirt")
+  df <- make_pcm_signal(n = 400, k = 5)$data
+  fit <- .rasch_fit_mml(df, se = TRUE)
+  n <- nrow(fit$vcov_thr)
+  C <- diag(n) - 1 / n
+  expected <- sqrt(diag(C %*% fit$vcov_thr %*% t(C)))
+  res <- RMitemParameters(df, estimator = "MML", output = "dataframe")
+  expect_equal(res$se, expected, tolerance = 1e-8)
+  # On mirt's own scale (no centring) the SEs are the uncentred ones. They are
+  # usually larger, but centring is not guaranteed to shrink every SE.
+  raw <- RMitemParameters(df, estimator = "MML", center = FALSE, output = "dataframe")
+  expect_equal(raw$se, sqrt(diag(fit$vcov_thr)), tolerance = 1e-8)
+  # CML SEs do not move under centring (psychotools thresholds are sum-zero).
+  cml <- RMitemParameters(df, output = "dataframe")
+  cml_raw <- RMitemParameters(df, center = FALSE, output = "dataframe")
+  expect_equal(cml$se, cml_raw$se, tolerance = 1e-8)
+})

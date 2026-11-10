@@ -169,6 +169,11 @@
 #' maximises the marginal likelihood of the data over the quadrature
 #' grid. Used as the default EAP prior when the user does not supply one.
 #'
+#' The prior weights are normalised to sum to one over the grid, as in
+#' `.estimate_prior_moments()`. Unnormalised, they sum to 1.34 at the 0.05
+#' SD floor on the 121-node `[-10, 10]` grid, which rewards a spuriously
+#' narrow prior. At realistic SDs the normalising constant is 1.
+#'
 #' @param loglik Person-by-node log-likelihood matrix from `.grid_loglik()`.
 #' @param grid Numeric quadrature nodes.
 #' @param prior_mean Numeric prior mean.
@@ -176,13 +181,14 @@
 #' @keywords internal
 #' @noRd
 .estimate_prior_sd <- function(loglik, grid, prior_mean) {
-  dgrid <- if (length(grid) > 1L) mean(diff(grid)) else 1
   neg_marg_ll <- function(sigma) {
     lprior <- stats::dnorm(grid, mean = prior_mean, sd = sigma, log = TRUE)
+    lmax <- max(lprior)
+    log_norm <- lmax + log(sum(exp(lprior - lmax)))
     # log integral over nodes for each person, via log-sum-exp
     M  <- sweep(loglik, 2L, lprior, `+`)
     mx <- apply(M, 1L, max)
-    person_ll <- mx + log(rowSums(exp(M - mx)) * dgrid)
+    person_ll <- mx + log(rowSums(exp(M - mx))) - log_norm
     -sum(person_ll[is.finite(person_ll)])
   }
   stats::optimize(neg_marg_ll, interval = c(0.05, 5))$minimum
@@ -440,12 +446,9 @@
 #' per-NA-pattern slowdown of `eRm`, and returns numerically identical
 #' parameters after centring.
 #'
-#' Rows with no answered items are dropped before fitting: they carry no
-#' information for CML, `pcmodel()` errors on them and `raschmodel()`
-#' (psychotools 0.7.7) crashes the R session. `.check_cml_categories()` then
-#' stops on items psychotools would silently reshape, and the fitted list is
-#' checked against the data so a threshold vector can never be paired with
-#' the wrong item.
+#' The fit goes through `.cml_fit()`, which drops all-`NA` rows and runs
+#' `.check_response_categories()`. The fitted list is then checked against
+#' the data so a threshold vector can never be paired with the wrong item.
 #'
 #' @param data Numeric response matrix or data.frame (items scored from 0).
 #' @return List of centred Andrich threshold vectors, one per item.
@@ -453,19 +456,19 @@
 #' @noRd
 .fit_cml_thresholds <- function(data) {
   data <- as.matrix(data)
-  data <- data[rowSums(!is.na(data)) > 0L, , drop = FALSE]
-  .check_cml_categories(data)
-  is_poly <- max(data, na.rm = TRUE) > 1L
   # A dichotomous item is a 2-category PCM, so pcmodel() handles both types and
   # gives the identical CML estimate (same log-likelihood, difficulties match to
   # 0). raschmodel() is used for the dichotomous case only because it is ~2x
   # faster, which matters in the per-iteration bootstrap loops that call this.
-  # The one-time `.rasch_fit_cml()` (item_parameters.R) uses pcmodel() for both,
-  # where that speed difference is immaterial.
-  fit <- if (is_poly) psychotools::pcmodel(data) else psychotools::raschmodel(data)
+  # Only point estimates are used, so skip the Hessian (1.4-5x faster on the
+  # eRm example data, identical thresholds).
+  fit <- .cml_fit(data, model = "auto", hessian = FALSE)
   thr_list <- lapply(psychotools::threshpar(fit), as.numeric)
   n_thr <- vapply(thr_list, length, integer(1L))
-  max_obs <- apply(data, 2L, max, na.rm = TRUE)
+  max_obs <- suppressWarnings(apply(data, 2L, max, na.rm = TRUE))
+  # Defensive: cannot fire once .check_response_categories() has passed (the
+  # two extreme-only shapes were tested and stay aligned), but a misaligned
+  # list would silently corrupt every downstream quantity.
   if (length(thr_list) != ncol(data) || any(n_thr != max_obs)) {
     stop(
       "The CML fit returned thresholds that do not match the observed ",
@@ -476,11 +479,47 @@
   .center_thresholds(thr_list)
 }
 
+#' Fit a Rasch / partial credit model by CML, with the shared data checks
+#'
+#' The single entry point for psychotools CML fits. Drops respondents with no
+#' answered items (they carry no CML information, `pcmodel()` errors on them
+#' and `raschmodel()` in psychotools 0.7.7 crashes the R session), then runs
+#' `.check_response_categories()`, then fits. Callers keep their own use of
+#' the fitted object (`threshpar()`, `itempar()`, `iarm` statistics).
+#'
+#' @param data Numeric response matrix or data.frame (items scored from 0).
+#' @param model `"pcm"` (default) fits `psychotools::pcmodel()` for every
+#'   item type. `"auto"` fits `psychotools::raschmodel()` when all items are
+#'   dichotomous, which is about twice as fast with the same estimates.
+#' @param hessian Passed to psychotools. `FALSE` in refit loops that need no
+#'   standard errors.
+#' @return The psychotools model object.
+#' @keywords internal
+#' @noRd
+.cml_fit <- function(data, model = c("pcm", "auto"), hessian = TRUE) {
+  model <- match.arg(model)
+  is_df <- is.data.frame(data)
+  mat <- as.matrix(data)
+  keep <- rowSums(!is.na(mat)) > 0L
+  mat <- mat[keep, , drop = FALSE]
+  .check_response_categories(mat)
+  # Keep a data.frame a data.frame, so item names reach psychotools the same
+  # way as before this helper existed.
+  dat <- if (is_df) data[keep, , drop = FALSE] else mat
+  if (model == "auto" && max(mat, na.rm = TRUE) <= 1L) {
+    psychotools::raschmodel(dat, hessian = hessian)
+  } else {
+    psychotools::pcmodel(dat, hessian = hessian)
+  }
+}
+
 #' Stop on items that psychotools would silently reshape
 #'
 #' `psychotools::pcmodel()` and `raschmodel()` handle three item shapes in
 #' ways that break the threshold list's alignment with the data, which every
-#' consumer of `.fit_cml_thresholds()` assumes:
+#' consumer of `.fit_cml_thresholds()` assumes. `mirt` (MML) renumbers the
+#' same items, and `eRm::LRtest()` drops them, so the check also runs before
+#' those fits:
 #' - an item with one observed category is dropped from the list,
 #' - an empty lowest category makes psychotools rescale the item to start at
 #'   0, while the data keep the original codes,
@@ -491,26 +530,34 @@
 #' scorers keeps its threshold in psychotools and is reported elsewhere by
 #' `.extreme_only_categories()`.
 #'
+#' The error has class `easyRasch2_category_error`, so callers that wrap a
+#' fit in `tryCatch()` with their own advice can pass it through unchanged.
+#'
 #' @param data Numeric response matrix, all-`NA` rows already removed.
 #' @return Invisibly `TRUE`; stops naming each problem item otherwise.
 #' @keywords internal
 #' @noRd
-.check_cml_categories <- function(data) {
+.check_response_categories <- function(data) {
+  data <- as.matrix(data)
   items <- colnames(data)
   if (is.null(items)) items <- paste0("item ", seq_len(ncol(data)))
   problems <- character(0)
+  bad <- character(0)
   for (j in seq_len(ncol(data))) {
     x <- data[!is.na(data[, j]), j]
     if (length(x) == 0L) {
       problems <- c(problems, paste0(items[j], " (no responses)"))
+      bad <- c(bad, items[j])
       next
     }
     if (length(unique(x)) == 1L) {
       problems <- c(problems, paste0(items[j], " (only category ", x[1L], ")"))
+      bad <- c(bad, items[j])
       next
     }
     empty <- which(tabulate(x + 1L, nbins = max(x) + 1L) == 0L) - 1L
     if (length(empty) > 0L) {
+      bad <- c(bad, items[j])
       problems <- c(problems, paste0(
         items[j],
         if (length(empty) == 1L) " (empty category " else " (empty categories ",
@@ -519,15 +566,64 @@
     }
   }
   if (length(problems) > 0L) {
-    stop(
+    msg <- paste0(
       "Item thresholds cannot be estimated for: ",
       paste(problems, collapse = ", "),
       ". Remove items with a single response category, and merge an empty ",
       "category with an adjacent one (an empty lowest category means ",
-      "recoding the item to start at 0).",
-      call. = FALSE
+      "recoding the item to start at 0)."
     )
+    # `items` carries the problem item names, so callers need not parse the
+    # message (names may contain " (").
+    stop(structure(
+      class = c("easyRasch2_category_error", "error", "condition"),
+      list(message = msg, call = NULL, items = bad)
+    ))
   }
+  invisible(TRUE)
+}
+
+#' Category check on the complete cases a complete-case test uses
+#'
+#' iarm's item-restscore and conditional infit statistics refit the model on
+#' complete cases. When a category occurs only in incomplete responses, that
+#' refit reshapes the item: `RMitemInfit()` then returned infit 0 for every
+#' item and `RMitemRestscore()` NA for the item, with only psychotools'
+#' warnings. The full data can pass `.check_response_categories()` while the
+#' complete cases do not. This runs the full-data check first, then checks
+#' the complete cases and stops naming the item.
+#'
+#' @param data Response matrix or data.frame (may contain `NA`).
+#' @return Invisibly `TRUE`; stops with an `easyRasch2_category_error`.
+#' @keywords internal
+#' @noRd
+.check_complete_case_categories <- function(data) {
+  mat <- as.matrix(data)
+  # Full data first: a category empty in the full data must not be blamed on
+  # complete cases, where the advice to impute could not fix it.
+  .check_response_categories(mat)
+  if (!anyNA(mat)) {
+    return(invisible(TRUE))
+  }
+  cc <- stats::na.omit(mat)
+  if (nrow(cc) == 0L) {
+    return(invisible(TRUE)) # callers stop on "no complete cases" themselves
+  }
+  tryCatch(
+    .check_response_categories(cc),
+    error = function(e) {
+      if (!inherits(e, "easyRasch2_category_error")) stop(e)
+      msg <- paste0(
+        "This test uses complete cases only (", nrow(cc), " of ", nrow(mat),
+        " respondents), and in them: ", conditionMessage(e),
+        " Alternatively, impute the missing responses first."
+      )
+      stop(structure(
+        class = class(e),
+        list(message = msg, call = NULL, items = e$items)
+      ))
+    }
+  )
   invisible(TRUE)
 }
 

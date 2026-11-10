@@ -51,11 +51,15 @@
 #'   location, and a caption noting iteration count, bootstrap size, and
 #'   number of complete cases.
 #' * If `output = "dataframe"`: a data.frame with one row per item ×
-#'   classification combination (`Item`, `item_restscore`, `n`, `percent`,
-#'   `Infit_MSQ`, `Relative_location`), including `"no misfit"` rows.
+#'   classification combination (`Item`, `item_restscore`, `n`, `n_tested`,
+#'   `percent`, `Infit_MSQ`, `Relative_location`), including `"no misfit"`
+#'   rows. `percent` is `n` out of `n_tested`, the resamples in which the item
+#'   could be tested, and `NA` when it never could.
 #' * If `output = "raw"`: a long data.frame with one row per item ×
 #'   successful iteration (`iteration`, `Item`, `item_restscore`, `diff`,
-#'   `diff_abs`), where `diff = expected - observed`.
+#'   `diff_abs`), where `diff = expected - observed`. Rows for an item that
+#'   could not be tested in that resample have `NA` in `item_restscore`,
+#'   `diff` and `diff_abs`.
 #'
 #' @details
 #' The full-sample model is fitted by CML via `psychotools::pcmodel()` (a
@@ -76,8 +80,16 @@
 #' than the `eRm` MLE mean.
 #'
 #' Iterations that fail (e.g., due to convergence issues on a degenerate
-#' bootstrap sample) are silently discarded; the caption / `actual_iterations`
-#' reflects only successful runs.
+#' bootstrap sample) are discarded, and the caption and `actual_iterations`
+#' count only successful runs. A polytomous item that is constant in a
+#' resample makes that resample fail. A dichotomous item that is constant, or a
+#' polytomous item with an empty middle category, cannot be tested in that
+#' resample: it is left out of that item's percentages, and the other items
+#' keep the resample. Its percentages are then based on fewer resamples, which
+#' the caption lists. When the left-out item is a constant dichotomous item,
+#' the Benjamini-Hochberg adjustment in that resample covers only the items
+#' tested there, since iarm drops the item before testing. An item with an empty lowest category is shifted to start
+#' at 0 by psychotools and is still tested.
 #'
 #' Parallel processing is provided by the `mirai` package (optional). Install
 #' it with `install.packages("mirai")` to enable parallelisation.
@@ -192,7 +204,10 @@ RMitemRestscoreBoot <- function(
   # the package. The item-restscore and infit statistics from iarm are
   # conditional and engine-invariant; only the relative-location reference
   # shifts slightly (WLE vs eRm MLE person mean).
-  fit_full <- psychotools::pcmodel(data)
+  # iarm's statistics refit on complete cases, so check them too.
+  .check_complete_case_categories(data)
+  fit_full <- .cml_fit(data) # shared category check, then pcmodel()
+
   thr_list <- .center_thresholds(lapply(
     psychotools::threshpar(fit_full),
     as.numeric
@@ -272,6 +287,29 @@ RMitemRestscoreBoot <- function(
   }
   actual_iterations <- length(successful)
 
+  # Shown once at least one bootstrap iteration succeeded, so a call that
+  # stops earlier (data checks, all iterations failed) does not spend the
+  # once-per-session warning, and before any output, so it also reaches the
+  # dataframe/raw outputs and the no-flags path, where a low underfit rate
+  # reads as evidence of fit.
+  rlang::warn(
+    c(
+      paste0(
+        "RMitemRestscoreBoot() flags items with the asymptotic ",
+        "item-restscore test, which is miscalibrated under the Rasch model."
+      ),
+      i = paste0(
+        "It flags too many items as overfit in small or mistargeted ",
+        "dichotomous samples and too few as underfit at any sample size."
+      ),
+      i = "The percentages are flag rates at `samplesize`, not probabilities of misfit.",
+      i = "For a calibrated test, use RMitemRestscoreCutoff() with RMitemRestscore()."
+    ),
+    class = "easyRasch2_asymptotic_restscore_warning",
+    .frequency = "once",
+    .frequency_id = "easyRasch2_restscoreboot_asymptotic"
+  )
+
   # Tag with iteration index and stack
   iter_dfs <- lapply(seq_along(successful), function(i) {
     df <- successful[[i]]
@@ -314,8 +352,31 @@ RMitemRestscoreBoot <- function(
   )
   fit_tbl$n[is.na(fit_tbl$n)] <- 0L
   per_item_total <- tapply(fit_tbl$n, fit_tbl$Item, sum)
+  # Each item's base is the resamples in which it could be tested: a
+  # dichotomous item that is constant, or a polytomous item with an empty
+  # middle category, gets NA there and is left out. (A constant polytomous
+  # item makes iarm fail, so the whole resample is dropped; an empty lowest
+  # category is shifted by psychotools and still tested.) An item never
+  # testable gets NA, not NaN.
+  fit_tbl$n_tested <- as.integer(per_item_total[fit_tbl$Item])
   # Unrounded values; the kable path rounds a display copy before rendering.
-  fit_tbl$percent <- fit_tbl$n * 100 / per_item_total[fit_tbl$Item]
+  fit_tbl$percent <- ifelse(
+    fit_tbl$n_tested > 0L,
+    fit_tbl$n * 100 / fit_tbl$n_tested,
+    NA_real_
+  )
+  short <- per_item_total[item_names] < actual_iterations
+  short_note <- if (any(short)) {
+    paste0(
+      " Percentages are of the resamples in which an item could be tested,",
+      " which was fewer for: ",
+      paste0(item_names[short], " (", per_item_total[item_names][short], ")",
+             collapse = ", "),
+      "."
+    )
+  } else {
+    ""
+  }
 
   cfit_df <- data.frame(
     Item = item_names,
@@ -346,6 +407,7 @@ RMitemRestscoreBoot <- function(
   # --- Kable: only flagged items above cutoff --------------------------------
   show <- result_df[
     result_df$item_restscore != "no misfit" &
+      !is.na(result_df$percent) &
       result_df$percent > cutoff,
     ,
     drop = FALSE
@@ -381,7 +443,7 @@ RMitemRestscoreBoot <- function(
       "Relative item location"
     ),
     caption = paste0(
-      "Conditional mean-square infit from ",
+      "Item-restscore flag rates from ",
       actual_iterations,
       " successful bootstrap iterations (resample size ",
       samplesize,
@@ -393,7 +455,14 @@ RMitemRestscoreBoot <- function(
         n_total,
         if (has_na) "complete cases" else character()
       ),
-      "."
+      ". Conditional MSQ infit and relative item location are from the",
+      " full sample. Items are flagged by the asymptotic test",
+      " (BH-adjusted p < .05), which is miscalibrated under the Rasch model,",
+      " so the percentages are how often that test flags an item at this",
+      " resample size, not the probability that it misfits. Use",
+      " RMitemRestscoreCutoff() with RMitemRestscore() for simulation-based",
+      " p-values.",
+      short_note
     )
   )
 }
@@ -433,11 +502,23 @@ run_single_boot_restscore <- function(seed, data_list) {
 
       i1 <- as.data.frame(iarm::item_restscore(model_fit))
       res_mat <- i1[[1L]]
-      n_items <- length(data_list$item_names)
 
-      observed <- as.numeric(res_mat[seq_len(n_items), 1L])
-      expected <- as.numeric(res_mat[seq_len(n_items), 2L])
-      p_adj <- as.numeric(res_mat[seq_len(n_items), 5L])
+      # Match rows by item name, not position: when a dichotomous item is
+      # constant in this resample, psychotools drops it and iarm returns one
+      # row fewer (a constant polytomous item makes iarm error instead).
+      # That item gets NA here (left out of its own percentages), and the
+      # other items keep this resample's results.
+      idx <- if (is.null(rownames(res_mat))) {
+        if (nrow(res_mat) != length(data_list$item_names)) {
+          stop("iarm returned unnamed rows for a reduced item set.")
+        }
+        seq_len(nrow(res_mat))
+      } else {
+        match(data_list$item_names, rownames(res_mat))
+      }
+      observed <- as.numeric(res_mat[idx, 1L])
+      expected <- as.numeric(res_mat[idx, 2L])
+      p_adj <- as.numeric(res_mat[idx, 5L])
       diff_val <- expected - observed
 
       cls <- ifelse(

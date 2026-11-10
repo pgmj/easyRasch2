@@ -539,7 +539,7 @@ extract_ml_sampling_params <- function(data, is_polytomous) {
     names(params_list) <- colnames(as.matrix(data))
     params_list
   } else {
-    rasch_fit <- psychotools::raschmodel(data, hessian = FALSE)
+    rasch_fit <- .cml_fit(data, model = "auto", hessian = FALSE) # shared check
     # `coef(raschmodel)` returns K-1 parameters under the sum-to-zero
     # constraint, but the sampler needs all K item parameters. Use
     # `itempar()` which returns the full K-vector with proper names.

@@ -159,7 +159,7 @@ RMitemHierarchy <- function(
   # flattened threshold order, so SEs are the square-root of its diagonal.
   # Threshold locations match the previous eRm values after grand-mean
   # centring; the reported SEs differ slightly (psychotools vs eRm vcov).
-  fit <- psychotools::pcmodel(data)
+  fit <- .cml_fit(data) # shared category check, then pcmodel()
   tp <- psychotools::threshpar(fit, vcov = TRUE)
   se_all <- sqrt(diag(attr(tp, "vcov")))
 

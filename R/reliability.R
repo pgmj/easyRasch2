@@ -277,7 +277,10 @@ RMUreliability <- function(input_draws, level = 0.95, verbose = FALSE) {
 #' can be compared directly. See `dev/TODO-reliability-form.md` for the open
 #' question of which form this row should use.
 #'
-#' Bootstrap iterations that fail to converge are silently dropped.
+#' Bootstrap resamples that cannot be fitted are dropped, with a message
+#' giving how many and why. The usual reason is a sparse lowest or middle
+#' response category that is absent from the resample, so the interval
+#' leaves such resamples out.
 #'
 #' @references
 #' Bignardi, G., Kievit, R., & Bürkner, P. C. (2026). A general method for
@@ -377,6 +380,9 @@ RMreliability <- function(
   }
 
   # --- Full-sample fits ------------------------------------------------------
+  # Shared category check before mirt, which renumbers items with an empty
+  # lowest or interior category (the CML paths check in .fit_cml_thresholds()).
+  .check_response_categories(data)
   mirt_fit <- mirt::mirt(
     data = data,
     model = 1,
@@ -487,6 +493,7 @@ RMreliability <- function(
     ok <- vapply(boot_results, is.list, logical(1L))
     successful <- boot_results[ok]
     actual_boot <- length(successful)
+    .notify_dropped_resamples(boot_results, what = "interval")
 
     if (actual_boot < 2L) {
       warning(
@@ -678,7 +685,9 @@ run_single_reliability_boot <- function(seed, data_list) {
 
       list(alpha = alpha_b, psi = psi_b, marginal = marg_b)
     },
-    error = function(e) as.character(conditionMessage(e))
+    # Item names travel as an attribute (it survives mirai serialization)
+    # so .notify_dropped_resamples() need not parse the message.
+    error = function(e) structure(conditionMessage(e), items = e$items)
   )
 }
 
@@ -719,6 +728,8 @@ run_reliability_boot_parallel <- function(
       .latent_moments = .latent_moments,
       .marginal_summaries = .marginal_summaries,
       .fit_cml_thresholds = .fit_cml_thresholds,
+      .cml_fit = .cml_fit,
+      .check_response_categories = .check_response_categories,
       .estimate_thetas = .estimate_thetas,
       .theta_wle = .theta_wle,
       .pcm_cat_probs = .pcm_cat_probs,

@@ -15,8 +15,8 @@
 #'   2-category PCM); `"MML"` uses [mirt::mirt()] with
 #'   `itemtype = "Rasch"`. CML is preferred for
 #'   Rasch measurement; MML can be more robust when data are sparse.
-#'   When `estimator = "CML"` and sparse response categories are
-#'   detected, a warning suggests switching to MML.
+#'   Neither estimator can fit an item with one response category or an
+#'   empty lowest or interior category (see Details).
 #' @param format Character. `"long"` (default) returns one row per item
 #'   (dichotomous) or per item-threshold (polytomous); `"wide"` returns
 #'   one row per item with threshold columns `t1`, `t2`, ... plus a mean
@@ -53,13 +53,23 @@
 #' person locations at which adjacent response categories are equally
 #' probable) on the logit difficulty scale, matching [RMtargeting()].
 #'
-#' \strong{Standard errors.} For the CML path, threshold SEs are the
-#' square roots of the diagonal of the threshold-parameter covariance from
-#' `psychotools::threshpar(vcov = TRUE)`. For the MML path, SEs come from
-#' the \pkg{mirt} parameter covariance, propagated by the delta method
-#' through the linear threshold map.
+#' \strong{Standard errors.} For the CML path, threshold SEs come from the
+#' threshold-parameter covariance of `psychotools::threshpar(vcov = TRUE)`.
+#' For the MML path, they come from the \pkg{mirt} parameter covariance,
+#' propagated by the delta method through the linear threshold map. With
+#' `center = TRUE` the SEs are those of the centred thresholds, computed
+#' from the full covariance. This changes nothing for CML, whose thresholds
+#' are already sum-zero, and usually makes MML SEs smaller than on
+#' \pkg{mirt}'s own scale, where the latent mean is fixed at 0.
 #' Confidence intervals are Wald intervals and are symmetric on the
 #' logit scale.
+#'
+#' \strong{Response categories.} Both estimators stop with a message naming
+#' the item when an item has one response category, or an empty lowest or
+#' interior category. Such categories have no threshold that the data can
+#' estimate. Merge them with an adjacent category, or remove the item. An
+#' empty top category is allowed: the item is then fitted with one
+#' threshold fewer.
 #'
 #' @references
 #' Andrich, D. (1978). A rating formulation for ordered response
@@ -143,6 +153,32 @@ RMitemParameters <- function(
   if (center) {
     grand <- mean(unlist(fit$thr_list))
     fit$thr_list <- lapply(fit$thr_list, function(x) x - grand)
+    # The SE of a centred threshold needs the full threshold covariance
+    # through the centring matrix C = I - 11'/n. mirt's MML SEs are on its
+    # latent-mean-zero scale and shrink. psychotools' CML thresholds are
+    # already sum-zero, so the product would change nothing there except
+    # spreading a single NaN (near-singular Hessian) to every SE: skip it.
+    if (se && estimator == "MML" && !is.null(fit$vcov_thr) &&
+        !all(is.finite(fit$vcov_thr))) {
+      # Every centred SE depends on the whole covariance, so one non-finite
+      # entry would make all of them NaN. Keep mirt's per-item SEs and say so.
+      warning(
+        "The MML parameter covariance has non-finite entries, so standard ",
+        "errors are reported on mirt's scale and not adjusted for centring.",
+        call. = FALSE
+      )
+    } else if (se && estimator == "MML" && !is.null(fit$vcov_thr)) {
+      n_thr <- nrow(fit$vcov_thr)
+      C <- diag(n_thr) - 1 / n_thr
+      se_all <- sqrt(pmax(diag(C %*% fit$vcov_thr %*% t(C)), 0))
+      fit$se_list <- stats::setNames(
+        lapply(
+          split(se_all, rep.int(seq_along(fit$thr_list), lengths(fit$thr_list))),
+          as.numeric
+        ),
+        fit$items
+      )
+    }
   }
 
   z <- stats::qnorm(1 - (1 - ci_level) / 2)
@@ -258,31 +294,33 @@ RMitemParameters <- function(
 }
 
 # ---------------------------------------------------------------------
-# Internal: CML fit + threshold extraction (eRm)
+# Internal: CML fit + threshold extraction (psychotools)
 # ---------------------------------------------------------------------
 
-#' Fit a Rasch/PCM by CML and extract thresholds (+ delta-method SEs)
+#' Fit a Rasch/PCM by CML and extract thresholds (+ SEs from `threshpar()`)
 #'
 #' @param data Validated response data.
 #' @param se Logical; compute threshold standard errors.
 #' @return A normalised list: `model`, `items`, `is_polytomous`,
-#'   `thr_list` (Andrich thresholds per item) and, if `se`, `se_list`.
+#'   `thr_list` (Andrich thresholds per item) and, if `se`, `se_list` and
+#'   `vcov_thr` (the full threshold covariance, in `thr_list` order).
 #' @keywords internal
 #' @noRd
 .rasch_fit_cml <- function(data, se = TRUE) {
   data <- as.data.frame(data)
   is_poly <- max(as.matrix(data), na.rm = TRUE) > 1L
 
-  .sparsity_warning(data, is_poly)
-
-  # CML via psychotools (a dichotomous item is a 2-category PCM). Andrich
-  # thresholds and their covariance come from threshpar(); callers re-centre
-  # the thresholds, so the parameterisation here is immaterial. (Previously
-  # eRm::PCM/RM + eRm threshold SEs; threshold locations match to ~5e-5, the
-  # reported SEs differ slightly, psychotools vs eRm vcov.)
+  # CML via psychotools (a dichotomous item is a 2-category PCM), through the
+  # shared .cml_fit() so the category check runs first. Andrich thresholds and
+  # their covariance come from threshpar(), which returns them sum-zero.
+  # (Previously eRm::PCM/RM + eRm threshold SEs; threshold locations match to
+  # ~5e-5, the reported SEs differ slightly, psychotools vs eRm vcov.)
+  # One handler that tests the class: with two handlers, tryCatch() nests them
+  # and an error re-raised by the first would be caught again by the second.
   fit <- tryCatch(
-    psychotools::pcmodel(data),
+    .cml_fit(data),
     error = function(e) {
+      if (inherits(e, "easyRasch2_category_error")) stop(e)
       stop(
         "CML estimation failed (",
         conditionMessage(e),
@@ -292,14 +330,18 @@ RMitemParameters <- function(
       )
     }
   )
+  # After the fit, so data that stop on the category check do not warn first.
+  .sparsity_warning(data)
 
   items <- colnames(data)
   tp <- psychotools::threshpar(fit, vcov = se)
   thr_list <- stats::setNames(lapply(tp, as.numeric), items)
 
   se_list <- NULL
+  vcov_thr <- NULL
   if (se) {
-    se_all <- sqrt(diag(attr(tp, "vcov")))
+    vcov_thr <- unname(as.matrix(attr(tp, "vcov")))
+    se_all <- sqrt(diag(vcov_thr))
     se_list <- split(se_all, rep.int(seq_along(thr_list), lengths(thr_list)))
     se_list <- stats::setNames(lapply(se_list, as.numeric), items)
   }
@@ -309,7 +351,8 @@ RMitemParameters <- function(
     items = items,
     is_polytomous = is_poly,
     thr_list = thr_list,
-    se_list = se_list
+    se_list = se_list,
+    vcov_thr = vcov_thr
   )
 }
 
@@ -334,6 +377,11 @@ RMitemParameters <- function(
   data <- as.data.frame(data)
   is_poly <- max(as.matrix(data), na.rm = TRUE) > 1L
   items <- colnames(data)
+
+  # mirt renumbers items with an empty lowest or interior category to run
+  # 0, 1, ... while callers keep the original codes, the same misalignment
+  # as in psychotools, so the shared check runs here too.
+  .check_response_categories(data)
 
   fit <- suppressMessages(
     mirt::mirt(
@@ -369,8 +417,16 @@ RMitemParameters <- function(
   }
 
   se_list <- NULL
+  vcov_thr <- NULL
   if (se) {
-    se_list <- .mml_threshold_se(V, steps)
+    vcov_thr <- .mml_threshold_vcov(V, steps)
+    se_list <- if (is.null(vcov_thr)) {
+      lapply(steps, function(m) rep(NA_real_, m))
+    } else {
+      se_all <- sqrt(pmax(diag(vcov_thr), 0))
+      lapply(split(se_all, rep.int(seq_along(steps), steps)), as.numeric)
+    }
+    names(se_list) <- items
   }
 
   list(
@@ -378,94 +434,67 @@ RMitemParameters <- function(
     items = items,
     is_polytomous = is_poly,
     thr_list = thr_list,
-    se_list = se_list
+    se_list = se_list,
+    vcov_thr = vcov_thr
   )
 }
 
-#' Delta-method threshold SEs from a mirt parameter covariance
+#' Threshold covariance from a mirt parameter covariance (delta method)
 #'
 #' The free intercept parameters appear in the covariance in item order
-#' (`d1.<idx>, d2.<idx>, ...`; d_0 is fixed at 0), so they are sliced
-#' into per-item blocks of `steps[i]` parameters and propagated through
-#' the linear threshold map `tau_k = d_{k-1} - d_k`.
+#' (`d1.<idx>, d2.<idx>, ...`; d_0 is fixed at 0). They are propagated
+#' through the linear threshold map `tau_k = d_{k-1} - d_k`, item by item
+#' but over the full covariance, so that cross-item covariances are kept for
+#' the centring in `RMitemParameters()`.
 #'
 #' @param V Parameter covariance from `vcov(fit)`, or `NULL`.
 #' @param steps Integer vector of threshold counts per item.
-#' @return List of threshold-SE vectors, one per item (all `NA` if the
-#'   covariance is unavailable or does not line up).
+#' @return The threshold covariance matrix (thresholds in item order), or
+#'   `NULL` if the covariance is unavailable or does not line up.
 #' @keywords internal
 #' @noRd
-.mml_threshold_se <- function(V, steps) {
-  na_out <- lapply(steps, function(m) rep(NA_real_, m))
+.mml_threshold_vcov <- function(V, steps) {
   if (is.null(V)) {
-    return(na_out)
+    return(NULL)
   }
-
   d_rows <- grep("^d[0-9]*\\.", rownames(V))
   if (length(d_rows) != sum(steps)) {
-    return(na_out)
+    return(NULL)
   }
 
-  out <- vector("list", length(steps))
+  # Block-diagonal J: within item i, tau_1 = -d_1 and tau_k = d_{k-1} - d_k.
+  n <- sum(steps)
+  J <- matrix(0, n, n)
   off <- 0L
-  for (i in seq_along(steps)) {
-    m <- steps[i]
-    idx <- d_rows[(off + 1L):(off + m)]
-    v_d <- V[idx, idx, drop = FALSE]
-
-    # tau_k = d_{k-1} - d_k (d_0 fixed): linear map J on free d_1..d_m.
-    J <- matrix(0, m, m)
+  for (m in steps) {
     for (k in seq_len(m)) {
-      if (k == 1L) {
-        J[1L, 1L] <- -1
-      } else {
-        J[k, k - 1L] <- 1
-        J[k, k] <- -1
-      }
+      J[off + k, off + k] <- -1
+      if (k > 1L) J[off + k, off + k - 1L] <- 1
     }
-    out[[i]] <- sqrt(pmax(diag(J %*% v_d %*% t(J)), 0))
     off <- off + m
   }
-  out
+  J %*% V[d_rows, d_rows, drop = FALSE] %*% t(J)
 }
 
 # ---------------------------------------------------------------------
 # Internal: sparsity warning for the CML path
 # ---------------------------------------------------------------------
 
-#' Warn about response-category sparsity that can destabilise CML
+#' Warn about categories used only by extreme scorers
+#'
+#' Until the 2026-11 code review this also warned about constant items and
+#' empty categories, suggesting `estimator = "MML"`. Those shapes now stop in
+#' `.check_response_categories()` for every estimator (mirt renumbers them
+#' the same way), so that part only preceded an error with wrong advice and
+#' was removed. What remains is the extreme-only case, which CML fits but
+#' cannot estimate well.
 #'
 #' @param data Response data.frame.
-#' @param is_poly Logical; polytomous data.
-#' @return Invisibly `NULL`; emits a warning when sparse categories or
-#'   zero-variance items are found, and a second one naming categories used
-#'   only by respondents with a zero or perfect score.
+#' @return Invisibly `NULL`; warns naming categories used only by
+#'   respondents with a zero or perfect score.
 #' @keywords internal
 #' @noRd
-.sparsity_warning <- function(data, is_poly) {
-  flagged <- character(0)
-  for (nm in colnames(data)) {
-    x <- data[[nm]]
-    x <- x[!is.na(x)]
-    if (length(unique(x)) <= 1L) {
-      flagged <- c(flagged, nm)
-      next
-    }
-    if (is_poly) {
-      counts <- tabulate(x + 1L, nbins = max(x) + 1L)
-      if (any(counts == 0L)) flagged <- c(flagged, nm)
-    }
-  }
-  if (length(flagged) > 0L) {
-    warning(
-      "Sparse or zero-variance response categories detected in ",
-      "item(s): ",
-      paste(unique(flagged), collapse = ", "),
-      ". ",
-      "CML estimates may be unstable; consider estimator = \"MML\".",
-      call. = FALSE
-    )
-  }
+.sparsity_warning <- function(data) {
   ec <- .extreme_only_categories(data)
   if (nrow(ec) > 0L) {
     warning(.extreme_only_message(ec), call. = FALSE)

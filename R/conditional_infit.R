@@ -357,6 +357,8 @@ RMitemInfit <- function(
   n_total <- nrow(as.data.frame(data))
   has_na <- anyNA(data)
   data <- .drop_empty_respondents(data)
+  # iarm's conditional infit refits on complete cases, so check them too.
+  .check_complete_case_categories(data)
 
   data_mat <- as.matrix(data)
 
@@ -365,7 +367,7 @@ RMitemInfit <- function(
   # and WLE person locations, consistent with the rest of the package. The
   # conditional infit/outfit statistic from iarm is engine-invariant; only the
   # relative-location reference shifts slightly (WLE vs eRm MLE person mean).
-  fit <- psychotools::pcmodel(data)
+  fit <- .cml_fit(data) # shared category check, then pcmodel()
   thr_list <- .center_thresholds(lapply(
     psychotools::threshpar(fit),
     as.numeric

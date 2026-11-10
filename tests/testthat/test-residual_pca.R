@@ -164,10 +164,11 @@ test_that("RMdimResidualPCACutoff is reproducible with the same seed", {
   expect_equal(r1$results, r2$results)
 })
 
-test_that("RMdimResidualPCA warns on sparse/zero-variance items (CML)", {
+test_that("RMdimResidualPCA stops on a constant item, naming it (CML)", {
   skip_if_not_installed("eRm")
   df <- make_dichotomous()
-  df[[1]] <- 0L   # constant item -> destabilises CML; should warn, not fail silently
-  expect_warning(try(RMdimResidualPCA(df, output = "dataframe"), silent = TRUE),
-                 regexp = "[Ss]parse|zero-variance")
+  df[[1]] <- 0L   # constant item: psychotools would drop it and misalign
+  first <- names(df)[1]
+  expect_error(suppressWarnings(RMdimResidualPCA(df, output = "dataframe")),
+               regexp = paste0(first, " \\(only category 0\\)"))
 })

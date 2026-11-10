@@ -7,6 +7,17 @@ make_dichotomous <- function(n = 200, k = 8, seed = 1L) {
   df
 }
 
+# Muffles only the once-per-session asymptotic-test warning, so other
+# warnings still surface. testthat shows "once" warnings on every call.
+quiet_boot <- function(expr) {
+  withCallingHandlers(
+    expr,
+    easyRasch2_asymptotic_restscore_warning = function(w) {
+      invokeRestart("muffleWarning")
+    }
+  )
+}
+
 # ---------------------------------------------------------------------
 # Input validation
 # ---------------------------------------------------------------------
@@ -23,9 +34,9 @@ test_that("RMitemRestscoreBoot output = 'dataframe' returns one row per item × 
   skip_on_cran()
   skip_if_not_installed("iarm")
   df <- make_dichotomous()
-  res <- RMitemRestscoreBoot(df, iterations = 10L, samplesize = 100L,
+  res <- quiet_boot(RMitemRestscoreBoot(df, iterations = 10L, samplesize = 100L,
                          parallel = FALSE, seed = 1L,
-                         output = "dataframe")
+                         output = "dataframe"))
   expect_s3_class(res, "data.frame")
   # 8 items × 3 classifications (overfit / underfit / no misfit) = 24 rows
   expect_equal(nrow(res), ncol(df) * 3L)
@@ -37,9 +48,9 @@ test_that("RMitemRestscoreBoot output = 'raw' returns per-iteration data", {
   skip_on_cran()
   skip_if_not_installed("iarm")
   df <- make_dichotomous()
-  res <- RMitemRestscoreBoot(df, iterations = 10L, samplesize = 100L,
+  res <- quiet_boot(RMitemRestscoreBoot(df, iterations = 10L, samplesize = 100L,
                          parallel = FALSE, seed = 1L,
-                         output = "raw")
+                         output = "raw"))
   expect_s3_class(res, "data.frame")
   expect_true(nrow(res) > 0L)
 })
@@ -49,9 +60,9 @@ test_that("RMitemRestscoreBoot output = 'kable' returns a knitr_kable", {
   skip_if_not_installed("iarm")
   skip_if_not_installed("knitr")
   df  <- make_dichotomous()
-  out <- RMitemRestscoreBoot(df, iterations = 10L, samplesize = 100L,
+  out <- quiet_boot(RMitemRestscoreBoot(df, iterations = 10L, samplesize = 100L,
                          parallel = FALSE, seed = 1L,
-                         output = "kable")
+                         output = "kable"))
   expect_s3_class(out, "knitr_kable")
 })
 
@@ -59,12 +70,12 @@ test_that("RMitemRestscoreBoot is reproducible with the same seed", {
   skip_on_cran()
   skip_if_not_installed("iarm")
   df <- make_dichotomous()
-  r1 <- RMitemRestscoreBoot(df, iterations = 5L, samplesize = 100L,
+  r1 <- quiet_boot(RMitemRestscoreBoot(df, iterations = 5L, samplesize = 100L,
                         parallel = FALSE, seed = 42L,
-                        output = "dataframe")
-  r2 <- RMitemRestscoreBoot(df, iterations = 5L, samplesize = 100L,
+                        output = "dataframe"))
+  r2 <- quiet_boot(RMitemRestscoreBoot(df, iterations = 5L, samplesize = 100L,
                         parallel = FALSE, seed = 42L,
-                        output = "dataframe")
+                        output = "dataframe"))
   expect_equal(r1, r2)
 })
 
@@ -76,10 +87,22 @@ test_that("RMitemRestscoreBoot drops all-NA respondents instead of erroring", {
   df[3, ] <- NA
 
   expect_message(
-    res <- RMitemRestscoreBoot(df, iterations = 5, samplesize = 40,
+    res <- quiet_boot(RMitemRestscoreBoot(df, iterations = 5, samplesize = 40,
                                parallel = FALSE, seed = 1,
-                               output = "dataframe"),
+                               output = "dataframe")),
     "no responses dropped"
   )
   expect_s3_class(res, "data.frame")
+})
+
+test_that("RMitemRestscoreBoot warns that its flags use the asymptotic test", {
+  skip_on_cran()
+  skip_if_not_installed("iarm")
+  df <- make_dichotomous()
+  rlang::local_options(rlib_warning_verbosity = "verbose")
+  expect_warning(
+    RMitemRestscoreBoot(df, iterations = 5L, samplesize = 100L,
+                        parallel = FALSE, seed = 1L, output = "dataframe"),
+    class = "easyRasch2_asymptotic_restscore_warning"
+  )
 })

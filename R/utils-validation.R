@@ -152,6 +152,64 @@ validate_response_data <- function(data) {
   paste0("All simulation iterations failed. ", detail)
 }
 
+#' Tell the user how many bootstrap resamples were dropped, and why
+#'
+#' Bootstrap workers return a list on success and an error message (character)
+#' on failure. The most common failure is a resample in which a sparse
+#' response category of some item is absent, so that item's threshold cannot
+#' be estimated (`.check_response_categories()`). Workers pass the item names
+#' on as an `items` attribute of the message. The interval or band then leaves
+#' out resamples that lost an item's lowest or a middle category (an empty top
+#' category is allowed, so those resamples are kept). This names how many
+#' resamples were dropped, how many for that reason and for which items, so
+#' that a smaller resample count in the output is explained.
+#'
+#' @param results List of bootstrap results, one per resample.
+#' @param what What the resamples feed, for the message: `"interval"` or
+#'   `"band"`.
+#' @return Invisibly `NULL`; informs when at least one resample failed.
+#' @keywords internal
+#' @noRd
+.notify_dropped_resamples <- function(results, what = "interval") {
+  failed <- Filter(Negate(is.list), results)
+  if (length(failed) == 0L) {
+    return(invisible(NULL))
+  }
+  n_total <- length(results)
+  n_failed <- length(failed)
+  n_left <- n_total - n_failed
+  cat_items <- lapply(failed, attr, "items")
+  is_cat <- !vapply(cat_items, is.null, logical(1L))
+
+  # With fewer than 2 left, the caller's own warning says the interval or
+  # band is not reported, so say nothing here about what it uses.
+  bullets <- paste0(
+    n_failed, " of ", n_total, " bootstrap resamples were dropped.",
+    if (n_left >= 2L) paste0(" The ", what, " uses the remaining ", n_left, ".")
+  )
+  if (any(is_cat)) {
+    counts <- sort(table(unlist(cat_items[is_cat])), decreasing = TRUE)
+    shown <- utils::head(counts, 3L)
+    bullets <- c(bullets, i = paste0(
+      sum(is_cat), " lacked a response category that the full data have (",
+      paste0(names(shown), " in ", as.integer(shown), collapse = ", "),
+      if (length(counts) > 3L) ", ..." else "",
+      "), so that item's thresholds could not be estimated. The ", what,
+      " therefore leaves out resamples that lost an item's lowest or a ",
+      "middle category. Such sparse categories are worth inspecting."
+    ))
+  }
+  if (any(!is_cat)) {
+    other <- sort(table(unlist(failed[!is_cat])), decreasing = TRUE)
+    bullets <- c(bullets, i = paste0(
+      sum(!is_cat), " failed for another reason, most often: ",
+      names(other)[1L]
+    ))
+  }
+  rlang::inform(bullets)
+  invisible(NULL)
+}
+
 #' Build the standard estimation-sample-size caption clause
 #'
 #' Returns `"n = X respondents"`, appending ` of Y` only when respondents were

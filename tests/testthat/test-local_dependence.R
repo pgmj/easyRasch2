@@ -407,13 +407,13 @@ test_that("dgp = 'conditional' runs and is consumable downstream", {
   expect_named(res, c("matrix", "pairs"))
 })
 
-test_that("RMlocdepQ3(estimator='CML') warns on sparse/zero-variance items", {
+test_that("RMlocdepQ3(estimator='CML') stops on a constant item, naming it", {
   skip_if_not_installed("eRm")
   df <- as.data.frame(matrix(sample(0:1, 200 * 6, replace = TRUE), 200, 6))
   colnames(df) <- paste0("I", 1:6)
-  df[[1]] <- 0L   # constant item -> destabilises CML; should warn
-  expect_warning(try(RMlocdepQ3(df, estimator = "CML"), silent = TRUE),
-                 regexp = "[Ss]parse|zero-variance")
+  df[[1]] <- 0L   # constant item: psychotools would drop it and misalign
+  expect_error(suppressWarnings(RMlocdepQ3(df, estimator = "CML")),
+               regexp = "I1 \\(only category 0\\)")
 })
 
 # ---------------------------------------------------------------------

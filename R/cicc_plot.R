@@ -284,8 +284,8 @@ RMitemICCPlot <- function(data,
 
   # --- Model curve + conditional variance (shared CML engine) ----------------
   data_mat <- as.matrix(data)
-  .sparsity_warning(data, is_poly = max(data_mat, na.rm = TRUE) > 1L)
   thr_list <- .fit_cml_thresholds(data_mat)
+  .sparsity_warning(data) # after the fit: category-check stops come first
   mom      <- .cond_moments(thr_list)              # $E, $V by total score; $max_score
   max_sc   <- mom$max_score
   steps    <- vapply(thr_list, length, integer(1L))   # per-item max score

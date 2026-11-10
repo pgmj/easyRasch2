@@ -318,6 +318,8 @@ RMitemRestscore <- function(
   data_mat <- as.matrix(data)
   n_items <- ncol(data)
   n_complete <- nrow(stats::na.omit(data))
+  # iarm's item-restscore test refits on complete cases, so check them too.
+  .check_complete_case_categories(data)
   if (!is.null(cutoff_full)) {
     .check_cutoff_sample(
       cutoff_full$sample_n,
@@ -332,7 +334,7 @@ RMitemRestscore <- function(
   # item-restscore statistic from iarm is conditional and engine-invariant; the
   # relative-location reference shifts only slightly (WLE vs eRm MLE person
   # mean), since item and person locations move together with the scale.
-  fit <- psychotools::pcmodel(data)
+  fit <- .cml_fit(data) # shared category check, then pcmodel()
   thr_list <- .center_thresholds(lapply(
     psychotools::threshpar(fit),
     as.numeric
@@ -405,8 +407,9 @@ RMitemRestscore <- function(
     # Recompute the observed statistic the way RMitemRestscoreCutoff() computes
     # its null, so both sides are unrounded (iarm returns them through
     # format(digits = 3)). Complete cases, refitted when needed, as iarm does.
-    # With an unobserved middle category .restscore_gamma() refuses the data,
-    # and the iarm values (expected NA for that item) are kept.
+    # .check_complete_case_categories() above has already stopped on complete
+    # cases that reshape an item, so the refit below is aligned. The tryCatch
+    # keeps the iarm values if .restscore_gamma() still refuses the data.
     cc <- stats::na.omit(data_mat)
     fit_cc <- if (has_na) psychotools::pcmodel(cc, hessian = FALSE) else fit
     rs <- tryCatch(

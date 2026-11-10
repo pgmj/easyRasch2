@@ -25,8 +25,8 @@ parameters with \code{\link[psychotools:pcmodel]{psychotools::pcmodel()}} (a dic
 2-category PCM); \code{"MML"} uses \code{\link[mirt:mirt]{mirt::mirt()}} with
 \code{itemtype = "Rasch"}. CML is preferred for
 Rasch measurement; MML can be more robust when data are sparse.
-When \code{estimator = "CML"} and sparse response categories are
-detected, a warning suggests switching to MML.}
+Neither estimator can fit an item with one response category or an
+empty lowest or interior category (see Details).}
 
 \item{format}{Character. \code{"long"} (default) returns one row per item
 (dichotomous) or per item-threshold (polytomous); \code{"wide"} returns
@@ -77,13 +77,23 @@ accordingly. Thresholds are reported as Andrich thresholds (the
 person locations at which adjacent response categories are equally
 probable) on the logit difficulty scale, matching \code{\link[=RMtargeting]{RMtargeting()}}.
 
-\strong{Standard errors.} For the CML path, threshold SEs are the
-square roots of the diagonal of the threshold-parameter covariance from
-\code{psychotools::threshpar(vcov = TRUE)}. For the MML path, SEs come from
-the \pkg{mirt} parameter covariance, propagated by the delta method
-through the linear threshold map.
+\strong{Standard errors.} For the CML path, threshold SEs come from the
+threshold-parameter covariance of \code{psychotools::threshpar(vcov = TRUE)}.
+For the MML path, they come from the \pkg{mirt} parameter covariance,
+propagated by the delta method through the linear threshold map. With
+\code{center = TRUE} the SEs are those of the centred thresholds, computed
+from the full covariance. This changes nothing for CML, whose thresholds
+are already sum-zero, and usually makes MML SEs smaller than on
+\pkg{mirt}'s own scale, where the latent mean is fixed at 0.
 Confidence intervals are Wald intervals and are symmetric on the
 logit scale.
+
+\strong{Response categories.} Both estimators stop with a message naming
+the item when an item has one response category, or an empty lowest or
+interior category. Such categories have no threshold that the data can
+estimate. Merge them with an adjacent category, or remove the item. An
+empty top category is allowed: the item is then fitted with one
+threshold fewer.
 }
 \examples{
 \donttest{

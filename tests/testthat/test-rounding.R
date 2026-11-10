@@ -18,7 +18,8 @@
 # Columns that are counts rather than statistics, where rounding would be
 # meaningless. Keep this list short and say why each one is here.
 allowed_unrounded <- c(
-  "n" # RMitemRestscoreBoot: iterations in which the item was flagged
+  "n", # RMitemRestscoreBoot: iterations in which the item was flagged
+  "n_tested" # RMitemRestscoreBoot: iterations in which the item could be tested
 )
 
 small_poly <- function(n = 120L, k = 5L, seed = 4L) {

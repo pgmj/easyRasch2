@@ -174,7 +174,10 @@ the same quantity in the bounded ratio form alongside this one, so the two
 can be compared directly. See \code{dev/TODO-reliability-form.md} for the open
 question of which form this row should use.
 
-Bootstrap iterations that fail to converge are silently dropped.
+Bootstrap resamples that cannot be fitted are dropped, with a message
+giving how many and why. The usual reason is a sparse lowest or middle
+response category that is absent from the resample, so the interval
+leaves such resamples out.
 }
 \examples{
 \donttest{

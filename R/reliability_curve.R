@@ -39,7 +39,9 @@
 #' @param boot Logical. If `TRUE`, add a bootstrap confidence band to the curve
 #'   by resampling respondents. Default `FALSE`.
 #' @param boot_iter Integer. Bootstrap iterations when `boot = TRUE`. Default
-#'   `200`.
+#'   `200`. Resamples that cannot be fitted, usually because a sparse lowest
+#'   or middle response category is absent from them, are dropped with a message
+#'   giving how many and why.
 #' @param conf_int Numeric in (0, 1). HDCI width for the bootstrap band.
 #'   Default `0.95`.
 #' @param parallel Logical. Use `mirai` for the bootstrap if available.
@@ -650,6 +652,7 @@ RMreliabilityCurve <- function(
   ok <- vapply(results, is.list, logical(1L))
   successful <- results[ok]
   n_ok <- length(successful)
+  .notify_dropped_resamples(results, what = "band")
 
   if (n_ok < 2L) {
     warning(
@@ -706,7 +709,9 @@ run_single_curve_boot <- function(seed, data_list) {
       }
       .curve_stats(thr_b, data_list$grid, lat_b$sd)
     },
-    error = function(e) as.character(conditionMessage(e))
+    # Item names travel as an attribute (it survives mirai serialization)
+    # so .notify_dropped_resamples() need not parse the message.
+    error = function(e) structure(conditionMessage(e), items = e$items)
   )
 }
 
@@ -739,6 +744,8 @@ run_single_curve_boot <- function(seed, data_list) {
       .test_information = .test_information,
       .latent_moments = .latent_moments,
       .fit_cml_thresholds = .fit_cml_thresholds,
+      .cml_fit = .cml_fit,
+      .check_response_categories = .check_response_categories,
       .pcm_cat_probs = .pcm_cat_probs,
       .center_thresholds = .center_thresholds,
       .estimate_prior_sd = .estimate_prior_sd,

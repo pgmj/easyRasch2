@@ -66,7 +66,9 @@ the theta axis.}
 by resampling respondents. Default \code{FALSE}.}
 
 \item{boot_iter}{Integer. Bootstrap iterations when \code{boot = TRUE}. Default
-\code{200}.}
+\code{200}. Resamples that cannot be fitted, usually because a sparse lowest
+or middle response category is absent from them, are dropped with a message
+giving how many and why.}
 
 \item{conf_int}{Numeric in (0, 1). HDCI width for the bootstrap band.
 Default \code{0.95}.}

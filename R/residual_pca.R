@@ -204,15 +204,14 @@ RMdimResidualPCA <- function(
   data_mat <- as.matrix(data)
   is_polytomous <- max(data_mat, na.rm = TRUE) > 1L
 
-  # CML (psychotools) can choke or destabilise on sparse / zero-variance
-  # response categories; warn before fitting, consistent with RMitemParameters().
-  .sparsity_warning(data, is_poly = is_polytomous)
-
   # CML item thresholds (psychotools) and WLE-based standardized residuals,
   # consistent with the rest of the package. Item locations are per-item mean
   # thresholds; the standardized residuals (x - E)/sqrt(Var) come from the
   # shared CML/WLE engine. (Previously eRm CML + eRm::itemfit() MLE residuals.)
   thr_list <- .fit_cml_thresholds(data)
+  # Categories used only by extreme scorers; after the fit so that data
+  # stopped by the category check do not warn first.
+  .sparsity_warning(data)
   item_locations <- vapply(thr_list, mean, numeric(1L))
   names(item_locations) <- names(data)
 
@@ -801,6 +800,8 @@ run_pca_sim_parallel <- function(
       # CML/WLE residual engine used by .rasch_std_residuals() in the daemon.
       .rasch_std_residuals = .rasch_std_residuals,
       .fit_cml_thresholds = .fit_cml_thresholds,
+      .cml_fit = .cml_fit,
+      .check_response_categories = .check_response_categories,
       .estimate_thetas = .estimate_thetas,
       .theta_wle = .theta_wle,
       .pcm_cat_probs = .pcm_cat_probs,

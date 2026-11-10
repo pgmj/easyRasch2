@@ -55,11 +55,15 @@ result, \% of iterations, Conditional MSQ infit, and Relative item
 location, and a caption noting iteration count, bootstrap size, and
 number of complete cases.
 \item If \code{output = "dataframe"}: a data.frame with one row per item ×
-classification combination (\code{Item}, \code{item_restscore}, \code{n}, \code{percent},
-\code{Infit_MSQ}, \code{Relative_location}), including \code{"no misfit"} rows.
+classification combination (\code{Item}, \code{item_restscore}, \code{n}, \code{n_tested},
+\code{percent}, \code{Infit_MSQ}, \code{Relative_location}), including \code{"no misfit"}
+rows. \code{percent} is \code{n} out of \code{n_tested}, the resamples in which the item
+could be tested, and \code{NA} when it never could.
 \item If \code{output = "raw"}: a long data.frame with one row per item ×
 successful iteration (\code{iteration}, \code{Item}, \code{item_restscore}, \code{diff},
-\code{diff_abs}), where \code{diff = expected - observed}.
+\code{diff_abs}), where \code{diff = expected - observed}. Rows for an item that
+could not be tested in that resample have \code{NA} in \code{item_restscore},
+\code{diff} and \code{diff_abs}.
 }
 }
 \description{
@@ -104,8 +108,16 @@ because it now uses the WLE person mean (finite at extreme scores) rather
 than the \code{eRm} MLE mean.
 
 Iterations that fail (e.g., due to convergence issues on a degenerate
-bootstrap sample) are silently discarded; the caption / \code{actual_iterations}
-reflects only successful runs.
+bootstrap sample) are discarded, and the caption and \code{actual_iterations}
+count only successful runs. A polytomous item that is constant in a
+resample makes that resample fail. A dichotomous item that is constant, or a
+polytomous item with an empty middle category, cannot be tested in that
+resample: it is left out of that item's percentages, and the other items
+keep the resample. Its percentages are then based on fewer resamples, which
+the caption lists. When the left-out item is a constant dichotomous item,
+the Benjamini-Hochberg adjustment in that resample covers only the items
+tested there, since iarm drops the item before testing. An item with an empty lowest category is shifted to start
+at 0 by psychotools and is still tested.
 
 Parallel processing is provided by the \code{mirai} package (optional). Install
 it with \code{install.packages("mirai")} to enable parallelisation.

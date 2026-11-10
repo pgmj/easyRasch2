@@ -219,6 +219,11 @@ RMdifLR <- function(
   # ---------------------------------------------------------------------
   # Fit, run LRtest, extract per-group + overall thresholds and SEs
   # ---------------------------------------------------------------------
+  # Shared category check on the full data: with an empty lowest or interior
+  # category eRm fits anyway and returns meaningless SEs. Items with an empty
+  # category within one group only are dropped by eRm::LRtest() (to be
+  # reported explicitly; see dev/code-review/item_parameters.md).
+  .check_response_categories(data)
   fit_full <- if (resolved_model == "PCM") eRm::PCM(data) else eRm::RM(data)
 
   lrt <- tryCatch(

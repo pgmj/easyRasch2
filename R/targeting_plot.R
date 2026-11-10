@@ -665,7 +665,7 @@ RMtargeting <- function(
   # 2-category PCM), on the grand-mean-zero scale. Locations match the previous
   # eRm values; SEs differ slightly (psychotools vs eRm vcov). Person locations
   # are estimated downstream by WLE from these thresholds.
-  fit <- psychotools::pcmodel(data)
+  fit <- .cml_fit(data) # shared category check, then pcmodel()
   tp <- psychotools::threshpar(fit, vcov = TRUE)
   se_all <- sqrt(diag(attr(tp, "vcov")))
   loc <- unlist(lapply(tp, as.numeric), use.names = FALSE)
@@ -694,6 +694,9 @@ RMtargeting <- function(
 #' @return Named list with `$thresholds` and `$erm_out`.
 #' @noRd
 .estimate_thresholds_mml <- function(data, is_dicho) {
+  # Shared category check: mirt renumbers items with an empty lowest or
+  # interior category, so thresholds would not match the data's codes.
+  .check_response_categories(data)
   mirt_out <- mirt::mirt(
     data,
     model = 1,

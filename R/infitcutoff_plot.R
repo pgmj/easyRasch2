@@ -251,6 +251,8 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
   # Respondents with no responses at all break the CML fit below
   # (psychotools errors on all-NA rows); drop them, as in RMitemInfit().
   data <- .drop_empty_respondents(data)
+  # iarm's conditional infit refits on complete cases, so check them too.
+  .check_complete_case_categories(data)
   .check_cutoff_sample(
     simfit$sample_n,
     nrow(stats::na.omit(data)),
@@ -265,7 +267,7 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
   # CML fit via psychotools (a dichotomous item is a 2-category PCM);
   # iarm::out_infit() accepts pcmodel objects and matches the former
   # eRm::RM()/PCM() route to ~1e-6 (same pairing as RMitemInfitCutoff()).
-  model_fit <- psychotools::pcmodel(data)
+  model_fit <- .cml_fit(data) # shared category check, then pcmodel()
   cfit <- iarm::out_infit(model_fit)
 
   observed_df <- data.frame(
