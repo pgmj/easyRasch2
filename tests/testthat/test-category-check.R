@@ -227,3 +227,35 @@ test_that("RMitemInfitMI skips imputations that lack a category (G4)", {
   expect_true(any(grepl("I1 in 1", ws, fixed = TRUE)))
   expect_false(any(grepl("failed and were excluded", ws, fixed = TRUE)))
 })
+
+test_that(".mml_fit() and .cml_fit() share the category check (G8)", {
+  skip_if_not_installed("mirt")
+  d <- mid_empty()
+  expect_error(.mml_fit(d), msg_mid)
+  expect_error(.cml_fit(d), msg_mid)
+  # check = FALSE leaves psychotools' own handling (the RMitemRestscoreBoot
+  # resamples and Martin-Löf simulated datasets rely on it)
+  expect_s3_class(suppressWarnings(.cml_fit(d, check = FALSE)), "pcmodel")
+})
+
+test_that("no model fit bypasses .cml_fit() or .mml_fit() (G8)", {
+  # Source files are only present when testing from the source tree.
+  r_dir <- testthat::test_path("..", "..", "R")
+  skip_if_not(dir.exists(r_dir), "R sources not available")
+  files <- setdiff(list.files(r_dir, "\\.R$", full.names = TRUE),
+                   file.path(r_dir, "utils-theta.R"))
+  # eRm fits are allowed only where the check runs explicitly before them.
+  erm_allowed <- "dif_lr.R"
+  hits <- unlist(lapply(files, function(f) {
+    code <- readLines(f, warn = FALSE)
+    code <- gsub('"[^"]*"', '""', code) # drop strings (a "#" inside one)
+    code <- sub("#.*$", "", code) # then comments and roxygen
+    pat <- "\\b(pcmodel|raschmodel)\\b|\\bmirt::mirt\\b"
+    if (!basename(f) %in% erm_allowed) {
+      pat <- paste0(pat, "|\\beRm::(PCM|RM)\\b")
+    }
+    i <- grep(pat, code)
+    if (length(i)) paste0(basename(f), ":", i) else character()
+  }))
+  expect_identical(hits, character())
+})

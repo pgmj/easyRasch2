@@ -481,11 +481,13 @@
 
 #' Fit a Rasch / partial credit model by CML, with the shared data checks
 #'
-#' The single entry point for psychotools CML fits. Drops respondents with no
-#' answered items (they carry no CML information, `pcmodel()` errors on them
-#' and `raschmodel()` in psychotools 0.7.7 crashes the R session), then runs
+#' The single entry point for psychotools CML fits: no other code calls
+#' `pcmodel()` or `raschmodel()` directly. Drops respondents with no answered
+#' items (they carry no CML information, `pcmodel()` errors on them and
+#' `raschmodel()` in psychotools 0.7.7 crashes the R session), then runs
 #' `.check_response_categories()`, then fits. Callers keep their own use of
 #' the fitted object (`threshpar()`, `itempar()`, `iarm` statistics).
+#' `.mml_fit()` is the matching entry point for `mirt`.
 #'
 #' @param data Numeric response matrix or data.frame (items scored from 0).
 #' @param model `"pcm"` (default) fits `psychotools::pcmodel()` for every
@@ -493,16 +495,26 @@
 #'   dichotomous, which is about twice as fast with the same estimates.
 #' @param hessian Passed to psychotools. `FALSE` in refit loops that need no
 #'   standard errors.
+#' @param check `FALSE` skips the category check, for refits that rely on
+#'   psychotools reshaping an item: the RMitemRestscoreBoot resamples (an
+#'   item with an empty category there gets NA or is shifted, see its docs)
+#'   and the Martin-Löf simulated datasets. The observed data of those
+#'   functions are checked beforehand.
 #' @return The psychotools model object.
 #' @keywords internal
 #' @noRd
-.cml_fit <- function(data, model = c("pcm", "auto"), hessian = TRUE) {
+.cml_fit <- function(
+  data,
+  model = c("pcm", "auto"),
+  hessian = TRUE,
+  check = TRUE
+) {
   model <- match.arg(model)
   is_df <- is.data.frame(data)
   mat <- as.matrix(data)
   keep <- rowSums(!is.na(mat)) > 0L
   mat <- mat[keep, , drop = FALSE]
-  .check_response_categories(mat)
+  if (check) .check_response_categories(mat)
   # Keep a data.frame a data.frame, so item names reach psychotools the same
   # way as before this helper existed.
   dat <- if (is_df) data[keep, , drop = FALSE] else mat
@@ -511,6 +523,25 @@
   } else {
     psychotools::pcmodel(dat, hessian = hessian)
   }
+}
+
+#' Fit a Rasch / partial credit model by MML, with the shared category check
+#'
+#' The single entry point for `mirt` fits, the MML counterpart of
+#' `.cml_fit()`. `mirt` renumbers an item with an empty lowest or interior
+#' category to run 0, 1, ..., while callers keep the original codes, so
+#' `.check_response_categories()` runs first. Rows are not dropped, since
+#' callers match `fscores()` and residuals to the input rows.
+#'
+#' @param data Numeric response matrix or data.frame (items scored from 0).
+#' @param ... Further arguments to `mirt::mirt()` (`SE`, `accelerate`,
+#'   `quadpts`, `TOL`).
+#' @return The `mirt` model object (`model = 1`, `itemtype = "Rasch"`).
+#' @keywords internal
+#' @noRd
+.mml_fit <- function(data, ...) {
+  .check_response_categories(data)
+  mirt::mirt(data, model = 1, itemtype = "Rasch", verbose = FALSE, ...)
 }
 
 #' Stop on items that psychotools would silently reshape

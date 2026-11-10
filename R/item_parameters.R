@@ -378,20 +378,11 @@ RMitemParameters <- function(
   is_poly <- max(as.matrix(data), na.rm = TRUE) > 1L
   items <- colnames(data)
 
-  # mirt renumbers items with an empty lowest or interior category to run
-  # 0, 1, ... while callers keep the original codes, the same misalignment
-  # as in psychotools, so the shared check runs here too.
-  .check_response_categories(data)
-
+  # .mml_fit() runs the shared category check first: mirt renumbers items
+  # with an empty lowest or interior category to run 0, 1, ... while callers
+  # keep the original codes, the same misalignment as in psychotools.
   fit <- suppressMessages(
-    mirt::mirt(
-      data,
-      model = 1,
-      itemtype = "Rasch",
-      SE = se,
-      verbose = FALSE,
-      accelerate = "squarem"
-    )
+    .mml_fit(data, SE = se, accelerate = "squarem")
   )
 
   cf <- mirt::coef(fit, simplify = FALSE)

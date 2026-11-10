@@ -414,7 +414,11 @@ run_single_restscore_sim <- function(seed, data_list) {
 
       # CML refit, then observed and expected gamma. The refit is what makes
       # the expected gamma vary across iterations as it does across samples.
-      model_fit <- psychotools::pcmodel(sim_df, hessian = FALSE)
+      # The polytomous validation above (every category present) is stricter
+      # than the category check in .cml_fit(). The dichotomous one only needs 8
+      # positive responses, so an item answered 1 by everyone passes it and
+      # stops in the check instead; the iteration is discarded either way.
+      model_fit <- .cml_fit(sim_df, hessian = FALSE)
       res_mat <- .restscore_gamma(
         sim_df,
         lapply(psychotools::threshpar(model_fit), cumsum)
@@ -567,7 +571,9 @@ run_restscore_sim_parallel <- function(
       .sim_conditional = .sim_conditional,
       .esf_convolve = .esf_convolve,
       .restscore_gamma = .restscore_gamma,
-      .gk_gamma = .gk_gamma
+      .gk_gamma = .gk_gamma,
+      .cml_fit = .cml_fit,
+      .check_response_categories = .check_response_categories
     )
   })
 

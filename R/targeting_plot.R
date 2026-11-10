@@ -694,16 +694,10 @@ RMtargeting <- function(
 #' @return Named list with `$thresholds` and `$erm_out`.
 #' @noRd
 .estimate_thresholds_mml <- function(data, is_dicho) {
-  # Shared category check: mirt renumbers items with an empty lowest or
-  # interior category, so thresholds would not match the data's codes.
-  .check_response_categories(data)
-  mirt_out <- mirt::mirt(
-    data,
-    model = 1,
-    itemtype = "Rasch",
-    SE = TRUE,
-    verbose = FALSE
-  )
+  # .mml_fit() runs the shared category check: mirt renumbers items with an
+  # empty lowest or interior category, so thresholds would not match the
+  # data's codes.
+  mirt_out <- .mml_fit(data, SE = TRUE)
 
   # Extract per-item coefficients with SEs in IRT parameterisation
   item_coefs <- mirt::coef(

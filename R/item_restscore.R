@@ -411,7 +411,8 @@ RMitemRestscore <- function(
     # cases that reshape an item, so the refit below is aligned. The tryCatch
     # keeps the iarm values if .restscore_gamma() still refuses the data.
     cc <- stats::na.omit(data_mat)
-    fit_cc <- if (has_na) psychotools::pcmodel(cc, hessian = FALSE) else fit
+    # check = FALSE: .check_complete_case_categories() has checked `cc`.
+    fit_cc <- if (has_na) .cml_fit(cc, hessian = FALSE, check = FALSE) else fit
     rs <- tryCatch(
       .restscore_gamma(cc, lapply(psychotools::threshpar(fit_cc), cumsum)),
       error = function(e) NULL

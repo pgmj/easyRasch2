@@ -555,24 +555,22 @@ extract_ml_sampling_params <- function(data, is_polytomous) {
 #' @noRd
 compute_ml_statistic <- function(data, partition_list, is_polytomous) {
   N <- nrow(data)
+  # "auto" fits raschmodel() for dichotomous data, pcmodel() otherwise.
+  # No category check: the observed data were checked by
+  # extract_ml_sampling_params() before this is called, and the simulated
+  # datasets keep psychotools' handling of a category the simulation left
+  # empty.
+  ml_model <- if (is_polytomous) "pcm" else "auto"
 
   # Full-scale CML log-likelihood
-  full_fit <- if (is_polytomous) {
-    psychotools::pcmodel(data, hessian = FALSE)
-  } else {
-    psychotools::raschmodel(data, hessian = FALSE)
-  }
+  full_fit <- .cml_fit(data, model = ml_model, hessian = FALSE, check = FALSE)
   ll_full <- as.numeric(stats::logLik(full_fit))
 
   # Sum of subscale CML log-likelihoods
   ll_subs <- 0
   for (idx in partition_list) {
     sub_data <- data[, idx, drop = FALSE]
-    sub_fit <- if (is_polytomous) {
-      psychotools::pcmodel(sub_data, hessian = FALSE)
-    } else {
-      psychotools::raschmodel(sub_data, hessian = FALSE)
-    }
+    sub_fit <- .cml_fit(sub_data, model = ml_model, hessian = FALSE, check = FALSE)
     ll_subs <- ll_subs + as.numeric(stats::logLik(sub_fit))
   }
 
@@ -623,11 +621,11 @@ compute_subscale_wle_and_correlations <- function(
     sub_data <- data[, idx, drop = FALSE]
     tryCatch(
       {
-        sub_fit <- if (is_polytomous) {
-          psychotools::pcmodel(sub_data, hessian = FALSE)
-        } else {
-          psychotools::raschmodel(sub_data, hessian = FALSE)
-        }
+        sub_fit <- .cml_fit(
+          sub_data,
+          model = if (is_polytomous) "pcm" else "auto",
+          hessian = FALSE
+        )
         pe <- iarm_person_estimates(sub_fit, allperson = TRUE)
         as.numeric(pe[, "WLE"])
       },
@@ -898,7 +896,8 @@ run_ml_sim_parallel <- function(
       data_list = sim_data_list,
       run_single_ml_iteration = run_single_ml_iteration,
       compute_ml_statistic = compute_ml_statistic,
-      sample_pattern_at_score = sample_pattern_at_score
+      sample_pattern_at_score = sample_pattern_at_score,
+      .cml_fit = .cml_fit
     )
   })
 

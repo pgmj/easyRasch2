@@ -497,8 +497,10 @@ run_single_boot_restscore <- function(seed, data_list) {
     {
       # CML refit via psychotools::pcmodel() for both dichotomous (2-category PCM)
       # and polytomous data; accepted by iarm::item_restscore() and faster than
-      # eRm. hessian = FALSE skips the (unused) SE computation.
-      model_fit <- psychotools::pcmodel(d, hessian = FALSE)
+      # eRm. hessian = FALSE skips the (unused) SE computation. check = FALSE:
+      # the full data were checked, and in a resample an item that loses a
+      # category is reshaped by psychotools and handled below (NA or shifted).
+      model_fit <- .cml_fit(d, hessian = FALSE, check = FALSE)
 
       i1 <- as.data.frame(iarm::item_restscore(model_fit))
       res_mat <- i1[[1L]]
@@ -575,7 +577,8 @@ run_boot_restscore_parallel <- function(
       },
       seed = boot_seeds[i],
       data_list = boot_data_list,
-      run_single_boot_restscore = run_single_boot_restscore
+      run_single_boot_restscore = run_single_boot_restscore,
+      .cml_fit = .cml_fit
     )
   })
 

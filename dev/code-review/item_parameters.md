@@ -361,3 +361,76 @@ User's decisions: G2 (a), G4 (b).
 Rd regenerated (RMitemRestscoreBoot, RMitemInfitMI). With NOT_CRAN=true: test-category-check 47/47, test-infit_mi 40/40, test-bootstrap_restscore 11/11, test-rounding 6/6. The full suite was not rerun after these changes. It had passed after the G1-G9 fixes, and these changes touch only RMitemInfitMI and documentation.
 
 Open after this round: G8 (route the remaining direct pcmodel/raschmodel and mirt calls through `.cml_fit()` and a new `.mml_fit()`), deferred by the user until after the commit. Also RMdifLR "not tested" status (dif_lr unit) and the Cutoff any-empty validation (Cutoff units).
+
+## G8 applied (2026-11-10, after the user's commit, uncommitted)
+
+Every psychotools and mirt fit in the package now goes through `.cml_fit()` or the new `.mml_fit()` (both in utils-theta.R). A test fails if a direct call appears anywhere else.
+
+- **`.cml_fit(..., check = TRUE)`:** new `check` argument. `check = FALSE` skips the category check (all-NA rows are still dropped). Two kinds of refit use it, because they rely on psychotools reshaping an item:
+  - the RMitemRestscoreBoot resample worker, where an item with an empty middle category becomes NA, an empty lowest category is shifted, and a constant dichotomous item is dropped (G1/G2);
+  - `compute_ml_statistic()` in Martin-Löf, for the observed data and the simulated datasets. The observed data were already checked by `extract_ml_sampling_params()`.
+- **`.mml_fit(data, ..., check = TRUE)`:** runs `.check_response_categories()` and then `mirt::mirt(data, model = 1, itemtype = "Rasch", verbose = FALSE, ...)`. No rows are dropped, since callers match `fscores()` and residuals to the input rows. It replaces the check-then-mirt pairs in `.rasch_fit_mml()`, `.q3_residual_matrix()` (both branches), RMreliability, RMscoreSE (EAP) and RMtargeting `.estimate_thresholds_mml()`.
+- **Sites moved to `.cml_fit()`:**
+  - bootstrap_restscore worker (`hessian = FALSE, check = FALSE`);
+  - RMitemInfitCutoff sim worker (default hessian, as before);
+  - RMitemRestscoreCutoff sim worker (`hessian = FALSE`);
+  - RMitemRestscore complete-case refit with a cutoff (`hessian = FALSE`);
+  - Martin-Löf `compute_ml_statistic()` (full and subscale fits);
+  - `compute_subscale_wle_and_correlations()`.
+  In the Cutoff workers the polytomous validation (every category present) is stricter than the check. **Corrected after H3:** the dichotomous validation (8 positive responses) lets an item answered 1 by everyone through, and the check then stops that iteration. It was discarded before G8 too, so results do not change.
+- **Mirai export lists:** `.cml_fit` and `.check_response_categories` were added for bootstrap_restscore, infit_cutoff, item_restscore_cutoff and martin_lof. `.mml_fit` was added for the Q3 cutoff.
+- **Not in scope:** `eRm::PCM()/RM()` in RMdifLR (already checked, dif_lr unit) and psychotree in RMdifTree.
+
+**Gotcha found on the way (dev only):** mirai puts the exported objects in the daemon's global environment. A package function serialized to a daemon still looks names up in its namespace first, and in the daemon that is the **installed** easyRasch2 (1.4.0 in the container). New helpers that are absent from the installed version fall through to the exported copies and work. A helper whose signature changed resolves to the installed old version. A first version gave `compute_ml_statistic()` a `check` argument, and every parallel Martin-Löf simulation failed with "unused argument (check = FALSE)", because the daemon called the installed 1.4.0 copy. Fixed by keeping its signature and setting `check = FALSE` inside. With a current installed package this does not arise. It does mean parallel tests under `load_all()` test a mix of the dev code and the installed package. **Corrected after H2:** this understated it. Under `load_all()`, a parallel worker runs the installed version of *every* helper it calls that the installed build also has, so the parallel rows of the G8 comparison below tested installed code for those helpers. Those rows were rerun with each version installed (see the H section).
+
+**Verification:** the committed version (HEAD, exported with `git archive` to the scratchpad) and the working tree, on the same data:
+- the step-2 baseline: 52/52 identical;
+- the item/person baseline: 60/60 identical;
+- a new G8 baseline: 60/60 identical. It covers RMitemInfitCutoff and RMitemRestscoreCutoff (sequential and parallel), RMitemRestscore with a cutoff on NA data, RMitemRestscoreBoot (sequential and parallel), Martin-Löf (sequential and parallel), the MML Q3 cutoff (parallel), RMtargeting's sparse MML path, RMscoreSE EAP and RMitemParameters MML. It includes a set where resamples lose an item's lowest category and a dichotomous set where I12 was tested in only 34 of 40 resamples.
+
+New tests in test-category-check.R: `.mml_fit()` and `.cml_fit()` stop on an empty interior category, `check = FALSE` returns a pcmodel, and a source scan finds no direct `pcmodel()`, `raschmodel()` or `mirt::mirt()` call outside utils-theta.R (skipped when the R sources are absent). Full suite: 0 failures, 1713 pass, 7 skips, 1 known mirt warning. No NEWS entry, since no results change.
+
+## /code-review high on the G8 diff (2026-11-10), verified in the main session
+
+| # | Where | Finding | Status |
+|---|---|---|---|
+| H1 | bootstrap_restscore.R:503 | The daemon worker calls `.cml_fit(..., check = FALSE)`. It resolves to the installed namespace, and HEAD's `.cml_fit` has no `check` argument. | **Confirmed, dev only** |
+| H2 | martin_lof.R:566 | Same mechanism in `compute_ml_statistic()`. | **Not confirmed as stated** |
+| H3 | infit_cutoff.R:406, item_restscore_cutoff.R:417, this log | "The validation is stricter than the check" is false for dichotomous data. | **Confirmed, comments and log only** |
+| H4 | test-category-check.R:249 | The source-scan test misses eRm, psychotree, `do.call(psychotools::pcmodel, ...)`, unqualified calls and code after a `"#"` string. | **Confirmed, low** |
+| H5 | martin_lof.R:901, bootstrap_restscore.R:582 | `.check_response_categories` is exported to daemons that never call it. | **Confirmed, low** |
+| H6 | utils-theta.R:543 | `.mml_fit()` has an unused `check` argument. Hard-coded `verbose = FALSE` collides with `...`. | **Confirmed, design** |
+| H7 | item_restscore.R:414 | The complete-case refit runs the category check again after `.check_complete_case_categories()`. | **Confirmed, but not in a loop** |
+| H8 | martin_lof.R:626 | Repeats the model-choice expression stored as `ml_model` in `compute_ml_statistic()`. | **Confirmed, low** |
+
+**H1.** HEAD (dab3a66, 1.4.0.9001) was installed to a scratch library with `git archive` + `R CMD INSTALL`, and the working tree was loaded with `load_all()`. A daemon reports `formals(.cml_fit)` as `data, model, hessian`. A namespace-environment closure sent with `.cml_fit = .cml_fit` exported also sees the installed version. `RMitemRestscoreBoot(d, iterations = 8, parallel = TRUE, n_cores = 2)` stops with "All bootstrap iterations failed". This only happens while the installed build is older than the loaded tree. It disappears once the working tree is installed, and CRAN users always have a single version. The container never showed it because its installed 1.4.0 has no `.cml_fit`, so the exported copy was used.
+
+**H2.** The same setup gives identical Martin-Löf results whether HEAD is installed or not (T_obs 7.89, p .667, 20/20 draws). `run_single_ml_iteration` resolves `compute_ml_statistic` from the installed namespace too. HEAD's copy is internally consistent, so nothing fails. The daemon simply runs HEAD's code. The real consequence is wider than the finding: **under `load_all()`, a parallel worker runs the installed versions of every helper it calls that also exists in the installed build.** The exported copies only matter for helpers the installed build lacks. So the G8 parallel baselines (and any parallel `load_all()` test) compared installed code against installed code for those callees, not the working tree. The G8 gotcha paragraph above understates this.
+
+**H3.** For dichotomous data the Cutoff validation only requires at least 8 positive responses per item. An item answered 1 by everyone passes it and then stops in `.check_response_categories()`. The iteration is still discarded (before G8, pcmodel dropped the item and `data.frame()` failed), so results do not change. Only the error string differs. The comment at both sites and the G8 bullet "the check never fires there" are wrong for dichotomous data.
+
+**H4.** Of the misses, RMdifLR's `eRm` fit is guarded explicitly (dif_lr.R:226). RMdifTree's psychotree fits have no category check (dif_tree unit). The rest are hypothetical future code.
+
+**H7.** Line 414 is in `RMitemRestscore()`, which no Cutoff loop calls (RMitemRestscoreCutoff uses `.restscore_gamma()` directly). It costs one extra pass per call, not per iteration.
+
+**Proposed** (nothing applied):
+- H1/H2: no code change. Reinstall the working tree before any parallel check, and correct the G8 gotcha paragraph. Optional: a dev-note line, or a test helper that skips parallel tests when the installed version differs from the loaded one.
+- H3: fix the two comments to say the polytomous validation is stricter, and that a dichotomous item with no 0 responses passes validation and then stops in the check (iteration discarded either way).
+- H4: widen the regex to `(psychotools::)?(pcmodel|raschmodel)\b` and `eRm::(PCM|RM)\(`, with an allow-list for dif_lr.R. Leave psychotree for the dif_tree unit.
+- H5, H8: drop the dead exports and pass `ml_model` in. Both are cheap.
+- H6: drop `check` from `.mml_fit()` until a caller needs it. Leave `verbose` alone.
+- H7: `check = FALSE` at line 414, optional.
+
+### H1-H8 applied in the main session (2026-11-10, uncommitted)
+
+Checked against the code. H1 and H2 match the mechanism I saw in the G8 Martin-Löf failure, and H3 matches the dichotomous validation (`colSums < 8` only).
+
+- **H1/H2:** no package code change. The G8 gotcha paragraph and the Cutoff bullet above are corrected. The parallel comparison was then redone properly. HEAD (1.4.0.9001) and the working tree were each installed to their own scratch library (`R CMD INSTALL -l`), and the G8 baseline was run with `R_LIBS` pointing at the matching library, so the daemons run that version's own code. Result: 60/60 identical, all parallel paths included (RMitemRestscoreBoot, RMitemInfitCutoff, RMitemRestscoreCutoff, Martin-Löf, MML Q3 cutoff). **Recipe for parallel checks in the container:** install the tree to a scratch library and set `R_LIBS` to it, since daemons inherit it.
+- **H3:** the comment at both Cutoff sites now says that the polytomous validation is stricter and that a constant dichotomous item stops in the check (discarded either way).
+- **H4:** the scan now strips strings before comments and matches unqualified `pcmodel`/`raschmodel`, `mirt::mirt` and `eRm::PCM`/`RM` (dif_lr.R allow-listed). Checked against the pre-G8 sources: it finds all 16 old direct calls. psychotree is left for the dif_tree unit.
+- **H5:** `.check_response_categories` was removed from the Martin-Löf and RMitemRestscoreBoot daemon exports (both call `.cml_fit(check = FALSE)`).
+- **H6:** `check` removed from `.mml_fit()`, and `verbose` left alone.
+- **H7:** `check = FALSE` on the complete-case refit in RMitemRestscore, with a comment that `.check_complete_case_categories()` has checked `cc`.
+- **H8:** not changed. Two one-line expressions in separate functions, and passing `ml_model` in would add an argument to a function for no behavioural gain.
+
+Tests: test-category-check 51/51. Full suite (with `R_LIBS` at the installed working tree): 0 failures, 1713 pass, 7 skips, 1 known mirt warning.

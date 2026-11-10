@@ -403,7 +403,11 @@ run_single_infit_sim <- function(seed, data_list) {
       # Conditional infit/outfit from a CML refit. psychotools::pcmodel() handles
       # both polytomous and dichotomous (a 2-category PCM is the Rasch model) and
       # is accepted by iarm::out_infit(); it matches eRm to ~1e-6 but is faster.
-      model_fit <- psychotools::pcmodel(sim_df)
+      # The polytomous validation above (every category present) is stricter
+      # than the category check in .cml_fit(). The dichotomous one only needs 8
+      # positive responses, so an item answered 1 by everyone passes it and
+      # stops in the check instead; the iteration is discarded either way.
+      model_fit <- .cml_fit(sim_df)
       cfit <- iarm::out_infit(model_fit)
 
       data.frame(
@@ -463,7 +467,9 @@ run_infit_sim_parallel <- function(
       # Conditional-DGP generators (shared with the Q3 cutoff).
       .sim_cond_dataset = .sim_cond_dataset,
       .sim_conditional = .sim_conditional,
-      .esf_convolve = .esf_convolve
+      .esf_convolve = .esf_convolve,
+      .cml_fit = .cml_fit,
+      .check_response_categories = .check_response_categories
     )
   })
 

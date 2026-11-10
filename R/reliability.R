@@ -380,16 +380,10 @@ RMreliability <- function(
   }
 
   # --- Full-sample fits ------------------------------------------------------
-  # Shared category check before mirt, which renumbers items with an empty
-  # lowest or interior category (the CML paths check in .fit_cml_thresholds()).
-  .check_response_categories(data)
-  mirt_fit <- mirt::mirt(
-    data = data,
-    model = 1,
-    itemtype = "Rasch",
-    verbose = FALSE,
-    accelerate = "squarem"
-  )
+  # .mml_fit() runs the shared category check before mirt, which renumbers
+  # items with an empty lowest or interior category (the CML paths check in
+  # .fit_cml_thresholds()).
+  mirt_fit <- .mml_fit(data, accelerate = "squarem")
   # --- Marginal reliability point estimate (native CML test info) ------------
   marg_rel <- .marginal_rxx(data)
 

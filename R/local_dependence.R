@@ -517,27 +517,13 @@ RMlocdepQ3 <- function(
 ) {
   estimator <- match.arg(estimator)
   if (estimator == "MML") {
-    # mirt renumbers items with an empty lowest or interior category; the CML
-    # path gets the same check through .fit_cml_thresholds().
-    .check_response_categories(data)
+    # .mml_fit() runs the category check (mirt renumbers items with an empty
+    # lowest or interior category); the CML path gets it through
+    # .fit_cml_thresholds().
     mirt_fit <- if (fast) {
-      mirt::mirt(
-        data,
-        model = 1,
-        itemtype = "Rasch",
-        verbose = FALSE,
-        accelerate = "squarem",
-        quadpts = 29,
-        TOL = 0.005
-      )
+      .mml_fit(data, accelerate = "squarem", quadpts = 29, TOL = 0.005)
     } else {
-      mirt::mirt(
-        data,
-        model = 1,
-        itemtype = "Rasch",
-        verbose = FALSE,
-        accelerate = "squarem"
-      )
+      .mml_fit(data, accelerate = "squarem")
     }
     m <- mirt::residuals(mirt_fit, type = "Q3", digits = 4, verbose = FALSE)
     diag(m) <- NA
@@ -1414,9 +1400,9 @@ run_q3_sim_parallel <- function(
       .sim_cond_dataset = .sim_cond_dataset,
       .sim_conditional = .sim_conditional,
       .esf_convolve = .esf_convolve,
-      # Engine helpers needed by .q3_residual_matrix() inside the daemon
-      # (the CML/WLE path; the MML path uses namespaced mirt::).
+      # Engine helpers needed by .q3_residual_matrix() inside the daemon.
       .q3_residual_matrix = .q3_residual_matrix,
+      .mml_fit = .mml_fit,
       .rasch_std_residuals = .rasch_std_residuals,
       .fit_cml_thresholds = .fit_cml_thresholds,
       .cml_fit = .cml_fit,
