@@ -11,6 +11,34 @@
   marginal p-values move slightly.** The typical change in a corrected 
   p-value is about 0.001 at B = 400 and under 0.0005 at B = 1000.
 
+- Docs - the `phq9` description no longer calls the share of zero sum
+  scores realistic. Zero sum scores were reduced by hand to 8, so the
+  sample is not representative of the NHANES population.
+
+## Bug fixes
+
+- `RMlocdepQ3()`, `RMreliability()`, `RMreliabilityCurve()`,
+  `RMdimResidualPCA()`, `RMitemICCPlot()`, `RMitemCatProb()`,
+  `RMdimMartinLof()` (polytomous) and the `Cutoff()` functions for Q3,
+  infit, restscore, CFA, residual PCA and gamma DIF/LD now stop with a
+  message naming the item when an item has one response category, or an
+  empty lowest or interior category. Before, these items were silently
+  dropped or rescaled, so thresholds could be paired with the wrong item.
+  This gave unclear errors or, in `RMlocdepQ3Cutoff()` and WLE estimates,
+  wrong results without a warning. Other functions that fit the model by
+  CML are not yet covered.
+
+- The latent mean and SD behind `RMreliability()` and
+  `RMreliabilityCurve()` are estimated with normalised prior weights.
+  Results move by at most about 1e-4.
+
+- `method = "EAP"` (e.g. `RMpersonChange()`) now returns `NA` for a
+  respondent with no answered items, as WLE does, instead of the prior mean.
+
+- WLE estimates beyond `theta_range` are now placed at the correct
+  boundary. Before, a respondent who answered only very hard or very easy
+  items could be put at the opposite end.
+
 # easyRasch2 1.4.0
 
 ## New features

@@ -49,8 +49,8 @@
 
 #' Warm's weighted likelihood estimate for a single response pattern
 #'
-#' Newton-Raphson with adaptive step damping on the Warm-corrected score
-#' equation. Only the items the person actually answered (non-`NA`)
+#' Solves the Warm-corrected score equation with `stats::uniroot()` on
+#' `theta_range`. Only the items the person actually answered (non-`NA`)
 #' contribute, so partial missingness is handled directly on the response
 #' pattern rather than via a sum-score lookup.
 #'
@@ -73,18 +73,6 @@
   thr_list <- thr_list[ok]
   r         <- sum(resp)
 
-  # Information at theta (also used for the SEM).
-  info_at <- function(theta) {
-    s <- 0
-    for (i in seq_along(thr_list)) {
-      cats <- 0:length(thr_list[[i]])
-      p    <- .pcm_cat_probs(theta, thr_list[[i]])
-      E    <- sum(cats * p)
-      s    <- s + sum((cats - E)^2 * p)
-    }
-    s
-  }
-
   # Warm's weighted-likelihood score function: l'(theta) + J(theta) / (2 I(theta)),
   # with J the summed third central moment of the item scores. Solving this for
   # zero gives the WLE, which is finite even at extreme scores.
@@ -106,12 +94,22 @@
 
   if (is.finite(g_lo) && is.finite(g_hi) && g_lo * g_hi < 0) {
     theta <- stats::uniroot(score, c(lo, hi), tol = tol)$root
-    info  <- info_at(theta)
+    info  <- .test_information(thr_list, theta)
     sem   <- if (info < 1e-12) NA_real_ else 1 / sqrt(info)
   } else {
-    # Root outside the search range: clamp to the nearer boundary.
-    theta <- if (r <= sum(vapply(thr_list, length, integer(1))) / 2) lo else hi
-    sem   <- NA_real_
+    # Root outside the search range: clamp to the boundary on the root's side.
+    # The score function decreases in theta, so a positive value at both ends
+    # puts the root above `hi`. The raw-score rule is only a fallback when the
+    # score function is not finite at a boundary: it picks the wrong side when
+    # the answered items all sit far from the person.
+    theta <- if (is.finite(g_lo) && is.finite(g_hi)) {
+      if (g_lo > 0) hi else lo
+    } else if (r <= sum(vapply(thr_list, length, integer(1))) / 2) {
+      lo
+    } else {
+      hi
+    }
+    sem <- NA_real_
   }
   c(theta = theta, sem = sem)
 }
@@ -196,7 +194,9 @@
 #' @param grid Numeric quadrature nodes.
 #' @param prior_mean,prior_sd Normal-prior parameters.
 #' @return data.frame with columns `theta` (EAP) and `sem` (posterior SD).
-#'   Persons with no answered items return `NA`.
+#'   A person with no answered items has a log-likelihood of zero at every
+#'   node and so gets the prior mean and SD here. `.estimate_thetas()` sets
+#'   those rows to `NA`, which this function cannot do from `loglik` alone.
 #' @keywords internal
 #' @noRd
 .theta_eap <- function(loglik, grid, prior_mean, prior_sd) {
@@ -209,7 +209,8 @@
   eap  <- as.numeric((w %*% grid) / wsum)
   eap2 <- as.numeric((w %*% grid^2) / wsum)
   sd   <- sqrt(pmax(eap2 - eap^2, 0))
-  # rows with no information (all-missing) -> NA
+  # Rows whose posterior cannot be formed (non-finite log-likelihood) -> NA.
+  # All-missing rows are finite here and are handled in .estimate_thetas().
   empty <- !is.finite(eap)
   eap[empty] <- NA_real_
   sd[empty]  <- NA_real_
@@ -281,21 +282,25 @@
 .latent_moments <- function(data, thr_list, n_nodes = 81L) {
   data_mat <- as.matrix(data)
 
-  fit_on <- function(grid) {
+  fit_on <- function(grid, start) {
     loglik <- .grid_loglik(data_mat, .logp_tables(thr_list, grid), grid)
-    .estimate_prior_moments(loglik, grid)
+    .estimate_prior_moments(loglik, grid, start = start)
   }
 
   # The first pass only has to find the mean, so it runs on a coarser grid:
   # its cost is linear in the node count and its answer is refined anyway.
-  first <- fit_on(seq(-10, 10, length.out = max(41L, n_nodes %/% 2L)))
+  first <- fit_on(seq(-10, 10, length.out = max(41L, n_nodes %/% 2L)),
+                  start = c(0, 0))
   if (!is.finite(first$mean) || !is.finite(first$sd) || first$sd <= 0) {
     return(list(mean = NA_real_, sd = NA_real_))
   }
 
+  # The second pass starts from the first-pass answer, which lies inside its
+  # grid by construction and saves objective evaluations in bootstrap loops.
   span <- max(6 * first$sd, 3)
   second <- fit_on(seq(first$mean - span, first$mean + span,
-                       length.out = n_nodes))
+                       length.out = n_nodes),
+                   start = c(first$mean, log(first$sd)))
   if (!is.finite(second$mean) || !is.finite(second$sd) || second$sd <= 0) {
     return(first)
   }
@@ -326,13 +331,20 @@
 #' from a respondent can still underflow every product to 0; those rows are
 #' recomputed in log space, so the objective equals the log-space one.
 #'
+#' The prior weights are normalised to sum to one over the grid. Without that,
+#' a SD near the 0.05 floor on a coarse grid lets the optimiser put the mean on
+#' a node and collect a weight far above one, so the first pass of
+#' `.latent_moments()` (node spacing 0.5) could snap to a spurious narrow fit.
+#' On the fine second-pass grid the normalising constant is one to within
+#' rounding, so reported moments are essentially unchanged.
+#'
 #' @param loglik Person-by-node log-likelihood matrix from `.grid_loglik()`.
 #' @param grid Numeric quadrature nodes.
+#' @param start Starting values `c(mean, log(sd))`, moved inside the bounds.
 #' @return A list with `mean` and `sd`.
 #' @keywords internal
 #' @noRd
-.estimate_prior_moments <- function(loglik, grid) {
-  dgrid <- if (length(grid) > 1L) mean(diff(grid)) else 1
+.estimate_prior_moments <- function(loglik, grid, start = c(0, 0)) {
 
   # Row maxima of the log-likelihood, plus the largest log-density any
   # candidate prior can contribute, bound the row maxima of loglik + lprior
@@ -346,19 +358,21 @@
   expl[!is.finite(expl)] <- 0
 
   neg_marg_ll <- function(par) {
-    w <- stats::dnorm(grid, mean = par[1L], sd = exp(par[2L]))
-    person_ll <- offset + log(as.numeric(expl %*% w) * dgrid)
+    lprior <- stats::dnorm(grid, mean = par[1L], sd = exp(par[2L]), log = TRUE)
+    # log of the grid sum of the prior weights, so the weights sum to one
+    lmax <- max(lprior)
+    log_norm <- lmax + log(sum(exp(lprior - lmax)))
+    w <- exp(lprior)
+    person_ll <- offset + log(as.numeric(expl %*% w)) - log_norm
     # A narrow candidate prior far from a respondent can make every product
     # underflow to 0, giving -Inf where the log-space sum is merely very
     # negative. Dropping such rows would make the candidate look better, so
     # they are recomputed in log space, exactly as before the speed-up.
     under <- !is.finite(person_ll) & is.finite(row_max_raw)
     if (any(under)) {
-      lprior <- stats::dnorm(grid, mean = par[1L], sd = exp(par[2L]),
-                             log = TRUE)
       M  <- sweep(loglik[under, , drop = FALSE], 2L, lprior, `+`)
       mx <- apply(M, 1L, max)
-      person_ll[under] <- mx + log(rowSums(exp(M - mx)) * dgrid)
+      person_ll[under] <- mx + log(rowSums(exp(M - mx))) - log_norm
     }
     out <- -sum(person_ll[is.finite(person_ll)])
     if (!is.finite(out)) .Machine$double.xmax else out
@@ -367,7 +381,7 @@
   lo <- c(min(grid), log(0.05))
   hi <- c(max(grid), log(5))
   opt <- try(
-    stats::optim(c(0, 0), neg_marg_ll, method = "L-BFGS-B",
+    stats::optim(pmin(pmax(start, lo), hi), neg_marg_ll, method = "L-BFGS-B",
                  lower = lo, upper = hi),
     silent = TRUE
   )
@@ -426,12 +440,21 @@
 #' per-NA-pattern slowdown of `eRm`, and returns numerically identical
 #' parameters after centring.
 #'
+#' Rows with no answered items are dropped before fitting: they carry no
+#' information for CML, `pcmodel()` errors on them and `raschmodel()`
+#' (psychotools 0.7.7) crashes the R session. `.check_cml_categories()` then
+#' stops on items psychotools would silently reshape, and the fitted list is
+#' checked against the data so a threshold vector can never be paired with
+#' the wrong item.
+#'
 #' @param data Numeric response matrix or data.frame (items scored from 0).
 #' @return List of centred Andrich threshold vectors, one per item.
 #' @keywords internal
 #' @noRd
 .fit_cml_thresholds <- function(data) {
   data <- as.matrix(data)
+  data <- data[rowSums(!is.na(data)) > 0L, , drop = FALSE]
+  .check_cml_categories(data)
   is_poly <- max(data, na.rm = TRUE) > 1L
   # A dichotomous item is a 2-category PCM, so pcmodel() handles both types and
   # gives the identical CML estimate (same log-likelihood, difficulties match to
@@ -441,7 +464,71 @@
   # where that speed difference is immaterial.
   fit <- if (is_poly) psychotools::pcmodel(data) else psychotools::raschmodel(data)
   thr_list <- lapply(psychotools::threshpar(fit), as.numeric)
+  n_thr <- vapply(thr_list, length, integer(1L))
+  max_obs <- apply(data, 2L, max, na.rm = TRUE)
+  if (length(thr_list) != ncol(data) || any(n_thr != max_obs)) {
+    stop(
+      "The CML fit returned thresholds that do not match the observed ",
+      "response categories, so item parameters cannot be paired with items.",
+      call. = FALSE
+    )
+  }
   .center_thresholds(thr_list)
+}
+
+#' Stop on items that psychotools would silently reshape
+#'
+#' `psychotools::pcmodel()` and `raschmodel()` handle three item shapes in
+#' ways that break the threshold list's alignment with the data, which every
+#' consumer of `.fit_cml_thresholds()` assumes:
+#' - an item with one observed category is dropped from the list,
+#' - an empty lowest category makes psychotools rescale the item to start at
+#'   0, while the data keep the original codes,
+#' - an empty interior category loses its threshold, while the data keep the
+#'   categories above it.
+#' An empty top category is harmless (the item gets one threshold fewer and
+#' the data agree), so it is not flagged. A category used only by extreme
+#' scorers keeps its threshold in psychotools and is reported elsewhere by
+#' `.extreme_only_categories()`.
+#'
+#' @param data Numeric response matrix, all-`NA` rows already removed.
+#' @return Invisibly `TRUE`; stops naming each problem item otherwise.
+#' @keywords internal
+#' @noRd
+.check_cml_categories <- function(data) {
+  items <- colnames(data)
+  if (is.null(items)) items <- paste0("item ", seq_len(ncol(data)))
+  problems <- character(0)
+  for (j in seq_len(ncol(data))) {
+    x <- data[!is.na(data[, j]), j]
+    if (length(x) == 0L) {
+      problems <- c(problems, paste0(items[j], " (no responses)"))
+      next
+    }
+    if (length(unique(x)) == 1L) {
+      problems <- c(problems, paste0(items[j], " (only category ", x[1L], ")"))
+      next
+    }
+    empty <- which(tabulate(x + 1L, nbins = max(x) + 1L) == 0L) - 1L
+    if (length(empty) > 0L) {
+      problems <- c(problems, paste0(
+        items[j],
+        if (length(empty) == 1L) " (empty category " else " (empty categories ",
+        paste(empty, collapse = ", "), ")"
+      ))
+    }
+  }
+  if (length(problems) > 0L) {
+    stop(
+      "Item thresholds cannot be estimated for: ",
+      paste(problems, collapse = ", "),
+      ". Remove items with a single response category, and merge an empty ",
+      "category with an adjacent one (an empty lowest category means ",
+      "recoding the item to start at 0).",
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
 }
 
 #' Estimate person locations under a fixed item model
@@ -473,7 +560,9 @@
 #' @param n_nodes Number of EAP quadrature nodes (default 121; the single
 #'   source for every EAP caller so the same data yields the same estimate).
 #' @return data.frame with columns `theta` and `sem`, one row per
-#'   respondent (in input order). For `method = "EAP"` the result carries
+#'   respondent (in input order). Respondents with no answered items get
+#'   `NA` under both methods, and are left out when `prior_sd` is estimated.
+#'   For `method = "EAP"` the result carries
 #'   `attr(., "prior_mean")` and `attr(., "prior_sd")` (the prior actually
 #'   used).
 #' @keywords internal
@@ -488,8 +577,15 @@
     grid   <- seq(theta_range[1L], theta_range[2L], length.out = n_nodes)
     logp   <- .logp_tables(thr_list, grid)
     loglik <- .grid_loglik(data, logp, grid)
-    if (is.null(prior_sd)) prior_sd <- .estimate_prior_sd(loglik, grid, prior_mean)
+    answered <- rowSums(!is.na(data)) > 0L
+    if (is.null(prior_sd)) {
+      prior_sd <- .estimate_prior_sd(loglik[answered, , drop = FALSE], grid,
+                                     prior_mean)
+    }
     out <- .theta_eap(loglik, grid, prior_mean, prior_sd)
+    # An all-missing row would otherwise report the prior as its estimate.
+    out$theta[!answered] <- NA_real_
+    out$sem[!answered]   <- NA_real_
     # Expose the prior used so callers (e.g. RMpersonParameters) can report it.
     attr(out, "prior_mean") <- prior_mean
     attr(out, "prior_sd")   <- prior_sd
@@ -502,7 +598,7 @@
   key <- paste(pat, rs, sep = "|")
   rep_idx <- which(!duplicated(key))
   est <- vapply(rep_idx, function(i) .theta_wle(data[i, ], thr_list, theta_range),
-                numeric(2L))                       # rows: theta, sem; cols: reps
+                c(theta = 0, sem = 0))             # rows: theta, sem; cols: reps
   m <- match(key, key[rep_idx])
   data.frame(theta = est["theta", m], sem = est["sem", m])
 }

@@ -162,7 +162,7 @@ estimates would inflate the person variance and overstate reliability.
 (Earlier versions used \code{eRm::SepRel()} with MLE; the values can differ, most
 noticeably for scales with many extreme scorers, e.g. dichotomous items.)
 
-RMU is from Bignardi, Kievit, & Bürkner (2025), modified here to use mirt
+RMU is from Bignardi, Kievit, & Bürkner (2026), modified here to use mirt
 plausible values rather than fully Bayesian posterior draws (see Mislevy,
 1991, for the plausible-values framework).
 
@@ -191,9 +191,9 @@ if (requireNamespace("ggdist", quietly = TRUE) &&
 }
 }
 \references{
-Bignardi, G., Kievit, R., & Bürkner, P. C. (2025). A general method for
+Bignardi, G., Kievit, R., & Bürkner, P. C. (2026). A general method for
 estimating reliability using Bayesian Measurement Uncertainty. \emph{PsyArXiv}.
-\doi{10.31234/osf.io/h54k8_v1}
+\url{https://osf.io/preprints/psyarxiv/h54k8}
 
 Green, B. F., Bock, R. D., Humphreys, L. G., Linn, R. L., & Reckase, M. D.
 (1984). Technical Guidelines for Assessing Computerized Adaptive Tests.

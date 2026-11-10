@@ -10,10 +10,11 @@
 # https://www.cdc.gov/nchs/policy/data-release-policy.html). No re-
 # distribution licence applies.
 #
-# The full NHANES sample is large; we drew a random subsample of 600
-# respondents with complete responses to all nine PHQ-9 items, deliberately
-# retaining enough respondents with a sum-score of zero so that the dataset
-# can illustrate floor behaviour in a Rasch analysis.
+# The full NHANES sample is large. We drew a subsample of 600 respondents
+# with complete responses to all nine PHQ-9 items. Respondents with a sum
+# score of zero were reduced by hand to 8, so the sample has much higher
+# symptom levels than the NHANES population and is not representative of
+# it. n600.csv has no respondent IDs (SEQN).
 #
 # To regenerate the bundled .rda from data-raw/n600.csv, run:
 #   Rscript data-raw/phq9.R
