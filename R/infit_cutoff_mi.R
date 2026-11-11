@@ -175,6 +175,8 @@ RMitemInfitCutoffMI <- function(
   item_names <- NULL
   n_failed <- 0L
 
+  .mi_validate_structure(mids_object) # once, not per imputation
+
   for (i in seq_len(m)) {
     completed_data <- .mi_completed_to_numeric(
       mice::complete(mids_object, action = i)

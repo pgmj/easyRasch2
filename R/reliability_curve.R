@@ -26,8 +26,8 @@
 #' @param reference Character. Horizontal line showing the flat summary that a
 #'   single coefficient implies: `"marginal"` (default) or `"none"`.
 #' @param items Optional character vector of column names, or numeric column
-#'   indices, selecting a subset of items. Useful for comparing a short form
-#'   against the full scale.
+#'   indices, selecting a subset of at least 2 distinct items. Useful for
+#'   comparing a short form against the full scale.
 #' @param item_params Optional pre-specified item parameters, used in place of
 #'   the thresholds estimated from `data`. Either a named list of Andrich
 #'   threshold vectors or a long-format data.frame from
@@ -285,11 +285,7 @@ RMreliabilityCurve <- function(
   thr_list <- NULL
   if (fixed_params) {
     thr_list <- .coerce_item_params(item_params)
-    data <- .align_items(data, thr_list)
-  }
-
-  if (ncol(data) < 2L) {
-    stop("`data` must contain at least two items.", call. = FALSE)
+    data <- .align_items(data, thr_list) # also checks for 2+ items
   }
 
   n_total <- nrow(data)
@@ -515,6 +511,9 @@ RMreliabilityCurve <- function(
 #' @keywords internal
 #' @noRd
 .curve_select_items <- function(data, items) {
+  if (anyNA(items)) {
+    stop("`items` must not contain NA.", call. = FALSE)
+  }
   if (is.character(items)) {
     missing_items <- setdiff(items, names(data))
     if (length(missing_items) > 0L) {
@@ -524,19 +523,32 @@ RMreliabilityCurve <- function(
         call. = FALSE
       )
     }
-    return(data[, items, drop = FALSE])
-  }
-  if (is.numeric(items)) {
+  } else if (is.numeric(items)) {
     if (any(items < 1) || any(items > ncol(data))) {
       stop("`items` contains out-of-range column indices.", call. = FALSE)
     }
-    return(data[, items, drop = FALSE])
+    # R truncates 1.5 to 1, so c(1, 1.5) would select column 1 twice
+    if (any(items != round(items))) {
+      stop("`items` must be whole column indices.", call. = FALSE)
+    }
+  } else {
+    stop(
+      "`items` must be a character vector of column names or a numeric ",
+      "vector of column indices.",
+      call. = FALSE
+    )
   }
-  stop(
-    "`items` must be a character vector of column names or a numeric ",
-    "vector of column indices.",
-    call. = FALSE
-  )
+  # a repeated item would count its information twice
+  if (anyDuplicated(items) > 0L) {
+    stop("`items` must not repeat an item.", call. = FALSE)
+  }
+  if (length(items) < 2L) {
+    stop(
+      "`items` must select at least 2 items. Found ", length(items), ".",
+      call. = FALSE
+    )
+  }
+  data[, items, drop = FALSE]
 }
 
 #' Check that supplied thresholds cover the observed response categories

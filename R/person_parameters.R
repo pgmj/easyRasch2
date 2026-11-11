@@ -17,7 +17,9 @@
 #' @param item_params Optional pre-specified item parameters, e.g. for
 #'   anchoring or equating. Either a named list of Andrich-threshold
 #'   vectors (one per item) or the long-format data.frame returned by
-#'   [RMitemParameters()]. When `NULL` (default) item parameters are
+#'   [RMitemParameters()]. Items are matched to the columns of `data` by
+#'   name, and `data` may hold extra columns. A name that is not a column of
+#'   `data` stops with an error. When `NULL` (default) item parameters are
 #'   estimated from `data`.
 #' @param estimator Character. How item parameters are estimated when
 #'   `item_params` is `NULL`: `"CML"` (default, via \pkg{psychotools}) or
@@ -353,21 +355,43 @@ RMpersonParameters <- function(
 #' Align response-data columns with the item-parameter list
 #'
 #' @param data Response data.frame.
-#' @param thr_list Named (or order-matched) list of threshold vectors.
-#' @return `data` with columns ordered/subset to match `thr_list`.
+#' @param thr_list Named list of threshold vectors.
+#' @return `data` with columns ordered/subset to match `thr_list`, by name.
+#'   Stops on missing or duplicated names in `thr_list`, on names that are not
+#'   columns of `data`, and when fewer than two items remain, as
+#'   `validate_response_data()` does for the full data.
 #' @keywords internal
 #' @noRd
 .align_items <- function(data, thr_list) {
-  if (!is.null(names(thr_list)) && all(names(thr_list) %in% colnames(data))) {
-    return(data[, names(thr_list), drop = FALSE])
+  nm <- names(thr_list)
+  if (is.null(nm)) {
+    stop("`item_params` must be named by item.", call. = FALSE)
   }
-  if (length(thr_list) != ncol(data)) {
+  unnamed <- which(is.na(nm) | !nzchar(nm))
+  if (length(unnamed) > 0L) {
     stop(
-      "Number of items in `item_params` (",
-      length(thr_list),
-      ") does not match the number of columns in `data` (",
-      ncol(data),
-      "), and names do not align.",
+      "Every element of `item_params` must be named by item. Unnamed: ",
+      "element(s) ", paste(unnamed, collapse = ", "), ".",
+      call. = FALSE
+    )
+  }
+  .check_unique_item_names(nm, "names of `item_params`")
+  # Items pair by name only. Pairing by position would give an item another
+  # item's thresholds without warning whenever the names or order differ.
+  in_data <- nm %in% colnames(data)
+  if (!all(in_data)) {
+    stop(
+      "Names in `item_params` not found in `data`: ",
+      paste(nm[!in_data], collapse = ", "), ". The names must match the ",
+      "item columns of `data`.",
+      call. = FALSE
+    )
+  }
+  data <- data[, nm, drop = FALSE]
+  if (ncol(data) < 2L) {
+    stop(
+      "`item_params` must cover at least 2 items in `data`. Found ",
+      ncol(data), ".",
       call. = FALSE
     )
   }

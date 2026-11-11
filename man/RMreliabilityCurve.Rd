@@ -50,8 +50,8 @@ There is deliberately no default value; see Details.}
 single coefficient implies: \code{"marginal"} (default) or \code{"none"}.}
 
 \item{items}{Optional character vector of column names, or numeric column
-indices, selecting a subset of items. Useful for comparing a short form
-against the full scale.}
+indices, selecting a subset of at least 2 distinct items. Useful for
+comparing a short form against the full scale.}
 
 \item{item_params}{Optional pre-specified item parameters, used in place of
 the thresholds estimated from \code{data}. Either a named list of Andrich

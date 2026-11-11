@@ -188,19 +188,7 @@ RMitemCatProb <- function(
   # ---------------------------------------------------------------------
   # Input validation
   # ---------------------------------------------------------------------
-  validate_response_data(data)
-
-  # PCM / RM require multi-item data for CML estimation, so `data` must
-  # always have >= 2 items. Path mode uses the `item` argument to filter
-  # which item's curves to plot AFTER the model is fit on all items.
-  if (ncol(data) < 2L) {
-    stop(
-      "`data` must contain at least 2 columns (items). Found ",
-      ncol(data),
-      " column(s).",
-      call. = FALSE
-    )
-  }
+  validate_response_data(data) # also checks for 2+ items
 
   if (
     !is.numeric(text_size) ||

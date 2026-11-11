@@ -179,7 +179,7 @@ test_that("RMreliabilityCurve validates item_params", {
   mismatch <- thr[1:2]
   names(mismatch) <- c("Z1", "Z2")
   expect_error(RMreliabilityCurve(df, item_params = mismatch),
-               regexp = "does not match the number of columns")
+               regexp = "not found in `data`: Z1, Z2")
   bad <- thr
   bad[[1L]] <- bad[[1L]][1L]           # too few thresholds for a 0-3 item
   expect_error(RMreliabilityCurve(df, item_params = bad),

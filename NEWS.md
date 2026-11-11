@@ -32,6 +32,11 @@
   say how many bootstrap resamples were dropped and why, naming the item
   when a sparse category was absent from a resample. Results do not change.
 
+- `RMpersonParameters()`, `RMretestSD()` and `RMpersonChange()` with
+  supplied `item_params` now need at least 2 items, in `data` and in
+  `item_params`, and stop on duplicated names in `item_params`. A single item
+  used to run.
+
 - `RMdifLR()` fits by CML with psychotools instead of `eRm`, which it no
   longer needs. The Andersen LR test is unchanged. For polytomous data the
   thresholds now sum to zero within each group, as in
@@ -41,6 +46,25 @@
   `MaxDiff` and `Flagged` change. Dichotomous results do not.**
 
 ## Bug fixes
+
+- Every function that takes response data and fits or scores a model now
+  stops up front, with a message, on data with a single item, duplicated
+  item names, non-numeric (character or factor) columns, or infinite values.
+  These gave obscure errors, or for `Inf` the wrong advice to try
+  `estimator = "MML"`. The MI functions check this once, not per imputation.
+  `RMitemInfitMI()` and `RMitemInfitCutoffMI()` also stop when imputed factor
+  items have labels rather than response codes as levels, which silently
+  became `NA`.
+
+- `RMreliabilityCurve()` stops when `items` selects fewer than 2 items,
+  repeats an item, or holds `NA` or a fractional index. A repeated item
+  counted its information twice.
+
+- With supplied `item_params`, items now pair with the columns of `data` by
+  name only, and a name that is not a column stops with an error
+  (`RMpersonParameters()`, `RMreliabilityCurve()`, `RMretestSD()`,
+  `RMpersonChange()`). With equal counts, mismatched names paired items by
+  position, so items could silently get another item's thresholds.
 
 - `RMdifLR()` stops, naming the item, category and group, when a category
   an item uses is unused in one group, or used there only by respondents

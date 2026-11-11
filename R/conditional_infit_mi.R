@@ -220,6 +220,8 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable", sort) {
   # fill a rare category in some imputations and not others.
   cat_errors <- list()
 
+  item_names <- .mi_validate_structure(mids_object) # once, not per imputation
+
   for (i in seq_len(m)) {
     completed_data <- .mi_completed_to_numeric(
       mice::complete(mids_object, action = i)
@@ -355,7 +357,6 @@ RMitemInfitMI <- function(mids_object, cutoff = NULL, output = "kable", sort) {
   }
 
   # --- Pool using Rubin's rules -----------------------------------------------
-  item_names <- names(mice::complete(mids_object, action = 1L))
   n_items <- length(item_names)
 
   # Collect per-imputation vectors into matrices (items x imputations)

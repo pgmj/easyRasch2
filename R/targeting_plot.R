@@ -185,6 +185,9 @@ RMtargeting <- function(
     )
   }
 
+  # before rowSums() below, so non-numeric data get the validator's message
+  validate_response_data(data)
+
   # if no manual value was selected for number of bins, use the number of
   # unique scores divided by 2, but no less than 11. ggplot2 requires a whole
   # number, so round up (an odd maximum score would otherwise give e.g. 13.5).
@@ -198,8 +201,6 @@ RMtargeting <- function(
   panel <- match.arg(panel)
   sort_items <- match.arg(sort_items)
   output <- match.arg(output, c("patchwork", "list"))
-
-  validate_response_data(data)
 
   data <- as.data.frame(data)
   n_total <- nrow(data)

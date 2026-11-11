@@ -237,17 +237,7 @@ RMdifLR <- function(
 
   validate_response_data(data)
   data <- as.data.frame(data)
-  if (ncol(data) < 2L) {
-    stop("`data` must have at least 2 items.", call. = FALSE)
-  }
-  if (anyDuplicated(colnames(data)) > 0L) {
-    stop(
-      "Item names (column names of `data`) must be unique. Duplicated: ",
-      paste(unique(colnames(data)[duplicated(colnames(data))]), collapse = ", "),
-      ".",
-      call. = FALSE
-    )
-  }
+  # (validate_response_data() also checks for 2+ items and unique names)
   n_total_lr <- nrow(data)
 
   # ---------------------------------------------------------------------

@@ -501,13 +501,7 @@
                                    max_cat = NULL) {
   data <- as.matrix(data)
   items <- colnames(data)
-  if (!is.null(items) && anyDuplicated(items) > 0L) {
-    stop(
-      "Item names (column names of `data`) must be unique. Duplicated: ",
-      paste(unique(items[duplicated(items)]), collapse = ", "), ".",
-      call. = FALSE
-    )
-  }
+  .check_unique_item_names(items)
   tp <- psychotools::threshpar(fit, vcov = se)
   thr_list <- lapply(tp, as.numeric)
   max_obs <- if (is.null(max_cat)) {

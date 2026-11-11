@@ -94,11 +94,8 @@ RMitemHierarchy <- function(
   }
 
   # --- Data validation ----------------------------------------------------
-  validate_response_data(data)
+  validate_response_data(data) # also checks for 2+ items
   data <- as.data.frame(data)
-  if (ncol(data) < 2L) {
-    stop("RMitemHierarchy() requires at least 2 items.", call. = FALSE)
-  }
 
   data_mat <- as.matrix(data)
   if (max(data_mat, na.rm = TRUE) <= 1L) {

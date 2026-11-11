@@ -1,10 +1,90 @@
 # Internal helpers for input validation across easyRasch2 functions
 
+#' Stop on duplicated item names
+#'
+#' Shared by `validate_response_data()`, `.cml_threshold_summary()` and
+#' `.align_items()`.
+#'
+#' @param items Character vector of item names, or `NULL` (no names: passes).
+#' @param where Where the names come from, for the message.
+#' @return Invisibly `TRUE`, or stops.
+#' @keywords internal
+#' @noRd
+.check_unique_item_names <- function(items, where = "column names of `data`") {
+  if (!is.null(items) && anyDuplicated(items) > 0L) {
+    stop(
+      "Item names (", where, ") must be unique. Duplicated: ",
+      paste(unique(items[duplicated(items)]), collapse = ", "), ".",
+      call. = FALSE
+    )
+  }
+  invisible(TRUE)
+}
+
+#' Structural part of validate_response_data()
+#'
+#' Class, at least 2 items, unique names and numeric columns. These are the
+#' same in every imputed dataset, so the MI functions check them once before
+#' their loop. The value checks in `validate_response_data()` can differ
+#' between imputations and stay inside the loop.
+#'
+#' @param data A data.frame or matrix of item responses.
+#' @return Invisibly `TRUE`, or stops.
+#' @keywords internal
+#' @noRd
+.validate_response_structure <- function(data) {
+  if (!is.data.frame(data) && !is.matrix(data)) {
+    stop("`data` must be a data.frame or matrix.", call. = FALSE)
+  }
+
+  if (ncol(data) < 2L) {
+    stop(
+      "`data` must have at least 2 items (columns). Found ", ncol(data), ".",
+      call. = FALSE
+    )
+  }
+
+  items <- colnames(data)
+  .check_unique_item_names(items)
+
+  # as.matrix() on a data.frame with any character or factor column turns
+  # every value into text, and the value checks in validate_response_data()
+  # would then fail with R's "non-numeric argument to mathematical function".
+  is_num <- if (is.data.frame(data)) {
+    vapply(data, function(x) is.numeric(x) || is.logical(x), logical(1L))
+  } else {
+    rep(is.numeric(data) || is.logical(data), ncol(data))
+  }
+  if (!all(is_num)) {
+    bad <- if (is.null(items)) which(!is_num) else items[!is_num]
+    has_factor <- is.data.frame(data) &&
+      any(vapply(data[!is_num], is.factor, logical(1L)))
+    stop(
+      "`data` must contain numeric item responses. Non-numeric column(s): ",
+      paste(bad, collapse = ", "), ".",
+      if (has_factor) {
+        paste0(
+          " Convert factors whose levels are the response codes with ",
+          "as.numeric(as.character(x))."
+        )
+      },
+      call. = FALSE
+    )
+  }
+
+  invisible(TRUE)
+}
+
 #' Validate response data for Rasch analysis
 #'
-#' Checks that the supplied object is a data.frame or matrix, that all values
-#' are non-negative integers (or `NA`), and that the minimum non-missing value
-#' is 0 (i.e., items are scored starting at 0).
+#' Checks that the supplied object is a data.frame or matrix with at least two
+#' items and unique item names, that every column is numeric (or logical,
+#' read as 0/1), that all values are finite non-negative integers (or `NA`),
+#' and that the minimum non-missing value is 0 (i.e., items are scored
+#' starting at 0). Every caller fits a Rasch model or scores respondents
+#' with supplied item parameters. Both need two or more items and pair
+#' parameters with items by name. With `item_params`, `.align_items()` checks
+#' the item count again after selecting the items.
 #'
 #' @param data A data.frame or matrix of item responses.
 #'
@@ -13,15 +93,18 @@
 #'
 #' @noRd
 validate_response_data <- function(data) {
-  if (!is.data.frame(data) && !is.matrix(data)) {
-    stop("`data` must be a data.frame or matrix.", call. = FALSE)
-  }
+  .validate_response_structure(data)
 
   vals <- as.vector(as.matrix(data))
   vals_nonmissing <- vals[!is.na(vals)]
 
   if (length(vals_nonmissing) == 0L) {
     stop("`data` contains no non-missing values.", call. = FALSE)
+  }
+
+  # Inf equals floor(Inf), so it would pass the integer check below.
+  if (any(!is.finite(vals_nonmissing))) {
+    stop("`data` contains infinite values.", call. = FALSE)
   }
 
   if (any(vals_nonmissing < 0)) {
@@ -315,11 +398,29 @@ validate_response_data <- function(data) {
 #' preserved -- not the 1-based integer codes), leaving numeric columns
 #' untouched.
 #'
+#' Factor levels must be the response codes themselves ("0", "1", ...).
+#' Labels such as "never" would otherwise become `NA` with only R's coercion
+#' warning, and the item would then fail later as "no responses", which
+#' points at the wrong problem, so this stops and names the columns.
+#'
 #' @param data A completed data.frame from `mice::complete()`.
 #' @return `data` with factor columns coerced to numeric.
 #' @noRd
 .mi_completed_to_numeric <- function(data) {
   factor_cols <- vapply(data, is.factor, logical(1L))
+  labelled <- vapply(data[factor_cols], function(x) {
+    anyNA(suppressWarnings(as.numeric(levels(x))))
+  }, logical(1L))
+  if (any(labelled)) {
+    stop(
+      "The imputed data have factor columns whose levels are not response ",
+      "codes: ", paste(names(labelled)[labelled], collapse = ", "), ". Their ",
+      "levels must be the 0-based codes (\"0\", \"1\", ...), for instance ",
+      "factor(x, levels = 0:3) before imputing. Remove columns that are not ",
+      "items, such as covariates, from the mids object.",
+      call. = FALSE
+    )
+  }
   if (any(factor_cols)) {
     data[factor_cols] <- lapply(
       data[factor_cols],
@@ -329,12 +430,32 @@ validate_response_data <- function(data) {
   data
 }
 
+#' Check the structure of multiply imputed data once
+#'
+#' Item count, names and column types are the same in every imputation, so
+#' RMitemInfitMI() and RMitemInfitCutoffMI() check them once before their
+#' loop instead of failing m times inside it. Values can differ between
+#' imputations and are checked per imputation by `validate_response_data()`.
+#'
+#' @param mids_object A `mids` object.
+#' @return Invisibly, the item names (column names of the first completed
+#'   dataset), or stops.
+#' @keywords internal
+#' @noRd
+.mi_validate_structure <- function(mids_object) {
+  first <- .mi_completed_to_numeric(mice::complete(mids_object, action = 1L))
+  .validate_response_structure(first)
+  invisible(names(first))
+}
+
 #' Drop respondents with no responses (all-NA rows)
 #'
 #' A row that is `NA` for every item contributes nothing to any estimate and
-#' breaks CML fitting (`psychotools::pcmodel()` errors on all-NA rows). Removes
-#' such rows and, matching the package's existing NA-drop messaging (e.g.
-#' `RMdifTree`, `RMdifLR`), emits a one-time message when any are dropped.
+#' breaks CML fitting (`psychotools::pcmodel()` errors on all-NA rows, and
+#' `raschmodel()` can crash the R session). Removes such rows, keeping the
+#' order and row names of the others, and, matching the package's NA-drop
+#' messaging (e.g. `RMdifTree`, `RMdifLR`), emits a message when any are
+#' dropped.
 #'
 #' @param data A data.frame or matrix of item responses.
 #' @return `data` with all-NA rows removed.

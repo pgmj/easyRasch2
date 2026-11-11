@@ -213,11 +213,8 @@ RMitemICCPlot <- function(data,
     )
   }
 
-  validate_response_data(data)
+  validate_response_data(data) # also checks for 2+ items
   data <- as.data.frame(data)
-  if (ncol(data) < 2L) {
-    stop("RMitemICCPlot() requires at least 2 items.", call. = FALSE)
-  }
   if (method %in% c("quantile", "width")) {
     if (!is.numeric(class_intervals) || length(class_intervals) != 1L ||
         !is.finite(class_intervals) || class_intervals < 2L) {

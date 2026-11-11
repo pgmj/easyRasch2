@@ -28,7 +28,9 @@ for the Expected A Posteriori estimate under a normal prior.}
 \item{item_params}{Optional pre-specified item parameters, e.g. for
 anchoring or equating. Either a named list of Andrich-threshold
 vectors (one per item) or the long-format data.frame returned by
-\code{\link[=RMitemParameters]{RMitemParameters()}}. When \code{NULL} (default) item parameters are
+\code{\link[=RMitemParameters]{RMitemParameters()}}. Items are matched to the columns of \code{data} by
+name, and \code{data} may hold extra columns. A name that is not a column of
+\code{data} stops with an error. When \code{NULL} (default) item parameters are
 estimated from \code{data}.}
 
 \item{estimator}{Character. How item parameters are estimated when

@@ -26,7 +26,7 @@ test_that("RMitemCatProb errors on min != 0", {
 test_that("RMitemCatProb errors when fewer than 2 items", {
   skip_if_not_installed("eRm")
   df <- make_polytomous()[, 1L, drop = FALSE]
-  expect_error(RMitemCatProb(df), regexp = "at least 2 columns")
+  expect_error(RMitemCatProb(df), regexp = "at least 2 items")
 })
 
 test_that("RMitemCatProb errors on invalid theta_range", {
