@@ -10,10 +10,16 @@ on:
     paths-ignore:
       - 'paper/**'
       - 'vignettes/**'
+  workflow_dispatch:
 
 name: R-CMD-check
 
 permissions: read-all
+
+# A new push cancels the still-running jobs from the previous one
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   R-CMD-check:
@@ -24,12 +30,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        config:
-          - {os: macos-latest,   r: 'release'}
-          - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
-          - {os: ubuntu-latest,   r: 'release'}
-          - {os: ubuntu-latest,   r: 'oldrel-1'}
+        # Push: ubuntu R-devel only (local checks cover macOS + release).
+        # Manual run (Actions tab > R-CMD-check > Run workflow) or PR: full matrix.
+        config: ${{ fromJSON(github.event_name == 'push' && '[{"os":"ubuntu-latest","r":"devel","http-user-agent":"release"}]' || '[{"os":"macos-latest","r":"release"},{"os":"windows-latest","r":"release"},{"os":"ubuntu-latest","r":"devel","http-user-agent":"release"},{"os":"ubuntu-latest","r":"release"},{"os":"ubuntu-latest","r":"oldrel-1"}]') }}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}

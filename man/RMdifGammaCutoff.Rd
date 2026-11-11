@@ -122,6 +122,11 @@ The conditional data-generating process uses CML item thresholds from
 group order follows the levels of \code{dif_var} (alphabetical for character
 vectors), which sets the sign of gamma as in \code{iarm::partgam_DIF()}.
 
+The null has no DIF in any item, so the cutoffs do not guard against
+artificial DIF, which real DIF in one item induces in the others
+(Hagquist & Andrich, 2017). See "Real and artificial DIF" in
+\code{\link[=RMdifGamma]{RMdifGamma()}}.
+
 Parallel processing is provided by the \code{mirai} package (optional). Install
 it with \code{install.packages("mirai")} to enable parallelisation.
 }
@@ -155,7 +160,12 @@ Bech, P. (1998). Differential item functioning in the Danish translation
 of the SF-36. \emph{Journal of Clinical Epidemiology, 51}(11), 1189--1202.
 \doi{10.1016/S0895-4356(98)00111-5}
 
-Henninger, M., Radek, J., Debelak, R., & Strobl, C. (2025).
+Hagquist, C., & Andrich, D. (2017). Recent advances in analysis of
+differential item functioning in health research using the Rasch model.
+\emph{Health and Quality of Life Outcomes, 15}, 181.
+\doi{10.1186/s12955-017-0755-0}
+
+Henninger, M., Radek, J., Sengewald, M.-A., & Strobl, C. (2025).
 Partial credit trees meet the partial gamma coefficient for quantifying
 DIF and DSF in polytomous items. \emph{Behaviormetrika, 52}, 221--257.
 \doi{10.1007/s41237-024-00252-3}

@@ -1,13 +1,11 @@
 #' DIF analysis via Andersen's likelihood-ratio test
 #'
-#' Splits a Rasch model by an external grouping variable using
-#' \code{eRm::LRtest()} and reports per-group item locations (or per-group
-#' threshold locations) together with their standard errors. A single
-#' function replaces the four legacy helpers (`RIdifTableLR`,
-#' `RIdifThreshTblLR`, `RIdifFigureLR`, `RIdifThreshFigLR`) by exposing the
-#' two underlying axes -- \code{level} (item or threshold) and \code{output}
-#' (data.frame, kable, or ggplot) -- as arguments. The same data
-#' preparation pipeline feeds all six combinations.
+#' Fits a Rasch model by conditional maximum likelihood in the full sample
+#' and in each group of an external grouping variable, tests the difference
+#' with Andersen's likelihood-ratio test, and reports per-group item
+#' locations (or per-group threshold locations) together with their standard
+#' errors. \code{level} (item or threshold) and \code{output} (data.frame,
+#' kable or ggplot) give six views of the same fits.
 #'
 #' The Partial Credit Model (PCM) is fitted by default for polytomous data
 #' and the dichotomous Rasch Model (RM) is fitted when all responses are
@@ -23,9 +21,10 @@
 #'   dropped with a message. Must result in at least 2 groups after
 #'   cleaning.
 #' @param model One of \code{"auto"} (default), \code{"PCM"}, or
-#'   \code{"RM"}. \code{"auto"} fits \code{eRm::RM()} when the data are
-#'   dichotomous (max response = 1) and \code{eRm::PCM()} otherwise.
-#'   \code{"RM"} errors on polytomous data.
+#'   \code{"RM"}. \code{"auto"} fits the Rasch model when the data are
+#'   dichotomous (max response = 1) and the partial credit model otherwise
+#'   (the two coincide for dichotomous data). \code{"RM"} errors on
+#'   polytomous data.
 #' @param level One of \code{"item"} (default) or \code{"threshold"}.
 #'   \code{"item"} reports each item's mean threshold location per group;
 #'   \code{"threshold"} reports each individual threshold per group. For
@@ -40,7 +39,9 @@
 #'   \code{MaxDiff > cutoff}, where \code{MaxDiff} is the difference
 #'   between the largest and smallest per-group location for that item
 #'   (or threshold). Set to \code{NULL} to suppress flagging. Default
-#'   \code{0.5}.
+#'   \code{0.5}. This default is a convention in applied Rasch work (Jin et
+#'   al., 2013; Kim et al., 2017; Pickard et al., 2006), not a value with a
+#'   statistical or substantive justification. See Details.
 #' @param conf Numeric in (0, 1). Confidence level used for the ggplot
 #'   error bars. Default \code{0.95}.
 #' @param sort Logical. \code{kable} output only: sort rows by
@@ -61,22 +62,111 @@
 #'   footnote, and in the ggplot caption (LR \eqn{\chi^2}, df, p-value).
 #'
 #' @details
-#' For the data.frame and kable outputs, locations are reported on the
-#' centred eRm parameterisation returned by \code{eRm::thresholds()}.
-#' Per-group fits come from \code{eRm::LRtest(..., splitcr = dif_var)};
-#' the unsplit fit (\code{All} column) is the model fitted to the full
-#' dataset. The Andersen LR statistic, df, and p-value reported as the
-#' \code{lr_test} attribute / caption come directly from
-#' \code{LRtest()}'s return value.
+#' Each fit is a CML partial credit model from \code{psychotools::pcmodel()}
+#' (a dichotomous item is a 2-category PCM). Within each fit the thresholds
+#' sum to zero, as in \code{\link{RMitemParameters}}, so each group's
+#' locations are centred on that group's own mean threshold. The \code{All}
+#' column is the fit to the full dataset. An item's location is the mean of
+#' its thresholds, and its SE is the SE of that mean, computed from the
+#' thresholds' covariance matrix.
 #'
-#' \code{cell_spec()}-style HTML cell colouring used in the legacy
-#' easyRasch package has been dropped in favour of a logical
-#' \code{Flagged} column (and bold rendering in the kable output), so the
-#' kable renders correctly in HTML, LaTeX, and pipe/markdown.
+#' The Andersen LR statistic is twice the difference between the sum of the
+#' group conditional log-likelihoods and the full-sample one, with df equal
+#' to the extra free parameters of the group fits. It equals
+#' \code{eRm::LRtest()} on the same data. Respondents with missing responses
+#' are kept (CML uses the items they answered).
+#'
+#' \strong{Response categories.} Every category an item uses must be used in
+#' every group, or that item's thresholds cannot be compared across groups.
+#' The same holds when a category is used in a group only by respondents
+#' with a zero or perfect score there, since CML leaves them out and the
+#' threshold cannot be estimated. The function then stops and names the
+#' items, categories and groups
+#' (\code{eRm::LRtest()} instead left items with an unused category out of
+#' the test without saying so, and returned diverging estimates in the
+#' second case). With small groups this is common for sparse categories: merge
+#' them with an adjacent one, combine groups, or leave the item out.
+#'
+#' \strong{DIF size and the cutoff.} The \code{Flagged} column applies one
+#' fixed cutoff to \code{MaxDiff}, and no single value suits every scale. An
+#' appropriate cutoff depends on the number of items, the number of response
+#' categories and the type of DIF (Van de Winckel et al., 2022). Treat a flag
+#' as a prompt for a closer look, not as a verdict. Judging DIF means
+#' weighing its size against its practical consequences (Henninger et al.,
+#' 2025). These are best evaluated by simulation: estimate person locations
+#' with and without accounting for DIF, for instance by splitting the
+#' affected item by group, and check whether the difference changes
+#' substantive conclusions (Johansson et al., 2026). For polytomous items,
+#' DIF can differ between an item's thresholds, which \code{level =
+#' "threshold"} shows (Henninger et al., 2025). \code{MaxDiff} is a point
+#' estimate, and with small groups its uncertainty is large (see the
+#' \code{SE_*} columns). The LR test addresses a different question: whether
+#' any DIF is present, not how large it is.
+#'
+#' \strong{Real and artificial DIF.} Real DIF in one item induces artificial
+#' DIF in the other items, in the opposite direction (Hagquist & Andrich,
+#' 2017). Here the mechanism is direct: each group's locations are centred
+#' on that group's own mean threshold, so a real shift in one item moves the
+#' other items' locations the other way. An item can therefore be flagged
+#' only because another item has DIF, and one analysis cannot tell real
+#' from artificial DIF. Hagquist and Andrich (2017) recommend resolving DIF
+#' items one at a time, starting with the item with the largest DIF (for
+#' instance by splitting it into group-specific items), and repeating the
+#' analysis before deciding on the next. Do not overinterpret the flags from
+#' a single run.
+#'
+#' @references
+#' Andersen, E. B. (1973). A goodness of fit test for the Rasch model.
+#' *Psychometrika, 38*(1), 123-140. \doi{10.1007/BF02291180}
+#'
+#' Hagquist, C., & Andrich, D. (2017). Recent advances in analysis of
+#' differential item functioning in health research using the Rasch model.
+#' *Health and Quality of Life Outcomes, 15*, 181.
+#' \doi{10.1186/s12955-017-0755-0}
+#'
+#' Henninger, M., Radek, J., Sengewald, M.-A., & Strobl, C. (2025). Partial
+#' credit trees meet the partial gamma coefficient for quantifying DIF and
+#' DSF in polytomous items. *Behaviormetrika, 52*(2), 221-257.
+#' \doi{10.1007/s41237-024-00252-3}
+#'
+#' Jin, Y., Myers, N. D., Ahn, S., & Penfield, R. D. (2013). A comparison of
+#' uniform DIF effect size estimators under the MIMIC and Rasch models.
+#' *Educational and Psychological Measurement, 73*(2), 339-358.
+#' \doi{10.1177/0013164412462705}
+#'
+#' Johansson, M., Preuter, M., & Melin, J. (2026). Valid and reliable? Basic
+#' criteria and modern methods for assessing psychometric quality. OSF
+#' Preprints. \doi{10.31219/osf.io/3htzc_v2}
+#'
+#' Kim, S., Ouellet, L. J., Mazza, J., & Spaulding, A. C. (2017). Rasch
+#' analysis and differential item functioning of a social support measure
+#' in jail inmates with HIV infection. *Evaluation & the Health Professions,
+#' 40*(1), 33-60. \doi{10.1177/0163278716644954}
+#'
+#' Pickard, A. S., Dalal, M. R., & Bushnell, D. M. (2006). A comparison of
+#' depressive symptoms in stroke and primary care: Applying Rasch models to
+#' evaluate the Center for Epidemiologic Studies-Depression Scale. *Value in
+#' Health, 9*(1), 59-64. \doi{10.1111/j.1524-4733.2006.00082.x}
+#'
+#' Strobl, C., Kopf, J., & Zeileis, A. (2015). Rasch trees: A new method for
+#' detecting differential item functioning in the Rasch model.
+#' *Psychometrika, 80*(2), 289-316. \doi{10.1007/s11336-013-9388-3}
+#'
+#' Van de Winckel, A., Kozlowski, A. J., Johnston, M. V., Weaver, J.,
+#' Grampurohit, N., Terhorst, L., Juengst, S., Ehrlich-Jones, L., Heinemann,
+#' A. W., Melvin, J., Sood, P., & Mallinson, T. (2022). Reporting guideline
+#' for RULER: Rasch reporting guideline for rehabilitation research:
+#' Explanation and elaboration. *Archives of Physical Medicine and
+#' Rehabilitation, 103*(7), 1487-1498. \doi{10.1016/j.apmr.2022.03.019}
+#'
+#' @seealso \code{\link{RMdifGamma}}, with simulation-based cutoffs from
+#'   \code{\link{RMdifGammaCutoff}}, and \code{\link{RMdifTree}}, for
+#'   continuous DIF variables and interactions between them (Strobl et al.,
+#'   2015; Henninger et al., 2025).
 #'
 #' @examples
 #' \donttest{
-#' if (requireNamespace("eRm", quietly = TRUE)) {
+#' if (requireNamespace("eRm", quietly = TRUE)) { # for the example data
 #'   set.seed(1)
 #'   data("pcmdat2", package = "eRm")
 #'   grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
@@ -122,10 +212,6 @@ RMdifLR <- function(
   if (output == "kable" && !requireNamespace("knitr", quietly = TRUE)) {
     stop("Package 'knitr' is required for output = \"kable\".", call. = FALSE)
   }
-  if (!requireNamespace("eRm", quietly = TRUE)) {
-    stop("Package 'eRm' is required for RMdifLR().", call. = FALSE)
-  }
-
   if (!is.null(cutoff)) {
     if (
       !is.numeric(cutoff) ||
@@ -152,7 +238,6 @@ RMdifLR <- function(
   validate_response_data(data)
   data <- as.data.frame(data)
   n_total_lr <- nrow(data)
-  has_na_lr <- anyNA(data) || anyNA(dif_var)
 
   # ---------------------------------------------------------------------
   # Resolve dif_var and drop NAs (jointly with `data`)
@@ -176,8 +261,7 @@ RMdifLR <- function(
     dif_factor <- droplevels(dif_factor[!na_mask])
   }
 
-  # Respondents with no responses at all contribute nothing and make
-  # eRm::LRtest() error; drop them jointly with `dif_factor` (the standard
+  # Respondents with no responses at all contribute nothing to CML; drop them jointly with `dif_factor` (the standard
   # .drop_empty_respondents() treatment, inlined to keep the rows aligned
   # with the grouping variable).
   empty <- rowSums(!is.na(as.matrix(data))) == 0L
@@ -186,6 +270,10 @@ RMdifLR <- function(
     data <- data[!empty, , drop = FALSE]
     dif_factor <- droplevels(dif_factor[!empty])
   }
+
+  # After the drops above: NA in `dif_var`, or in all-NA rows, does not
+  # mean that incomplete responses are retained.
+  has_na_lr <- anyNA(data)
 
   if (nlevels(dif_factor) < 2L) {
     stop(
@@ -217,47 +305,65 @@ RMdifLR <- function(
   }
 
   # ---------------------------------------------------------------------
-  # Fit, run LRtest, extract per-group + overall thresholds and SEs
+  # Fit the full sample and each group by CML, then Andersen's LR test
   # ---------------------------------------------------------------------
-  # Shared category check on the full data: with an empty lowest or interior
-  # category eRm fits anyway and returns meaningless SEs. Items with an empty
-  # category within one group only are dropped by eRm::LRtest() (to be
-  # reported explicitly; see dev/code-review/item_parameters.md).
-  .check_response_categories(data)
-  fit_full <- if (resolved_model == "PCM") eRm::PCM(data) else eRm::RM(data)
+  # Every category an item uses in the full data must occur in every group,
+  # or the group fits would have different thresholds (psychotools drops an
+  # unused category's threshold) and the locations could not be compared.
+  .check_response_categories(data) # full data first, the plain message
+  .check_group_categories(data, dif_factor)
+  item_names <- names(data)
+  is_rm <- resolved_model == "RM"
+  # Thresholds per item: the full-data top category (every group uses it).
+  n_thr <- as.integer(apply(as.matrix(data), 2L, max, na.rm = TRUE))
+  # "auto" fits raschmodel() for dichotomous data (same estimates as a
+  # 2-category pcmodel(), about twice as fast), pcmodel() otherwise.
+  fit_lr <- function(d, where) {
+    tryCatch(
+      .cml_fit(d, model = "auto"),
+      error = function(e) {
+        if (inherits(e, "easyRasch2_category_error")) stop(e)
+        stop(
+          "CML estimation failed in ", where, " (", conditionMessage(e),
+          "). Small or sparse groups are the usual cause; inspect the ",
+          "counts with RMplotTile(data, group = dif_var).",
+          call. = FALSE
+        )
+      }
+    )
+  }
+  fit_full <- fit_lr(data, "the full sample")
+  fits <- lapply(groups, function(g) {
+    fit_lr(data[dif_factor == g, , drop = FALSE], paste0("group '", g, "'"))
+  })
+  # Categories used only by extreme scorers in the full data (warning, as in
+  # the other CML functions); within a group they stop in the check above.
+  .sparsity_warning(data)
 
-  lrt <- tryCatch(
-    eRm::LRtest(fit_full, splitcr = dif_factor),
-    error = function(e) {
-      stop(
-        "eRm::LRtest() failed: ",
-        conditionMessage(e),
-        "\nThis often indicates an empty response category in one ",
-        "subgroup. Inspect with RMplotTile(data, group = dif_var).",
-        call. = FALSE
-      )
-    }
+  # LR = 2 * (sum of group conditional log-likelihoods - full one), with df
+  # the extra free parameters of the group fits (Andersen, 1973).
+  ll <- function(f) as.numeric(stats::logLik(f))
+  npar <- function(f) length(stats::coef(f))
+  lr_stat <- 2 * (sum(vapply(fits, ll, numeric(1L))) - ll(fit_full))
+  lr_df <- sum(vapply(fits, npar, integer(1L))) - npar(fit_full)
+  lr_p <- stats::pchisq(lr_stat, lr_df, lower.tail = FALSE)
+
+  parts <- c(
+    Map(function(f, g) lr_fit_summary(f, g, item_names, is_rm, n_thr),
+        fits, groups),
+    list(lr_fit_summary(fit_full, "All", item_names, is_rm, n_thr))
   )
-
-  per_group <- extract_lr_locations(lrt, groups, names(data))
-  overall <- extract_overall_locations(fit_full, names(data))
-
-  # Combine into a long-form table: Item, Threshold, DIFgroup, Location, SE
-  long_df <- rbind(per_group, overall)
-  long_df$Item <- factor(long_df$Item, levels = names(data))
+  per_level <- if (level == "item") "item" else "thr"
+  long_df <- do.call(rbind, lapply(parts, `[[`, per_level))
+  rownames(long_df) <- NULL
+  long_df$Item <- factor(long_df$Item, levels = item_names)
 
   # ---------------------------------------------------------------------
-  # Aggregate to the requested level
+  # Wide table at the requested level
   # ---------------------------------------------------------------------
   if (level == "item") {
-    agg <- stats::aggregate(
-      cbind(Location = long_df$Location, SE = long_df$SE),
-      by = list(Item = long_df$Item, DIFgroup = long_df$DIFgroup),
-      FUN = function(x) mean(x, na.rm = TRUE)
-    )
-    agg$Item <- factor(agg$Item, levels = names(data))
-    table_df <- build_wide_table(agg, groups, level = "item")
-    plot_df <- agg
+    table_df <- build_wide_table(long_df, groups, level = "item")
+    plot_df <- long_df
     plot_df$Threshold <- NA_character_
   } else {
     table_df <- build_wide_table(long_df, groups, level = "threshold")
@@ -290,9 +396,9 @@ RMdifLR <- function(
   # LR test summary (Andersen)
   # ---------------------------------------------------------------------
   lr_summary <- list(
-    LR = unname(lrt$LR),
-    df = unname(lrt$df),
-    p_value = unname(lrt$pvalue),
+    LR = lr_stat,
+    df = lr_df,
+    p_value = lr_p,
     n_groups = nr_groups,
     groups = groups,
     model = resolved_model,
@@ -323,7 +429,7 @@ RMdifLR <- function(
     n_clause <- .n_caption(
       lr_summary$n_persons,
       n_total_lr,
-      if (has_na_lr) "complete cases" else character()
+      if (has_na_lr) "incomplete responses retained" else character()
     )
     return(render_lr_kable(
       table_df,
@@ -351,140 +457,149 @@ RMdifLR <- function(
 # Internal helpers
 # =====================================================================
 
-#' Extract per-group threshold locations + SEs from an LRtest fit
+#' Stop unless every category an item uses occurs in every DIF group
 #'
-#' Returns a long-format data.frame with columns
-#' Item, Threshold, DIFgroup, Location, SE.
+#' psychotools fits an item with an unused category in one group with fewer
+#' thresholds there (or, for an empty lowest or interior category, shifts or
+#' drops them), so its locations could not be compared across groups. The
+#' full data have already passed `.check_response_categories()`, so an item's
+#' categories there run 0 to its highest observed one. A category used in a
+#' group only by respondents with a zero or perfect score there also stops:
+#' CML leaves those respondents out, so the category is unused in that
+#' group's fit and its threshold diverges.
 #'
+#' @param data Response data.frame (items from 0).
+#' @param dif_factor Factor of the same length, without `NA`.
+#' @return Invisibly `TRUE`; stops with an `easyRasch2_category_error`
+#'   naming the items, the categories and the groups.
 #' @keywords internal
 #' @noRd
-extract_lr_locations <- function(lrt, groups, item_names) {
-  parts <- lapply(seq_along(groups), function(g) {
-    fit_g <- lrt$fitobj[[g]]
-    one_fit_long(fit_g, dif_group = groups[g], item_names = item_names)
-  })
-  out <- do.call(rbind, parts)
-  rownames(out) <- NULL
-  out
-}
-
-#' Extract threshold locations + SEs from the unsplit fit
-#'
-#' @keywords internal
-#' @noRd
-extract_overall_locations <- function(fit, item_names) {
-  one_fit_long(fit, dif_group = "All", item_names = item_names)
-}
-
-#' Pull thresholds + SEs out of one eRm `Rm` fit, as a long data.frame
-#'
-#' Both \code{eRm::PCM()} and \code{eRm::RM()} fits are supported via
-#' \code{eRm::thresholds()}, which returns the centred threshold matrix
-#' and matching SEs. For RM fits there is exactly one threshold per item.
-#'
-#' @keywords internal
-#' @noRd
-one_fit_long <- function(fit, dif_group, item_names) {
-  is_rm <- isTRUE(fit$model == "RM")
-
-  if (is_rm) {
-    # eRm::thresholds() is polytomous-only. For RM the "threshold" is
-    # the item difficulty, available as -betapar with matching se.beta.
-    beta <- fit$betapar
-    se <- fit$se.beta
-    raw_names <- sub("^beta\\s+", "", names(beta))
-    if (!all(raw_names %in% item_names)) {
-      stop(
-        "Could not match RM item parameter names to data columns: ",
-        paste(utils::head(setdiff(raw_names, item_names), 5L), collapse = ", "),
-        call. = FALSE
-      )
+.check_group_categories <- function(data, dif_factor) {
+  data <- as.matrix(data)
+  items <- colnames(data)
+  problems <- character(0)
+  bad <- character(0)
+  unused <- matrix(FALSE, ncol(data), nlevels(dif_factor))
+  for (j in seq_len(ncol(data))) {
+    x <- data[, j]
+    cats <- sort(unique(x[!is.na(x)]))
+    for (gi in seq_along(levels(dif_factor))) {
+      g <- levels(dif_factor)[gi]
+      xg <- x[dif_factor == g]
+      miss <- setdiff(cats, xg[!is.na(xg)])
+      if (length(miss) > 0L) {
+        unused[j, gi] <- TRUE
+        bad <- union(bad, items[j])
+        problems <- c(problems, paste0(
+          items[j], " (",
+          if (length(miss) == length(cats)) {
+            "no responses"
+          } else {
+            paste0(
+              if (length(miss) == 1L) "category " else "categories ",
+              paste(miss, collapse = ", "), " unused"
+            )
+          },
+          " in group '", g, "')"
+        ))
+      }
     }
-    return(data.frame(
-      Item = raw_names,
-      Threshold = "1",
-      DIFgroup = dif_group,
-      Location = unname(-as.numeric(beta)),
-      SE = unname(as.numeric(se)),
-      stringsAsFactors = FALSE
+  }
+  # Extreme-score-only categories per group, for items whose categories are
+  # all used there (else the group's item maxima would differ).
+  for (gi in seq_along(levels(dif_factor))) {
+    g <- levels(dif_factor)[gi]
+    ec <- .extreme_only_categories(data[dif_factor == g, , drop = FALSE])
+    ec <- ec[!unused[match(ec$Item, items), gi], , drop = FALSE]
+    for (it in unique(ec$Item)) {
+      k <- ec$Category[ec$Item == it]
+      bad <- union(bad, it)
+      problems <- c(problems, paste0(
+        it, " (", if (length(k) == 1L) "category " else "categories ",
+        paste(k, collapse = ", "), " used only by respondents with a zero ",
+        "or perfect score in group '", g, "')"
+      ))
+    }
+  }
+  if (length(problems) > 0L) {
+    msg <- paste0(
+      "Item locations cannot be compared across DIF groups for: ",
+      paste(problems, collapse = ", "),
+      ". Every response category of an item must be used in every group, ",
+      "by respondents without a zero or perfect score (conditional maximum ",
+      "likelihood leaves those out). ",
+      "Merge a sparse category with an adjacent one, combine groups, or ",
+      "leave the item out. RMplotTile(data, group = dif_var) shows the ",
+      "counts."
+    )
+    stop(structure(
+      class = c("easyRasch2_category_error", "error", "condition"),
+      list(message = msg, call = NULL, items = bad)
     ))
   }
-
-  thr <- eRm::thresholds(fit)
-  loc <- thr$threshpar
-  se <- thr$se.thresh
-  if (is.list(loc)) {
-    loc <- unlist(loc, use.names = TRUE)
-  }
-  if (is.list(se)) {
-    se <- unlist(se, use.names = TRUE)
-  }
-
-  parsed <- parse_threshold_names(names(loc), item_names)
-
-  data.frame(
-    Item = parsed$Item,
-    Threshold = parsed$Threshold,
-    DIFgroup = dif_group,
-    Location = unname(as.numeric(loc)),
-    SE = unname(as.numeric(se)),
-    stringsAsFactors = FALSE
-  )
+  invisible(TRUE)
 }
 
-#' Parse "beta Item.Tk" style names into Item / Threshold columns
+#' Threshold and item locations with SEs from one CML fit
 #'
-#' Tolerates name shapes seen across eRm versions:
-#'   "beta I1.c1", "beta I1.T1", "I1.c1", "I1".
+#' Thresholds come from `psychotools::threshpar()`, which makes them sum to
+#' zero within the fit (the identification `RMitemParameters()` uses), with
+#' their covariance matrix `V`. An item's location is the mean of its
+#' thresholds, and its SE is `sqrt(w' V w)` over that item's block, with
+#' `w = 1 / m`, so the covariance between an item's thresholds is included.
 #'
+#' @param fit A `pcmodel` fit (hessian on).
+#' @param dif_group Label for the `DIFgroup` column.
+#' @param item_names Item names, in data order.
+#' @param is_rm `TRUE` labels the single threshold `"1"` (dichotomous).
+#' @param n_thr Expected thresholds per item (the full-data top category).
+#' @return A list with `thr` (Item, Threshold, DIFgroup, Location, SE) and
+#'   `item` (Item, DIFgroup, Location, SE) data.frames.
 #' @keywords internal
 #' @noRd
-parse_threshold_names <- function(nm, item_names) {
-  bare <- sub("^(thresh\\s+)?beta\\s+", "", nm)
-
-  # Match the longest item name as a prefix -- needed because item names
-  # themselves may legitimately contain dots ("Q1.a").
-  matched_item <- vapply(
-    bare,
-    function(b) {
-      hits <- item_names[
-        startsWith(b, item_names) |
-          startsWith(b, paste0(item_names, "."))
-      ]
-      if (length(hits) == 0L) {
-        NA_character_
-      } else {
-        hits[which.max(nchar(hits))]
-      }
-    },
-    character(1L)
+lr_fit_summary <- function(fit, dif_group, item_names, is_rm, n_thr) {
+  tp <- psychotools::threshpar(fit, vcov = TRUE)
+  thr <- lapply(tp, as.numeric)
+  m <- lengths(thr)
+  # Defensive: the category checks should make a reshaped item impossible.
+  if (!identical(names(tp), item_names) || !identical(unname(m), n_thr)) {
+    stop("Internal error: the fit for '", dif_group, "' does not match the ",
+         "data's items and categories.", call. = FALSE)
+  }
+  V <- unname(as.matrix(attr(tp, "vcov")))
+  blocks <- split(seq_len(sum(m)), rep.int(seq_along(m), m))
+  thr_df <- data.frame(
+    Item = rep(item_names, m),
+    Threshold = if (is_rm) "1" else unlist(lapply(m, function(k) paste0("c", seq_len(k)))),
+    DIFgroup = dif_group,
+    Location = unlist(thr, use.names = FALSE),
+    SE = suppressWarnings(sqrt(diag(V))),
+    stringsAsFactors = FALSE,
+    row.names = NULL
   )
-
-  thr_part <- mapply(
-    function(b, it) {
-      if (is.na(it)) {
-        return(NA_character_)
-      }
-      rest <- substr(b, nchar(it) + 1L, nchar(b))
-      rest <- sub("^\\.", "", rest)
-      if (!nzchar(rest)) "1" else rest
-    },
-    bare,
-    matched_item,
-    USE.NAMES = FALSE
-  )
-
-  if (any(is.na(matched_item))) {
-    bad <- nm[is.na(matched_item)]
-    stop(
-      "Could not match threshold parameter name(s) to items: ",
-      paste(utils::head(bad, 5L), collapse = ", "),
-      if (length(bad) > 5L) ", ..." else "",
+  item_se <- vapply(blocks, function(i) {
+    w <- rep(1 / length(i), length(i))
+    suppressWarnings(sqrt(sum(w * (V[i, i, drop = FALSE] %*% w))))
+  }, numeric(1L))
+  if (any(!is.finite(thr_df$SE)) || any(!is.finite(item_se))) {
+    warning(
+      "Standard errors could not be computed for some parameters in '",
+      dif_group, "' (the covariance matrix is not positive definite); they ",
+      "are NA.",
       call. = FALSE
     )
+    thr_df$SE[!is.finite(thr_df$SE)] <- NA_real_
+    item_se[!is.finite(item_se)] <- NA_real_
   }
-
-  list(Item = unname(matched_item), Threshold = unname(thr_part))
+  item_df <- data.frame(
+    Item = item_names,
+    DIFgroup = dif_group,
+    Location = vapply(thr, mean, numeric(1L)),
+    SE = unname(item_se),
+    stringsAsFactors = FALSE,
+    row.names = NULL
+  )
+  list(thr = thr_df, item = item_df)
 }
 
 #' Reshape long -> wide on DIFgroup, add MaxDiff, attach SE columns
@@ -520,7 +635,8 @@ build_wide_table <- function(long_df, groups, level) {
   })
 
   ord <- if (level == "threshold") {
-    order(out$Item, out$Threshold)
+    # Numeric order, so c10 comes after c9.
+    order(out$Item, as.integer(sub("^c", "", out$Threshold)))
   } else {
     order(out$Item)
   }
@@ -624,6 +740,14 @@ render_lr_ggplot <- function(
   z <- stats::qnorm(1 - (1 - conf) / 2)
 
   plot_df$DIFgroup <- factor(plot_df$DIFgroup, levels = c(groups, "All"))
+  if (level == "threshold") {
+    # Numeric order in the legend, so c10 comes after c9.
+    lab <- unique(plot_df$Threshold)
+    plot_df$Threshold <- factor(
+      plot_df$Threshold,
+      levels = lab[order(as.integer(sub("^c", "", lab)))]
+    )
+  }
   group_only <- plot_df[plot_df$DIFgroup %in% groups, , drop = FALSE]
   all_only <- plot_df[plot_df$DIFgroup == "All", , drop = FALSE]
 

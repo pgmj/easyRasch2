@@ -549,8 +549,9 @@
 #' `psychotools::pcmodel()` and `raschmodel()` handle three item shapes in
 #' ways that break the threshold list's alignment with the data, which every
 #' consumer of `.fit_cml_thresholds()` assumes. `mirt` (MML) renumbers the
-#' same items, and `eRm::LRtest()` drops them, so the check also runs before
-#' those fits:
+#' same items, so the check also runs before those fits (via `.mml_fit()`).
+#' RMdifLR() adds a per-group check, `.check_group_categories()`. The three
+#' shapes:
 #' - an item with one observed category is dropped from the list,
 #' - an empty lowest category makes psychotools rescale the item to start at
 #'   0, while the data keep the original codes,

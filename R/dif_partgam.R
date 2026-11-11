@@ -97,6 +97,16 @@
 #' gamma they test is computed by the same internal routine as the simulated
 #' values, which reproduces `iarm::partgam_DIF()` exactly.
 #'
+#' \strong{Real and artificial DIF.} Partial gamma conditions on the total
+#' score, which includes every item. Real DIF in one item then induces
+#' artificial DIF in the other items, in the opposite direction, because at
+#' a given total score the item scores must add up to that score (Hagquist &
+#' Andrich, 2017). An item can therefore be flagged only because another
+#' item has DIF. The simulation-based cutoffs from [RMdifGammaCutoff()] do
+#' not guard against this, since their null has no DIF in any item. Resolve
+#' DIF items one at a time, starting with the largest, and repeat the
+#' analysis before deciding on the next (Hagquist & Andrich, 2017).
+#'
 #' @inheritSection RMitemInfit Multiple comparisons
 #'
 #' @references
@@ -108,6 +118,11 @@
 #' Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
 #' of hypotheses simultaneously. *Journal of Statistical Theory and Practice,
 #' 19*(6). \doi{10.1007/s42519-024-00412-4}
+#'
+#' Hagquist, C., & Andrich, D. (2017). Recent advances in analysis of
+#' differential item functioning in health research using the Rasch model.
+#' *Health and Quality of Life Outcomes, 15*, 181.
+#' \doi{10.1186/s12955-017-0755-0}
 #'
 #' Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple Testing*.
 #' Wiley.
@@ -671,6 +686,11 @@ RMdifGamma <- function(
 #' group order follows the levels of `dif_var` (alphabetical for character
 #' vectors), which sets the sign of gamma as in `iarm::partgam_DIF()`.
 #'
+#' The null has no DIF in any item, so the cutoffs do not guard against
+#' artificial DIF, which real DIF in one item induces in the others
+#' (Hagquist & Andrich, 2017). See "Real and artificial DIF" in
+#' [RMdifGamma()].
+#'
 #' Parallel processing is provided by the `mirai` package (optional). Install
 #' it with `install.packages("mirai")` to enable parallelisation.
 #'
@@ -680,7 +700,12 @@ RMdifGamma <- function(
 #' of the SF-36. *Journal of Clinical Epidemiology, 51*(11), 1189--1202.
 #' \doi{10.1016/S0895-4356(98)00111-5}
 #'
-#' Henninger, M., Radek, J., Debelak, R., & Strobl, C. (2025).
+#' Hagquist, C., & Andrich, D. (2017). Recent advances in analysis of
+#' differential item functioning in health research using the Rasch model.
+#' *Health and Quality of Life Outcomes, 15*, 181.
+#' \doi{10.1186/s12955-017-0755-0}
+#'
+#' Henninger, M., Radek, J., Sengewald, M.-A., & Strobl, C. (2025).
 #' Partial credit trees meet the partial gamma coefficient for quantifying
 #' DIF and DSF in polytomous items. *Behaviormetrika, 52*, 221--257.
 #' \doi{10.1007/s41237-024-00252-3}

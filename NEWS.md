@@ -11,6 +11,14 @@
   marginal p-values move slightly.** The typical change in a corrected 
   p-value is about 0.001 at B = 400 and under 0.0005 at B = 1000.
 
+- Docs - `RMdifLR()` explains why its 0.5-logit `cutoff` is a convention
+  rather than a justified value, and how real DIF in one item induces
+  artificial DIF in the others, with references for further reading.
+  `RMdifGamma()`, `RMdifGammaCutoff()` and `RMdifTree()` also describe
+  artificial DIF. The
+  Henninger et al. (2025) reference in `RMdifTree()` and
+  `RMdifGammaCutoff()` named the wrong third author.
+
 - Docs - the `phq9` description no longer calls the share of zero sum
   scores realistic. Zero sum scores were reduced by hand to 8, so the
   sample is not representative of the NHANES population.
@@ -24,10 +32,26 @@
   say how many bootstrap resamples were dropped and why, naming the item
   when a sparse category was absent from a resample. Results do not change.
 
+- `RMdifLR()` fits by CML with psychotools instead of `eRm`, which it no
+  longer needs. The Andersen LR test is unchanged. For polytomous data the
+  thresholds now sum to zero within each group, as in
+  `RMitemParameters()`, so each group's locations shift by a constant, and
+  item SEs are now the SE of the item's mean threshold rather than the mean
+  of the threshold SEs (about half as large). **Polytomous locations, SEs,
+  `MaxDiff` and `Flagged` change. Dichotomous results do not.**
+
 ## Bug fixes
 
-- Every function that fits a Rasch or partial credit model (CML, MML or
-  eRm) now stops with a message naming the item when an item has one
+- `RMdifLR()` stops, naming the item, category and group, when a category
+  an item uses is unused in one group, or used there only by respondents
+  with a zero or perfect score. `eRm::LRtest()` left unused-category items
+  out of the test without saying so (shown as not flagged), and gave
+  diverging estimates in the second case (e.g. -13.5 logits, SE 276).
+  Its caption also said "complete cases" for data with missing responses,
+  which are kept.
+
+- Every function that fits a Rasch or partial credit model (CML or MML)
+  now stops with a message naming the item when an item has one
   response category, or an empty lowest or interior category. Such items
   were silently dropped or renumbered, which paired thresholds with the
   wrong items: e.g. WLE estimates pushed to the boundary in

@@ -123,6 +123,16 @@ model-conditional and sample-size-sensitive, and are reported alongside
 the simulated effect-size band, not in place of it. The observed partial
 gamma they test is computed by the same internal routine as the simulated
 values, which reproduces \code{iarm::partgam_DIF()} exactly.
+
+\strong{Real and artificial DIF.} Partial gamma conditions on the total
+score, which includes every item. Real DIF in one item then induces
+artificial DIF in the other items, in the opposite direction, because at
+a given total score the item scores must add up to that score (Hagquist &
+Andrich, 2017). An item can therefore be flagged only because another
+item has DIF. The simulation-based cutoffs from \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}} do
+not guard against this, since their null has no DIF in any item. Resolve
+DIF items one at a time, starting with the largest, and repeat the
+analysis before deciding on the next (Hagquist & Andrich, 2017).
 }
 \section{Multiple comparisons}{
 
@@ -181,6 +191,11 @@ of the SF-36. \emph{Journal of Clinical Epidemiology, 51}(11), 1189--1202.
 Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
 of hypotheses simultaneously. \emph{Journal of Statistical Theory and Practice,
 19}(6). \doi{10.1007/s42519-024-00412-4}
+
+Hagquist, C., & Andrich, D. (2017). Recent advances in analysis of
+differential item functioning in health research using the Rasch model.
+\emph{Health and Quality of Life Outcomes, 15}, 181.
+\doi{10.1186/s12955-017-0755-0}
 
 Westfall, P. H., & Young, S. S. (1993). \emph{Resampling-Based Multiple Testing}.
 Wiley.

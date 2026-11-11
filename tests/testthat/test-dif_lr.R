@@ -80,7 +80,6 @@ test_that("RMdifLR errors on invalid cutoff or conf", {
 # Output structure (dataframe)
 # ---------------------------------------------------------------------
 test_that("RMdifLR output = 'dataframe' on dichotomous data picks RM and returns one row per item", {
-  skip_if_not_installed("eRm")
   df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
 
@@ -101,7 +100,6 @@ test_that("RMdifLR output = 'dataframe' on dichotomous data picks RM and returns
 })
 
 test_that("RMdifLR level = 'threshold' on polytomous data returns one row per item × threshold", {
-  skip_if_not_installed("eRm")
   df <- make_polytomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
 
@@ -120,7 +118,6 @@ test_that("RMdifLR level = 'threshold' on polytomous data returns one row per it
 # Output structure (kable / ggplot)
 # ---------------------------------------------------------------------
 test_that("RMdifLR output = 'kable' returns a knitr_kable", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("knitr")
   df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
@@ -129,7 +126,6 @@ test_that("RMdifLR output = 'kable' returns a knitr_kable", {
 })
 
 test_that("RMdifLR defaults to kable (consistent with other kable/ggplot functions)", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("knitr")
   df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
@@ -137,7 +133,6 @@ test_that("RMdifLR defaults to kable (consistent with other kable/ggplot functio
 })
 
 test_that("RMdifLR output = 'ggplot' returns a ggplot", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
   df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
@@ -149,7 +144,6 @@ test_that("RMdifLR output = 'ggplot' returns a ggplot", {
 # Flagged column / MaxDiff
 # ---------------------------------------------------------------------
 test_that("Flagged column is logical and absent when cutoff = NULL", {
-  skip_if_not_installed("eRm")
   df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
 
@@ -166,7 +160,6 @@ test_that("Flagged column is logical and absent when cutoff = NULL", {
 # NA handling in dif_var
 # ---------------------------------------------------------------------
 test_that("RMdifLR drops NA rows in dif_var with a message", {
-  skip_if_not_installed("eRm")
   df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
   grp[c(1L, 5L, 9L)] <- NA
@@ -182,7 +175,6 @@ test_that("RMdifLR drops NA rows in dif_var with a message", {
 # Sorting (kable)
 # ---------------------------------------------------------------------
 test_that("sort = TRUE in dataframe output sorts by MaxDiff descending", {
-  skip_if_not_installed("eRm")
   df <- make_dichotomous()
   grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
   out <- RMdifLR(df, dif_var = grp, output = "dataframe", sort = TRUE)
@@ -193,7 +185,6 @@ test_that("sort = TRUE in dataframe output sorts by MaxDiff descending", {
 # p-value formatting in captions
 # ---------------------------------------------------------------------
 test_that("captions format p as plain numbers, never scientific notation", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
   df <- make_dichotomous()
   grp <- rep(c("A", "B"), length.out = nrow(df))
@@ -216,7 +207,6 @@ test_that(".format_p follows APA-style thresholds", {
 })
 
 test_that("RMdifLR drops all-NA respondents instead of erroring", {
-  skip_if_not_installed("eRm")
   set.seed(42)
   df <- as.data.frame(matrix(sample(0:2, 80 * 5, replace = TRUE), nrow = 80))
   colnames(df) <- paste0("i", 1:5)
@@ -225,4 +215,146 @@ test_that("RMdifLR drops all-NA respondents instead of erroring", {
 
   expect_message(k <- RMdifLR(df, dif_var = grp), "no responses dropped")
   expect_s3_class(k, "knitr_kable")
+})
+
+# ---------------------------------------------------------------------
+# psychotools engine (replaced eRm::LRtest in 1.4.0.9002)
+# ---------------------------------------------------------------------
+test_that("the LR test equals eRm::LRtest(), with and without missing data", {
+  skip_if_not_installed("eRm")
+  e <- new.env()
+  utils::data(pcmdat2, raschdat1, package = "eRm", envir = e)
+  set.seed(4)
+  pcm <- as.data.frame(e$pcmdat2)
+  pcm_na <- pcm
+  pcm_na[matrix(stats::runif(length(as.matrix(pcm))) < 0.05, nrow(pcm))] <- NA
+  ras <- as.data.frame(e$raschdat1)[, 1:12]
+  cases <- list(
+    list(pcm, sample(c("a", "b"), nrow(pcm), TRUE), "PCM"),
+    # I3 left out: only 7 of its 14 zeros come from respondents without a
+    # zero score, so a 3-way split often leaves a group with none there,
+    # which now stops (eRm returned I3.c1 = -13.5, SE 276 in one such split)
+    list(pcm[, -3], sample(c("x", "y", "z"), nrow(pcm), TRUE), "PCM"),
+    list(pcm_na, sample(c("a", "b"), nrow(pcm), TRUE), "PCM"),
+    list(ras, sample(1:2, nrow(ras), TRUE), "RM")
+  )
+  for (cs in cases) {
+    lr <- attr(RMdifLR(cs[[1]], cs[[2]], output = "dataframe"), "lr_test")
+    fit <- if (cs[[3]] == "PCM") eRm::PCM(cs[[1]]) else eRm::RM(cs[[1]])
+    ref <- eRm::LRtest(fit, splitcr = factor(cs[[2]]))
+    expect_equal(lr$LR, unname(ref$LR), tolerance = 1e-4)
+    expect_identical(as.integer(lr$df), as.integer(ref$df))
+  }
+})
+
+test_that("dichotomous locations match eRm; polytomous match up to a group shift", {
+  skip_if_not_installed("eRm")
+  e <- new.env()
+  utils::data(pcmdat2, raschdat1, package = "eRm", envir = e)
+  set.seed(5)
+  ras <- as.data.frame(e$raschdat1)[, 1:10]
+  g <- factor(sample(c("a", "b"), nrow(ras), TRUE))
+  out <- RMdifLR(ras, g, output = "dataframe")
+  ref <- eRm::LRtest(eRm::RM(ras), splitcr = g)
+  expect_equal(out$a, unname(-ref$fitobj[[1]]$betapar), tolerance = 1e-3)
+  expect_equal(out$SE_a, unname(ref$fitobj[[1]]$se.beta), tolerance = 1e-3)
+
+  pcm <- as.data.frame(e$pcmdat2)
+  g <- factor(sample(c("a", "b"), nrow(pcm), TRUE))
+  thr <- RMdifLR(pcm, g, level = "threshold", output = "dataframe")
+  ref <- eRm::LRtest(eRm::PCM(pcm), splitcr = g)
+  er <- unname(eRm::thresholds(ref$fitobj[[1]])$threshpar)
+  # psychotools makes thresholds sum to zero within each group, eRm makes
+  # the item-category parameters do so: a constant shift per group.
+  d <- er - thr$a
+  expect_lt(max(d) - min(d), 1e-3)
+})
+
+test_that("item locations and SEs equal psychotools::itempar() for equal category counts", {
+  # With equal counts, sum-zero thresholds and sum-zero item means are the
+  # same identification, so locations and SEs must agree exactly.
+  df <- make_polytomous(n = 200)
+  grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
+  out <- RMdifLR(df, grp, output = "dataframe")
+  ip <- psychotools::itempar(psychotools::pcmodel(df), vcov = TRUE)
+  expect_equal(out$All, unname(as.numeric(ip)), tolerance = 1e-8)
+  expect_equal(out$SE_All, unname(sqrt(diag(stats::vcov(ip)))), tolerance = 1e-8)
+})
+
+test_that("a category unused in one group stops, naming item, category and group", {
+  df <- make_polytomous(n = 120)
+  grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
+  # top category of I2 unused in group B (allowed in the full data, not
+  # across groups), and the lowest category of I4 unused in group A
+  df$I2[grp == "B" & df$I2 == 2L] <- 1L
+  df$I4[grp == "A" & df$I4 == 0L] <- 1L
+  err <- tryCatch(RMdifLR(df, grp, output = "dataframe"), error = function(e) e)
+  expect_s3_class(err, "easyRasch2_category_error")
+  expect_match(conditionMessage(err), "I2 (category 2 unused in group 'B')", fixed = TRUE)
+  expect_match(conditionMessage(err), "I4 (category 0 unused in group 'A')", fixed = TRUE)
+  expect_identical(err$items, c("I2", "I4"))
+  # an item with no responses in a group
+  df2 <- make_polytomous(n = 120)
+  df2$I3[grp == "A"] <- NA
+  expect_error(RMdifLR(df2, grp, output = "dataframe"), "I3 (no responses in group 'A')", fixed = TRUE)
+})
+
+test_that("with mixed category counts, item locations equal itempar() up to a constant", {
+  # itempar() makes the item means sum to zero, RMdifLR() the thresholds:
+  # with different counts the two differ by a constant (SEs then depend on
+  # the identification, so only locations are compared).
+  set.seed(7)
+  df <- data.frame(
+    I1 = sample(0:1, 300, TRUE), I2 = sample(0:1, 300, TRUE),
+    I3 = sample(0:3, 300, TRUE), I4 = sample(0:3, 300, TRUE),
+    I5 = sample(0:2, 300, TRUE)
+  )
+  grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
+  out <- RMdifLR(df, grp, output = "dataframe")
+  ip <- as.numeric(psychotools::itempar(psychotools::pcmodel(df)))
+  d <- out$All - ip
+  expect_lt(max(d) - min(d), 1e-8)
+})
+
+test_that("a category used in a group only by extreme scorers stops (DL1)", {
+  df <- make_dichotomous(n = 120, k = 5)
+  grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
+  # I1 = 1 in group B only for two perfect scorers
+  df$I1[grp == "B"] <- 0L
+  b <- which(grp == "B")[1:2]
+  df[b, ] <- 1L
+  err <- tryCatch(RMdifLR(df, grp, output = "dataframe"), error = function(e) e)
+  expect_s3_class(err, "easyRasch2_category_error")
+  expect_match(conditionMessage(err),
+    "I1 (category 1 used only by respondents with a zero or perfect score in group 'B')",
+    fixed = TRUE)
+})
+
+test_that("thresholds sort numerically, c10 after c9 (DL3)", {
+  set.seed(8)
+  df <- data.frame(I1 = rep(0:10, length.out = 440), I2 = rep(0:10, length.out = 440),
+                   I3 = sample(0:2, 440, TRUE))
+  df$I1 <- sample(df$I1); df$I2 <- sample(df$I2)
+  grp <- factor(rep(c("A", "B"), length.out = nrow(df)))
+  out <- suppressWarnings(RMdifLR(df, grp, level = "threshold", output = "dataframe"))
+  expect_identical(out$Threshold[out$Item == "I1"], paste0("c", 1:10))
+  skip_if_not_installed("ggplot2")
+  p <- suppressWarnings(RMdifLR(df, grp, level = "threshold", output = "ggplot"))
+  expect_identical(levels(p$data$Threshold)[1:10], paste0("c", 1:10))
+})
+
+test_that("the caption says incomplete responses only when some remain (DL2)", {
+  df <- make_polytomous(n = 200, k = 6)
+  grp <- rep(c("A", "B"), length.out = nrow(df))
+  grp[1:3] <- NA
+  k <- suppressMessages(RMdifLR(df, grp))
+  expect_false(any(grepl("incomplete responses retained", k)))
+  df2 <- df
+  df2[5, ] <- NA
+  k2 <- suppressMessages(RMdifLR(df2, rep(c("A", "B"), length.out = nrow(df2))))
+  expect_false(any(grepl("incomplete responses retained", k2)))
+  df3 <- df
+  df3[5, 2] <- NA
+  k3 <- suppressMessages(RMdifLR(df3, rep(c("A", "B"), length.out = nrow(df3))))
+  expect_true(any(grepl("incomplete responses retained", k3)))
 })

@@ -203,6 +203,14 @@ a stable split with a negligible effect is still negligible, and a
 large effect on an unstable split should be interpreted with care.
 Cost is roughly \code{stability_B} times the original fitting time.
 
+\strong{Real and artificial DIF.} The splits come from a joint test of
+all item parameters. The per-node effect sizes, however, condition on
+the total score, so real DIF in one item can induce artificial DIF of
+the opposite sign in the others (Hagquist & Andrich, 2017). An item can
+then be classified B or C only because another item has DIF.
+\code{purification = "iterative"} limits this by removing items
+classified as DIF from the matching score (Bjorner et al., 1998).
+
 \strong{Acknowledgement.} The effect-size machinery -- MH and partial
 gamma per node, iterative purification, ETS A/B/C classification --
 follows the implementations by Henninger & Radek in the GitHub
@@ -251,12 +259,17 @@ P. (1998). Differential item functioning in the Danish translation
 of the SF-36. \emph{Journal of Clinical Epidemiology, 51}(11),
 1189-1202. \doi{10.1016/S0895-4356(98)00111-5}
 
+Hagquist, C., & Andrich, D. (2017). Recent advances in analysis of
+differential item functioning in health research using the Rasch model.
+\emph{Health and Quality of Life Outcomes, 15}, 181.
+\doi{10.1186/s12955-017-0755-0}
+
 Henninger, M., Debelak, R., & Strobl, C. (2023). A new stopping
 criterion for Rasch trees based on the Mantel-Haenszel effect size
 measure for DIF. \emph{Educational and Psychological Measurement,
 83}, 181-212. \doi{10.1177/00131644221077135}
 
-Henninger, M., Radek, J., Debelak, R., & Strobl, C. (2025). Partial
+Henninger, M., Radek, J., Sengewald, M.-A., & Strobl, C. (2025). Partial
 credit trees meet the partial gamma coefficient for quantifying DIF
 and DSF in polytomous items. \emph{Behaviormetrika, 52}, 221-257.
 \doi{10.1007/s41237-024-00252-3}

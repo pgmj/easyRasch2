@@ -1,16 +1,16 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/v2/examples
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+# Manual only: Actions tab > test-coverage > Run workflow
 on:
-  push:
-    branches: [main, master]
-    paths-ignore:
-      - 'paper/**'
-      - 'vignettes/**'
-  pull_request:
+  workflow_dispatch:
 
 name: test-coverage
 
 permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test-coverage:

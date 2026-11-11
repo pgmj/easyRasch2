@@ -1,4 +1,5 @@
-# Internal patched copies of two iarm functions used by RMscoreSE().
+# Internal patched copies of two iarm functions, used by RMdimMartinLof() for
+# the per-subscale WLE estimates (RMscoreSE() no longer uses them).
 #
 # The upstream `iarm::person_estimates()` and `iarm::persons.mle()` (iarm 0.4.x)
 # converge poorly for extreme raw scores: the default `sthetarange` and `maxval`
@@ -13,9 +14,11 @@
 #' Patched iarm::person_estimates()
 #'
 #' Score-to-theta lookup with MLE and WLE columns plus optional precision
-#' properties (SEM, bias, RMSE, score-SEM). Used internally by [RMscoreSE()].
+#' properties (SEM, bias, RMSE, score-SEM). Used internally by RMdimMartinLof().
 #'
-#' @param object An eRm `Rm` object or a psychotools `raschmodel` / `pcmodel`.
+#' @param object A psychotools `raschmodel` or `pcmodel` (the eRm `Rm` branches
+#'   of the iarm original are removed: no caller passes eRm fits since
+#'   RMdifLR() moved to psychotools).
 #' @param properties Logical. Return precision properties.
 #' @param allperson Logical. If TRUE, return one row per respondent rather than
 #'   per raw score.
@@ -28,28 +31,20 @@
 iarm_person_estimates <- function(object, properties = FALSE, allperson = FALSE,
                                   sthetarange = c(-10, 10)) {
 
-  if (!any("Rm" %in% class(object),
-           class(object) %in% c("raschmodel", "pcmodel"))) {
-    stop("`object` must be of class Rm, raschmodel, or pcmodel.",
-         call. = FALSE)
+  if (!class(object)[1L] %in% c("raschmodel", "pcmodel")) {
+    stop("`object` must be of class raschmodel or pcmodel.", call. = FALSE)
   }
-  if (class(object)[1L] == "pcmodel")    object$model <- "pcmodel"
-  if (class(object)[1L] == "raschmodel") object$model <- "raschmodel"
+  object$model <- class(object)[1L]
 
-  X <- if (object$model %in% c("raschmodel", "pcmodel")) object$data else object$X
+  X <- object$data
 
-  if (object$model %in% c("RM", "raschmodel")) {
+  if (object$model == "raschmodel") {
     k <- dim(X)[2L]
-    coeff <- if (object$model == "RM") (-1) * stats::coef(object) else psychotools::itempar(object)
+    coeff <- psychotools::itempar(object)
     m <- k
     respm <- rbind(rep(0, k), lower.tri(matrix(1, k, k)) + diag(k))
   } else {
-    if (object$model == "PCM") {
-      thr <- eRm::thresholds(object)[[3L]][[1L]][, -1L]
-      coeff <- thr - mean(thr, na.rm = TRUE)
-    } else {
-      coeff <- stats::coef(psychotools::threshpar(object), type = "matrix")
-    }
+    coeff <- stats::coef(psychotools::threshpar(object), type = "matrix")
     k  <- dim(X)[2L]
     mi <- apply(X, 2L, max, na.rm = TRUE)
     m  <- sum(mi)
@@ -62,13 +57,7 @@ iarm_person_estimates <- function(object, properties = FALSE, allperson = FALSE,
     }
   }
 
-  mode <- if (object$model == "pcmodel") {
-    "PCM"
-  } else if (object$model == "raschmodel") {
-    "RM"
-  } else {
-    object$model
-  }
+  mode <- if (object$model == "pcmodel") "PCM" else "RM"
 
   mm <- cbind(
     0:m,
@@ -85,7 +74,7 @@ iarm_person_estimates <- function(object, properties = FALSE, allperson = FALSE,
 
   if (!properties) return(mm)
 
-  if (object$model %in% c("RM", "raschmodel")) {
+  if (object$model == "raschmodel") {
     koeff <- as.list(coeff)
   } else {
     koeff <- lapply(as.list(as.data.frame(t(coeff))),
@@ -99,11 +88,7 @@ iarm_person_estimates <- function(object, properties = FALSE, allperson = FALSE,
     }
   }
 
-  if (object$model %in% c("pcmodel", "raschmodel")) {
-    mm[1L, 2L] <- NA
-  } else {
-    mm[1L, 2L] <- eRm::person.parameter(object)$pred.list[[1L]]$y[1L]
-  }
+  mm[1L, 2L] <- NA
   try(mm[1L, 2L]      <- stats::uniroot(s.theta(0.25),     sthetarange)$root,
       silent = TRUE)
   try(mm[m + 1L, 2L]  <- stats::uniroot(s.theta(m - 0.25), sthetarange)$root,
