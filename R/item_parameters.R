@@ -333,26 +333,17 @@ RMitemParameters <- function(
   # After the fit, so data that stop on the category check do not warn first.
   .sparsity_warning(data)
 
-  items <- colnames(data)
-  tp <- psychotools::threshpar(fit, vcov = se)
-  thr_list <- stats::setNames(lapply(tp, as.numeric), items)
-
-  se_list <- NULL
-  vcov_thr <- NULL
-  if (se) {
-    vcov_thr <- unname(as.matrix(attr(tp, "vcov")))
-    se_all <- sqrt(diag(vcov_thr))
-    se_list <- split(se_all, rep.int(seq_along(thr_list), lengths(thr_list)))
-    se_list <- stats::setNames(lapply(se_list, as.numeric), items)
-  }
+  # Thresholds, SEs and covariance through the shared extraction, which
+  # also guards item alignment and turns uncomputable SEs into NA.
+  ts <- .cml_threshold_summary(fit, data, se = se, label = "the CML fit")
 
   list(
     model = if (is_poly) "PCM" else "RM",
-    items = items,
+    items = colnames(data),
     is_polytomous = is_poly,
-    thr_list = thr_list,
-    se_list = se_list,
-    vcov_thr = vcov_thr
+    thr_list = ts$thr_list,
+    se_list = ts$se_list,
+    vcov_thr = ts$vcov_thr
   )
 }
 

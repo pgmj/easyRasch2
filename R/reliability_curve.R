@@ -744,6 +744,7 @@ run_single_curve_boot <- function(seed, data_list) {
       .test_information = .test_information,
       .latent_moments = .latent_moments,
       .fit_cml_thresholds = .fit_cml_thresholds,
+      .cml_threshold_summary = .cml_threshold_summary,
       .cml_fit = .cml_fit,
       .check_response_categories = .check_response_categories,
       .pcm_cat_probs = .pcm_cat_probs,

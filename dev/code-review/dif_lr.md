@@ -129,3 +129,104 @@ User decision: add the real/artificial DIF note to the other DIF functions, and 
 - **RMdifGammaCutoff:** one paragraph saying the null has no DIF, so the cutoffs do not catch artificial DIF, pointing to RMdifGamma.
 - **RMdifTree:** Details paragraph. The splits come from a joint parameter test. The per-node MH and partial gamma condition on the total score, so B/C classifications can be artificial. `purification = "iterative"` limits this (Bjorner et al., 1998).
 - Hagquist & Andrich (2017) added to the references of all three. NEWS Docs bullet extended. Rd regenerated: RMdifGamma, RMdifGammaCutoff, RMdifTree.
+
+## Edge cases, docs vs code, conventions (2026-11-11, uncommitted)
+
+Script: scratchpad `dif_edge.R`. Fine as they were:
+- 2 polytomous items;
+- 6 groups;
+- numeric, logical and factor-with-unused-level `dif_var`;
+- matrix and tibble input;
+- item names with spaces, dots and parentheses;
+- mixed 0-1 and 0-2 items (item and threshold level);
+- `model = "PCM"` on dichotomous data;
+- all-NA `dif_var`, an all-NA item, non-integer data;
+- kable with `cutoff = NULL` and `sort`, and the threshold ggplot.
+
+A tiny group (n = 8) or a one-person group gives the per-group category message.
+
+Found and fixed:
+- **2 dichotomous items failed** ("n > 1L is not TRUE"). This was a DL7 regression: `raschmodel()` errors in its Hessian with two items, while `pcmodel()` gives the same estimates. `.cml_fit(model = "auto")` now uses raschmodel only with 3+ items. With `hessian = FALSE`, as in `.fit_cml_thresholds()`, it already worked. Unreleased, so no NEWS entry.
+- **A `dif_var` level named like an output column:** "All" silently replaced the whole-sample column (reshape "first taken" warning only), "Item" errored obscurely, and "MaxDiff" duplicated a column. Now stops naming the clashing levels (Item, Threshold, All, MaxDiff, Flagged, SE_*). In the released version too, so it has a NEWS entry.
+- **Duplicated item names** mixed up rows, and 1 item gave a confusing extreme-score message. Both now stop up front. `validate_response_data()` checks neither, so they are local to RMdifLR. A package-wide check belongs to the utils-validation.R unit.
+- **Docs vs code:** `@param output` said the data.frame always has `Flagged` (absent with `cutoff = NULL`), and `@param sort` said kable only (it also sorts the data.frame). Both corrected.
+- **Conventions:** kable rounding now goes through `.round_display()` (3 dp, unchanged), so test-rounding.R actually covers RMdifLR. Before, it silently saw nothing. Output names and default (`"kable"`), caption `.n_caption()` and `.format_p()` are as elsewhere. `sort` is logical, as in the package-wide open `sort` question.
+
+New tests: 2 dichotomous items with finite SEs, the 1-item error, duplicate names, and reserved levels. DIF baseline identical to before these fixes. test-dif_lr 72/72. Full suite (installed working tree): 0 failures, 1745 pass, 7 skips, 1 known mirt warning.
+
+Remaining test gaps (proposed, not written): bold rendering of flagged rows in the kable, item-level ggplot content (error bars use the item SE), `conf` changing the bar width, and the DL4 fit-failure message (hard to trigger now that the checks run first).
+
+Noted for other units: RMreliability fails on 2 items inside mirt ("Too few degrees of freedom"), for the reliability unit.
+
+**Unit status:** dif_lr done apart from the proposed test gaps.
+
+## Second /code-review high (2026-11-11)
+
+User-run `/code-review high` over the two unpushed commits plus the uncommitted working tree (`git diff @{upstream}`), after the fixes above. The review agent confirmed LR, df and p still equal `eRm::LRtest()` on pcmdat2. DL10 and DL12 were confirmed by the agent with small runs (package loaded from source). DL11 and DL13-DL16 come from reading the code and have not been re-checked in R. No fixes applied.
+
+- **DL10 (confirmed), line 298, reserved group names.** The check covers only a fixed list (Item, Threshold, All, MaxDiff, Flagged, SE_*). A `dif_var` with an empty-string level passes it, and RMdifLR then fails in `build_wide_table()` with "undefined columns selected" (reproduced on pcmdat2). Proposed fix: also stop on `!nzchar(groups)`, or build the wide table on internal keys (g1..gK) and add the labels at the end.
+- **DL11 (plausible), line 365, `.sparsity_warning(data)` cannot fire.** A category used only by extreme scorers in the full data is unused or extreme-only in every group, so `.check_group_categories()` stops first. The user gets the per-group message advising "combine groups", which cannot help when the problem is in the full data. Proposed fix: drop the call, or check the full data for extreme-only categories first with the plain full-data message, as `.check_response_categories()` does at line 341.
+- **DL12 (confirmed), utils-theta.R line 524, 2-item guard too broad.** The DL7 regression fix sends 2-item data to `pcmodel()` also when `hessian = FALSE`, where `raschmodel()` works (checked). 2-item dichotomous subscales in `RMdimMartinLof()` (`compute_ml_statistic()` per simulation iteration) and `.fit_cml_thresholds()` in the bootstrap loops now use the about 2x slower fit. Proposed condition: `ncol(mat) > 2L || !hessian`.
+- **DL13 (plausible), line 536, per-group item maxima in the extreme-only check.** The maxima come from the group's own data. If a group never uses an item's top category, a respondent there can count as perfect without being perfect on the full scale, so other items may be wrongly named as extreme-only in that group. Merging the first item's category would then clear them, so the message can send the user to recode items needlessly. Proposed fix: pass the full-data item maxima to `.extreme_only_categories()`.
+- **DL14 (plausible), line 585, duplicated threshold extraction.** Same as DL6. The new threshold-count guard and the NA-SE handling exist only in the RMdifLR copy, so `RMitemParameters()` can still give "NaNs produced" from `sqrt(diag())` and has no alignment guard. Strengthens the case for the shared helper deferred under DL6.
+- **DL15 (plausible), line 347, category check repeated.** `fit_lr()` calls `.cml_fit()` with the default `check = TRUE`, so `.check_response_categories()` runs again on the full data and on every group (G+1 extra times) after lines 341-342. Proposed fix: `check = FALSE`, as in the other already-checked refits (item_restscore.R, martin_lof.R).
+- **DL16 (plausible), line 704, mixed precision in the kable.** Flagged rows are reformatted with `format(nsmall = 3)`, unflagged rows use `as.character()`, so one column can show **0.200** and 0.2. Proposed fix: format the numeric columns once with `formatC(x, format = "f", digits = 3)` before adding the bold.
+
+### Main-session check and fixes of DL10-DL16 (2026-11-11, uncommitted)
+
+- **DL10 confirmed, fixed:** an empty-string level now stops with the clash message ("... or are empty"). A level with spaces or hyphens works (checked). Test added.
+- **DL11 confirmed, fixed:** a full-data extreme-only category gave the per-group message twice ("combine groups" cannot help). RMdifLR now checks the full data first with `.extreme_only_categories()` and stops with the plain full-data message plus "RMdifLR() stops here, since these thresholds cannot be compared across groups" (classed, `items`). The dead `.sparsity_warning()` call is removed. Test added (message has no "in group").
+- **DL12 confirmed, fixed:** `.cml_fit(model = "auto")` uses raschmodel when `ncol > 2 || !hessian`. 200 fits of 2 dichotomous items took 0.08 s with raschmodel and 0.13 s with pcmodel. This restores the pre-DL7 route for the Hessian-free 2-item fits (Martin-Löf subscales, `.fit_cml_thresholds()`). Test: class raschmodel without a Hessian, pcmodel with one.
+- **DL13 plausible, then confirmed by a constructed case, fixed:** `.extreme_only_categories()` gains an optional `item_max` (default unchanged), and `.check_group_categories()` passes the full-data maxima. Test: group B with I1's top category unused and (1, 2, 2) rows. Judged against the group's own maxima, I2's category 2 is wrongly extreme-only. Against the full-data maxima, only I1 is named.
+- **DL14 not changed, user decision:** shared threshold-extraction helper for `.rasch_fit_cml()` and `lr_fit_summary()`, so RMitemParameters also gets the alignment guard and NA-instead-of-NaN SEs. See DL6.
+- **DL15 fixed:** `fit_lr()` uses `check = FALSE` (full data and every group checked just before).
+- **DL16 not confirmed:** in `render_lr_kable()` the numeric column is formatted once (`format(col, nsmall = 3)`) before the `ifelse()`, so both branches use the formatted string. A flagged table shows 0.020 and 0.325 alike (checked). With nothing flagged the columns stay numeric and kable formats them per column. No change.
+
+DIF baseline identical. test-dif_lr 81/81, test-category-check 51/51, test-utils-theta 20/20. Full suite (installed tree): 0 failures, 1754 pass, 7 skips, 1 known mirt warning. NEWS: empty level added to the RMdifLR bug-fix bullet.
+
+### DL14 applied (user: yes, 2026-11-11, uncommitted)
+
+New `.cml_threshold_summary(fit, data, se, label)` in utils-theta.R, the shared extraction for three callers: `.fit_cml_thresholds()`, `.rasch_fit_cml()` (RMitemParameters) and `lr_fit_summary()` (RMdifLR).
+- Thresholds come from `threshpar()`, sum-zero within the fit.
+- **Alignment guard**, moved from `.fit_cml_thresholds()`: one entry per column, names equal to `colnames(data)`, and threshold counts equal to the observed maxima. This is new for RMitemParameters.
+- **Uncomputable SEs** (non-finite `sqrt(diag(V))`) become NA with one warning naming `label` ("the CML fit", "group 'B'", "the full sample"). Before, RMitemParameters gave NaN plus R's "NaNs produced".
+- Returns `thr_list` named by item (psychotools' names kept when the data have no column names, as before), and with `se` also `se_list` and `vcov_thr`.
+- `lr_fit_summary(fit, data, dif_group, is_rm)` takes the group's data instead of `item_names` and `n_thr`. Every group uses every full-data category, so the observed maxima equal the full-data ones. The item-mean SE keeps its own NA handling (warning only when the threshold SEs were all fine).
+- `.cml_threshold_summary` added to the four mirai export lists that carry `.fit_cml_thresholds` (local_dependence, reliability, reliability_curve, residual_pca).
+
+**Slip on the way:** the first version `unname()`d the `.fit_cml_thresholds()` result. RMitemCatProb indexes it by item name, so the full suite caught it with 8 failures in test-item_cat_prob.R. Names restored.
+
+Verification, final code:
+- item/person baseline 60/60 identical;
+- DIF baseline identical;
+- step-2 baseline identical except the four `diflr` cells, saved before the eRm replacement, so expected.
+
+New test: `.cml_threshold_summary()` matches `threshpar()` (thresholds, SEs, names), returns NULL `se_list` with `se = FALSE`, and stops on mismatched categories or reordered columns. Full suite: 0 failures, 1760 pass, 7 skips, 1 known mirt warning.
+
+## Third /code-review high (2026-11-11)
+
+User-run `/code-review high` over the unpushed commits plus the uncommitted working tree. DL17 and DL18 were reproduced by the review agent with `pkgload::load_all()`. DL19-DL25 come from reading the code. No fixes applied.
+
+- **DL17 (confirmed), utils-theta.R line 577, raschmodel Hessian fails on incomplete data.** The fallback to `pcmodel()` checks only `ncol(mat) > 2`. The `raschmodel()` Hessian fails with "n > 1L is not TRUE" whenever any respondent answered only 1 or 2 items. Reproduced: 300 x 10 dichotomous data with `d[1:5, 3:10] <- NA` and two groups. RMdifLR stops with "CML estimation failed in the full sample (n > 1L is not TRUE). Small or sparse groups are the usual cause", which names the wrong cause. `pcmodel()` fits the same data. `model = "PCM"` does not help (DL20). Checked with grep: dif_lr.R line 363 is the only `.cml_fit()` call with `model = "auto"` and the Hessian, so only RMdifLR is affected. Proposed fix: use `pcmodel()` whenever `hessian = TRUE`, or base the condition on the smallest number of answered items per row.
+- **DL18 (confirmed), utils-theta.R line 500, duplicated item names reported as a category mismatch.** The `identical(names(tp), items)` guard in `.cml_threshold_summary()` catches psychotools' silent mispairing, but the message is about response categories. Reproduced: RMitemParameters() on names I1, I1, I2, ..., I9 stops with "The CML fit returned thresholds that do not match the observed response categories". All `.fit_cml_thresholds()` users (RMreliability bootstrap, residual PCA, Q3, cicc, item_cat_prob, Martin-Löf) behave the same. Only RMdifLR has the "must be unique" check. Proposed fix: move the check to `validate_response_data()` (utils-validation.R unit).
+- **DL19 (plausible), line 612, weaker threshold-count guard.** The DL5 guard compared each group fit's threshold counts with the full-data `n_thr`. It now compares them with the group's own observed maxima, so a group whose top category psychotools dropped would pass. The item location would then average over fewer thresholds, `build_wide_table()` would fill NA for the missing cN, and MaxDiff/Flagged would not be comparable, with no error. The comment at lines 600-601 still describes the full-data check. Proposed fix: pass the full-data maxima to the guard.
+- **DL20 (plausible), line 363, `resolved_model` ignored.** `fit_lr()` always uses `model = "auto"`. The docs (lines 65-66) say every fit is a `pcmodel()` PCM, but dichotomous data with 3+ items are fitted with `raschmodel()`. The documented estimator and the `lr_test$model` label do not match the fit.
+- **DL21 (plausible), line 243, dead branch.** `is.null(colnames(data))` cannot be TRUE after `as.data.frame()` at line 239, and its message would read "Duplicated: .". Reduce to `anyDuplicated(colnames(data)) > 0L`.
+- **DL22 (plausible), line 365, dead handler.** `fit_lr()` still passes through `easyRasch2_category_error`, but `.cml_fit(check = FALSE)` can no longer raise it. The handler suggests the check runs inside the fit.
+- **DL23 (plausible), lines 342 and 582, utils-theta.R line 667, repeated condition constructor.** The classed `easyRasch2_category_error` condition is built by hand three times. A `.category_error(msg, items)` helper would keep the class and fields in one place.
+- **DL24 (plausible), line 391, repeated subsetting.** Each group is subset with `data[dif_factor == g, , drop = FALSE]` for the fit (line 377), again for `lr_fit_summary()`, and again in `.check_group_categories()`. One `split(data, dif_factor)` could serve all three.
+- **DL25 (plausible), NEWS.md line 52, miscount.** The RMdifLR bug-fix bullet lists three defects (an "All" level, an empty level, duplicated item names) and then says "Both now stop". Change to "All three now stop".
+
+### Main-session check and fixes of DL17-DL25 (2026-11-11, uncommitted)
+
+- **DL17 confirmed, fixed:** reproduced with 300 x 10 dichotomous data, `d[1:5, 3:10] <- NA` ("CML estimation failed in the full sample (n > 1L is not TRUE)"). `raschmodel(hessian = FALSE)` works on the same data with identical thresholds. The `.cml_fit(model = "auto")` rule is now "raschmodel only without a Hessian", replacing the DL7/DL12 column-count rules. Without a Hessian it works with 2 items and with incomplete data, and it stays the fast route in the bootstrap and Martin-Löf loops. RMdifLR calls `.cml_fit(d, check = FALSE)` (pcmodel) explicitly. Tests: the reproduced case, and `.cml_fit` class by Hessian for 10 items.
+- **DL18 confirmed, fixed in part:** `.cml_threshold_summary()` now stops on duplicated names with "Item names (column names of `data`) must be unique. Duplicated: I1." before the category guard. This covers RMitemParameters and every `.fit_cml_thresholds()` user (checked with RMitemParameters). Moving the check up front into `validate_response_data()` stays with the utils-validation.R unit.
+- **DL19 partly right, fixed:** the guard compares the fit with the data's observed maxima, so a threshold psychotools dropped from data that has the category would still be caught. It missed only a group whose data lack the top category, which `.check_group_categories()` blocks. `.cml_threshold_summary()` gains `max_cat`, and `lr_fit_summary()` passes the full-data maxima, so the guard no longer relies on the group check. Comment and roxygen updated. Test: a wrong `max_cat` stops.
+- **DL20 resolved by DL17:** every RMdifLR fit is now `pcmodel()`, as the docs say. The `lr_test$model` label (RM/PCM) names the model, and the two coincide for dichotomous data.
+- **DL21 fixed:** dead `is.null(colnames(data))` branch removed.
+- **DL22 fixed:** `fit_lr()` no longer passes `easyRasch2_category_error` through (cannot occur with `check = FALSE`). Comment says so.
+- **DL23 fixed:** new `.category_error(msg, items)` constructor in utils-theta.R, used by `.check_response_categories()`, `.check_group_categories()` and the RMdifLR full-data extreme-only stop.
+- **DL24 not changed:** three group subsets per group cost little next to the fits and read clearly.
+- **DL25 fixed:** NEWS "All three now stop", reflowed.
+
+Baselines vs the DL14 runs: item/person 60/60 identical. The DIF and step-2 sets differ only in the dichotomous RMdifLR cells (max 7.1e-9, back to pcmodel). Tests: test-dif_lr 85/85, test-utils-theta 28/28. Full suite (installed tree): 0 failures, 1766 pass, 7 skips, 1 known mirt warning.

@@ -722,6 +722,7 @@ run_reliability_boot_parallel <- function(
       .latent_moments = .latent_moments,
       .marginal_summaries = .marginal_summaries,
       .fit_cml_thresholds = .fit_cml_thresholds,
+      .cml_threshold_summary = .cml_threshold_summary,
       .cml_fit = .cml_fit,
       .check_response_categories = .check_response_categories,
       .estimate_thetas = .estimate_thetas,

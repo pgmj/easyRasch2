@@ -31,9 +31,9 @@
 #'   dichotomous (RM) data the two views are equivalent (one threshold per
 #'   item).
 #' @param output One of \code{"kable"} (default), \code{"dataframe"}, or
-#'   \code{"ggplot"}. The data.frame view always carries a
-#'   \code{Flagged} logical column; the kable view bolds flagged rows; the
-#'   ggplot view shows confidence intervals.
+#'   \code{"ggplot"}. The data.frame has a logical \code{Flagged} column
+#'   (unless \code{cutoff = NULL}), the kable bolds flagged rows, and the
+#'   ggplot shows confidence intervals.
 #' @param cutoff Numeric or \code{NULL}. Threshold (in logits) for the
 #'   \code{Flagged} column: a row is flagged when
 #'   \code{MaxDiff > cutoff}, where \code{MaxDiff} is the difference
@@ -44,7 +44,7 @@
 #'   statistical or substantive justification. See Details.
 #' @param conf Numeric in (0, 1). Confidence level used for the ggplot
 #'   error bars. Default \code{0.95}.
-#' @param sort Logical. \code{kable} output only: sort rows by
+#' @param sort Logical. Sort the rows of the data.frame and kable output by
 #'   \code{MaxDiff} (descending). Default \code{FALSE}.
 #'
 #' @return A data.frame, a \code{knitr_kable} object, or a \code{ggplot}
@@ -237,6 +237,17 @@ RMdifLR <- function(
 
   validate_response_data(data)
   data <- as.data.frame(data)
+  if (ncol(data) < 2L) {
+    stop("`data` must have at least 2 items.", call. = FALSE)
+  }
+  if (anyDuplicated(colnames(data)) > 0L) {
+    stop(
+      "Item names (column names of `data`) must be unique. Duplicated: ",
+      paste(unique(colnames(data)[duplicated(colnames(data))]), collapse = ", "),
+      ".",
+      call. = FALSE
+    )
+  }
   n_total_lr <- nrow(data)
 
   # ---------------------------------------------------------------------
@@ -283,6 +294,19 @@ RMdifLR <- function(
   }
   groups <- levels(dif_factor)
   nr_groups <- length(groups)
+  # Group labels become column names next to Item, All, MaxDiff and SE_*.
+  clash <- groups[
+    groups %in% c("Item", "Threshold", "All", "MaxDiff", "Flagged") |
+      startsWith(groups, "SE_") | !nzchar(groups)
+  ]
+  if (length(clash) > 0L) {
+    stop(
+      "`dif_var` level(s) ", paste0("'", clash, "'", collapse = ", "),
+      " would clash with the output columns (Item, Threshold, All, MaxDiff, ",
+      "Flagged, SE_*) or are empty. Rename them, e.g. with levels(dif_var).",
+      call. = FALSE
+    )
+  }
 
   # ---------------------------------------------------------------------
   # Pick the model
@@ -311,18 +335,32 @@ RMdifLR <- function(
   # or the group fits would have different thresholds (psychotools drops an
   # unused category's threshold) and the locations could not be compared.
   .check_response_categories(data) # full data first, the plain message
+  # A category only extreme scorers use in the full data is unusable in
+  # every group: stop with the full-data message, not the per-group one.
+  ec_full <- .extreme_only_categories(data)
+  if (nrow(ec_full) > 0L) {
+    stop(.category_error(
+      paste0(
+        .extreme_only_message(ec_full),
+        " RMdifLR() stops here, since these thresholds cannot be ",
+        "compared across groups."
+      ),
+      unique(ec_full$Item)
+    ))
+  }
   .check_group_categories(data, dif_factor)
   item_names <- names(data)
   is_rm <- resolved_model == "RM"
-  # Thresholds per item: the full-data top category (every group uses it).
-  n_thr <- as.integer(apply(as.matrix(data), 2L, max, na.rm = TRUE))
   # "auto" fits raschmodel() for dichotomous data (same estimates as a
   # 2-category pcmodel(), about twice as fast), pcmodel() otherwise.
   fit_lr <- function(d, where) {
     tryCatch(
-      .cml_fit(d, model = "auto"),
+      # pcmodel() for every fit (a dichotomous item is a 2-category PCM; the
+      # raschmodel() Hessian fails on some incomplete data). check = FALSE:
+      # the full data and every group were checked above, so any error here
+      # comes from the fit itself.
+      .cml_fit(d, check = FALSE),
       error = function(e) {
-        if (inherits(e, "easyRasch2_category_error")) stop(e)
         stop(
           "CML estimation failed in ", where, " (", conditionMessage(e),
           "). Small or sparse groups are the usual cause; inspect the ",
@@ -332,13 +370,11 @@ RMdifLR <- function(
       }
     )
   }
+  full_max <- apply(as.matrix(data), 2L, max, na.rm = TRUE)
   fit_full <- fit_lr(data, "the full sample")
   fits <- lapply(groups, function(g) {
     fit_lr(data[dif_factor == g, , drop = FALSE], paste0("group '", g, "'"))
   })
-  # Categories used only by extreme scorers in the full data (warning, as in
-  # the other CML functions); within a group they stop in the check above.
-  .sparsity_warning(data)
 
   # LR = 2 * (sum of group conditional log-likelihoods - full one), with df
   # the extra free parameters of the group fits (Andersen, 1973).
@@ -349,9 +385,14 @@ RMdifLR <- function(
   lr_p <- stats::pchisq(lr_stat, lr_df, lower.tail = FALSE)
 
   parts <- c(
-    Map(function(f, g) lr_fit_summary(f, g, item_names, is_rm, n_thr),
-        fits, groups),
-    list(lr_fit_summary(fit_full, "All", item_names, is_rm, n_thr))
+    Map(
+      function(f, g) {
+        lr_fit_summary(f, data[dif_factor == g, , drop = FALSE], g, is_rm,
+                       full_max)
+      },
+      fits, groups
+    ),
+    list(lr_fit_summary(fit_full, data, "All", is_rm, full_max))
   )
   per_level <- if (level == "item") "item" else "thr"
   long_df <- do.call(rbind, lapply(parts, `[[`, per_level))
@@ -420,12 +461,12 @@ RMdifLR <- function(
 
   if (output == "kable") {
     # Display rounding (3 dp; the dataframe output above stays unrounded)
+    # (through .round_display(), so test-rounding.R sees these columns)
     num_cols <- c(groups, "All", "MaxDiff", se_cols)
-    for (cc in num_cols) {
-      if (is.numeric(table_df[[cc]])) {
-        table_df[[cc]] <- round(table_df[[cc]], 3)
-      }
-    }
+    table_df <- .round_display(
+      table_df,
+      stats::setNames(as.list(rep(3L, length(num_cols))), num_cols)
+    )
     n_clause <- .n_caption(
       lr_summary$n_persons,
       n_total_lr,
@@ -480,6 +521,7 @@ RMdifLR <- function(
   problems <- character(0)
   bad <- character(0)
   unused <- matrix(FALSE, ncol(data), nlevels(dif_factor))
+  full_max <- apply(data, 2L, max, na.rm = TRUE)
   for (j in seq_len(ncol(data))) {
     x <- data[, j]
     cats <- sort(unique(x[!is.na(x)]))
@@ -509,7 +551,12 @@ RMdifLR <- function(
   # all used there (else the group's item maxima would differ).
   for (gi in seq_along(levels(dif_factor))) {
     g <- levels(dif_factor)[gi]
-    ec <- .extreme_only_categories(data[dif_factor == g, , drop = FALSE])
+    # Perfect is judged against the full-data maxima, so an item whose top
+    # category is unused in the group does not make others look extreme-only.
+    ec <- .extreme_only_categories(
+      data[dif_factor == g, , drop = FALSE],
+      item_max = full_max
+    )
     ec <- ec[!unused[match(ec$Item, items), gi], , drop = FALSE]
     for (it in unique(ec$Item)) {
       k <- ec$Category[ec$Item == it]
@@ -532,10 +579,7 @@ RMdifLR <- function(
       "leave the item out. RMplotTile(data, group = dif_var) shows the ",
       "counts."
     )
-    stop(structure(
-      class = c("easyRasch2_category_error", "error", "condition"),
-      list(message = msg, call = NULL, items = bad)
-    ))
+    stop(.category_error(msg, bad))
   }
   invisible(TRUE)
 }
@@ -548,32 +592,33 @@ RMdifLR <- function(
 #' thresholds, and its SE is `sqrt(w' V w)` over that item's block, with
 #' `w = 1 / m`, so the covariance between an item's thresholds is included.
 #'
-#' @param fit A `pcmodel` fit (hessian on).
-#' @param dif_group Label for the `DIFgroup` column.
-#' @param item_names Item names, in data order.
+#' @param fit A `pcmodel` or `raschmodel` fit (hessian on).
+#' @param data The data the fit was made from (the full data or one group).
+#' @param full_max The full-data top category per item. The alignment guard
+#'   checks every fit against it, independently of the group check.
+#' @param dif_group Label for the `DIFgroup` column (`"All"` for the full fit).
 #' @param is_rm `TRUE` labels the single threshold `"1"` (dichotomous).
-#' @param n_thr Expected thresholds per item (the full-data top category).
 #' @return A list with `thr` (Item, Threshold, DIFgroup, Location, SE) and
 #'   `item` (Item, DIFgroup, Location, SE) data.frames.
 #' @keywords internal
 #' @noRd
-lr_fit_summary <- function(fit, dif_group, item_names, is_rm, n_thr) {
-  tp <- psychotools::threshpar(fit, vcov = TRUE)
-  thr <- lapply(tp, as.numeric)
+lr_fit_summary <- function(fit, data, dif_group, is_rm, full_max) {
+  where <- if (dif_group == "All") "the full sample" else paste0("group '", dif_group, "'")
+  # Shared extraction: alignment guard, and NA (with a warning) for
+  # threshold SEs that cannot be computed.
+  ts <- .cml_threshold_summary(fit, data, se = TRUE, label = where,
+                               max_cat = full_max)
+  item_names <- names(ts$thr_list)
+  thr <- ts$thr_list
+  V <- ts$vcov_thr
   m <- lengths(thr)
-  # Defensive: the category checks should make a reshaped item impossible.
-  if (!identical(names(tp), item_names) || !identical(unname(m), n_thr)) {
-    stop("Internal error: the fit for '", dif_group, "' does not match the ",
-         "data's items and categories.", call. = FALSE)
-  }
-  V <- unname(as.matrix(attr(tp, "vcov")))
   blocks <- split(seq_len(sum(m)), rep.int(seq_along(m), m))
   thr_df <- data.frame(
     Item = rep(item_names, m),
     Threshold = if (is_rm) "1" else unlist(lapply(m, function(k) paste0("c", seq_len(k)))),
     DIFgroup = dif_group,
     Location = unlist(thr, use.names = FALSE),
-    SE = suppressWarnings(sqrt(diag(V))),
+    SE = unlist(ts$se_list, use.names = FALSE),
     stringsAsFactors = FALSE,
     row.names = NULL
   )
@@ -581,16 +626,16 @@ lr_fit_summary <- function(fit, dif_group, item_names, is_rm, n_thr) {
     w <- rep(1 / length(i), length(i))
     suppressWarnings(sqrt(sum(w * (V[i, i, drop = FALSE] %*% w))))
   }, numeric(1L))
-  if (any(!is.finite(thr_df$SE)) || any(!is.finite(item_se))) {
+  # A threshold SE problem has already warned; an item SE can still fail on
+  # its own (a negative quadratic form).
+  if (any(!is.finite(item_se)) && all(is.finite(thr_df$SE))) {
     warning(
-      "Standard errors could not be computed for some parameters in '",
-      dif_group, "' (the covariance matrix is not positive definite); they ",
-      "are NA.",
+      "Standard errors could not be computed for some item locations in ",
+      where, "; they are NA.",
       call. = FALSE
     )
-    thr_df$SE[!is.finite(thr_df$SE)] <- NA_real_
-    item_se[!is.finite(item_se)] <- NA_real_
   }
+  item_se[!is.finite(item_se)] <- NA_real_
   item_df <- data.frame(
     Item = item_names,
     DIFgroup = dif_group,

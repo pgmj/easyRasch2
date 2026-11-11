@@ -463,20 +463,87 @@
   # Only point estimates are used, so skip the Hessian (1.4-5x faster on the
   # eRm example data, identical thresholds).
   fit <- .cml_fit(data, model = "auto", hessian = FALSE)
-  thr_list <- lapply(psychotools::threshpar(fit), as.numeric)
-  n_thr <- vapply(thr_list, length, integer(1L))
-  max_obs <- suppressWarnings(apply(data, 2L, max, na.rm = TRUE))
-  # Defensive: cannot fire once .check_response_categories() has passed (the
-  # two extreme-only shapes were tested and stay aligned), but a misaligned
-  # list would silently corrupt every downstream quantity.
-  if (length(thr_list) != ncol(data) || any(n_thr != max_obs)) {
+  # The alignment guard lives in .cml_threshold_summary().
+  # Named by item, as before (RMitemCatProb indexes by item name).
+  .center_thresholds(.cml_threshold_summary(fit, data, se = FALSE)$thr_list)
+}
+
+#' Thresholds, SEs and covariance from a CML fit, with an alignment guard
+#'
+#' The shared extraction for `.fit_cml_thresholds()`, `.rasch_fit_cml()`
+#' (RMitemParameters) and `lr_fit_summary()` (RMdifLR). Thresholds come from
+#' `psychotools::threshpar()`, which makes them sum to zero within the fit.
+#'
+#' The guard checks that the fit has one entry per data column, in order,
+#' and that each item has as many thresholds as its highest observed
+#' category. It cannot fire once `.check_response_categories()` has passed
+#' (the extreme-only shapes were tested and stay aligned), but a misaligned
+#' list would silently pair parameters with the wrong items.
+#'
+#' A threshold SE that cannot be computed (a covariance matrix that is not
+#' positive definite gives `NaN` from `sqrt()`) is set to `NA` with one
+#' warning naming `label`.
+#'
+#' @param fit A psychotools `pcmodel` or `raschmodel` fit (with a Hessian
+#'   when `se = TRUE`).
+#' @param data The response data the fit was made from (items from 0).
+#' @param se Logical. Also return `se_list` and `vcov_thr`.
+#' @param label Where the fit came from, for the warning (e.g. "group 'B'").
+#' @param max_cat Optional expected threshold count per item. RMdifLR passes
+#'   the full-data maxima, so the guard does not rely on its group check.
+#'   Default: the observed maxima of `data`.
+#' @return A list with `thr_list` (thresholds per item, named by item) and,
+#'   when `se`, `se_list` (named like `thr_list`) and `vcov_thr` (the full
+#'   threshold covariance, in `thr_list` order). Both are `NULL` otherwise.
+#' @keywords internal
+#' @noRd
+.cml_threshold_summary <- function(fit, data, se = TRUE, label = "the fit",
+                                   max_cat = NULL) {
+  data <- as.matrix(data)
+  items <- colnames(data)
+  if (!is.null(items) && anyDuplicated(items) > 0L) {
+    stop(
+      "Item names (column names of `data`) must be unique. Duplicated: ",
+      paste(unique(items[duplicated(items)]), collapse = ", "), ".",
+      call. = FALSE
+    )
+  }
+  tp <- psychotools::threshpar(fit, vcov = se)
+  thr_list <- lapply(tp, as.numeric)
+  max_obs <- if (is.null(max_cat)) {
+    suppressWarnings(apply(data, 2L, max, na.rm = TRUE))
+  } else {
+    max_cat
+  }
+  if (length(thr_list) != ncol(data) ||
+        (!is.null(items) && !identical(names(tp), items)) ||
+        any(lengths(thr_list) != max_obs)) {
     stop(
       "The CML fit returned thresholds that do not match the observed ",
       "response categories, so item parameters cannot be paired with items.",
       call. = FALSE
     )
   }
-  .center_thresholds(thr_list)
+  # Data without column names keep psychotools' item names, as before.
+  if (!is.null(items)) names(thr_list) <- items
+  out <- list(thr_list = thr_list, se_list = NULL, vcov_thr = NULL)
+  if (se) {
+    V <- unname(as.matrix(attr(tp, "vcov")))
+    se_all <- suppressWarnings(sqrt(diag(V)))
+    if (any(!is.finite(se_all))) {
+      warning(
+        "Standard errors could not be computed for some thresholds in ",
+        label, " (the covariance matrix is not positive definite); they ",
+        "are NA.",
+        call. = FALSE
+      )
+      se_all[!is.finite(se_all)] <- NA_real_
+    }
+    se_list <- split(se_all, rep.int(seq_along(thr_list), lengths(thr_list)))
+    out$se_list <- stats::setNames(lapply(se_list, as.numeric), names(thr_list))
+    out$vcov_thr <- V
+  }
+  out
 }
 
 #' Fit a Rasch / partial credit model by CML, with the shared data checks
@@ -492,7 +559,9 @@
 #' @param data Numeric response matrix or data.frame (items scored from 0).
 #' @param model `"pcm"` (default) fits `psychotools::pcmodel()` for every
 #'   item type. `"auto"` fits `psychotools::raschmodel()` when all items are
-#'   dichotomous, which is about twice as fast with the same estimates.
+#'   dichotomous and `hessian = FALSE`, which is about twice as fast with the
+#'   same estimates (its Hessian fails with two items or with respondents
+#'   who answered only one or two).
 #' @param hessian Passed to psychotools. `FALSE` in refit loops that need no
 #'   standard errors.
 #' @param check `FALSE` skips the category check, for refits that rely on
@@ -518,7 +587,11 @@
   # Keep a data.frame a data.frame, so item names reach psychotools the same
   # way as before this helper existed.
   dat <- if (is_df) data[keep, , drop = FALSE] else mat
-  if (model == "auto" && max(mat, na.rm = TRUE) <= 1L) {
+  # raschmodel() (psychotools 0.7.7) errors in its Hessian ("n > 1L is not
+  # TRUE") with two items, or when any respondent answered only 1 or 2
+  # items. pcmodel() gives the same estimates, so "auto" uses raschmodel()
+  # only without a Hessian, where it works and is about twice as fast.
+  if (model == "auto" && max(mat, na.rm = TRUE) <= 1L && !hessian) {
     psychotools::raschmodel(dat, hessian = hessian)
   } else {
     psychotools::pcmodel(dat, hessian = hessian)
@@ -607,12 +680,28 @@
     )
     # `items` carries the problem item names, so callers need not parse the
     # message (names may contain " (").
-    stop(structure(
-      class = c("easyRasch2_category_error", "error", "condition"),
-      list(message = msg, call = NULL, items = bad)
-    ))
+    stop(.category_error(msg, bad))
   }
   invisible(TRUE)
+}
+
+#' Classed condition for response-category problems
+#'
+#' One constructor for every stop on items whose categories cannot be
+#' estimated or compared, so the class and the `items` field stay in one
+#' place. Callers (the RMitemInfitMI loop, `.rasch_fit_cml()`) test for the
+#' class and pass the condition through.
+#'
+#' @param msg The message.
+#' @param items Names of the items concerned.
+#' @return An `easyRasch2_category_error` condition, for `stop()`.
+#' @keywords internal
+#' @noRd
+.category_error <- function(msg, items) {
+  structure(
+    class = c("easyRasch2_category_error", "error", "condition"),
+    list(message = msg, call = NULL, items = items)
+  )
 }
 
 #' Category check on the complete cases a complete-case test uses

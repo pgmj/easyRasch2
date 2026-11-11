@@ -40,9 +40,9 @@ dichotomous (RM) data the two views are equivalent (one threshold per
 item).}
 
 \item{output}{One of \code{"kable"} (default), \code{"dataframe"}, or
-\code{"ggplot"}. The data.frame view always carries a
-\code{Flagged} logical column; the kable view bolds flagged rows; the
-ggplot view shows confidence intervals.}
+\code{"ggplot"}. The data.frame has a logical \code{Flagged} column
+(unless \code{cutoff = NULL}), the kable bolds flagged rows, and the
+ggplot shows confidence intervals.}
 
 \item{cutoff}{Numeric or \code{NULL}. Threshold (in logits) for the
 \code{Flagged} column: a row is flagged when
@@ -56,7 +56,7 @@ statistical or substantive justification. See Details.}
 \item{conf}{Numeric in (0, 1). Confidence level used for the ggplot
 error bars. Default \code{0.95}.}
 
-\item{sort}{Logical. \code{kable} output only: sort rows by
+\item{sort}{Logical. Sort the rows of the data.frame and kable output by
 \code{MaxDiff} (descending). Default \code{FALSE}.}
 }
 \value{

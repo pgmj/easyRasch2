@@ -48,7 +48,10 @@
   out of the test without saying so (shown as not flagged), and gave
   diverging estimates in the second case (e.g. -13.5 logits, SE 276).
   Its caption also said "complete cases" for data with missing responses,
-  which are kept.
+  which are kept. A `dif_var` level named "All" silently replaced the
+  whole-sample column, an empty level gave an obscure error, and
+  duplicated item names mixed up rows. All three now stop with a message,
+  as does data with a single item.
 
 - Every function that fits a Rasch or partial credit model (CML or MML)
   now stops with a message naming the item when an item has one

@@ -65,17 +65,22 @@ validate_response_data <- function(data) {
 #'
 #' @param data Numeric response matrix or data.frame (items from 0; `NA`
 #'   allowed). The top category of each item is its observed maximum.
+#' @param item_max Optional per-item top categories, for a subset of the
+#'   data (a DIF group) that should be judged against the full data's
+#'   maxima. Default: the observed maxima of `data`.
 #' @return data.frame with columns `Item` and `Category`, one row per
 #'   affected category (zero rows when there are none).
 #' @keywords internal
 #' @noRd
-.extreme_only_categories <- function(data) {
+.extreme_only_categories <- function(data, item_max = NULL) {
   data <- as.matrix(data)
   empty <- data.frame(Item = character(0), Category = integer(0))
   if (ncol(data) == 0L || all(is.na(data))) {
     return(empty)
   }
-  item_max <- suppressWarnings(apply(data, 2L, max, na.rm = TRUE))
+  if (is.null(item_max)) {
+    item_max <- suppressWarnings(apply(data, 2L, max, na.rm = TRUE))
+  }
   item_max[!is.finite(item_max)] <- 0
   answered <- !is.na(data)
   raw <- rowSums(data, na.rm = TRUE)

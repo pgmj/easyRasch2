@@ -82,3 +82,31 @@ test_that("latent moments recover an off-target normal distribution", {
   expect_equal(lat$mean, 3, tolerance = 0.1)
   expect_equal(lat$sd, 0.6, tolerance = 0.1)
 })
+
+test_that(".cml_threshold_summary() extracts aligned thresholds and guards (DL14)", {
+  skip_if_not_installed("eRm")
+  e <- new.env()
+  utils::data(pcmdat2, package = "eRm", envir = e)
+  d <- as.data.frame(e$pcmdat2)
+  fit <- .cml_fit(d)
+  ts <- .cml_threshold_summary(fit, d)
+  tp <- psychotools::threshpar(fit, vcov = TRUE)
+  expect_identical(names(ts$thr_list), names(d))
+  expect_equal(unlist(ts$thr_list, use.names = FALSE), unname(unlist(tp)))
+  expect_equal(unlist(ts$se_list, use.names = FALSE),
+               unname(sqrt(diag(attr(tp, "vcov")))))
+  expect_null(.cml_threshold_summary(fit, d, se = FALSE)$se_list)
+  # data whose categories do not match the fit: stop, never mispair
+  d2 <- d
+  d2$I1[d2$I1 == 2L] <- 1L
+  expect_error(.cml_threshold_summary(fit, d2), "do not match the observed")
+  d3 <- d[, c(2, 1, 3, 4)]
+  expect_error(.cml_threshold_summary(fit, d3), "do not match the observed")
+  # duplicated names get their own message, not a category mismatch (DL18)
+  d4 <- d
+  names(d4)[2] <- "I1"
+  expect_error(.cml_threshold_summary(fit, d4), "must be unique. Duplicated: I1")
+  # max_cat overrides the observed maxima (DL19)
+  expect_error(.cml_threshold_summary(fit, d, max_cat = c(2, 2, 2, 3)),
+               "do not match the observed")
+})

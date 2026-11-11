@@ -358,3 +358,71 @@ test_that("the caption says incomplete responses only when some remain (DL2)", {
   k3 <- suppressMessages(RMdifLR(df3, rep(c("A", "B"), length.out = nrow(df3))))
   expect_true(any(grepl("incomplete responses retained", k3)))
 })
+
+test_that("edge cases: 2 dichotomous items, too few items, names, reserved levels", {
+  df <- make_dichotomous(n = 200, k = 2)
+  grp <- rep(c("A", "B"), length.out = nrow(df))
+  # raschmodel() fails in its Hessian with two items; .cml_fit() uses pcmodel()
+  out <- RMdifLR(df, grp, output = "dataframe")
+  expect_equal(nrow(out), 2L)
+  expect_true(all(is.finite(out$SE_All)))
+  expect_error(RMdifLR(df[, 1, drop = FALSE], grp), "at least 2 items")
+  dup <- cbind(df, df)
+  expect_error(RMdifLR(dup, grp), "must be unique. Duplicated: I1, I2")
+  df5 <- make_dichotomous(n = 200)
+  # a level named like an output column would overwrite it silently
+  expect_error(RMdifLR(df5, rep(c("All", "x"), 100)), "'All' would clash")
+  expect_error(RMdifLR(df5, rep(c("Item", "SE_x"), 100)), "'Item', 'SE_x' would clash")
+})
+
+test_that("second review: empty level, full-data extreme-only, group maxima (DL10, DL11, DL13)", {
+  df5 <- make_dichotomous(n = 200)
+  expect_error(RMdifLR(df5, rep(c("", "x"), 100)), "'' would clash")
+
+  # DL11: category 1 of I1 used only by perfect scorers in the full data
+  d <- make_dichotomous(n = 100, k = 6)
+  d$I1 <- 0L
+  d[1:3, ] <- 1L
+  err <- tryCatch(RMdifLR(d, rep(1:2, 50), output = "dataframe"), error = function(e) e)
+  expect_s3_class(err, "easyRasch2_category_error")
+  expect_match(conditionMessage(err), "zero or perfect total score: I1 (category 1)", fixed = TRUE)
+  expect_no_match(conditionMessage(err), "in group")
+
+  # DL13: in group B, I1's top category is unused. Judged against B's own
+  # maxima, (1, 2, 2) would look perfect and make I2's category 2 look
+  # extreme-only; against the full-data maxima only I1 is named.
+  set.seed(9)
+  a <- as.data.frame(matrix(sample(0:2, 300, TRUE), ncol = 3))
+  b <- data.frame(
+    V1 = c(rep(0:1, 30), rep(1L, 3)),
+    V2 = c(rep(0:1, each = 30), rep(2L, 3)),
+    V3 = c(sample(0:2, 60, TRUE), rep(2L, 3))
+  )
+  d13 <- rbind(a, b)
+  names(d13) <- paste0("I", 1:3)
+  g <- c(rep("A", nrow(a)), rep("B", nrow(b)))
+  expect_gt(nrow(.extreme_only_categories(d13[g == "B", ])), 0L)
+  expect_equal(nrow(.extreme_only_categories(d13[g == "B", ], item_max = c(2, 2, 2))), 0L)
+  err <- tryCatch(RMdifLR(d13, g, output = "dataframe"), error = function(e) e)
+  expect_identical(err$items, "I1")
+})
+
+test_that(".cml_fit(auto) keeps raschmodel for 2 items without a Hessian (DL12)", {
+  df <- make_dichotomous(n = 100, k = 2)
+  expect_s3_class(.cml_fit(df, model = "auto", hessian = FALSE), "raschmodel")
+  expect_s3_class(.cml_fit(df, model = "auto", hessian = TRUE), "pcmodel")
+  # with a Hessian, "auto" is always pcmodel() (DL17)
+  df10 <- make_dichotomous(n = 100, k = 10)
+  expect_s3_class(.cml_fit(df10, model = "auto", hessian = TRUE), "pcmodel")
+  expect_s3_class(.cml_fit(df10, model = "auto", hessian = FALSE), "raschmodel")
+})
+
+test_that("dichotomous data with respondents answering 1-2 items fit (DL17)", {
+  set.seed(1)
+  d <- as.data.frame(matrix(stats::rbinom(3000, 1, 0.5), 300))
+  names(d) <- paste0("I", 1:10)
+  d[1:5, 3:10] <- NA
+  out <- RMdifLR(d, rep(1:2, 150), output = "dataframe")
+  expect_equal(nrow(out), 10L)
+  expect_true(all(is.finite(out$SE_All)))
+})

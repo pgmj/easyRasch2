@@ -800,6 +800,7 @@ run_pca_sim_parallel <- function(
       # CML/WLE residual engine used by .rasch_std_residuals() in the daemon.
       .rasch_std_residuals = .rasch_std_residuals,
       .fit_cml_thresholds = .fit_cml_thresholds,
+      .cml_threshold_summary = .cml_threshold_summary,
       .cml_fit = .cml_fit,
       .check_response_categories = .check_response_categories,
       .estimate_thetas = .estimate_thetas,
