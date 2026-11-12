@@ -230,3 +230,12 @@ User-run `/code-review high` over the unpushed commits plus the uncommitted work
 - **DL25 fixed:** NEWS "All three now stop", reflowed.
 
 Baselines vs the DL14 runs: item/person 60/60 identical. The DIF and step-2 sets differ only in the dichotomous RMdifLR cells (max 7.1e-9, back to pcmodel). Tests: test-dif_lr 85/85, test-utils-theta 28/28. Full suite (installed tree): 0 failures, 1766 pass, 7 skips, 1 known mirt warning.
+
+## Remaining test gaps written (2026-11-11, uncommitted)
+
+Three new tests at the end of test-dif_lr.R (polytomous, n = 300, 5 items, two groups):
+- **Kable bold:** with `cutoff` at the median MaxDiff, every data cell of a flagged row is bold (`**yes**`, the item name not), unflagged rows have no bold and "no", and the caption gives the bold note. `cutoff = NULL` gives no Flagged column, no bold and no note. `sort = TRUE` orders the kable rows by MaxDiff.
+- **Item ggplot:** the group locations and SEs in the plot data equal the dataframe output, the error-bar half-widths equal qnorm(0.975) times the item SE, `conf = 0.80` scales them by qnorm(0.90)/qnorm(0.975) and says "80% CI", and the diamonds sit at the All locations.
+- **DL4 fit failure:** `.cml_fit()` mocked with `local_mocked_bindings()`. A failure in the full fit gives "CML estimation failed in the full sample (boom). Small or sparse groups ...", and one in the first group fit names group 'a'.
+
+test-dif_lr.R passes. Unit status: dif_lr done.

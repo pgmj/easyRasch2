@@ -445,7 +445,7 @@ RMdimResidualPCA <- function(
         "no multiplicity correction); it cannot be smaller than 1/(",
         cutoff_n_iter,
         "+1) = ",
-        round(1 / (cutoff_n_iter + 1), 4),
+        .fmt_small(1 / (cutoff_n_iter + 1)),
         "."
       )
     )

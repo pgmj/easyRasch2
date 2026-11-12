@@ -295,7 +295,7 @@ test_that("RMlocdepGamma p_value adds one-sided p per pair, mirrored across dire
   cuts <- RMlocdepGammaCutoff(df, iterations = 10L, parallel = FALSE, seed = 1L)
   # Below 400 iterations the advice is a once-per-session message, not a
   # warning, so that the default path does not warn about its own default.
-  rlang::reset_message_verbosity("easyRasch2_low_iterations_locdep")
+  for (cr in c("fwer", "fdr_bh", "fdr_by", "none")) rlang::reset_message_verbosity(paste0("easyRasch2_low_iterations_locdep_", cr))
   expect_message(
     res <- RMlocdepGamma(
       df,

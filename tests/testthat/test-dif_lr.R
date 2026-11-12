@@ -426,3 +426,101 @@ test_that("dichotomous data with respondents answering 1-2 items fit (DL17)", {
   expect_equal(nrow(out), 10L)
   expect_true(all(is.finite(out$SE_All)))
 })
+
+# ---------------------------------------------------------------------
+# Remaining test gaps from the dif_lr review (2026-11-11)
+# ---------------------------------------------------------------------
+dif_fixture <- function() {
+  d <- make_polytomous(n = 300, k = 5, seed = 3L)
+  list(d = d, g = rep(c("a", "b"), length.out = nrow(d)))
+}
+
+test_that("the kable bolds flagged rows only, and says so in the caption", {
+  skip_if_not_installed("knitr")
+  fx <- dif_fixture()
+  df <- RMdifLR(fx$d, fx$g, output = "dataframe")
+  # a cutoff between the MaxDiff values gives flagged and unflagged rows
+  cut <- stats::median(df$MaxDiff)
+  flagged <- as.character(df$Item[df$MaxDiff > cut])
+  kept <- as.character(df$Item[df$MaxDiff <= cut])
+  expect_true(length(flagged) > 0L && length(kept) > 0L)
+  k <- RMdifLR(fx$d, fx$g, cutoff = cut)
+  rows <- as.character(k)
+  row_of <- function(it) rows[grepl(paste0("^\\|", it, "\\s*\\|"), rows)]
+  for (it in flagged) {
+    r <- row_of(it)
+    expect_length(r, 1L)
+    expect_match(r, "**yes**", fixed = TRUE)
+    # every data cell is bold, the item name is not
+    expect_false(grepl("**I", r, fixed = TRUE))
+    cells <- trimws(strsplit(r, "|", fixed = TRUE)[[1L]])
+    cells <- cells[nzchar(cells)][-1L]
+    expect_true(all(startsWith(cells, "**") & endsWith(cells, "**")))
+  }
+  for (it in kept) {
+    r <- row_of(it)
+    expect_false(grepl("**", r, fixed = TRUE))
+    expect_match(r, "|no ", fixed = TRUE)
+  }
+  cap <- function(x) grep("^Table:", as.character(x), value = TRUE)
+  expect_match(cap(k), paste0("**Bold** = MaxDiff > ", cut, " logits."),
+               fixed = TRUE)
+  # no cutoff: no Flagged column, no bold, no bold note
+  k0 <- RMdifLR(fx$d, fx$g, cutoff = NULL)
+  expect_false(any(grepl("**", as.character(k0), fixed = TRUE)))
+  expect_length(cap(k0), 1L)
+  expect_false(any(grepl("Flagged", as.character(k0))))
+  expect_no_match(cap(k0), "Bold")
+  # sort = TRUE orders the kable rows by MaxDiff
+  ks <- as.character(RMdifLR(fx$d, fx$g, cutoff = NULL, sort = TRUE))
+  body <- ks[grepl("^\\|I[0-9]", ks)]
+  expect_identical(sub("^\\|(I[0-9]+).*", "\\1", body),
+                   as.character(df$Item[order(-df$MaxDiff)]))
+})
+
+test_that("the item ggplot draws group locations with item-SE bars of the conf width", {
+  skip_if_not_installed("ggplot2")
+  fx <- dif_fixture()
+  df <- RMdifLR(fx$d, fx$g, output = "dataframe")
+  p <- RMdifLR(fx$d, fx$g, output = "ggplot")
+  pd <- p$data
+  expect_setequal(as.character(unique(pd$DIFgroup)), c("a", "b"))
+  for (g in c("a", "b")) {
+    sub_g <- pd[pd$DIFgroup == g, ]
+    sub_g <- sub_g[match(as.character(df$Item), as.character(sub_g$Item)), ]
+    expect_equal(sub_g$Location, df[[g]], tolerance = 1e-10)
+    expect_equal(sub_g$SE, df[[paste0("SE_", g)]], tolerance = 1e-10)
+  }
+  half <- function(pl) {
+    eb <- ggplot2::layer_data(pl, 3L) # geom_errorbar
+    sort((eb$ymax - eb$ymin) / 2)
+  }
+  z95 <- stats::qnorm(0.975)
+  expect_equal(half(p), sort(pd$SE * z95), tolerance = 1e-10)
+  p80 <- RMdifLR(fx$d, fx$g, output = "ggplot", conf = 0.80)
+  expect_equal(half(p80) / half(p), rep(stats::qnorm(0.90) / z95, nrow(pd)),
+               tolerance = 1e-10)
+  expect_match(p80$labels$caption, "80% CI", fixed = TRUE)
+  # the whole-sample diamonds sit at the All locations
+  dm <- ggplot2::layer_data(p, 4L)
+  expect_equal(sort(dm$y), sort(df$All), tolerance = 1e-10)
+})
+
+test_that("a failed CML fit names where it failed and points to RMplotTile (DL4)", {
+  fx <- dif_fixture()
+  local_mocked_bindings(.cml_fit = function(...) stop("boom"))
+  expect_error(
+    RMdifLR(fx$d, fx$g, output = "dataframe"),
+    "CML estimation failed in the full sample (boom). Small or sparse groups",
+    fixed = TRUE
+  )
+  # a failure in a group fit names the group
+  n <- 0L
+  local_mocked_bindings(.cml_fit = function(d, ...) {
+    n <<- n + 1L
+    if (n == 2L) stop("group boom")
+    psychotools::pcmodel(as.matrix(d), hessian = TRUE)
+  })
+  expect_error(RMdifLR(fx$d, fx$g, output = "dataframe"),
+               "CML estimation failed in group 'a' (group boom)", fixed = TRUE)
+})

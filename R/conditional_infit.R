@@ -333,7 +333,8 @@ RMitemInfit <- function(
     # Below 400 decisions depend on the seed enough to say so on the
     # console. Between 400 and 1000 the table caption reports it instead.
     if (!is.null(cutoff_n_iter) && cutoff_n_iter < 400L) {
-      .notify_low_iterations(cutoff_n_iter, cutoff_req_iter)
+      .notify_low_iterations(cutoff_n_iter, cutoff_req_iter,
+                             correction = correction)
     }
   } else if (!is.null(cutoff)) {
     .notify_band_flagging(
@@ -561,25 +562,26 @@ RMitemInfit <- function(
       "1/(",
       cutoff_n_iter,
       "+1) = ",
-      round(1 / (cutoff_n_iter + 1), 4),
+      .fmt_small(1 / (cutoff_n_iter + 1)),
       ".",
-      # Two tiers, both about reproducibility since the error rate is
-      # controlled at any number of iterations. Below 400 the console also
-      # reports it. Between 400 and 1000 it is a caption matter rather than
-      # something to interrupt over.
+      # Two tiers about reproducibility. What the error rate claim says
+      # follows `correction` (.error_rate_sentence()). Below 400 the console
+      # also reports it. Between 400 and 1000 it is a caption matter rather
+      # than something to interrupt over.
       if (is.null(cutoff_n_iter)) {
         ""
       } else if (cutoff_n_iter < 400L) {
         paste0(
-          " This is below the recommended 400. Error rates are controlled,",
-          " but decisions depend on the seed, so use 1000 to 2000 for a final",
+          " This is below the recommended 400. ",
+          .error_rate_sentence(correction, "any"),
+          " Decisions depend on the seed, so use 1000 to 2000 for a final",
           " analysis (Johansson, 2026)."
         )
       } else if (cutoff_n_iter < 1000L) {
         paste0(
-          " Error rates are controlled at this many iterations, but decisions",
-          " are still somewhat seed-dependent. Two analysts using different",
-          " seeds disagree about at least one item roughly 10% of the time at",
+          " ", .error_rate_sentence(correction, "this"),
+          " Decisions are still somewhat seed-dependent. Two analysts using",
+          " different seeds disagree about at least one item roughly 10% of the time at",
           " 400 iterations against 4% at 2000, so use 1000 to 2000 for a final",
           " analysis (Johansson, 2026)."
         )

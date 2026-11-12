@@ -262,7 +262,7 @@ test_that("RMdifGamma p_value replaces asymptotic p columns and flags at alpha",
     parallel = FALSE,
     seed = 1L
   )
-  rlang::reset_message_verbosity("easyRasch2_low_iterations_dif")
+  for (cr in c("fwer", "fdr_bh", "fdr_by", "none")) rlang::reset_message_verbosity(paste0("easyRasch2_low_iterations_dif_", cr))
   expect_message(
     res <- RMdifGamma(
       df,

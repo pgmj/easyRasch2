@@ -29,7 +29,14 @@
 #'   the Johansson (2026) simulation scripts can reproduce published results.
 #' @return A data.frame with columns `name`, `p` (marginal Monte-Carlo
 #'   p-value), and `padj` (corrected p-value). Comparisons whose simulated
-#'   values have no variance return `NA`.
+#'   values have no variance return `NA`, under either `moments`.
+#'
+#' Missing simulated values (`NA`, e.g. an undefined partial gamma or an
+#' RMSEA that could not be computed) are left out, not counted as
+#' non-exceedances. The marginal p-value of a comparison uses its own
+#' non-missing values, `(1 + count) / (1 + B_i)`. The step-down needs the
+#' maximum over all comparisons in an iteration, so it uses only iterations
+#' with every compared value present.
 #' @keywords internal
 #' @noRd
 .bootstrap_pvalues <- function(
@@ -43,13 +50,27 @@
   tail <- match.arg(tail)
   moments <- match.arg(moments)
   nm <- names(observed)
+  # Comparisons are matched to the simulated columns by name, so the names
+  # must exist, be unique and all be columns of `sim` (a guard for callers:
+  # unnamed input used to return an empty result silently).
+  if (is.null(nm) || anyNA(nm) || !all(nzchar(nm)) || anyDuplicated(nm) > 0L ||
+      is.null(colnames(sim)) || !all(nm %in% colnames(sim))) {
+    stop(
+      "Internal error in .bootstrap_pvalues(): `observed` needs unique ",
+      "names that are all column names of `sim`.",
+      call. = FALSE
+    )
+  }
   sim <- sim[, nm, drop = FALSE]
-  B <- nrow(sim)
 
   ref <- if (moments == "joint") rbind(observed, sim) else sim
   m <- colMeans(ref, na.rm = TRUE)
   s <- apply(ref, 2L, stats::sd, na.rm = TRUE)
-  s[!is.finite(s) | s < 1e-8] <- NA_real_ # guard zero-variance comparisons
+  # Guard zero-variance comparisons on the simulated values alone. Under
+  # "joint" the observed value would otherwise give a constant null some
+  # variance, and the comparison would get the smallest possible p (UM3).
+  s_sim <- apply(sim, 2L, stats::sd, na.rm = TRUE)
+  s[!is.finite(s) | s < 1e-8 | !is.finite(s_sim) | s_sim < 1e-8] <- NA_real_
 
   # Studentise observed and simulated by the same mean / SD; the test
   # statistic is |t| (two-sided) or t (upper tail).
@@ -63,14 +84,17 @@
     stat_sim <- t_sim
   }
 
-  # Marginal Monte-Carlo p-value, (1 + count) / (B + 1).
+  # Marginal Monte-Carlo p-value, (1 + count) / (B_i + 1), over the
+  # comparison's non-missing simulated values. Counting a missing value as a
+  # non-exceedance while keeping it in B would make p too small (UM1).
   p_marg <- vapply(
     seq_along(nm),
     function(i) {
       if (is.na(stat_obs[i])) {
         return(NA_real_)
       }
-      (1 + sum(stat_sim[, i] >= stat_obs[i], na.rm = TRUE)) / (B + 1)
+      x <- stat_sim[!is.na(stat_sim[, i]), i]
+      (1 + sum(x >= stat_obs[i])) / (length(x) + 1)
     },
     numeric(1)
   )
@@ -80,8 +104,27 @@
     none = p_marg,
     fdr_bh = stats::p.adjust(p_marg, method = "BH"),
     fdr_by = stats::p.adjust(p_marg, method = "BY"),
-    fwer = .wy_stepdown(stat_obs, stat_sim, B)
+    fwer = .wy_stepdown(stat_obs, stat_sim)
   )
+  if (correction == "fwer") {
+    # The step-down uses only iterations where every comparison is defined,
+    # the marginal p each comparison's own. With missing values the two
+    # subsets differ, and padj could fall below p by Monte-Carlo noise (UM12).
+    # An adjusted p-value is never smaller than the raw one.
+    b_used <- attr(padj, "B")
+    padj <- pmax(as.numeric(padj), p_marg)
+    b_total <- nrow(sim)
+    if (!is.null(b_used) && b_used < 0.95 * b_total) {
+      # Say when the family-wise correction lost more than 5% of the
+      # iterations, since captions quote the full count (UM11).
+      message(
+        "The Westfall-Young correction used the ", b_used, " of ", b_total,
+        " simulated datasets in which every comparison could be computed. ",
+        "Corrected p-values cannot be smaller than 1/(", b_used, "+1) = ",
+        .fmt_small(1 / (b_used + 1)), "."
+      )
+    }
+  }
 
   data.frame(
     name = nm,
@@ -107,6 +150,21 @@
     return("p = NA")
   }
   if (p < 0.001) "p < 0.001" else paste0("p = ", sprintf("%.3f", p))
+}
+
+#' Format a small number as a plain decimal for prose
+#'
+#' `paste()` prints values below 1e-4 in scientific notation ("7e-04"),
+#' which most readers are not used to. This keeps `digits` significant
+#' digits and never switches notation: `1 / 1501` gives "0.00067".
+#'
+#' @param x Numeric value (length 1).
+#' @param digits Significant digits.
+#' @return A string.
+#' @keywords internal
+#' @noRd
+.fmt_small <- function(x, digits = 2L) {
+  format(signif(x, digits), scientific = FALSE, trim = TRUE)
 }
 
 #' Human-readable label for a multiplicity-correction method
@@ -181,12 +239,20 @@
 
 #' Format a width for display, dropping the leading zero
 #'
+#' At least five decimals, and more when the width is so close to 1 that
+#' five would round it to "1" (the Sidak width over the 19900 pairs of a
+#' 200-item scale is .9999974).
+#'
 #' @param w Numeric width.
-#' @return A string such as `".95"` or `".99432"`.
+#' @return A string such as `".95"`, `".99432"` or `".9999974"`.
 #' @keywords internal
 #' @noRd
 .fmt_width <- function(w) {
-  s <- sub("0+$", "", sprintf("%.5f", w))
+  digits <- 5L
+  if (is.finite(w) && w < 1) {
+    digits <- max(digits, ceiling(-log10(1 - w)) + 1L)
+  }
+  s <- sub("0+$", "", sprintf("%.*f", digits, w))
   sub("^0", "", sub("[.]$", "", s))
 }
 
@@ -298,7 +364,10 @@
 #'
 #' The joint studentisation in `.bootstrap_pvalues()` keeps the
 #' Westfall-Young error rate at the nominal level at any number of
-#' iterations, so the notice is about reproducibility. Below 400 the
+#' iterations, so for `correction = "fwer"` the notice is about
+#' reproducibility. The error-rate sentence follows `correction`
+#' (`.error_rate_sentence()`): the false discovery rate is only controlled
+#' once the threshold is reachable, and `"none"` corrects nothing. Below 400 the
 #' p-values are coarse and two analysts using different seeds disagree often
 #' enough to interrupt over. Between 400 and 1000 the table caption covers
 #' the same point instead.
@@ -310,6 +379,7 @@
 #'   they chose too few.
 #' @param fn Name of the cutoff function whose `iterations` should be raised.
 #' @param id Frequency id, one per family of functions.
+#' @param correction The correction in force.
 #' @return Invisibly `NULL`, called for its side effect.
 #' @keywords internal
 #' @noRd
@@ -317,7 +387,8 @@
   n_iter,
   requested = NULL,
   fn = "RMitemInfitCutoff()",
-  id = "easyRasch2_low_iterations"
+  id = "easyRasch2_low_iterations",
+  correction = "fwer"
 ) {
   lost <- !is.null(requested) && is.finite(requested) && n_iter < requested
   rlang::inform(
@@ -326,10 +397,10 @@
         "Bootstrap p-values are based on %d iterations, below the recommended 400.",
         n_iter
       ),
-      i = paste(
-        "The family-wise error rate is controlled at any number of",
-        "iterations, but with few of them the p-values are coarse and which",
-        "comparisons get flagged depends on the seed."
+      i = paste0(
+        .error_rate_sentence(correction, "any"),
+        " With few iterations the p-values are coarse, and which comparisons",
+        " get flagged depends on the seed."
       ),
       if (lost) {
         c(i = sprintf(
@@ -346,15 +417,53 @@
       i = paste0("Raise `iterations` in ", fn, ".")
     ),
     .frequency = "once",
-    .frequency_id = id
+    # One notice per correction: the error-rate sentence differs (UM16).
+    .frequency_id = paste0(id, "_", correction)
   )
   invisible(NULL)
 }
 
+#' What a correction controls, for the iteration notices
+#'
+#' The family-wise rate under the Westfall-Young step-down is controlled at
+#' any number of iterations. A false discovery rate correction controls its
+#' rate only once the iterations let its threshold be reached
+#' (`.fdr_min_iterations()`; `.warn_fdr_floor()` says when they do not).
+#' `"none"` gives valid p-values one at a time and controls no rate across
+#' them.
+#'
+#' @param correction The correction in force.
+#' @param when `"any"` ("at any number of iterations") or `"this"` ("at this
+#'   many iterations"), for the family-wise case.
+#' @return One sentence, ending with a full stop.
+#' @keywords internal
+#' @noRd
+.error_rate_sentence <- function(correction, when = c("any", "this")) {
+  when <- match.arg(when)
+  switch(
+    correction,
+    fwer = paste0(
+      "The family-wise error rate is controlled at ",
+      if (when == "any") "any number of iterations." else "this many iterations."
+    ),
+    fdr_bh = ,
+    fdr_by = paste0(
+      "The false discovery rate is controlled once there are enough ",
+      "iterations for the correction to flag anything."
+    ),
+    none = paste0(
+      "Each p-value is valid on its own, but none is corrected for multiple ",
+      "comparisons."
+    ),
+    ""
+  )
+}
+
 #' Caption sentence about the iteration count
 #'
-#' The second tier of the two-tier treatment. Error rates are controlled at
-#' any number of iterations, so both tiers are about reproducibility. Below
+#' The second tier of the two-tier treatment. Under the family-wise
+#' correction the error rate is controlled at any number of iterations, so
+#' both tiers are about reproducibility. Below
 #' 400 decisions depend on the seed enough that the console also reports it
 #' through `.notify_low_iterations()`. Between 400 and 1000 they still depend
 #' on it somewhat, which is a caption matter rather than something to
@@ -365,25 +474,27 @@
 #' pairs has not been measured.
 #'
 #' @param n_iter Completed iterations, or `NULL`.
+#' @param correction The correction in force.
 #' @return A single string, empty when there is nothing to say.
 #' @keywords internal
 #' @noRd
-.iteration_note <- function(n_iter) {
+.iteration_note <- function(n_iter, correction = "fwer") {
   if (is.null(n_iter) || !is.finite(n_iter)) {
     return("")
   }
   if (n_iter < 400L) {
     return(paste0(
-      " This is below the recommended 400. Error rates are controlled, but",
-      " decisions depend on the seed, so use 1000 to 2000 for a final",
+      " This is below the recommended 400. ",
+      .error_rate_sentence(correction, "any"),
+      " Decisions depend on the seed, so use 1000 to 2000 for a final",
       " analysis (Johansson, 2026)."
     ))
   }
   if (n_iter < 1000L) {
     return(paste0(
-      " Error rates are controlled at this many iterations, but decisions are",
-      " still somewhat seed-dependent, so use 1000 to 2000 for a final",
-      " analysis (Johansson, 2026)."
+      " ", .error_rate_sentence(correction, "this"),
+      " Decisions are still somewhat seed-dependent, so use 1000 to 2000 for",
+      " a final analysis (Johansson, 2026)."
     ))
   }
   ""
@@ -408,8 +519,9 @@
 #' than from the closed form, which also keeps it exact when `m / alpha` is
 #' not representable in binary.
 #'
-#' The Westfall-Young alternative needs `1 / alpha - 1` iterations whatever
-#' `m` is, which is why it is the default correction.
+#' The Westfall-Young alternative needs the smallest `B` with
+#' `1 / (B + 1) < alpha` whatever `m` is (`.wy_min_iterations()`, 20 at
+#' `alpha = .05`), which is why it is the default correction.
 #'
 #' @param m Number of comparisons.
 #' @param correction One of `"fdr_bh"`, `"fdr_by"`, `"fwer"` or `"none"`.
@@ -433,6 +545,22 @@
   b <- max(1, floor(penalty * m / alpha) - 1)
   while (!reachable(b)) b <- b + 1
   while (b > 1 && reachable(b - 1)) b <- b - 1
+  as.integer(b)
+}
+
+#' Iterations the Westfall-Young step-down needs to reject anything
+#'
+#' Its smallest adjusted p-value is `1 / (B + 1)`, and flagging tests
+#' `padj < alpha` strictly, so `B = 1 / alpha - 1` lands exactly on `alpha`
+#' and one more iteration is needed (20 at `alpha = .05`).
+#'
+#' @param alpha Significance level.
+#' @return Integer iterations.
+#' @keywords internal
+#' @noRd
+.wy_min_iterations <- function(alpha = 0.05) {
+  b <- max(1, ceiling(1 / alpha) - 1)
+  while (!(1 / (b + 1) < alpha)) b <- b + 1
   as.integer(b)
 }
 
@@ -464,11 +592,11 @@
   if (is.null(need) || is.null(n_iter) || !is.finite(n_iter) || n_iter >= need) {
     return(invisible(NULL))
   }
-  label <- if (identical(correction, "fdr_by")) {
-    "Benjamini-Yekutieli"
-  } else {
-    "Benjamini-Hochberg"
-  }
+  by <- identical(correction, "fdr_by")
+  label <- if (by) "Benjamini-Yekutieli" else "Benjamini-Hochberg"
+  # Benjamini-Yekutieli multiplies by c(m) = sum(1/(1:m)), as in
+  # .fdr_min_iterations(), so the quoted numbers must too.
+  penalty <- if (by) sum(1 / seq_len(m)) else 1
   warning(
     "The ",
     label,
@@ -477,7 +605,7 @@
     " iterations. A bootstrap p-value cannot be smaller than 1/(",
     n_iter,
     "+1) = ",
-    signif(1 / (n_iter + 1), 3),
+    .fmt_small(1 / (n_iter + 1), 3L),
     ", and over ",
     m,
     " ",
@@ -485,18 +613,19 @@
     " a single standout ",
     sub("s$", "", unit),
     " needs a raw p-value below ",
-    signif(alpha / m, 3),
+    .fmt_small(alpha / (penalty * m), 3L),
     " to clear the threshold, so it cannot be flagged below ",
     need,
     " iterations. Several extreme ",
     unit,
     " lower that requirement, since the smallest attainable adjusted p-value ",
-    "is m/(s(B+1)) for s of them at the floor. Raise `iterations` in ",
+    "is ", if (by) "c(m)m/(s(B+1)), with c(m) = 1 + 1/2 + ... + 1/m," else "m/(s(B+1))",
+    " for s of them at the floor. Raise `iterations` in ",
     fn,
     " to at least ",
     need,
     ", or use the default correction = \"fwer\", which needs ",
-    ceiling(1 / alpha) - 1,
+    .wy_min_iterations(alpha),
     " iterations whatever the number of ",
     unit,
     ".",
@@ -516,12 +645,15 @@
 #' @param stat_obs Numeric vector of observed test statistics (already
 #'   |studentised| or signed-studentised depending on the tail).
 #' @param stat_sim Numeric matrix (`iterations` x comparisons) of the
-#'   simulated test statistics.
-#' @param B Number of iterations.
-#' @return Numeric vector of adjusted p-values (NA for invalid comparisons).
+#'   simulated test statistics. An iteration with a missing value among the
+#'   valid comparisons has no defined maximum and is left out, so `B` is the
+#'   number of complete iterations.
+#' @return Numeric vector of adjusted p-values (NA for invalid comparisons,
+#'   and for all when no iteration is complete), with attribute `B`, the
+#'   number of complete iterations used (absent when no comparison is valid).
 #' @keywords internal
 #' @noRd
-.wy_stepdown <- function(stat_obs, stat_sim, B) {
+.wy_stepdown <- function(stat_obs, stat_sim) {
   k <- length(stat_obs)
   padj <- rep(NA_real_, k)
 
@@ -529,30 +661,42 @@
   if (length(valid) == 0L) {
     return(padj)
   }
-
-  # Process valid comparisons in order of decreasing observed evidence.
-  ord <- valid[order(stat_obs[valid], decreasing = TRUE)]
-  prev <- 0
-  for (j in seq_along(ord)) {
-    remaining <- ord[j:length(ord)]
-    max_star <- apply(
-      stat_sim[, remaining, drop = FALSE],
-      1L,
-      max,
-      na.rm = TRUE
-    )
-    p_j <- (1 + sum(max_star >= stat_obs[ord[j]], na.rm = TRUE)) / (B + 1)
-    prev <- max(prev, p_j) # enforce monotonicity (step-down)
-    padj[ord[j]] <- min(prev, 1)
+  # Dropping incomplete iterations keeps every maximum over the same set of
+  # comparisons. max(na.rm = TRUE) would shrink it, and give -Inf with a
+  # warning on an all-missing row (UM2).
+  stat_sim <- stat_sim[stats::complete.cases(stat_sim[, valid, drop = FALSE]), ,
+                       drop = FALSE]
+  B <- nrow(stat_sim)
+  attr(padj, "B") <- B
+  if (B == 0L) {
+    return(padj)
   }
+
+  # Process valid comparisons in order of decreasing observed evidence. Step
+  # j compares against the maximum over comparisons j..K, which is a reverse
+  # running maximum: one pmax() per comparison, O(K B), instead of a fresh
+  # row-wise max over the remaining columns at every step, O(K^2 B).
+  ord <- valid[order(stat_obs[valid], decreasing = TRUE)]
+  K <- length(ord)
+  p_step <- numeric(K)
+  running <- rep(-Inf, B)
+  for (j in rev(seq_len(K))) {
+    running <- pmax(running, stat_sim[, ord[j]])
+    p_step[j] <- (1 + sum(running >= stat_obs[ord[j]])) / (B + 1)
+  }
+  # enforce monotonicity (step-down)
+  padj[ord] <- pmin(cummax(p_step), 1)
   padj
 }
 
 #' Significance stars in the style of iarm
 #'
-#' Reproduces the star string `iarm` attaches to its adjusted p-values
-#' (`symnum()` with cutpoints .001, .01, .05 and .10), trimmed of padding, so
-#' that a column easyRasch2 adjusts itself reads like the one it replaces.
+#' Uses the same cutpoints as the star string `iarm` attaches to its adjusted
+#' p-values (.001, .01, .05 and .10), so that a column easyRasch2 adjusts
+#' itself reads like the one it replaces. The intervals are closed on the
+#' left (`p < .05` gives "*"), matching the strict `padj < alpha` flagging
+#' rule, while iarm's `symnum()` closes them on the right, so a p-value of
+#' exactly .05 gets "." here and "*" in iarm.
 #'
 #' @param p Numeric vector of adjusted p-values.
 #' @return Character vector, `""` above .10 and for `NA`.

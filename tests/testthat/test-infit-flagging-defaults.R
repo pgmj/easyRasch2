@@ -21,7 +21,7 @@ quiet_cutoff <- function(df, ...) {
 
 reset_notices <- function() {
   rlang::reset_message_verbosity("easyRasch2_band_flagging")
-  rlang::reset_message_verbosity("easyRasch2_low_iterations")
+  for (cr in c("fwer", "fdr_bh", "fdr_by", "none")) rlang::reset_message_verbosity(paste0("easyRasch2_low_iterations_", cr))
 }
 
 # ---------------------------------------------------------------------

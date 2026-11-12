@@ -225,7 +225,7 @@ test_that("output = 'dataframe' returns the curve and its summary attributes", {
   expect_true(all(res$sem > 0))
   expect_true(all(res$reliability > 0 & res$reliability < 1))
 
-  for (a in c("sigma", "marginal_ratio", "marginal_green", "sem_average")) {
+  for (a in c("sigma", "marginal_ratio", "marginal_green", "sem_median", "sem_average")) {
     expect_true(is.finite(attr(res, a)))
   }
 })
@@ -260,6 +260,7 @@ test_that("both functions read the marginal off the same shared helper", {
   expect_identical(attr(res, "marginal_ratio"), marg$ratio)
   expect_identical(attr(res, "marginal_green"), marg$green)
   expect_identical(attr(res, "sem_average"), marg$sem_average)
+  expect_identical(attr(res, "sem_median"), marg$sem_median)
 })
 
 test_that("the marginal does not move with the plotted grid", {
@@ -578,11 +579,11 @@ test_that("the reference line is named in the units of its own axis", {
   inf_cap <- flat_caption(RMreliabilityCurve(df, statistic = "information",
                                              n_nodes = 21L))
 
-  expect_match(sem_cap, sprintf("average SEM \\(%.2f logits\\)",
-                                attr(res, "sem_average")))
+  expect_match(sem_cap, sprintf("median SEM over the latent distribution \\(%.2f logits\\)",
+                                attr(res, "sem_median")))
   expect_match(rel_cap, sprintf("marginal reliability \\(%.3f\\)",
                                 attr(res, "marginal_ratio")))
-  expect_match(inf_cap, "average test information")
+  expect_match(inf_cap, "median test information")
   # the old wording used one unitless phrase on every axis
   expect_false(grepl("flat marginal summary", sem_cap))
 })
@@ -651,4 +652,40 @@ test_that("the bootstrap is reproducible under a fixed seed", {
   b <- do.call(RMreliabilityCurve, args)
   expect_identical(a$sem_lower, b$sem_lower)
   expect_identical(a$reliability_upper, b$reliability_upper)
+})
+
+test_that("the median SEM is the typical precision, unlike the tail-dominated average", {
+  # 10 dichotomous items from -2 to 2
+  thr <- as.list(seq(-2, 2, length.out = 10))
+  sem_at <- function(th) sqrt(1 / easyRasch2:::.test_information(thr, th))
+  for (p in list(c(0, 1), c(2, 1.5), c(0, 3))) {
+    m <- easyRasch2:::.marginal_summaries(thr, p[2], mu = p[1])
+    # the median of SEM(theta) for theta ~ N(mu, sigma), on a fine grid
+    ref <- stats::median(sem_at(stats::qnorm(stats::ppoints(20000), p[1], p[2])))
+    expect_equal(m$sem_median, ref, tolerance = 0.01)
+  }
+  # wide latent distribution: the average is driven by the tails, the median
+  # stays near the precision most respondents get
+  wide <- easyRasch2:::.marginal_summaries(thr, 3, mu = 0)
+  expect_gt(wide$sem_average, 3)
+  expect_lt(wide$sem_median, 1)
+})
+
+test_that("the kable and the SEM reference line use the median SEM", {
+  skip_on_cran()
+  skip_if_not_installed("ggplot2")
+  df <- make_poly()
+  res <- RMreliabilityCurve(df, output = "dataframe", n_nodes = 21L)
+  k <- as.character(RMreliabilityCurve(df, output = "kable", n_nodes = 21L))
+  expect_true(any(grepl("Median SEM (logits)", k, fixed = TRUE)))
+  expect_false(any(grepl("Average SEM", k, fixed = TRUE)))
+  expect_true(any(grepl(sprintf("%.3f", attr(res, "sem_median")), k, fixed = TRUE)))
+  p <- RMreliabilityCurve(df, statistic = "sem", n_nodes = 21L)
+  hl <- Filter(function(l) inherits(l$geom, "GeomHline"), p$layers)
+  expect_length(hl, 1L)
+  expect_equal(ggplot2::layer_data(p, which(vapply(p$layers, function(l)
+    inherits(l$geom, "GeomHline"), TRUE)))$yintercept, attr(res, "sem_median"))
+  pi <- RMreliabilityCurve(df, statistic = "information", n_nodes = 21L)
+  expect_equal(ggplot2::layer_data(pi, which(vapply(pi$layers, function(l)
+    inherits(l$geom, "GeomHline"), TRUE)))$yintercept, 1 / attr(res, "sem_median")^2)
 })

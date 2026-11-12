@@ -28,7 +28,7 @@ gamma_cutoff <- function(df, ...) {
 
 reset_notices <- function() {
   rlang::reset_message_verbosity("easyRasch2_band_flagging_locdep")
-  rlang::reset_message_verbosity("easyRasch2_low_iterations_locdep")
+  for (cr in c("fwer", "fdr_bh", "fdr_by", "none")) rlang::reset_message_verbosity(paste0("easyRasch2_low_iterations_locdep_", cr))
 }
 
 # ---------------------------------------------------------------------
@@ -246,4 +246,88 @@ test_that("the FDR warning is silent when there are enough iterations", {
 test_that(".capitalise leaves an empty string alone", {
   expect_equal(.capitalise(""), "")
   expect_equal(.capitalise("item pairs"), "Item pairs")
+})
+
+# ---------------------------------------------------------------------
+# utils-multiplicity review (UM4, UM5, UM9)
+# ---------------------------------------------------------------------
+test_that(".wy_min_iterations is the first B whose floor is below alpha (UM5)", {
+  for (alpha in c(0.05, 0.01, 0.1, 0.03)) {
+    b <- .wy_min_iterations(alpha)
+    expect_true(1 / (b + 1) < alpha)
+    expect_false(1 / b < alpha)
+  }
+  expect_identical(.wy_min_iterations(0.05), 20L)
+  # one extreme comparison: flagged at 20 iterations, not at 19
+  set.seed(1)
+  padj_at <- function(B) {
+    sim <- matrix(stats::rnorm(B * 3), B, 3, dimnames = list(NULL, c("a", "b", "c")))
+    .bootstrap_pvalues(c(a = 50, b = 0, c = 0), sim, "fwer")$padj[1]
+  }
+  expect_false(padj_at(19) < 0.05)
+  expect_true(padj_at(20) < 0.05)
+})
+
+test_that("the FDR warning quotes numbers that match its requirement (UM4, UM5)", {
+  m <- 10L
+  msg <- function(cr) tryCatch(.warn_fdr_floor(100, m, cr), warning = conditionMessage)
+  by <- msg("fdr_by")
+  bh <- msg("fdr_bh")
+  # BY carries c(m) = sum(1/(1:m)) in the raw-p threshold and the formula
+  expect_match(by, sprintf("below %s to clear", signif(0.05 / (sum(1 / seq_len(m)) * m), 3)),
+               fixed = TRUE)
+  expect_match(by, "c(m)m/(s(B+1))", fixed = TRUE)
+  expect_match(bh, "below 0.005 to clear", fixed = TRUE)
+  expect_no_match(bh, "c(m)", fixed = TRUE)
+  # the Westfall-Young alternative: 20 iterations at alpha = .05
+  for (w in c(by, bh)) expect_match(w, "which needs 20 iterations", fixed = TRUE)
+})
+
+test_that("the iteration notices say what the chosen correction controls (UM9)", {
+  for (n in c(200, 600)) {
+    expect_match(.iteration_note(n, "fwer"), "family-wise error rate is controlled")
+    expect_match(.iteration_note(n, "fdr_bh"), "false discovery rate is controlled once")
+    expect_match(.iteration_note(n, "fdr_by"), "false discovery rate is controlled once")
+    none <- .iteration_note(n, "none")
+    expect_match(none, "none is corrected for multiple comparisons")
+    expect_no_match(none, "controlled")
+  }
+  expect_identical(.iteration_note(1000, "none"), "")
+  catch <- function(cr) {
+    id <- paste0("easyRasch2_test_um9_", cr)
+    rlang::reset_message_verbosity(paste0(id, "_", cr))
+    conditionMessage(rlang::catch_cnd(
+      .notify_low_iterations(150, NULL, id = id, correction = cr), "message"
+    ))
+  }
+  expect_match(catch("fwer"), "family-wise error rate is controlled at any number")
+  expect_match(catch("fdr_bh"), "false discovery rate is controlled once")
+  expect_no_match(catch("none"), "controlled")
+})
+
+test_that("RMlocdepQ3 passes the correction to its notice and caption (UM9)", {
+  skip_on_cran()
+  df <- make_poly()
+  cu <- q3_cutoff(df, iterations = 40L)
+  reset_notices()
+  expect_message(
+    res <- suppressWarnings(RMlocdepQ3(df, cutoff = cu, correction = "none")),
+    "none is corrected for multiple comparisons"
+  )
+  cap <- paste(as.character(res), collapse = " ")
+  expect_match(cap, "none is corrected for multiple comparisons")
+  expect_no_match(cap, "error rate is controlled")
+})
+
+test_that(".fmt_width never rounds a width below 1 up to 1 (UM7)", {
+  expect_identical(.fmt_width(0.95), ".95")
+  expect_identical(.fmt_width(.sidak_width(10)), ".99488")
+  expect_identical(.fmt_width(.sidak_width(19900)), ".9999974")
+  for (k in c(21, 1225, 19900)) expect_false(.fmt_width(.sidak_width(k)) == "1")
+  expect_identical(.fmt_width(1), "1")
+})
+
+test_that(".p_stars uses strict cutpoints like the padj < alpha rule (UM8)", {
+  expect_identical(.p_stars(c(0.0005, 0.005, 0.03, 0.05, 0.07, 0.2, NA)),
+                   c("***", "**", "*", ".", ".", "", ""))
 })

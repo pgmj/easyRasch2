@@ -18,7 +18,9 @@ RMdimCFACutoff(
 }
 \arguments{
 \item{data}{A data.frame or matrix of item responses (non-negative
-integers, 0-based). One column per item, one row per person.}
+integers, 0-based). One column per item, one row per person. At least
+4 items: with 3 the one-factor model has no degrees of freedom and the
+fit indices are perfect by construction.}
 
 \item{iterations}{Integer. Number of parametric-bootstrap iterations.
 Default \code{250}.}
@@ -50,10 +52,10 @@ sequential is used.}
 interacts with \code{parallel}.}
 
 \item{estimator}{Character. The lavaan estimator passed to
-\code{lavaan::cfa()}. Default \code{"WLSMV"}. Other limited-information
-estimators that produce robust/scaled fit indices (e.g.,
-\code{"DWLS"}, \code{"ULSMV"}) are also accepted; full-information ML is
-rejected (incompatible with \code{ordered = TRUE}).}
+\code{lavaan::cfa()}. One of \code{"WLSMV"} (default), \code{"ULSMV"}, \code{"WLSM"},
+\code{"ULSM"}, \code{"WLSMVS"} or \code{"ULSMVS"}. The CFI and RMSEA are always the
+scaled versions, so only estimators with a scaled test statistic are
+accepted. Any other estimator stops with an error.}
 }
 \value{
 A list (the simulation object), with components:
@@ -107,9 +109,11 @@ satisfy the PCM unidimensional assumption.
 \strong{Estimation model.} The CFA on each simulated dataset uses a
 single-factor model with all items as ordinal indicators
 (\code{F1 =~ I1 + I2 + ...}), fitted with \code{WLSMV} by default. Reported
-CFI / RMSEA are the Satorra-Bentler-scaled variants (\code{cfi.scaled},
-\code{rmsea.scaled}) for consistency across iterations; SRMR is reported
-unchanged. Standardized loadings are the \code{est.std} of the \verb{=~} paths
+CFI / RMSEA are the scaled variants (\code{cfi.scaled}, \code{rmsea.scaled}) for
+the observed data and every simulated dataset alike; SRMR is reported
+unchanged. A simulated dataset for which lavaan cannot compute a scaled
+index gets \code{NA} for it and is left out of that index's cutoff and
+p-value, with a message giving the count. Standardized loadings are the \code{est.std} of the \verb{=~} paths
 from \code{lavaan::standardizedSolution()}.
 
 \strong{Why a null distribution.} A perfectly PCM-unidimensional

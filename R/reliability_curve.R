@@ -23,8 +23,10 @@
 #'   region of the scale whose conditional reliability reaches `benchmark` is
 #'   shaded, and the percentage of respondents located inside it is reported.
 #'   There is deliberately no default value; see Details.
-#' @param reference Character. Horizontal line showing the flat summary that a
-#'   single coefficient implies: `"marginal"` (default) or `"none"`.
+#' @param reference Character. Horizontal reference line: `"marginal"`
+#'   (default) draws the median SEM or median test information over the
+#'   latent distribution, or the marginal reliability, matching `statistic`.
+#'   `"none"` draws no line.
 #' @param items Optional character vector of column names, or numeric column
 #'   indices, selecting a subset of at least 2 distinct items. Useful for
 #'   comparing a short form against the full scale.
@@ -69,7 +71,10 @@
 #'   `boot = TRUE`. Attributes carry the summary quantities: `sigma`,
 #'   `marginal_ratio` (the latent-density-weighted mean of the reliability
 #'   curve, matching [RMreliability()]), `marginal_green` (the superseded
-#'   subtractive coefficient), `sem_average` (root mean error variance),
+#'   subtractive coefficient), `sem_median` (the median SEM over the latent
+#'   distribution, shown as "Median SEM" in the kable), `sem_average` (root
+#'   mean error variance, kept for compatibility: respondents beyond the items
+#'   dominate it, so it can be several logits when the reliability is high),
 #'   `latent_mean`, `benchmark`,
 #'   `benchmark_range`, `benchmark_percent` and `n_not_estimable`.
 #'
@@ -333,6 +338,7 @@ RMreliabilityCurve <- function(
   # `theta_range`, which govern the plotted grid only.
   marg <- .marginal_summaries(thr_list, sigma, mu = mu)
   sem_bar <- marg$sem_average
+  sem_med <- marg$sem_median
   marginal_ratio <- marg$ratio
   marginal_green <- marg$green
 
@@ -399,6 +405,7 @@ RMreliabilityCurve <- function(
   attr(curve_df, "sigma") <- sigma
   attr(curve_df, "marginal_ratio") <- marginal_ratio
   attr(curve_df, "marginal_green") <- marginal_green
+  attr(curve_df, "sem_median") <- sem_med
   attr(curve_df, "sem_average") <- sem_bar
   attr(curve_df, "benchmark") <- benchmark
   attr(curve_df, "benchmark_range") <- benchmark_range
@@ -437,7 +444,7 @@ RMreliabilityCurve <- function(
     curve_df,
     statistic = statistic,
     reference = reference,
-    sem_bar = sem_bar,
+    sem_med = sem_med,
     marginal_ratio = marginal_ratio,
     sigma = sigma,
     benchmark = benchmark,
@@ -850,7 +857,7 @@ run_single_curve_boot <- function(seed, data_list) {
     "Latent SD (sigma)",
     "Marginal reliability (curve mean, as in RMreliability)",
     "Marginal reliability (Green/Lord, superseded)",
-    "Average SEM (logits)",
+    "Median SEM (logits)",
     "Minimum SEM (logits)",
     "Theta at minimum SEM"
   )
@@ -858,7 +865,7 @@ run_single_curve_boot <- function(seed, data_list) {
     sprintf("%.3f", sigma),
     sprintf("%.3f", attr(curve_df, "marginal_ratio", exact = TRUE)),
     sprintf("%.3f", attr(curve_df, "marginal_green", exact = TRUE)),
-    sprintf("%.3f", attr(curve_df, "sem_average", exact = TRUE)),
+    sprintf("%.3f", attr(curve_df, "sem_median", exact = TRUE)),
     sprintf("%.3f", curve_df$sem[best]),
     sprintf("%.2f", curve_df$theta[best])
   )
@@ -917,7 +924,7 @@ run_single_curve_boot <- function(seed, data_list) {
   curve_df,
   statistic,
   reference,
-  sem_bar,
+  sem_med,
   marginal_ratio,
   sigma,
   benchmark,
@@ -949,13 +956,13 @@ run_single_curve_boot <- function(seed, data_list) {
     fig$upper <- curve_df[[paste0(statistic, "_upper")]]
   }
 
-  # The flat summary a single coefficient implies, on this axis. Each axis
-  # gets its own natural summary: the root mean error variance for SEM and
-  # information, and the mean of the reliability curve for reliability, which
-  # is the `marginal_ratio` the table and attributes report.
+  # A flat summary on this axis: the median SEM over the latent distribution
+  # (and its transform, the median test information), or the mean of the
+  # reliability curve, which is the `marginal_ratio` the table reports. The
+  # root mean error variance is not used: the tails dominate it.
   ref_value <- switch(statistic,
-    sem = sem_bar,
-    information = 1 / sem_bar^2,
+    sem = sem_med,
+    information = 1 / sem_med^2,
     reliability = marginal_ratio
   )
 
@@ -1141,17 +1148,19 @@ run_single_curve_boot <- function(seed, data_list) {
 
   if (reference == "marginal") {
     ref_txt <- switch(statistic,
-      sem = sprintf("the average SEM (%.2f logits)", ref_value),
-      information = sprintf("the average test information (%.2f)", ref_value),
-      reliability = sprintf("the marginal reliability (%.3f)", ref_value)
-    )
-    parts <- c(
-      parts,
-      paste0(
-        "Dashed line is ", ref_txt,
-        ", the flat summary a single coefficient reports."
+      sem = sprintf(
+        "the median SEM over the latent distribution (%.2f logits)", ref_value
+      ),
+      information = sprintf(
+        "the median test information over the latent distribution (%.2f)",
+        ref_value
+      ),
+      reliability = sprintf(
+        "the marginal reliability (%.3f), the flat summary a single coefficient reports",
+        ref_value
       )
     )
+    parts <- c(parts, paste0("Dashed line is ", ref_txt, "."))
   }
 
   if (!is.null(benchmark)) {

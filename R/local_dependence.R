@@ -268,7 +268,8 @@ RMlocdepQ3 <- function(
         cutoff_full$actual_iterations,
         cutoff_full$requested_iterations,
         fn = "RMlocdepQ3Cutoff()",
-        id = "easyRasch2_low_iterations_locdep"
+        id = "easyRasch2_low_iterations_locdep",
+        correction = correction
       )
     }
     if (!is.null(n_pairs_total)) {
@@ -746,7 +747,7 @@ RMlocdepQ3 <- function(
       alpha,
       ". The interval is shown as description and is not the decision rule, ",
       "so a pair below the lower bound is not flagged.",
-      .iteration_note(n_iter),
+      .iteration_note(n_iter, correction),
       .attrition_clause(n_iter, cutoff_full$requested_iterations)
     )
     col.names <- c(

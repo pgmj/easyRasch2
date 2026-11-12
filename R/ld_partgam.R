@@ -276,7 +276,8 @@ RMlocdepGamma <- function(
         cutoff_n_iter,
         cutoff_full$requested_iterations,
         fn = "RMlocdepGammaCutoff()",
-        id = "easyRasch2_low_iterations_locdep"
+        id = "easyRasch2_low_iterations_locdep",
+        correction = correction
       )
     }
     if (!is.null(n_pairs_total)) {
@@ -569,10 +570,10 @@ RMlocdepGamma <- function(
       ". p-values cannot be smaller than 1/(",
       cutoff_n_iter,
       "+1) = ",
-      round(1 / (cutoff_n_iter + 1), 4),
+      .fmt_small(1 / (cutoff_n_iter + 1)),
       ". The interval is shown as description and is not the decision rule, ",
       "so a pair below the lower bound is not flagged.",
-      .iteration_note(cutoff_n_iter),
+      .iteration_note(cutoff_n_iter, correction),
       .attrition_clause(cutoff_n_iter, cutoff_full$requested_iterations),
       filter_suffix
     )

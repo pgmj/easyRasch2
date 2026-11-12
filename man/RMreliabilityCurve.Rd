@@ -46,8 +46,10 @@ region of the scale whose conditional reliability reaches \code{benchmark} is
 shaded, and the percentage of respondents located inside it is reported.
 There is deliberately no default value; see Details.}
 
-\item{reference}{Character. Horizontal line showing the flat summary that a
-single coefficient implies: \code{"marginal"} (default) or \code{"none"}.}
+\item{reference}{Character. Horizontal reference line: \code{"marginal"}
+(default) draws the median SEM or median test information over the
+latent distribution, or the marginal reliability, matching \code{statistic}.
+\code{"none"} draws no line.}
 
 \item{items}{Optional character vector of column names, or numeric column
 indices, selecting a subset of at least 2 distinct items. Useful for
@@ -106,7 +108,10 @@ columns \code{theta}, \code{information}, \code{sem}, \code{reliability}, plus
 \code{boot = TRUE}. Attributes carry the summary quantities: \code{sigma},
 \code{marginal_ratio} (the latent-density-weighted mean of the reliability
 curve, matching \code{\link[=RMreliability]{RMreliability()}}), \code{marginal_green} (the superseded
-subtractive coefficient), \code{sem_average} (root mean error variance),
+subtractive coefficient), \code{sem_median} (the median SEM over the latent
+distribution, shown as "Median SEM" in the kable), \code{sem_average} (root
+mean error variance, kept for compatibility: respondents beyond the items
+dominate it, so it can be several logits when the reliability is high),
 \code{latent_mean}, \code{benchmark},
 \code{benchmark_range}, \code{benchmark_percent} and \code{n_not_estimable}.
 

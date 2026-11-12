@@ -22,11 +22,15 @@ test_that("RMdimCFACutoff errors when data has non-zero minimum", {
   expect_error(RMdimCFACutoff(df), regexp = "scored starting at 0")
 })
 
-test_that("RMdimCFACutoff errors when fewer than 3 items", {
+test_that("RMdimCFACutoff errors when fewer than 4 items", {
   skip_if_not_installed("lavaan")
   df <- as.data.frame(matrix(sample(0:1, 100, replace = TRUE),
                              nrow = 50, ncol = 2))
-  expect_error(RMdimCFACutoff(df), regexp = "at least 3 items")
+  expect_error(RMdimCFACutoff(df), regexp = "at least 4 items")
+  # 3 items: just-identified, so the fit indices are perfect by construction
+  df3 <- as.data.frame(matrix(sample(0:2, 150, replace = TRUE),
+                              nrow = 50, ncol = 3))
+  expect_error(RMdimCFACutoff(df3), regexp = "With 3 the one-factor model")
 })
 
 test_that("RMdimCFACutoff rejects ML-family estimators", {
@@ -39,6 +43,66 @@ test_that("RMdimCFACutoff rejects ML-family estimators", {
       regexp = "not appropriate for ordinal-CFA"
     )
   }
+})
+
+test_that("RMdimCFACutoff rejects estimators without a scaled test", {
+  skip_if_not_installed("lavaan")
+  df <- as.data.frame(matrix(sample(0:1, 200, replace = TRUE),
+                             nrow = 40, ncol = 5))
+  for (est in c("DWLS", "ULS", "WLS")) {
+    expect_error(
+      RMdimCFACutoff(df, estimator = est, iterations = 5, parallel = FALSE),
+      regexp = "gives no scaled test statistic"
+    )
+  }
+})
+
+test_that("extract_cfa_fit uses the scaled indices only, NA when missing", {
+  skip_if_not_installed("lavaan")
+  set.seed(2)
+  df <- as.data.frame(sim_partial_score(
+    lapply(seq(-1.2, 1.2, length.out = 6), function(l) l + c(-0.8, 0, 0.8)),
+    stats::rnorm(200)
+  ))
+  nm <- paste0("V", 1:6)
+  colnames(df) <- nm
+  fmla <- paste0("F1 =~ ", paste(nm, collapse = " + "))
+  # DWLS has no scaled test: no fallback to the uncorrected cfi / rmsea
+  f_dwls <- suppressWarnings(lavaan::cfa(fmla, data = df, ordered = nm,
+                                         estimator = "DWLS", warn = FALSE))
+  out <- extract_cfa_fit(f_dwls)
+  expect_true(all(is.na(out[1:2])))
+  expect_equal(out[3], unname(lavaan::fitMeasures(f_dwls, "srmr")[[1]]))
+  f_wlsmv <- suppressWarnings(lavaan::cfa(fmla, data = df, ordered = nm,
+                                          estimator = "WLSMV", warn = FALSE))
+  fm <- lavaan::fitMeasures(f_wlsmv)
+  expect_equal(extract_cfa_fit(f_wlsmv),
+               unname(c(fm[["cfi.scaled"]], fm[["rmsea.scaled"]], fm[["srmr"]])))
+})
+
+test_that("RMdimCFACutoff reports simulated datasets without a scaled index", {
+  skip_if_not_installed("lavaan")
+  set.seed(3)
+  df <- as.data.frame(sim_partial_score(
+    lapply(seq(-1.2, 1.2, length.out = 5), function(l) l + c(-0.8, 0, 0.8)),
+    stats::rnorm(150)
+  ))
+  colnames(df) <- paste0("I", 1:5)
+  n_call <- 0L
+  real <- extract_cfa_fit
+  local_mocked_bindings(extract_cfa_fit = function(fit, ...) {
+    n_call <<- n_call + 1L
+    out <- real(fit, ...)
+    if (n_call %% 2L == 0L) out[2] <- NA_real_ # every second RMSEA missing
+    out
+  })
+  expect_message(
+    res <- RMdimCFACutoff(df, iterations = 6, parallel = FALSE, seed = 1),
+    "3 of 6 simulated datasets had no scaled RMSEA. Their cutoffs and p-values",
+    fixed = TRUE
+  )
+  expect_equal(sum(is.na(res$simulated$rmsea)), 3L)
+  expect_true(is.finite(res$cutoffs[["rmsea"]]))
 })
 
 test_that("RMdimCFACutoff rejects out-of-range percentile", {
@@ -383,4 +447,50 @@ test_that("fit indices and loadings match a full lavaan fit", {
   expect_equal(res$fit,
                unname(c(fm[["cfi.scaled"]], fm[["rmsea.scaled"]], fm[["srmr"]])))
   expect_equal(unname(res$loadings), full_loadings)
+})
+
+test_that("RMdimCFA and RMdimCFAPlot refuse stale cutoff objects (UM14)", {
+  skip_if_not_installed("lavaan")
+  df <- as.data.frame(matrix(sample(0:2, 200, replace = TRUE), 50, 4))
+  stale <- list(
+    simulated = data.frame(), simulated_loadings = data.frame(),
+    cutoffs = c(cfi = 1, rmsea = 0, srmr = 0), loading_cutoffs = data.frame(),
+    percentile = 99, item_names = names(df), estimator = "DWLS"
+  )
+  expect_error(RMdimCFA(df, cutoff = stale),
+               "`cutoff` was built with `estimator = \"DWLS\"`", fixed = TRUE)
+  expect_error(RMdimCFAPlot(stale, df),
+               "`simfit` was built with `estimator = \"DWLS\"`", fixed = TRUE)
+  three <- stale
+  three$estimator <- "WLSMV"
+  three$item_names <- names(df)[1:3]
+  expect_error(RMdimCFA(df[, 1:3], cutoff = three),
+               "was built from 3 items", fixed = TRUE)
+})
+
+test_that("RMdimCFA shows an observed index lavaan cannot compute as not tested (UM13)", {
+  skip_on_cran()
+  skip_if_not_installed("lavaan")
+  skip_if_not_installed("eRm")
+  data("raschdat1", package = "eRm")
+  sim <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 20,
+                        parallel = FALSE, seed = 1)
+  real <- extract_cfa_fit
+  local_mocked_bindings(extract_cfa_fit = function(fit, ...) {
+    out <- real(fit, ...)
+    out[2] <- NA_real_ # observed RMSEA missing
+    out
+  })
+  expect_warning(
+    expect_message(
+      tabs <- RMdimCFA(raschdat1[, 1:8], cutoff = sim, output = "dataframe",
+                       p_value = TRUE),
+      "could not compute the observed RMSEA for `data`, so it is not tested",
+      fixed = TRUE
+    ),
+    "only 20 simulation iterations"
+  )
+  expect_identical(tabs$fit$Flagged[tabs$fit$Index == "RMSEA"], "not tested")
+  expect_true(is.na(tabs$fit$p[tabs$fit$Index == "RMSEA"]))
+  expect_false(anyNA(tabs$fit$p[tabs$fit$Index != "RMSEA"]))
 })

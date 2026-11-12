@@ -83,6 +83,58 @@ test_that(".bootstrap_pvalues upper-tail marginal p is the raw rank under both m
   expect_equal(s$p, raw)
 })
 
+test_that(".bootstrap_pvalues leaves missing simulated values out (UM1)", {
+  set.seed(2)
+  sim <- matrix(rnorm(400), 200, 2, dimnames = list(NULL, c("a", "b")))
+  obs <- c(a = 1.6, b = 0)
+  na_sim <- sim
+  na_sim[1:100, "a"] <- NA
+  for (tail in c("two.sided", "upper")) {
+    p_na <- easyRasch2:::.bootstrap_pvalues(obs, na_sim, "none", tail = tail,
+                                            moments = "simulated")
+    p_drop <- easyRasch2:::.bootstrap_pvalues(obs["a"], sim[101:200, "a", drop = FALSE],
+                                              "none", tail = tail, moments = "simulated")
+    # same as dropping the missing rows, not counted as non-exceedances
+    expect_equal(p_na$p[1], p_drop$p)
+    # the complete column keeps its own denominator
+    expect_equal(p_na$p[2], easyRasch2:::.bootstrap_pvalues(
+      obs["b"], sim[, "b", drop = FALSE], "none", tail = tail, moments = "simulated")$p)
+  }
+})
+
+test_that("the step-down uses complete iterations only, without warnings (UM2)", {
+  set.seed(5)
+  sim <- matrix(rnorm(300 * 3), 300, 3, dimnames = list(NULL, c("a", "b", "c")))
+  obs <- c(a = 2.5, b = 0.3, c = -1)
+  part <- sim
+  part[sample(300, 40), "b"] <- NA
+  part[7, ] <- NA # an all-missing iteration
+  cc <- stats::complete.cases(part)
+  # on fixed statistics, an incomplete iteration is simply left out
+  expect_no_warning(wy <- easyRasch2:::.wy_stepdown(abs(obs), abs(part)))
+  expect_equal(wy, easyRasch2:::.wy_stepdown(abs(obs), abs(part[cc, ])))
+  expect_no_warning(easyRasch2:::.bootstrap_pvalues(obs, part, "fwer"))
+  # no complete iteration at all: no step-down, no warning
+  alt <- sim[, 1:2]
+  alt[c(TRUE, FALSE), "a"] <- NA
+  alt[c(FALSE, TRUE), "b"] <- NA
+  expect_no_warning(r2 <- easyRasch2:::.bootstrap_pvalues(obs[1:2], alt, "fwer"))
+  expect_true(all(is.na(r2$padj)))
+  expect_true(all(is.finite(r2$p)))
+})
+
+test_that("a constant simulated column gives NA under joint moments too (UM3)", {
+  set.seed(6)
+  sim <- cbind(a = rep(1, 200), b = rnorm(200))
+  obs <- c(a = 1.01, b = 0)
+  for (mo in c("joint", "simulated")) {
+    res <- easyRasch2:::.bootstrap_pvalues(obs, sim, "fwer", moments = mo)
+    expect_true(is.na(res$p[1]))
+    expect_true(is.na(res$padj[1]))
+    expect_false(is.na(res$p[2]))
+  }
+})
+
 # ---------------------------------------------------------------------
 # RMitemInfit() integration
 # ---------------------------------------------------------------------
@@ -145,7 +197,7 @@ test_that("low iteration count triggers the calibration message", {
   sim <- RMitemInfitCutoff(df, iterations = 200, parallel = FALSE, seed = 1)
   # Since 1.2.0 this is a once-per-session message rather than a warning, and
   # the threshold is the recommended 400 rather than 1000.
-  rlang::reset_message_verbosity("easyRasch2_low_iterations")
+  for (cr in c("fwer", "fdr_bh", "fdr_by", "none")) rlang::reset_message_verbosity(paste0("easyRasch2_low_iterations_", cr))
   expect_message(RMitemInfit(df, cutoff = sim, p_value = TRUE,
                              output = "dataframe"),
                  regexp = "below the recommended 400")
@@ -228,4 +280,107 @@ test_that("statistic = 'infit' is the default and leaves output unchanged", {
     RMitemInfit(df, cutoff = sim, statistic = "infit", output = "dataframe")
   )
   expect_error(RMitemInfit(df, statistic = "both"), regexp = "should be one of")
+})
+
+test_that("small numbers in captions are plain decimals, never 7e-04", {
+  expect_identical(.fmt_small(1 / 1501), "0.00067")
+  expect_identical(.fmt_small(1 / 401), "0.0025")
+  expect_identical(.fmt_small(1 / 41), "0.024")
+  expect_identical(.fmt_small(1 / 100001), "0.00001")
+  expect_identical(.fmt_small(1 / 5001, 3L), "0.0002")
+  w <- tryCatch(.warn_fdr_floor(5000, 2000, "fdr_by"), warning = conditionMessage)
+  expect_no_match(w, "[0-9]e-[0-9]")
+})
+
+test_that("the RMitemInfit caption states the p-value floor as a plain decimal", {
+  skip_on_cran()
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("knitr")
+  set.seed(8)
+  thr <- lapply(seq(-1, 1, length.out = 5), function(b) b + c(-0.6, 0.6))
+  d <- as.data.frame(sim_partial_score(thr, stats::rnorm(150)))
+  names(d) <- paste0("I", 1:5)
+  cu <- suppressMessages(RMitemInfitCutoff(d, iterations = 30, parallel = FALSE, seed = 1))
+  # only the caption reads the iteration count, so pretend it was 1500
+  cu$actual_iterations <- 1500L
+  cu$requested_iterations <- 1500L
+  cap <- paste(as.character(suppressMessages(RMitemInfit(d, cutoff = cu))), collapse = " ")
+  expect_match(cap, "1/(1500+1) = 0.00067", fixed = TRUE)
+  expect_no_match(cap, "[0-9]e-[0-9]")
+})
+
+test_that(".bootstrap_pvalues stops on unnamed or mismatched observed names (UM10)", {
+  sim <- matrix(stats::rnorm(40), 20, 2, dimnames = list(NULL, c("a", "b")))
+  msg <- "needs unique names that are all column names of `sim`"
+  expect_error(.bootstrap_pvalues(c(1, 2), sim), msg, fixed = TRUE)
+  expect_error(.bootstrap_pvalues(c(a = 1, a = 2), sim), msg, fixed = TRUE)
+  expect_error(.bootstrap_pvalues(c(a = 1, z = 2), sim), msg, fixed = TRUE)
+  expect_error(.bootstrap_pvalues(c(a = 1), unname(sim)), msg, fixed = TRUE)
+  # a subset of the columns, in any order, is fine
+  expect_identical(.bootstrap_pvalues(c(b = 1, a = 0), sim)$name, c("b", "a"))
+})
+
+test_that(".wy_stepdown equals the direct step-down definition (UM6)", {
+  # Reference: at each step a fresh row-wise max over the remaining columns.
+  ref_wy <- function(obs, sim) {
+    B <- nrow(sim)
+    ord <- order(obs, decreasing = TRUE)
+    padj <- numeric(length(obs))
+    prev <- 0
+    for (j in seq_along(ord)) {
+      mx <- apply(sim[, ord[j:length(ord)], drop = FALSE], 1L, max)
+      prev <- max(prev, (1 + sum(mx >= obs[ord[j]])) / (B + 1))
+      padj[ord[j]] <- min(prev, 1)
+    }
+    padj
+  }
+  set.seed(9)
+  for (r in 1:30) {
+    k <- sample(c(1, 2, 6, 25), 1)
+    B <- sample(c(19, 99, 250), 1)
+    sim <- matrix(round(abs(stats::rnorm(B * k)), sample(c(1, 6), 1)), B, k)
+    obs <- round(abs(stats::rnorm(k, 0, 2)), 1)
+    if (k > 2) obs[2] <- obs[1] # tied observed values
+    expect_identical(as.vector(.wy_stepdown(obs, sim)), ref_wy(obs, sim))
+  }
+})
+
+test_that("Westfall-Young padj is never below the marginal p (UM12)", {
+  set.seed(1)
+  for (r in 1:200) {
+    K <- sample(2:8, 1)
+    sim <- matrix(stats::rnorm(200 * K), 200, K,
+                  dimnames = list(NULL, letters[1:K]))
+    sim[matrix(stats::runif(200 * K) < stats::runif(1, 0, 0.2), 200, K)] <- NA
+    obs <- stats::setNames(stats::rnorm(K, 0, 2), letters[1:K])
+    res <- suppressMessages(.bootstrap_pvalues(obs, sim, correction = "fwer"))
+    expect_true(all(res$padj >= res$p, na.rm = TRUE))
+    expect_null(attributes(res$padj))
+  }
+})
+
+test_that("A step-down that loses iterations says so (UM11)", {
+  set.seed(2)
+  sim <- matrix(stats::rnorm(300), 100, 3, dimnames = list(NULL, c("a", "b", "c")))
+  obs <- c(a = 3, b = 0, c = 0)
+  expect_no_message(.bootstrap_pvalues(obs, sim, correction = "fwer"))
+  sim[1:4, "b"] <- NA # 96 of 100 complete: below the 5% threshold
+  expect_no_message(.bootstrap_pvalues(obs, sim, correction = "fwer"))
+  sim[1:20, "b"] <- NA
+  expect_message(
+    res <- .bootstrap_pvalues(obs, sim, correction = "fwer"),
+    "used the 80 of 100 simulated datasets in which every comparison could be computed. Corrected p-values cannot be smaller than 1/(80+1) = 0.012.",
+    fixed = TRUE
+  )
+  expect_gte(res$padj[1], 1 / 81)
+  # The marginal corrections do not use the step-down
+  expect_no_message(.bootstrap_pvalues(obs, sim, correction = "fdr_bh"))
+})
+
+test_that("The low-iterations notice is shown once per correction (UM16)", {
+  id <- "easyRasch2_test_um16"
+  for (cr in c("fwer", "none")) rlang::reset_message_verbosity(paste0(id, "_", cr))
+  expect_message(.notify_low_iterations(150, NULL, id = id, correction = "fwer"))
+  expect_no_message(.notify_low_iterations(150, NULL, id = id, correction = "fwer"))
+  expect_message(.notify_low_iterations(150, NULL, id = id, correction = "none"))
 })

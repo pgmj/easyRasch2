@@ -287,7 +287,8 @@ RMitemRestscore <- function(
         cutoff_n_iter,
         cutoff_req_iter,
         fn = "RMitemRestscoreCutoff()",
-        id = "easyRasch2_low_iterations_restscore"
+        id = "easyRasch2_low_iterations_restscore",
+        correction = correction
       )
     }
   } else if (!is.null(cutoff)) {
@@ -536,7 +537,7 @@ RMitemRestscore <- function(
         ". p-values cannot be smaller than 1/(",
         cutoff_n_iter,
         "+1) = ",
-        round(1 / (cutoff_n_iter + 1), 4),
+        .fmt_small(1 / (cutoff_n_iter + 1)),
         ".",
         if (1 / (cutoff_n_iter + 1) >= alpha) {
           paste0(" No item can be flagged at alpha = ", alpha, ".")

@@ -46,7 +46,8 @@ A named list with two elements, \code{fit} and \code{loadings}:
 \item{\code{fit}}{CFI / RMSEA / SRMR with columns \code{Index}, \code{Observed},
 \code{Cutoff}, \code{Direction}, \code{Flagged} (one-sided, in the unfavourable
 direction). With \code{p_value = TRUE}, columns \code{p} and \code{padj} are added
-and \code{Flagged} reflects \code{padj < alpha}.}
+and \code{Flagged} reflects \code{padj < alpha}. An index lavaan could not
+compute for \code{data} has \code{Observed = NA} and \code{Flagged = "not tested"}.}
 \item{\code{loadings}}{One row per item with columns \code{Item}, \code{Observed},
 \code{Expected_low}, \code{Expected_high}, \code{Flagged} (\code{"below"} / \code{"above"} /
 \code{""}). With \code{p_value = TRUE}, columns \code{p_loading} and \code{padj_loading}

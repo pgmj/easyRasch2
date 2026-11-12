@@ -25,7 +25,7 @@ dif_cutoff <- function(df, grp, ...) {
 
 reset_notices <- function() {
   rlang::reset_message_verbosity("easyRasch2_band_flagging_dif")
-  rlang::reset_message_verbosity("easyRasch2_low_iterations_dif")
+  for (cr in c("fwer", "fdr_bh", "fdr_by", "none")) rlang::reset_message_verbosity(paste0("easyRasch2_low_iterations_dif_", cr))
 }
 
 iarm_gamma <- function(df, grp) {

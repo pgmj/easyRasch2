@@ -434,3 +434,14 @@ Checked against the code. H1 and H2 match the mechanism I saw in the G8 Martin-L
 - **H8:** not changed. Two one-line expressions in separate functions, and passing `ml_model` in would add an argument to a function for no behavioural gain.
 
 Tests: test-category-check 51/51. Full suite (with `R_LIBS` at the installed working tree): 0 failures, 1713 pass, 7 skips, 1 known mirt warning.
+
+## Cutoff empty-category study: script written (2026-11-11, not yet run)
+
+`dev/code-review/cutoff_empty_categories/cutoff_empty_categories.R`, for the open point 2 above. Theory first: the observed data always use every category their own CML fit has (that defines the threshold count), so the current discard rule conditions the null on an event the observed data satisfy. It is then right in principle and only wasteful. Three arms on the same simulated datasets, for RMitemInfitCutoff (default DGP "resample") and RMitemRestscoreCutoff (default "conditional"):
+- **A** current rule (fewer iterations than requested);
+- **B** allow empty top categories (only `.cml_fit()`'s check);
+- **C** current rule topped up to the requested count (at most 10 x the draws).
+
+Outcomes: iterations used, runs with none, familywise false-flag rate under the default p-value flagging and under interval flagging. Design: n 100/200/400, 6 items x 4 categories or 10 x 5, theta mean 0 or -1 (12 cells). It uses the package's own workers (patched only at the discard line) and RMitemInfit/RMitemRestscore. A fidelity check stops the run unless arm A reproduces both *Cutoff() functions exactly.
+
+Container smoke run (R = 4, 40 iterations, 0.9 min): fidelity ok for both. A kept 13-40 of 40 iterations (as low as 7 for restscore), B and C 40. Interval flagging gives high familywise rates in every arm (it has no multiplicity correction, 6-10 items at 95% each), so the p-value rate is the main outcome. Host run: `nohup Rscript dev/code-review/cutoff_empty_categories/cutoff_empty_categories.R 300 10 400 > dev/code-review/cutoff_empty_categories/run.log 2>&1 &`, estimated 3-5 h on 10 cores.

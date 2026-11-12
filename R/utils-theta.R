@@ -409,7 +409,11 @@
 #' @param sigma Latent SD, from `.latent_moments()`.
 #' @param mu Latent mean, from `.latent_moments()`.
 #' @param n_nodes Number of quadrature nodes.
-#' @return A list with `sem_average` (root mean error variance), `ratio` (the
+#' @return A list with `sem_median` (the median SEM over the latent
+#'   distribution, the typical precision RMreliabilityCurve() reports),
+#'   `sem_average` (root mean error variance; the error variance grows
+#'   roughly exponentially beyond the items, so respondents in the tails
+#'   dominate it when the distribution reaches past them), `ratio` (the
 #'   density-weighted mean of the bounded reliability curve, which is what
 #'   both functions report) and `green` (the superseded subtractive
 #'   coefficient, retained for comparison).
@@ -421,7 +425,13 @@
   w <- w / sum(w)
   sem2 <- 1 / .test_information(thr_list, g)
   sem2_bar <- sum(w * sem2)
+  # Weighted median of SEM(theta): sort the nodes by SEM and interpolate the
+  # cumulative latent weight at 0.5 (the SEM curve is U-shaped, so this is
+  # not the SEM at the latent median).
+  o <- order(sem2)
+  cw <- cumsum(w[o])
   list(
+    sem_median = sqrt(stats::approx(cw, sem2[o], xout = 0.5, ties = "ordered")$y),
     sem_average = sqrt(sem2_bar),
     ratio = sum(w * (sigma^2 / (sigma^2 + sem2))),
     green = 1 - sem2_bar / sigma^2

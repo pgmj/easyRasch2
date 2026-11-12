@@ -17,7 +17,9 @@
 #' the figures, pass it to \code{\link{RMdimCFAPlot}}.
 #'
 #' @param data A data.frame or matrix of item responses (non-negative
-#'   integers, 0-based). One column per item, one row per person.
+#'   integers, 0-based). One column per item, one row per person. At least
+#'   4 items: with 3 the one-factor model has no degrees of freedom and the
+#'   fit indices are perfect by construction.
 #' @param iterations Integer. Number of parametric-bootstrap iterations.
 #'   Default `250`.
 #' @param percentile Numeric in (50, 100). The strictness of the cutoffs.
@@ -41,10 +43,10 @@
 #'   [easyRasch2-reproducibility] for what this guarantees and how it
 #'   interacts with `parallel`.
 #' @param estimator Character. The lavaan estimator passed to
-#'   `lavaan::cfa()`. Default `"WLSMV"`. Other limited-information
-#'   estimators that produce robust/scaled fit indices (e.g.,
-#'   `"DWLS"`, `"ULSMV"`) are also accepted; full-information ML is
-#'   rejected (incompatible with `ordered = TRUE`).
+#'   `lavaan::cfa()`. One of `"WLSMV"` (default), `"ULSMV"`, `"WLSM"`,
+#'   `"ULSM"`, `"WLSMVS"` or `"ULSMVS"`. The CFI and RMSEA are always the
+#'   scaled versions, so only estimators with a scaled test statistic are
+#'   accepted. Any other estimator stops with an error.
 #'
 #' @return A list (the simulation object), with components:
 #' \describe{
@@ -80,9 +82,11 @@
 #' \strong{Estimation model.} The CFA on each simulated dataset uses a
 #' single-factor model with all items as ordinal indicators
 #' (`F1 =~ I1 + I2 + ...`), fitted with `WLSMV` by default. Reported
-#' CFI / RMSEA are the Satorra-Bentler-scaled variants (`cfi.scaled`,
-#' `rmsea.scaled`) for consistency across iterations; SRMR is reported
-#' unchanged. Standardized loadings are the `est.std` of the `=~` paths
+#' CFI / RMSEA are the scaled variants (`cfi.scaled`, `rmsea.scaled`) for
+#' the observed data and every simulated dataset alike; SRMR is reported
+#' unchanged. A simulated dataset for which lavaan cannot compute a scaled
+#' index gets `NA` for it and is left out of that index's cutoff and
+#' p-value, with a message giving the count. Standardized loadings are the `est.std` of the `=~` paths
 #' from `lavaan::standardizedSolution()`.
 #'
 #' \strong{Why a null distribution.} A perfectly PCM-unidimensional
@@ -178,13 +182,23 @@ RMdimCFACutoff <- function(
   }
 
   estimator <- toupper(estimator[1L])
+  scaled_estimators <- .cfa_scaled_estimators
   if (estimator %in% c("ML", "MLR", "MLM", "MLF")) {
     stop(
       "`estimator = \"",
       estimator,
       "\"` is not appropriate for ",
       "ordinal-CFA. Use a limited-information estimator such as ",
-      "\"WLSMV\", \"DWLS\", or \"ULSMV\".",
+      "\"WLSMV\" or \"ULSMV\".",
+      call. = FALSE
+    )
+  }
+  if (!estimator %in% scaled_estimators) {
+    stop(
+      "`estimator = \"", estimator, "\"` gives no scaled test statistic. ",
+      "The CFI and RMSEA here are the scaled versions, so that the observed ",
+      "data and every simulated dataset use the same metric. Use one of: ",
+      paste0("\"", scaled_estimators, "\"", collapse = ", "), ".",
       call. = FALSE
     )
   }
@@ -205,9 +219,11 @@ RMdimCFACutoff <- function(
   if (nrow(data) == 0L) {
     stop("No complete cases in `data`.", call. = FALSE)
   }
-  if (ncol(data) < 3L) {
+  if (ncol(data) < 4L) {
     stop(
-      "RMdimCFACutoff() requires at least 3 items for a one-factor CFA.",
+      "RMdimCFACutoff() requires at least 4 items. With ", ncol(data),
+      " the one-factor model has no degrees of freedom, so CFI, RMSEA and ",
+      "SRMR fit perfectly by construction and cannot be tested.",
       call. = FALSE
     )
   }
@@ -330,6 +346,23 @@ RMdimCFACutoff <- function(
     stringsAsFactors = FALSE
   )
 
+  # A scaled index lavaan could not compute is NA (extract_cfa_fit()). Those
+  # datasets are left out of that index's cutoff and p-value, so say so.
+  n_missing <- colSums(!is.finite(fit_mat))
+  if (any(n_missing > 0L)) {
+    message(
+      paste0(
+        n_missing[n_missing > 0L], " of ", actual_iterations,
+        " simulated datasets had no ",
+        c(cfi = "scaled CFI", rmsea = "scaled RMSEA", srmr = "SRMR")[
+          names(n_missing)[n_missing > 0L]
+        ],
+        collapse = "; "
+      ),
+      ". Their cutoffs and p-values use the remaining datasets."
+    )
+  }
+
   cutoffs <- compute_cfa_cutoffs(simulated_df, percentile)
   loading_cutoffs <- compute_cfa_loading_cutoffs(
     simulated_loadings,
@@ -422,6 +455,48 @@ ordinal_suffix <- function(n) {
 #'
 #' @keywords internal
 #' @noRd
+#' lavaan estimators with a scaled test statistic
+#'
+#' Only these give `cfi.scaled` and `rmsea.scaled`, the indices the CFA
+#' functions use for the observed data and every simulated dataset.
+#'
+#' @keywords internal
+#' @noRd
+.cfa_scaled_estimators <- c("WLSMV", "ULSMV", "WLSM", "ULSM", "WLSMVS", "ULSMVS")
+
+#' Check a stored RMdimCFACutoff() object against the current rules
+#'
+#' A cutoff object saved with an earlier version can carry an estimator
+#' without scaled indices (DWLS, ULS, WLS were accepted in 1.4.0) or come from
+#' a 3-item scale, where the one-factor model has no degrees of freedom. Both
+#' would give an empty fit test, so stop with the reason (UM14).
+#'
+#' @param cutoff The cutoff object, already checked for its required fields.
+#' @param arg Name of the argument, for the message.
+#' @keywords internal
+#' @noRd
+.check_cfa_cutoff_object <- function(cutoff, arg = "cutoff") {
+  est <- toupper(as.character(cutoff$estimator)[1L])
+  if (is.na(est) || !est %in% .cfa_scaled_estimators) {
+    stop(
+      "`", arg, "` was built with `estimator = \"", est, "\"`, which gives ",
+      "no scaled CFI and RMSEA. Rerun RMdimCFACutoff() with one of: ",
+      paste0("\"", .cfa_scaled_estimators, "\"", collapse = ", "), ".",
+      call. = FALSE
+    )
+  }
+  n_items <- length(cutoff$item_names)
+  if (n_items < 4L) {
+    stop(
+      "`", arg, "` was built from ", n_items, " items. With fewer than 4 the ",
+      "one-factor model has no degrees of freedom, so CFI, RMSEA and SRMR ",
+      "fit perfectly by construction and cannot be tested.",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
 compute_cfa_flagged <- function(observed, cutoffs) {
   c(
     cfi = !is.na(observed[["cfi"]]) && observed[["cfi"]] < cutoffs[["cfi"]],
@@ -490,7 +565,8 @@ compute_cfa_loading_flagged <- function(observed_loadings, loading_cutoffs) {
 #'   \item{`fit`}{CFI / RMSEA / SRMR with columns `Index`, `Observed`,
 #'     `Cutoff`, `Direction`, `Flagged` (one-sided, in the unfavourable
 #'     direction). With `p_value = TRUE`, columns `p` and `padj` are added
-#'     and `Flagged` reflects `padj < alpha`.}
+#'     and `Flagged` reflects `padj < alpha`. An index lavaan could not
+#'     compute for `data` has `Observed = NA` and `Flagged = "not tested"`.}
 #'   \item{`loadings`}{One row per item with columns `Item`, `Observed`,
 #'     `Expected_low`, `Expected_high`, `Flagged` (`"below"` / `"above"` /
 #'     `""`). With `p_value = TRUE`, columns `p_loading` and `padj_loading`
@@ -581,6 +657,7 @@ RMdimCFA <- function(
       call. = FALSE
     )
   }
+  .check_cfa_cutoff_object(cutoff)
 
   # --- p-value prerequisites --------------------------------------------------
   # The full cutoff object always carries $simulated / $simulated_loadings
@@ -678,8 +755,9 @@ RMdimCFA <- function(
   # --- Bootstrap p-values (two separate families: fit indices, loadings) ------
   if (p_value) {
     # Fit indices: one-sided in the unfavourable direction. CFI is negated so
-    # "large = bad" holds for all three; RMSEA can be Inf on a degenerate
-    # simulated dataset, so non-finite simulated values are dropped to NA.
+    # "large = bad" holds for all three. A scaled index lavaan could not
+    # compute is already NA (extract_cfa_fit()); .bootstrap_pvalues() leaves
+    # NA values out. The line below only guards against anything non-finite.
     sim_fit <- cbind(
       CFI = -cutoff$simulated$cfi,
       RMSEA = cutoff$simulated$rmsea,
@@ -747,6 +825,21 @@ RMdimCFA <- function(
       "padj_loading",
       "Flagged"
     )]
+  }
+
+  # An observed scaled index lavaan could not compute (NA) has nothing to
+  # compare against the null, so it is shown as not tested rather than as
+  # not flagged (UM13).
+  not_tested <- is.na(fit_df$Observed)
+  if (any(not_tested)) {
+    fit_df$Flagged[not_tested] <- "not tested"
+    message(
+      "lavaan could not compute the observed ",
+      paste(fit_df$Index[not_tested], collapse = " and "),
+      " for `data`, so ",
+      if (sum(not_tested) == 1L) "it is" else "they are",
+      " not tested."
+    )
   }
 
   if (output == "dataframe") {
@@ -860,7 +953,7 @@ render_cfa_fit_kable <- function(
         ". p-values cannot be smaller than 1/(",
         cutoff$actual_iterations,
         "+1) = ",
-        round(1 / (cutoff$actual_iterations + 1), 4),
+        .fmt_small(1 / (cutoff$actual_iterations + 1)),
         "."
       )
     } else {
@@ -1033,6 +1126,7 @@ RMdimCFAPlot <- function(simfit, data, percentile = NULL) {
       call. = FALSE
     )
   }
+  .check_cfa_cutoff_object(simfit, "simfit")
   if (missing(data)) {
     stop(
       "`data` is required: the observed CFA fit and loadings are computed ",
@@ -1463,13 +1557,15 @@ run_single_cfa_sim <- function(seed, data_list, obs_data = NULL) {
 
 #' Pull (CFI, RMSEA, SRMR) from a fitted lavaan object
 #'
-#' Uses the Satorra-Bentler-SCALED CFI / RMSEA variants when available
-#' (`cfi.scaled`, `rmsea.scaled`), falling back to the uncorrected
-#' `cfi` / `rmsea` when not. SRMR is unaffected by the correction. The
+#' Uses the scaled CFI / RMSEA (`cfi.scaled`, `rmsea.scaled`) only, with no
+#' fallback to the uncorrected `cfi` / `rmsea`: a per-dataset fallback would
+#' mix two metrics in one null distribution, while the comparison needs the
+#' same metric for the observed and every simulated dataset. A scaled index
+#' that is missing or not finite is `NA`. RMdimCFACutoff() only accepts
+#' estimators with a scaled test. SRMR is unaffected by the correction. The
 #' `.scaled` variants are well-defined across nearly all fits (unlike the
 #' `.robust` variants, which return `NA` for a non-trivial fraction at small
-#' n); for a percentile comparison the binding requirement is that the same
-#' metric is computed for observed and simulated iterations.
+#' n).
 #'
 #' @keywords internal
 #' @noRd
@@ -1479,16 +1575,13 @@ extract_cfa_fit <- function(fit, estimator = NULL) {
   # used here.
   fm <- lavaan::fitMeasures(
     fit,
-    c("cfi.scaled", "rmsea.scaled", "cfi", "rmsea", "srmr"),
+    c("cfi.scaled", "rmsea.scaled", "srmr"),
     fm.args = list(robust = FALSE)
   )
   pick_scaled <- function(name) {
     key_s <- paste0(name, ".scaled")
     if (key_s %in% names(fm) && is.finite(fm[[key_s]])) {
       return(as.numeric(fm[[key_s]]))
-    }
-    if (name %in% names(fm) && is.finite(fm[[name]])) {
-      return(as.numeric(fm[[name]]))
     }
     NA_real_
   }
