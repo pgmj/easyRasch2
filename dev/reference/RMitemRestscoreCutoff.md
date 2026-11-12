@@ -222,7 +222,7 @@ if (requireNamespace("iarm", quietly = TRUE) &&
   RMitemRestscore(sim_data, cutoff = cutoff_res)
 }
 #> Bootstrap p-values are based on 100 iterations, below the recommended 400.
-#> ℹ The family-wise error rate is controlled at any number of iterations, but with few of them the p-values are coarse and which comparisons get flagged depends on the seed.
+#> ℹ The family-wise error rate is controlled at any number of iterations. With few iterations the p-values are coarse, and which comparisons get flagged depends on the seed.
 #> ℹ See Johansson (2026), doi:10.31234/osf.io/7pqz4_v2.
 #> ℹ Raise `iterations` in RMitemRestscoreCutoff().
 #> This message is displayed once per session.

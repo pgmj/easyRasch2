@@ -15,7 +15,7 @@ value, the expected reference from the simulation, and a flag."><meta name="robo
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -110,7 +110,8 @@ comparisons on the corrected p-value. Default <code>0.05</code>. Ignored when
 <dd><p>CFI / RMSEA / SRMR with columns <code>Index</code>, <code>Observed</code>,
 <code>Cutoff</code>, <code>Direction</code>, <code>Flagged</code> (one-sided, in the unfavourable
 direction). With <code>p_value = TRUE</code>, columns <code>p</code> and <code>padj</code> are added
-and <code>Flagged</code> reflects <code>padj &lt; alpha</code>.</p></dd>
+and <code>Flagged</code> reflects <code>padj &lt; alpha</code>. An index lavaan could not
+compute for <code>data</code> has <code>Observed = NA</code> and <code>Flagged = "not tested"</code>.</p></dd>
 
 <dt><code>loadings</code></dt>
 <dd><p>One row per item with columns <code>Item</code>, <code>Observed</code>,
@@ -188,7 +189,7 @@ Wiley.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $fit</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Rasch Model posterior-predictive CFA fit-index check. Observed CFA fit (one-factor, lavaan WLSMV, ordered = TRUE) vs simulated null under RM unidimensionality (50 iterations at n = 100 simulees). n = 100 respondents. Cutoffs shown at the 99th percentile for reference. One-sided bootstrap p-values in the unfavourable direction (CFI low; RMSEA/SRMR high); multiplicity correction: Westfall-Young step-down (FWER); flagged at padj &lt; 0.05. p-values cannot be smaller than 1/(50+1) = 0.0196.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Rasch Model posterior-predictive CFA fit-index check. Observed CFA fit (one-factor, lavaan WLSMV, ordered = TRUE) vs simulated null under RM unidimensionality (50 iterations at n = 100 simulees). n = 100 respondents. Cutoffs shown at the 99th percentile for reference. One-sided bootstrap p-values in the unfavourable direction (CFI low; RMSEA/SRMR high); multiplicity correction: Westfall-Young step-down (FWER); flagged at padj &lt; 0.05. p-values cannot be smaller than 1/(50+1) = 0.02.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |Index | Observed| Cutoff|Direction  |      p| p (adj)|Flagged |</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |:-----|--------:|------:|:----------|------:|-------:|:-------|</span>

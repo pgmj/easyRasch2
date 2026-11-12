@@ -66,14 +66,16 @@ RMreliabilityCurve(
 
 - reference:
 
-  Character. Horizontal line showing the flat summary that a single
-  coefficient implies: `"marginal"` (default) or `"none"`.
+  Character. Horizontal reference line: `"marginal"` (default) draws the
+  median SEM or median test information over the latent distribution, or
+  the marginal reliability, matching `statistic`. `"none"` draws no
+  line.
 
 - items:
 
   Optional character vector of column names, or numeric column indices,
-  selecting a subset of items. Useful for comparing a short form against
-  the full scale.
+  selecting a subset of at least 2 distinct items. Useful for comparing
+  a short form against the full scale.
 
 - item_params:
 
@@ -154,8 +156,12 @@ RMreliabilityCurve(
   curve, matching
   [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)),
   `marginal_green` (the superseded subtractive coefficient),
-  `sem_average` (root mean error variance), `latent_mean`, `benchmark`,
-  `benchmark_range`, `benchmark_percent` and `n_not_estimable`.
+  `sem_median` (the median SEM over the latent distribution, shown as
+  "Median SEM" in the kable), `sem_average` (root mean error variance,
+  kept for compatibility: respondents beyond the items dominate it, so
+  it can be several logits when the reliability is high), `latent_mean`,
+  `benchmark`, `benchmark_range`, `benchmark_percent` and
+  `n_not_estimable`.
 
   `latent_mean` and `sigma` are estimated together. Before 1.3.1 the
   mean was held at 0 and \\\sigma\\ absorbed any distance between the
@@ -287,7 +293,7 @@ RMreliabilityCurve(phq9[, 1:9], benchmark = 0.8, output = "kable")
 #> |Latent SD (sigma)                                      |1.306         |
 #> |Marginal reliability (curve mean, as in RMreliability) |0.876         |
 #> |Marginal reliability (Green/Lord, superseded)          |0.845         |
-#> |Average SEM (logits)                                   |0.514         |
+#> |Median SEM (logits)                                    |0.426         |
 #> |Minimum SEM (logits)                                   |0.396         |
 #> |Theta at minimum SEM                                   |0.25          |
 #> |Theta range with reliability >= 0.80                   |-2.20 to 2.36 |

@@ -71,7 +71,8 @@ A named list with two elements, `fit` and `loadings`:
   CFI / RMSEA / SRMR with columns `Index`, `Observed`, `Cutoff`,
   `Direction`, `Flagged` (one-sided, in the unfavourable direction).
   With `p_value = TRUE`, columns `p` and `padj` are added and `Flagged`
-  reflects `padj < alpha`.
+  reflects `padj < alpha`. An index lavaan could not compute for `data`
+  has `Observed = NA` and `Flagged = "not tested"`.
 
 - `loadings`:
 
@@ -152,7 +153,7 @@ if (requireNamespace("lavaan", quietly = TRUE) &&
 #> $fit
 #> 
 #> 
-#> Table: Rasch Model posterior-predictive CFA fit-index check. Observed CFA fit (one-factor, lavaan WLSMV, ordered = TRUE) vs simulated null under RM unidimensionality (50 iterations at n = 100 simulees). n = 100 respondents. Cutoffs shown at the 99th percentile for reference. One-sided bootstrap p-values in the unfavourable direction (CFI low; RMSEA/SRMR high); multiplicity correction: Westfall-Young step-down (FWER); flagged at padj < 0.05. p-values cannot be smaller than 1/(50+1) = 0.0196.
+#> Table: Rasch Model posterior-predictive CFA fit-index check. Observed CFA fit (one-factor, lavaan WLSMV, ordered = TRUE) vs simulated null under RM unidimensionality (50 iterations at n = 100 simulees). n = 100 respondents. Cutoffs shown at the 99th percentile for reference. One-sided bootstrap p-values in the unfavourable direction (CFI low; RMSEA/SRMR high); multiplicity correction: Westfall-Young step-down (FWER); flagged at padj < 0.05. p-values cannot be smaller than 1/(50+1) = 0.02.
 #> 
 #> |Index | Observed| Cutoff|Direction  |      p| p (adj)|Flagged |
 #> |:-----|--------:|------:|:----------|------:|-------:|:-------|

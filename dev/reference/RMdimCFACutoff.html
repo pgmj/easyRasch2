@@ -27,7 +27,7 @@ produces at this sample size and item structure."><meta name="robots" content="n
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,7 +89,9 @@ produces at this sample size and item structure.</p>
 
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
 <dd><p>A data.frame or matrix of item responses (non-negative
-integers, 0-based). One column per item, one row per person.</p></dd>
+integers, 0-based). One column per item, one row per person. At least
+4 items: with 3 the one-factor model has no degrees of freedom and the
+fit indices are perfect by construction.</p></dd>
 
 
 <dt id="arg-iterations">iterations<a class="anchor" aria-label="anchor" href="#arg-iterations"></a></dt>
@@ -137,10 +139,10 @@ interacts with <code>parallel</code>.</p></dd>
 
 <dt id="arg-estimator">estimator<a class="anchor" aria-label="anchor" href="#arg-estimator"></a></dt>
 <dd><p>Character. The lavaan estimator passed to
-<code><a href="https://rdrr.io/pkg/lavaan/man/cfa.html" class="external-link">lavaan::cfa()</a></code>. Default <code>"WLSMV"</code>. Other limited-information
-estimators that produce robust/scaled fit indices (e.g.,
-<code>"DWLS"</code>, <code>"ULSMV"</code>) are also accepted; full-information ML is
-rejected (incompatible with <code>ordered = TRUE</code>).</p></dd>
+<code><a href="https://rdrr.io/pkg/lavaan/man/cfa.html" class="external-link">lavaan::cfa()</a></code>. One of <code>"WLSMV"</code> (default), <code>"ULSMV"</code>, <code>"WLSM"</code>,
+<code>"ULSM"</code>, <code>"WLSMVS"</code> or <code>"ULSMVS"</code>. The CFI and RMSEA are always the
+scaled versions, so only estimators with a scaled test statistic are
+accepted. Any other estimator stops with an error.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -206,9 +208,11 @@ satisfy the PCM unidimensional assumption.</p>
 <p><strong>Estimation model.</strong> The CFA on each simulated dataset uses a
 single-factor model with all items as ordinal indicators
 (<code>F1 =~ I1 + I2 + ...</code>), fitted with <code>WLSMV</code> by default. Reported
-CFI / RMSEA are the Satorra-Bentler-scaled variants (<code>cfi.scaled</code>,
-<code>rmsea.scaled</code>) for consistency across iterations; SRMR is reported
-unchanged. Standardized loadings are the <code>est.std</code> of the <code>=~</code> paths
+CFI / RMSEA are the scaled variants (<code>cfi.scaled</code>, <code>rmsea.scaled</code>) for
+the observed data and every simulated dataset alike; SRMR is reported
+unchanged. A simulated dataset for which lavaan cannot compute a scaled
+index gets <code>NA</code> for it and is left out of that index's cutoff and
+p-value, with a message giving the count. Standardized loadings are the <code>est.std</code> of the <code>=~</code> paths
 from <code><a href="https://rdrr.io/pkg/lavaan/man/standardizedSolution.html" class="external-link">lavaan::standardizedSolution()</a></code>.</p>
 <p><strong>Why a null distribution.</strong> A perfectly PCM-unidimensional
 dataset will typically not yield CFA fit indices at their ideal

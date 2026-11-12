@@ -17,7 +17,7 @@ difference between the groups' latent distributions."><meta name="robots" conten
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9001</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9003</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -212,6 +212,10 @@ here. Iterations that fail are discarded and reported through
 <code><a href="https://rdrr.io/pkg/psychotools/man/pcmodel.html" class="external-link">psychotools::pcmodel()</a></code> (a dichotomous item is a 2-category PCM). The
 group order follows the levels of <code>dif_var</code> (alphabetical for character
 vectors), which sets the sign of gamma as in <code><a href="https://rdrr.io/pkg/iarm/man/partgam_DIF.html" class="external-link">iarm::partgam_DIF()</a></code>.</p>
+<p>The null has no DIF in any item, so the cutoffs do not guard against
+artificial DIF, which real DIF in one item induces in the others
+(Hagquist &amp; Andrich, 2017). See "Real and artificial DIF" in
+<code><a href="RMdifGamma.html">RMdifGamma()</a></code>.</p>
 <p>Parallel processing is provided by the <code>mirai</code> package (optional). Install
 it with <code>install.packages("mirai")</code> to enable parallelisation.</p>
     </div>
@@ -221,7 +225,11 @@ it with <code>install.packages("mirai")</code> to enable parallelisation.</p>
 Bech, P. (1998). Differential item functioning in the Danish translation
 of the SF-36. <em>Journal of Clinical Epidemiology, 51</em>(11), 1189–1202.
 <a href="https://doi.org/10.1016/S0895-4356%2898%2900111-5" class="external-link">doi:10.1016/S0895-4356(98)00111-5</a></p>
-<p>Henninger, M., Radek, J., Debelak, R., &amp; Strobl, C. (2025).
+<p>Hagquist, C., &amp; Andrich, D. (2017). Recent advances in analysis of
+differential item functioning in health research using the Rasch model.
+<em>Health and Quality of Life Outcomes, 15</em>, 181.
+<a href="https://doi.org/10.1186/s12955-017-0755-0" class="external-link">doi:10.1186/s12955-017-0755-0</a></p>
+<p>Henninger, M., Radek, J., Sengewald, M.-A., &amp; Strobl, C. (2025).
 Partial credit trees meet the partial gamma coefficient for quantifying
 DIF and DSF in polytomous items. <em>Behaviormetrika, 52</em>, 221–257.
 <a href="https://doi.org/10.1007/s41237-024-00252-3" class="external-link">doi:10.1007/s41237-024-00252-3</a></p>

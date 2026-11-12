@@ -155,6 +155,17 @@ internal routine as the simulated values, which reproduces
 [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html)
 exactly.
 
+**Real and artificial DIF.** Partial gamma conditions on the total
+score, which includes every item. Real DIF in one item then induces
+artificial DIF in the other items, in the opposite direction, because at
+a given total score the item scores must add up to that score (Hagquist
+& Andrich, 2017). An item can therefore be flagged only because another
+item has DIF. The simulation-based cutoffs from
+[`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+do not guard against this, since their null has no DIF in any item.
+Resolve DIF items one at a time, starting with the largest, and repeat
+the analysis before deciding on the next (Hagquist & Andrich, 2017).
+
 ## Multiple comparisons
 
 The marginal p-value controls the error rate of a *single* comparison:
@@ -182,6 +193,11 @@ Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate'
 number of hypotheses simultaneously. *Journal of Statistical Theory and
 Practice, 19*(6).
 [doi:10.1007/s42519-024-00412-4](https://doi.org/10.1007/s42519-024-00412-4)
+
+Hagquist, C., & Andrich, D. (2017). Recent advances in analysis of
+differential item functioning in health research using the Rasch model.
+*Health and Quality of Life Outcomes, 15*, 181.
+[doi:10.1186/s12955-017-0755-0](https://doi.org/10.1186/s12955-017-0755-0)
 
 Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple
 Testing*. Wiley.
@@ -228,7 +244,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
   }
 }
 #> Bootstrap p-values are based on 100 iterations, below the recommended 400.
-#> ℹ The family-wise error rate is controlled at any number of iterations, but with few of them the p-values are coarse and which comparisons get flagged depends on the seed.
+#> ℹ The family-wise error rate is controlled at any number of iterations. With few iterations the p-values are coarse, and which comparisons get flagged depends on the seed.
 #> ℹ See Johansson (2026), doi:10.31234/osf.io/7pqz4_v2.
 #> ℹ Raise `iterations` in RMdifGammaCutoff().
 #> This message is displayed once per session.

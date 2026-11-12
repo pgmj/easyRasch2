@@ -182,6 +182,11 @@ levels of `dif_var` (alphabetical for character vectors), which sets the
 sign of gamma as in
 [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html).
 
+The null has no DIF in any item, so the cutoffs do not guard against
+artificial DIF, which real DIF in one item induces in the others
+(Hagquist & Andrich, 2017). See "Real and artificial DIF" in
+[`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md).
+
 Parallel processing is provided by the `mirai` package (optional).
 Install it with `install.packages("mirai")` to enable parallelisation.
 
@@ -192,7 +197,12 @@ Bjorner, J. B., Kreiner, S., Ware, J. E., Damsgaard, M. T., & Bech, P.
 SF-36. *Journal of Clinical Epidemiology, 51*(11), 1189–1202.
 [doi:10.1016/S0895-4356(98)00111-5](https://doi.org/10.1016/S0895-4356%2898%2900111-5)
 
-Henninger, M., Radek, J., Debelak, R., & Strobl, C. (2025). Partial
+Hagquist, C., & Andrich, D. (2017). Recent advances in analysis of
+differential item functioning in health research using the Rasch model.
+*Health and Quality of Life Outcomes, 15*, 181.
+[doi:10.1186/s12955-017-0755-0](https://doi.org/10.1186/s12955-017-0755-0)
+
+Henninger, M., Radek, J., Sengewald, M.-A., & Strobl, C. (2025). Partial
 credit trees meet the partial gamma coefficient for quantifying DIF and
 DSF in polytomous items. *Behaviormetrika, 52*, 221–257.
 [doi:10.1007/s41237-024-00252-3](https://doi.org/10.1007/s41237-024-00252-3)

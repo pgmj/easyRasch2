@@ -45,7 +45,10 @@ RMpersonParameters(
   equating. Either a named list of Andrich-threshold vectors (one per
   item) or the long-format data.frame returned by
   [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemParameters.md).
-  When `NULL` (default) item parameters are estimated from `data`.
+  Items are matched to the columns of `data` by name, and `data` may
+  hold extra columns. A name that is not a column of `data` stops with
+  an error. When `NULL` (default) item parameters are estimated from
+  `data`.
 
 - estimator:
 
@@ -189,6 +192,6 @@ RMpersonParameters(dat, method = "EAP", prior_sd = 1, output = "dataframe") |>
 # Write the person-location table to a CSV (also returned invisibly)
 RMpersonParameters(dat, output = "file",
                    filename = tempfile(fileext = ".csv"))
-#> Wrote 200 row(s) to '/tmp/RtmphdBD3W/file1acf45c47408.csv'.
+#> Wrote 200 row(s) to '/tmp/RtmpzND4fj/file1b252a02fdc1.csv'.
 # }
 ```

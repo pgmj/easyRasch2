@@ -4,98 +4,158 @@
 
 ### Changes
 
-- Bootstrap p-values in
-  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
+- Bootstrap p-values
+  ([`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
   [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md),
   [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md),
   [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md),
-  [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
-  and
-  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
-  now studentize by the mean and SD of the observed and simulated values
-  together, which keeps the Westfall-Young family-wise error rate at the
-  nominal level at any number of iterations. The notice below 400
-  iterations now concerns reproducibility only. **Corrected p-values
-  change, mostly below 1000 iterations. Two-sided marginal p-values move
-  slightly.** The typical change in a corrected p-value is about 0.001
-  at B = 400 and under 0.0005 at B = 1000.
+  [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md),
+  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md))
+  studentize by the observed and simulated values together, which keeps
+  the Westfall-Young family-wise error rate nominal at any number of
+  iterations. **Corrected p-values change slightly, mostly below 1000
+  iterations.**
 
-- Docs - the `phq9` description no longer calls the share of zero sum
-  scores realistic. Zero sum scores were reduced by hand to 8, so the
-  sample is not representative of the NHANES population.
+- [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md)
+  always uses the scaled CFI and RMSEA, accepts only estimators with a
+  scaled test (`"DWLS"`, `"ULS"` and `"WLS"` are refused) and needs at
+  least 4 items, since a 3-item model fits perfectly by construction.
+  With the default `"WLSMV"`, results do not change in practice.
+
+- [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
+  fits by CML with psychotools instead of `eRm`, which it no longer
+  needs. The LR test is unchanged. **Polytomous locations, SEs,
+  `MaxDiff` and `Flagged` change** (thresholds now centred within each
+  group, as in
+  [`RMitemParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemParameters.md)).
+  Dichotomous results do not.
+
+- [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md)
+  reports the median SEM and draws its SEM and information reference
+  lines there, instead of at the average SEM, which extreme respondents
+  dominate. The `sem_average` attribute is kept.
+
+- [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md),
+  [`RMretestSD()`](https://pgmj.github.io/easyRasch2/dev/reference/RMretestSD.md)
+  and
+  [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonChange.md)
+  with supplied `item_params` need at least 2 items and stop on
+  duplicated names.
 
 - [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md)
-  warns once per session that its flags come from the miscalibrated
-  asymptotic test, and its caption now says so. The caption also
-  described the bootstrap percentages as infit. Results do not change.
+  warns that its flags come from the miscalibrated asymptotic test, and
+  its caption says so.
 
-- `RMreliability(boot = TRUE)` and `RMreliabilityCurve(boot = TRUE)` now
-  say how many bootstrap resamples were dropped and why, naming the item
-  when a sparse category was absent from a resample. Results do not
-  change.
+- `RMreliability(boot = TRUE)` and `RMreliabilityCurve(boot = TRUE)` say
+  how many resamples were dropped and why.
+
+- Docs:
+  [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md),
+  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md),
+  [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+  and
+  [`RMdifTree()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md)
+  explain artificial DIF, and
+  [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
+  why its 0.5-logit `cutoff` is a convention. A wrong Henninger et
+  al. (2025) author is corrected. The `phq9` description no longer calls
+  the sample representative.
 
 ### Bug fixes
 
-- Every function that fits a Rasch or partial credit model (CML, MML or
-  eRm) now stops with a message naming the item when an item has one
-  response category, or an empty lowest or interior category. Such items
-  were silently dropped or renumbered, which paired thresholds with the
-  wrong items: e.g. WLE estimates pushed to the boundary in
-  [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md),
-  SEs over 100 logits in
-  [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md).
-  Switching to `estimator = "MML"` did not help, and the warning that
-  suggested it is gone. An empty top category is still allowed.
+- Bootstrap p-values with missing simulated values
+  ([`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md),
+  [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md),
+  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md))
+  were too small, since a missing value counted as a non-exceedance. The
+  Westfall-Young adjusted p-value is now never below the raw one, and a
+  message says when the correction used fewer than 95% of the simulated
+  datasets. A constant null gives `NA`. **Results change only when
+  simulated values are missing.**
+
+- [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
+  shows an observed index lavaan cannot compute as “not tested”.
+  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
+  and
+  [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFAPlot.md)
+  stop on a saved cutoff object built with an estimator without scaled
+  indices or from 3 items.
+
+- With supplied `item_params`, items pair with `data` by name only, and
+  an unknown name stops
+  ([`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md),
+  [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md),
+  [`RMretestSD()`](https://pgmj.github.io/easyRasch2/dev/reference/RMretestSD.md),
+  [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonChange.md)).
+  Items could silently get another item’s thresholds.
+
+- Every function that fits or scores a model stops with a clear message
+  on a single item, duplicated item names, non-numeric columns or
+  infinite values.
+  [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
+  and
+  [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md)
+  also stop when imputed factor levels are labels rather than response
+  codes, which became `NA`.
+
+- Every function that fits a Rasch or partial credit model stops, naming
+  the item, on a single response category or an empty lowest or interior
+  category. Such items were dropped or renumbered, which paired
+  thresholds with the wrong items. An empty top category is still
+  allowed.
   [`RMdifTree()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md)
   is not covered.
+
+- [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
+  stops, naming item, category and group, when a category is unused in a
+  group or used only by zero or perfect scores. `eRm` silently left such
+  items out or diverged. A `dif_var` level named “All” or an empty
+  level, duplicated item names and a single item also stop, and the
+  caption no longer says “complete cases” for data with missing
+  responses.
 
 - [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
   [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md),
   [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md)
   and
   [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
-  use complete cases only, and now stop naming the item when a category
-  occurs only in incomplete responses.
+  stop when a category occurs only in incomplete responses.
   [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
-  returned infit 0 for every item in that case.
+  returned infit 0 for every item.
 
 - [`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
-  skips an imputed dataset in which an item lacks its lowest or a middle
-  category (possible with `polr` or `polyreg` imputation), with a
-  warning naming the item, and stops only when every imputation lacks
-  it.
+  skips, with a warning, an imputation in which an item lacks its lowest
+  or a middle category, and stops only when all do.
 
 - [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md)
-  matches results to items by name. A resample in which a dichotomous
-  item was constant used to be dropped whole. Now only that item is left
-  out of it, as is a polytomous item with an empty middle category in
-  the resample (for a constant dichotomous item, the BH adjustment in
-  that resample then covers the other items only). Its percentages use
-  the resamples in which it could be tested (new `n_tested` column,
-  listed in the caption when fewer), and an item never testable gets
-  `NA` instead of `NaN`. **Percentages can change for data with a very
-  sparse item.**
+  leaves an untestable item out of a resample rather than dropping the
+  resample, and reports `n_tested`. **Percentages can change for data
+  with a very sparse item.**
 
-- `RMitemParameters(estimator = "MML")` standard errors and Wald
-  intervals now refer to the centred thresholds when `center = TRUE`
-  (the default). They were 2-19% too large. **MML SEs and CIs usually
-  get smaller. Locations and CML results do not change.**
+- `RMitemParameters(estimator = "MML")` SEs and Wald intervals refer to
+  the centred thresholds when `center = TRUE`. **MML SEs and CIs usually
+  get smaller (by 2-19%).**
 
-- `method = "EAP"`
-  (e.g. [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonChange.md))
-  now returns `NA` for a respondent with no answered items, as WLE does,
-  instead of the prior mean.
+- [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md)
+  stops when `items` selects fewer than 2 items, repeats one, or holds
+  `NA` or a fractional index.
 
-- WLE estimates beyond `theta_range` are now placed at the correct
-  boundary. Before, a respondent who answered only very hard or very
-  easy items could be put at the opposite end.
+- Iteration messages are corrected: the `"fdr_by"` warning includes the
+  c(m) factor, the Westfall-Young minimum is 20 iterations at .05 (not
+  19), the error-rate sentence follows `correction`, and the smallest
+  possible p-value is a plain decimal. The notice below 400 iterations
+  is shown once per correction method. Results do not change.
 
-- The latent mean and SD behind
-  [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
+- `method = "EAP"` returns `NA` for a respondent with no answered items,
+  as WLE does, instead of the prior mean.
+
+- WLE estimates beyond `theta_range` are placed at the correct boundary
+  rather than possibly the opposite one.
+
+- [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
   and
-  [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md),
-  and the estimated EAP prior SD, use normalised prior weights. Results
-  move by at most about 1e-4.
+  [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md)
+  use normalised prior weights. Results move by at most about 1e-4.
 
 ## easyRasch2 1.4.0
 
