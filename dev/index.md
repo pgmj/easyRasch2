@@ -66,9 +66,7 @@ remotes::install_github("pgmj/easyRasch2")
 
 - **Estimation**: a single engine across the package — Conditional
   Maximum Likelihood (CML) item parameters via `psychotools` and Warm’s
-  Weighted Likelihood Estimation (WLE) for person parameters. `eRm` is
-  used for Andersen’s LR test
-  ([`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md));
+  Weighted Likelihood Estimation (WLE) for person parameters.
   `mirt` (MML) is available as an optional engine (`estimator = "MML"`
   in
   [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
@@ -150,8 +148,12 @@ remotes::install_github("pgmj/easyRasch2")
 ### Differential item functioning
 
 - [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
-  — Andersen’s likelihood-ratio test
-  ([`eRm::LRtest`](https://rdrr.io/pkg/eRm/man/LRtest.html))
+  — Andersen’s likelihood-ratio test of whether any item parameters
+  differ between groups
+- [`RMdifAnchor()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md)
+  — anchored Wald tests of DIF between two groups for item locations,
+  thresholds and threshold spacing, with a multiplicity correction and a
+  consensus forward or Gini anchor
 - [`RMdifTree()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md)
   — Rasch / partial-credit trees (`psychotree`) with Mantel-Haenszel or
   partial-γ effect sizes per split, optional iterative purification, and
@@ -249,6 +251,7 @@ plots$fit                                               # fit-index distribution
 # DIF analysis via Andersen's LR test
 grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
 RMdifLR(pcmdat2, dif_var = grp)
+RMdifAnchor(pcmdat2, dif_var = grp)    # anchored tests per item
 
 # Rasch-tree DIF with effect-size classification on continuous +
 # categorical covariates simultaneously

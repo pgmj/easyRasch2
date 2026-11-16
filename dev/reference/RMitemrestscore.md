@@ -116,7 +116,7 @@ RMitemRestscore(
   (not flagged).
 
 With a `cutoff`, `p_adjusted` is replaced by `Diff_low` and `Diff_high`,
-followed by `p_restscore` (marginal two-sided bootstrap p-value) and
+followed by `p_restscore` (marginal equal-tailed bootstrap p-value) and
 `padj_restscore` (corrected p-value) when `p_value` resolves to `TRUE`.
 `Flagged` then reflects `padj_restscore < alpha`, or the interval when
 `p_value = FALSE`.
@@ -172,22 +172,29 @@ as `cutoff` for p-values from a parametric bootstrap null instead.
 simulated values together. Because that mean is subtracted, the
 small-sample upward bias of the difference is removed, and because that
 SD is used, the correlation between observed and expected gamma is
-accounted for. The marginal p-value is the two-sided Monte-Carlo p-value
-`(1 + #{|t*| >= |t|}) / (B + 1)`, and `correction = "fwer"` applies the
-Westfall-Young studentised-max step-down across items (Ferreira, 2024).
+accounted for.
 
-The two directions do not get equal shares of alpha. Gamma is bounded at
-1, so the null of `Difference` is left-skewed and a two-sided test on
-`|t|` rejects more often in the long (underfit) tail. In simulation
-under a true Rasch model the total rate was nominal, but the per-item
-marginal rate was about 3 percent for underfit and 2 percent for overfit
-with 20 dichotomous items at n = 150 and 1.5 logits off target,
-narrowing toward equal shares with polytomous items and larger samples.
-With `correction = "fwer"`, over four such conditions, at least one item
-was flagged as underfit in 3.7 percent of datasets and as overfit in 1.6
-percent, 5.0 percent in total. An equal-tailed test, with alpha/2 for
-each direction, was evaluated and not adopted: it detected 2 to 3
-percentage points fewer underfitting items and no more overfitting ones.
+The test is equal-tailed: overfit and underfit each get alpha/2. Gamma
+is bounded at 1, so the null of `Difference` is left-skewed, and a
+two-sided test on `|t|` would reject more often in the long (underfit)
+tail. The marginal p-value is twice the smaller of the one-sided
+Monte-Carlo p-values, `(1 + #{t* >= t}) / (B + 1)` and
+`(1 + #{t* <= t}) / (B + 1)`, so it cannot be smaller than
+`2 / (B + 1)`. With `correction = "fwer"`, the Westfall-Young
+studentised-max step-down (Ferreira, 2024) is run once for each
+direction, and `padj_restscore` is twice the smaller of the two adjusted
+p-values. `"fdr_bh"` and `"fdr_by"` adjust the equal-tailed marginal
+p-values.
+
+In simulation under a true Rasch model, over four conditions (20
+dichotomous or 9 polytomous items, n = 150 to 1000, on or off target),
+`correction = "fwer"` flagged at least one item in 5.0 percent of
+datasets: 2.4 percent underfit and 2.75 percent overfit. A test on `|t|`
+also held 5.0 percent, but split it 3.7 and 1.6. The equal-tailed test
+also gave fewer false underfit flags when other items overfit (4.7
+against 6.2 percent with two overfitting items), at a cost of 2 to 3
+percentage points of power to detect underfitting items. Before
+easyRasch2 1.4.0.9004 the test was on `|t|`.
 
 **Reproducibility.** The bootstrap p-values depend on the simulated
 null, so two analyses of the same data with different seeds can disagree
@@ -244,7 +251,7 @@ Models. *Applied Psychological Measurement, 35*(7), 557–561.
 
 Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate'
 number of hypotheses simultaneously. *Journal of Statistical Theory and
-Practice, 19*(6).
+Practice, 19*(1), 6.
 [doi:10.1007/s42519-024-00412-4](https://doi.org/10.1007/s42519-024-00412-4)
 
 ## See also
@@ -287,17 +294,17 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 #> 
 #> 
 #> 
-#> Table: Item-restscore associations. n = 200 respondents. Two-sided parametric bootstrap p-values for the difference from 100 iterations, conditional DGP, multiplicity correction: Westfall-Young step-down (FWER). p-values cannot be smaller than 1/(100+1) = 0.0099. This is below the recommended 400, where decisions depend on the seed (Johansson, 2026). Flagged (adj. p < 0.05): overfit = observed above expected (over-discrimination, often local dependence); underfit = below (under-discrimination, often multidimensionality/noise).
+#> Table: Item-restscore associations. n = 200 respondents. Equal-tailed parametric bootstrap p-values for the difference from 100 iterations, conditional DGP, multiplicity correction: Westfall-Young step-down (FWER). p-values cannot be smaller than 2/(100+1) = 0.02. This is below the recommended 400, where decisions depend on the seed (Johansson, 2026). Flagged (adj. p < 0.05): overfit = observed above expected (over-discrimination, often local dependence); underfit = below (under-discrimination, often multidimensionality/noise).
 #> 
 #> |Item  | Observed| Expected| Difference| Diff low| Diff high|      p| p (adj)|Flagged | Rel. location|
 #> |:-----|--------:|--------:|----------:|--------:|---------:|------:|-------:|:-------|-------------:|
-#> |Item1 |     0.00|     0.01|     -0.006|   -0.154|     0.147| 0.9604|  1.0000|        |         -0.23|
-#> |Item2 |     0.00|     0.01|     -0.016|   -0.148|     0.182| 0.7624|  1.0000|        |          0.13|
-#> |Item3 |    -0.01|     0.01|     -0.026|   -0.133|     0.169| 0.5446|  0.9802|        |         -0.01|
-#> |Item4 |    -0.05|     0.01|     -0.061|   -0.168|     0.187| 0.5050|  0.9802|        |         -0.05|
-#> |Item5 |     0.07|     0.01|      0.058|   -0.160|     0.215| 0.4554|  0.9802|        |          0.09|
-#> |Item6 |    -0.04|     0.01|     -0.049|   -0.166|     0.166| 0.4851|  0.9802|        |         -0.09|
-#> |Item7 |     0.15|     0.01|      0.136|   -0.159|     0.221| 0.1782|  0.7129|        |         -0.05|
-#> |Item8 |    -0.01|     0.01|     -0.021|   -0.148|     0.171| 0.7822|  1.0000|        |         -0.03|
+#> |Item1 |     0.00|     0.01|     -0.006|   -0.154|     0.147| 0.8911|       1|        |         -0.23|
+#> |Item2 |     0.00|     0.01|     -0.016|   -0.148|     0.182| 0.7723|       1|        |          0.13|
+#> |Item3 |    -0.01|     0.01|     -0.026|   -0.133|     0.169| 0.6139|       1|        |         -0.01|
+#> |Item4 |    -0.05|     0.01|     -0.061|   -0.168|     0.187| 0.4752|       1|        |         -0.05|
+#> |Item5 |     0.07|     0.01|      0.058|   -0.160|     0.215| 0.4554|       1|        |          0.09|
+#> |Item6 |    -0.04|     0.01|     -0.049|   -0.166|     0.166| 0.4554|       1|        |         -0.09|
+#> |Item7 |     0.15|     0.01|      0.136|   -0.159|     0.221| 0.2178|       1|        |         -0.05|
+#> |Item8 |    -0.01|     0.01|     -0.021|   -0.148|     0.171| 0.7129|       1|        |         -0.03|
 # }
 ```

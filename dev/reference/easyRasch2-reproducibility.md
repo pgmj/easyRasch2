@@ -102,6 +102,15 @@ and
 
 Functions that involve no simulation take no `seed` and are unaffected.
 
+[`RMdifAnchor()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md)
+is the one exception to the default. Its random draws only break ties in
+the anchor search and approximate the single-step correction, so a test
+result should not change from one call to the next. It therefore
+defaults to a fixed `seed = 20260113`, pins the generator to the
+defaults above, and restores both the caller's `.Random.seed` and
+[`RNGkind()`](https://rdrr.io/r/base/Random.html) on exit. `seed = NULL`
+uses the session's stream instead, as elsewhere.
+
 [`RMUreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMUreliability.md)
 is the one resampling function without a `seed`. It splits the draw
 columns at random, and reproduces from the session's stream in the way

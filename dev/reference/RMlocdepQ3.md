@@ -207,7 +207,7 @@ model. *Applied Psychological Measurement, 41*(3), 178–194.
 
 Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate'
 number of hypotheses simultaneously. *Journal of Statistical Theory and
-Practice, 19*(6).
+Practice, 19*(1), 6.
 [doi:10.1007/s42519-024-00412-4](https://doi.org/10.1007/s42519-024-00412-4)
 
 Johansson, M. (2026). Simulation-based cutoffs for conditional item fit

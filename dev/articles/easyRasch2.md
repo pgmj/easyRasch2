@@ -33,12 +33,12 @@ sibling package, see <https://pgmj.github.io/easyRaschBayes/>.
 
 > **NOTE:** all simulation-based functions use a low number of
 > iterations to make this vignette render faster. You should use more
-> iterations for actual analysis work. 400 is the calibrated floor for
-> the multiplicity-corrected *p*-values and is the package default,
-> while 1000 to 2000 is advisable for a final analysis, since decisions
-> about items near the decision boundary can change with the seed: at
-> 400 iterations, two analyses with different seeds disagree about at
-> least one item roughly 10 percent of the time ([Johansson
+> iterations for actual analysis work. 400 is the recommended floor for
+> reproducible multiplicity-corrected *p*-values and is the package
+> default, while 1000 to 2000 is advisable for a final analysis, since
+> decisions about items near the decision boundary can change with the
+> seed: at 400 iterations, two analyses with different seeds disagree
+> about at least one item roughly 10 percent of the time ([Johansson
 > 2026](#ref-johansson_simulationbased_2026)). An earlier
 > recommendation, that fewer iterations could improve detection for
 > conditional infit at small samples, is withdrawn: that advantage came
@@ -212,24 +212,24 @@ RMitemInfit(items, cutoff = infit_cut)
 
 | Item | Infit MSQ | Infit low | Infit high |      p | p (adj) | Flagged  | Relative location |
 |:-----|----------:|----------:|-----------:|-------:|--------:|:---------|------------------:|
-| q1   |     0.946 |     0.911 |      1.097 | 0.2871 |  0.4554 |          |             -0.56 |
-| q2   |     0.778 |     0.924 |      1.107 | 0.0099 |  0.0099 | overfit  |             -0.76 |
+| q1   |     0.946 |     0.911 |      1.097 | 0.2871 |  0.4653 |          |             -0.56 |
+| q2   |     0.778 |     0.924 |      1.107 | 0.0099 |  0.0198 | overfit  |             -0.76 |
 | q3   |     1.234 |     0.897 |      1.107 | 0.0099 |  0.0198 | underfit |             -0.83 |
 | q4   |     0.835 |     0.893 |      1.098 | 0.0198 |  0.0396 | overfit  |             -1.48 |
-| q5   |     1.069 |     0.917 |      1.102 | 0.1881 |  0.4356 |          |             -0.58 |
-| q6   |     0.895 |     0.926 |      1.097 | 0.0297 |  0.1386 |          |             -0.76 |
-| q7   |     0.986 |     0.919 |      1.101 | 0.7624 |  0.7624 |          |             -0.66 |
-| q8   |     1.260 |     0.880 |      1.119 | 0.0099 |  0.0099 | underfit |              0.97 |
+| q5   |     1.069 |     0.917 |      1.102 | 0.1980 |  0.4554 |          |             -0.58 |
+| q6   |     0.895 |     0.926 |      1.097 | 0.0297 |  0.1485 |          |             -0.76 |
+| q7   |     0.986 |     0.919 |      1.101 | 0.7822 |  0.7822 |          |             -0.66 |
+| q8   |     1.260 |     0.880 |      1.119 | 0.0099 |  0.0198 | underfit |              0.97 |
 | q9   |     1.315 |     0.842 |      1.107 | 0.0099 |  0.0099 | underfit |              0.79 |
 
 MSQ values based on conditional estimation. n = 600 respondents.
 Two-sided bootstrap p-values from 100 iterations, multiplicity
 correction: Westfall-Young step-down (FWER). Flagged on the corrected
 p-value at alpha = 0.05. p-values cannot be smaller than 1/(100+1) =
-0.0099. This is below the calibrated floor of 400, where the correction
-is mildly liberal and the family-wise error rate sits above the nominal
-level (Johansson, 2026). Flagged: underfit (infit \> 1) / overfit (infit
-\< 1). {.table}
+0.0099. This is below the recommended 400. The family-wise error rate is
+controlled at any number of iterations. Decisions depend on the seed, so
+use 1000 to 2000 for a final analysis (Johansson, 2026). Flagged:
+underfit (infit \> 1) / overfit (infit \< 1). {.table}
 
 You can also get a plot summarizing simulated and observed item infit,
 using
@@ -296,22 +296,22 @@ RMitemRestscore(items, cutoff = rs_cut)
 
 | Item | Observed | Expected | Difference | Diff low | Diff high | p | p (adj) | Flagged | Rel. location |
 |:---|---:|---:|---:|---:|---:|---:|---:|:---|---:|
-| q1 | 0.66 | 0.62 | 0.041 | -0.032 | 0.036 | 0.0396 | 0.1089 |  | -0.56 |
-| q2 | 0.72 | 0.62 | 0.102 | -0.036 | 0.043 | 0.0099 | 0.0099 | overfit | -0.76 |
-| q3 | 0.57 | 0.63 | -0.059 | -0.032 | 0.036 | 0.0099 | 0.0198 | underfit | -0.83 |
-| q4 | 0.71 | 0.62 | 0.097 | -0.052 | 0.043 | 0.0099 | 0.0099 | overfit | -1.48 |
-| q5 | 0.62 | 0.62 | -0.001 | -0.035 | 0.040 | 0.7921 | 0.7921 |  | -0.58 |
-| q6 | 0.69 | 0.63 | 0.065 | -0.035 | 0.037 | 0.0099 | 0.0099 | overfit | -0.76 |
-| q7 | 0.64 | 0.62 | 0.020 | -0.041 | 0.035 | 0.3069 | 0.4851 |  | -0.66 |
-| q8 | 0.55 | 0.63 | -0.083 | -0.044 | 0.041 | 0.0099 | 0.0099 | underfit | 0.97 |
-| q9 | 0.59 | 0.64 | -0.046 | -0.039 | 0.039 | 0.0198 | 0.0594 |  | 0.79 |
+| q1 | 0.66 | 0.62 | 0.041 | -0.032 | 0.036 | 0.0792 | 0.2970 |  | -0.56 |
+| q2 | 0.72 | 0.62 | 0.102 | -0.036 | 0.043 | 0.0198 | 0.0198 | overfit | -0.76 |
+| q3 | 0.57 | 0.63 | -0.059 | -0.032 | 0.036 | 0.0198 | 0.0396 | underfit | -0.83 |
+| q4 | 0.71 | 0.62 | 0.097 | -0.052 | 0.043 | 0.0198 | 0.0198 | overfit | -1.48 |
+| q5 | 0.62 | 0.62 | -0.001 | -0.035 | 0.040 | 0.7525 | 1.0000 |  | -0.58 |
+| q6 | 0.69 | 0.63 | 0.065 | -0.035 | 0.037 | 0.0198 | 0.0198 | overfit | -0.76 |
+| q7 | 0.64 | 0.62 | 0.020 | -0.041 | 0.035 | 0.3168 | 1.0000 |  | -0.66 |
+| q8 | 0.55 | 0.63 | -0.083 | -0.044 | 0.041 | 0.0198 | 0.0198 | underfit | 0.97 |
+| q9 | 0.59 | 0.64 | -0.046 | -0.039 | 0.039 | 0.0396 | 0.1386 |  | 0.79 |
 
-Item-restscore associations. n = 600 respondents. Two-sided parametric
-bootstrap p-values for the difference from 100 iterations, conditional
-DGP, multiplicity correction: Westfall-Young step-down (FWER). p-values
-cannot be smaller than 1/(100+1) = 0.0099. This is below the calibrated
-floor of 400, where the correction is mildly liberal (Johansson, 2026).
-Flagged (adj. p \< 0.05): overfit = observed above expected
+Item-restscore associations. n = 600 respondents. Equal-tailed
+parametric bootstrap p-values for the difference from 100 iterations,
+conditional DGP, multiplicity correction: Westfall-Young step-down
+(FWER). p-values cannot be smaller than 2/(100+1) = 0.02. This is below
+the recommended 400, where decisions depend on the seed (Johansson,
+2026). Flagged (adj. p \< 0.05): overfit = observed above expected
 (over-discrimination, often local dependence); underfit = below
 (under-discrimination, often multidimensionality/noise). {.table
 style="width:100%;"}
@@ -670,19 +670,19 @@ reversals in red.
 
 ## 4. Invariance / no DIF
 
-We use three complementary DIF assessments. The Andersen
-likelihood-ratio test (LRT, [Andersen
-1973](#ref-andersen_goodness_1973)) partitions the sample by an external
-variable, refits the model in each subgroup, and compares item
-locations. The partial gamma approach ([Kreiner
-2007](#ref-kreiner_validity_2007); [Christensen et al.
-2021](#ref-christensen_psychometric_2021)) looks for an association
-between item responses and the external variable *conditional on the
-rest-score*, and the Rasch tree (below) searches for DIF across
-covariates without pre-specified groups. All are run on the *gender*
-variable, which has some missing values that are automatically dropped
-by the functions (noted in a console message and/or table/figure caption
-output).
+We use complementary DIF assessments. The Andersen likelihood-ratio test
+(LRT, [Andersen 1973](#ref-andersen_goodness_1973)) partitions the
+sample by an external variable, refits the model in each subgroup, and
+tests whether any item parameters differ. Anchored Wald tests then
+compare single items and thresholds between two groups. The partial
+gamma approach ([Kreiner 2007](#ref-kreiner_validity_2007); [Christensen
+et al. 2021](#ref-christensen_psychometric_2021)) looks for an
+association between item responses and the external variable
+*conditional on the rest-score*, and the Rasch tree (below) searches for
+DIF across covariates without pre-specified groups. All are run on the
+*gender* variable, which has some missing values that are automatically
+dropped by the functions (noted in a console message and/or table/figure
+caption output).
 
 First, it is important to review the response distribution when dividing
 the sample. If there are zero or low (below 8 or so) responses in a
@@ -702,20 +702,67 @@ plot\*](figures/rasch-tile-plot-1.png)
 
 ``` r
 
-RMdifLR(items, dif_var = phq9$gender, level = "threshold", output = "ggplot")
+RMdifLR(items, dif_var = phq9$gender)
 ```
 
-![\*\*Figure 9.\*\* \*Andersen LR-test DIF locations by
-gender\*](figures/rasch-dif-lr-1.png)
+| Chisq | df | p | Model | Items | Groups | N | N_excluded | N_incomplete | n_Female | n_Male |
+|---:|---:|:---|:---|---:|---:|---:|---:|---:|---:|---:|
+| 63.744 | 26 | \< 0.0001 | PCM | 9 | 2 | 569 | 31 | 0 | 426 | 143 |
 
-**Figure 9.** *Andersen LR-test DIF locations by gender*
+Andersen’s likelihood-ratio test of DIF, partial credit model fitted by
+CML in each of 2 groups. n = 569 of 600 respondents (Female: 426, Male:
+143), 9 items. A significant test means that some item parameters differ
+between groups. RMdifAnchor() tests single items and thresholds.
+{.table}
 
-The plot shows the item threshold locations estimated in each gender
-group with the corresponding confidence band. The global LR test is also
-reported in the plot caption, with a statistically significant test
-indicating problems with DIF between groups. However, this test is
-sensitive to sample size and number of items and should, like all global
-tests, be interpreted with care.
+A statistically significant test indicates that some item parameters
+differ between the groups. It does not say which items, and like all
+global tests it is sensitive to sample size and number of items, so it
+should be interpreted with care.
+
+### Anchored tests of items and thresholds
+
+To compare single items, the two groups’ scales must first be linked.
+[`RMdifAnchor()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md)
+links them through anchor items chosen from the data, tests each item
+location with a Wald test, and corrects the *p*-values for multiple
+testing.
+
+``` r
+
+RMdifAnchor(items, dif_var = phq9$gender, output = "ggplot")
+```
+
+![\*\*Figure 9.\*\* \*Anchored item location differences by
+gender\*](figures/rasch-dif-anchor-1.png)
+
+**Figure 9.** *Anchored item location differences by gender*
+
+The spacing between an item’s thresholds can be compared without an
+anchor. A difference in spacing is differential step functioning (DSF).
+
+``` r
+
+RMdifAnchor(items, dif_var = phq9$gender, level = "spacing")
+```
+
+| Item |     Chisq |    df |          p |       padj | Flagged | MaxSpacingDiff |
+|:-----|----------:|------:|-----------:|-----------:|:--------|---------------:|
+| q1   | **10.60** | **2** | **0.0050** | **0.0424** | **yes** |      **1.579** |
+| q2   |      5.08 |     2 |     0.0789 |     0.5327 | no      |          0.569 |
+| q3   |      1.25 |     2 |     0.5357 |     0.9987 | no      |          0.270 |
+| q4   |      5.29 |     2 |     0.0711 |     0.4945 | no      |          1.180 |
+| q5   |      6.09 |     2 |     0.0475 |     0.3626 | no      |          1.245 |
+| q6   |      3.38 |     2 |     0.1843 |     0.8430 | no      |          0.439 |
+| q7   |      4.17 |     2 |     0.1243 |     0.6986 | no      |          0.971 |
+| q8   |      3.89 |     2 |     0.1433 |     0.7532 | no      |          0.615 |
+| q9   |      3.22 |     2 |     0.1996 |     0.8665 | no      |          0.919 |
+
+DIF in threshold spacing (distances between adjacent thresholds),
+partial credit model, ‘Male’ minus ‘Female’. n = 569 of 600 respondents
+(Female: 426, Male: 143), 9 items. No anchor is needed for spacing. Wald
+chi-square per item, single-step correction (min-p, family-wise error
+rate). **Bold** = padj \< 0.05. {.table}
 
 ### Partial-gamma DIF
 
@@ -747,15 +794,15 @@ RMdifGamma(items, cutoff = difpg, dif_var = phq9$gender, p_value = TRUE)
 
 | Item | Partial gamma | SE | Lower CI | Upper CI | Gamma low | Gamma high | p | p (adj) | Flagged |
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|:---|
-| q1 | 0.251 | 0.104 | 0.046 | 0.456 | -0.126 | 0.173 | 0.0099 | 0.0396 | TRUE |
+| q1 | 0.251 | 0.104 | 0.046 | 0.456 | -0.126 | 0.173 | 0.0099 | 0.0495 | TRUE |
 | q2 | 0.411 | 0.094 | 0.227 | 0.595 | -0.175 | 0.165 | 0.0099 | 0.0099 | TRUE |
 | q3 | 0.064 | 0.103 | -0.138 | 0.266 | -0.167 | 0.187 | 0.5446 | 0.8713 | FALSE |
 | q4 | -0.092 | 0.114 | -0.315 | 0.131 | -0.185 | 0.217 | 0.4059 | 0.8713 | FALSE |
-| q5 | -0.286 | 0.092 | -0.467 | -0.104 | -0.148 | 0.171 | 0.0198 | 0.0297 | TRUE |
-| q6 | -0.155 | 0.105 | -0.361 | 0.050 | -0.164 | 0.167 | 0.0891 | 0.3564 | FALSE |
+| q5 | -0.286 | 0.092 | -0.467 | -0.104 | -0.148 | 0.171 | 0.0198 | 0.0495 | TRUE |
+| q6 | -0.155 | 0.105 | -0.361 | 0.050 | -0.164 | 0.167 | 0.0891 | 0.3762 | FALSE |
 | q7 | -0.075 | 0.102 | -0.275 | 0.126 | -0.164 | 0.164 | 0.4554 | 0.8713 | FALSE |
-| q8 | -0.112 | 0.102 | -0.311 | 0.088 | -0.198 | 0.171 | 0.2772 | 0.6634 | FALSE |
-| q9 | 0.180 | 0.100 | -0.015 | 0.376 | -0.237 | 0.181 | 0.0990 | 0.3960 | FALSE |
+| q8 | -0.112 | 0.102 | -0.311 | 0.088 | -0.198 | 0.171 | 0.2772 | 0.6733 | FALSE |
+| q9 | 0.180 | 0.100 | -0.015 | 0.376 | -0.237 | 0.181 | 0.1188 | 0.4455 | FALSE |
 
 Partial gamma DIF analysis. n = 569 of 600 respondents (complete cases).
 Two-sided bootstrap p-values from 100 iterations (replacing the
@@ -763,9 +810,10 @@ asymptotic BH p-values); multiplicity correction: Westfall-Young
 step-down (FWER); flagged at padj \< 0.05. p-values cannot be smaller
 than 1/(100+1) = 0.0099. The interval is shown as description and is not
 the decision rule. Positive gamma indicates higher scores in higher DIF
-group levels. This is below the calibrated floor of 400, where the
-correction is mildly liberal and the family-wise error rate sits above
-the nominal level (Johansson, 2026). {.table}
+group levels. This is below the recommended 400. The family-wise error
+rate is controlled at any number of iterations. Decisions depend on the
+seed, so use 1000 to 2000 for a final analysis (Johansson, 2026).
+{.table}
 
 ### Rasch tree (model-based recursive partitioning)
 
@@ -835,12 +883,12 @@ advantages appear when you supply several covariates at once
 (`covariates = phq9[, c("gender", "age")]`), where it tests all of them,
 picks split points for continuous ones, and uncovers interactions.
 
-Three options are worth knowing about: purification = “iterative”
+Three options are worth knowing about: `purification = "iterative"`
 recomputes effect sizes while excluding already-flagged items from the
-matching score; stability = TRUE refits the tree on resamples to report
-how often each covariate is selected and where the cutpoints land — a
-guard against overinterpreting a single sample’s tree structure; and
-output = “plot” draws the tree with per-node item parameters.
+matching score; `stability = TRUE` refits the tree on resamples to
+report how often each covariate is selected and where the cutpoints land
+— a guard against overinterpreting a single sample’s tree structure; and
+`output = "plot"` draws the tree with per-node item parameters.
 
 ## Next step
 

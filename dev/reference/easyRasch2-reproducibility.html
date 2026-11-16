@@ -17,7 +17,7 @@ deliberate choice of generator."><meta name="robots" content="noindex"></head><b
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9003</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -132,6 +132,13 @@ will not see the stream it would have seen without one. Use
 <code><a href="RMlocdepGammaCutoff.html">RMlocdepGammaCutoff()</a></code>, <code><a href="RMlocdepQ3cutoff.html">RMlocdepQ3Cutoff()</a></code>, <code><a href="RMpersonFit.html">RMpersonFit()</a></code> and
 <code><a href="RMreliability.html">RMreliability()</a></code>.</p>
 <p>Functions that involve no simulation take no <code>seed</code> and are unaffected.</p>
+<p><code><a href="RMdifAnchor.html">RMdifAnchor()</a></code> is the one exception to the default. Its random draws
+only break ties in the anchor search and approximate the single-step
+correction, so a test result should not change from one call to the
+next. It therefore defaults to a fixed <code>seed = 20260113</code>, pins the
+generator to the defaults above, and restores both the caller's
+<code>.Random.seed</code> and <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">RNGkind()</a></code> on exit. <code>seed = NULL</code> uses the session's
+stream instead, as elsewhere.</p>
 <p><code><a href="RMUreliability.html">RMUreliability()</a></code> is the one resampling function without a <code>seed</code>. It
 splits the draw columns at random, and reproduces from the session's
 stream in the way described above. <code><a href="RMreliability.html">RMreliability()</a></code> calls it unseeded

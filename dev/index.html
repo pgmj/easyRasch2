@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9003</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,7 +78,7 @@
 </h2>
 <ul>
 <li>
-<strong>Estimation</strong>: a single engine across the package — Conditional Maximum Likelihood (CML) item parameters via <code>psychotools</code> and Warm’s Weighted Likelihood Estimation (WLE) for person parameters. <code>eRm</code> is used for Andersen’s LR test (<code><a href="reference/RMdifLR.html">RMdifLR()</a></code>); <code>mirt</code> (MML) is available as an optional engine (<code>estimator = "MML"</code> in <code><a href="reference/RMlocdepQ3.html">RMlocdepQ3()</a></code> and <code><a href="reference/RMitemParameters.html">RMitemParameters()</a></code>) and for the plausible values behind the RMU reliability metric.</li>
+<strong>Estimation</strong>: a single engine across the package — Conditional Maximum Likelihood (CML) item parameters via <code>psychotools</code> and Warm’s Weighted Likelihood Estimation (WLE) for person parameters. <code>mirt</code> (MML) is available as an optional engine (<code>estimator = "MML"</code> in <code><a href="reference/RMlocdepQ3.html">RMlocdepQ3()</a></code> and <code><a href="reference/RMitemParameters.html">RMitemParameters()</a></code>) and for the plausible values behind the RMU reliability metric.</li>
 <li>
 <strong>Inference</strong>: simulation-based cutoffs throughout. Item fit and local dependence flag on multiplicity-corrected bootstrap <em>p</em>-values whenever the full cutoff object is supplied, using Westfall–Young family-wise correction (default) or FDR alternatives (Ferreira, 2024; Johansson, 2026). Pass <code>p_value = FALSE</code> to flag against the simulated interval instead, which tests every item or pair at once and so sets a family-wise error rate of <code>1 - width^m</code> implicitly.</li>
 <li>
@@ -137,7 +137,9 @@
 </h3>
 <ul>
 <li>
-<code><a href="reference/RMdifLR.html">RMdifLR()</a></code> — Andersen’s likelihood-ratio test (<code><a href="https://rdrr.io/pkg/eRm/man/LRtest.html" class="external-link">eRm::LRtest</a></code>)</li>
+<code><a href="reference/RMdifLR.html">RMdifLR()</a></code> — Andersen’s likelihood-ratio test of whether any item parameters differ between groups</li>
+<li>
+<code><a href="reference/RMdifAnchor.html">RMdifAnchor()</a></code> — anchored Wald tests of DIF between two groups for item locations, thresholds and threshold spacing, with a multiplicity correction and a consensus forward or Gini anchor</li>
 <li>
 <code><a href="reference/RMdifTree.html">RMdifTree()</a></code> — Rasch / partial-credit trees (<code>psychotree</code>) with Mantel-Haenszel or partial-γ effect sizes per split, optional iterative purification, and <code>stablelearner</code>-based stability assessment</li>
 <li>
@@ -238,6 +240,7 @@
 <span><span class="co"># DIF analysis via Andersen's LR test</span></span>
 <span><span class="va">grp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">pcmdat2</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/RMdifLR.html">RMdifLR</a></span><span class="op">(</span><span class="va">pcmdat2</span>, dif_var <span class="op">=</span> <span class="va">grp</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/RMdifAnchor.html">RMdifAnchor</a></span><span class="op">(</span><span class="va">pcmdat2</span>, dif_var <span class="op">=</span> <span class="va">grp</span><span class="op">)</span>    <span class="co"># anchored tests per item</span></span>
 <span></span>
 <span><span class="co"># Rasch-tree DIF with effect-size classification on continuous +</span></span>
 <span><span class="co"># categorical covariates simultaneously</span></span>

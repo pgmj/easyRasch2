@@ -229,19 +229,19 @@ if (requireNamespace("iarm", quietly = TRUE) &&
 #> 
 #> 
 #> 
-#> Table: Item-restscore associations. n = 200 respondents. Two-sided parametric bootstrap p-values for the difference from 100 iterations, conditional DGP, multiplicity correction: Westfall-Young step-down (FWER). p-values cannot be smaller than 1/(100+1) = 0.0099. This is below the recommended 400, where decisions depend on the seed (Johansson, 2026). Flagged (adj. p < 0.05): overfit = observed above expected (over-discrimination, often local dependence); underfit = below (under-discrimination, often multidimensionality/noise).
+#> Table: Item-restscore associations. n = 200 respondents. Equal-tailed parametric bootstrap p-values for the difference from 100 iterations, conditional DGP, multiplicity correction: Westfall-Young step-down (FWER). p-values cannot be smaller than 2/(100+1) = 0.02. This is below the recommended 400, where decisions depend on the seed (Johansson, 2026). Flagged (adj. p < 0.05): overfit = observed above expected (over-discrimination, often local dependence); underfit = below (under-discrimination, often multidimensionality/noise).
 #> 
 #> |Item   | Observed| Expected| Difference| Diff low| Diff high|      p| p (adj)|Flagged | Rel. location|
 #> |:------|--------:|--------:|----------:|--------:|---------:|------:|-------:|:-------|-------------:|
-#> |Item1  |     0.02|     0.03|     -0.006|   -0.174|     0.176| 1.0000|  1.0000|        |         -0.22|
+#> |Item1  |     0.02|     0.03|     -0.006|   -0.174|     0.176| 0.9901|  1.0000|        |         -0.22|
 #> |Item2  |     0.04|     0.03|      0.008|   -0.155|     0.174| 0.9703|  1.0000|        |          0.14|
-#> |Item3  |     0.05|     0.03|      0.013|   -0.195|     0.151| 0.9010|  1.0000|        |          0.00|
-#> |Item4  |    -0.08|     0.03|     -0.110|   -0.135|     0.183| 0.2574|  0.8713|        |         -0.04|
-#> |Item5  |     0.02|     0.03|     -0.012|   -0.175|     0.167| 0.9703|  1.0000|        |          0.10|
-#> |Item6  |    -0.05|     0.03|     -0.083|   -0.172|     0.142| 0.1980|  0.8713|        |         -0.08|
-#> |Item7  |     0.15|     0.03|      0.122|   -0.211|     0.186| 0.1782|  0.8713|        |         -0.04|
-#> |Item8  |     0.08|     0.03|      0.052|   -0.149|     0.157| 0.6238|  1.0000|        |         -0.02|
-#> |Item9  |     0.17|     0.03|      0.139|   -0.151|     0.169| 0.1089|  0.5941|        |          0.12|
-#> |Item10 |    -0.06|     0.03|     -0.095|   -0.186|     0.170| 0.2574|  0.8713|        |          0.38|
+#> |Item3  |     0.05|     0.03|      0.013|   -0.195|     0.151| 0.9307|  1.0000|        |          0.00|
+#> |Item4  |    -0.08|     0.03|     -0.110|   -0.135|     0.183| 0.1980|  1.0000|        |         -0.04|
+#> |Item5  |     0.02|     0.03|     -0.012|   -0.175|     0.167| 0.9307|  1.0000|        |          0.10|
+#> |Item6  |    -0.05|     0.03|     -0.083|   -0.172|     0.142| 0.2376|  1.0000|        |         -0.08|
+#> |Item7  |     0.15|     0.03|      0.122|   -0.211|     0.186| 0.1584|  1.0000|        |         -0.04|
+#> |Item8  |     0.08|     0.03|      0.052|   -0.149|     0.157| 0.6535|  1.0000|        |         -0.02|
+#> |Item9  |     0.17|     0.03|      0.139|   -0.151|     0.169| 0.1188|  0.7921|        |          0.12|
+#> |Item10 |    -0.06|     0.03|     -0.095|   -0.186|     0.170| 0.2376|  1.0000|        |          0.38|
 # }
 ```

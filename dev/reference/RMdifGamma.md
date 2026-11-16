@@ -191,7 +191,7 @@ SF-36. *Journal of Clinical Epidemiology, 51*(11), 1189–1202.
 
 Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate'
 number of hypotheses simultaneously. *Journal of Statistical Theory and
-Practice, 19*(6).
+Practice, 19*(1), 6.
 [doi:10.1007/s42519-024-00412-4](https://doi.org/10.1007/s42519-024-00412-4)
 
 Hagquist, C., & Andrich, D. (2017). Recent advances in analysis of

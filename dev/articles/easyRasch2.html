@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9003</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -112,11 +112,11 @@ For a Bayesian sibling package, see <a href="https://pgmj.github.io/easyRaschBay
 <blockquote>
 <p><strong>NOTE:</strong> all simulation-based functions use a low
 number of iterations to make this vignette render faster. You should use
-more iterations for actual analysis work. 400 is the calibrated floor
-for the multiplicity-corrected <em>p</em>-values and is the package
-default, while 1000 to 2000 is advisable for a final analysis, since
-decisions about items near the decision boundary can change with the
-seed: at 400 iterations, two analyses with different seeds disagree
+more iterations for actual analysis work. 400 is the recommended floor
+for reproducible multiplicity-corrected <em>p</em>-values and is the
+package default, while 1000 to 2000 is advisable for a final analysis,
+since decisions about items near the decision boundary can change with
+the seed: at 400 iterations, two analyses with different seeds disagree
 about at least one item roughly 10 percent of the time <span class="citation">(<a href="#ref-johansson_simulationbased_2026">Johansson 2026</a>)</span>.
 An earlier recommendation, that fewer iterations could improve detection
 for conditional infit at small samples, is withdrawn: that advantage
@@ -273,10 +273,10 @@ flags against the interval.</p>
 respondents. Two-sided bootstrap p-values from 100 iterations,
 multiplicity correction: Westfall-Young step-down (FWER). Flagged on the
 corrected p-value at alpha = 0.05. p-values cannot be smaller than
-1/(100+1) = 0.0099. This is below the calibrated floor of 400, where the
-correction is mildly liberal and the family-wise error rate sits above
-the nominal level (Johansson, 2026). Flagged: underfit (infit &gt; 1) /
-overfit (infit &lt; 1).</caption>
+1/(100+1) = 0.0099. This is below the recommended 400. The family-wise
+error rate is controlled at any number of iterations. Decisions depend
+on the seed, so use 1000 to 2000 for a final analysis (Johansson, 2026).
+Flagged: underfit (infit &gt; 1) / overfit (infit &lt; 1).</caption>
 <colgroup>
 <col width="6%">
 <col width="12%">
@@ -304,7 +304,7 @@ overfit (infit &lt; 1).</caption>
 <td align="right">0.911</td>
 <td align="right">1.097</td>
 <td align="right">0.2871</td>
-<td align="right">0.4554</td>
+<td align="right">0.4653</td>
 <td align="left"></td>
 <td align="right">-0.56</td>
 </tr>
@@ -314,7 +314,7 @@ overfit (infit &lt; 1).</caption>
 <td align="right">0.924</td>
 <td align="right">1.107</td>
 <td align="right">0.0099</td>
-<td align="right">0.0099</td>
+<td align="right">0.0198</td>
 <td align="left">overfit</td>
 <td align="right">-0.76</td>
 </tr>
@@ -343,8 +343,8 @@ overfit (infit &lt; 1).</caption>
 <td align="right">1.069</td>
 <td align="right">0.917</td>
 <td align="right">1.102</td>
-<td align="right">0.1881</td>
-<td align="right">0.4356</td>
+<td align="right">0.1980</td>
+<td align="right">0.4554</td>
 <td align="left"></td>
 <td align="right">-0.58</td>
 </tr>
@@ -354,7 +354,7 @@ overfit (infit &lt; 1).</caption>
 <td align="right">0.926</td>
 <td align="right">1.097</td>
 <td align="right">0.0297</td>
-<td align="right">0.1386</td>
+<td align="right">0.1485</td>
 <td align="left"></td>
 <td align="right">-0.76</td>
 </tr>
@@ -363,8 +363,8 @@ overfit (infit &lt; 1).</caption>
 <td align="right">0.986</td>
 <td align="right">0.919</td>
 <td align="right">1.101</td>
-<td align="right">0.7624</td>
-<td align="right">0.7624</td>
+<td align="right">0.7822</td>
+<td align="right">0.7822</td>
 <td align="left"></td>
 <td align="right">-0.66</td>
 </tr>
@@ -374,7 +374,7 @@ overfit (infit &lt; 1).</caption>
 <td align="right">0.880</td>
 <td align="right">1.119</td>
 <td align="right">0.0099</td>
-<td align="right">0.0099</td>
+<td align="right">0.0198</td>
 <td align="left">underfit</td>
 <td align="right">0.97</td>
 </tr>
@@ -441,15 +441,14 @@ sensitive to underfit.</p>
 <span>                                seed <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/RMitemrestscore.html">RMitemRestscore</a></span><span class="op">(</span><span class="va">items</span>, cutoff <span class="op">=</span> <span class="va">rs_cut</span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
-<caption>Item-restscore associations. n = 600 respondents. Two-sided
+<caption>Item-restscore associations. n = 600 respondents. Equal-tailed
 parametric bootstrap p-values for the difference from 100 iterations,
 conditional DGP, multiplicity correction: Westfall-Young step-down
-(FWER). p-values cannot be smaller than 1/(100+1) = 0.0099. This is
-below the calibrated floor of 400, where the correction is mildly
-liberal (Johansson, 2026). Flagged (adj. p &lt; 0.05): overfit =
-observed above expected (over-discrimination, often local dependence);
-underfit = below (under-discrimination, often
-multidimensionality/noise).</caption>
+(FWER). p-values cannot be smaller than 2/(100+1) = 0.02. This is below
+the recommended 400, where decisions depend on the seed (Johansson,
+2026). Flagged (adj. p &lt; 0.05): overfit = observed above expected
+(over-discrimination, often local dependence); underfit = below
+(under-discrimination, often multidimensionality/noise).</caption>
 <colgroup>
 <col width="5%">
 <col width="9%">
@@ -482,8 +481,8 @@ multidimensionality/noise).</caption>
 <td align="right">0.041</td>
 <td align="right">-0.032</td>
 <td align="right">0.036</td>
-<td align="right">0.0396</td>
-<td align="right">0.1089</td>
+<td align="right">0.0792</td>
+<td align="right">0.2970</td>
 <td align="left"></td>
 <td align="right">-0.56</td>
 </tr>
@@ -494,8 +493,8 @@ multidimensionality/noise).</caption>
 <td align="right">0.102</td>
 <td align="right">-0.036</td>
 <td align="right">0.043</td>
-<td align="right">0.0099</td>
-<td align="right">0.0099</td>
+<td align="right">0.0198</td>
+<td align="right">0.0198</td>
 <td align="left">overfit</td>
 <td align="right">-0.76</td>
 </tr>
@@ -506,8 +505,8 @@ multidimensionality/noise).</caption>
 <td align="right">-0.059</td>
 <td align="right">-0.032</td>
 <td align="right">0.036</td>
-<td align="right">0.0099</td>
 <td align="right">0.0198</td>
+<td align="right">0.0396</td>
 <td align="left">underfit</td>
 <td align="right">-0.83</td>
 </tr>
@@ -518,8 +517,8 @@ multidimensionality/noise).</caption>
 <td align="right">0.097</td>
 <td align="right">-0.052</td>
 <td align="right">0.043</td>
-<td align="right">0.0099</td>
-<td align="right">0.0099</td>
+<td align="right">0.0198</td>
+<td align="right">0.0198</td>
 <td align="left">overfit</td>
 <td align="right">-1.48</td>
 </tr>
@@ -530,8 +529,8 @@ multidimensionality/noise).</caption>
 <td align="right">-0.001</td>
 <td align="right">-0.035</td>
 <td align="right">0.040</td>
-<td align="right">0.7921</td>
-<td align="right">0.7921</td>
+<td align="right">0.7525</td>
+<td align="right">1.0000</td>
 <td align="left"></td>
 <td align="right">-0.58</td>
 </tr>
@@ -542,8 +541,8 @@ multidimensionality/noise).</caption>
 <td align="right">0.065</td>
 <td align="right">-0.035</td>
 <td align="right">0.037</td>
-<td align="right">0.0099</td>
-<td align="right">0.0099</td>
+<td align="right">0.0198</td>
+<td align="right">0.0198</td>
 <td align="left">overfit</td>
 <td align="right">-0.76</td>
 </tr>
@@ -554,8 +553,8 @@ multidimensionality/noise).</caption>
 <td align="right">0.020</td>
 <td align="right">-0.041</td>
 <td align="right">0.035</td>
-<td align="right">0.3069</td>
-<td align="right">0.4851</td>
+<td align="right">0.3168</td>
+<td align="right">1.0000</td>
 <td align="left"></td>
 <td align="right">-0.66</td>
 </tr>
@@ -566,8 +565,8 @@ multidimensionality/noise).</caption>
 <td align="right">-0.083</td>
 <td align="right">-0.044</td>
 <td align="right">0.041</td>
-<td align="right">0.0099</td>
-<td align="right">0.0099</td>
+<td align="right">0.0198</td>
+<td align="right">0.0198</td>
 <td align="left">underfit</td>
 <td align="right">0.97</td>
 </tr>
@@ -578,8 +577,8 @@ multidimensionality/noise).</caption>
 <td align="right">-0.046</td>
 <td align="right">-0.039</td>
 <td align="right">0.039</td>
-<td align="right">0.0198</td>
-<td align="right">0.0594</td>
+<td align="right">0.0396</td>
+<td align="right">0.1386</td>
 <td align="left"></td>
 <td align="right">0.79</td>
 </tr>
@@ -1267,11 +1266,12 @@ reversals in red.</p>
 <div class="section level2">
 <h2 id="invariance-no-dif">4. Invariance / no DIF<a class="anchor" aria-label="anchor" href="#invariance-no-dif"></a>
 </h2>
-<p>We use three complementary DIF assessments. The Andersen
-likelihood-ratio test <span class="citation">(LRT, <a href="#ref-andersen_goodness_1973">Andersen 1973</a>)</span> partitions
+<p>We use complementary DIF assessments. The Andersen likelihood-ratio
+test <span class="citation">(LRT, <a href="#ref-andersen_goodness_1973">Andersen 1973</a>)</span> partitions
 the sample by an external variable, refits the model in each subgroup,
-and compares item locations. The partial gamma approach <span class="citation">(<a href="#ref-kreiner_validity_2007">Kreiner 2007</a>;
-<a href="#ref-christensen_psychometric_2021">Christensen et al.
+and tests whether any item parameters differ. Anchored Wald tests then
+compare single items and thresholds between two groups. The partial
+gamma approach <span class="citation">(<a href="#ref-kreiner_validity_2007">Kreiner 2007</a>; <a href="#ref-christensen_psychometric_2021">Christensen et al.
 2021</a>)</span> looks for an association between item responses and the
 external variable <em>conditional on the rest-score</em>, and the Rasch
 tree (below) searches for DIF across covariates without pre-specified
@@ -1294,19 +1294,187 @@ plot</em>
 <h3 id="andersen-lr-test">Andersen LR-test<a class="anchor" aria-label="anchor" href="#andersen-lr-test"></a>
 </h3>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdifLR.html">RMdifLR</a></span><span class="op">(</span><span class="va">items</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>, level <span class="op">=</span> <span class="st">"threshold"</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdifLR.html">RMdifLR</a></span><span class="op">(</span><span class="va">items</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<caption>Andersen’s likelihood-ratio test of DIF, partial credit model
+fitted by CML in each of 2 groups. n = 569 of 600 respondents (Female:
+426, Male: 143), 9 items. A significant test means that some item
+parameters differ between groups. RMdifAnchor() tests single items and
+thresholds.</caption>
+<colgroup>
+<col width="8%">
+<col width="3%">
+<col width="10%">
+<col width="7%">
+<col width="7%">
+<col width="8%">
+<col width="4%">
+<col width="13%">
+<col width="15%">
+<col width="10%">
+<col width="8%">
+</colgroup>
+<thead><tr class="header">
+<th align="right">Chisq</th>
+<th align="right">df</th>
+<th align="left">p</th>
+<th align="left">Model</th>
+<th align="right">Items</th>
+<th align="right">Groups</th>
+<th align="right">N</th>
+<th align="right">N_excluded</th>
+<th align="right">N_incomplete</th>
+<th align="right">n_Female</th>
+<th align="right">n_Male</th>
+</tr></thead>
+<tbody><tr class="odd">
+<td align="right">63.744</td>
+<td align="right">26</td>
+<td align="left">&lt; 0.0001</td>
+<td align="left">PCM</td>
+<td align="right">9</td>
+<td align="right">2</td>
+<td align="right">569</td>
+<td align="right">31</td>
+<td align="right">0</td>
+<td align="right">426</td>
+<td align="right">143</td>
+</tr></tbody>
+</table>
+<p>A statistically significant test indicates that some item parameters
+differ between the groups. It does not say which items, and like all
+global tests it is sensitive to sample size and number of items, so it
+should be interpreted with care.</p>
+</div>
+<div class="section level3">
+<h3 id="anchored-tests-of-items-and-thresholds">Anchored tests of items and thresholds<a class="anchor" aria-label="anchor" href="#anchored-tests-of-items-and-thresholds"></a>
+</h3>
+<p>To compare single items, the two groups’ scales must first be linked.
+<code><a href="../reference/RMdifAnchor.html">RMdifAnchor()</a></code> links them through anchor items chosen from
+the data, tests each item location with a Wald test, and corrects the
+<em>p</em>-values for multiple testing.</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdifAnchor.html">RMdifAnchor</a></span><span class="op">(</span><span class="va">items</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-dif-lr-1.png" alt="**Figure 9.** *Andersen LR-test DIF locations by gender*" width="100%"><p class="caption">
-<strong>Figure 9.</strong> <em>Andersen LR-test DIF locations by
+<img src="figures/rasch-dif-anchor-1.png" alt="**Figure 9.** *Anchored item location differences by gender*" width="100%"><p class="caption">
+<strong>Figure 9.</strong> <em>Anchored item location differences by
 gender</em>
 </p>
 </div>
-<p>The plot shows the item threshold locations estimated in each gender
-group with the corresponding confidence band. The global LR test is also
-reported in the plot caption, with a statistically significant test
-indicating problems with DIF between groups. However, this test is
-sensitive to sample size and number of items and should, like all global
-tests, be interpreted with care.</p>
+<p>The spacing between an item’s thresholds can be compared without an
+anchor. A difference in spacing is differential step functioning
+(DSF).</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdifAnchor.html">RMdifAnchor</a></span><span class="op">(</span><span class="va">items</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>, level <span class="op">=</span> <span class="st">"spacing"</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<caption>DIF in threshold spacing (distances between adjacent
+thresholds), partial credit model, ‘Male’ minus ‘Female’. n = 569 of 600
+respondents (Female: 426, Male: 143), 9 items. No anchor is needed for
+spacing. Wald chi-square per item, single-step correction (min-p,
+family-wise error rate). <strong>Bold</strong> = padj &lt;
+0.05.</caption>
+<colgroup>
+<col width="7%">
+<col width="15%">
+<col width="9%">
+<col width="16%">
+<col width="16%">
+<col width="12%">
+<col width="22%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Item</th>
+<th align="right">Chisq</th>
+<th align="right">df</th>
+<th align="right">p</th>
+<th align="right">padj</th>
+<th align="left">Flagged</th>
+<th align="right">MaxSpacingDiff</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">q1</td>
+<td align="right"><strong>10.60</strong></td>
+<td align="right"><strong>2</strong></td>
+<td align="right"><strong>0.0050</strong></td>
+<td align="right"><strong>0.0424</strong></td>
+<td align="left"><strong>yes</strong></td>
+<td align="right"><strong>1.579</strong></td>
+</tr>
+<tr class="even">
+<td align="left">q2</td>
+<td align="right">5.08</td>
+<td align="right">2</td>
+<td align="right">0.0789</td>
+<td align="right">0.5327</td>
+<td align="left">no</td>
+<td align="right">0.569</td>
+</tr>
+<tr class="odd">
+<td align="left">q3</td>
+<td align="right">1.25</td>
+<td align="right">2</td>
+<td align="right">0.5357</td>
+<td align="right">0.9987</td>
+<td align="left">no</td>
+<td align="right">0.270</td>
+</tr>
+<tr class="even">
+<td align="left">q4</td>
+<td align="right">5.29</td>
+<td align="right">2</td>
+<td align="right">0.0711</td>
+<td align="right">0.4945</td>
+<td align="left">no</td>
+<td align="right">1.180</td>
+</tr>
+<tr class="odd">
+<td align="left">q5</td>
+<td align="right">6.09</td>
+<td align="right">2</td>
+<td align="right">0.0475</td>
+<td align="right">0.3626</td>
+<td align="left">no</td>
+<td align="right">1.245</td>
+</tr>
+<tr class="even">
+<td align="left">q6</td>
+<td align="right">3.38</td>
+<td align="right">2</td>
+<td align="right">0.1843</td>
+<td align="right">0.8430</td>
+<td align="left">no</td>
+<td align="right">0.439</td>
+</tr>
+<tr class="odd">
+<td align="left">q7</td>
+<td align="right">4.17</td>
+<td align="right">2</td>
+<td align="right">0.1243</td>
+<td align="right">0.6986</td>
+<td align="left">no</td>
+<td align="right">0.971</td>
+</tr>
+<tr class="even">
+<td align="left">q8</td>
+<td align="right">3.89</td>
+<td align="right">2</td>
+<td align="right">0.1433</td>
+<td align="right">0.7532</td>
+<td align="left">no</td>
+<td align="right">0.615</td>
+</tr>
+<tr class="odd">
+<td align="left">q9</td>
+<td align="right">3.22</td>
+<td align="right">2</td>
+<td align="right">0.1996</td>
+<td align="right">0.8665</td>
+<td align="left">no</td>
+<td align="right">0.919</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section level3">
 <h3 id="partial-gamma-dif">Partial-gamma DIF<a class="anchor" aria-label="anchor" href="#partial-gamma-dif"></a>
@@ -1314,7 +1482,7 @@ tests, be interpreted with care.</p>
 <p>This plot annotates each item with its partial-<span class="math inline">\gamma</span> DIF coefficient and shows group
 differences within class intervals (respondents grouped by their
 total/latent score).</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemICCPlot.html">RMitemICCPlot</a></span><span class="op">(</span><span class="va">items</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>, error_band <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="figures/rasch-dif-cicc-1.png" alt="**Figure 10.** *Partial Gamma DIF Conditional Item Characteristic Curves*" width="100%"><p class="caption">
@@ -1326,7 +1494,7 @@ Characteristic Curves</em>
 partial-<span class="math inline">\gamma</span> DIF analysis with
 parametric bootstrap (only 100 here for rendering speed, which limits
 the reliability of the <em>p</em>-values).</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">difpg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMdifGammaCutoff.html">RMdifGammaCutoff</a></span><span class="op">(</span><span class="va">items</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>, iterations <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>                          parallel <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/RMdifGamma.html">RMdifGamma</a></span><span class="op">(</span><span class="va">items</span>, cutoff <span class="op">=</span> <span class="va">difpg</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>, p_value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
@@ -1337,9 +1505,10 @@ the reliability of the <em>p</em>-values).</p>
 Westfall-Young step-down (FWER); flagged at padj &lt; 0.05. p-values
 cannot be smaller than 1/(100+1) = 0.0099. The interval is shown as
 description and is not the decision rule. Positive gamma indicates
-higher scores in higher DIF group levels. This is below the calibrated
-floor of 400, where the correction is mildly liberal and the family-wise
-error rate sits above the nominal level (Johansson, 2026).</caption>
+higher scores in higher DIF group levels. This is below the recommended
+400. The family-wise error rate is controlled at any number of
+iterations. Decisions depend on the seed, so use 1000 to 2000 for a
+final analysis (Johansson, 2026).</caption>
 <colgroup>
 <col width="5%">
 <col width="16%">
@@ -1374,7 +1543,7 @@ error rate sits above the nominal level (Johansson, 2026).</caption>
 <td align="right">-0.126</td>
 <td align="right">0.173</td>
 <td align="right">0.0099</td>
-<td align="right">0.0396</td>
+<td align="right">0.0495</td>
 <td align="left">TRUE</td>
 </tr>
 <tr class="even">
@@ -1422,7 +1591,7 @@ error rate sits above the nominal level (Johansson, 2026).</caption>
 <td align="right">-0.148</td>
 <td align="right">0.171</td>
 <td align="right">0.0198</td>
-<td align="right">0.0297</td>
+<td align="right">0.0495</td>
 <td align="left">TRUE</td>
 </tr>
 <tr class="even">
@@ -1434,7 +1603,7 @@ error rate sits above the nominal level (Johansson, 2026).</caption>
 <td align="right">-0.164</td>
 <td align="right">0.167</td>
 <td align="right">0.0891</td>
-<td align="right">0.3564</td>
+<td align="right">0.3762</td>
 <td align="left">FALSE</td>
 </tr>
 <tr class="odd">
@@ -1458,7 +1627,7 @@ error rate sits above the nominal level (Johansson, 2026).</caption>
 <td align="right">-0.198</td>
 <td align="right">0.171</td>
 <td align="right">0.2772</td>
-<td align="right">0.6634</td>
+<td align="right">0.6733</td>
 <td align="left">FALSE</td>
 </tr>
 <tr class="odd">
@@ -1469,8 +1638,8 @@ error rate sits above the nominal level (Johansson, 2026).</caption>
 <td align="right">0.376</td>
 <td align="right">-0.237</td>
 <td align="right">0.181</td>
-<td align="right">0.0990</td>
-<td align="right">0.3960</td>
+<td align="right">0.1188</td>
+<td align="right">0.4455</td>
 <td align="left">FALSE</td>
 </tr>
 </tbody>
@@ -1507,7 +1676,7 @@ educational testing, not values calibrated to your sample and items — in
 contrast to the simulation-based cutoffs used elsewhere in this package
 — so the A/B/C labels are best read as a rough magnitude guide rather
 than a calibrated test.</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdifTree.html">RMdifTree</a></span><span class="op">(</span><span class="va">items</span>, covariates <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Node 1 – gender: Female vs Male (n left = 426, n right =
 143)</strong></p>
@@ -1597,12 +1766,14 @@ advantages appear when you supply several covariates at once
 (<code>covariates = phq9[, c("gender", "age")]</code>), where it tests
 all of them, picks split points for continuous ones, and uncovers
 interactions.</p>
-<p>Three options are worth knowing about: purification = “iterative”
-recomputes effect sizes while excluding already-flagged items from the
-matching score; stability = TRUE refits the tree on resamples to report
-how often each covariate is selected and where the cutpoints land — a
-guard against overinterpreting a single sample’s tree structure; and
-output = “plot” draws the tree with per-node item parameters.</p>
+<p>Three options are worth knowing about:
+<code>purification = "iterative"</code> recomputes effect sizes while
+excluding already-flagged items from the matching score;
+<code>stability = TRUE</code> refits the tree on resamples to report how
+often each covariate is selected and where the cutpoints land — a guard
+against overinterpreting a single sample’s tree structure; and
+<code>output = "plot"</code> draws the tree with per-node item
+parameters.</p>
 </div>
 </div>
 <div class="section level2">
@@ -1639,7 +1810,7 @@ item as a bar partitioned into its response categories, with the
 threshold estimates and their confidence intervals below it. Each band
 spans the locations at which its category is the most likely
 response.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMtargeting.html">RMtargeting</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="figures/rasch-targeting-1.png" alt="**Figure 11.** *Person-item targeting*" width="100%"><p class="caption">
@@ -1672,7 +1843,7 @@ mean of the conditional reliability curve shown below. Alpha, PSI and
 marginal can use a bootstrap for confidence intervals. All four range
 from 0 to 1, with higher values indicating better separation and
 precision.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMreliability.html">RMreliability</a></span><span class="op">(</span><span class="va">items</span>, draws <span class="op">=</span> <span class="fl">200</span>, rmu_iter <span class="op">=</span> <span class="fl">20</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>              seed <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
@@ -1736,7 +1907,7 @@ highest where the item thresholds are concentrated and falls away
 towards the extremes, so the same scale can separate respondents well in
 the middle of its range and poorly at either end.
 <code><a href="../reference/RMreliabilityCurve.html">RMreliabilityCurve()</a></code> shows that directly.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMreliabilityCurve.html">RMreliabilityCurve</a></span><span class="op">(</span><span class="va">items</span>, statistic <span class="op">=</span> <span class="st">"reliability"</span>, benchmark <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="figures/rasch-relcurve-1.png" alt="**Figure 12.** *Conditional reliability across the latent continuum*" width="100%"><p class="caption">
@@ -1761,7 +1932,7 @@ information is also available, using
 </h2>
 <p>Item (threshold) locations can be easily summarized in wide or long
 format, with or without SEs.</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemParameters.html">RMitemParameters</a></span><span class="op">(</span><span class="va">items</span>, format <span class="op">=</span> <span class="st">"wide"</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Item thresholds via CML (Andrich thresholds, logit scale). SE
@@ -1877,7 +2048,7 @@ value and SE for each individual, below reduced to only print the first
 <code>easyRasch2</code> can be output as dataframes instead, if so
 desired. The option <code>output = "file"</code> makes it easy to export
 estimated latent scores for each respondent to a CSV file.</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ppar</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMpersonParameters.html">RMpersonParameters</a></span><span class="op">(</span><span class="va">items</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">ppar</span>, <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="co">#&gt;         theta       sem sum_score n_answered extreme</span></span>
@@ -1898,7 +2069,7 @@ estimated latent scores for each respondent to a CSV file.</p>
 <p>For converting ordinal sum-scores to interval-scaled person-location
 estimates with associated standard errors, use
 <code><a href="../reference/RMscoreSE.html">RMscoreSE()</a></code>.</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMscoreSE.html">RMscoreSE</a></span><span class="op">(</span><span class="va">items</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
 <img src="figures/rasch-scoreSE-1.png" alt="**Figure 13.** *Sum-score to WLE conversion with 95% CIs*" width="100%"><p class="caption">
@@ -1906,7 +2077,7 @@ estimates with associated standard errors, use
 CIs</em>
 </p>
 </div>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMscoreSE.html">RMscoreSE</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Person locations via Warm’s WLE (CML item parameters). n = 600
@@ -2067,7 +2238,7 @@ a posteriori).</p>
 </h2>
 <p>Conditional person infit/outfit MSQ and the <span class="math inline">\ell_z</span> statistic are implemented, with
 Monte-Carlo resampling for <em>p</em>-values.</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMpersonFit.html">RMpersonFit</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, output <span class="op">=</span> <span class="st">"ggplot"</span>, seed <span class="op">=</span> <span class="fl">7</span><span class="op">)</span></span>
 <span><span class="va">pfit</span><span class="op">$</span><span class="va">lz</span></span></code></pre></div>
 <div class="figure">

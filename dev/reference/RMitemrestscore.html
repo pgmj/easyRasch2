@@ -13,7 +13,7 @@ item locations relative to the sample mean person location."><meta name="robots"
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9003</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9004</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -143,7 +143,7 @@ location relative to the sample mean person location.</p></li>
 <code>Relative_location</code>. <code>Flagged</code> is <code>"overfit"</code> (observed above expected,
 adj. p &lt; .05), <code>"underfit"</code> (below, adj. p &lt; .05), or <code>""</code> (not flagged).</p></li>
 </ul><p>With a <code>cutoff</code>, <code>p_adjusted</code> is replaced by <code>Diff_low</code> and <code>Diff_high</code>,
-followed by <code>p_restscore</code> (marginal two-sided bootstrap p-value) and
+followed by <code>p_restscore</code> (marginal equal-tailed bootstrap p-value) and
 <code>padj_restscore</code> (corrected p-value) when <code>p_value</code> resolves to <code>TRUE</code>.
 <code>Flagged</code> then reflects <code>padj_restscore &lt; alpha</code>, or the interval when
 <code>p_value = FALSE</code>.</p>
@@ -189,22 +189,26 @@ bootstrap null instead.</p>
 simulated values together. Because that mean is subtracted, the
 small-sample upward bias of the difference is removed, and because that SD
 is used, the
-correlation between observed and expected gamma is accounted for. The
-marginal p-value is the two-sided Monte-Carlo p-value
-<code>(1 + #{|t*| &gt;= |t|}) / (B + 1)</code>, and <code>correction = "fwer"</code> applies the
-Westfall-Young studentised-max step-down across items (Ferreira, 2024).</p>
-<p>The two directions do not get equal shares of alpha. Gamma is bounded at
-1, so the null of <code>Difference</code> is left-skewed and a two-sided test on
-<code>|t|</code> rejects more often in the long (underfit) tail. In simulation under
-a true Rasch model the total rate was nominal, but the per-item marginal
-rate was about 3 percent for underfit and 2 percent for overfit with 20
-dichotomous items at n = 150 and 1.5 logits off target, narrowing toward
-equal shares with polytomous items and larger samples. With
-<code>correction = "fwer"</code>, over four such conditions, at least one item was
-flagged as underfit in 3.7 percent of datasets and as overfit in 1.6
-percent, 5.0 percent in total. An equal-tailed test, with alpha/2 for each
-direction, was evaluated and not adopted: it detected 2 to 3 percentage
-points fewer underfitting items and no more overfitting ones.</p>
+correlation between observed and expected gamma is accounted for.</p>
+<p>The test is equal-tailed: overfit and underfit each get alpha/2. Gamma is
+bounded at 1, so the null of <code>Difference</code> is left-skewed, and a two-sided
+test on <code>|t|</code> would reject more often in the long (underfit) tail. The
+marginal p-value is twice the smaller of the one-sided Monte-Carlo
+p-values, <code>(1 + #{t* &gt;= t}) / (B + 1)</code> and <code>(1 + #{t* &lt;= t}) / (B + 1)</code>,
+so it cannot be smaller than <code>2 / (B + 1)</code>. With <code>correction = "fwer"</code>,
+the Westfall-Young studentised-max step-down (Ferreira, 2024) is run once
+for each direction, and <code>padj_restscore</code> is twice the smaller of the two
+adjusted p-values. <code>"fdr_bh"</code> and <code>"fdr_by"</code> adjust the equal-tailed
+marginal p-values.</p>
+<p>In simulation under a true Rasch model, over four conditions (20
+dichotomous or 9 polytomous items, n = 150 to 1000, on or off target),
+<code>correction = "fwer"</code> flagged at least one item in 5.0 percent of
+datasets: 2.4 percent underfit and 2.75 percent overfit. A test on <code>|t|</code>
+also held 5.0 percent, but split it 3.7 and 1.6. The equal-tailed test
+also gave fewer false underfit flags when other items overfit (4.7
+against 6.2 percent with two overfitting items), at a cost of 2 to 3
+percentage points of power to detect underfitting items. Before
+easyRasch2 1.4.0.9004 the test was on <code>|t|</code>.</p>
 <p><strong>Reproducibility.</strong> The bootstrap p-values depend on the simulated
 null, so two analyses of the same data with different seeds can disagree
 about items near the decision boundary. In simulation, in conditions
@@ -259,7 +263,7 @@ the clearest misfit and testing again before interpreting the rest.</p>
 <a href="https://doi.org/10.1177/0146621611410227" class="external-link">doi:10.1177/0146621611410227</a></p>
 <p>Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
 of hypotheses simultaneously. <em>Journal of Statistical Theory and Practice,
-19</em>(6). <a href="https://doi.org/10.1007/s42519-024-00412-4" class="external-link">doi:10.1007/s42519-024-00412-4</a></p>
+19</em>(1), 6. <a href="https://doi.org/10.1007/s42519-024-00412-4" class="external-link">doi:10.1007/s42519-024-00412-4</a></p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -301,18 +305,18 @@ of hypotheses simultaneously. <em>Journal of Statistical Theory and Practice,
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Item-restscore associations. n = 200 respondents. Two-sided parametric bootstrap p-values for the difference from 100 iterations, conditional DGP, multiplicity correction: Westfall-Young step-down (FWER). p-values cannot be smaller than 1/(100+1) = 0.0099. This is below the recommended 400, where decisions depend on the seed (Johansson, 2026). Flagged (adj. p &lt; 0.05): overfit = observed above expected (over-discrimination, often local dependence); underfit = below (under-discrimination, often multidimensionality/noise).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Item-restscore associations. n = 200 respondents. Equal-tailed parametric bootstrap p-values for the difference from 100 iterations, conditional DGP, multiplicity correction: Westfall-Young step-down (FWER). p-values cannot be smaller than 2/(100+1) = 0.02. This is below the recommended 400, where decisions depend on the seed (Johansson, 2026). Flagged (adj. p &lt; 0.05): overfit = observed above expected (over-discrimination, often local dependence); underfit = below (under-discrimination, often multidimensionality/noise).</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |Item  | Observed| Expected| Difference| Diff low| Diff high|      p| p (adj)|Flagged | Rel. location|</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> |:-----|--------:|--------:|----------:|--------:|---------:|------:|-------:|:-------|-------------:|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item1 |     0.00|     0.01|     -0.006|   -0.154|     0.147| 0.9604|  1.0000|        |         -0.23|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2 |     0.00|     0.01|     -0.016|   -0.148|     0.182| 0.7624|  1.0000|        |          0.13|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3 |    -0.01|     0.01|     -0.026|   -0.133|     0.169| 0.5446|  0.9802|        |         -0.01|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4 |    -0.05|     0.01|     -0.061|   -0.168|     0.187| 0.5050|  0.9802|        |         -0.05|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5 |     0.07|     0.01|      0.058|   -0.160|     0.215| 0.4554|  0.9802|        |          0.09|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item6 |    -0.04|     0.01|     -0.049|   -0.166|     0.166| 0.4851|  0.9802|        |         -0.09|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item7 |     0.15|     0.01|      0.136|   -0.159|     0.221| 0.1782|  0.7129|        |         -0.05|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |Item8 |    -0.01|     0.01|     -0.021|   -0.148|     0.171| 0.7822|  1.0000|        |         -0.03|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item1 |     0.00|     0.01|     -0.006|   -0.154|     0.147| 0.8911|       1|        |         -0.23|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item2 |     0.00|     0.01|     -0.016|   -0.148|     0.182| 0.7723|       1|        |          0.13|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item3 |    -0.01|     0.01|     -0.026|   -0.133|     0.169| 0.6139|       1|        |         -0.01|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item4 |    -0.05|     0.01|     -0.061|   -0.168|     0.187| 0.4752|       1|        |         -0.05|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item5 |     0.07|     0.01|      0.058|   -0.160|     0.215| 0.4554|       1|        |          0.09|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item6 |    -0.04|     0.01|     -0.049|   -0.166|     0.166| 0.4554|       1|        |         -0.09|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item7 |     0.15|     0.01|      0.136|   -0.159|     0.221| 0.2178|       1|        |         -0.05|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |Item8 |    -0.01|     0.01|     -0.021|   -0.148|     0.171| 0.7129|       1|        |         -0.03|</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

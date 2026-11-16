@@ -58,6 +58,8 @@ DIF assessment functions
 
 - [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
   : DIF analysis via Andersen's likelihood-ratio test
+- [`RMdifAnchor()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md)
+  : Anchored DIF tests for items and thresholds (two groups)
 - [`RMdifTree()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md)
   : Tree-based DIF analysis with effect-size classification
 - [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
