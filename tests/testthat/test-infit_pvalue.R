@@ -384,3 +384,116 @@ test_that("The low-iterations notice is shown once per correction (UM16)", {
   expect_no_message(.notify_low_iterations(150, NULL, id = id, correction = "fwer"))
   expect_message(.notify_low_iterations(150, NULL, id = id, correction = "none"))
 })
+
+# ---------------------------------------------------------------------
+# Equal-tailed test (tail = "split"), used by RMitemRestscore()
+# ---------------------------------------------------------------------
+test_that(".bootstrap_pvalues split marginal p is twice the smaller one-sided p", {
+  set.seed(5)
+  sim <- matrix(-exp(0.5 * rnorm(300 * 4)), ncol = 4,
+                dimnames = list(NULL, paste0("I", 1:4)))
+  observed <- setNames(c(-0.2, -1, -3, -1.1), colnames(sim))
+  ref <- rbind(observed, sim)
+  m <- colMeans(ref)
+  s <- apply(ref, 2, sd)
+  t_obs <- (observed - m) / s
+  t_sim <- sweep(sweep(sim, 2, m), 2, s, `/`)
+  hi <- vapply(1:4, function(i) (1 + sum(t_sim[, i] >= t_obs[i])) / 301, 1)
+  lo <- vapply(1:4, function(i) (1 + sum(t_sim[, i] <= t_obs[i])) / 301, 1)
+  res <- easyRasch2:::.bootstrap_pvalues(observed, sim, "none", tail = "split")
+  expect_equal(res$p, pmin(1, 2 * pmin(hi, lo)))
+  expect_identical(res$direction, ifelse(hi <= lo, "upper", "lower"))
+  bh <- easyRasch2:::.bootstrap_pvalues(observed, sim, "fdr_bh", tail = "split")
+  expect_equal(bh$padj, p.adjust(res$p, "BH"))
+})
+
+test_that(".bootstrap_pvalues split fwer is two one-sided step-downs", {
+  set.seed(6)
+  sim <- matrix(rnorm(400 * 5), ncol = 5,
+                dimnames = list(NULL, paste0("I", 1:5)))
+  observed <- setNames(c(4, -4, 0.3, -0.5, 1), colnames(sim))
+  res <- easyRasch2:::.bootstrap_pvalues(observed, sim, "fwer", tail = "split")
+  ref <- rbind(observed, sim)
+  m <- colMeans(ref)
+  s <- apply(ref, 2, sd)
+  t_obs <- (observed - m) / s
+  t_sim <- sweep(sweep(sim, 2, m), 2, s, `/`)
+  hi <- as.numeric(easyRasch2:::.wy_stepdown(t_obs, t_sim))
+  lo <- as.numeric(easyRasch2:::.wy_stepdown(-t_obs, -t_sim))
+  # no missing values, so the step-down is never below the one-sided p
+  expect_equal(res$padj, pmin(1, 2 * pmin(hi, lo)))
+  expect_identical(res$direction[1:2], c("upper", "lower"))
+  expect_true(all(res$padj[1:2] < 0.05))
+  expect_true(all(res$padj >= res$p))
+  expect_true(all(res$p >= 2 / 401))
+})
+
+test_that(".bootstrap_pvalues split fwer holds the level under exchangeability", {
+  # Every one of B + 1 exchangeable rows as the observed one: the share with
+  # min padj <= 2k/(B+1) must not exceed 2k/(B+1) (union of two exact tails).
+  set.seed(7)
+  B <- 59
+  x <- matrix(-exp(0.5 * rnorm((B + 1) * 4)), ncol = 4,
+              dimnames = list(NULL, paste0("I", 1:4)))
+  min_padj <- vapply(seq_len(B + 1), function(r) {
+    min(easyRasch2:::.bootstrap_pvalues(
+      x[r, ], x[-r, , drop = FALSE], "fwer", tail = "split"
+    )$padj)
+  }, numeric(1))
+  lv <- 2 * seq_len(B %/% 2) / (B + 1)
+  rate <- vapply(lv, function(a) mean(min_padj <= a + 1e-12), numeric(1))
+  expect_true(all(rate <= lv + 1e-12))
+  # The rows holding the global max and the global min of t each reach
+  # 2/(B+1); they are one row in about 1 seed in 60, so only the lower
+  # bound 1/(B+1) is guaranteed.
+  expect_gte(rate[1], 1 / (B + 1))
+})
+
+test_that("the floor helpers take the equal-tailed floor 2/(B + 1)", {
+  # Westfall-Young: 40 at alpha = .05 (2/41 < .05, 2/40 is not)
+  expect_identical(easyRasch2:::.wy_min_iterations(0.05, floor_mult = 2L), 40L)
+  for (alpha in c(0.05, 0.01, 0.1, 0.03)) {
+    b <- easyRasch2:::.wy_min_iterations(alpha, floor_mult = 2L)
+    expect_true(2 / (b + 1) < alpha)
+    expect_false(2 / b < alpha)
+  }
+  # FDR: agrees with p.adjust() on split p-values at the boundary, including
+  # m / alpha whole numbers
+  smallest <- function(m, B, method) {
+    min(stats::p.adjust(c(2 * (1 / (B + 1)), rep(0.9, m - 1L)), method = method))
+  }
+  for (correction in c("fdr_bh", "fdr_by")) {
+    method <- if (correction == "fdr_bh") "BH" else "BY"
+    for (m in c(9L, 20L, 21L, 36L, 190L)) {
+      for (alpha in c(0.05, 0.01)) {
+        need <- easyRasch2:::.fdr_min_iterations(m, correction, alpha, 2L)
+        expect_true(smallest(m, need, method) < alpha)
+        expect_false(smallest(m, need - 1L, method) < alpha)
+      }
+    }
+  }
+  # the default is unchanged for the other callers
+  expect_identical(easyRasch2:::.fdr_min_iterations(20L, "fdr_bh"), 400L)
+  expect_identical(easyRasch2:::.fdr_min_iterations(20L, "fdr_bh", floor_mult = 2L), 800L)
+  # the warning quotes the doubled floor and the split WY requirement
+  w <- tryCatch(
+    easyRasch2:::.warn_fdr_floor(400, 20L, "fdr_bh", unit = "items",
+                                 fn = "RMitemRestscoreCutoff()", floor_mult = 2L),
+    warning = conditionMessage
+  )
+  expect_match(w, "cannot be smaller than 2/(400+1)", fixed = TRUE)
+  expect_match(w, "is 2m/(s(B+1))", fixed = TRUE)
+  expect_match(w, "to at least 800", fixed = TRUE)
+  expect_match(w, "which needs 40 iterations", fixed = TRUE)
+})
+
+test_that(".bootstrap_pvalues split matches the smallest one-sided step", {
+  # one standout per direction: each gets padj = 2/(B+1) exactly at the floor
+  set.seed(8)
+  B <- 99
+  sim <- matrix(rnorm(B * 3), B, dimnames = list(NULL, c("a", "b", "c")))
+  res <- easyRasch2:::.bootstrap_pvalues(c(a = 50, b = -50, c = 0), sim,
+                                         "fwer", tail = "split")
+  expect_equal(res$padj[1:2], rep(2 / (B + 1), 2))
+  expect_identical(res$direction[1:2], c("upper", "lower"))
+})

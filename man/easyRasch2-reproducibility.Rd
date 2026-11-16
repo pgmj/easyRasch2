@@ -98,6 +98,14 @@ will not see the stream it would have seen without one. Use
 
 Functions that involve no simulation take no \code{seed} and are unaffected.
 
+\code{\link[=RMdifAnchor]{RMdifAnchor()}} is the one exception to the default. Its random draws
+only break ties in the anchor search and approximate the single-step
+correction, so a test result should not change from one call to the
+next. It therefore defaults to a fixed \code{seed = 20260113}, pins the
+generator to the defaults above, and restores both the caller's
+\code{.Random.seed} and \code{\link[=RNGkind]{RNGkind()}} on exit. \code{seed = NULL} uses the session's
+stream instead, as elsewhere.
+
 \code{\link[=RMUreliability]{RMUreliability()}} is the one resampling function without a \code{seed}. It
 splits the draw columns at random, and reproduces from the session's
 stream in the way described above. \code{RMreliability()} calls it unseeded

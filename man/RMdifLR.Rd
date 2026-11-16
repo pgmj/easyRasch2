@@ -8,11 +8,8 @@ RMdifLR(
   data,
   dif_var,
   model = c("auto", "PCM", "RM"),
-  level = c("item", "threshold"),
-  output = c("kable", "dataframe", "ggplot"),
-  cutoff = 0.5,
-  conf = 0.95,
-  sort = FALSE
+  output = c("kable", "dataframe"),
+  ...
 )
 }
 \arguments{
@@ -28,117 +25,63 @@ dropped with a message. Must result in at least 2 groups after
 cleaning.}
 
 \item{model}{One of \code{"auto"} (default), \code{"PCM"}, or
-\code{"RM"}. \code{"auto"} fits the Rasch model when the data are
+\code{"RM"}. \code{"auto"} reports the Rasch model when the data are
 dichotomous (max response = 1) and the partial credit model otherwise
 (the two coincide for dichotomous data). \code{"RM"} errors on
 polytomous data.}
 
-\item{level}{One of \code{"item"} (default) or \code{"threshold"}.
-\code{"item"} reports each item's mean threshold location per group;
-\code{"threshold"} reports each individual threshold per group. For
-dichotomous (RM) data the two views are equivalent (one threshold per
-item).}
+\item{output}{\code{"kable"} (default) or \code{"dataframe"}.}
 
-\item{output}{One of \code{"kable"} (default), \code{"dataframe"}, or
-\code{"ggplot"}. The data.frame has a logical \code{Flagged} column
-(unless \code{cutoff = NULL}), the kable bolds flagged rows, and the
-ggplot shows confidence intervals.}
-
-\item{cutoff}{Numeric or \code{NULL}. Threshold (in logits) for the
-\code{Flagged} column: a row is flagged when
-\code{MaxDiff > cutoff}, where \code{MaxDiff} is the difference
-between the largest and smallest per-group location for that item
-(or threshold). Set to \code{NULL} to suppress flagging. Default
-\code{0.5}. This default is a convention in applied Rasch work (Jin et
-al., 2013; Kim et al., 2017; Pickard et al., 2006), not a value with a
-statistical or substantive justification. See Details.}
-
-\item{conf}{Numeric in (0, 1). Confidence level used for the ggplot
-error bars. Default \code{0.95}.}
-
-\item{sort}{Logical. Sort the rows of the data.frame and kable output by
-\code{MaxDiff} (descending). Default \code{FALSE}.}
+\item{...}{Not used. Arguments that earlier versions accepted for the
+per-group location table and plots (\code{level}, \code{cutoff},
+\code{conf}, \code{sort}, \code{p_value}, \code{correction},
+\code{alpha}, \code{plot_type}, \code{reference}) give an error that
+points to \code{\link{RMdifAnchor}}.}
 }
 \value{
-A data.frame, a \code{knitr_kable} object, or a \code{ggplot}
-object, depending on \code{output}.
-
-The data.frame has one row per item (\code{level = "item"}) or per
-item x threshold (\code{level = "threshold"}), with columns
-\code{Item} (and \code{Threshold} at threshold level), one numeric
-column per group level, an \code{All} column for the unsplit fit,
-\code{MaxDiff}, \code{Flagged} (when \code{cutoff} is non-\code{NULL}),
-and matching \code{SE_*} columns.
-
-The Andersen LR test result is attached as
-\code{attr(result, "lr_test")} on the data.frame, in the kable
-footnote, and in the ggplot caption (LR \eqn{\chi^2}, df, p-value).
+A one-row data.frame, or a \code{knitr_kable} of it, with
+\code{Chisq} (the LR statistic), \code{df}, \code{p}, \code{Model}
+(\code{"PCM"} or \code{"RM"}), \code{Items}, \code{Groups}, \code{N}
+(respondents used), \code{N_excluded} (rows dropped for a missing
+\code{dif_var} or no responses), \code{N_incomplete} (respondents used
+who skipped some items) and one \code{n_<group>} column per group.
 }
 \description{
-Fits a Rasch model by conditional maximum likelihood in the full sample
-and in each group of an external grouping variable, tests the difference
-with Andersen's likelihood-ratio test, and reports per-group item
-locations (or per-group threshold locations) together with their standard
-errors. \code{level} (item or threshold) and \code{output} (data.frame,
-kable or ggplot) give six views of the same fits.
+Tests whether the item parameters differ between the groups of an
+external variable, with Andersen's likelihood-ratio (LR) test. The model
+is fitted by conditional maximum likelihood (CML) in the full sample and
+in each group. The test answers whether there is any DIF, not which items
+or thresholds have it. For that, use \code{\link{RMdifAnchor}}.
 }
 \details{
-The Partial Credit Model (PCM) is fitted by default for polytomous data
-and the dichotomous Rasch Model (RM) is fitted when all responses are
-0/1; this can be overridden via \code{model}.
+The LR statistic is twice the difference between the sum of the group
+conditional log-likelihoods and the full-sample one, with df equal to the
+extra free parameters of the group fits (Andersen, 1973). It equals
+\code{eRm::LRtest()} on the same data. Each fit is a CML partial credit
+model from \code{psychotools::pcmodel()} (a dichotomous item is a
+2-category PCM). Respondents with missing responses are kept (CML uses
+the items they answered).
 
-Each fit is a CML partial credit model from \code{psychotools::pcmodel()}
-(a dichotomous item is a 2-category PCM). Within each fit the thresholds
-sum to zero, as in \code{\link{RMitemParameters}}, so each group's
-locations are centred on that group's own mean threshold. The \code{All}
-column is the fit to the full dataset. An item's location is the mean of
-its thresholds, and its SE is the SE of that mean, computed from the
-thresholds' covariance matrix.
+The test does not depend on how each group's scale is centred, but any
+comparison of single items or thresholds between groups does. Centring
+each group on its own mean makes real DIF in some items appear as
+artificial DIF in the others (Andrich & Hagquist, 2012), so this function
+no longer reports per-group locations. \code{\link{RMdifAnchor}} links the
+groups through anchor items and tests each item, threshold or threshold
+spacing, with a correction for multiple testing.
 
-The Andersen LR statistic is twice the difference between the sum of the
-group conditional log-likelihoods and the full-sample one, with df equal
-to the extra free parameters of the group fits. It equals
-\code{eRm::LRtest()} on the same data. Respondents with missing responses
-are kept (CML uses the items they answered).
+Like other global tests, the LR test becomes significant for small
+amounts of DIF in large samples, and has little power in small ones.
 
 \strong{Response categories.} Every category an item uses must be used in
-every group, or that item's thresholds cannot be compared across groups.
-The same holds when a category is used in a group only by respondents
-with a zero or perfect score there, since CML leaves them out and the
-threshold cannot be estimated. The function then stops and names the
-items, categories and groups
+every group, or the group fits have different thresholds and the test is
+not defined. The same holds when a category is used in a group only by
+respondents with a zero or perfect score there, since CML leaves them
+out. The function then stops and names the items, categories and groups
 (\code{eRm::LRtest()} instead left items with an unused category out of
-the test without saying so, and returned diverging estimates in the
-second case). With small groups this is common for sparse categories: merge
-them with an adjacent one, combine groups, or leave the item out.
-
-\strong{DIF size and the cutoff.} The \code{Flagged} column applies one
-fixed cutoff to \code{MaxDiff}, and no single value suits every scale. An
-appropriate cutoff depends on the number of items, the number of response
-categories and the type of DIF (Van de Winckel et al., 2022). Treat a flag
-as a prompt for a closer look, not as a verdict. Judging DIF means
-weighing its size against its practical consequences (Henninger et al.,
-2025). These are best evaluated by simulation: estimate person locations
-with and without accounting for DIF, for instance by splitting the
-affected item by group, and check whether the difference changes
-substantive conclusions (Johansson et al., 2026). For polytomous items,
-DIF can differ between an item's thresholds, which \code{level =
-"threshold"} shows (Henninger et al., 2025). \code{MaxDiff} is a point
-estimate, and with small groups its uncertainty is large (see the
-\code{SE_*} columns). The LR test addresses a different question: whether
-any DIF is present, not how large it is.
-
-\strong{Real and artificial DIF.} Real DIF in one item induces artificial
-DIF in the other items, in the opposite direction (Hagquist & Andrich,
-2017). Here the mechanism is direct: each group's locations are centred
-on that group's own mean threshold, so a real shift in one item moves the
-other items' locations the other way. An item can therefore be flagged
-only because another item has DIF, and one analysis cannot tell real
-from artificial DIF. Hagquist and Andrich (2017) recommend resolving DIF
-items one at a time, starting with the item with the largest DIF (for
-instance by splitting it into group-specific items), and repeating the
-analysis before deciding on the next. Do not overinterpret the flags from
-a single run.
+the test without saying so). With small groups this is common for sparse
+categories: merge them with an adjacent one, combine groups, or leave the
+item out.
 }
 \examples{
 \donttest{
@@ -147,19 +90,8 @@ if (requireNamespace("eRm", quietly = TRUE)) { # for the example data
   data("pcmdat2", package = "eRm")
   grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
 
-  # Default: kable of per-group item locations
   RMdifLR(pcmdat2, dif_var = grp)
-
-  # ggplot panel of item locations with 95\% CIs
-  RMdifLR(pcmdat2, dif_var = grp, output = "ggplot")
-
-  # Threshold-level kable, sorted by MaxDiff
-  RMdifLR(pcmdat2, dif_var = grp, level = "threshold", sort = TRUE)
-
-  # Tidy data.frame for downstream use
-  df <- RMdifLR(pcmdat2, dif_var = grp, output = "dataframe")
-  attr(df, "lr_test")
-  df[df$Flagged, ]
+  RMdifLR(pcmdat2, dif_var = grp, output = "dataframe")
 }
 }
 
@@ -168,49 +100,12 @@ if (requireNamespace("eRm", quietly = TRUE)) { # for the example data
 Andersen, E. B. (1973). A goodness of fit test for the Rasch model.
 \emph{Psychometrika, 38}(1), 123-140. \doi{10.1007/BF02291180}
 
-Hagquist, C., & Andrich, D. (2017). Recent advances in analysis of
-differential item functioning in health research using the Rasch model.
-\emph{Health and Quality of Life Outcomes, 15}, 181.
-\doi{10.1186/s12955-017-0755-0}
-
-Henninger, M., Radek, J., Sengewald, M.-A., & Strobl, C. (2025). Partial
-credit trees meet the partial gamma coefficient for quantifying DIF and
-DSF in polytomous items. \emph{Behaviormetrika, 52}(2), 221-257.
-\doi{10.1007/s41237-024-00252-3}
-
-Jin, Y., Myers, N. D., Ahn, S., & Penfield, R. D. (2013). A comparison of
-uniform DIF effect size estimators under the MIMIC and Rasch models.
-\emph{Educational and Psychological Measurement, 73}(2), 339-358.
-\doi{10.1177/0013164412462705}
-
-Johansson, M., Preuter, M., & Melin, J. (2026). Valid and reliable? Basic
-criteria and modern methods for assessing psychometric quality. OSF
-Preprints. \doi{10.31219/osf.io/3htzc_v2}
-
-Kim, S., Ouellet, L. J., Mazza, J., & Spaulding, A. C. (2017). Rasch
-analysis and differential item functioning of a social support measure
-in jail inmates with HIV infection. \emph{Evaluation & the Health Professions,
-40}(1), 33-60. \doi{10.1177/0163278716644954}
-
-Pickard, A. S., Dalal, M. R., & Bushnell, D. M. (2006). A comparison of
-depressive symptoms in stroke and primary care: Applying Rasch models to
-evaluate the Center for Epidemiologic Studies-Depression Scale. \emph{Value in
-Health, 9}(1), 59-64. \doi{10.1111/j.1524-4733.2006.00082.x}
-
-Strobl, C., Kopf, J., & Zeileis, A. (2015). Rasch trees: A new method for
-detecting differential item functioning in the Rasch model.
-\emph{Psychometrika, 80}(2), 289-316. \doi{10.1007/s11336-013-9388-3}
-
-Van de Winckel, A., Kozlowski, A. J., Johnston, M. V., Weaver, J.,
-Grampurohit, N., Terhorst, L., Juengst, S., Ehrlich-Jones, L., Heinemann,
-A. W., Melvin, J., Sood, P., & Mallinson, T. (2022). Reporting guideline
-for RULER: Rasch reporting guideline for rehabilitation research:
-Explanation and elaboration. \emph{Archives of Physical Medicine and
-Rehabilitation, 103}(7), 1487-1498. \doi{10.1016/j.apmr.2022.03.019}
+Andrich, D., & Hagquist, C. (2012). Real and artificial differential item
+functioning. \emph{Journal of Educational and Behavioral Statistics, 37}(3),
+387-416. \doi{10.3102/1076998611411913}
 }
 \seealso{
-\code{\link{RMdifGamma}}, with simulation-based cutoffs from
-\code{\link{RMdifGammaCutoff}}, and \code{\link{RMdifTree}}, for
-continuous DIF variables and interactions between them (Strobl et al.,
-2015; Henninger et al., 2025).
+\code{\link{RMdifAnchor}} for anchored tests of single items,
+thresholds and threshold spacing, \code{\link{RMdifGamma}} and
+\code{\link{RMdifTree}}.
 }

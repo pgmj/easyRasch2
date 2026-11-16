@@ -15,3 +15,11 @@ docs
 .positai
 Rplots.pdf
 *HANDOFF
+
+# Full-size DIF simulation results (kept locally; slim copies are tracked)
+dev/dif_lr_wald/*.rds
+dev/dif_anchor_threshold/*.rds
+dev/dif_anchor_consensus/*.rds
+!dev/dif_lr_wald/*_slim*.rds
+!dev/dif_anchor_threshold/*_slim*.rds
+!dev/dif_anchor_consensus/*_slim*.rds

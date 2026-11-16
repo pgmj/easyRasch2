@@ -55,6 +55,7 @@ reference:
     desc: "DIF assessment functions"
     contents:
       - RMdifLR
+      - RMdifAnchor
       - RMdifTree
       - RMdifGamma
       - RMdifGammaCutoff

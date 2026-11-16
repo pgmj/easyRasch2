@@ -316,9 +316,11 @@ RMpersonChange(t1, t2, critical = "simulate", sim_iter = 200,
 }
 }
 \references{
-Caronni, A., et al. (2026). Improving single-subject change assessment:
-deriving the minimal detectable change of questionnaires' ordinal scores
-from the Rasch analysis measures.
+Caronni, A., Picardi, M., Scarano, S., Rota, V., & Amadei, M. (2026).
+Improving single-subject change assessment: Deriving the minimal detectable
+change of questionnaires' ordinal scores from Rasch analysis measures.
+\emph{Disability and Rehabilitation, 48}(7), 2169-2186.
+\doi{10.1080/09638288.2025.2547398}
 
 Jacobson, N. S., & Truax, P. (1991). Clinical significance: A statistical
 approach to defining meaningful change in psychotherapy research.

@@ -62,7 +62,7 @@
 #'   adj. p < .05), `"underfit"` (below, adj. p < .05), or `""` (not flagged).
 #'
 #' With a `cutoff`, `p_adjusted` is replaced by `Diff_low` and `Diff_high`,
-#' followed by `p_restscore` (marginal two-sided bootstrap p-value) and
+#' followed by `p_restscore` (marginal equal-tailed bootstrap p-value) and
 #' `padj_restscore` (corrected p-value) when `p_value` resolves to `TRUE`.
 #' `Flagged` then reflects `padj_restscore < alpha`, or the interval when
 #' `p_value = FALSE`.
@@ -113,23 +113,28 @@
 #' simulated values together. Because that mean is subtracted, the
 #' small-sample upward bias of the difference is removed, and because that SD
 #' is used, the
-#' correlation between observed and expected gamma is accounted for. The
-#' marginal p-value is the two-sided Monte-Carlo p-value
-#' `(1 + #{|t*| >= |t|}) / (B + 1)`, and `correction = "fwer"` applies the
-#' Westfall-Young studentised-max step-down across items (Ferreira, 2024).
+#' correlation between observed and expected gamma is accounted for.
 #'
-#' The two directions do not get equal shares of alpha. Gamma is bounded at
-#' 1, so the null of `Difference` is left-skewed and a two-sided test on
-#' `|t|` rejects more often in the long (underfit) tail. In simulation under
-#' a true Rasch model the total rate was nominal, but the per-item marginal
-#' rate was about 3 percent for underfit and 2 percent for overfit with 20
-#' dichotomous items at n = 150 and 1.5 logits off target, narrowing toward
-#' equal shares with polytomous items and larger samples. With
-#' `correction = "fwer"`, over four such conditions, at least one item was
-#' flagged as underfit in 3.7 percent of datasets and as overfit in 1.6
-#' percent, 5.0 percent in total. An equal-tailed test, with alpha/2 for each
-#' direction, was evaluated and not adopted: it detected 2 to 3 percentage
-#' points fewer underfitting items and no more overfitting ones.
+#' The test is equal-tailed: overfit and underfit each get alpha/2. Gamma is
+#' bounded at 1, so the null of `Difference` is left-skewed, and a two-sided
+#' test on `|t|` would reject more often in the long (underfit) tail. The
+#' marginal p-value is twice the smaller of the one-sided Monte-Carlo
+#' p-values, `(1 + #{t* >= t}) / (B + 1)` and `(1 + #{t* <= t}) / (B + 1)`,
+#' so it cannot be smaller than `2 / (B + 1)`. With `correction = "fwer"`,
+#' the Westfall-Young studentised-max step-down (Ferreira, 2024) is run once
+#' for each direction, and `padj_restscore` is twice the smaller of the two
+#' adjusted p-values. `"fdr_bh"` and `"fdr_by"` adjust the equal-tailed
+#' marginal p-values.
+#'
+#' In simulation under a true Rasch model, over four conditions (20
+#' dichotomous or 9 polytomous items, n = 150 to 1000, on or off target),
+#' `correction = "fwer"` flagged at least one item in 5.0 percent of
+#' datasets: 2.4 percent underfit and 2.75 percent overfit. A test on `|t|`
+#' also held 5.0 percent, but split it 3.7 and 1.6. The equal-tailed test
+#' also gave fewer false underfit flags when other items overfit (4.7
+#' against 6.2 percent with two overfitting items), at a cost of 2 to 3
+#' percentage points of power to detect underfitting items. Before
+#' easyRasch2 1.4.0.9004 the test was on `|t|`.
 #'
 #' \strong{Reproducibility.} The bootstrap p-values depend on the simulated
 #' null, so two analyses of the same data with different seeds can disagree
@@ -155,7 +160,7 @@
 #'
 #' Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
 #' of hypotheses simultaneously. *Journal of Statistical Theory and Practice,
-#' 19*(6). \doi{10.1007/s42519-024-00412-4}
+#' 19*(1), 6. \doi{10.1007/s42519-024-00412-4}
 #'
 #' @seealso \code{\link{RMitemRestscoreCutoff}},
 #'   \code{\link{RMitemRestscorePlot}}
@@ -291,6 +296,17 @@ RMitemRestscore <- function(
         correction = correction
       )
     }
+    # The equal-tailed test's floor is 2/(B + 1), so an FDR correction needs
+    # about twice the iterations it would under |t|.
+    .warn_fdr_floor(
+      cutoff_n_iter,
+      nrow(cutoff),
+      correction,
+      alpha,
+      unit = "items",
+      fn = "RMitemRestscoreCutoff()",
+      floor_mult = 2L
+    )
   } else if (!is.null(cutoff)) {
     .notify_band_flagging(
       if (identical(cutoff_method, "quantile")) 0.95 else cutoff_hdci_width,
@@ -461,19 +477,25 @@ RMitemRestscore <- function(
         function(x) x[1L]
       )
       obs_diff <- stats::setNames(i2$Difference, data_items)
-      pv <- .bootstrap_pvalues(obs_diff, sim_mat, correction = correction)
+      # Equal-tailed: the null of Difference is left-skewed (gamma is bounded
+      # at 1), so a test on |t| would give the underfit tail more than
+      # alpha/2. See dev/HANDOFF-restscore-equal-tails.md.
+      pv <- .bootstrap_pvalues(
+        obs_diff, sim_mat,
+        correction = correction,
+        tail = "split"
+      )
       pidx <- match(data_items, pv$name)
       i2$p_restscore <- pv$p[pidx]
       i2$padj_restscore <- pv$padj[pidx]
-      # Direction from the studentised value: the null mean of the difference
-      # is positive in small samples, so the sign of Difference alone can
-      # disagree with the side of the null distribution an item falls on.
-      null_mean <- colMeans(sim_mat, na.rm = TRUE)[data_items]
+      # Direction from the tail that rejected, not the sign of Difference: the
+      # null mean of the difference is positive in small samples, so the sign
+      # alone can disagree with the side of the null an item falls on.
       sig <- i2$padj_restscore < alpha
       i2$Flagged <- ifelse(
         is.na(sig) | !sig,
         "",
-        ifelse(i2$Difference > null_mean, "overfit", "underfit")
+        ifelse(pv$direction[pidx] == "upper", "overfit", "underfit")
       )
       i2 <- i2[, c(
         "Item", "Observed", "Expected", "Difference", "Diff_low", "Diff_high",
@@ -528,18 +550,18 @@ RMitemRestscore <- function(
       kbl_caption <- paste0(
         "Item-restscore associations. ",
         n_clause,
-        ". Two-sided parametric bootstrap p-values for the difference from ",
+        ". Equal-tailed parametric bootstrap p-values for the difference from ",
         cutoff_n_iter,
         " iterations",
         dgp_part,
         ", multiplicity correction: ",
         .correction_label(correction),
-        ". p-values cannot be smaller than 1/(",
+        ". p-values cannot be smaller than 2/(",
         cutoff_n_iter,
         "+1) = ",
-        .fmt_small(1 / (cutoff_n_iter + 1)),
+        .fmt_small(2 / (cutoff_n_iter + 1)),
         ".",
-        if (1 / (cutoff_n_iter + 1) >= alpha) {
+        if (2 / (cutoff_n_iter + 1) >= alpha) {
           paste0(" No item can be flagged at alpha = ", alpha, ".")
         },
         if (cutoff_n_iter < 400L) {

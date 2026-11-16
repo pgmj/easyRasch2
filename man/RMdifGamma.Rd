@@ -190,7 +190,7 @@ of the SF-36. \emph{Journal of Clinical Epidemiology, 51}(11), 1189--1202.
 
 Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
 of hypotheses simultaneously. \emph{Journal of Statistical Theory and Practice,
-19}(6). \doi{10.1007/s42519-024-00412-4}
+19}(1), 6. \doi{10.1007/s42519-024-00412-4}
 
 Hagquist, C., & Andrich, D. (2017). Recent advances in analysis of
 differential item functioning in health research using the Rasch model.

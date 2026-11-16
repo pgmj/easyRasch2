@@ -18,19 +18,16 @@ make_dichotomous <- function(n = 200, k = 5, seed = 2L) {
 # Input validation
 # ---------------------------------------------------------------------
 test_that("RMitemCatProb errors on min != 0", {
-  skip_if_not_installed("eRm")
   df <- make_polytomous() + 1L
   expect_error(RMitemCatProb(df), regexp = "scored starting at 0")
 })
 
 test_that("RMitemCatProb errors when fewer than 2 items", {
-  skip_if_not_installed("eRm")
   df <- make_polytomous()[, 1L, drop = FALSE]
   expect_error(RMitemCatProb(df), regexp = "at least 2 items")
 })
 
 test_that("RMitemCatProb errors on invalid theta_range", {
-  skip_if_not_installed("eRm")
   df <- make_polytomous()
   expect_error(RMitemCatProb(df, theta_range = c(2, -2)),
                regexp = "theta_range\\[1\\] < theta_range\\[2\\]")
@@ -39,28 +36,24 @@ test_that("RMitemCatProb errors on invalid theta_range", {
 })
 
 test_that("RMitemCatProb errors on bad n_points", {
-  skip_if_not_installed("eRm")
   df <- make_polytomous()
   expect_error(RMitemCatProb(df, n_points = 1L), regexp = "integer >= 2")
   expect_error(RMitemCatProb(df, n_points = 50.5), regexp = "integer >= 2")
 })
 
 test_that("RMitemCatProb errors on bad viridis_end", {
-  skip_if_not_installed("eRm")
   df <- make_polytomous()
   expect_error(RMitemCatProb(df, viridis_end = 0),  regexp = "in \\(0, 1\\]")
   expect_error(RMitemCatProb(df, viridis_end = 1.5), regexp = "in \\(0, 1\\]")
 })
 
 test_that("RMitemCatProb errors when item_labels length mismatches", {
-  skip_if_not_installed("eRm")
   df <- make_polytomous()
   expect_error(RMitemCatProb(df, item_labels = c("a", "b")),
                regexp = "same length")
 })
 
 test_that("RMitemCatProb errors when category_labels length mismatches", {
-  skip_if_not_installed("eRm")
   df <- make_polytomous(max_score = 3L)  # max=3 -> 4 categories
   expect_error(RMitemCatProb(df, category_labels = c("low", "high")),
                regexp = "same length")
@@ -70,7 +63,6 @@ test_that("RMitemCatProb errors when category_labels length mismatches", {
 # Polytomous output
 # ---------------------------------------------------------------------
 test_that("RMitemCatProb returns a ggplot for polytomous data", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
   df <- make_polytomous()
   p <- RMitemCatProb(df)
@@ -78,7 +70,6 @@ test_that("RMitemCatProb returns a ggplot for polytomous data", {
 })
 
 test_that("RMitemCatProb dataframe output has correct structure + sums to 1", {
-  skip_if_not_installed("eRm")
   df <- make_polytomous(k = 4L, max_score = 3L)
   res <- RMitemCatProb(df, n_points = 50L, output = "dataframe")
   expect_s3_class(res, "data.frame")
@@ -94,7 +85,6 @@ test_that("RMitemCatProb dataframe output has correct structure + sums to 1", {
 })
 
 test_that("RMitemCatProb item_labels are applied to facet titles", {
-  skip_if_not_installed("eRm")
   df <- make_polytomous()
   labs <- paste("Custom", seq_len(ncol(df)))
   res <- RMitemCatProb(df, item_labels = labs, output = "dataframe")
@@ -107,7 +97,6 @@ test_that("RMitemCatProb item_labels are applied to facet titles", {
 # Dichotomous fallback (RM)
 # ---------------------------------------------------------------------
 test_that("RMitemCatProb handles dichotomous data via RM", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
   df <- make_dichotomous()
   p <- RMitemCatProb(df)
@@ -128,7 +117,6 @@ test_that("RMitemCatProb handles dichotomous data via RM", {
 # Path mode (geomtextpath single-item branch)
 # ---------------------------------------------------------------------
 test_that("RMitemCatProb path mode requires the `item` argument", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("geomtextpath")
   df <- make_polytomous()
   expect_error(
@@ -138,7 +126,6 @@ test_that("RMitemCatProb path mode requires the `item` argument", {
 })
 
 test_that("RMitemCatProb path mode rejects unknown item name", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("geomtextpath")
   df <- make_polytomous()
   expect_error(
@@ -148,7 +135,6 @@ test_that("RMitemCatProb path mode rejects unknown item name", {
 })
 
 test_that("RMitemCatProb path mode rejects out-of-range item index", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("geomtextpath")
   df <- make_polytomous()
   expect_error(
@@ -162,7 +148,6 @@ test_that("RMitemCatProb path mode rejects out-of-range item index", {
 })
 
 test_that("RMitemCatProb path mode returns a ggplot for polytomous data", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
   skip_if_not_installed("geomtextpath")
   df <- make_polytomous()
@@ -171,7 +156,6 @@ test_that("RMitemCatProb path mode returns a ggplot for polytomous data", {
 })
 
 test_that("RMitemCatProb path mode also works for dichotomous (no middle tier)", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("ggplot2")
   skip_if_not_installed("geomtextpath")
   df <- make_dichotomous()
@@ -180,7 +164,6 @@ test_that("RMitemCatProb path mode also works for dichotomous (no middle tier)",
 })
 
 test_that("RMitemCatProb path mode dataframe output is subset to the chosen item", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("geomtextpath")
   df  <- make_polytomous(k = 4L, max_score = 3L)
   res <- RMitemCatProb(df, label_curves = "path", item = "I2",
@@ -191,7 +174,6 @@ test_that("RMitemCatProb path mode dataframe output is subset to the chosen item
 })
 
 test_that("RMitemCatProb path mode default theta_range widens to (-5, 5)", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("geomtextpath")
   df  <- make_polytomous()
   res <- RMitemCatProb(df, label_curves = "path", item = "I1",
@@ -205,7 +187,6 @@ test_that("RMitemCatProb path mode default theta_range widens to (-5, 5)", {
 })
 
 test_that("RMitemCatProb path mode validates text_size", {
-  skip_if_not_installed("eRm")
   skip_if_not_installed("geomtextpath")
   df <- make_polytomous()
   expect_error(RMitemCatProb(df, label_curves = "path", item = "I1",
@@ -221,7 +202,6 @@ test_that("RMitemCatProb path mode produces one geom_textpath layer per category
   # exactly (max_score + 1) geom_textpath layers, one per response
   # category. This catches regressions if the layer loop is ever
   # changed back to a single layer.
-  skip_if_not_installed("eRm")
   skip_if_not_installed("geomtextpath")
   df <- make_polytomous(max_score = 3L)  # categories 0..3 -> 4 layers
   p  <- RMitemCatProb(df, label_curves = "path", item = "I1")
@@ -234,7 +214,6 @@ test_that("RMitemCatProb path mode produces one geom_textpath layer per category
 })
 
 test_that("RMitemCatProb boundary probabilities behave correctly", {
-  skip_if_not_installed("eRm")
   df  <- make_polytomous(max_score = 3L)
   res <- RMitemCatProb(df, theta_range = c(-10, 10), n_points = 100L,
                        output = "dataframe")

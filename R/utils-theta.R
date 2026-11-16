@@ -481,7 +481,7 @@
 #' Thresholds, SEs and covariance from a CML fit, with an alignment guard
 #'
 #' The shared extraction for `.fit_cml_thresholds()`, `.rasch_fit_cml()`
-#' (RMitemParameters) and `lr_fit_summary()` (RMdifLR). Thresholds come from
+#' (RMitemParameters) and RMdifAnchor(). Thresholds come from
 #' `psychotools::threshpar()`, which makes them sum to zero within the fit.
 #'
 #' The guard checks that the fit has one entry per data column, in order,
@@ -499,7 +499,7 @@
 #' @param data The response data the fit was made from (items from 0).
 #' @param se Logical. Also return `se_list` and `vcov_thr`.
 #' @param label Where the fit came from, for the warning (e.g. "group 'B'").
-#' @param max_cat Optional expected threshold count per item. RMdifLR passes
+#' @param max_cat Optional expected threshold count per item. RMdifAnchor passes
 #'   the full-data maxima, so the guard does not rely on its group check.
 #'   Default: the observed maxima of `data`.
 #' @return A list with `thr_list` (thresholds per item, named by item) and,
@@ -627,8 +627,8 @@
 #' ways that break the threshold list's alignment with the data, which every
 #' consumer of `.fit_cml_thresholds()` assumes. `mirt` (MML) renumbers the
 #' same items, so the check also runs before those fits (via `.mml_fit()`).
-#' RMdifLR() adds a per-group check, `.check_group_categories()`. The three
-#' shapes:
+#' RMdifLR() and RMdifAnchor() add a per-group check,
+#' `.check_group_categories()`. The three shapes:
 #' - an item with one observed category is dropped from the list,
 #' - an empty lowest category makes psychotools rescale the item to start at
 #'   0, while the data keep the original codes,

@@ -360,10 +360,11 @@ red.
 
 ## 4. Invariance / no DIF
 
-We use three complementary DIF assessments. The Andersen likelihood-ratio
+We use complementary DIF assessments. The Andersen likelihood-ratio
 test [LRT, @andersen_goodness_1973] partitions the sample by an external
-variable, refits the model in each subgroup, and compares item
-locations. The partial gamma approach
+variable, refits the model in each subgroup, and tests whether any item
+parameters differ. Anchored Wald tests then compare single items and
+thresholds between two groups. The partial gamma approach
 [@kreiner_validity_2007;@christensen_psychometric_2021] looks for an
 association between item responses and the external variable
 *conditional on the rest-score*, and the Rasch tree (below) searches for DIF across covariates without pre-specified groups. All are run on the *gender* variable, which has some missing values that are automatically dropped by the functions (noted in a console message and/or table/figure caption output).
@@ -376,12 +377,25 @@ RMplotTile(items, category_labels = item_resp, group = phq9$gender)
 
 ### Andersen LR-test
 
-```{r dif-lr, fig.cap = "Andersen LR-test DIF locations by gender", fig.height = 7}
-RMdifLR(items, dif_var = phq9$gender, level = "threshold", output = "ggplot")
+```{r dif-lr}
+RMdifLR(items, dif_var = phq9$gender)
 ```
 
-The plot shows the item threshold locations estimated in each gender group with
-the corresponding confidence band. The global LR test is also reported in the plot caption, with a statistically significant test indicating problems with DIF between groups. However, this test is sensitive to sample size and number of items and should, like all global tests, be interpreted with care.
+A statistically significant test indicates that some item parameters differ between the groups. It does not say which items, and like all global tests it is sensitive to sample size and number of items, so it should be interpreted with care.
+
+### Anchored tests of items and thresholds
+
+To compare single items, the two groups' scales must first be linked. `RMdifAnchor()` links them through anchor items chosen from the data, tests each item location with a Wald test, and corrects the *p*-values for multiple testing.
+
+```{r dif-anchor, fig.cap = "Anchored item location differences by gender", fig.height = 6}
+RMdifAnchor(items, dif_var = phq9$gender, output = "ggplot")
+```
+
+The spacing between an item's thresholds can be compared without an anchor. A difference in spacing is differential step functioning (DSF).
+
+```{r dif-spacing}
+RMdifAnchor(items, dif_var = phq9$gender, level = "spacing")
+```
 
 ### Partial-gamma DIF
 

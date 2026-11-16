@@ -115,7 +115,7 @@ if (requireNamespace("lavaan", quietly = TRUE) &&
 \references{
 Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
 of hypotheses simultaneously. \emph{Journal of Statistical Theory and Practice,
-19}(6). \doi{10.1007/s42519-024-00412-4}
+19}(1), 6. \doi{10.1007/s42519-024-00412-4}
 
 Westfall, P. H., & Young, S. S. (1993). \emph{Resampling-Based Multiple Testing}.
 Wiley.

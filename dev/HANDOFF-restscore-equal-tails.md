@@ -3,8 +3,17 @@
 First written 2026-10-02 after the first equal-tailed step-down was built,
 tested and withdrawn. Updated 2026-10-03 after the split one-sided
 step-down was validated on synthetic nulls, the real restscore null, power
-and seed stability. **Nothing here is in the package.** What remains is a
-decision, not a research question (see "Open decisions").
+and seed stability.
+
+**IMPLEMENTED 2026-11-13 in 1.4.0.9004 (decision 1 = yes).**
+`.bootstrap_pvalues(tail = "split")` (helper `.split_pvalues()` in
+`R/utils-multiplicity.R`), used by `RMitemRestscore()` only. Flags reproduce
+`split_t_pooled` on all 2000 datasets in `restscore_split_null/` (0
+disagreements; FWER 5.00, 2.40 under / 2.75 over). BH/BY and `"none"` use
+the equal-tailed marginal p (2 x smaller one-sided p). Decision 2 was done
+earlier (joint moments, 1.4.0.9000). Decision 3 (iterations) still open.
+The vignette's precomputed restscore caption still says "Two-sided" and
+1/(B+1) until the next re-knit.
 
 ## The problem
 

@@ -140,7 +140,7 @@ Biostatistics, University of Copenhagen.
 
 Christensen, K. B., Bjorner, J. B., Kreiner, S., & Petersen, J. H. (2002).
 Testing unidimensionality in polytomous Rasch models. \emph{Psychometrika,
-67}(4), 563-574. \doi{10.1007/BF02295132}
+67}(4), 563-574. \doi{10.1007/BF02295131}
 }
 \seealso{
 \code{\link{RMdimMartinLof}}

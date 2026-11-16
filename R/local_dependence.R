@@ -126,7 +126,7 @@
 #'
 #' Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
 #' of hypotheses simultaneously. *Journal of Statistical Theory and Practice,
-#' 19*(6). \doi{10.1007/s42519-024-00412-4}
+#' 19*(1), 6. \doi{10.1007/s42519-024-00412-4}
 #'
 #' Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
 #' Rasch models: Iterations, multiplicity correction, and decision stability.

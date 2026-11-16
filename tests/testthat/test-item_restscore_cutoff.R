@@ -146,7 +146,7 @@ test_that("the full cutoff object flags on bootstrap p-values by default", {
     "p_restscore", "padj_restscore", "Flagged", "Relative_location"
   ))
   expect_false("p_adjusted" %in% names(res))
-  expect_true(all(res$p_restscore >= 1 / 21))
+  expect_true(all(res$p_restscore >= 2 / 21)) # equal-tailed floor
   expect_true(all(res$padj_restscore >= res$p_restscore))
   expect_true(all(res$Flagged %in% c("", "overfit", "underfit")))
 })
@@ -180,7 +180,9 @@ test_that("a planted underfitting item is flagged as underfit", {
   }))
   d[[6]] <- stats::rbinom(n, 1, 0.5) # unrelated to the trait
   colnames(d) <- paste0("I", 1:6)
-  co <- RMitemRestscoreCutoff(d, iterations = 40, parallel = FALSE, seed = 1,
+  # 100 iterations: the equal-tailed floor 2/(B + 1) is then well below .05,
+  # so a failed refit or one extreme simulated row cannot block the flag.
+  co <- RMitemRestscoreCutoff(d, iterations = 100, parallel = FALSE, seed = 1,
                               cutoff_method = "quantile")
   res <- suppressMessages(RMitemRestscore(d, cutoff = co,
                                           output = "dataframe"))
@@ -263,4 +265,26 @@ test_that("RMitemRestscorePlot rejects a non-restscore simfit", {
   skip_if_not_installed("ggplot2")
   expect_error(RMitemRestscorePlot(list(results = data.frame(x = 1))),
                "not an RMitemRestscoreCutoff")
+})
+
+test_that("an FDR correction below the equal-tailed floor warns (ET1)", {
+  skip_on_cran()
+  skip_if_not_installed("iarm")
+  d <- make_dich()
+  co <- RMitemRestscoreCutoff(d, iterations = 20, parallel = FALSE, seed = 1,
+                              cutoff_method = "quantile")
+  w <- NULL
+  withCallingHandlers(
+    suppressMessages(RMitemRestscore(d, cutoff = co, correction = "fdr_bh",
+                                     output = "dataframe")),
+    warning = function(cnd) {
+      w <<- conditionMessage(cnd)
+      invokeRestart("muffleWarning")
+    }
+  )
+  expect_match(w, "Benjamini-Hochberg threshold is out of reach", fixed = TRUE)
+  expect_match(w, "cannot be smaller than 2/(20+1)", fixed = TRUE)
+  expect_no_warning(suppressMessages(
+    RMitemRestscore(d, cutoff = co, correction = "fwer", output = "dataframe")
+  ))
 })

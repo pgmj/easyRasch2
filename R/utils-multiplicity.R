@@ -16,8 +16,16 @@
 #' @param correction One of `"fwer"` (Westfall-Young studentised-max
 #'   step-down), `"fdr_bh"`, `"fdr_by"`, or `"none"`.
 #' @param tail `"two.sided"` (default; deviations in either direction are
-#'   extreme, e.g. infit over/underfit) or `"upper"` (only large positive
-#'   values are extreme, e.g. excess Q3 local dependence).
+#'   extreme, e.g. infit over/underfit), `"upper"` (only large positive
+#'   values are extreme, e.g. excess Q3 local dependence), or `"split"`
+#'   (equal-tailed two-sided test: two one-sided tests, each at alpha/2).
+#'   Under `"split"`, the marginal `p` is twice the smaller one-sided
+#'   Monte-Carlo p-value, and `"fwer"` runs one Westfall-Young step-down on
+#'   `t` and one on `-t`, reporting twice the smaller of the two adjusted
+#'   p-values, so that `padj < alpha` keeps its meaning. A skewed null then
+#'   gives each direction alpha/2, where `|t|` gives more to the long tail.
+#'   The result gains a column `direction` (`"upper"` or `"lower"`), the
+#'   side with the smaller p-value.
 #' @param moments Where the studentising mean and SD come from. `"joint"`
 #'   (default) uses all `B + 1` values, the observed one included. Every
 #'   dataset is then scored on the same scale, so under the null the `B + 1`
@@ -28,8 +36,9 @@
 #'   which makes the family-wise correction liberal at small `B`. Kept so that
 #'   the Johansson (2026) simulation scripts can reproduce published results.
 #' @return A data.frame with columns `name`, `p` (marginal Monte-Carlo
-#'   p-value), and `padj` (corrected p-value). Comparisons whose simulated
-#'   values have no variance return `NA`, under either `moments`.
+#'   p-value), and `padj` (corrected p-value), plus `direction` under
+#'   `tail = "split"`. Comparisons whose simulated values have no variance
+#'   return `NA`, under either `moments`.
 #'
 #' Missing simulated values (`NA`, e.g. an undefined partial gamma or an
 #' RMSEA that could not be computed) are left out, not counted as
@@ -43,7 +52,7 @@
   observed,
   sim,
   correction = c("fwer", "fdr_bh", "fdr_by", "none"),
-  tail = c("two.sided", "upper"),
+  tail = c("two.sided", "upper", "split"),
   moments = c("joint", "simulated")
 ) {
   correction <- match.arg(correction)
@@ -73,9 +82,13 @@
   s[!is.finite(s) | s < 1e-8 | !is.finite(s_sim) | s_sim < 1e-8] <- NA_real_
 
   # Studentise observed and simulated by the same mean / SD; the test
-  # statistic is |t| (two-sided) or t (upper tail).
+  # statistic is |t| (two-sided), t (upper tail), or t and -t separately
+  # (split, see .split_pvalues()).
   t_obs <- (observed - m) / s
   t_sim <- sweep(sweep(sim, 2L, m, `-`), 2L, s, `/`)
+  if (tail == "split") {
+    return(.split_pvalues(nm, t_obs, t_sim, correction))
+  }
   if (tail == "two.sided") {
     stat_obs <- abs(t_obs)
     stat_sim <- abs(t_sim)
@@ -114,22 +127,110 @@
     b_used <- attr(padj, "B")
     padj <- pmax(as.numeric(padj), p_marg)
     b_total <- nrow(sim)
-    if (!is.null(b_used) && b_used < 0.95 * b_total) {
-      # Say when the family-wise correction lost more than 5% of the
-      # iterations, since captions quote the full count (UM11).
-      message(
-        "The Westfall-Young correction used the ", b_used, " of ", b_total,
-        " simulated datasets in which every comparison could be computed. ",
-        "Corrected p-values cannot be smaller than 1/(", b_used, "+1) = ",
-        .fmt_small(1 / (b_used + 1)), "."
-      )
-    }
+    .wy_attrition_message(b_used, b_total)
   }
 
   data.frame(
     name = nm,
     p = p_marg,
     padj = padj,
+    stringsAsFactors = FALSE,
+    row.names = NULL
+  )
+}
+
+#' Say when the Westfall-Young step-down dropped iterations
+#'
+#' The step-down uses only iterations in which every comparison is defined.
+#' When that loses more than 5% of them, say so, since captions quote the full
+#' count (UM11).
+#'
+#' @param b_used Iterations the step-down used (`attr(padj, "B")`).
+#' @param b_total Simulated iterations available.
+#' @param floor_mult Smallest attainable corrected p-value in units of
+#'   `1 / (b_used + 1)`: 1, or 2 for the equal-tailed test.
+#' @return Invisibly `NULL`, called for its side effect.
+#' @keywords internal
+#' @noRd
+.wy_attrition_message <- function(b_used, b_total, floor_mult = 1L) {
+  if (is.null(b_used) || b_used >= 0.95 * b_total) {
+    return(invisible(NULL))
+  }
+  if (b_used == 0L) {
+    message(
+      "The Westfall-Young correction found none of the ", b_total,
+      " simulated datasets in which every comparison could be computed, ",
+      "so the corrected p-values are missing."
+    )
+  } else {
+    message(
+      "The Westfall-Young correction used the ", b_used, " of ", b_total,
+      " simulated datasets in which every comparison could be computed. ",
+      "Corrected p-values cannot be smaller than ", floor_mult, "/(", b_used,
+      "+1) = ", .fmt_small(min(1, floor_mult / (b_used + 1))), "."
+    )
+  }
+  invisible(NULL)
+}
+
+#' Equal-tailed bootstrap p-values (`.bootstrap_pvalues(tail = "split")`)
+#'
+#' Two one-sided tests on the studentised values, each at alpha/2, reported
+#' as one two-sided p-value: twice the smaller one-sided value, capped at 1.
+#' Validated for the item-restscore test in
+#' `dev/HANDOFF-restscore-equal-tails.md` (`split_t_pooled`).
+#'
+#' @param nm Comparison names.
+#' @param t_obs,t_sim Studentised observed vector and simulated matrix.
+#' @param correction As in `.bootstrap_pvalues()`.
+#' @return As `.bootstrap_pvalues()`, with a `direction` column.
+#' @keywords internal
+#' @noRd
+.split_pvalues <- function(nm, t_obs, t_sim, correction) {
+  # One-sided Monte-Carlo p-values, (1 + count) / (B_i + 1), over each
+  # comparison's non-missing simulated values (UM1). A comparison with fewer
+  # than two of them already has t_obs = NA from the zero-variance guard.
+  p_tails <- vapply(
+    seq_along(nm),
+    function(i) {
+      if (is.na(t_obs[i])) {
+        return(c(NA_real_, NA_real_))
+      }
+      x <- t_sim[!is.na(t_sim[, i]), i]
+      c(1 + sum(x >= t_obs[i]), 1 + sum(x <= t_obs[i])) / (length(x) + 1)
+    },
+    numeric(2)
+  )
+  p_hi <- p_tails[1L, ]
+  p_lo <- p_tails[2L, ]
+  p_marg <- pmin(1, 2 * pmin(p_hi, p_lo))
+
+  if (correction == "fwer") {
+    padj_hi <- .wy_stepdown(t_obs, t_sim)
+    padj_lo <- .wy_stepdown(-t_obs, -t_sim)
+    b_used <- attr(padj_hi, "B")
+    # Never below the raw one-sided p-value (see UM12 in .bootstrap_pvalues()).
+    padj_hi <- pmax(as.numeric(padj_hi), p_hi)
+    padj_lo <- pmax(as.numeric(padj_lo), p_lo)
+    padj <- pmin(1, 2 * pmin(padj_hi, padj_lo))
+    upper <- padj_hi <= padj_lo
+    .wy_attrition_message(b_used, nrow(t_sim), floor_mult = 2L)
+  } else {
+    padj <- switch(
+      correction,
+      none = p_marg,
+      fdr_bh = stats::p.adjust(p_marg, method = "BH"),
+      fdr_by = stats::p.adjust(p_marg, method = "BY")
+    )
+    upper <- p_hi <= p_lo
+  }
+
+  data.frame(
+    name = nm,
+    p = p_marg,
+    padj = padj,
+    direction = ifelse(is.na(upper), NA_character_,
+                       ifelse(upper, "upper", "lower")),
     stringsAsFactors = FALSE,
     row.names = NULL
   )
@@ -150,6 +251,19 @@
     return("p = NA")
   }
   if (p < 0.001) "p < 0.001" else paste0("p = ", sprintf("%.3f", p))
+}
+
+#' Format a p-value column for a table: 4 decimals, "< 0.0001" below that
+#'
+#' @param p Numeric vector of p-values.
+#' @return Character vector, "" for `NA`.
+#' @keywords internal
+#' @noRd
+.format_p_table <- function(p) {
+  out <- formatC(p, format = "f", digits = 4)
+  out[!is.na(p) & p < 0.0001] <- "< 0.0001"
+  out[is.na(p)] <- ""
+  out
 }
 
 #' Format a small number as a plain decimal for prose
@@ -523,15 +637,20 @@
 #' `1 / (B + 1) < alpha` whatever `m` is (`.wy_min_iterations()`, 20 at
 #' `alpha = .05`), which is why it is the default correction.
 #'
+#' Under the equal-tailed test (`.bootstrap_pvalues(tail = "split")`) the
+#' floor is `2 / (B + 1)`, so every `1` above becomes `floor_mult = 2`.
+#'
 #' @param m Number of comparisons.
 #' @param correction One of `"fdr_bh"`, `"fdr_by"`, `"fwer"` or `"none"`.
 #' @param alpha Significance level.
+#' @param floor_mult Smallest Monte Carlo p-value in units of `1 / (B + 1)`:
+#'   1 (default), or 2 for the equal-tailed test.
 #' @return Integer iterations needed for a single standout comparison to be
 #'   rejectable, or `NULL` when the correction has no such floor beyond the
 #'   trivial one.
 #' @keywords internal
 #' @noRd
-.fdr_min_iterations <- function(m, correction, alpha = 0.05) {
+.fdr_min_iterations <- function(m, correction, alpha = 0.05, floor_mult = 1L) {
   if (!correction %in% c("fdr_bh", "fdr_by")) {
     return(NULL)
   }
@@ -539,10 +658,12 @@
     return(NULL)
   }
   penalty <- if (identical(correction, "fdr_by")) sum(1 / seq_len(m)) else 1
-  # Mirrors how p.adjust() forms the value, `q * n/i * p` with `p = 1/(b+1)`,
-  # so that the two agree in the last bit when `m / alpha` is a whole number.
-  reachable <- function(b) (penalty * m) * (1 / (b + 1)) < alpha
-  b <- max(1, floor(penalty * m / alpha) - 1)
+  # Mirrors how p.adjust() forms the value, `q * n/i * p` with
+  # `p = floor_mult/(b+1)`, so that the two agree in the last bit when
+  # `m / alpha` is a whole number. (Doubling is exact in binary, so
+  # 2 * (1/(b+1)), as .split_pvalues() forms it, equals 2/(b+1).)
+  reachable <- function(b) (penalty * m) * (floor_mult / (b + 1)) < alpha
+  b <- max(1, floor(penalty * m * floor_mult / alpha) - 1)
   while (!reachable(b)) b <- b + 1
   while (b > 1 && reachable(b - 1)) b <- b - 1
   as.integer(b)
@@ -552,15 +673,18 @@
 #'
 #' Its smallest adjusted p-value is `1 / (B + 1)`, and flagging tests
 #' `padj < alpha` strictly, so `B = 1 / alpha - 1` lands exactly on `alpha`
-#' and one more iteration is needed (20 at `alpha = .05`).
+#' and one more iteration is needed (20 at `alpha = .05`). Under the
+#' equal-tailed test the floor is `2 / (B + 1)` (40 at `alpha = .05`).
 #'
 #' @param alpha Significance level.
+#' @param floor_mult Smallest adjusted p-value in units of `1 / (B + 1)`:
+#'   1 (default), or 2 for the equal-tailed test.
 #' @return Integer iterations.
 #' @keywords internal
 #' @noRd
-.wy_min_iterations <- function(alpha = 0.05) {
-  b <- max(1, ceiling(1 / alpha) - 1)
-  while (!(1 / (b + 1) < alpha)) b <- b + 1
+.wy_min_iterations <- function(alpha = 0.05, floor_mult = 1L) {
+  b <- max(1, ceiling(floor_mult / alpha) - 1)
+  while (!(floor_mult / (b + 1) < alpha)) b <- b + 1
   as.integer(b)
 }
 
@@ -577,6 +701,8 @@
 #' @param alpha Significance level.
 #' @param unit Plural noun for what is being compared.
 #' @param fn Name of the cutoff function whose `iterations` should be raised.
+#' @param floor_mult Smallest bootstrap p-value in units of `1 / (B + 1)`:
+#'   1 (default), or 2 for the equal-tailed test.
 #' @return Invisibly `NULL`, called for its side effect.
 #' @keywords internal
 #' @noRd
@@ -586,9 +712,10 @@
   correction,
   alpha = 0.05,
   unit = "comparisons",
-  fn = "RMitemInfitCutoff()"
+  fn = "RMitemInfitCutoff()",
+  floor_mult = 1L
 ) {
-  need <- .fdr_min_iterations(m, correction, alpha)
+  need <- .fdr_min_iterations(m, correction, alpha, floor_mult)
   if (is.null(need) || is.null(n_iter) || !is.finite(n_iter) || n_iter >= need) {
     return(invisible(NULL))
   }
@@ -602,10 +729,12 @@
     label,
     " threshold is out of reach of ",
     n_iter,
-    " iterations. A bootstrap p-value cannot be smaller than 1/(",
+    " iterations. A bootstrap p-value cannot be smaller than ",
+    floor_mult,
+    "/(",
     n_iter,
     "+1) = ",
-    .fmt_small(1 / (n_iter + 1), 3L),
+    .fmt_small(floor_mult / (n_iter + 1), 3L),
     ", and over ",
     m,
     " ",
@@ -619,13 +748,15 @@
     " iterations. Several extreme ",
     unit,
     " lower that requirement, since the smallest attainable adjusted p-value ",
-    "is ", if (by) "c(m)m/(s(B+1)), with c(m) = 1 + 1/2 + ... + 1/m," else "m/(s(B+1))",
+    "is ",
+    if (floor_mult == 1) "" else floor_mult,
+    if (by) "c(m)m/(s(B+1)), with c(m) = 1 + 1/2 + ... + 1/m," else "m/(s(B+1))",
     " for s of them at the floor. Raise `iterations` in ",
     fn,
     " to at least ",
     need,
     ", or use the default correction = \"fwer\", which needs ",
-    .wy_min_iterations(alpha),
+    .wy_min_iterations(alpha, floor_mult),
     " iterations whatever the number of ",
     unit,
     ".",

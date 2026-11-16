@@ -3,6 +3,7 @@
 S3method(base::print,RMlocdepGamma)
 S3method(knitr::knit_print,RMlocdepGamma)
 export(RMUreliability)
+export(RMdifAnchor)
 export(RMdifGamma)
 export(RMdifGammaCutoff)
 export(RMdifGammaPlot)

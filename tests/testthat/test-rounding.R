@@ -83,6 +83,9 @@ test_that("every numeric column shown in a kable has a rounding rule", {
     q(RMpersonParameters(df)),
     q(RMscoreSE(df, output = "kable")),
     q(RMdifLR(df, dif_var = grp)),
+    q(RMdifAnchor(df, dif_var = grp, n_seeds = 5)),
+    q(RMdifAnchor(df, dif_var = grp, level = "spacing")),
+    q(RMdifAnchor(df, dif_var = grp, level = "threshold", n_seeds = 5)),
     q(RMpersonFit(df, iterations = 10, seed = 1))
   ))
 

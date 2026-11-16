@@ -239,3 +239,97 @@ Three new tests at the end of test-dif_lr.R (polytomous, n = 300, 5 items, two g
 - **DL4 fit failure:** `.cml_fit()` mocked with `local_mocked_bindings()`. A failure in the full fit gives "CML estimation failed in the full sample (boom). Small or sparse groups ...", and one in the first group fit names group 'a'.
 
 test-dif_lr.R passes. Unit status: dif_lr done.
+
+## Development: difference plot (user request, 2026-11-13, uncommitted)
+
+`RMdifLR(output = "ggplot", plot_type = "differences", reference = NULL)`.
+- Plots each group's location minus the reference group's (first level by default), with a CI from sqrt(SE_g^2 + SE_ref^2). There is one panel per comparison, and one row of panels per item at threshold level.
+- Points beyond `cutoff` differ in colour, shape and line type. With `cutoff = NULL` there are no cutoff lines and no legend.
+- The caption says the intervals are not corrected for multiplicity.
+- New internal helpers: `lr_differences()` and `render_lr_diff_ggplot()`.
+- Other outputs are unchanged. The help text has a Details paragraph and an example. NEWS was updated.
+- The README's two RMdifLR lines still said eRm and were updated.
+- Tests: 3 new in test-dif_lr.R (137 pass).
+- Background: the sketch is in dev/dif_lr_diffplot/, and the anchored Wald test study is in dev/dif_lr_wald/.
+
+Follow-up (user: fix both, 2026-11-13).
+- `RMitemCatProb()` no longer requires eRm: the stale `requireNamespace()` stop was removed, along with the 21 `skip_if_not_installed("eRm")` lines in test-item_cat_prob.R, which used no eRm data. 42 tests pass, and NEWS has a bullet.
+- eRm was already in Suggests, not Imports as noted above. Every test and example that uses its datasets is guarded.
+- Other test files still skip without eRm while using no eRm data (e.g. test-conditional_infit.R). This is harmless and was left as is.
+
+## Development: anchored Wald tests (user: go ahead as proposed, 2026-11-13, uncommitted)
+
+`RMdifLR(p_value = FALSE, correction = c("fwer", "fdr_bh", "fdr_by", "none"), alpha = 0.05)`.
+- **Method.** Two groups and item level only (stops otherwise). Forward anchor with MTT selection via `psychotools::anchortest()`. DIF is the second level minus the first. `"fwer"` is the multcomp single-step adjustment, and the FDR options use `p.adjust()`.
+- **Output.** New columns DIF, SE_DIF, p, padj and Anchor. `Flagged` means padj < alpha. The `anchor` attribute holds the anchor items and the untested item.
+  - The kable caption names the anchor and the correction.
+  - The difference plot shows anchored differences, marked as anchor items, not flagged, or flagged. The untested item is omitted and named in the caption.
+  - A failure in the Wald step warns and leaves NA.
+- **Seed.** anchorselect() breaks ties at random with `sample()`. (Corrected 2026-11-14: an earlier note said "as published (Kopf et al. 2015a)", but neither Kopf paper nor the psychotools help says so. Only the source shows it.) A fixed internal seed (`.with_local_seed()`, which restores the caller's `.Random.seed`) makes results reproducible.
+  - Across 50 seeds on 4 simulated datasets (10 x 4, n = 300 per group, 3 DIF items), the flags were identical in 3 datasets. In the 4th, one real DIF item was missed under 8 of 50 seeds.
+  - Raised for the defaults discussion.
+- **Docs.** Details paragraphs on method, assumption and simulation, plus references: Glas & Verhelst (chap. 5, no DOI, as in psychotools), Hothorn 2008, Kopf 2015a/b, Strobl 2021, Wang 2004. The DOIs were checked against the PDFs or the psychotools help.
+- multcomp was added to Suggests. NEWS updated.
+- Tests: 6 new (anchortest match, corrections, RNG and reproducibility, guards, kable, plot, failure path). test-dif_lr all pass, test-rounding passes.
+- Also fixed: the kable bolding turned empty cells into "****".
+
+## Redesign decided 2026-11-14 (not implemented yet)
+
+- **`RMdifLR()` becomes the LR test only.** It keeps Andersen's LR test for any number of groups (χ², df, p, n per group), kable/dataframe output and the input checks. It drops the per-group location table, `MaxDiff`, `cutoff`, `Flagged`, `output = "ggplot"` (both plots), `level`, `sort`, `conf`, `reference`, and the Wald arguments added 2026-11-13. This is a clean break, documented in NEWS. No plot is kept, not even a descriptive one, because the risk of misreading it is too high. In the release that ships this, a once-per-session message points to `RMdifAnchor()`. Reason: the LR test is invariant to the scale normalisation, but every per-item comparison needs an anchor, and the centred one produces artificial DIF (dev/dif_lr_wald).
+- **New `RMdifAnchor()`.** Two groups. Anchors forward (MTT, default) and Gini (Strobl et al. 2021), plus the Gini criterion plot. Item level: the anchored Wald tests moved from RMdifLR. Threshold level: the spacing test (DSF, no anchor) and the anchored threshold differences. The simulation for the threshold level comes first: dev/dif_anchor_threshold/.
+- **Correction found.** Our "constant, Gini, length 1" arm in dev/dif_lr_wald is Strobl et al.'s anchor point (their Appendix F: every optimum falls on a single item). The README there said otherwise and was corrected.
+- **Still to fix.** The Kopf 2015a/b labels turned out to be consistent (see dev/dif_anchor_threshold/README.md), but the tie-break sentence in R/dif_lr.R cites Kopf 2015a for something only the psychotools source shows. The jamovi module (`easyRasch2jmv/R/lrdif.b.R`) uses the table and plot. It pins easyRasch2 by SHA, so it is unaffected until the pin moves, and it needs its own redesign then. The vignette (`vignettes/easyRasch2.Rmd:550`) uses `level = "threshold", output = "ggplot"`. Check which normalisation `RMdifTree()` uses for its node parameters.
+
+## RMdifAnchor() design approved (user, 2026-11-15, not implemented yet)
+
+Evidence: `dev/dif_anchor_tests.qmd` (Studies 1-3, audited and fixed 2026-11-15).
+
+```r
+RMdifAnchor(data, dif_var,
+            anchor = c("forward", "gini"), n_seeds = 100, seed = <fixed integer>,
+            level = c("item", "spacing", "threshold"),
+            output = c("kable", "dataframe", "ggplot"),
+            plot_type = c("differences", "criterion"),
+            correction = c("fwer", "holm", "fdr_bh", "none"),
+            alpha = 0.05, conf = 0.95, reference = NULL, sort = FALSE)
+```
+
+- Two groups only; stop with a pointer to RMdifLR()/RMdifTree() otherwise. Missing dif_var dropped with a message. Reuse `.check_group_categories()`.
+- Forward = consensus over `n_seeds` tie-break orderings (items with inclusion frequency >= .5), via exported `psychotools::anchor()` per seed (no `:::`; 100 seeds took 0.6 s for 10 items, 7.9 s for 40 in the container). Gini = Strobl anchor point.
+- Every item tested when the anchor has 2+ items (no untested reference item). Single-item Gini anchor: that item untested.
+- Item table reports inclusion frequency; message naming items with frequency in (.4, .6).
+- `level` picks one table; each level its own correction family. No size cutoff.
+- `"criterion"` plot: Gini curve, available with either anchor.
+- Seed: exposed `seed` argument with a fixed integer default, run through `.with_local_seed()` so the caller's RNG is untouched. `NULL` = use the current RNG stream. Deliberate exception to the package's `seed = NULL` default for simulation functions: this is a test result that should not change between runs. Covers both the tie-break orderings and multcomp's pmvnorm.
+- RMdifLR(): LR test only, once-per-session message to RMdifAnchor(), Wald code moves, fix the tie-break citation (no published source; psychotools source only).
+- Documented as not covered: >2 groups, DIF sizes other than 0.6, unequal n with dichotomous items, contamination from several small undetected shifts (location FWER up to .097), fixed-length anchors.
+- psychotools forward class detail for the docs: anchor grows while shorter than 0.8 x the number of non-significant tests, top 10% of the ranking skipped as first candidates; MTT criterion is a count, so ties are common.
+
+## RMdifAnchor() implemented (2026-11-15, uncommitted)
+
+- `R/dif_anchor.R`: as approved above, `seed = 20260113L` (same value RMdifLR uses internally). Consensus via exported `psychotools::anchor()` in one seeded stream (0.13 s on pcmdat2, 0.5 s on 10 items x 800). Single-step by Monte Carlo (10,000 draws from the joint normal, base R eigen root, no new dependency, multcomp not needed); spacing uses min-p. The untested Gini anchor item gets DIF/SE/p NA.
+- Validated against the prototype (`dev/dif_anchor_threshold/dif_thresh.R`): location, threshold and spacing statistics identical (difference 0); against `psychotools::anchortest()` for the same anchor (test).
+- `tests/testthat/test-dif_anchor.R`: 50 expectations, all pass. RMdifAnchor added to `test-rounding.R` (passes with NOT_CRAN). NEWS, `_pkgdown.yml`, README updated. roxygen2 8.0.0 used.
+- Not done yet: RMdifLR shrink to the LR test + once-per-session message (approved 2026-11-14), the tie-break citation in R/dif_lr.R, vignette line 550, jamovi (separate package, ask first).
+
+## RMdifLR() reduced to the LR test (2026-11-15, uncommitted)
+
+- `RMdifLR(data, dif_var, model, output = c("kable", "dataframe"), ...)`. Returns one row (Chisq, df, p, Groups, N, Items, Model) with `attr(, "lr_test")` (now also `n_per_group`). Kable caption gives group sizes; p shown as plain decimals ("< 0.001").
+- Removed arguments (`level`, `cutoff`, `conf`, `sort`, `p_value`, `correction`, `alpha`, `plot_type`, `reference`) and `output = "ggplot"` give an error naming RMdifAnchor(). Once-per-session `rlang::inform()` (id `easyRasch2_difLR_anchor`) points to RMdifAnchor().
+- Removed helpers: lr_fit_summary, build_wide_table, render_lr_kable, render_lr_ggplot, lr_differences, render_lr_diff_ggplot, lr_anchor_wald, lr_wald_sentence, render_lr_wald_ggplot. Kept (used by RMdifAnchor): `.check_group_categories()`, `isTRUE_vec()`, `.with_local_seed()`. The reserved-level clash check went with the wide table.
+- The Kopf tie-break citation is gone with the old docs; RMdifAnchor attributes random tie-breaks to psychotools.
+- Tests: test-dif_lr.R rewritten (20 tests: validation, removed args, once-message, output, LR = eRm::LRtest, NA, categories, edge cases, failed fits). test-dif_anchor, test-category-check, test-rounding pass. Full suite not run.
+- NEWS: one entry for the change; the two dev entries for p_value and plot_type (never released) removed; three older dev entries trimmed of removed features. README, vignette source (`easyRasch2.Rmd.orig`: LR kable + RMdifAnchor item plot + spacing table) updated. The knitted `vignettes/easyRasch2.Rmd` still shows the old call until re-knit on the host (`Rscript vignettes/precompile.R`). `figures/rasch-dif-lr-1.png` becomes unused then.
+- DESCRIPTION: Config/roxygen2/version 8.1.1 (user, 2026-11-15).
+- Still open: jamovi `lrdif.b.R` uses the table/plot; it pins easyRasch2 by SHA, so it breaks only when the pin moves. Ask before crossing the package boundary.
+- 2026-11-15, user: no output hidden in attributes. RMdifLR() dataframe is now complete in its columns: Chisq, df, p, Model, Items, Groups, N, N_excluded, N_incomplete, n_<group>; `attr(, "lr_test")` removed (kable shows the same columns). Tests updated (test-dif_lr.R checks no extra attributes). RMdifAnchor() still has `attr(, "anchor")`: raised with the user.
+- jamovi plan updated: `easyRasch2jmv/dev/PLAN-easyRasch2-next-release.md` sections B (lrdif reduced) and B2 (new anchored analysis, design decisions for the user).
+- 2026-11-16, user: `RMdifAnchor(output = "list")` added: `table`, `settings` (one row: method, anchor items, untested, N_seeds, Seed, Level, Correction, Alpha, Conf, Comparison, Reference, Items, N, N_excluded, N_incomplete, n_<group>), `distances` (spacing level, else NULL), `criterion` (Item, Location_diff, Gini). `attr(, "anchor")` removed from the dataframe; kable/ggplot unchanged. test-dif_anchor 17 tests pass; jamovi plan B2 updated to read the list.
+
+## Review findings DA1-DA10 fixed (2026-11-16)
+
+See `dif-anchor.md`, "Fixes applied". Shared DIF helpers now live in `R/utils-dif.R`. Outputs unchanged.
+
+## Second-round findings DA11-DA18 fixed (2026-11-16)
+
+See `dif-anchor.md`, "Second-round fixes applied". Table p-values now use 4 decimals ("< 0.0001") in both DIF functions. DA19 is the vignette re-knit.

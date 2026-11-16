@@ -1,0 +1,187 @@
+Design: 72 cells x 1000 replications on 10 cores, B = 5000, 200 seeds per set
+[11:45] cell  1/72  n=150 equal   10x4 null     ok 976/1000  0.7 min
+[11:46] cell  2/72  n=300 equal   10x4 null     ok 999/1000  0.8 min
+[11:47] cell  3/72  n=600 equal   10x4 null     ok 1000/1000  0.8 min
+[11:48] cell  4/72  n=150 unequal 10x4 null     ok 800/1000  0.6 min
+[11:48] cell  5/72  n=300 unequal 10x4 null     ok 990/1000  0.8 min
+[11:49] cell  6/72  n=600 unequal 10x4 null     ok 1000/1000  0.8 min
+[11:53] cell  7/72  n=150 equal   20x3 null     ok 1000/1000  3.3 min
+[11:56] cell  8/72  n=300 equal   20x3 null     ok 1000/1000  3.3 min
+[11:59] cell  9/72  n=600 equal   20x3 null     ok 1000/1000  3.3 min
+[12:02] cell 10/72  n=150 unequal 20x3 null     ok 991/1000  3.2 min
+[12:06] cell 11/72  n=300 unequal 20x3 null     ok 1000/1000  3.3 min
+[12:09] cell 12/72  n=600 unequal 20x3 null     ok 1000/1000  3.4 min
+[12:10] cell 13/72  n=150 equal   10x4 unif1    ok 984/1000  0.6 min
+[12:10] cell 14/72  n=300 equal   10x4 unif1    ok 1000/1000  0.6 min
+[12:11] cell 15/72  n=600 equal   10x4 unif1    ok 1000/1000  0.7 min
+[12:11] cell 16/72  n=150 unequal 10x4 unif1    ok 814/1000  0.6 min
+[12:12] cell 17/72  n=300 unequal 10x4 unif1    ok 989/1000  0.6 min
+[12:13] cell 18/72  n=600 unequal 10x4 unif1    ok 1000/1000  0.6 min
+[12:16] cell 19/72  n=150 equal   20x3 unif1    ok 1000/1000  3.0 min
+[12:19] cell 20/72  n=300 equal   20x3 unif1    ok 1000/1000  3.1 min
+[12:22] cell 21/72  n=600 equal   20x3 unif1    ok 1000/1000  3.1 min
+[12:25] cell 22/72  n=150 unequal 20x3 unif1    ok 989/1000  3.1 min
+[12:28] cell 23/72  n=300 unequal 20x3 unif1    ok 1000/1000  3.1 min
+[12:31] cell 24/72  n=600 unequal 20x3 unif1    ok 1000/1000  3.1 min
+[12:32] cell 25/72  n=150 equal   10x4 unif3    ok 974/1000  0.6 min
+[12:33] cell 26/72  n=300 equal   10x4 unif3    ok 1000/1000  0.7 min
+[12:33] cell 27/72  n=600 equal   10x4 unif3    ok 1000/1000  0.9 min
+[12:34] cell 28/72  n=150 unequal 10x4 unif3    ok 759/1000  0.5 min
+[12:35] cell 29/72  n=300 unequal 10x4 unif3    ok 982/1000  0.7 min
+[12:35] cell 30/72  n=600 unequal 10x4 unif3    ok 1000/1000  0.8 min
+[12:38] cell 31/72  n=150 equal   20x3 unif3    ok 1000/1000  2.8 min
+[12:41] cell 32/72  n=300 equal   20x3 unif3    ok 1000/1000  2.7 min
+[12:44] cell 33/72  n=600 equal   20x3 unif3    ok 1000/1000  2.8 min
+[12:47] cell 34/72  n=150 unequal 20x3 unif3    ok 996/1000  2.9 min
+[12:49] cell 35/72  n=300 unequal 20x3 unif3    ok 1000/1000  2.8 min
+[12:52] cell 36/72  n=600 unequal 20x3 unif3    ok 1000/1000  2.8 min
+[12:53] cell 37/72  n=150 equal   10x4 sym1     ok 976/1000  0.7 min
+[12:54] cell 38/72  n=300 equal   10x4 sym1     ok 1000/1000  0.8 min
+[12:54] cell 39/72  n=600 equal   10x4 sym1     ok 1000/1000  0.8 min
+[12:55] cell 40/72  n=150 unequal 10x4 sym1     ok 810/1000  0.7 min
+[12:56] cell 41/72  n=300 unequal 10x4 sym1     ok 981/1000  0.7 min
+[12:57] cell 42/72  n=600 unequal 10x4 sym1     ok 1000/1000  0.8 min
+[13:00] cell 43/72  n=150 equal   20x3 sym1     ok 1000/1000  3.0 min
+[13:03] cell 44/72  n=300 equal   20x3 sym1     ok 1000/1000  3.1 min
+[13:06] cell 45/72  n=600 equal   20x3 sym1     ok 1000/1000  3.1 min
+[13:09] cell 46/72  n=150 unequal 20x3 sym1     ok 988/1000  3.0 min
+[13:12] cell 47/72  n=300 unequal 20x3 sym1     ok 1000/1000  3.1 min
+[13:15] cell 48/72  n=600 unequal 20x3 sym1     ok 1000/1000  3.1 min
+[13:16] cell 49/72  n=150 equal   10x4 nonsym1  ok 985/1000  0.7 min
+[13:17] cell 50/72  n=300 equal   10x4 nonsym1  ok 999/1000  0.8 min
+[13:17] cell 51/72  n=600 equal   10x4 nonsym1  ok 1000/1000  0.8 min
+[13:18] cell 52/72  n=150 unequal 10x4 nonsym1  ok 812/1000  0.6 min
+[13:19] cell 53/72  n=300 unequal 10x4 nonsym1  ok 982/1000  0.8 min
+[13:19] cell 54/72  n=600 unequal 10x4 nonsym1  ok 1000/1000  0.8 min
+[13:22] cell 55/72  n=150 equal   20x3 nonsym1  ok 1000/1000  3.0 min
+[13:25] cell 56/72  n=300 equal   20x3 nonsym1  ok 1000/1000  3.0 min
+[13:28] cell 57/72  n=600 equal   20x3 nonsym1  ok 1000/1000  3.0 min
+[13:31] cell 58/72  n=150 unequal 20x3 nonsym1  ok 986/1000  3.0 min
+[13:34] cell 59/72  n=300 unequal 20x3 nonsym1  ok 1000/1000  3.0 min
+[13:37] cell 60/72  n=600 unequal 20x3 nonsym1  ok 1000/1000  3.0 min
+[13:38] cell 61/72  n=150 equal   10x4 nonsym3  ok 970/1000  0.7 min
+[13:39] cell 62/72  n=300 equal   10x4 nonsym3  ok 1000/1000  0.7 min
+[13:40] cell 63/72  n=600 equal   10x4 nonsym3  ok 1000/1000  0.7 min
+[13:40] cell 64/72  n=150 unequal 10x4 nonsym3  ok 826/1000  0.6 min
+[13:41] cell 65/72  n=300 unequal 10x4 nonsym3  ok 985/1000  0.8 min
+[13:42] cell 66/72  n=600 unequal 10x4 nonsym3  ok 1000/1000  0.8 min
+[13:45] cell 67/72  n=150 equal   20x3 nonsym3  ok 1000/1000  2.9 min
+[13:47] cell 68/72  n=300 equal   20x3 nonsym3  ok 1000/1000  2.9 min
+[13:50] cell 69/72  n=600 equal   20x3 nonsym3  ok 1000/1000  2.8 min
+[13:53] cell 70/72  n=150 unequal 20x3 nonsym3  ok 989/1000  3.0 min
+[13:56] cell 71/72  n=300 unequal 20x3 nonsym3  ok 1000/1000  2.9 min
+[13:59] cell 72/72  n=600 unequal 20x3 nonsym3  ok 1000/1000  2.8 min
+
+Failures (cell, status, count):
+ cell                                                status Freq
+    1                                        empty_category   24
+    2                                        empty_category    1
+    4                                        empty_category  199
+    5                                        empty_category   10
+   10                                        empty_category    9
+   13                                        empty_category   16
+   16                                        empty_category  186
+   17                                        empty_category   11
+   22                                        empty_category   11
+   25                                        empty_category   26
+   28                                        empty_category  241
+   29                                        empty_category   18
+   34                                        empty_category    4
+   37                                        empty_category   24
+   40                                        empty_category  190
+   41                                        empty_category   19
+   46                                        empty_category   12
+   49                                        empty_category   15
+   50                                        empty_category    1
+   52                                        empty_category  188
+   53                                        empty_category   18
+   58                                        empty_category   14
+   61                                        empty_category   30
+   64                                        empty_category  174
+   65                                        empty_category   15
+   70                                        empty_category   11
+    4 error: NAs are not allowed in subscripted assignments    1
+
+FWER and power by method (single-step), mean over cells per scenario:
+       family scenario   method  fwer power
+1   locations  nonsym1 cons_all 0.044 0.142
+2  thresholds  nonsym1 cons_all 0.043 0.381
+3   locations  nonsym3 cons_all 0.057 0.110
+4  thresholds  nonsym3 cons_all 0.051 0.203
+5   locations     null cons_all 0.047    NA
+6  thresholds     null cons_all 0.046    NA
+7   locations     sym1 cons_all 0.046    NA
+8  thresholds     sym1 cons_all 0.041 0.250
+9   locations    unif1 cons_all 0.046 0.795
+10 thresholds    unif1 cons_all 0.044 0.280
+11  locations    unif3 cons_all 0.046 0.706
+12 thresholds    unif3 cons_all 0.042 0.248
+13  locations  nonsym1  cons100 0.048 0.146
+14 thresholds  nonsym1  cons100 0.044 0.381
+15  locations  nonsym3  cons100 0.060 0.112
+16 thresholds  nonsym3  cons100 0.051 0.203
+17  locations     null  cons100 0.051    NA
+18 thresholds     null  cons100 0.046    NA
+19  locations     sym1  cons100 0.050    NA
+20 thresholds     sym1  cons100 0.041 0.251
+21  locations    unif1  cons100 0.049 0.799
+22 thresholds    unif1  cons100 0.044 0.281
+23  locations    unif3  cons100 0.049 0.711
+24 thresholds    unif3  cons100 0.041 0.248
+25  locations  nonsym1  cons200 0.047 0.146
+26 thresholds  nonsym1  cons200 0.043 0.381
+27  locations  nonsym3  cons200 0.061 0.112
+28 thresholds  nonsym3  cons200 0.051 0.203
+29  locations     null  cons200 0.051    NA
+30 thresholds     null  cons200 0.046    NA
+31  locations     sym1  cons200 0.050    NA
+32 thresholds     sym1  cons200 0.041 0.250
+33  locations    unif1  cons200 0.050 0.799
+34 thresholds    unif1  cons200 0.044 0.280
+35  locations    unif3  cons200 0.050 0.710
+36 thresholds    unif3  cons200 0.042 0.248
+37  locations  nonsym1   cons50 0.048 0.146
+38 thresholds  nonsym1   cons50 0.043 0.382
+39  locations  nonsym3   cons50 0.060 0.113
+40 thresholds  nonsym3   cons50 0.051 0.203
+41  locations     null   cons50 0.051    NA
+42 thresholds     null   cons50 0.046    NA
+43  locations     sym1   cons50 0.050    NA
+44 thresholds     sym1   cons50 0.042 0.250
+45  locations    unif1   cons50 0.049 0.799
+46 thresholds    unif1   cons50 0.044 0.281
+47  locations    unif3   cons50 0.050 0.710
+48 thresholds    unif3   cons50 0.041 0.248
+49  locations  nonsym1     gini 0.013 0.057
+50 thresholds  nonsym1     gini 0.021 0.253
+51  locations  nonsym3     gini 0.023 0.047
+52 thresholds  nonsym3     gini 0.027 0.145
+53  locations     null     gini 0.011    NA
+54 thresholds     null     gini 0.023    NA
+55  locations     sym1     gini 0.014    NA
+56 thresholds     sym1     gini 0.020 0.170
+57  locations    unif1     gini 0.010 0.609
+58 thresholds    unif1     gini 0.019 0.196
+59  locations    unif3     gini 0.018 0.563
+60 thresholds    unif3     gini 0.018 0.179
+61  locations  nonsym1   single 0.047 0.146
+62 thresholds  nonsym1   single 0.044 0.381
+63  locations  nonsym3   single 0.060 0.112
+64 thresholds  nonsym3   single 0.051 0.202
+65  locations     null   single 0.050    NA
+66 thresholds     null   single 0.046    NA
+67  locations     sym1   single 0.049    NA
+68 thresholds     sym1   single 0.041 0.250
+69  locations    unif1   single 0.050 0.797
+70 thresholds    unif1   single 0.044 0.279
+71  locations    unif3   single 0.048 0.705
+72 thresholds    unif3   single 0.041 0.246
+
+Reproducibility (seed set A vs B), mean over cells:
+    S same_set same_ref loc_same thr_same
+1   1    0.375    0.359    0.967    0.963
+2  50    0.731    0.451    0.988    0.986
+3 100    0.770    0.473    0.989    0.988
+4 200    0.793    0.475    0.991    0.989
+
+Total run time: 134.2 min

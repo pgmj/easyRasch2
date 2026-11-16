@@ -171,9 +171,6 @@ RMitemCatProb <- function(
       call. = FALSE
     )
   }
-  if (!requireNamespace("eRm", quietly = TRUE)) {
-    stop("Package 'eRm' is required for RMitemCatProb().", call. = FALSE)
-  }
   if (
     label_curves == "path" &&
       !requireNamespace("geomtextpath", quietly = TRUE)

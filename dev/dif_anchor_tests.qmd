@@ -1,0 +1,595 @@
+---
+title: "Anchored DIF tests for two groups"
+subtitle: "Item- and threshold-level Wald tests with forward and Gini anchors and a multiplicity correction"
+author: "Magnus Johansson"
+date: today
+bibliography: dif-anchor-refs.bib
+csl: apa.csl
+---
+
+```{r setup}
+#| include: false
+library(ggplot2)
+library(knitr)
+
+# Study 1 (item locations): dif_lr_wald/dif_wald_sim.R, run 2026-11-13.
+s1 <- read.csv(file.path("dif_lr_wald", "dif_wald_sim_summary.csv"))
+s1$Anchor <- factor(s1$Anchor, levels = c("centred", "forward", "constant"),
+                    labels = c("Centred", "Forward (MTT)", "Gini"))
+s1$scenario <- factor(s1$scenario, levels = c("null", "one", "unbal3", "bal2"),
+                      labels = c("No DIF", "One DIF item",
+                                 "Three DIF items, same direction",
+                                 "Two DIF items, opposite directions"))
+s1$structure <- factor(s1$structure, levels = c("10x4", "20x2"),
+                       labels = c("10 items, 4 categories",
+                                  "20 dichotomous items"))
+s1$impact_lab <- factor(s1$impact, levels = c(0, 0.5),
+                        labels = c("Impact 0", "Impact 0.5"))
+
+# Study 2 (thresholds, unequal sizes, tie-breaks):
+# dif_anchor_threshold/dif_thresh_sim.R, host run 2026-11-15.
+s2_file <- file.path("dif_anchor_threshold", "dif_thresh_sim_slim.rds")
+has_s2 <- file.exists(s2_file)
+
+# Okabe-Ito colours, with line type and shape per series.
+anchor_cols <- c("Centred" = "#E69F00", "Forward (MTT)" = "#0072B2",
+                 "Gini" = "#009E73")
+anchor_lty <- c("Centred" = "dashed", "Forward (MTT)" = "solid",
+                "Gini" = "dotdash")
+anchor_shp <- c("Centred" = 17, "Forward (MTT)" = 16, "Gini" = 15)
+scale_anchor <- list(
+  scale_colour_manual(values = anchor_cols, name = "Anchor"),
+  scale_linetype_manual(values = anchor_lty, name = "Anchor"),
+  scale_shape_manual(values = anchor_shp, name = "Anchor")
+)
+theme_set(theme_bw(base_size = 10) +
+            theme(legend.position = "bottom",
+                  panel.spacing = unit(0.5, "cm")))
+
+r3 <- function(x) sub("^0", "", formatC(x, format = "f", digits = 3))
+rng <- function(x) paste0(r3(min(x)), " to ", r3(max(x)))
+# Upper limit of the Monte-Carlo band for a rate of .05 with `reps` valid replications.
+upper <- function(reps) 0.05 + 1.96 * sqrt(0.05 * 0.95 / reps)
+above <- function(fwer, reps) fwer > upper(reps)
+pick <- function(d, ...) {
+  cond <- list(...)
+  for (nm in names(cond)) d <- d[d[[nm]] %in% cond[[nm]], , drop = FALSE]
+  d
+}
+```
+
+## Purpose
+
+`RMdifLR()` reports Andersen's likelihood-ratio test [@andersen1973] together with per-group item and threshold locations, and it flags items whose largest location difference exceeds a fixed cutoff. The locations are centred within each group, so every item is compared with the mean of all items. When the DIF in a test is unbalanced, the mean item moves too, and items without DIF show an apparent difference. This is the artificial DIF described by @andrich2012.
+
+Comparing items between groups requires an anchor. The scale of a Rasch model has no natural origin, so each group's item parameters can only be compared after the two scales have been linked. The LR test itself compares likelihoods and needs no anchor, but every per-item comparison does. These studies evaluate the replacement planned for `RMdifAnchor()`. Items are compared through an anchor chosen from the data, each comparison gets a Wald test [@glas1995], and the p-values are corrected across items or thresholds.
+
+Study 1 covers item locations. Study 2 covers thresholds, unequal group sizes, and how much the results depend on random tie-breaks in the anchor selection. Study 3 checks a consensus anchor over many tie-breaks.
+
+## Background
+
+### Anchors
+
+The studies compare three anchors.
+
+1. **Centred.** All items, with the locations centred in each group. This is the scale `RMdifLR()` uses today. It is equivalent to the equal-mean-difficulty method in @wang2004. The all-other anchor gives the same z statistics, since an item's difference from the mean of all items is $(k-1)/k$ times its difference from the mean of the others.
+2. **Forward (MTT).** The iterative forward class of @kopf2015framework with the mean test statistic threshold selection of @kopf2015selection. Each item is first tested against several provisional anchors (auxiliary tests), and the items are ranked by how often their test statistic exceeds a threshold based on the mean test statistics. The anchor then grows along this ranking, one item at a time, while it is shorter than the number of items without a significant test against the current anchor [@kopf2015framework]. In psychotools the limit is 0.8 times that number, and the top 10% of the ranking are skipped as first candidates. A candidate's own test is not checked before it enters, so an item with a small shift can enter the anchor.
+3. **Gini.** The anchor point of @strobl2021. The second group's item parameters are shifted along the scale, and the shift that maximises the Gini index of the absolute item-wise differences is chosen. That is the position where a few items differ a lot and the rest overlap. @strobl2021 [Online Appendix F] show that every optimum of the criterion lies where one item's parameters coincide in the two groups, so the anchor point is always a single anchor item. In psychotools this is `anchor(class = "constant", select = "Gini")`, which by default has length 1.
+
+Forward and Gini both assume that most items are free of DIF, and this cannot be tested. When a majority of items share the same DIF, treating them as the reference is an equally valid solution [@strobl2021].
+
+Anchor length is a trade-off. A longer anchor gives more power if it is free of DIF, but a contaminated anchor produces artificial DIF. @teresi2016, summarising @wang2004 and others, report a recommendation of at least four anchor items. The forward anchor grows as long as the data allow. The Gini anchor point is always one item, which @strobl2021 note may cost power.
+
+Both are computed with `psychotools::anchortest()` or `psychotools::anchor()`. The first anchor item fixes the scale and is not tested, so $k - 1$ items get a test. When items tie in the ranking, psychotools orders them at random. The forward ranking criterion is a count, so ties are common. The Gini criterion is continuous, and ties are rare.
+
+### Item locations and thresholds
+
+In the partial credit model, threshold $k$ of item $i$ in group $g$ can be written as
+
+$$
+\delta_{ikg} = \beta_{ig} + \tau_{ikg},
+$$
+
+where $\beta_{ig}$ is the item location (the mean of the item's thresholds) and the $\tau_{ikg}$ sum to zero within the item. @henninger2025 distinguish two ways an item can differ between groups. With DIF, every threshold moves by the same amount, so the location moves and the spacing stays the same. With differential step functioning (DSF), the thresholds move by different amounts. Non-symmetric DSF also moves the location. Symmetric DSF leaves the location unchanged and changes only the spacing.
+
+Fixing a group's scale adds one constant to every $\delta_{ikg}$ in that group. The constant ends up in $\beta_{ig}$ and leaves the $\tau_{ikg}$ unchanged. Group differences in threshold spacing can therefore be tested without an anchor, and they cannot be affected by artificial DIF. Differences in location, and in the thresholds themselves, need an anchor.
+
+### Multiplicity correction
+
+Each study tests every item or threshold, so the family-wise error rate (FWER) is the share of datasets where at least one unit without DIF is flagged. The `"fwer"` correction is the single-step max-|z| adjustment [@hothorn2008], which uses the correlation between the tests. Holm's step-down is reported as a check. @kopf2015framework, @kopf2015selection and @strobl2021 report per-item false alarm rates for dichotomous items. @wang2004 showed for partial credit items, as well as dichotomous ones, that the equal-mean-difficulty and all-other methods fail when DIF is unbalanced. @teresi2016 note that the Kopf et al. results were for binary Rasch items and that they knew of no such evidence for the graded response model. We did not find a study of the forward or Gini anchors for partial credit items, or of anchor selection followed by a multiplicity correction. These are what the present studies add.
+
+## Study 1: item locations
+
+### Design
+
+```{r s1-design}
+#| include: false
+n_cells1 <- nrow(unique(s1[c("n", "structure", "impact", "scenario")]))
+```
+
+The design has `r n_cells1` cells with 1000 replications each. Two groups are compared.
+
+- **Group size.** 150, 300 or 600 per group, equal in both groups.
+- **Items.** 10 items with 4 categories (locations evenly spaced on [-1.5, 1.5], thresholds at location - 1, location and location + 1), or 20 dichotomous items (locations evenly spaced on [-1.5, 1.5]).
+- **Impact.** Group 2's latent mean is 0 or 0.5. The SD is 1 in both groups.
+- **DIF.** None, one item, three items in the same direction, or two items in opposite directions. DIF is uniform: 0.6 logits added to every threshold of the item in group 2. The DIF items are items 3, 6 and 8 of 10, or 5, 11 and 16 of 20. One DIF item is the first of these, and the balanced pair the first two (+0.6 and -0.6).
+
+Each group is fitted by conditional maximum likelihood with `psychotools::pcmodel()`. Replications with a category unused in either group are skipped, since `RMdifLR()` requires every category to be used. Each replication has its own seed. The code is in `dif_lr_wald/dif_wald.R` (methods) and `dif_lr_wald/dif_wald_sim.R` (simulation). The methods match `psychotools::anchortest()`.
+
+With 1000 valid replications, the Monte-Carlo SE of a rate near .05 is about .007, so values from .036 to .064 are consistent with .05. Cells with skipped replications have a wider band, up to `r r3(upper(min(s1$reps)))` with the `r min(s1$reps)` valid replications of the smallest cell. Counts of cells above the band below use each cell's own number of valid replications. With many cells, about 2.5% are expected above the band by chance alone.
+
+### Calibration without DIF
+
+```{r s1-null}
+#| echo: false
+nul <- pick(s1, scenario = "No DIF")
+nul$items <- ifelse(nul$structure == "20 dichotomous items", "20 x 2", "10 x 4")
+tab <- aggregate(cbind(sd_z_free, fwer_none, fwer_ss, fwer_holm) ~ Anchor + items,
+                 data = nul, FUN = function(x) rng(x))
+names(tab) <- c("Anchor", "Items", "SD of z", "None", "Single-step", "Holm")
+kable(tab, caption = "Calibration without DIF: SD of z for items without DIF, and FWER with no correction, single-step and Holm. Ranges over group size and impact (6 cells per row). Items: 10 x 4 = 10 items with 4 categories, 20 x 2 = 20 dichotomous items.")
+```
+
+Without a correction, at least one item is flagged in `r rng(pick(nul, structure = "10 items, 4 categories", Anchor = "Forward (MTT)")$fwer_none)` of the datasets with 10 items, and `r rng(pick(nul, structure = "20 dichotomous items", Anchor = "Forward (MTT)")$fwer_none)` with 20 items, under the forward anchor. The z statistics of the centred and forward anchors have an SD close to 1. The Gini anchor gives z statistics with an SD of `r rng(pick(nul, Anchor = "Gini")$sd_z_free)` and is conservative.
+
+### Family-wise error rate with DIF
+
+```{r fig-s1-fwer}
+#| echo: false
+#| fig-height: 7.5
+#| fig-cap: "Family-wise error rate with the single-step correction: the share of datasets where at least one item without DIF is flagged. The grey band is .036 to .064, the range consistent with .05 at 1000 valid replications. Panel rows have separate y-axes."
+ggplot(s1, aes(n, fwer_ss, colour = Anchor, linetype = Anchor, shape = Anchor)) +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = 0.036, ymax = 0.064,
+           fill = "grey80", alpha = 0.6) +
+  geom_hline(yintercept = 0.05, colour = "grey40") +
+  geom_line() + geom_point(size = 2) +
+  facet_grid(scenario ~ structure + impact_lab, scales = "free_y",
+             labeller = labeller(scenario = label_wrap_gen(18))) +
+  scale_x_continuous(breaks = c(150, 300, 600)) +
+  scale_anchor +
+  labs(x = "Respondents per group", y = "Family-wise error rate")
+```
+
+```{r s1-fwer-numbers}
+#| include: false
+cen_un <- pick(s1, Anchor = "Centred", scenario = "Three DIF items, same direction",
+               structure = "10 items, 4 categories", impact = 0)
+fwd_all <- pick(s1, Anchor = "Forward (MTT)")
+fwd_max <- fwd_all[which.max(fwd_all$fwer_ss), ]
+fwd_rest <- fwd_all[-which.max(fwd_all$fwer_ss), ]
+cen_bal <- pick(s1, Anchor = "Centred", scenario = "Two DIF items, opposite directions")
+gini_all <- pick(s1, Anchor = "Gini")
+gini_hi <- gini_all[gini_all$fwer_ss > 0.05, ]
+gini_lo <- gini_all[gini_all$fwer_ss <= 0.05, ]
+```
+
+The centred anchor flags items without DIF as soon as DIF is unbalanced, and more often the larger the sample. With three DIF items in the same direction among 10 items (impact 0), the FWER is `r paste(r3(cen_un$fwer_ss[order(cen_un$n)]), collapse = ", ")` at 150, 300 and 600 respondents per group. With balanced DIF it holds (`r rng(cen_bal$fwer_ss)`).
+
+The forward anchor keeps the FWER at `r rng(fwd_rest$fwer_ss)` in every cell but one. The exception is `r r3(fwd_max$fwer_ss)`, with three DIF items in the same direction among 10 items, `r fwd_max$n` respondents per group and impact `r fwd_max$impact`. @strobl2021 report a per-item false alarm rate "notably above" the nominal 5% for the forward anchor when 40% of 40 dichotomous items had DIF in one direction, in small and medium samples. Their measure and design differ, but the pattern is consistent.
+
+The Gini anchor is mostly conservative (`r rng(gini_lo$fwer_ss)`). It exceeds .05 only in `r nrow(gini_hi)` cells, `r if (nrow(gini_hi) == 2L) "both" else "all"` with three DIF items in the same direction among 10 items and `r paste(unique(gini_hi$n), collapse = ", ")` per group (`r paste(r3(sort(gini_hi$fwer_ss)), collapse = " and ")`).
+
+### Power
+
+```{r fig-s1-power}
+#| echo: false
+#| fig-height: 6
+#| fig-cap: "Power with the single-step correction: the mean share of DIF items flagged. The untested first anchor item counts as not flagged."
+pw <- s1[s1$scenario != "No DIF", ]
+ggplot(pw, aes(n, power_ss, colour = Anchor, linetype = Anchor, shape = Anchor)) +
+  geom_line() + geom_point(size = 2) +
+  facet_grid(scenario ~ structure + impact_lab,
+             labeller = labeller(scenario = label_wrap_gen(18))) +
+  scale_x_continuous(breaks = c(150, 300, 600)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  scale_anchor +
+  labs(x = "Respondents per group", y = "Power")
+```
+
+```{r s1-power-numbers}
+#| include: false
+p_un <- pick(s1, scenario = "Three DIF items, same direction",
+             structure = "10 items, 4 categories", impact = 0, n = 300)
+p_bal <- pick(s1, scenario = "Two DIF items, opposite directions",
+              structure = "10 items, 4 categories", impact = 0, n = 150)
+p_one <- pick(s1, scenario = "One DIF item", structure = "20 dichotomous items",
+              impact = 0, n = 300)
+pv <- function(d, a) r3(d$power_ss[d$Anchor == a])
+untested <- pick(s1, Anchor = c("Forward (MTT)", "Gini"))
+```
+
+Forward has the highest power when DIF is unbalanced (`r pv(p_un, "Forward (MTT)")` against `r pv(p_un, "Centred")` for centred, three DIF items among 10, 300 per group). It is close to centred with one DIF item, and below it with balanced DIF (`r pv(p_bal, "Forward (MTT)")` against `r pv(p_bal, "Centred")`, 150 per group). The centred power comes with the inflated error rate shown above whenever DIF is unbalanced.
+
+Gini has less power than forward in small and medium samples. With one DIF item among 20 dichotomous items and 300 per group, it finds `r pv(p_one, "Gini")` against `r pv(p_one, "Forward (MTT)")` for forward. With 10 items and 600 per group the two are close (`r rng(pick(s1, Anchor = "Gini", structure = "10 items, 4 categories", n = 600)$power_ss[pick(s1, Anchor = "Gini", structure = "10 items, 4 categories", n = 600)$scenario != "No DIF"])` for Gini). @strobl2021 also found lower hit rates for the Gini index than for the forward anchor when 20% or 40% of the items had DIF in one direction. With 60% the Gini index had the highest hit rates. In their balanced setting both inequality criteria were outperformed, and they suggest that single-item anchors, which are more affected by sampling error, may play a part.
+
+A DIF item was the untested first anchor item in up to `r r3(max(untested$dif_untested[untested$Anchor == "Forward (MTT)"], na.rm = TRUE))` of replications per cell for forward and `r r3(max(untested$dif_untested[untested$Anchor == "Gini"], na.rm = TRUE))` for Gini.
+
+### Run notes
+
+```{r s1-status}
+#| include: false
+st1 <- readRDS(file.path("dif_lr_wald", "dif_wald_sim_slim.rds"))$status
+skip <- aggregate(status ~ cell + n + structure + impact, data = st1,
+                  FUN = function(x) mean(x == "empty_category"))
+skip_max <- skip[which.max(skip$status), ]
+skip_max$structure <- c("10x4" = "10 items with 4 categories",
+                        "20x2" = "20 dichotomous items")[skip_max$structure]
+err <- st1$status[grepl("^error", st1$status)]
+n_total1 <- format(nrow(st1), big.mark = ",")
+n_err_word <- c("No", "One", "Two", "Three")[min(length(err), 3L) + 1L]
+rm(st1)
+```
+
+Replications with an unused category in either group were skipped, up to `r round(100 * skip_max$status)`% of them (`r skip_max$structure`, `r skip_max$n` per group, impact `r skip_max$impact`). Results there are conditional on all categories being used. `r n_err_word` of `r n_total1` replications failed with an error (`r paste(unique(sub("^error: ", "", err)), collapse = "; ")`). `RMdifAnchor()` must catch such failures and report them.
+
+## Study 2: thresholds, unequal group sizes and tie-breaks
+
+### Design
+
+The design has 144 cells with 1000 replications each.
+
+- **Group size.** A mean of 150, 300 or 600 per group, either equal or unequal (1.5 n and 0.5 n). Group 2 is the smaller, focal group, with the impact and the DIF. Unequal subgroup sizes and differing latent distributions are among the conditions that make DIF detection harder [@teresi2016].
+- **Items.** 10 items with 4 categories as in Study 1, or 20 items with 3 categories (thresholds at location ± 0.75). DIF items are at the same positions as in Study 1.
+- **Impact.** 0 or 0.5, as in Study 1.
+- **Scenarios**, as shifts of group 2's thresholds per DIF item:
+  - no DIF
+  - uniform DIF in one or three items (every threshold +0.6)
+  - symmetric DSF in one item (lowest threshold -0.6, highest +0.6, location unchanged)
+  - non-symmetric DSF in one or three items (highest threshold +0.6, location +0.2 with three thresholds and +0.3 with two).
+
+Each replication has three families of tests, each with its own correction:
+
+1. **Spacing.** A joint Wald test per item of the group differences in adjacent threshold distances, on $m_i - 1$ df, where $m_i$ is the number of thresholds of item $i$. It needs no anchor. Corrections across items: Holm, BH, and a single-step min-p computed from the joint normal of all contrasts.
+2. **Anchored thresholds.** Each group is shifted so that the mean location of its anchor items is zero, and $\delta_{ik2} - \delta_{ik1}$ is tested per threshold. Corrections across all thresholds: Holm and single-step max-|z|.
+3. **Anchored item locations**, as in Study 1. The prototype reproduces `psychotools::anchortest()` (z identical to within $10^{-14}$).
+
+The single-step adjustments are computed by Monte Carlo, with 5000 draws from the joint normal of the estimates. This is the same adjustment as multcomp's, and it is faster with 30 to 40 correlated tests. On one 10-item dataset, with 20,000 draws, the largest difference from multcomp was .003. With 5000 draws, the Monte-Carlo SE of an adjusted p-value near .05 is about .003.
+
+In the first 250 replications of each cell (fewer valid ones where replications were skipped), the forward and Gini rankings are redone under 20 seeds and compared with the main run. Only the ranking step draws random numbers, so the auxiliary tests are computed once. The Monte-Carlo adjustments use a fixed seed per replication, so a flag can change only through the anchor.
+
+The code is in `dif_anchor_threshold/dif_thresh.R` and `dif_anchor_threshold/dif_thresh_sim.R`.
+
+### Results
+
+```{r s2-prep}
+#| include: false
+s2 <- readRDS(s2_file)
+sm <- s2$summary
+sm$Anchor <- factor(sm$anchor, levels = c("centred", "forward", "gini"),
+                    labels = c("Centred", "Forward (MTT)", "Gini"))
+sc_lev <- c("null", "unif1", "unif3", "sym1", "nonsym1", "nonsym3")
+sc_lab <- c("No DIF", "Uniform DIF, 1 item", "Uniform DIF, 3 items",
+            "Symmetric DSF, 1 item", "Non-symmetric DSF, 1 item",
+            "Non-symmetric DSF, 3 items")
+sm$Scenario <- factor(sm$scenario, levels = sc_lev, labels = sc_lab)
+sm$Items <- factor(sm$structure, levels = c("10x4", "20x3"),
+                   labels = c("10 items, 4 cat.", "20 items, 3 cat."))
+sm$Sizes <- factor(sm$ratio, levels = c("equal", "unequal"),
+                   labels = c("Equal n", "Unequal n"))
+ss <- sm[sm$correction == "ss", ]
+tie <- s2$tie_summary
+tie$Scenario <- factor(tie$scenario, levels = sc_lev, labels = sc_lab)
+
+st2 <- s2$status
+skip2 <- aggregate(status ~ cell + n + ratio + structure + impact, data = st2,
+                   FUN = function(x) mean(x == "empty_category"))
+skip2_max <- skip2[which.max(skip2$status), ]
+err2 <- st2$status[grepl("^error", st2$status)]
+n_total2 <- format(nrow(st2), big.mark = ",")
+rm(st2)
+pct <- function(x) paste0(round(100 * x), "%")
+im <- ss[ss$anchor != "centred", c("family", "anchor", "scenario", "ratio",
+                                   "structure", "n", "impact", "fwer")]
+im <- reshape(im, idvar = c("family", "anchor", "scenario", "ratio", "structure", "n"),
+              timevar = "impact", direction = "wide")
+imp_diff <- max(abs(im$fwer.0.5 - im$fwer.0))
+```
+
+All results use the single-step correction unless stated. Figures show impact 0. Across matched cells, impact 0.5 changed the FWER by at most `r r3(imp_diff)` for the forward and Gini anchors and the spacing test.
+
+#### Spacing tests
+
+```{r fig-s2-spacing}
+#| echo: false
+#| fig-height: 6.5
+#| fig-cap: "Spacing tests (no anchor), impact 0. Top: FWER, the share of datasets where at least one item without a spacing difference is flagged, averaged over the six scenarios (items with uniform DIF have unchanged spacing and count as null). The grey band is .036 to .064. Bottom: power to detect the one symmetric DSF item."
+sp <- sm[sm$family == "spacing" & sm$correction != "none" & sm$impact == 0, ]
+sp$Correction <- factor(sp$correction, levels = c("ss", "holm", "bh"),
+                        labels = c("Single-step", "Holm", "BH"))
+sp_long <- rbind(
+  data.frame(sp[c("n", "Scenario", "Items", "Sizes", "Correction")],
+             what = "FWER", value = sp$fwer),
+  data.frame(sp[c("n", "Scenario", "Items", "Sizes", "Correction")],
+             what = "Power", value = sp$power))
+sp_long <- sp_long[!is.na(sp_long$value), ]
+sp_long <- sp_long[sp_long$what == "FWER" | sp_long$Scenario == "Symmetric DSF, 1 item", ]
+sp_long <- aggregate(value ~ n + Items + Sizes + Correction + what, data = sp_long, FUN = mean)
+sp_long$panel <- interaction(sp_long$Items, sp_long$Sizes, sep = "\n")
+cor_cols <- c("Single-step" = "#0072B2", "Holm" = "#CC79A7", "BH" = "#D55E00")
+cor_lty <- c("Single-step" = "solid", "Holm" = "dashed", "BH" = "dotted")
+cor_shp <- c("Single-step" = 16, "Holm" = 17, "BH" = 4)
+band <- data.frame(what = "FWER", ymin = 0.036, ymax = 0.064, y = 0.05)
+ggplot(sp_long, aes(n, value, colour = Correction, linetype = Correction,
+                    shape = Correction)) +
+  geom_rect(data = band, aes(xmin = -Inf, xmax = Inf, ymin = ymin, ymax = ymax),
+            inherit.aes = FALSE, fill = "grey80", alpha = 0.6) +
+  geom_hline(data = band, aes(yintercept = y), colour = "grey40") +
+  geom_line() + geom_point(size = 1.8) +
+  facet_grid(what ~ panel, scales = "free_y") +
+  scale_x_continuous(breaks = c(150, 300, 600)) +
+  scale_colour_manual(values = cor_cols) + scale_linetype_manual(values = cor_lty) +
+  scale_shape_manual(values = cor_shp) +
+  labs(x = "Respondents per group (mean)", y = NULL)
+```
+
+```{r s2-spacing-numbers}
+#| include: false
+sp_ss <- pick(sm, family = "spacing", correction = "ss")
+sp_holm <- pick(sm, family = "spacing", correction = "holm")
+sp_bh <- pick(sm, family = "spacing", correction = "bh")
+sp_bh_dsf <- pick(sp_bh, scenario = c("sym1", "nonsym1", "nonsym3"))
+sym600 <- pick(sm, family = "spacing", correction = "ss", scenario = "sym1", n = 600)
+sym600_eq <- pick(sym600, ratio = "equal")
+sym600_un <- pick(sym600, ratio = "unequal")
+non600 <- pick(sm, family = "spacing", correction = "ss", scenario = "nonsym1", n = 600)
+```
+
+The spacing test needs no anchor, and its error rate does not depend on the DIF scenario. The FWER is `r rng(sp_ss$fwer)` with the single-step correction and `r rng(sp_holm$fwer)` with Holm, over all `r nrow(sp_ss)` cells. BH controls the false discovery rate, not the FWER. Without DSF it behaves like the others, but with a DSF item in the test its FWER goes up to `r r3(max(sp_bh_dsf$fwer))`.
+
+Power depends on how the thresholds move. One symmetric DSF item is found in `r rng(sym600_eq$power)` of datasets with 600 per group, and in `r rng(sym600_un$power)` with unequal groups of 900 and 300. A non-symmetric shift of one threshold is harder to see in the spacing (`r rng(non600$power)` at 600), where only the highest threshold moves and so only the last distance changes.
+
+#### Anchored tests: error rate
+
+```{r fig-s2-fwer}
+#| echo: false
+#| fig-height: 8
+#| fig-cap: "Anchored tests, impact 0: FWER with the single-step correction for item locations (left four columns) and thresholds (right four). Columns: 10 x 4 = 10 items with 4 categories, 20 x 3 = 20 items with 3 categories, equal or unequal group sizes. The grey band is .036 to .064 (1000 valid replications). Panel rows have separate y-axes."
+fw <- ss[ss$family != "spacing" & ss$impact == 0, ]
+fw$Family <- factor(fw$family, levels = c("locations", "thresholds"),
+                    labels = c("Locations", "Thresholds"))
+fw$panel <- paste0(sub("x", " x ", fw$structure), "\n", fw$ratio, " n")
+ggplot(fw, aes(n, fwer, colour = Anchor, linetype = Anchor, shape = Anchor)) +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = 0.036, ymax = 0.064,
+           fill = "grey80", alpha = 0.6) +
+  geom_hline(yintercept = 0.05, colour = "grey40") +
+  geom_line() + geom_point(size = 1.8) +
+  facet_grid(Scenario ~ Family + panel, scales = "free_y",
+             labeller = labeller(Scenario = label_wrap_gen(14))) +
+  scale_x_continuous(breaks = c(150, 300, 600)) +
+  scale_anchor +
+  theme(strip.text = element_text(size = 7), axis.text.x = element_text(size = 6)) +
+  labs(x = "Respondents per group (mean)", y = "Family-wise error rate")
+```
+
+```{r s2-fwer-numbers}
+#| include: false
+cen_u3 <- pick(ss, anchor = "centred", scenario = "unif3", structure = "10x4",
+               ratio = "equal", impact = 0)
+cen_u3_loc <- pick(cen_u3, family = "locations")
+cen_u3_thr <- pick(cen_u3, family = "thresholds")
+fwd <- pick(ss, anchor = "forward")
+fwd_loc <- pick(fwd, family = "locations")
+fwd_thr <- pick(fwd, family = "thresholds")
+fwd_null <- pick(fwd, scenario = "null")
+fwd_ns3 <- pick(fwd_loc, scenario = "nonsym3", n = 600)
+fwd_u3s <- pick(fwd_loc, scenario = "unif3", n = 150, structure = "10x4")
+fwd_u3l <- pick(fwd_loc, scenario = "unif3", n = 600, structure = "10x4")
+gini <- pick(ss, anchor = "gini")
+gini_loc <- pick(gini, family = "locations")
+gini_thr <- pick(gini, family = "thresholds")
+gini_null <- pick(gini, scenario = "null")
+out_band <- function(d) sum(above(d$fwer, d$reps))
+exc_lab <- c("without DIF", "with one uniform DIF item", "with three uniform DIF items",
+             "with one symmetric DSF item", "with one non-symmetric DSF item",
+             "with three non-symmetric DSF items")
+exc_loc <- table(factor(fwd_loc$scenario[above(fwd_loc$fwer, fwd_loc$reps)], levels = sc_lev, labels = exc_lab))
+exc_loc <- exc_loc[exc_loc > 0]
+ns3_eq <- function(st) pick(fwd_loc, scenario = "nonsym3", structure = st, ratio = "equal", impact = 0)
+ns3_10 <- ns3_eq("10x4"); ns3_20 <- ns3_eq("20x3")
+```
+
+The centred scale fails as in Study 1. With three uniform DIF items among 10 (equal groups, impact 0), its FWER for item locations is `r paste(r3(cen_u3_loc$fwer[order(cen_u3_loc$n)]), collapse = ", ")` at 150, 300 and 600 per group, and for thresholds `r paste(r3(cen_u3_thr$fwer[order(cen_u3_thr$n)]), collapse = ", ")`.
+
+Without DIF, the forward anchor has an FWER of `r rng(pick(fwd_null, family = "locations")$fwer)` for locations and `r rng(pick(fwd_null, family = "thresholds")$fwer)` for thresholds. Over all scenarios, `r out_band(fwd_loc)` of `r nrow(fwd_loc)` location cells and `r out_band(fwd_thr)` of `r nrow(fwd_thr)` threshold cells are above the band for their number of valid replications, against about `r round(0.025 * nrow(fwd_loc), 1)` per family expected by chance. The location cells above the band are `r paste(paste(exc_loc, names(exc_loc)), collapse = ", ")`. The largest values are in two kinds of cells.
+
+- **Non-symmetric DSF in three items.** Each such item moves its location by only 0.2 or 0.3 logits, which the forward selection often misses. At 600 per group, a DSF item is in the anchor in `r rng(fwd_ns3$anchor_locdif)` of datasets, and the location FWER is `r rng(fwd_ns3$fwer)`.
+- **Three uniform DIF items with small samples.** With 10 items and 150 per group, a DIF item is in the anchor in `r rng(fwd_u3s$anchor_locdif)` of datasets, and the location FWER is `r rng(fwd_u3s$fwer)`.
+
+In both, DIF items enter the anchor. With uniform DIF of 0.6 the selection removes them as n grows (a DIF item is in the anchor in `r rng(fwd_u3l$anchor_locdif)` of datasets at 600 per group), and the inflation goes away. The small location shifts of non-symmetric DSF stay in the anchor more often. With 10 items the inflation then grows with n, because the tests get more precise (`r paste(r3(ns3_10$fwer[order(ns3_10$n)]), collapse = ", ")` at 150, 300 and 600 per group, equal groups). With 20 items it does not (`r paste(r3(ns3_20$fwer[order(ns3_20$n)]), collapse = ", ")`).
+
+The Gini anchor is conservative. Without DIF its FWER is `r rng(pick(gini_null, family = "locations")$fwer)` for locations and `r rng(pick(gini_null, family = "thresholds")$fwer)` for thresholds, and over all scenarios it is above the band in `r out_band(gini_loc)` of `r nrow(gini_loc)` location cells and `r out_band(gini_thr)` of `r nrow(gini_thr)` threshold cells (maximum `r r3(max(gini$fwer))`).
+
+Without DIF, unequal group sizes did not change the calibration. The forward location FWER averaged `r r3(mean(pick(fwd_null, family = "locations", ratio = "equal")$fwer))` with equal and `r r3(mean(pick(fwd_null, family = "locations", ratio = "unequal")$fwer))` with unequal groups.
+
+#### Anchored tests: power
+
+```{r fig-s2-power}
+#| echo: false
+#| fig-height: 7
+#| fig-cap: "Anchored tests, equal group sizes, impact 0: power with the single-step correction, the mean share of DIF units flagged. For locations a unit is an item with a location shift, for thresholds a shifted threshold. Symmetric DSF does not move the location, so it has no location power. For locations, the untested first anchor item counts as not flagged. Every threshold is tested."
+pw2 <- ss[ss$family != "spacing" & ss$impact == 0 & ss$ratio == "equal" &
+            ss$scenario != "null" & !is.na(ss$power), ]
+pw2$Family <- factor(pw2$family, levels = c("locations", "thresholds"),
+                     labels = c("Locations", "Thresholds"))
+ggplot(pw2, aes(n, power, colour = Anchor, linetype = Anchor, shape = Anchor)) +
+  geom_line() + geom_point(size = 1.8) +
+  facet_grid(Scenario ~ Family + Items,
+             labeller = labeller(Scenario = label_wrap_gen(14))) +
+  scale_x_continuous(breaks = c(150, 300, 600)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  scale_anchor +
+  labs(x = "Respondents per group", y = "Power")
+```
+
+```{r s2-power-numbers}
+#| include: false
+pp <- function(fam, sc, st, a, nn, rt = "equal")
+  r3(pick(ss, family = fam, scenario = sc, structure = st, anchor = a,
+          n = nn, ratio = rt, impact = 0)$power)
+eff_ratio <- function(fam, a) {
+  d <- pick(ss, family = fam, anchor = a, n = 600)
+  d <- d[!is.na(d$power) & d$scenario != "null", ]
+  w <- reshape(d[c("scenario", "structure", "impact", "ratio", "power")],
+               idvar = c("scenario", "structure", "impact"), timevar = "ratio",
+               direction = "wide")
+  w$power.unequal / w$power.equal
+}
+r_thr <- eff_ratio("thresholds", "forward")
+```
+
+For item locations the pattern is that of Study 1. Forward is as powerful as centred with one DIF item and more powerful with three (`r pp("locations", "unif3", "10x4", "forward", 300)` against `r pp("locations", "unif3", "10x4", "centred", 300)`, 10 items, 300 per group), and Gini has less power than forward (`r pp("locations", "unif3", "10x4", "gini", 300)` in the same cell, and `r pp("locations", "unif1", "10x4", "gini", 300)` against `r pp("locations", "unif1", "10x4", "forward", 300)` with one DIF item).
+
+Threshold tests need more data. One threshold shifted by 0.6 is found in `r pp("thresholds", "nonsym1", "10x4", "forward", 600)` of datasets with 10 items and 600 per group under the forward anchor, and in `r pp("thresholds", "nonsym1", "10x4", "forward", 150)` with 150. The threshold test spreads its error rate over 30 or 40 thresholds, so for uniform DIF it is much weaker than the location test (`r pp("thresholds", "unif1", "10x4", "forward", 300)` against `r pp("locations", "unif1", "10x4", "forward", 300)`, one DIF item, 300 per group).
+
+Unequal sizes cost power. With the same total n, the threshold power of the forward anchor at 600 per group (900 and 300) was `r round(100 * min(r_thr))`% to `r round(100 * max(r_thr))`% of that with equal groups.
+
+#### Dependence on the tie-break
+
+```{r s2-ties}
+#| echo: false
+tt <- aggregate(cbind(unique_sets, set_diff, loc_any_change, thr_any_change) ~ anchor,
+                data = tie, FUN = function(x) rng(x))
+tt$anchor <- c(forward = "Forward (MTT)", gini = "Gini")[tt$anchor]
+tt$unique_sets <- aggregate(unique_sets ~ anchor, data = tie,
+  FUN = function(x) paste0(formatC(min(x), format = "f", digits = 1), " to ",
+                           formatC(max(x), format = "f", digits = 1)))$unique_sets
+names(tt) <- c("Anchor", "Distinct anchor sets", "Seeds giving another set",
+               "Location flags change", "Threshold flags change")
+kable(tt, caption = "Dependence on the random tie-break: ranges over the 144 cells. Up to 250 datasets per cell (fewer where replications were skipped) were analysed with 20 further seeds. Distinct anchor sets: mean number of different anchor sets over the 20 seeds. Seeds giving another set: mean share of seeds whose anchor set differs from that of the main run. Flags change: share of datasets where some seed changes which units are flagged (single-step).")
+```
+
+```{r s2-tie-numbers}
+#| include: false
+tf <- pick(tie, anchor = "forward")
+tf_null <- pick(tf, scenario = "null")
+tf_u3 <- pick(tf, scenario = "unif3")
+tf_worst <- tf[which.max(tf$thr_any_change), ]
+```
+
+The forward anchor depends on the random tie-break in every condition. Over 20 seeds it gives `r formatC(min(tf$unique_sets), format = "f", digits = 1)` to `r formatC(max(tf$unique_sets), format = "f", digits = 1)` different anchor sets per dataset on average, and in `r rng(tf$first_diff)` of seeds the untested first anchor item differs from the main run's. Without DIF these differences rarely change a flag (location flags change in `r rng(tf_null$loc_any_change)` of datasets). With DIF they do. With three uniform DIF items, some seed changes a threshold flag in `r rng(tf_u3$thr_any_change)` of datasets, and the largest value, `r r3(tf_worst$thr_any_change)`, is at `r tf_worst$n` per group (`r c("10x4" = "10 items with 4 categories", "20x3" = "20 items with 3 categories")[tf_worst$structure]`, `r tf_worst$ratio` sizes, impact `r tf_worst$impact`). The number of true DIF units found also varies by seed, in up to `r pct(max(tf$loc_found_varies))` of datasets for locations and `r pct(max(tf$thr_found_varies))` for thresholds.
+
+Ties are rare for the Gini anchor point. In `r rng(pick(tie, anchor = "gini")$set_diff)` of seeds the anchor item differed, and flags changed in at most `r pct(max(pick(tie, anchor = "gini")$thr_any_change))` of datasets.
+
+#### Run notes
+
+Replications with an unused category in either group were skipped, up to `r pct(skip2_max$status)` of them (`r skip2_max$structure`, mean `r skip2_max$n` per group, `r skip2_max$ratio` sizes, impact `r skip2_max$impact`). These are the cells where the smaller group has `r round(0.5 * skip2_max$n)` respondents, and their results are conditional on all categories being used. `r c("No", "One", "Two", "Three", "Four", "Five", "Six", "Seven")[min(length(err2), 7L) + 1L]` of `r n_total2` replications failed with an error (`r paste(unique(sub("^error: ", "", err2)), collapse = "; ")`). The run took `r round(s2$run_minutes)` minutes on 10 cores.
+
+## Study 3: a consensus forward anchor
+
+### Design
+
+```{r s3-prep}
+#| include: false
+s3 <- readRDS(file.path("dif_anchor_consensus", "dif_consensus_sim_slim.rds"))
+m3 <- s3$summary
+meth_lev <- c("single", "cons50", "cons100", "cons200", "cons_all", "gini")
+meth_lab <- c("Forward, 1 seed", "Consensus, 50 seeds", "Consensus, 100 seeds",
+              "Consensus, 200 seeds", "Consensus, 200 seeds, all tested",
+              "Gini")
+m3$Method <- factor(m3$method, meth_lev, meth_lab)
+a3 <- s3$agree_summary
+a3$Seeds <- factor(a3$S, c(1, 50, 100, 200, -200),
+                   c("1", "50", "100", "200", "200, all items tested"))
+g3 <- s3$agree
+h200 <- g3[g3$S == 200, ]
+near_share <- mean(h200$n_near > 0)
+dis_near <- mean((!h200$loc_same | !h200$thr_same)[h200$n_near > 0])
+dis_far <- mean((!h200$loc_same | !h200$thr_same)[h200$n_near == 0])
+ref_same <- mean(a3$same_ref[a3$S == 200])
+fr3 <- s3$freq$freq
+st3 <- s3$status
+skip3_max <- max(tapply(st3$status == "empty_category", st3$cell, mean))
+err3 <- sum(grepl("^error", st3$status))
+rm(st3)
+mr <- function(x) paste0(r3(mean(x)), " (", rng(x), ")")
+mx <- function(x) paste0(r3(mean(x)), " / ", r3(max(x)))
+# Check against Study 2: same datasets, so Gini (no ties) should agree.
+g3chk <- m3[m3$method == "gini", ]
+g3chk$cell_s2 <- s3$design$cell_s2[match(g3chk$cell, s3$design$cell)]
+g3chk <- merge(g3chk, ss[ss$anchor == "gini", c("cell", "family", "fwer", "power")],
+               by.x = c("cell_s2", "family"), by.y = c("cell", "family"))
+g3d_f <- max(abs(g3chk$fwer.x - g3chk$fwer.y))
+g3d_p <- max(abs(g3chk$power.x - g3chk$power.y), na.rm = TRUE)
+ns3_cell <- list(scenario = "nonsym3", structure = "10x4", ratio = "equal", n = 600)
+s2_ns3 <- do.call(pick, c(list(ss), ns3_cell, list(anchor = "forward", family = "locations", impact = 0)))$fwer
+s3_ns3 <- do.call(pick, c(list(m3), ns3_cell, list(method = "single", family = "locations")))$fwer
+```
+
+Study 2 showed that the forward anchor depends on the random order of tied items. Study 3 checks whether a consensus over many seeds removes that dependence. For each dataset, the ranking is redone under S seeds, and each item's inclusion frequency is the share of seeds whose anchor contains it. The consensus anchor is the items with an inclusion frequency of at least .5. The auxiliary tests are computed once per dataset, so extra seeds are cheap.
+
+Two rules are compared for the untested reference item. In the first, it is the anchor item that is most often first in the per-seed anchors, as psychotools leaves the first anchor item untested. In the second ("all items tested"), every item is tested when the anchor has two or more items. An anchor item's difference from the anchor mean is a well-defined contrast, and the single-step adjustment handles the singular covariance. But the anchor items were chosen because they looked free of DIF in the same data, so their tests lean towards non-rejection, and they add tests to the max-|z| family. The results show the net effect.
+
+To measure reproducibility, each dataset is analysed with two disjoint sets of 200 seeds, and the results are compared for S = 1 (the single-seed forward anchor), 50, 100 and 200 seeds within each set.
+
+The design is that of Study 2 with impact 0 only (72 cells, 1000 replications each), since impact changed the Study 2 error rates by at most .027. The datasets are the impact-0 datasets of Study 2. As a check, the Gini results of all `r nrow(g3chk)` cell and family combinations agree with Study 2 to within `r r3(g3d_f)` in FWER and `r r3(g3d_p)` in power. The code is in `dif_anchor_consensus/`.
+
+### Results
+
+```{r s3-calib}
+#| echo: false
+cal <- do.call(rbind, lapply(split(m3, m3$Method), function(d) {
+  lo <- d[d$family == "locations", ]
+  th <- d[d$family == "thresholds", ]
+  data.frame(Method = d$Method[1L],
+             loc_fwer = mx(lo$fwer), thr_fwer = mx(th$fwer),
+             loc_pow = r3(mean(lo$power, na.rm = TRUE)),
+             thr_pow = r3(mean(th$power, na.rm = TRUE)),
+             len = formatC(mean(lo$anchor_len), format = "f", digits = 1))
+}))
+names(cal) <- c("Anchor", "FWER, locations", "FWER, thresholds",
+                "Power, locations", "Power, thresholds", "Anchor items")
+kable(cal, row.names = FALSE, caption = "Study 3: FWER (mean / maximum over the 72 cells) and mean power with the single-step correction, and the mean number of anchor items. Power is averaged over the cells with DIF in that family.")
+```
+
+The consensus anchor behaves like the single-seed forward anchor. The error rates and power are almost the same, and the anchor is slightly longer. It does not reduce the contamination seen in Study 2: with three non-symmetric DSF items, the location FWER reaches `r r3(max(pick(m3, method = "cons200", family = "locations", scenario = "nonsym3")$fwer))` with 200 seeds, against `r r3(max(pick(m3, method = "single", family = "locations", scenario = "nonsym3")$fwer))` with one seed. The single-seed values differ from Study 2 on the same datasets only through the tie-break (for example `r r3(s2_ns3)` in Study 2 and `r r3(s3_ns3)` here, 10 items, equal groups of 600). Testing all items instead of leaving a reference item untested changes the error rates and power by little.
+
+```{r s3-agree}
+#| echo: false
+ag <- do.call(rbind, lapply(split(a3, a3$Seeds), function(d) data.frame(
+  Seeds = d$Seeds[1L], set = mr(1 - d$same_set),
+  loc = mr(1 - d$loc_same), thr = mr(1 - d$thr_same))))
+names(ag) <- c("Seeds", "Anchor set differs", "Location flags differ",
+               "Threshold flags differ")
+kable(ag, row.names = FALSE, caption = "Study 3: share of datasets where two disjoint seed sets give a different anchor set or different flags (single-step). Mean and range over the 72 cells.")
+```
+
+```{r fig-s3-agree}
+#| echo: false
+#| fig-height: 4.2
+#| fig-cap: "Share of datasets where two seed sets flag different thresholds, for the single-seed forward anchor and the consensus over 200 seeds. Mean over item structures and group-size ratios."
+fa <- a3[a3$S %in% c(1, 200), ]
+fa$Anchor <- factor(fa$S, c(1, 200), c("Forward, 1 seed", "Consensus, 200 seeds"))
+fa <- aggregate(cbind(thr = 1 - thr_same) ~ Anchor + scenario + n, data = fa, FUN = mean)
+fa$Scenario <- factor(fa$scenario, sc_lev, sc_lab)
+ggplot(fa, aes(n, thr, colour = Anchor, linetype = Anchor, shape = Anchor)) +
+  geom_line() + geom_point(size = 1.8) +
+  facet_wrap(~ Scenario, nrow = 1, labeller = label_wrap_gen(14)) +
+  scale_x_continuous(breaks = c(150, 300, 600)) +
+  scale_colour_manual(values = c("Forward, 1 seed" = "#D55E00", "Consensus, 200 seeds" = "#0072B2")) +
+  scale_linetype_manual(values = c("Forward, 1 seed" = "dashed", "Consensus, 200 seeds" = "solid")) +
+  scale_shape_manual(values = c("Forward, 1 seed" = 17, "Consensus, 200 seeds" = 16)) +
+  labs(x = "Respondents per group (mean)", y = "Threshold flags differ", colour = NULL,
+       linetype = NULL, shape = NULL)
+```
+
+The consensus reduces the dependence on the seed but does not remove it. Two single seeds flag different thresholds in `r r3(mean(1 - a3$thr_same[a3$S == 1]))` of datasets on average, and in up to `r r3(max(1 - a3$thr_same[a3$S == 1]))` per cell. Two sets of 200 seeds disagree in `r r3(mean(1 - a3$thr_same[a3$S == 200]))` on average, and in up to `r r3(max(1 - a3$thr_same[a3$S == 200]))`. Most of the gain comes with the first 50 seeds.
+
+The remaining disagreement does not come from too few seeds. It comes from items whose inclusion frequency is close to .5, so that the forward anchor contains them under about half of the possible orderings. With 200 seeds, `r r3(mean(fr3 > 0.4 & fr3 < 0.6))` of all items had an inclusion frequency between .4 and .6, and `r pct(near_share)` of datasets had at least one such item. In those datasets the two seed sets gave different flags in `r r3(dis_near)` of cases, and in the others in `r r3(dis_far)`. More seeds estimate the frequency of such an item more precisely, but it stays near the cut.
+
+The most-often-first rule does not give a stable reference item. The two seed sets chose the same one in `r r3(ref_same)` of datasets, because the first position is spread over several tied items. Testing all items avoids the choice.
+
+Replications with an unused category were skipped as in Study 2 (up to `r pct(skip3_max)` per cell). `r c("No", "One", "Two", "Three")[min(err3, 3L) + 1L]` of `r format(nrow(s3$status), big.mark = ",")` replications failed with an error. The run took `r round(s3$run_minutes)` minutes on 10 cores.
+
+## Interpretation
+
+1. The centred scale should not be used to test or flag single items or thresholds. Its error rate depends on whether DIF is balanced, which cannot be known from the data.
+2. The spacing test needs no anchor and kept the FWER at or below the Monte-Carlo band around .05 in every scenario, with the single-step correction or Holm. It answers a narrower question, whether the distances between thresholds differ, and it needs large groups to detect one DSF item.
+3. The forward (MTT) anchor with the single-step correction kept the FWER close to .05 in most cells and had the highest power among the anchors that held the FWER. It was liberal when several items carried small location shifts that the selection missed, and with three uniform DIF items in small samples. Its results depend on the random tie-break: with the same data, another seed often gives another anchor, and with DIF present it changes which units are flagged in a noticeable share of datasets. A consensus over 50 or more seeds keeps the error rates and power. Two independent seed sets then flag different thresholds in `r r3(mean(1 - a3$thr_same[a3$S == 200]))` of datasets on average, against `r r3(mean(1 - a3$thr_same[a3$S == 1]))` for two single seeds (Study 3). The rest comes from items that the forward anchor includes under about half of the orderings, and more seeds do not remove it. Reporting each item's inclusion frequency shows when this is the case. Testing all items avoids an unstable reference item.
+4. The Gini anchor point is conservative, has less power than forward in small and medium samples, and is effectively deterministic. Its value remains the criterion plot [@strobl2021].
+5. Threshold-level tests have much lower power than location tests for uniform DIF, because the error rate is spread over all thresholds. Location tests and the spacing test together cover uniform DIF and symmetric DSF. Anchored threshold tests add information mainly for non-symmetric DSF.
+
+## Not covered
+
+More than two groups, DIF sizes other than 0.6, non-uniform DIF in the sense of unequal discrimination (outside the partial credit model), unequal group sizes for dichotomous items, anchors of a length fixed in advance, and anchor rules that would resolve items with an inclusion frequency near .5.
+
+## References
