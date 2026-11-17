@@ -184,8 +184,10 @@ results can then depend on how ties are broken.
 are aligned where the Gini index of the absolute item differences is
 largest, that is, where a few items differ a lot and the rest overlap.
 Its optimum always lies on a single item, so the anchor is one item,
-which is then not tested. It is deterministic in practice but
-conservative, with less power than the forward anchor.
+which is then not tested. It is deterministic in practice, but it flags
+items without DIF less often than the nominal level (in the simulations
+below, mostly well under 5% at `alpha = 0.05`), so some DIF may be
+missed, and it has less power than the forward anchor.
 
 **Tests.** At item level, each item's location (the mean of its
 thresholds) is compared after linking. With an anchor of two or more
@@ -210,13 +212,14 @@ categories, 20 items with 2 or 3 categories, 150 to 600 respondents per
 group, equal and unequal sizes, uniform DIF and DSF of 0.6 logits), the
 forward anchor with the single-step correction kept the family-wise
 error rate close to .05 in most conditions and had the highest power
-among the anchors that held it. It was liberal (up to about .10) when
-several items had small location shifts that the selection missed, and
-with three of 10 items with DIF at 150 per group. The consensus over
-orderings kept the error rate and power. The share of datasets where two
-runs with different seeds flag different thresholds fell from about .037
-with a single ordering to about .012 with 100 orderings. More than two
-groups, other DIF sizes and anchors of fixed length were not studied.
+among the anchors that held it. Its family-wise error rate rose above
+.05 (up to about .10) when several items had small location shifts that
+the selection missed, and with three of 10 items with DIF at 150 per
+group. The consensus over orderings kept the error rate and power. The
+share of datasets where two runs with different seeds flag different
+thresholds fell from about .037 with a single ordering to about .012
+with 100 orderings. More than two groups, other DIF sizes and anchors of
+fixed length were not studied.
 
 Every response category must be used in both groups, as in
 [`RMdifLR`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md).
