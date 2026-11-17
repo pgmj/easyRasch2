@@ -333,3 +333,14 @@ See `dif-anchor.md`, "Fixes applied". Shared DIF helpers now live in `R/utils-di
 ## Second-round findings DA11-DA18 fixed (2026-11-16)
 
 See `dif-anchor.md`, "Second-round fixes applied". Table p-values now use 4 decimals ("< 0.0001") in both DIF functions. DA19 is the vignette re-knit.
+
+## Wording, 2026-11-16
+
+- RMdifAnchor() help: "conservative" and "liberal" replaced by the rate and its consequence (Gini anchor and Evidence paragraphs), following the house rule for user-facing text. man/RMdifAnchor.Rd regenerated with roxygen2 8.1.1, no other Rd changed.
+- dev/dif_anchor_tests.qmd: Purpose and Background describe RMdifLR() up to 1.4.0 in the past tense, the same wording fix, and a new section on how the simulated settings differ from the RMdifAnchor() defaults (consensus over 100 seeds, every item tested, 10,000 draws). Rendered.
+
+## Symmetric root in .mvn_draws(), 2026-11-16
+
+- `.mvn_draws()` (R/dif_anchor.R), which supplies the draws for the single-step adjustment, used the root Q Lambda^(1/2). Its draws change when `eigen()` returns an eigenvector with the opposite sign, and the sign can differ between BLAS/LAPACK builds. The fixed default seed therefore did not guarantee the same padj on different machines (Navarro 2025 blog post on MASS::mvrnorm). It now uses the symmetric root Q Lambda^(1/2) Q', which does not depend on the signs. Cholesky is not an option because the linked V is singular.
+- Checked: root root' reproduces V to 2e-15 at full rank and rank 5 of 6. A sign flip by hand changes the old draws and leaves the new ones unchanged. On pcmdat2 with a random grouping, padj moves by at most .004 (item), .004 (threshold) and .005 (spacing), which is Monte-Carlo noise. Flags and all other columns are unchanged.
+- Tests: test-dif_anchor (79) and test-rounding pass. No NEWS entry, since RMdifAnchor() is unreleased.

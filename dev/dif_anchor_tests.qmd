@@ -7,6 +7,8 @@ bibliography: dif-anchor-refs.bib
 csl: apa.csl
 ---
 
+Promoted to rasch_book as `chapters/dif-anchor-tests.qmd` (2026-11-16). The book chapter is the maintained version.
+
 ```{r setup}
 #| include: false
 library(ggplot2)
@@ -60,9 +62,9 @@ pick <- function(d, ...) {
 
 ## Purpose
 
-`RMdifLR()` reports Andersen's likelihood-ratio test [@andersen1973] together with per-group item and threshold locations, and it flags items whose largest location difference exceeds a fixed cutoff. The locations are centred within each group, so every item is compared with the mean of all items. When the DIF in a test is unbalanced, the mean item moves too, and items without DIF show an apparent difference. This is the artificial DIF described by @andrich2012.
+Up to version 1.4.0, `RMdifLR()` reported Andersen's likelihood-ratio test [@andersen1973] together with per-group item and threshold locations, and it flagged items whose largest location difference exceeded a fixed cutoff. The locations were centred within each group, so every item was compared with the mean of all items. When the DIF in a test is unbalanced, the mean item moves too, and items without DIF show an apparent difference. This is the artificial DIF described by @andrich2012.
 
-Comparing items between groups requires an anchor. The scale of a Rasch model has no natural origin, so each group's item parameters can only be compared after the two scales have been linked. The LR test itself compares likelihoods and needs no anchor, but every per-item comparison does. These studies evaluate the replacement planned for `RMdifAnchor()`. Items are compared through an anchor chosen from the data, each comparison gets a Wald test [@glas1995], and the p-values are corrected across items or thresholds.
+Comparing items between groups requires an anchor. The scale of a Rasch model has no natural origin, so each group's item parameters can only be compared after the two scales have been linked. The LR test compares likelihoods and needs no anchor, but every per-item comparison does. After version 1.4.0, `RMdifLR()` reports only the LR test, and the per-item comparisons moved to the new function `RMdifAnchor()`. These studies are the evidence behind `RMdifAnchor()`. Items are compared through an anchor chosen from the data, each comparison gets a Wald test [@glas1995], and the p-values are corrected across items or thresholds. The settings studied differ from the function's defaults in a few places, listed in the section on the defaults of `RMdifAnchor()` below.
 
 Study 1 covers item locations. Study 2 covers thresholds, unequal group sizes, and how much the results depend on random tie-breaks in the anchor selection. Study 3 checks a consensus anchor over many tie-breaks.
 
@@ -72,7 +74,7 @@ Study 1 covers item locations. Study 2 covers thresholds, unequal group sizes, a
 
 The studies compare three anchors.
 
-1. **Centred.** All items, with the locations centred in each group. This is the scale `RMdifLR()` uses today. It is equivalent to the equal-mean-difficulty method in @wang2004. The all-other anchor gives the same z statistics, since an item's difference from the mean of all items is $(k-1)/k$ times its difference from the mean of the others.
+1. **Centred.** All items, with the locations centred in each group. This is the scale `RMdifLR()` used up to version 1.4.0. It is equivalent to the equal-mean-difficulty method in @wang2004. The all-other anchor gives the same z statistics, since an item's difference from the mean of all items is $(k-1)/k$ times its difference from the mean of the others.
 2. **Forward (MTT).** The iterative forward class of @kopf2015framework with the mean test statistic threshold selection of @kopf2015selection. Each item is first tested against several provisional anchors (auxiliary tests), and the items are ranked by how often their test statistic exceeds a threshold based on the mean test statistics. The anchor then grows along this ranking, one item at a time, while it is shorter than the number of items without a significant test against the current anchor [@kopf2015framework]. In psychotools the limit is 0.8 times that number, and the top 10% of the ranking are skipped as first candidates. A candidate's own test is not checked before it enters, so an item with a small shift can enter the anchor.
 3. **Gini.** The anchor point of @strobl2021. The second group's item parameters are shifted along the scale, and the shift that maximises the Gini index of the absolute item-wise differences is chosen. That is the position where a few items differ a lot and the rest overlap. @strobl2021 [Online Appendix F] show that every optimum of the criterion lies where one item's parameters coincide in the two groups, so the anchor point is always a single anchor item. In psychotools this is `anchor(class = "constant", select = "Gini")`, which by default has length 1.
 
@@ -114,7 +116,7 @@ The design has `r n_cells1` cells with 1000 replications each. Two groups are co
 - **Impact.** Group 2's latent mean is 0 or 0.5. The SD is 1 in both groups.
 - **DIF.** None, one item, three items in the same direction, or two items in opposite directions. DIF is uniform: 0.6 logits added to every threshold of the item in group 2. The DIF items are items 3, 6 and 8 of 10, or 5, 11 and 16 of 20. One DIF item is the first of these, and the balanced pair the first two (+0.6 and -0.6).
 
-Each group is fitted by conditional maximum likelihood with `psychotools::pcmodel()`. Replications with a category unused in either group are skipped, since `RMdifLR()` requires every category to be used. Each replication has its own seed. The code is in `dif_lr_wald/dif_wald.R` (methods) and `dif_lr_wald/dif_wald_sim.R` (simulation). The methods match `psychotools::anchortest()`.
+Each group is fitted by conditional maximum likelihood with `psychotools::pcmodel()`. Replications with a category unused in either group are skipped, since `RMdifLR()` and `RMdifAnchor()` require every category to be used in both groups. Each replication has its own seed. The code is in `dif_lr_wald/dif_wald.R` (methods) and `dif_lr_wald/dif_wald_sim.R` (simulation). The methods match `psychotools::anchortest()`.
 
 With 1000 valid replications, the Monte-Carlo SE of a rate near .05 is about .007, so values from .036 to .064 are consistent with .05. Cells with skipped replications have a wider band, up to `r r3(upper(min(s1$reps)))` with the `r min(s1$reps)` valid replications of the smallest cell. Counts of cells above the band below use each cell's own number of valid replications. With many cells, about 2.5% are expected above the band by chance alone.
 
@@ -130,7 +132,7 @@ names(tab) <- c("Anchor", "Items", "SD of z", "None", "Single-step", "Holm")
 kable(tab, caption = "Calibration without DIF: SD of z for items without DIF, and FWER with no correction, single-step and Holm. Ranges over group size and impact (6 cells per row). Items: 10 x 4 = 10 items with 4 categories, 20 x 2 = 20 dichotomous items.")
 ```
 
-Without a correction, at least one item is flagged in `r rng(pick(nul, structure = "10 items, 4 categories", Anchor = "Forward (MTT)")$fwer_none)` of the datasets with 10 items, and `r rng(pick(nul, structure = "20 dichotomous items", Anchor = "Forward (MTT)")$fwer_none)` with 20 items, under the forward anchor. The z statistics of the centred and forward anchors have an SD close to 1. The Gini anchor gives z statistics with an SD of `r rng(pick(nul, Anchor = "Gini")$sd_z_free)` and is conservative.
+Without a correction, at least one item is flagged in `r rng(pick(nul, structure = "10 items, 4 categories", Anchor = "Forward (MTT)")$fwer_none)` of the datasets with 10 items, and `r rng(pick(nul, structure = "20 dichotomous items", Anchor = "Forward (MTT)")$fwer_none)` with 20 items, under the forward anchor. The z statistics of the centred and forward anchors have an SD close to 1. The Gini anchor gives z statistics with an SD of `r rng(pick(nul, Anchor = "Gini")$sd_z_free)`. Its tests therefore reject less often than the nominal level, and some DIF may be missed.
 
 ### Family-wise error rate with DIF
 
@@ -167,7 +169,7 @@ The centred anchor flags items without DIF as soon as DIF is unbalanced, and mor
 
 The forward anchor keeps the FWER at `r rng(fwd_rest$fwer_ss)` in every cell but one. The exception is `r r3(fwd_max$fwer_ss)`, with three DIF items in the same direction among 10 items, `r fwd_max$n` respondents per group and impact `r fwd_max$impact`. @strobl2021 report a per-item false alarm rate "notably above" the nominal 5% for the forward anchor when 40% of 40 dichotomous items had DIF in one direction, in small and medium samples. Their measure and design differ, but the pattern is consistent.
 
-The Gini anchor is mostly conservative (`r rng(gini_lo$fwer_ss)`). It exceeds .05 only in `r nrow(gini_hi)` cells, `r if (nrow(gini_hi) == 2L) "both" else "all"` with three DIF items in the same direction among 10 items and `r paste(unique(gini_hi$n), collapse = ", ")` per group (`r paste(r3(sort(gini_hi$fwer_ss)), collapse = " and ")`).
+The Gini anchor keeps the FWER well below .05 in most cells (`r rng(gini_lo$fwer_ss)`), so some DIF may be missed. It exceeds .05 only in `r nrow(gini_hi)` cells, `r if (nrow(gini_hi) == 2L) "both" else "all"` with three DIF items in the same direction among 10 items and `r paste(unique(gini_hi$n), collapse = ", ")` per group (`r paste(r3(sort(gini_hi$fwer_ss)), collapse = " and ")`).
 
 ### Power
 
@@ -220,7 +222,7 @@ n_err_word <- c("No", "One", "Two", "Three")[min(length(err), 3L) + 1L]
 rm(st1)
 ```
 
-Replications with an unused category in either group were skipped, up to `r round(100 * skip_max$status)`% of them (`r skip_max$structure`, `r skip_max$n` per group, impact `r skip_max$impact`). Results there are conditional on all categories being used. `r n_err_word` of `r n_total1` replications failed with an error (`r paste(unique(sub("^error: ", "", err)), collapse = "; ")`). `RMdifAnchor()` must catch such failures and report them.
+Replications with an unused category in either group were skipped, up to `r round(100 * skip_max$status)`% of them (`r skip_max$structure`, `r skip_max$n` per group, impact `r skip_max$impact`). Results there are conditional on all categories being used. `r n_err_word` of `r n_total1` replications failed with an error (`r paste(unique(sub("^error: ", "", err)), collapse = "; ")`). When a fit fails, `RMdifAnchor()` stops with a message that names the failing step.
 
 ## Study 2: thresholds, unequal group sizes and tie-breaks
 
@@ -397,7 +399,7 @@ Without DIF, the forward anchor has an FWER of `r rng(pick(fwd_null, family = "l
 
 In both, DIF items enter the anchor. With uniform DIF of 0.6 the selection removes them as n grows (a DIF item is in the anchor in `r rng(fwd_u3l$anchor_locdif)` of datasets at 600 per group), and the inflation goes away. The small location shifts of non-symmetric DSF stay in the anchor more often. With 10 items the inflation then grows with n, because the tests get more precise (`r paste(r3(ns3_10$fwer[order(ns3_10$n)]), collapse = ", ")` at 150, 300 and 600 per group, equal groups). With 20 items it does not (`r paste(r3(ns3_20$fwer[order(ns3_20$n)]), collapse = ", ")`).
 
-The Gini anchor is conservative. Without DIF its FWER is `r rng(pick(gini_null, family = "locations")$fwer)` for locations and `r rng(pick(gini_null, family = "thresholds")$fwer)` for thresholds, and over all scenarios it is above the band in `r out_band(gini_loc)` of `r nrow(gini_loc)` location cells and `r out_band(gini_thr)` of `r nrow(gini_thr)` threshold cells (maximum `r r3(max(gini$fwer))`).
+The Gini anchor flags units without DIF less often than the nominal 5%. Without DIF its FWER is `r rng(pick(gini_null, family = "locations")$fwer)` for locations and `r rng(pick(gini_null, family = "thresholds")$fwer)` for thresholds, and over all scenarios it is above the band in `r out_band(gini_loc)` of `r nrow(gini_loc)` location cells and `r out_band(gini_thr)` of `r nrow(gini_thr)` threshold cells (maximum `r r3(max(gini$fwer))`).
 
 Without DIF, unequal group sizes did not change the calibration. The forward location FWER averaged `r r3(mean(pick(fwd_null, family = "locations", ratio = "equal")$fwer))` with equal and `r r3(mean(pick(fwd_null, family = "locations", ratio = "unequal")$fwer))` with unequal groups.
 
@@ -580,12 +582,29 @@ The most-often-first rule does not give a stable reference item. The two seed se
 
 Replications with an unused category were skipped as in Study 2 (up to `r pct(skip3_max)` per cell). `r c("No", "One", "Two", "Three")[min(err3, 3L) + 1L]` of `r format(nrow(s3$status), big.mark = ",")` replications failed with an error. The run took `r round(s3$run_minutes)` minutes on 10 cores.
 
+## Simulated settings and the defaults of `RMdifAnchor()` {#sec-defaults}
+
+```{r defaults-numbers}
+#| include: false
+c100 <- pick(m3, method = "cons100")
+c_all <- pick(m3, method = "cons_all")
+dis <- function(S) r3(mean(1 - a3$thr_same[a3$S == S]))
+```
+
+The studies were run before `RMdifAnchor()` was written, and its defaults differ from the simulated settings in three places.
+
+1. **Forward anchor.** Studies 1 and 2 used one tie-break ordering per dataset. `RMdifAnchor()` uses the consensus of Study 3, the items in the anchor under at least half of `n_seeds = 100` orderings.
+2. **Untested item.** Studies 1 and 2, and the consensus rows of Study 3 except "all tested", leave the first anchor item untested, as `psychotools::anchortest()` does. `RMdifAnchor()` tests every item when the anchor has two or more items. With the Gini anchor point, the single anchor item is untested in both.
+3. **Single-step adjustment.** Study 1 used multcomp, and Studies 2 and 3 used 5000 Monte-Carlo draws. `RMdifAnchor()` uses 10,000 draws, so the Monte-Carlo SE of an adjusted p-value near .05 is about .002 instead of .003.
+
+The default combination, 100 seeds with every item tested, was not simulated. Study 3 covers each part separately: 100 seeds with the reference item untested, and 200 seeds with every item tested. Their results are close. The location FWER had a mean of `r r3(mean(pick(c100, family = "locations")$fwer))` and a maximum of `r r3(max(pick(c100, family = "locations")$fwer))` with 100 seeds, against `r r3(mean(pick(c_all, family = "locations")$fwer))` and `r r3(max(pick(c_all, family = "locations")$fwer))` with 200 seeds and every item tested. Two disjoint seed sets flagged different thresholds in `r dis(100)` and `r dis(-200)` of datasets, and in `r dis(200)` with 200 seeds and the reference item untested. Above 100 seeds the number of seeds matters little, so the defaults are expected to behave like the "all tested" row.
+
 ## Interpretation
 
 1. The centred scale should not be used to test or flag single items or thresholds. Its error rate depends on whether DIF is balanced, which cannot be known from the data.
 2. The spacing test needs no anchor and kept the FWER at or below the Monte-Carlo band around .05 in every scenario, with the single-step correction or Holm. It answers a narrower question, whether the distances between thresholds differ, and it needs large groups to detect one DSF item.
-3. The forward (MTT) anchor with the single-step correction kept the FWER close to .05 in most cells and had the highest power among the anchors that held the FWER. It was liberal when several items carried small location shifts that the selection missed, and with three uniform DIF items in small samples. Its results depend on the random tie-break: with the same data, another seed often gives another anchor, and with DIF present it changes which units are flagged in a noticeable share of datasets. A consensus over 50 or more seeds keeps the error rates and power. Two independent seed sets then flag different thresholds in `r r3(mean(1 - a3$thr_same[a3$S == 200]))` of datasets on average, against `r r3(mean(1 - a3$thr_same[a3$S == 1]))` for two single seeds (Study 3). The rest comes from items that the forward anchor includes under about half of the orderings, and more seeds do not remove it. Reporting each item's inclusion frequency shows when this is the case. Testing all items avoids an unstable reference item.
-4. The Gini anchor point is conservative, has less power than forward in small and medium samples, and is effectively deterministic. Its value remains the criterion plot [@strobl2021].
+3. The forward (MTT) anchor with the single-step correction kept the FWER close to .05 in most cells and had the highest power among the anchors that held the FWER. Its FWER exceeded the band, up to `r r3(max(fwd$fwer, fwd_all$fwer_ss))`, when several items carried small location shifts that the selection missed, and with three uniform DIF items in small samples. Its results depend on the random tie-break: with the same data, another seed often gives another anchor, and with DIF present it changes which units are flagged in a noticeable share of datasets. A consensus over 50 or more seeds keeps the error rates and power. Two independent seed sets then flag different thresholds in `r r3(mean(1 - a3$thr_same[a3$S == 200]))` of datasets on average, against `r r3(mean(1 - a3$thr_same[a3$S == 1]))` for two single seeds (Study 3). The rest comes from items that the forward anchor includes under about half of the orderings, and more seeds do not remove it. Reporting each item's inclusion frequency shows when this is the case. Testing all items avoids an unstable reference item.
+4. The Gini anchor point flags units without DIF less often than the nominal 5% (FWER up to `r r3(max(gini_null$fwer))` without DIF), so some DIF is missed. It has less power than forward in small and medium samples, and is effectively deterministic. Its value remains the criterion plot [@strobl2021].
 5. Threshold-level tests have much lower power than location tests for uniform DIF, because the error rate is spread over all thresholds. Location tests and the spacing test together cover uniform DIF and symmetric DSF. Anchored threshold tests add information mainly for non-symmetric DSF.
 
 ## Not covered

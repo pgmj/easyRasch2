@@ -119,8 +119,10 @@
 #' groups are aligned where the Gini index of the absolute item
 #' differences is largest, that is, where a few items differ a lot and the
 #' rest overlap. Its optimum always lies on a single item, so the anchor is
-#' one item, which is then not tested. It is deterministic in practice but
-#' conservative, with less power than the forward anchor.
+#' one item, which is then not tested. It is deterministic in practice, but
+#' it flags items without DIF less often than the nominal level (in the
+#' simulations below, mostly well under 5% at \code{alpha = 0.05}), so some
+#' DIF may be missed, and it has less power than the forward anchor.
 #'
 #' \strong{Tests.} At item level, each item's location (the mean of its
 #' thresholds) is compared after linking. With an anchor of two or more
@@ -145,8 +147,9 @@
 #' group, equal and unequal sizes, uniform DIF and DSF of 0.6 logits), the
 #' forward anchor with the single-step correction kept the family-wise error
 #' rate close to .05 in most conditions and had the highest power among the
-#' anchors that held it. It was liberal (up to about .10) when several items
-#' had small location shifts that the selection missed, and with three of
+#' anchors that held it. Its family-wise error rate rose above .05 (up to
+#' about .10) when several items had small location shifts that the
+#' selection missed, and with three of
 #' 10 items with DIF at 150 per group. The consensus over orderings kept
 #' the error rate and power. The share of datasets where two runs with
 #' different seeds flag different thresholds fell from about .037 with a
@@ -558,12 +561,20 @@ RMdifAnchor <- function(
 }
 
 #' Draws from a zero-mean normal with covariance V (singular allowed)
+#'
+#' Uses the symmetric square root Q Lambda^(1/2) Q', which does not change
+#' when eigen() returns an eigenvector with the other sign. A root of the
+#' form Q Lambda^(1/2) does, and the sign can differ between BLAS/LAPACK
+#' builds, so the same seed would give different draws on different
+#' machines (the problem with MASS::mvrnorm()). Cholesky is not used because
+#' the linked V is singular.
 #' @keywords internal
 #' @noRd
 .mvn_draws <- function(V, B) {
   V <- (V + t(V)) / 2
   e <- eigen(V, symmetric = TRUE)
-  root <- e$vectors %*% diag(sqrt(pmax(e$values, 0)), nrow(V))
+  root <- e$vectors %*% diag(sqrt(pmax(e$values, 0)), nrow(V)) %*%
+    t(e$vectors)
   matrix(stats::rnorm(B * nrow(V)), B, nrow(V)) %*% t(root)
 }
 

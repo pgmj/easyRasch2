@@ -23,3 +23,6 @@ dev/dif_anchor_consensus/*.rds
 !dev/dif_lr_wald/*_slim*.rds
 !dev/dif_anchor_threshold/*_slim*.rds
 !dev/dif_anchor_consensus/*_slim*.rds
+dev/category_conditional_null/results/cells/
+dev/category_conditional_null/results/cells_rngbug/
+dev/category_conditional_null/results/smoke_cells/

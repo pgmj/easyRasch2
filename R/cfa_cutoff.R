@@ -451,10 +451,6 @@ ordinal_suffix <- function(n) {
   switch(as.character(n_int %% 10), "1" = "st", "2" = "nd", "3" = "rd", "th")
 }
 
-#' Apply directional fit-index flagging given observed values + cutoffs
-#'
-#' @keywords internal
-#' @noRd
 #' lavaan estimators with a scaled test statistic
 #'
 #' Only these give `cfi.scaled` and `rmsea.scaled`, the indices the CFA
@@ -497,6 +493,10 @@ ordinal_suffix <- function(n) {
   invisible(NULL)
 }
 
+#' Apply directional fit-index flagging given observed values + cutoffs
+#'
+#' @keywords internal
+#' @noRd
 compute_cfa_flagged <- function(observed, cutoffs) {
   c(
     cfi = !is.na(observed[["cfi"]]) && observed[["cfi"]] < cutoffs[["cfi"]],
