@@ -26,3 +26,7 @@ dev/dif_anchor_consensus/*.rds
 dev/category_conditional_null/results/cells/
 dev/category_conditional_null/results/cells_rngbug/
 dev/category_conditional_null/results/smoke_cells/
+dev/results/**/*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].rds
+dev/results/**/*_[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].rds	
+dev/**/results/**/*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].rds
+dev/**/results/**/*_[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].rds	
