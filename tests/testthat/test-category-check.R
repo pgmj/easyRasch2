@@ -131,6 +131,27 @@ test_that("complete-case functions stop when the complete cases lose a category 
   )
 })
 
+test_that("complete-case functions stop when the complete cases lose a top category", {
+  skip_if_not_installed("eRm")
+  skip_if_not_installed("iarm")
+  e <- new.env()
+  utils::data(pcmdat2, package = "eRm", envir = e)
+  x <- as.data.frame(e$pcmdat2)
+  x[x$I1 == 2, "I2"] <- NA # top category 2 of I1 occurs only in incomplete rows
+  q <- function(expr) suppressWarnings(suppressMessages(expr))
+  msg <- "complete cases only.*missing responses: I1 \\(category 2\\)"
+  err <- tryCatch(.check_complete_case_categories(x), error = function(e) e)
+  expect_s3_class(err, "easyRasch2_category_error")
+  expect_equal(err$items, "I1")
+  expect_error(q(RMitemInfit(x, output = "dataframe")), msg)
+  expect_error(q(RMitemRestscore(x, output = "dataframe")), msg)
+  g <- rep(c("a", "b"), length.out = nrow(x))
+  expect_error(q(RMdifImpact(x, g, items = "I3")),
+               "RMdifImpact\\(\\) uses complete cases only.*I1 \\(category 2\\)")
+  # Losing the top category in rows that stay complete elsewhere is fine
+  expect_true(.check_complete_case_categories(e$pcmdat2))
+})
+
 test_that("restscore bootstrap matches iarm rows by item name (E1)", {
   skip_if_not_installed("iarm")
   set.seed(7)

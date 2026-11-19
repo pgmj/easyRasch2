@@ -81,7 +81,8 @@ with Benjamini-Hochberg adjustment, so the result inherits that test's
 calibration at the subsample size. Under a true Rasch model it flags too
 many items as overfit in small or mistargeted samples of dichotomous
 items, too few items of any kind in large polytomous samples, and too few
-underfitting items at every sample size (see \code{\link[=RMitemRestscore]{RMitemRestscore()}}). The
+underfitting items at every sample size (see \code{\link[=RMitemRestscore]{RMitemRestscore()}} and
+\url{https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html}). The
 percentage is therefore how often that test flags an item in samples of
 size \code{samplesize}, not the probability that the item misfits, and it
 changes with \code{samplesize}. A low underfit percentage is weak evidence of

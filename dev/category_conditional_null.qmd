@@ -1,0 +1,861 @@
+---
+title: "A category-level test of the response scale under the PCM"
+subtitle: "Rest-score statistics per category, tested against the CML-conditional table with an exact conditional bootstrap"
+author: "Magnus Johansson"
+date: today
+---
+
+## Purpose
+
+Disordered threshold estimates are often read as evidence that a response
+scale is not working as intended. But the partial credit model (PCM) allows
+any threshold order, so a disordered estimate is not a misfit to the model.
+The question asked here is different: is there evidence that the categories
+of an item do not work as the integer scoring 0, 1, ..., m says, whatever the
+threshold order? How the middle category is used (for example as "don't
+know") is a secondary question.
+
+The approach uses a property of the PCM. Given a person's total score r, the
+probability of each category of item i depends only on the item parameters:
+
+$$P(X_i = j \mid r) = \frac{\varepsilon_{ij}\,\gamma^{(i)}_{r-j}}{\gamma_r},$$
+
+where $\varepsilon_{ij}$ is the category parameter and $\gamma_r$ and
+$\gamma^{(i)}_{r-j}$ are elementary symmetric functions of all items and of
+all items except i. The item-category by score table therefore has expected
+counts that involve no person parameters. This is the table behind Glas's CML
+test R1c for polytomous items (Glas, 1991). Earlier versions are Glas (1988)
+for dichotomous items and Glas and Verhelst (1989) for the MML case.
+
+Two things are added to Glas's table:
+
+- **Statistics per category.** For each category j of the focus item: the
+  mean and SD of the rest score among persons in that category, and the
+  count of persons in the category whose total score is in the lowest or
+  highest 10% of totals, each as observed minus model-expected. Also $Q_j$,
+  the sum over score levels of the squared Glas deviates for that category.
+  The item index is the sum of $Q_j$ over $j \ge 1$ (category 0 is redundant
+  given the others).
+- **An exact conditional bootstrap.** Response patterns are sampled from
+  $P(\mathbf{x} \mid r)$ given each person's observed total score, so no
+  person parameter is drawn. The CML thresholds are refitted in every
+  replicate.
+
+Under the PCM, the mean rest score is ordered across categories for any
+threshold values, because the item has a monotone likelihood ratio in
+$\theta$. So the category means test whether the categories are ordered and
+distinct, not whether the thresholds are.
+
+## Design
+
+```{r setup}
+suppressMessages({
+  library(dplyr)
+  library(tidyr)
+  library(ggplot2)
+  library(knitr)
+})
+RES <- "category_conditional_null/results"
+s <- readRDS(file.path(RES, "summary.rds"))
+alpha <- s$alpha
+
+d <- as.data.frame(s$reps) |>
+  mutate(evaluable = is.na(skipped) & !is.na(B_used) & B_used > 0,
+         cell = sprintf("n = %d, k = %d", n, k))
+ok <- filter(d, evaluable)
+
+cond_labels <- c(
+  A0_pcm_ordered    = "PCM, ordered",
+  A1_pcm_disordered = "PCM, disordered",
+  S_outer_a0        = "Categories 0, 1 interchangeable",
+  S_inner_a0        = "Categories 1, 2 interchangeable",
+  S_inner_a05       = "Step 2 discrimination .5",
+  S_inner_a2        = "Step 2 discrimination 2",
+  SWAP_1_2          = "Categories 1, 2 swapped",
+  DK_wide_05        = "Don't know 5%, wide middle",
+  DK_wide_10        = "Don't know 10%, wide middle",
+  DK_wide_25        = "Don't know 25%, wide middle",
+  DK_narrow_05      = "Don't know 5%, narrow middle",
+  DK_narrow_10      = "Don't know 10%, narrow middle",
+  DK_narrow_25      = "Don't know 25%, narrow middle",
+  ERS_30            = "Extreme response style 30%")
+lab <- function(x) factor(cond_labels[as.character(x)], levels = cond_labels)
+
+# Okabe-Ito, validated for four nominal series (all-pairs CVD dE 11.0).
+# The lightest hue goes to the least central series (tail).
+pal_stat <- c(Mean = "#0072B2", SD = "#D55E00", Q = "#009E73", Tail = "#56B4E9")
+shp_stat <- c(Mean = 16, SD = 17, Q = 15, Tail = 1)
+lty_stat <- c(Mean = "solid", SD = "42", Q = "dotdash", Tail = "dotted")
+scale_stat <- list(
+  scale_colour_manual("Statistic", values = pal_stat),
+  scale_shape_manual("Statistic", values = shp_stat),
+  scale_linetype_manual("Statistic", values = lty_stat))
+
+stat_long <- ok |>
+  select(cond, null, n, k, cell, rep, matches("^p_(mean|sd|tail|Q)_\\d$")) |>
+  pivot_longer(matches("^p_"), names_to = c("stat", "category"),
+               names_pattern = "p_(mean|sd|tail|Q)_(\\d)", values_to = "p") |>
+  mutate(stat = factor(c(mean = "Mean", sd = "SD", tail = "Tail", Q = "Q")[stat],
+                       levels = names(pal_stat)),
+         category = as.integer(category))
+rej <- stat_long |>
+  group_by(cond, null, n, k, cell, stat, category) |>
+  summarise(rate = mean(p < alpha), reps = n(), .groups = "drop")
+```
+
+**Data.** $\theta \sim N(0, 1)$. One focus item (item 1) and $k - 1$ other
+items, each with five categories scored 0 to 4 (0 = lowest), so thresholds
+t1 to t4 lie between categories 0/1, 1/2, 2/3 and 3/4. The other items follow
+the PCM with locations spread evenly over $[-1, 1]$, step pattern
+$(-1.5, -0.5, 0.5, 1.5)$ around the location and a fixed jitter (SD 0.2),
+the same for every replicate with the same k. The focus item has location 0.
+Sample sizes n = 250, 500 and 1000, with k = 5 or 10 items.
+
+**Conditions for the focus item.**
+
+- *Null (PCM holds):* ordered thresholds $(-1.5, -0.5, 0.5, 1.5)$, and
+  disordered thresholds $(-1.5, 0.4, -0.4, 1.5)$, in which the middle
+  category is rare and never the most probable.
+- *Step discriminations* (Glas & Verhelst, 1989, section 7):
+  $P(X = j \mid \theta) \propto \exp\{\sum_{l \le j} a_l(\theta - \delta_l)\}$
+  with ordered thresholds. $a_1 = 0$ makes categories 0 and 1
+  interchangeable, $a_2 = 0$ makes 1 and 2 interchangeable, and $a_2 = 0.5$
+  or $2$ makes step 2 flatter or steeper than the scoring assumes.
+- *Swapped categories:* data generated under the ordered PCM, then
+  categories 1 and 2 relabelled as each other (the second and third
+  options).
+- *"Don't know" use:* with probability $\pi$ = .05, .10 or .25, the middle
+  category is chosen whatever $\theta$. On the ordered (wide middle) or the
+  disordered (narrow middle) thresholds.
+- *Extreme response style:* 30% of persons answer every item with thresholds
+  compressed towards the item location (factor 0.3).
+
+**Tests.** The item index for every item (one-sided), each per-category
+statistic for the focus item (two-sided for mean, SD and tail, one-sided for
+$Q_j$), all from the same bootstrap. Two comparison tests on the focus item:
+a Wald test of threshold order (any adjacent pair with $z < -1.645$, from the
+CML covariance matrix, no bootstrap) and a one-sided Wilcoxon test that the
+rest score is higher in category j than in j - 1 (the adjacent-category AUC).
+The Wilcoxon test has the null that adjacent categories are interchangeable,
+so for it a rejection means the categories are distinct.
+
+**Replication.** Null cells 500 datasets with B = 199, alternative cells 200
+datasets with B = 99. Monte Carlo SE at a rate of .05 is .010 for null cells
+and .015 for alternative cells. Bootstrap replicates in which some category
+of some item is empty are dropped, since the CML fit then has fewer
+thresholds. A dataset with an empty category in the observed data is
+skipped. A dataset in which every bootstrap replicate was dropped is counted
+as not evaluable and left out of the rates.
+
+**Run.** Scripts are in `category_conditional_null/R/`. `run_study.R` ran on
+10 cores on 2026-11-17 in 2 h 16 min. An earlier run on 2026-11-16 was
+discarded because a fixed seed inside the generator for the other items
+reset the random number stream, so most replicates in a cell were the same
+dataset. `summarise.R` collects the cells and checks that no cell repeats a
+dataset. The run computed the elementary symmetric functions by FFT
+convolution, which was off by up to 0.001 in the conditional category
+probabilities at extreme total scores for k = 10. The scripts now use direct
+polynomial multiplication. In 60 datasets (n = 500, k = 10, two conditions)
+the change moved the observed $Q_j$ by at most 0.007 and the other category
+statistics by at most 0.0001, so the run was not repeated.
+
+```{r evaluable}
+d |>
+  group_by(cell) |>
+  summarise(Datasets = n(),
+            Skipped = sum(!is.na(skipped)),
+            `No bootstrap kept` = sum(is.na(skipped) & B_used == 0),
+            `Kept < 90% of B` = sum(evaluable & B_used / B < .9),
+            .groups = "drop") |>
+  rename(Cell = cell) |>
+  kable(caption = "Datasets per sample size and number of items, all conditions together.")
+```
+
+Bootstrap loss is a small-sample problem. At n = 250, about one dataset in
+ten kept less than 90% of its bootstrap replicates. The test then conditions
+on every category being observed, as it was in the observed data.
+
+## Results
+
+### When the PCM holds
+
+```{r fig-null}
+#| fig-height: 7.5
+#| fig-cap: "Rejection rate at .05 for each per-category statistic when the PCM holds, by condition, number of items (rows) and sample size (columns). The grey band is .05 plus or minus two Monte Carlo SEs."
+rej |>
+  filter(null) |>
+  mutate(row = paste0(lab(cond), ", k = ", k)) |>
+  ggplot(aes(category, rate, colour = stat, shape = stat, linetype = stat)) +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = .05 - 2 * .0097,
+           ymax = .05 + 2 * .0097, fill = "grey85") +
+  geom_hline(yintercept = .05, colour = "grey40", linetype = "dotted") +
+  geom_line() + geom_point(size = 2) +
+  facet_grid(row ~ factor(paste("n =", n), levels = paste("n =", c(250, 500, 1000)))) +
+  scale_stat +
+  scale_y_continuous(limits = c(0, .1)) +
+  labs(x = "Category of the focus item", y = "Rejection rate") +
+  theme_bw() +
+  theme(legend.position = "bottom", strip.text.y = element_text(size = 7))
+```
+
+```{r null-index}
+ok |>
+  filter(null) |>
+  group_by(Condition = lab(cond), k, n) |>
+  summarise(`Item index` = mean(p_index1 < alpha),
+            `Any other item (Holm)` = mean(any_other_holm),
+            `Wald, disorder` = mean(disorder_any),
+            `Estimates disordered` = mean(disorder_pt),
+            .groups = "drop") |>
+  kable(digits = 3, caption = "Rejection rates when the PCM holds. Item index for the focus item, any other item after Holm adjustment over the k - 1 other items, the Wald test of threshold order, and the share of datasets whose point estimates are disordered.")
+```
+
+All 20 per-category statistics and the item index reject at between .02 and
+.066 per cell, a little under .05 on average. The same holds with disordered
+thresholds. The Wald test, by contrast, flags the disordered PCM in 69 to
+100% of datasets. So the bootstrap tests treat disorder that the PCM itself
+produces as fitting, which is what they are designed to do.
+
+### Detecting a scale that does not work as intended
+
+```{r fig-power}
+#| fig-height: 8
+#| fig-cap: "Rejection rate at .05 for each per-category statistic at n = 500 and k = 10, by condition. Dotted line at .05. Results for every cell are in the appendix."
+rej |>
+  filter(!null, n == 500, k == 10) |>
+  ggplot(aes(category, rate, colour = stat, shape = stat, linetype = stat)) +
+  geom_hline(yintercept = .05, colour = "grey40", linetype = "dotted") +
+  geom_line() + geom_point(size = 2) +
+  facet_wrap(~ lab(cond), ncol = 3) +
+  scale_stat +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Category of the focus item", y = "Rejection rate") +
+  theme_bw() +
+  theme(legend.position = "bottom", strip.text = element_text(size = 7.5))
+```
+
+```{r fig-index}
+#| fig-height: 7
+#| fig-cap: "Rejection rate at .05 of the item index for the focus item and of the Wald test of threshold order, by condition, sample size and number of items. Dotted line at .05."
+pal_test <- c("Item index" = "#0072B2", "Wald, disorder" = "#D55E00")
+ok |>
+  filter(!null) |>
+  group_by(cond, n, k) |>
+  summarise(`Item index` = mean(p_index1 < alpha),
+            `Wald, disorder` = mean(disorder_any), .groups = "drop") |>
+  pivot_longer(c(`Item index`, `Wald, disorder`), names_to = "test",
+               values_to = "rate") |>
+  mutate(test = paste0(test, ", k = ", k)) |>
+  ggplot(aes(n, rate, colour = test, shape = test, linetype = test)) +
+  geom_hline(yintercept = .05, colour = "grey40", linetype = "dotted") +
+  geom_line() + geom_point(size = 2) +
+  facet_wrap(~ lab(cond), ncol = 3) +
+  scale_colour_manual("Test", values = rep(pal_test, each = 2)) +
+  scale_shape_manual("Test", values = c(16, 1, 17, 2)) +
+  scale_linetype_manual("Test", values = c("solid", "42", "solid", "42")) +
+  scale_x_continuous(breaks = c(250, 500, 1000), trans = "log10",
+                     expand = expansion(mult = .12)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Sample size", y = "Rejection rate") +
+  guides(colour = guide_legend(nrow = 2)) +
+  theme_bw() +
+  theme(legend.position = "bottom", strip.text = element_text(size = 7.5),
+        panel.spacing.x = unit(1.2, "lines"))
+```
+
+```{r thresholds}
+ok |>
+  filter(n == 1000, k == 10) |>
+  group_by(Condition = lab(cond)) |>
+  summarise(across(t1:t4, mean), `Wald, disorder` = mean(disorder_any)) |>
+  kable(digits = 2, caption = "Mean CML threshold estimates for the focus item at n = 1000, k = 10, and the rejection rate of the Wald test of threshold order.")
+```
+
+The results fall into four groups.
+
+First, **categories that are not distinct or are in the wrong order are
+detected, and the thresholds stay ordered.** With categories 1 and 2
+swapped, the category means for 1 and 2 reject in every dataset at every
+sample size, and the item index in 58 to 100%. The mean threshold estimates
+are ordered but close (−0.07 and 0.20 at n = 1000), and the Wald test flags
+disorder in at most 0.5% of datasets. With categories 1 and 2 interchangeable, the category 1 mean
+rejects in 83 to 100% of datasets and $Q_1$ in 44 to 99%. With categories 0
+and 1 interchangeable, $Q_0$ and the category 1 mean carry the signal
+(44 to 97%), while the item index is weak (4 to 32%). In these three
+conditions the Wald test flags disorder in at most 1.5% of datasets.
+
+Second, **a step that discriminates more or less than the scoring says** is
+seen mainly in the category means (23 to 95%). The item index and $Q_j$
+are weak here, so a sum of squared deviates is not the best summary for
+this departure.
+
+Third, **"don't know" use shows up as a wider spread in the middle
+category**, not as a shifted mean. With $\pi$ = .25, the SD of the middle
+category rejects in 25 to 92% of datasets (wide middle) and 34 to 98%
+(narrow middle), followed by the tail count and $Q_2$. At $\pi$ = .05 the
+rates are .05 to .28. On a narrow, disordered middle, "don't know" use at 10%
+or 25% removes the disorder: the Wald test flags at most 1% of these
+datasets, against 69 to 100% without "don't know" use. Disorder in the middle category
+is therefore not a marker of "don't know" use, and "don't know" use can hide
+a middle category that is rarely chosen for trait-related reasons.
+
+Fourth, **an extreme response style shared by all items is not detected**
+(.01 to .10 for every statistic). The test compares the focus item with the
+other items, and a style that affects every item in the same way leaves
+that comparison unchanged.
+
+Misfit in the focus item did not lead to other items being flagged. The
+Holm-adjusted item index flagged no other item in any alternative cell.
+
+### Adjacent categories: distinct or interchangeable
+
+```{r auc}
+ok |>
+  filter(cond %in% c("A0_pcm_ordered", "S_inner_a0", "SWAP_1_2")) |>
+  group_by(Condition = lab(cond), n, k) |>
+  summarise(`0 vs 1` = mean(p_auc01 < alpha), `1 vs 2` = mean(p_auc12 < alpha),
+            `2 vs 3` = mean(p_auc23 < alpha), `3 vs 4` = mean(p_auc34 < alpha),
+            .groups = "drop") |>
+  kable(digits = 2, caption = "Rejection rate of the one-sided Wilcoxon test that the rest score is higher in the upper of two adjacent categories. A rejection means the two categories are distinct.")
+```
+
+The Wilcoxon test separates adjacent categories that differ from those that
+do not. When categories 1 and 2 are interchangeable, it rejects for that pair
+in 2.5 to 4.5% of datasets, close to its nominal level, while it rejects for
+every other pair in most datasets. With categories 1 and 2 swapped it never
+rejects for that pair, because the rest score is lower in category 2 than in
+category 1. Its null is interchangeability, not the PCM, so a non-rejection
+is weak evidence that two categories carry the same information, and a
+rejection says only that they differ in the expected direction.
+
+### Using all 20 category statistics together
+
+```{r multiplicity}
+pc <- grep("^p_(mean|sd|tail|Q)_\\d$", names(ok), value = TRUE)
+ok |>
+  filter(null) |>
+  mutate(any20 = apply(across(all_of(pc)) < alpha, 1, any)) |>
+  group_by(Condition = lab(cond), k, n) |>
+  summarise(`Any of 20 at .05` = mean(any20), .groups = "drop") |>
+  kable(digits = 3, caption = "Share of datasets with at least one of the 20 per-category statistics at p < .05 when the PCM holds.")
+```
+
+Each statistic is calibrated on its own, but a reader who looks at all 20
+and acts on any p < .05 rejects in 44 to 51% of datasets when the PCM holds.
+A Holm adjustment over the 20 cannot reject at all here: the smallest
+attainable p is $1/(B + 1)$, .005 with B = 199, and 20 times that is .10. The
+item index is the only single calibrated test per item among these
+statistics, and it misses some
+departures that the category statistics find (categories 0 and 1
+interchangeable, step discriminations, "don't know" use).
+
+### Diagnostic plots for single datasets
+
+```{r plot-setup}
+source("category_conditional_null/R/calibration_functions.R")
+source("category_conditional_null/R/plot_functions.R")
+ex <- readRDS(file.path(RES, "plot_examples.rds"))
+pv <- readRDS(file.path(RES, "plot_pav_examples.rds"))
+ex_conds <- c(A1_pcm_disordered = "PCM, disordered (null)",
+              SWAP_1_2 = "Categories 1, 2 swapped",
+              S_inner_a0 = "Categories 1, 2 interchangeable",
+              S_inner_a2 = "Step 2 discrimination 2",
+              DK_narrow_25 = "Don't know 25%, narrow middle")
+stack <- function(part) {
+  do.call(rbind, lapply(names(ex), function(nm) {
+    d <- ex[[nm]][[part]]
+    d$cond <- factor(ex_conds[nm], levels = ex_conds)
+    d
+  }))
+}
+```
+
+The tests say whether a category departs from the model. A plot can show
+how. A bar plot of observed and expected counts per category shows nothing
+here: the category counts are the sufficient statistics for the item's CML
+parameters, so the expected counts equal the observed counts. Each plot below
+therefore splits the persons by total score. The examples are one simulated
+dataset per condition at n = 500 and k = 10, generated by
+`category_conditional_null/R/plot_examples.R` and `plot_pav_examples.R`.
+
+```{r fig-group-resid}
+#| fig-height: 8.5
+#| fig-cap: "Standardised residual, (observed − expected) / SD, of the count in each category of the focus item within five score groups of about equal size. Dotted lines at ±1.96. One dataset per condition (rows), n = 500, k = 10."
+plot_group_resid(stack("agg"))
+```
+
+Swapped categories give a sign reversal across the score range: category 2
+is chosen more often than expected in the low score groups and category 1 in
+the high groups, with 9 of 25 residuals beyond ±1.96 against 1 of 25 under
+the null. Interchangeable categories give a weaker form of the same pattern.
+
+```{r fig-adjacent}
+#| fig-height: 8.5
+#| fig-cap: "Share of persons in the upper of two adjacent categories of the focus item at each total score, among persons in either category (circles, area proportional to the number of persons), against the CML expectation (line) and its pointwise 95% binomial band (grey). One dataset per condition."
+plot_adjacent(stack("adj"))
+```
+
+Under the PCM the share in the upper category rises with the total score.
+For swapped categories the observed share for categories 2 and 1 falls
+across the middle of the score range, and a quarter of the points lie outside
+the band. The band is pointwise and treats the item parameters as known.
+
+```{r fig-focused}
+#| fig-height: 8
+#| fig-cap: "Observed minus expected rest-score mean and SD per category of the focus item (points), against the 2.5 to 97.5% range of the exact conditional bootstrap (grey bars, B = 199). Filled points lie outside the range. One dataset per condition."
+plot_focused(stack("boot"), c("mean", "sd"))
+```
+
+This plot shows the statistics behind the tests in the earlier sections. In
+these datasets the swapped and interchangeable categories shift the means of
+categories 1 and 2 in opposite directions, and "don't know" use widens the
+middle category.
+
+```{r fig-pav}
+#| fig-height: 9.5
+#| fig-cap: "PAV-adjusted calibration plots for the cumulative events X ≥ k of the focus item. The forecast is the CML conditional probability P(X ≥ k | r). The line is the conditional event probability from the pool-adjacent-violators algorithm, the grey band the pointwise 95% range of the same curve for responses sampled given the total scores at the fitted item parameters. Dotted diagonal: perfect calibration. One dataset per condition."
+plot_pav(pv)
+```
+
+The last plot follows the recommendation of Säilynoja et al. (2025) for
+ordinal outcomes: one PAV-adjusted calibration plot (Dimitriadis et al.,
+2021) per cumulative event. Here the forecast is the CML conditional
+probability given the total score, so no person parameter enters, and the
+band is drawn from the exact conditional sampler. CML reproduces the
+category counts, so the mean deviation from the diagonal is zero for every
+event, and only the shape of the curve can depart. A curve flatter than the
+diagonal means that the event depends less on the total score than the model
+predicts. Swapped and interchangeable categories give a flat curve for X ≥ 2
+(62% and 40% of the points outside the band), while the other events stay
+close to the diagonal, so the plot points to the step between categories 1
+and 2. A step that discriminates more than the
+scoring says gives an S-shaped curve for X ≥ 2 (13% outside). None of the
+other plots showed that condition. Under the null, 0 to 5% of the points per
+event were outside the band.
+
+Pointwise bands are a guide, not a test. Under the null, some point will
+often lie outside a band, and in-sample bands of this kind were conservative
+in an earlier check of a nine-item PCM (2 to 3% of points outside under the
+null, easyRaschBayes `dev/pav-calibration-plan.md`). The next section turns
+the PAV curves into a test.
+
+### A calibration test from the PAV curves
+
+```{r cal-setup}
+cal <- readRDS(file.path(RES, "calibration_summary.rds"))$reps |>
+  mutate(evaluable = is.na(skipped) & !is.na(B_used) & B_used > 0,
+         cell = sprintf("n = %d, k = %d", n, k))
+cal_ok <- filter(cal, evaluable)
+
+# Item p of every item from R/compare_combination.R, which recomputes both
+# combinations of the events from the stored bootstrap MCB values:
+# p = studentised max-T (used below), p_minp = pooled min-p (the first
+# approach), padj / padj_minp = Westfall-Young step-down over the items.
+cal_items <- readRDS(file.path(RES, "compare_combination.rds"))$items |>
+  transmute(cond, null, n, k, rep, item, p = p_max, padj = padj_max,
+            p_minp = p_min, padj_minp = padj_min)
+null_cell <- cal_items |>
+  filter(null) |>
+  group_by(cond, n, k) |>
+  summarise(r01 = mean(p < .01), r05 = mean(p < alpha), r10 = mean(p < .10),
+            le01 = mean(p <= .01), le05 = mean(p <= alpha),
+            min_p = min(p), r05_minp = mean(p_minp < alpha),
+            min_p_minp = min(p_minp), .groups = "drop")
+null_all <- cal_items |>
+  filter(null) |>
+  group_by(k) |>
+  summarise(r01 = mean(p < .01), r05 = mean(p < alpha),
+            r01_minp = mean(p_minp < .01), r05_minp = mean(p_minp < alpha),
+            .groups = "drop")
+# Family-wise rate: any item of a null dataset with adjusted p below alpha.
+fwer <- cal_items |>
+  filter(null) |>
+  group_by(cond, n, k, rep) |>
+  summarise(any_maxT = any(padj < alpha), any_minp = any(padj_minp < alpha),
+            .groups = "drop") |>
+  group_by(cond, n, k) |>
+  summarise(datasets = n(), fw = mean(any_maxT), fw_minp = mean(any_minp),
+            .groups = "drop") |>
+  mutate(se = sqrt(.05 * .95 / datasets))
+fw_top <- slice_max(fwer, fw, n = 1, with_ties = FALSE)
+le_top <- slice_max(null_cell, le01, n = 1, with_ties = FALSE)
+# Focus item after the correction, alternative cells.
+pow_adj <- cal_items |>
+  filter(!null, item == 1) |>
+  group_by(cond, n, k) |>
+  summarise(maxT = mean(padj < alpha), minp = mean(padj_minp < alpha),
+            .groups = "drop")
+pa_rng <- function(cnd, col = "maxT") rng(pow_adj[[col]][pow_adj$cond == cnd])
+# Any of the k - 1 other items flagged after the correction, alternative cells.
+other_adj <- cal_items |>
+  filter(!null) |>
+  group_by(cond, n, k, rep) |>
+  summarise(any_other = any(padj[item > 1] < alpha), .groups = "drop") |>
+  group_by(cond, n, k) |>
+  summarise(rate = mean(any_other), .groups = "drop")
+event_null <- cal_ok |>
+  filter(null) |>
+  group_by(cond, n, k) |>
+  summarise(across(all_of(paste0("p_raw_", 1:4)), ~ mean(.x < alpha)), .groups = "drop")
+other_alt <- cal_items |>
+  filter(!null, item > 1) |>
+  group_by(cond, n, k) |>
+  summarise(rate = mean(p < alpha), .groups = "drop")
+
+pow <- bind_rows(
+  cal_items |> filter(!null, item == 1) |> group_by(cond, n, k) |>
+    summarise(rate = mean(p < alpha), .groups = "drop") |>
+    mutate(test = "Calibration test"),
+  ok |> filter(!null) |> group_by(cond, n, k) |>
+    summarise(rate = mean(p_index1 < alpha), .groups = "drop") |>
+    mutate(test = "Item index"))
+
+# Cells where either test rejects in more than 20%: calibration minus index.
+pow_big <- pow |>
+  pivot_wider(names_from = test, values_from = rate) |>
+  mutate(d = `Calibration test` - `Item index`) |>
+  filter(pmax(`Calibration test`, `Item index`) > .2)
+
+# Inline helpers: a rate as a percentage, and a range of rates.
+pct <- function(x) sprintf("%.0f%%", 100 * x)
+rng <- function(x) paste(pct(min(x)), "to", pct(max(x)))
+f3 <- function(x) sub("^0", "", sprintf("%.3f", x))
+pw <- function(cnd, nn, kk, tst = "Calibration test") {
+  pct(pow$rate[pow$cond == cnd & pow$n == nn & pow$k == kk & pow$test == tst])
+}
+pw_rng <- function(cnd, tst = "Calibration test") {
+  rng(pow$rate[pow$cond == cnd & pow$test == tst])
+}
+# Share of the focus item's max-T rejections kept after the step-down across
+# items: rate after / rate before, in cells with a rate before above .20.
+kept <- pow |>
+  filter(test == "Calibration test") |>
+  select(cond, n, k, before = rate) |>
+  inner_join(pow_adj, by = c("cond", "n", "k")) |>
+  filter(before > .2) |>
+  mutate(share = maxT / before,
+         scale = cond %in% c("SWAP_1_2", "S_outer_a0", "S_inner_a0"))
+```
+
+**Statistic.** For item i and the event $X_i \ge k$, the forecast for person
+v is $p_v = P(X_i \ge k \mid r_v)$ and the outcome $y_v$ is 1 when the person
+scored k or higher. The statistic is the miscalibration component of the
+Brier score in the CORP decomposition (Dimitriadis et al., 2021):
+
+$$\text{MCB} = \frac{1}{n}\sum_v (p_v - y_v)^2 - \frac{1}{n}\sum_v (\hat c_v - y_v)^2,$$
+
+where $\hat c_v$ is the PAV-recalibrated probability, the curve in
+@fig-pav. MCB is zero when the curve lies on the diagonal and grows with its
+distance from it. It is computed for every item and event, without the
+persons with an extreme total score.
+
+**p-values.** The reference distribution is the exact conditional bootstrap
+used for the category statistics, with the CML thresholds refitted in every
+replicate, so the fit of the forecast to the same data is part of it. For
+each event, p is the share of the pool of the observed MCB and its B
+replicates that lies at or above the observed value. The four events of an
+item are combined by a studentised Westfall-Young max-T (Ge et al., 2003). Each event's MCB is centred and scaled by the mean and SD of its pool,
+the item statistic is the largest of the four, and the item p is the share
+of the pool of item statistics at or above the observed one. This is how the
+bootstrap tests in easyRasch2 combine statistics on different scales. Across
+the k items, the Westfall-Young step-down on the item statistics gives
+adjusted p-values that control the family-wise error rate. A test rejects
+when p < .05, as in easyRasch2.
+
+The first version combined the events by a single-step min-p, with Holm's
+method across items. Its smallest attainable item p is the number of tied
+replicates at the smallest event p divided by B + 1, and with B = 199 no
+item p was below .015, so a correction across items could hardly reject.
+Both combinations are computed from the same stored bootstrap values
+(`R/compare_combination.R`), and the min-p results are reported alongside.
+
+**Run.** Same 84 cells, generators, replications and B as above, with new
+datasets. `run_calibration_study.R` ran on 4 cores on 2026-11-18 and 19 in
+about 6 h, and `summarise_calibration.R` collects the cells. An earlier run
+was discarded. Its min-p step divided the replicates' p by B and the
+observed p by B + 1, which left out replicates tied with the observed value,
+so the item p was too small (`R/minp_toy_check.R`).
+
+```{r fig-cal-null}
+#| fig-height: 5
+#| fig-cap: "Share of item p-values (max-T) at or below α when the PCM holds, over all items of every dataset, by condition (rows), sample size (columns) and number of items. Points at α = .01, .025, .05 and .10. Dotted diagonal: a calibrated p-value. The bootstrap has B = 199."
+a_grid <- seq(0, .1, by = .0025)
+pal_k <- c("k = 5" = "#0072B2", "k = 10" = "#D55E00")
+cal_items |>
+  filter(null) |>
+  group_by(cond, n, k) |>
+  reframe(a = a_grid, rate = ecdf(p)(a_grid)) |>
+  mutate(k = factor(paste("k =", k), levels = names(pal_k)),
+         n = factor(paste("n =", n), levels = paste("n =", c(250, 500, 1000)))) |>
+  ggplot(aes(a, rate, colour = k, linetype = k, shape = k)) +
+  geom_abline(slope = 1, intercept = 0, colour = "grey40", linetype = "dotted") +
+  geom_step() +
+  geom_point(data = \(d) filter(d, round(a, 4) %in% c(.01, .025, .05, .1)),
+             size = 2) +
+  facet_grid(lab(cond) ~ n) +
+  scale_colour_manual("Items", values = pal_k) +
+  scale_linetype_manual("Items", values = c("solid", "42")) +
+  scale_shape_manual("Items", values = c(16, 17)) +
+  scale_x_continuous(breaks = c(0, .05, .1), labels = c("0", ".05", ".10")) +
+  scale_y_continuous(breaks = c(0, .05, .1), labels = c("0", ".05", ".10")) +
+  coord_equal(xlim = c(0, .1), ylim = c(0, .1)) +
+  labs(x = "α", y = "Share of p ≤ α") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+When the PCM holds the item p is close to uniform in its lower tail
+(@fig-cal-null). Over all items the rejection rate at .05 is
+`r f3(null_all$r05[null_all$k == 5])` at k = 5 and
+`r f3(null_all$r05[null_all$k == 10])` at k = 10, between
+`r f3(min(null_cell$r05))` and `r f3(max(null_cell$r05))` per cell, and at
+.01 between `r f3(min(null_cell$r01))` and `r f3(max(null_cell$r01))` per
+cell. The smallest item p is `r f3(min(null_cell$min_p))`, 1/(B + 1).
+@fig-cal-null counts p equal to α as well. There the largest shares are in
+the `r as.character(lab(le_top$cond))` condition at n = `r le_top$n` and
+k = `r le_top$k`, `r f3(le_top$le01)` at .01 and `r f3(le_top$le05)` at .05. The raw p of each event
+rejects at a rate between `r f3(min(unlist(event_null[, -(1:3)])))` and
+`r f3(max(unlist(event_null[, -(1:3)])))` per cell.
+
+The min-p combination rejected at .05 in
+`r f3(null_all$r05_minp[null_all$k == 5])` (k = 5) and
+`r f3(null_all$r05_minp[null_all$k == 10])` (k = 10) of items, and never at
+.01, since no min-p item p was below `r f3(min(null_cell$min_p_minp))`.
+
+After the step-down across items, the share of null datasets with at least
+one item flagged is between `r f3(min(fwer$fw))` and `r f3(max(fwer$fw))`
+per cell for max-T. The largest, `r f3(fw_top$fw)`, is in the
+`r as.character(lab(fw_top$cond))` condition at n = `r fw_top$n` and
+k = `r fw_top$k`,
+`r sprintf("%.1f", (fw_top$fw - .05) / fw_top$se[1])` Monte Carlo SEs above
+.05 with `r fw_top$datasets` datasets. Every other cell is at or below
+`r f3(sort(fwer$fw, decreasing = TRUE)[2])`. A check with B = 999 and 1000
+datasets per cell for the two null cells at n = 1000 and k = 5 is prepared
+(`R/run_calibration_B999.R`). For min-p the family-wise rate is between
+`r f3(min(fwer$fw_minp))` and `r f3(max(fwer$fw_minp))`, held down by its
+smallest attainable p rather than by a correct calibration. Rates per cell
+are in the appendix.
+
+```{r fig-cal-power}
+#| fig-height: 7
+#| fig-cap: "Rejection rate at .05 of the calibration test and of the item index (the sum of the per-category Q statistics, from the first study) for the focus item, by condition, sample size and number of items. The two tests were run on different datasets from the same generators. Dotted line at .05."
+pal_test2 <- c("Calibration test" = "#0072B2", "Item index" = "#D55E00")
+pow |>
+  mutate(test = paste0(test, ", k = ", k)) |>
+  ggplot(aes(n, rate, colour = test, shape = test, linetype = test)) +
+  geom_hline(yintercept = .05, colour = "grey40", linetype = "dotted") +
+  geom_line() + geom_point(size = 2) +
+  facet_wrap(~ lab(cond), ncol = 3) +
+  scale_colour_manual("Test", values = rep(pal_test2, each = 2)) +
+  scale_shape_manual("Test", values = c(16, 1, 17, 2)) +
+  scale_linetype_manual("Test", values = c("solid", "42", "solid", "42")) +
+  scale_x_continuous(breaks = c(250, 500, 1000), trans = "log10",
+                     expand = expansion(mult = .12)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Sample size", y = "Rejection rate") +
+  guides(colour = guide_legend(nrow = 2)) +
+  theme_bw() +
+  theme(legend.position = "bottom", strip.text = element_text(size = 7.5),
+        panel.spacing.x = unit(1.2, "lines"))
+```
+
+In every cell where either test rejected in more than 20% of datasets, the
+calibration test rejected
+`r if (min(pow_big$d) >= 0) "at least as often as the item index" else sprintf("about as often as the item index or more often, at most %.1f percentage points less", -100 * min(pow_big$d))`
+(@fig-cal-power). The largest
+differences:
+
+- Categories 0 and 1 interchangeable: `r pw_rng("S_outer_a0")` against
+  `r pw_rng("S_outer_a0", "Item index")` for the item index.
+- Step 2 discrimination 2: `r pw("S_inner_a2", 1000, 10)` against
+  `r pw("S_inner_a2", 1000, 10, "Item index")` at n = 1000 and k = 10.
+- Categories 1 and 2 interchangeable at k = 10: `r pw("S_inner_a0", 250, 10)`
+  against `r pw("S_inner_a0", 250, 10, "Item index")` at n = 250.
+- Categories 1 and 2 swapped at n = 250 and k = 10:
+  `r pw("SWAP_1_2", 250, 10)` against `r pw("SWAP_1_2", 250, 10, "Item index")`.
+- "Don't know" use at 25% on a narrow middle, n = 1000 and k = 10:
+  `r pw("DK_narrow_25", 1000, 10)` against
+  `r pw("DK_narrow_25", 1000, 10, "Item index")`.
+
+Both tests rarely detect "don't know" use at 5 or 10% (at most
+`r pct(max(pow$rate[pow$test == "Calibration test" & grepl("DK_(wide|narrow)_(05|10)", pow$cond)]))`
+for the calibration test and
+`r pct(max(pow$rate[pow$test == "Item index" & grepl("DK_(wide|narrow)_(05|10)", pow$cond)]))`
+for the item index), and the calibration test does not detect the extreme
+response style (`r pw_rng("ERS_30")`). For "don't know" use
+the SD of the middle category from the first study stays the most sensitive
+statistic. Misfit in the focus item raised the rejection rate of the other
+items only a little: the median over alternative cells was
+`r pct(median(other_alt$rate))` and the largest `r pct(max(other_alt$rate))`
+(`r lab(other_alt$cond[which.max(other_alt$rate)])`, n =
+`r other_alt$n[which.max(other_alt$rate)]`, k =
+`r other_alt$k[which.max(other_alt$rate)]`).
+
+Before the correction across items, the two combinations reject the focus
+item about equally often. After the Westfall-Young step-down across the
+k items (B = 99 in the alternative cells), the focus item is rejected at
+these rates, max-T against min-p:
+
+- Categories 1 and 2 swapped: `r pa_rng("SWAP_1_2")` against
+  `r pa_rng("SWAP_1_2", "minp")` for min-p.
+- Categories 0 and 1 interchangeable: `r pa_rng("S_outer_a0")` against
+  `r pa_rng("S_outer_a0", "minp")`.
+- Categories 1 and 2 interchangeable: `r pa_rng("S_inner_a0")` against
+  `r pa_rng("S_inner_a0", "minp")`.
+
+Compared with its own rejection rate before the correction, max-T keeps
+`r rng(kept$share[kept$scale])` of its rejections for swapped and
+interchangeable categories and `r rng(kept$share[!kept$scale])` for the other
+departures, in the cells where it rejected in more than 20% of datasets
+before the correction. Step 2 discrimination 2 at n = 1000 and k = 10 falls
+from `r pw("S_inner_a2", 1000, 10)` to
+`r pct(pow_adj$maxT[pow_adj$cond == "S_inner_a2" & pow_adj$n == 1000 & pow_adj$k == 10])`,
+and "don't know" use at 25% on a narrow middle at n = 1000 and k = 10 from
+`r pw("DK_narrow_25", 1000, 10)` to
+`r pct(pow_adj$maxT[pow_adj$cond == "DK_narrow_25" & pow_adj$n == 1000 & pow_adj$k == 10])`.
+With max-T, the share of datasets in which at least one of the other items
+was flagged after the correction was at most `r pct(max(other_adj$rate))`
+per alternative cell, `r pct(mean(other_adj$rate))` on average.
+
+```{r fig-cal-events}
+#| fig-height: 6
+#| fig-cap: "Rejection rate at .05 of the raw p for each cumulative event of the focus item at n = 1000 and k = 10, by condition. Dotted line at .05."
+cal_ok |>
+  filter(!null, n == 1000, k == 10) |>
+  group_by(cond) |>
+  summarise(across(all_of(paste0("p_raw_", 1:4)), ~ mean(.x < alpha)), .groups = "drop") |>
+  pivot_longer(all_of(paste0("p_raw_", 1:4)), names_to = "event", names_prefix = "p_raw_",
+               values_to = "rate") |>
+  mutate(event = paste0("X ≥ ", event)) |>
+  ggplot(aes(event, rate, group = 1)) +
+  geom_hline(yintercept = .05, colour = "grey40", linetype = "dotted") +
+  geom_line(colour = "#0072B2") +
+  geom_point(colour = "#0072B2", size = 2) +
+  facet_wrap(~ lab(cond), ncol = 3) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Event", y = "Rejection rate") +
+  theme_bw() +
+  theme(strip.text = element_text(size = 7.5))
+```
+
+The event that rejects points to the step concerned (@fig-cal-events).
+Interchangeable categories 0 and 1 are found through $X \ge 1$, swapped or
+interchangeable categories 1 and 2 and a step 2 that discriminates too much
+or too little through $X \ge 2$, and "don't know" use in the middle category
+through $X \ge 2$ and $X \ge 3$. Rates per cell for the item p and each event
+are in the appendix.
+
+## Discussion
+
+The category-level statistics detect response scales that do not work as
+the scoring says in cases where the thresholds are ordered (swapped or
+interchangeable categories), and they do not flag disordered thresholds
+when the PCM holds. In these data, disordered threshold estimates were
+neither necessary nor sufficient for a response scale that does not work.
+Swapped and interchangeable categories gave ordered estimates, the PCM with
+disordered thresholds fits, and "don't know" use removed a disorder that was
+there.
+
+The calibration test gives one calibrated p per item that finds most of
+what the 20 category statistics find, including the departures the item
+index misses. It also says which step is affected. The category statistics
+remain useful for describing a departure once it is found, in particular the
+SD of the middle category for "don't know" use.
+
+Limitations of this run:
+
+- **Multiplicity.** The study has no calibrated decision rule across the 20
+  statistics. A joint test needs the bootstrap distribution of all
+  statistics together (for example a min-p or max-T adjustment, as in
+  Westfall-Young), which this run did not save, and a larger B. For the
+  calibration test the max-T step-down across items held the family-wise
+  rate near .05 at B = 199 except in one cell (`r f3(fw_top$fw)`), and the check at
+  B = 999 has not been run yet.
+- **One focus item.** Only item 1 departs from the PCM, and it is located at
+  the centre of the person distribution. Departures in several items at once,
+  and in items off target, are not studied.
+- **Bootstrap loss at n = 250.** About one dataset in ten lost more than 10%
+  of its bootstrap replicates, and eight datasets lost all of them.
+- **Person-level mechanisms.** A response style shared by all items is out
+  of reach of a test that compares items. A mixture Rasch model or an IRTree
+  model would be needed for that.
+- **Mechanisms are stylised.** "Don't know" use is modelled as a fixed
+  probability of choosing the middle category, unrelated to $\theta$.
+
+## References
+
+Dimitriadis, T., Gneiting, T., & Jordan, A. I. (2021). Stable reliability
+diagrams for probabilistic classifiers. *Proceedings of the National Academy
+of Sciences, 118*(8), e2016191118. https://doi.org/10.1073/pnas.2016191118
+
+Glas, C. A. W. (1988). The derivation of some tests for the Rasch model from
+the multinomial distribution. *Psychometrika, 53*(4), 525–546.
+https://doi.org/10.1007/BF02294405
+
+Glas, C. A. W. (1991). *Testing Rasch models for polytomous items with an
+example concerning detection of item bias* (Research Report 91-2). Cito.
+
+Glas, C. A. W., & Verhelst, N. D. (1989). Extensions of the partial credit
+model. *Psychometrika, 54*(4), 635–659. https://doi.org/10.1007/BF02296401
+
+Ge, Y., Dudoit, S., & Speed, T. P. (2003). Resampling-based multiple testing
+for microarray data analysis. *Test, 12*(1), 1–77.
+https://doi.org/10.1007/BF02595811
+
+Säilynoja, T., Johnson, A. R., Martin, O. A., & Vehtari, A. (2025).
+*Recommendations for visual predictive checks in Bayesian workflow*
+(arXiv:2503.01509). arXiv. https://doi.org/10.48550/arXiv.2503.01509
+
+## Appendix: rejection rates for every cell
+
+Rejection rate at .05 per category of the focus item (columns 0 to 4), for
+every condition and cell. Null cells have 500 datasets, alternative cells
+200.
+
+```{r appendix}
+#| results: asis
+for (st in names(pal_stat)) {
+  tab <- rej |>
+    filter(stat == st) |>
+    mutate(Condition = lab(cond)) |>
+    arrange(Condition, k, n) |>
+    select(Condition, Cell = cell, category, rate) |>
+    pivot_wider(names_from = category, values_from = rate)
+  print(kable(tab, digits = 2, caption = paste0("Statistic: ", st, ".")))
+  cat("\n\n")
+}
+```
+
+```{r appendix-cal}
+cal_ok |>
+  left_join(filter(cal_items, item == 1) |> select(cond, n, k, rep, p_maxT = p),
+            by = c("cond", "n", "k", "rep")) |>
+  group_by(Condition = lab(cond), Cell = cell, k, n) |>
+  summarise(Datasets = n(),
+            `Item p` = mean(p_maxT < alpha),
+            `X ≥ 1` = mean(p_raw_1 < alpha), `X ≥ 2` = mean(p_raw_2 < alpha),
+            `X ≥ 3` = mean(p_raw_3 < alpha), `X ≥ 4` = mean(p_raw_4 < alpha),
+            .groups = "drop") |>
+  arrange(Condition, k, n) |>
+  select(-k, -n) |>
+  kable(digits = 2, caption = "Calibration test: rejection rate at .05 of the item p (max-T) and the raw p of each cumulative event for the focus item, for every condition and cell.")
+```
+
+```{r appendix-cal-null}
+null_cell |>
+  left_join(fwer, by = c("cond", "n", "k")) |>
+  mutate(Condition = lab(cond), Cell = sprintf("n = %d, k = %d", n, k)) |>
+  arrange(Condition, k, n) |>
+  select(Condition, Cell, Datasets = datasets,
+         `Max-T, .01` = r01, `Max-T, .05` = r05, `Min-p, .05` = r05_minp,
+         `FWER max-T` = fw, `FWER min-p` = fw_minp) |>
+  kable(digits = 3, caption = "Calibration test when the PCM holds (B = 199): rejection rate of the item p over all items at .01 and .05, and the share of datasets with at least one item flagged after the Westfall-Young step-down (FWER), for the max-T and min-p combinations of the events.")
+```
+
+```{r appendix-cal-adj}
+pow_adj |>
+  mutate(Condition = lab(cond), Cell = sprintf("n = %d, k = %d", n, k)) |>
+  arrange(Condition, k, n) |>
+  select(Condition, Cell, `Max-T` = maxT, `Min-p` = minp) |>
+  kable(digits = 2, caption = "Calibration test: rejection rate at .05 of the focus item after the Westfall-Young step-down across items (B = 99), max-T and min-p combinations of the events.")
+```

@@ -23,6 +23,11 @@ dev/dif_anchor_consensus/*.rds
 !dev/dif_lr_wald/*_slim*.rds
 !dev/dif_anchor_threshold/*_slim*.rds
 !dev/dif_anchor_consensus/*_slim*.rds
+dev/dif_impact_sim/*.rds
+!dev/dif_impact_sim/*_slim*.rds
+dev/dif_impact_ext_sim/*.rds
+dev/dif_impact_ext_sim/*_cells/
+!dev/dif_impact_ext_sim/*_slim*.rds
 dev/category_conditional_null/results/cells/
 dev/category_conditional_null/results/cells_rngbug/
 dev/category_conditional_null/results/smoke_cells/
@@ -30,3 +35,13 @@ dev/results/**/*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].rds
 dev/results/**/*_[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].rds	
 dev/**/results/**/*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].rds
 dev/**/results/**/*_[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].rds	
+dev/**/*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].rds
+dev/**/*_[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].rds	
+# Simulation output in dev/ (rule set 2026-11-19). Tracked: scripts, the
+# write-up (.qmd and rendered pdf), the slim/summary results it reads (and
+# their dated copies), csv summaries and run logs. Never tracked: per-cell
+# or per-replication files, smoke-test output, render logs. Full-size
+# results that the write-up does not read get a folder entry above.
+dev/**/*cells*/
+dev/**/*smoke*.rds
+dev/**/render*.log

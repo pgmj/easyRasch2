@@ -23,6 +23,7 @@ reps <- dplyr::bind_rows(lapply(files, function(f) {
     base$any_other_holm <- any(r$p_item_holm[-1] < alpha)
     base$item1_holm <- r$p_item_holm[1] < alpha
     for (nm in names(pc)) base[[paste0("p_", nm)]] <- pc[[nm]]
+    for (j in 1:4) base[[paste0("t", j)]] <- r$thresholds1[j]
     for (j in 1:3) base[[paste0("z", j, j + 1)]] <- r$z1[j]
     base$disorder_any <- any(r$z1 < -stats::qnorm(1 - alpha))
     base$disorder_pt <- any(diff(r$thresholds1) < 0)

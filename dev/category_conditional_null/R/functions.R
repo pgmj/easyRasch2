@@ -18,10 +18,22 @@ library(psychotools)
 
 # Elementary symmetric functions for a set of items (convolution of the
 # items' generating polynomials). Index 1 is score 0.
+# Direct polynomial multiplication (2026-11-18). The first version used
+# stats::convolve(), which goes through the FFT: P(X = j | r) was off by up to
+# about 5e-6 and differences of cumulative probabilities at extreme scores by
+# up to 1e-3. This version is exact up to floating point and all terms are
+# positive, so there is no cancellation.
 .gamma <- function(eps_list) {
   g <- 1
-  for (e in eps_list) g <- stats::convolve(g, rev(e), type = "open")
-  pmax(g, 0)
+  for (e in eps_list) {
+    out <- numeric(length(g) + length(e) - 1L)
+    for (j in seq_along(e)) {
+      idx <- j:(j + length(g) - 1L)
+      out[idx] <- out[idx] + e[j] * g
+    }
+    g <- out
+  }
+  g
 }
 
 # P(X_i = j | r) for item i, as a (K+1) x (m_i+1) matrix, rows r = 0..K.

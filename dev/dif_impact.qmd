@@ -1,0 +1,904 @@
+---
+title: "Practical impact of DIF"
+subtitle: "How much uniform DIF biases group comparisons and person scores, and how well the impact can be estimated after RMdifAnchor()"
+author: "Magnus Johansson"
+date: today
+bibliography: dif-impact-refs.bib
+csl: apa.csl
+---
+
+Development study for a planned easyRasch2 function (working name `RMdifImpact()`). The design log with every decision is `dif-impact-design.md`, Part B.
+
+A condensed version is the rasch_book chapter `chapters/dif-impact.qmd` (draft, 2026-11-19). This document keeps the full record of the development work.
+
+```{r setup}
+#| include: false
+library(ggplot2)
+library(knitr)
+
+# Study 1 (population values): dif_impact_theory.R, host run 2026-11-17.
+th <- readRDS(file.path("dif_impact_theory", "theory_results.rds"))
+th <- if (is.data.frame(th)) th else th$results
+# Only the general grid is used here. The scenario rows in this file are from
+# sample-size settings that were changed before the simulation, and Study 2
+# computes its own exact targets.
+th <- th[th$cell_set == "general", ]
+th$type_lab <- factor(th$type, levels = c("dich", "poly"),
+                      labels = c("Dichotomous", "Four categories"))
+th$pos_lab <- factor(th$position, levels = c("central", "offtarget"),
+                     labels = c("Central item", "Off-target item"))
+th$n_lab <- factor(paste0(th$n_ref, "/", th$n_focal),
+                   levels = c("500/500", "1000/200", "2000/100"))
+
+# Study 2 (simulation): dif_impact_sim.R, host run 2026-11-17, summarised
+# by dif_impact_sim_analysis.R.
+sim <- readRDS(file.path("dif_impact_sim", "sim_results_slim.rds"))
+
+scen_levels <- c("k5 one central", "k5 one near_cut",
+                 "k10 one central", "k10 one near_cut",
+                 "k10 two_same central", "k10 two_same near_cut",
+                 "k10 two_opposite near_cut")
+scen_labels <- c("5 items, one central", "5 items, one near cut",
+                 "10 items, one central", "10 items, one near cut",
+                 "10 items, two same, central", "10 items, two same, near cut",
+                 "10 items, two opposite")
+add_scen <- function(d) {
+  d$scen <- factor(paste0("k", d$k, " ", d$scenario, " ", d$position),
+                   levels = scen_levels, labels = scen_labels)
+  d$n_lab <- factor(paste0(d$n_ref, "/", d$n_focal),
+                    levels = c("250/250", "500/500", "800/200"))
+  d
+}
+for (nm in c("strategies", "split_remove", "person", "estimates",
+             "flag_class", "null_flagged", "detection", "targets")) {
+  sim[[nm]] <- add_scen(sim[[nm]])
+}
+
+# Palettes. Ordered variables use a one-hue blue ramp and nominal ones
+# Okabe-Ito, both validated earlier with the dataviz checker (light mode,
+# white surface). Every series also has its own line type and point shape.
+ramp3 <- c("#5598e7", "#256abf", "#0d366b")
+ramp2 <- c("#5598e7", "#0d366b")
+scale_series <- function(name, values, lty, shp) {
+  list(scale_colour_manual(name = name, values = values),
+       scale_linetype_manual(name = name, values = lty),
+       scale_shape_manual(name = name, values = shp))
+}
+theme_set(theme_bw(base_size = 10) +
+            theme(legend.position = "bottom",
+                  panel.spacing = unit(0.4, "cm")))
+
+minus <- function(x) sub("^-", "\u2212", x)
+r2 <- function(x) minus(formatC(x, format = "f", digits = 2))
+r3 <- function(x) minus(formatC(x, format = "f", digits = 3))
+r1 <- function(x) minus(formatC(x, format = "f", digits = 1))
+pct <- function(x) paste0(rng(100 * x, function(v) formatC(v, format = "f", digits = 0)), "%")
+p2 <- function(x) sub("^(\u2212?)0", "\\1", r2(x))
+p3 <- function(x) sub("^(\u2212?)0", "\\1", r3(x))
+rng <- function(x, f = r2) paste0(f(min(x)), " to ", f(max(x)))
+pick <- function(.data, ...) {
+  cond <- list(...)
+  for (nm in names(cond)) .data <- .data[.data[[nm]] %in% cond[[nm]], , drop = FALSE]
+  .data
+}
+# Shift share of the parameter variance of Delta under split (Study 1)
+sp_rows <- pick(th, strategy = "split")
+sp_rows <- sp_rows[sp_rows$se_param > 0, ]
+shift_share <- (sp_rows$se_shift / sp_rows$se_param)^2
+```
+
+## Purpose
+
+`RMdifAnchor()` and `RMdifTree()` answer whether items function differently between groups. With a few hundred respondents per group, a DIF test can flag items whose DIF has no practical consequence, and with small groups it can miss DIF that matters. Statistical significance and practical importance are separate questions [@meade2010]. The planned function answers the second: once DIF has been flagged, is it large enough that something should be done about it, or can it be left as practically irrelevant?
+
+The consequence of DIF depends on what the scale is used for. Two uses are studied here.
+
+1. **Group comparison.** How much does the DIF bias the estimated difference between the groups' means?
+2. **Individual scores.** How much does it shift persons in one group relative to persons with the same latent value in the other group, and where on the scale is the shift largest?
+
+Three ways of handling a DIF item are compared. **Keep** ignores the DIF and scores everyone with pooled item parameters. **Remove** drops the item. **Split** gives the item group-specific parameters, anchored through the other items.
+
+Study 1 computes the population values of the bias for each strategy, without simulation, over a broad grid of scales. Study 2 is a simulation of the estimates a function would report from one dataset, both when the true DIF items are known and when they are the items `RMdifAnchor()` flags. Study 3 checks the outputs added after Study 2: the impact of each DIF item separately, misclassification rates at a cut-off, and projection to another population.
+
+## Background
+
+### Model and estimand
+
+Items follow the partial credit model. DIF is uniform: every threshold of a DIF item is shifted by the same number of logits in the focal group, so the item is harder for focal persons with the same $\theta$. This shift is the DIF size, written as, for example, DIF = 0.5 logits. The latent distributions are $N(0, 1)$ in the reference group and $N(\mu_f, 1)$ in the focal group.
+
+The target is the group difference $\Delta = \mu_f - \mu_r$. Three estimators of $\Delta$ are compared, since applied work uses all three.
+
+1. **WLE mean.** The difference between the groups' mean weighted likelihood estimates [@warm1989].
+2. **Latent mean.** Item parameters fixed at their CML estimates, and each group's mean and SD estimated by marginal maximum likelihood. For Rasch-family items the marginal likelihood depends on a response pattern only through its raw score.
+3. **Sum score.** The difference in mean raw scores. Under split, the focal group's raw scores are first equated to the reference items through the test characteristic curves, $T_r^{-1}(T_f(\cdot))$.
+
+Every estimator has some bias without DIF (the WLE through extreme scores, the sum score through floor and ceiling), and that bias differs between $k$ and $k - 1$ items. The **impact** of a strategy is therefore defined as its estimate of $\Delta$ under DIF minus the same strategy's estimate for the same persons without DIF. Remove and split have zero impact when the anchor items are free of DIF. Keep does not.
+
+### Group-level bias under keep
+
+When a DIF item is kept, its pooled parameters lie between the two groups' true values. To first order, the bias in $\Delta$ is $-\text{DIF}$ times the item's share of the test information, averaged over the persons,
+
+$$
+\text{bias}(\hat\Delta_\text{keep}) \approx -\text{DIF} \, \overline{I_j(\theta) / I(\theta)},
+$$
+
+where $I_j$ is the item's information and $I$ the test information. The bias does not shrink as $n$ grows. The standard error of $\hat\Delta$ does, so the same DIF distorts the comparison more in a larger study. A bias that is negligible as an effect size can still make a CI for $\Delta$ miss its target in a large study, and the two readings must be kept apart.
+
+### Local bias
+
+The information share of an item varies with $\theta$, so the shift is local. A focal person at $\theta$ has the expected raw score $T_f(\theta)$, which a reference person reaches at $T_r^{-1}(T_f(\theta))$. The local bias
+
+$$
+b(\theta) = T_r^{-1}\big(T_f(\theta)\big) - \theta
+$$
+
+is the horizontal distance between the groups' test characteristic curves, in logits. It is the difference in estimated $\theta$ between a focal and a reference person with the same true $\theta$. Divided by the standard error of measurement at $\theta$, it is the shift in SEM units. The vertical distance $T_f(\theta) - T_r(\theta)$ is the expected raw-score difference at equal $\theta$. @chalmers2016 integrate it over $\theta$ as signed and unsigned measures of differential test functioning.
+
+An item targeted at a high cut-off can have a small group-mean bias and a large local bias at the cut, since the item carries a large share of the information there and little elsewhere. An off-target item is the only informative item in its region, so its share keeps rising into the tail. The local summaries are therefore restricted to the central 95% of the pooled latent distribution. They are the largest absolute local bias, its location, and $b$ at a cut-off.
+
+### What a function can estimate from one dataset
+
+Given the items to split, the impact is estimated within one dataset as $\hat\Delta_\text{keep} - \hat\Delta_\text{split}$ for each estimator. The local bias is computed from the split model's parameters over the estimated latent mixture. Standard errors come from the delta method on the estimated DIF sizes $\widehat{\text{DIF}}$, with the other item parameters treated as fixed. This is an approximation. In the population calculation of Study 1, the variance from the shifts alone was a median of `r round(100 * stats::median(shift_share))`% of the full parameter variance of $\hat\Delta_\text{split}$ (`r rng(100 * shift_share, function(v) formatC(v, format = "f", digits = 0))`% over the settings, since the other parameters also covary with the shifts). Studies 2 and 3 check the resulting CIs directly. The difference $\hat\Delta_\text{keep} - \hat\Delta_\text{remove}$ was not used, since it also carries the difference in estimator bias between $k$ and $k - 1$ items.
+
+The split model is fitted by conditional maximum likelihood with a single shift parameter per split item (`dif_shift_cml.R`, validated in `dif_shift_cml_validation.qmd`).
+
+## Study 1: population values
+
+### Design
+
+```{r s1-design}
+#| include: false
+n_set1 <- nrow(unique(th[c("type", "k", "position", "d", "mu2", "n_ref")]))
+```
+
+No data are simulated. Each model is fitted by CML to the expected sufficient statistics (category counts and raw-score distribution in each group, from quadrature over the true latent distributions). This gives the probability limit of every estimate. The SE at given group sizes combines the sampling error of the estimator and the delta-method error from the item parameters. The grid has `r n_set1` settings.
+
+- **Items.** 5, 10 or 20 dichotomous items (locations evenly spaced on $[-2, 2]$), or 5, 10 or 20 items with four categories (locations evenly spaced on $[-1.5, 1.5]$, thresholds at location $-1$, $0$ and $+1$).
+- **DIF item.** One item, either the most central or the one with the largest location (off target).
+- **DIF size.** 0.5, 0.8 or 1.2 logits.
+- **Focal mean.** $\mu_f$ = 0 or 0.5.
+- **Group sizes.** 500/500, 1000/200 or 2000/100 (reference/focal).
+
+### Results
+
+```{r s1-numbers}
+#| include: false
+kw <- pick(th, strategy = "keep", estimator = "wle")
+kw$fo_ratio <- kw$bias_first_order / kw$impact
+fo_c <- pick(kw, position = "central")$fo_ratio
+fo_o <- pick(kw, position = "offtarget")$fo_ratio
+
+key <- c("type", "k", "position", "d", "mu2", "n_ref", "estimator")
+sr <- merge(pick(th, strategy = "split")[c(key, "se_total_smd")],
+            pick(th, strategy = "remove")[c(key, "se_total_smd")], by = key)
+sr$ratio <- sr$se_total_smd.x / sr$se_total_smd.y
+sr_max <- function(est, kk, tp) max(pick(sr, estimator = est, k = kk, type = tp)$ratio)
+
+kk <- pick(th, strategy = "keep")
+bise <- reshape(kk[c(key[-7], "estimator", "bias_in_se")],
+                idvar = key[-7], timevar = "estimator", direction = "wide")
+lat_wle <- bise$bias_in_se.latent / bise$bias_in_se.wle
+sum_wle <- bise$bias_in_se.sum / bise$bias_in_se.wle
+
+kl <- pick(th, strategy = "keep", estimator = "latent")
+kl$loc_ratio <- kl$b_maxabs / abs(kl$impact)
+
+cov_k5 <- pick(kl, type = "poly", k = 5, position = "central", mu2 = 0.5, d = 0.5)
+cov_k5 <- cov_k5[order(cov_k5$n_lab), ]
+cov_k20 <- pick(kl, type = "poly", k = 20, position = "central", mu2 = 0.5, d = 0.5)
+ck_d <- pick(kl, type = "poly", position = "central", mu2 = 0.5, d = 0.5, n_ref = 500)
+ck <- setNames(ck_d$impact, ck_d$k)
+```
+
+**Size of the bias under keep.** @fig-s1-impact shows the population impact of keeping the item on the latent mean difference. For a central four-category item with DIF = 0.5 it is `r r3(abs(ck[["5"]]))` logits at 5 items, `r r3(abs(ck[["10"]]))` at 10 and `r r3(abs(ck[["20"]]))` at 20, roughly halving each time the scale doubles in length. An off-target item has a smaller group-mean bias, because few persons are in the region where it carries information. The first-order formula is close for central items (ratio first-order/exact `r rng(fo_c)`), but it overstates the bias of off-target items (up to `r r2(max(fo_o))`), so the function should use the exact calculation.
+
+```{r fig-s1-impact}
+#| echo: false
+#| fig-height: 4.6
+#| fig-cap: "Study 1. Population bias in the latent mean difference when the DIF item is kept, by DIF size, number of items, item type and position. Focal mean 0.5, groups 500/500 (the bias hardly depends on group size). The dotted line is zero."
+d1 <- pick(kl, mu2 = 0.5, n_ref = 500)
+d1$k_lab <- factor(d1$k, levels = c(5, 10, 20), labels = c("5 items", "10 items", "20 items"))
+ggplot(d1, aes(d, impact, colour = k_lab, linetype = k_lab, shape = k_lab)) +
+  geom_hline(yintercept = 0, linetype = "dotted", colour = "grey50") +
+  geom_line(linewidth = 0.6) + geom_point(size = 2) +
+  facet_grid(type_lab ~ pos_lab) +
+  scale_series("Scale length", ramp3, c("solid", "dashed", "dotdash"), c(16, 17, 15)) +
+  scale_x_continuous(breaks = c(0.5, 0.8, 1.2)) +
+  labs(x = "DIF size (logits)", y = "Bias in the latent mean difference (logits)")
+```
+
+```{r s1-scales}
+#| include: false
+sc <- pick(th, strategy = "keep", estimator = "latent", mu2 = 0.5, n_ref = 500)
+sc$share <- abs(sc$impact) / sc$delta_0
+sc$smd <- abs(sc$impact_smd)
+sc$bsem <- sc$b_sem_maxabs
+sc$bse <- abs(sc$bias_in_se)
+sv <- function(col, tp, pos, kk, dd) {
+  pick(sc, type = tp, position = pos, k = kk, d = dd)[[col]]
+}
+pc_ <- function(x) paste0(round(100 * x), "%")
+```
+
+**Size on the reference scales.** A bias in logits does not say whether it matters. @fig-s1-scales expresses the same bias on the four scales that `RMdifImpact()` will report.
+
+1. **Share of the group difference**, $|\text{impact}| / \Delta$. Here $\Delta$ = 0.5. The scale depends on the true difference: the same bias is two and a half times as large a share of a difference of 0.2. In one dataset the function divides by $\hat\Delta_\text{split}$, which has no DIF bias.
+2. **Standardised mean difference**, impact divided by the pooled SD. With unit latent SDs it is close to the bias in logits.
+3. **Largest local bias in SEM units**, the largest value of $|b(\theta)| / \text{SEM}(\theta)$ over the central 95% of the latent distribution. This is the scale for individual scores.
+4. **Bias in SE units**, bias divided by the SE of $\hat\Delta$. It depends on the group sizes and sets the coverage in @fig-s1-coverage. It is shown at 500/500.
+
+For a central four-category item in a five-item scale, DIF = 0.5 removes `r pc_(sv("share", "poly", "central", 5, 0.5))` of the group difference (SMD `r r2(sv("smd", "poly", "central", 5, 0.5))`), and DIF = 1.2 removes `r pc_(sv("share", "poly", "central", 5, 1.2))` (SMD `r r2(sv("smd", "poly", "central", 5, 1.2))`), a bias of `r r1(sv("bse", "poly", "central", 5, 1.2))` SEs at 500/500. The same DIF moves a focal person's estimate by at most `r r2(sv("bsem", "poly", "central", 5, 0.5))` and `r r2(sv("bsem", "poly", "central", 5, 1.2))` SEM. The group comparison is affected far more than the individual scores. A longer scale dilutes both, but not equally. From 5 to 20 items at DIF = 1.2, the share of $\Delta$ falls from `r pc_(sv("share", "poly", "central", 5, 1.2))` to `r pc_(sv("share", "poly", "central", 20, 1.2))`, and the largest local bias in SEM units only from `r r2(sv("bsem", "poly", "central", 5, 1.2))` to `r r2(sv("bsem", "poly", "central", 20, 1.2))`, because the SEM also shrinks as items are added.
+
+An off-target item has the smaller group-level bias (`r pc_(sv("share", "poly", "offtarget", 5, 1.2))` of $\Delta$ at five items and DIF = 1.2) but the larger local bias in SEM units (`r r2(sv("bsem", "poly", "offtarget", 5, 1.2))`), at the edge of the range. Dichotomous items give similar shares of $\Delta$ (`r pc_(sv("share", "dich", "central", 5, 1.2))` for a central item at five items and DIF = 1.2) and smaller values in SEM units (`r r2(sv("bsem", "dich", "central", 5, 1.2))`), since the SEM of a dichotomous scale is larger.
+
+None of the scales has a value below which a bias is negligible in general. Which one matters depends on the use: the share of $\Delta$ and the SMD for a group comparison, the bias in SE units for whether a CI for $\Delta$ can be trusted in a study of a given size, and the SEM scale for individual scores.
+
+
+```{r fig-s1-scales}
+#| echo: false
+#| fig-height: 7
+#| fig-cap: "Study 1. Bias under keep on four reference scales, four-category items, focal mean 0.5 (Δ = 0.5), latent mean estimator. Rows: share of the group difference (%), standardised mean difference, largest local bias over the central 95% of the latent distribution in SEM units, and bias in SE units of the estimated difference at 500/500. All in absolute value. Each row has its own y axis."
+lab_sc <- c(share = "Share of Δ (%)", smd = "SMD", bsem = "Largest |b| / SEM",
+            bse = "|Bias| / SE, 500/500")
+d3 <- do.call(rbind, lapply(names(lab_sc), function(v) {
+  y <- pick(sc, type = "poly")
+  data.frame(d = y$d, k = y$k, pos_lab = y$pos_lab,
+             value = if (v == "share") 100 * y[[v]] else y[[v]],
+             scale = lab_sc[[v]])
+}))
+d3$scale <- factor(d3$scale, levels = lab_sc)
+d3$k_lab <- factor(d3$k, levels = c(5, 10, 20), labels = c("5 items", "10 items", "20 items"))
+ggplot(d3, aes(d, value, colour = k_lab, linetype = k_lab, shape = k_lab)) +
+  geom_line(linewidth = 0.6) + geom_point(size = 2) +
+  facet_grid(scale ~ pos_lab, scales = "free_y",
+             labeller = labeller(scale = label_wrap_gen(12))) +
+  scale_series("Scale length", ramp3, c("solid", "dashed", "dotdash"), c(16, 17, 15)) +
+  scale_x_continuous(breaks = c(0.5, 0.8, 1.2)) +
+  expand_limits(y = 0) +
+  labs(x = "DIF size (logits)", y = NULL)
+```
+
+**Consequence for a group comparison.** @fig-s1-coverage shows the coverage of a nominal 95% CI for $\Delta$ when the item is kept, computed from the bias and the total SE at each sample size. With five items and DIF = 0.5, coverage is `r p2(cov_k5$ci95_coverage[1])` at 500/500, `r p2(cov_k5$ci95_coverage[2])` at 1000/200 and `r p2(cov_k5$ci95_coverage[3])` at 2000/100. The equal-groups design has the smallest SE for $\Delta$ and is hit hardest. At 20 items and DIF = 0.5 the coverage is `r rng(cov_k20$ci95_coverage, p2)`. The bias in SE units, which sets the coverage, is about the same for the three estimators (ratio latent/WLE `r rng(lat_wle)`, sum score/WLE `r rng(sum_wle)`), so the choice of estimator does not change the conclusion.
+
+```{r fig-s1-coverage}
+#| echo: false
+#| fig-height: 4.6
+#| fig-cap: "Study 1. Coverage of a nominal 95% confidence interval for the latent mean difference when the DIF item is kept. Central item, focal mean 0.5. Columns are reference/focal group sizes. The dotted line is .95."
+d2 <- pick(kl, mu2 = 0.5, position = "central")
+d2$k_lab <- factor(d2$k, levels = c(5, 10, 20), labels = c("5 items", "10 items", "20 items"))
+ggplot(d2, aes(d, ci95_coverage, colour = k_lab, linetype = k_lab, shape = k_lab)) +
+  geom_hline(yintercept = 0.95, linetype = "dotted", colour = "grey50") +
+  geom_line(linewidth = 0.6) + geom_point(size = 2) +
+  facet_grid(type_lab ~ n_lab) +
+  scale_series("Scale length", ramp3, c("solid", "dashed", "dotdash"), c(16, 17, 15)) +
+  scale_x_continuous(breaks = c(0.5, 0.8, 1.2)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "DIF size (logits)", y = "Coverage of the 95% CI")
+```
+
+**Split against remove.** Both have zero impact. The question is precision. The split item cannot inform $\Delta$, which is identified through the common items, and the error in $\widehat{\text{DIF}}$ is shared by every focal person, so it does not average out. For the latent mean the SE of $\hat\Delta$ is the same under split and remove (largest ratio `r r3(max(pick(sr, estimator = "latent")$ratio))`). For the WLE mean and the sum score, in SMD units, split has a larger SE at five items (largest ratio for the WLE: `r r2(sr_max("wle", 5, "dich"))` dichotomous, `r r2(sr_max("wle", 5, "poly"))` four categories) and practically the same at 20 items (`r r3(max(pick(sr, estimator = "wle", k = 20)$ratio))`). Split is never more than `r round(100 * (1 - min(sr$ratio)), 1)`% more precise than remove, so removing the item costs nothing for a group comparison.
+
+**Local against group-mean bias.** The largest absolute local bias over the central 95% of the latent distribution is `r rng(pick(kl, position = "central")$loc_ratio, r1)` times the group-mean bias for central items and `r rng(pick(kl, position = "offtarget")$loc_ratio, r1)` times for off-target items. For off-target items the largest local bias is at the edge of the range, so its value depends on how the range is defined, and it has to be reported with its location.
+
+## Study 2: simulation
+
+### Design
+
+```{r s2-design}
+#| include: false
+n_cells2 <- nrow(sim$cells)
+rt <- as.numeric(sim$run_time, units = "hours")
+```
+
+The simulation checks the estimates a function would report: their bias, their delta-method SE, and the coverage of their CIs. It also covers what happens when the items to split are those `RMdifAnchor()` flags instead of the true DIF items. Study 1 covers the range of scale types, so the simulation is restricted to four-category items (thresholds as in Study 1), a focal mean of 0.5 and a cut-off at $\theta$ = 1. The scenarios are in @tbl-s2-design. Each is crossed with DIF = 0.5 or 0.8 and group sizes 250/250, 500/500 or 800/200, giving `r n_cells2` cells with `r sim$reps` replications each.
+
+```{r tbl-s2-design}
+#| echo: false
+#| tbl-cap: "Study 2 scenarios. Item locations are evenly spaced on [-1.5, 1.5]. With two opposite items, the second is shifted by \u2212DIF."
+kable(data.frame(
+  Scale = c("5 items", "5 items", "10 items", "10 items", "10 items", "10 items", "10 items"),
+  `DIF items` = c("one", "one", "one", "one", "two, same direction", "two, same direction", "two, opposite directions"),
+  `Location of DIF items` = c("0", "0.75 (near the cut)", "0.17", "1.17 (near the cut)", "-0.17 and 0.17", "0.83 and 1.17 (near the cut)", "1.17 (+DIF) and -0.83 (\u2212DIF)"),
+  check.names = FALSE))
+```
+
+Each replication draws a dataset with DIF and a twin without DIF from the same persons and the same uniform random numbers, so only the DIF items' focal-group responses differ. The twin gives the counterfactual for the true impact of each strategy and a no-DIF dataset for false flags. In each replication:
+
+1. **Strategies.** Keep, remove and split (with the true DIF items) are fitted and linked to the true metric through the DIF-free items. The group difference is estimated with each of the three estimators, and WLEs are scored for every person.
+2. **Estimates.** The impact $\hat\Delta_\text{keep} - \hat\Delta_\text{split}$ and the local-bias summaries are computed with their delta-method SEs, for the true DIF items (oracle set) and for the items `RMdifAnchor()` flags with its defaults (forward consensus anchor, item level, single-step correction at .05). Both are computed on the DIF dataset and on its twin.
+
+The targets are the population values for each cell, computed as in Study 1. The code is in `dif_impact_sim.R` (simulation) and `dif_impact_sim_analysis.R` (summaries). The run took `r r2(rt)` hours on 10 workers, and no replication failed.
+
+### Population pattern
+
+@fig-local shows the local bias for each scenario. For a central item, $b(\theta)$ is close to its minimum over most of the range, and the group-mean bias describes it well. For an item near the cut, the bias grows toward the item and beyond it, and the largest value is at the upper edge of the range. With two opposite items the group-mean bias nearly cancels, while each item creates a local bias in its own region of the scale.
+
+```{r local-curves}
+#| include: false
+exp_score <- function(thr_list, theta) {
+  Reduce(`+`, lapply(thr_list, function(t) {
+    m <- length(t)
+    eta <- outer(theta, 0:m) -
+      matrix(c(0, cumsum(t)), length(theta), m + 1L, byrow = TRUE)
+    p <- exp(eta - apply(eta, 1, max))
+    drop((p / rowSums(p)) %*% (0:m))
+  }))
+}
+inv_score <- function(thr_list, s) {
+  vapply(s, function(v) stats::uniroot(function(x) exp_score(thr_list, x) - v,
+                                       c(-15, 15), tol = 1e-10)$root, 0)
+}
+scale_thr <- function(k) {
+  loc <- seq(-1.5, 1.5, length.out = k)
+  lapply(loc, function(l) l + c(-1, 0, 1))
+}
+dif_items <- list(
+  "k5 one central" = list(k = 5, loc = 0, sign = 1),
+  "k5 one near_cut" = list(k = 5, loc = 0.75, sign = 1),
+  "k10 one central" = list(k = 10, loc = 1 / 6, sign = 1),
+  "k10 one near_cut" = list(k = 10, loc = 7 / 6, sign = 1),
+  "k10 two_same central" = list(k = 10, loc = c(-1, 1) / 6, sign = c(1, 1)),
+  "k10 two_same near_cut" = list(k = 10, loc = c(5, 7) / 6, sign = c(1, 1)),
+  "k10 two_opposite near_cut" = list(k = 10, loc = c(7, -5) / 6, sign = c(1, -1))
+)
+# Range: central 95% of the 500/500 mixture of N(0, 1) and N(0.5, 1).
+pmix <- function(x) 0.5 * pnorm(x) + 0.5 * pnorm(x, 0.5)
+range95 <- vapply(c(0.025, 0.975), function(p) uniroot(function(x) pmix(x) - p, c(-5, 5), tol = 1e-10)$root, 0)
+grid <- seq(-3, 3, by = 0.025)
+curves <- list(); checks <- list()
+for (s in names(dif_items)) for (d in c(0.5, 0.8)) {
+  di <- dif_items[[s]]
+  thr <- scale_thr(di$k)
+  loc <- seq(-1.5, 1.5, length.out = di$k)
+  j <- vapply(di$loc, function(l) which.min(abs(loc - l)), 0L)
+  thr_f <- thr
+  for (q in seq_along(j)) thr_f[[j[q]]] <- thr[[j[q]]] + d * di$sign[q]
+  b <- inv_score(thr, exp_score(thr_f, grid)) - grid
+  curves[[length(curves) + 1L]] <- data.frame(key = s, d = d, theta = grid, b = b)
+  g95 <- seq(range95[1], range95[2], length.out = 401)
+  b95 <- inv_score(thr, exp_score(thr_f, g95)) - g95
+  tg <- pick(sim$targets, d = d, n_ref = 500, n_focal = 500)
+  tg <- tg[paste0("k", tg$k, " ", tg$scenario, " ", tg$position) == s, ]
+  checks[[length(checks) + 1L]] <- data.frame(
+    key = s, d = d,
+    b_cut = inv_score(thr, exp_score(thr_f, 1)) - 1,
+    b_cut_target = tg$target[tg$quantity == "b_cut"],
+    b_maxabs = max(abs(b95)),
+    b_maxabs_target = tg$target[tg$quantity == "b_maxabs"],
+    impact = tg$target[tg$quantity == "impact_latent"])
+}
+curves <- do.call(rbind, curves)
+checks <- do.call(rbind, checks)
+# The curves must reproduce the simulation's targets.
+stopifnot(max(abs(checks$b_cut - checks$b_cut_target)) < 1e-4,
+          max(abs(checks$b_maxabs - checks$b_maxabs_target)) < 1e-3)
+curves$scen <- factor(curves$key, levels = scen_levels, labels = scen_labels)
+checks$scen <- factor(checks$key, levels = scen_levels, labels = scen_labels)
+curves$d_lab <- factor(curves$d, labels = c("DIF = 0.5", "DIF = 0.8"))
+checks$d_lab <- factor(checks$d, labels = c("DIF = 0.5", "DIF = 0.8"))
+```
+
+```{r fig-local}
+#| echo: false
+#| fig-height: 6.8
+#| fig-cap: "Population local bias b(θ): the difference in estimated θ between a focal and a reference person with the same true θ, when the DIF items are kept. Short horizontal segments on the right edge mark the group-mean bias (latent mean) for each DIF size. The shaded band is the central 95% of the latent distribution at 500/500, the vertical dotted line the cut at θ = 1."
+ggplot(curves, aes(theta, b, colour = d_lab, linetype = d_lab)) +
+  annotate("rect", xmin = range95[1], xmax = range95[2], ymin = -Inf, ymax = Inf,
+           fill = "grey92") +
+  geom_hline(yintercept = 0, colour = "grey50", linewidth = 0.3) +
+  geom_vline(xintercept = 1, linetype = "dotted", colour = "grey40") +
+  geom_line(linewidth = 0.7) +
+  geom_segment(data = checks, aes(x = 3.2, xend = 3.6, y = impact, yend = impact),
+               linewidth = 0.9) +
+  facet_wrap(~ scen, ncol = 2) +
+  scale_colour_manual(name = "DIF size", values = ramp2) +
+  scale_linetype_manual(name = "DIF size", values = c("solid", "dashed")) +
+  labs(x = "θ", y = "Local bias b(θ) (logits)")
+```
+
+### Estimates with the true DIF items
+
+```{r s2-oracle}
+#| include: false
+or <- pick(sim$estimates, data = "dif", set = "oracle")
+or$grp <- ifelse(or$scenario == "two_opposite", "Two opposite", "Other scenarios")
+qlab <- c(impact_latent = "Impact, latent mean", impact_wle = "Impact, WLE mean",
+          impact_sum = "Impact, sum score", b_maxabs = "Largest |b|",
+          b_sem_maxabs = "Largest |b| / SEM", b_cut = "b at the cut",
+          b_hi = "Smallest b (one direction)")
+tab_or <- do.call(rbind, lapply(names(qlab), function(q) {
+  do.call(rbind, lapply(c("Other scenarios", "Two opposite"), function(g) {
+    y <- pick(or, quantity = q, grp = g)
+    if (q == "b_hi" && g == "Two opposite") return(NULL)
+    data.frame(Quantity = qlab[[q]], Scenarios = g,
+               `Max abs bias` = r3(max(abs(y$bias))),
+               `SE ratio` = rng(y$se_ratio), Coverage = rng(y$coverage, p2),
+               check.names = FALSE)
+  }))
+}))
+imp <- pick(or, quantity = c("impact_latent", "impact_wle", "impact_sum"))
+low_cov <- imp[imp$coverage < 0.925, ]
+# Person-level RMSE ratios over all cells and both groups
+pw <- reshape(sim$person[c("cell", "group", "strategy", "rmse_theta")],
+              idvar = c("cell", "group"), timevar = "strategy", direction = "wide")
+rmse_remove <- pw$rmse_theta.remove / pw$rmse_theta.keep
+rmse_split <- pw$rmse_theta.split / pw$rmse_theta.keep
+bhi <- pick(or, quantity = "b_hi", grp = "Other scenarios")
+```
+
+With the true DIF items split, the reported estimates are close to unbiased, and the delta-method CIs are near nominal (@fig-s2-oracle). The SE ratio is the mean delta-method SE divided by the empirical SD over replications. A coverage of .95 has a Monte Carlo SE of about .007 at 1000 replications. The lowest coverages for the impact (`r rng(low_cov$coverage, p2)`) are at DIF = 0.8 with items near the cut, where the delta method on $\widehat{\text{DIF}}$ alone understates the SD by up to `r round(100 * (1 - min(imp$se_ratio)))`%. A bootstrap is not needed for these estimates.
+
+```{r fig-s2-oracle}
+#| echo: false
+#| fig-height: 4.2
+#| fig-cap: "Study 2. Coverage of nominal 95% CIs (left) and SE ratio, the mean delta-method SE divided by the empirical SD (right), with the true DIF items split, DIF data. One point per cell, jittered vertically. Two opposite: the scenario with two DIF items in opposite directions. Grey band: .95 ± two Monte Carlo SEs. The smallest local bias is shown for DIF in one direction only. Values, with the largest absolute bias, in @tbl-s2-oracle."
+ol <- or[or$quantity %in% names(qlab) & !(or$quantity == "b_hi" & or$grp == "Two opposite"), ]
+ol$q_lab <- factor(qlab[ol$quantity], levels = rev(unname(qlab)))
+ol_long <- rbind(data.frame(ol[c("q_lab", "grp")], what = "Coverage", value = ol$coverage),
+                 data.frame(ol[c("q_lab", "grp")], what = "SE ratio", value = ol$se_ratio))
+half2 <- 2 * sqrt(0.95 * 0.05 / sim$reps)
+set.seed(20261118)
+ggplot(ol_long, aes(value, q_lab, colour = grp, shape = grp)) +
+  scale_y_discrete() +
+  geom_rect(data = data.frame(what = "Coverage"), aes(xmin = 0.95 - half2, xmax = 0.95 + half2,
+                                                       ymin = -Inf, ymax = Inf),
+            inherit.aes = FALSE, fill = "grey90") +
+  geom_vline(data = data.frame(what = c("Coverage", "SE ratio"), x = c(0.95, 1)),
+             aes(xintercept = x), linetype = "dotted") +
+  geom_point(position = position_jitter(height = 0.2, width = 0), size = 1.4, alpha = 0.7) +
+  facet_wrap(~ what, scales = "free_x") +
+  scale_colour_manual(name = NULL, values = c(`Other scenarios` = "#0072B2", `Two opposite` = "#CC79A7")) +
+  scale_shape_manual(name = NULL, values = c(`Other scenarios` = 16, `Two opposite` = 17)) +
+  labs(x = NULL, y = NULL)
+```
+
+Two quantities need care.
+
+1. **Maxima of curves that cross zero.** The largest absolute value of a noisy curve is biased upward when the true curve crosses zero, as it does with two opposite items. The bias is small (at most `r r3(max(abs(pick(or, quantity = "b_maxabs", grp = "Two opposite")$bias)))` logits against targets of `r rng(pick(or, quantity = "b_maxabs", grp = "Two opposite")$target, r3)`), and the SE is too large as well, so the coverage stays above .95.
+2. **The least affected end of the range.** For DIF in one direction, the smallest local bias is found at the edge of the range farthest from the item. Its CIs cover `r rng(bhi$coverage, p2)`. The delta method holds the range fixed, but the range comes from the estimated latent distribution, and at that edge $b(\theta)$ changes fast relative to its small value. The largest local bias is not affected in the same way, even when it is at the other edge. The function should report the largest absolute local bias with its location and the value at the cut, and not the smallest.
+
+**Split against remove.** The simulation confirms Study 1 (@tbl-s2-splitremove). In raw points, the sum score's SE ratio is misleading, since remove has one item less. Relative to the size of the difference ($SE/|\Delta|$, which sets the power), split and remove are equally precise for all three estimators.
+
+```{r tbl-s2-splitremove}
+#| echo: false
+#| tbl-cap: "Study 2. Ratio of the empirical SE of the group difference under split and under remove, range over the 42 cells, on three scales."
+sr2 <- sim$split_remove
+kable(do.call(rbind, lapply(c("latent", "wle", "sum"), function(e) {
+  y <- pick(sr2, estimator = e)
+  data.frame(Estimator = c(latent = "Latent mean", wle = "WLE mean", sum = "Sum score")[[e]],
+             `Native units` = rng(y$se_native), SMD = rng(y$se_smd),
+             `SE / abs(Δ)` = rng(y$cv), check.names = FALSE)
+})), align = "lrrr")
+```
+
+**Individual scores.** Under keep, the focal group's WLEs are biased downward and the reference group's upward, by amounts that add up to the group-mean bias (@tbl-s2-person). The bias is small compared with the measurement error. Keep and split have about the same RMSE against the true $\theta$ (ratio split/keep `r rng(rmse_split)`), and remove has a `r round(100 * (min(rmse_remove) - 1))` to `r round(100 * (max(rmse_remove) - 1))`% larger RMSE. The total misclassification at the cut is almost the same under keep and split. DIF shifts focal persons downward, which trades false positives for false negatives at the cut and leaves the total almost unchanged. Study 3 reports the signed rates (@fig-s3-rates).
+
+```{r tbl-s2-person}
+#| echo: false
+#| tbl-cap: "Study 2. Person-level WLE results in the focal group, 500/500. Scenario: number of items and DIF items. RMSE against the true θ, and the share misclassified at θ = 1."
+pp <- pick(sim$person, n_ref = 500, n_focal = 500, group = "focal")
+rows <- list(c("k5 one central", 0.5, "5 items, central"),
+             c("k5 one central", 0.8, "5 items, central"),
+             c("k10 one near_cut", 0.5, "10, near cut"),
+             c("k10 two_same central", 0.8, "10, two central"))
+kable(do.call(rbind, lapply(rows, function(r) {
+  y <- pp[paste0("k", pp$k, " ", pp$scenario, " ", pp$position) == r[1] & pp$d == as.numeric(r[2]), ]
+  v <- function(col, s) y[[col]][y$strategy == s]
+  data.frame(Scenario = r[3], DIF = r[2],
+             `Keep bias` = r3(v("bias_theta", "keep")),
+             `RMSE keep/split/remove` = paste(r2(v("rmse_theta", "keep")), r2(v("rmse_theta", "split")), r2(v("rmse_theta", "remove")), sep = " / "),
+             `Misclassified keep/split/remove` = paste(p3(v("class_error", "keep")), p3(v("class_error", "split")), p3(v("class_error", "remove")), sep = " / "),
+             check.names = FALSE)
+})), align = "lcrcc")
+```
+
+### Detection by RMdifAnchor()
+
+```{r s2-detect}
+#| include: false
+dd <- pick(sim$detection, data = "dif")
+dn <- pick(sim$detection, data = "null")
+fp5 <- pick(dd, k = 5)$any_fp
+fp10 <- pick(dd, k = 10)$any_fp
+```
+
+@fig-detect shows how often `RMdifAnchor()` flags every true DIF item (other items may be flagged as well). At DIF = 0.5 with 250/250 or 800/200, a single item is flagged in `r pct(pick(dd, scenario = "one", d = 0.5, n_ref = c(250, 800))$all_true_flagged)` of datasets. When there are two DIF items near the cut, both are flagged in only `r pct(pick(dd, scenario = c("two_same", "two_opposite"), position = "near_cut", d = 0.5, n_ref = c(250, 800))$all_true_flagged)` of datasets at those sizes. At least one item without DIF is flagged in `r pct(fp5)` of the DIF datasets with five items, where four anchor items carry artificial DIF [@andrich2012], and in `r pct(fp10)` with ten items. On the no-DIF twins, some item is flagged in `r rng(100 * dn$any_flag, r1)`% of datasets, against a nominal family-wise rate of 5%. `RMdifAnchor()` stops when a response category is unused in one group, which happened in up to `r round(100 * max(dd$anchor_error))`% of the DIF datasets, most often with a focal group of 200.
+
+```{r fig-detect}
+#| echo: false
+#| fig-height: 5.4
+#| fig-cap: "Study 2. Share of datasets where RMdifAnchor() flags all true DIF items (other items may also be flagged). The x axis is reference/focal group sizes."
+ggplot(dd, aes(n_lab, all_true_flagged, colour = factor(d), linetype = factor(d),
+               shape = factor(d), group = factor(d))) +
+  geom_line(linewidth = 0.6) + geom_point(size = 2) +
+  facet_wrap(~ scen, ncol = 4, labeller = label_wrap_gen(22)) +
+  scale_series("DIF size", ramp2, c("dashed", "solid"), c(17, 16)) +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(x = "Group sizes", y = "All DIF items flagged")
+```
+
+### Estimates with the flagged items
+
+```{r s2-flagged}
+#| include: false
+fc <- sim$flag_class[sim$flag_class$n >= 10, ]
+fc$scen_grp <- factor(fc$scenario, levels = c("one", "two_same", "two_opposite"),
+                      labels = c("One item", "Two same", "Two opposite"))
+fc$class_lab <- factor(fc$class, levels = c("exact", "missed", "fp"),
+                       labels = c("Exact", "Item missed", "False flag"))
+tab_fc <- do.call(rbind, lapply(split(fc, list(fc$scen_grp, fc$class_lab), drop = TRUE), function(y) {
+  il <- pick(y, quantity = "impact_latent"); bm <- pick(y, quantity = "b_maxabs")
+  data.frame(Scenario = as.character(y$scen_grp[1]), `Flagged set` = as.character(y$class_lab[1]),
+             Share = rng(il$share, p2), `Cov. impact` = rng(il$coverage, p2),
+             `Cov. max |b|` = rng(bm$coverage, p2), check.names = FALSE)
+}))
+tab_fc <- tab_fc[order(match(tab_fc$Scenario, levels(fc$scen_grp))), ]
+ex1 <- pick(fc, quantity = "impact_latent", class = "exact")
+miss_same <- pick(sim$flag_class, quantity = "impact_latent", class = "missed", scenario = "two_same")
+miss_same <- miss_same[miss_same$n >= 10, ]
+miss_opp <- pick(sim$flag_class, quantity = "impact_latent", class = "missed", scenario = "two_opposite")
+miss_opp <- miss_opp[miss_opp$n >= 10, ]
+fp_k5 <- pick(fc, quantity = "impact_latent", class = "fp", k = 5)
+```
+
+What goes wrong with the flagged items is the item set, not the estimate (@fig-s2-flagged). Datasets where nothing was flagged are left out, since the function would not be used there.
+
+```{r fig-s2-flagged}
+#| echo: false
+#| fig-height: 5
+#| fig-cap: "Study 2. Estimates computed for the items RMdifAnchor() flagged, DIF data, by what was flagged. Exact: all DIF items and nothing else. Item missed: a DIF item not flagged, and no false flag. False flag: at least one item without DIF flagged. Left: share of all datasets in a cell. Middle and right: coverage of the population target by the 95% CI, for the latent-mean impact and the largest absolute local bias. One point per cell with at least 10 datasets in the class, jittered vertically. The diamond is the median. Values in @tbl-s2-flagged."
+fl <- rbind(
+  data.frame(pick(fc, quantity = "impact_latent")[c("scen_grp", "class_lab")], what = "Share of datasets",
+             value = pick(fc, quantity = "impact_latent")$share),
+  data.frame(pick(fc, quantity = "impact_latent")[c("scen_grp", "class_lab")], what = "Coverage, impact",
+             value = pick(fc, quantity = "impact_latent")$coverage),
+  data.frame(pick(fc, quantity = "b_maxabs")[c("scen_grp", "class_lab")], what = "Coverage, largest |b|",
+             value = pick(fc, quantity = "b_maxabs")$coverage))
+fl$what <- factor(fl$what, levels = c("Share of datasets", "Coverage, impact", "Coverage, largest |b|"))
+fl$class_lab <- factor(fl$class_lab, levels = rev(levels(fc$class_lab)))
+fl <- fl[!is.na(fl$value), ]
+fl_med <- aggregate(value ~ scen_grp + class_lab + what, fl, stats::median)
+set.seed(20261118)
+ggplot(fl, aes(value, class_lab)) +
+  geom_vline(data = data.frame(what = factor(c("Coverage, impact", "Coverage, largest |b|"), levels = levels(fl$what)), x = 0.95),
+             aes(xintercept = x), linetype = "dotted") +
+  geom_jitter(height = 0.2, width = 0, size = 1.1, alpha = 0.5, colour = ramp3[2]) +
+  geom_point(data = fl_med, shape = 23, size = 2.4, fill = "white", colour = "black") +
+  facet_grid(scen_grp ~ what, scales = "free_y", space = "free_y") +
+  scale_x_continuous(limits = c(0, 1), breaks = c(0, 0.25, 0.5, 0.75, 1),
+                     labels = function(v) sub("^0\\.", ".", formatC(v, format = "f", digits = 2))) +
+  labs(x = NULL, y = NULL)
+```
+
+1. **Exact set.** The estimates behave as with the true items. In the cells with the lowest power the impact is slightly too large in absolute value (relative bias up to `r round(100 * max(abs(pick(ex1, scenario = "one")$rel_bias)))`% with one item), the usual inflation after selection on significance.
+2. **A DIF item missed.** The estimate covers only the items it is given. With two items in the same direction it is about half the true impact (mean `r r3(min(miss_same$mean_est))` to `r r3(max(miss_same$mean_est))` against `r rng(miss_same$target, r3)`). With two opposite items it is one item's impact without the other's cancelling contribution (`r r3(min(miss_opp$mean_est))` to `r r3(max(miss_opp$mean_est))` against `r rng(miss_opp$target, r3)`). The largest local bias is then less wrong, because the two items act in different regions of the scale.
+3. **A false flag.** With five items, the falsely flagged item carries apparent DIF in the opposite direction to the real one. Splitting it as well pulls the estimate toward zero, and in the worst cell past it (the mean estimate is off by `r round(100 * max(fp_k5$rel_bias))`% of the impact).
+
+### False flags without DIF
+
+```{r s2-null}
+#| include: false
+nf <- pick(sim$null_flagged, quantity = "impact_latent")
+one5 <- pick(sim$targets, quantity = "impact_latent", scenario = "one", k = 5, d = 0.5)$target
+one10 <- pick(sim$targets, quantity = "impact_latent", scenario = "one", k = 10, d = 0.5)$target
+```
+
+When `RMdifAnchor()` flags an item in a no-DIF twin, the impact estimate for that item is not zero, and its CI excludes zero in most of these datasets (@tbl-s2-null). The item was flagged because its estimated shift was large, and the estimated impact is roughly the shift times the item's information share. The impact CI therefore restates the DIF test and adds no evidence that the DIF exists. What it adds is the size. With ten items, a false flag gives an impact about half that of a real item with DIF = 0.5. With five items, the upper tail reaches the size of a real one.
+
+```{r tbl-s2-null}
+#| echo: false
+#| tbl-cap: "Study 2. Impact on the latent mean (logits) estimated for falsely flagged items in the no-DIF twins, range over cells. The last column is the true impact of one real item with DIF = 0.5."
+kable(do.call(rbind, lapply(c(5, 10), function(kk) {
+  y <- pick(nf, k = kk)
+  data.frame(Items = kk, `Datasets with a flag` = rng(y$share, p3),
+             `Mean abs impact` = rng(y$mean_abs, r3), `95th percentile` = rng(y$q95_abs, r3),
+             `CI excludes 0` = rng(y$ci_excludes_0, p2),
+             `Real item, DIF = 0.5` = rng(if (kk == 5) one5 else one10, r3),
+             check.names = FALSE)
+})), align = "rrrrrr")
+```
+
+## Study 3: per-item impacts, rates at a cut and projection
+
+### Design
+
+```{r s3-setup}
+#| include: false
+# First run: dif_impact_ext_sim.R, summarised by dif_impact_ext_sim_analysis.R.
+# Second run: dif_impact_ext_sim_3b.R, summarised by
+# dif_impact_ext_sim_3b_analysis.R. Both host runs 2026-11-18.
+e1 <- readRDS(file.path("dif_impact_ext_sim", "ext_results_slim.rds"))
+e2 <- readRDS(file.path("dif_impact_ext_sim", "ext3b_results_slim.rds"))
+# Third run: dif_impact_ext_sim_3c.R (package rule, estimates from the
+# package), summarised by dif_impact_ext_sim_3c_analysis.R, host 2026-11-19.
+e3 <- readRDS(file.path("dif_impact_ext_sim", "ext3c_results_slim.rds"))
+mr <- function(x, f = p3) paste0(rng(x, f), " (", f(stats::median(x)), ")")
+s1 <- e1$summary
+s2 <- e2$summary[e2$summary$context != "rule" & !e2$summary$degenerate, ]
+mcse <- function(reps) p3(sqrt(0.95 * 0.05 / reps))
+# first run, theta-scale rates against the population rule
+th1p <- s1[s1$context == "projection" & grepl("^theta\\.(keep|split)", s1$q), ]
+stopifnot(th1p$k[which.min(th1p$coverage)] == 10)
+kn <- e1$knife
+kn_near <- kn[abs(kn$dist) <= 0.01, ]
+kn_far <- kn[abs(kn$dist) > 0.05, ]
+# second run, fitted rule against the population rule
+rm2 <- e2$summary[e2$summary$context == "rule" &
+                    grepl("^theta", e2$summary$quantity), ]
+dz <- e2$diff_nz
+dz_pool <- function(sc, ctx) {
+  y <- dz[dz$scale == sc & dz$context == ctx, ]
+  sum(y$cov_delta * y$reps_nonzero) / sum(y$reps_nonzero)
+}
+dz_cell <- dz[dz$reps_nonzero >= 100, ]
+true_prev_focal <- 1 - pnorm(1, 0.5, 1)
+```
+
+Study 3 checks three outputs added after Study 2. All use the true DIF items and the DIF data of the same `r nrow(e1$cells)` cells.
+
+1. **Per-item impact.** With two DIF items, the impact of keeping item $j$ while the other DIF item stays split, $\Delta_{\text{split } S \setminus j} - \Delta_{\text{split } S}$, where $S$ is the set of DIF items. It shows how much of the total impact each item carries.
+2. **Rates at a cut.** Persons are classified as at or above a cut at $\theta$ = 1, either by their WLE or by their sum score. The sum-score cut is the raw score nearest the reference group's expected score at $\theta$ = 1. Under split, focal raw scores are first equated to the reference group by true-score equating, and a focal person is classified at or above the cut when the equated score is at or above it. For each group and strategy, three rates are given as shares of the group: classified at or above the cut, false negatives (true $\theta$ at or above the cut, classified below) and false positives (true $\theta$ below the cut, classified at or above). The difference keep − split is given as well. The rates are computed from the split model and each group's estimated normal latent distribution, not counted among the persons in the sample.
+3. **Projection.** The impact, the SE of $\hat\Delta$ in a study of the target's size, the bias in those SE units, and the rates, for a target population of 40 000 reference persons from N(0, 1) and 10 000 focal persons from N(0.25, 1.25²). It differs from every simulated cell.
+
+The first run (`r e1$reps` replications per cell) covered all three outputs, with CIs for the rates from percentiles of `r e1$n_draws` draws of the parameters. The second run (`r e2$reps` replications per cell) repeated the rates and the per-item impacts with the changes described below, with both delta-method CIs and the draws. A third run (`r e3$reps` replications per cell) repeated the sum-score rates with the classification rule of RMdifImpact(), with every estimate and SE computed by the package itself (see "Sum-score rates with the package's rule"). A coverage of .95 has a Monte Carlo SE of `r mcse(e1$reps)` in the first run and `r mcse(e2$reps)` in the second and third. No replication failed in any run.
+
+### Which classification rule the rates describe
+
+A person's classification depends only on their raw score, so the rule is the set of raw scores at or above the cut, per group and strategy. On the $\theta$ scale it is read off a WLE table. In the first run the target was the rates of the population rule, read off the population WLE tables. Where a population WLE lies within 0.01 logits of the cut, the estimated table puts that raw score on the other side of the cut in about half the samples, and the estimated rates jump with it. In the sample, the $\theta$-scale rates then covered as little as `r p3(min(kn_near$cov_min_sample))` (median `r p3(stats::median(kn_near$cov_min_sample))`), against a lowest coverage of `r p3(min(kn_far$cov_min_sample))` where every WLE was more than 0.05 from the cut. Projected to the target population, the lowest coverage was `r p3(min(th1p$coverage))`, at ten items. The parameter draws cannot repair this, since the target is a step function of the parameters.
+
+The second run takes the rule from the fit and holds it fixed. The target is the rates of that rule under the true model, which are the rates the user's own classification has. These change smoothly with the parameters, and the delta method applies. The fitted $\theta$ rule equalled the population rule in `r rng(100 * rm2$rule_match, function(v) formatC(v, format = "f", digits = 0))`% of samples, depending on the cell. The rates are therefore conditional on the rule, and the rule has to be reported with them, as a raw-score cut per group and strategy.
+
+### Coverage
+
+```{r s3-coverage}
+#| include: false
+sel1 <- function(ctx, qs) s1[s1$context == ctx & s1$q %in% qs, ]
+s3k <- e3$summary[!e3$summary$degenerate & e3$summary$strategy %in% c("keep", "split"), ]
+dz3 <- e3$diff_nz
+sel2 <- function(ctx, sc, st) s2[s2$context == ctx & s2$scale == sc & s2$strategy %in% st, ]
+est3 <- c("impact_latent", "impact_wle", "impact_sum")
+cov_rows <- list(
+  list("Projected impact, three estimators", "1", sel1("projection", est3), "coverage", "se_ratio"),
+  list("Projected bias / SE, three estimators", "1", sel1("projection", c("bias_in_se_latent", "bias_in_se_wle", "bias_in_se_sum")), "coverage", "se_ratio"),
+  list("Rates, θ cut, sample", "2", sel2("sample", "theta", c("keep", "split")), "cov_delta", "se_ratio_delta"),
+  list("Rates, sum-score cut, sample", "2", sel2("sample", "sum", c("keep", "split")), "cov_delta", "se_ratio_delta"),
+  list("Rates, θ cut, projected", "2", sel2("projection", "theta", c("keep", "split")), "cov_delta", "se_ratio_delta"),
+  list("Rates, sum-score cut, projected", "2", sel2("projection", "sum", c("keep", "split")), "cov_delta", "se_ratio_delta"),
+  list("Per-item impact, ratio SE", "2", s2[s2$scale == "item", ], "cov_delta", "se_ratio_delta"),
+  list("Keep \u2212 split, rules differ, per cell", "2", dz[dz$reps_nonzero >= 100, ], "cov_delta", "se_ratio_delta"),
+  list("Rates, sum-score cut, sample, package rule", "3", s3k[s3k$context == "sample", ], "coverage", "se_ratio"),
+  list("Rates, sum-score cut, projected, package rule", "3", s3k[s3k$context == "projection", ], "coverage", "se_ratio"),
+  list("Keep \u2212 split, rules differ, package rule", "3", dz3[dz3$reps_nonzero >= 100, ], "coverage", "se_ratio"))
+tab_cov <- do.call(rbind, lapply(cov_rows, function(r) {
+  data.frame(Output = r[[1]], Run = r[[2]], Rows = nrow(r[[3]]),
+             `Coverage (median)` = mr(r[[3]][[r[[4]]]]),
+             `SE ratio (median)` = mr(r[[3]][[r[[5]]]], r2),
+             check.names = FALSE)
+}))
+ds2 <- s2[s2$scale != "item", ]
+dd_ratio <- ds2$se_ratio_delta / ds2$se_ratio_draws
+low_lim <- 0.95 - 2 * sqrt(0.95 * 0.05 / e2$reps)
+ks2 <- s2[s2$strategy %in% c("keep", "split") & s2$context == "sample", ]
+it2 <- s2[s2$scale == "item", ]
+it_low <- it2[which.min(it2$cov_delta), ]
+stopifnot(it_low$scenario == "two_same", it_low$position == "central")
+# Third run: package rule on the sum-score scale
+ru3 <- e3$rule
+fd <- function(sn, dd) ru3$focal_rule_differs[ru3$scenario == sn & ru3$d == dd]
+stopifnot(!any(ru3$ref_rule_differs > 0), all(ru3$reps_with_warning == 0))
+k3s <- s3k[s3k$context == "sample", ]
+k3p <- s3k[s3k$context == "projection", ]
+k2s <- sel2("sample", "sum", c("keep", "split"))
+k2p <- sel2("projection", "sum", c("keep", "split"))
+pool <- function(y, cv) sum(y[[cv]] * y$reps_nonzero) / sum(y$reps_nonzero)
+dz3s <- dz3[dz3$context == "sample", ]
+dz3p <- dz3[dz3$context == "projection", ]
+dz3_100 <- dz3[dz3$reps_nonzero >= 100, ]
+dz2_100 <- dz[dz$scale == "sum" & dz$reps_nonzero >= 100, ]
+```
+
+With the rule held fixed, the rates are close to nominal on both scales, in the sample and projected (@fig-s3-coverage). In the sample, `r sum(ks2$cov_delta <= low_lim)` of `r nrow(ks2)` rates (one per group, strategy, cell and kind of rate) cover `r p3(low_lim)` or less (two Monte Carlo SEs below .95), against about `r round(0.023 * nrow(ks2))` expected by chance. Many rows are duplicates, since keep and split give the same rates whenever their rules agree, so the excess is a slight undercoverage and no more. The delta-method SE agrees with the SD of the `r e2$n_draws` parameter draws (ratio `r rng(dd_ratio, r2)`, median `r r3(stats::median(dd_ratio))`), so the draws are not needed. The projected impact and bias / SE from the first run are calibrated as well.
+
+```{r fig-s3-coverage}
+#| echo: false
+#| fig-height: 4.4
+#| fig-cap: "Study 3. Coverage of nominal 95% CIs (left) and SE ratio, the mean SE divided by the SD of the error (right). Each small point is one quantity in one cell (for the rates, one rate for one group and strategy), jittered vertically. The diamond is the median. Grey band: .95 ± two Monte Carlo SEs for the run. Rates use delta-method CIs for the rates of the fitted rule. The keep − split rows are per cell, over the replications where the two fitted rules differ (cells with at least 100 such replications). Run 1, 2 or 3 in parentheses. Run 3 repeats the sum-score rates with the package's classification rule, computed by the package. Values in @tbl-s3-coverage."
+cov_long <- do.call(rbind, lapply(cov_rows, function(r) {
+  lab <- paste0(r[[1]], " (", r[[2]], ")")
+  y <- r[[3]]
+  rbind(data.frame(out = lab, what = "Coverage", value = y[[r[[4]]]]),
+        data.frame(out = lab, what = "SE ratio", value = y[[r[[5]]]]))
+}))
+lev <- vapply(cov_rows, function(r) paste0(r[[1]], " (", r[[2]], ")"), "")
+cov_long$out <- factor(cov_long$out, levels = rev(lev))
+cov_long <- cov_long[!is.na(cov_long$value), ]
+band <- data.frame(out = factor(lev, levels = rev(lev)), what = "Coverage",
+                   reps = c(`1` = e1$reps, `2` = e2$reps, `3` = e3$reps)[vapply(cov_rows, `[[`, "", 2)])
+band$y <- as.numeric(band$out)
+band$half <- 2 * sqrt(0.95 * 0.05 / band$reps)
+ref <- data.frame(what = c("Coverage", "SE ratio"), x = c(0.95, 1))
+med <- aggregate(value ~ out + what, cov_long, stats::median)
+set.seed(20261118)
+ggplot(cov_long, aes(value, out)) +
+  scale_y_discrete() +
+  geom_rect(data = band, aes(xmin = 0.95 - half, xmax = 0.95 + half,
+                             ymin = y - 0.4, ymax = y + 0.4),
+            inherit.aes = FALSE, fill = "grey88") +
+  geom_vline(data = ref, aes(xintercept = x), linetype = "dotted") +
+  geom_jitter(height = 0.25, width = 0, size = 0.7, alpha = 0.35, colour = ramp3[2]) +
+  geom_point(data = med, shape = 23, size = 2.4, fill = "white", colour = "black") +
+  facet_wrap(~ what, scales = "free_x") +
+  labs(x = NULL, y = NULL)
+```
+
+**Keep − split.** The difference is zero, with an SE of zero, whenever the two strategies give the same rule, which inflates its coverage. In the replications where the rules differ, the pooled coverage is `r p3(dz_pool("theta", "sample"))` on the $\theta$ scale and `r p3(dz_pool("sum", "sample"))` on the sum-score scale (sample). Per cell it is less even: `r sum(dz_cell$cov_delta < 0.93)` of `r nrow(dz_cell)` rows with at least 100 such replications cover less than .93, the lowest `r p3(min(dz_cell$cov_delta))`. When the rules differ by one raw score, the difference is the share of persons with that score, and its error is skewed. This CI is the least accurate of the outputs.
+
+**Per-item impact.** The first run used the SE $|\partial \Delta_\text{split} / \partial\, \text{DIF}_j| \times SE(\widehat{\text{DIF}}_j)$, which covered `r mr(e1$item_check$cov_old)`. Making item $j$ common moves $\Delta$ by more than the local gradient of the split model predicts. The per-item estimate is close to proportional to $\widehat{\text{DIF}}_j$, so the second run used the slope of that line, $|\widehat{\text{impact}}_j / \widehat{\text{DIF}}_j| \times SE(\widehat{\text{DIF}}_j)$, with the SE from the CML covariance matrix. It covers `r mr(it2$cov_delta)`. The lowest value is for an item in the cell with two central items, DIF = `r it_low$d` and `r it_low$n_ref`/`r it_low$n_focal`.
+
+### Signed rates
+
+```{r s3-rates}
+#| include: false
+sr <- add_scen(e2$summary[e2$summary$context == "sample" & e2$summary$n_ref == 500 &
+                            e2$summary$scale %in% c("theta", "sum") &
+                            e2$summary$strategy %in% c("keep", "split"), ])
+vr <- function(y, sc, st, g, m) y$mean_target[y$quantity == paste(sc, st, g, m, sep = ".")]
+ks <- function(y, sc, g, m) paste(p3(vr(y, sc, "keep", g, m)), p3(vr(y, sc, "split", g, m)), sep = " / ")
+tab_rates <- do.call(rbind, lapply(levels(sr$scen), function(sn) {
+  do.call(rbind, lapply(c(0.5, 0.8), function(dd) {
+    y <- sr[sr$scen == sn & sr$d == dd, ]
+    data.frame(Scenario = sn, DIF = dd,
+               `Focal FN` = ks(y, "theta", "focal", "fn"), `Focal FP` = ks(y, "theta", "focal", "fp"),
+               `Reference FN` = ks(y, "theta", "ref", "fn"), `Reference FP` = ks(y, "theta", "ref", "fp"),
+               check.names = FALSE)
+  }))
+}))
+# Sum-score cut: which focal cells differ between keep and split (all group sizes)
+sa <- e2$summary[e2$summary$context == "sample" & e2$summary$quantity == "sum.diff.focal.prev", ]
+sa$changed <- 1 - sa$share_zero  # share of samples where the focal rule changed
+big <- sa$scenario == "two_same" & sa$d == 0.8
+stopifnot(min(sa$changed[big]) > 0.5, max(sa$changed[!big]) < 0.1)
+y5 <- sr[sr$k == 5 & sr$scenario == "one" & sr$position == "central" & sr$d == 0.8, ]
+y2s <- sr[sr$scenario == "two_same" & sr$position == "central" & sr$d == 0.8, ]
+# Direction claims in the text, checked over all 500/500 cells
+dir_ok <- function(g, m, sgn) {
+  all(vapply(split(sr, sr$cell), function(y) sgn * (vr(y, "theta", "keep", g, m) - vr(y, "theta", "split", g, m)) >= -1e-9, TRUE))
+}
+stopifnot(dir_ok("focal", "fn", 1), dir_ok("focal", "fp", -1))
+sr10 <- sr[sr$k == 10, ]
+stopifnot(all(vapply(split(sr10, sr10$cell), function(y) vr(y, "theta", "keep", "ref", "fn") <= vr(y, "theta", "split", "ref", "fn") &&
+  vr(y, "theta", "keep", "ref", "fp") >= vr(y, "theta", "split", "ref", "fp"), TRUE)))
+sr5 <- sr[sr$k == 5, ]
+stopifnot(all(vapply(split(sr5, sr5$cell), function(y) abs(vr(y, "theta", "keep", "ref", "fn") - vr(y, "theta", "split", "ref", "fn")) < 2e-3 &&
+  abs(vr(y, "theta", "keep", "ref", "fp") - vr(y, "theta", "split", "ref", "fp")) < 2e-3, TRUE)))
+k10one <- sr[sr$k == 10 & sr$scenario == "one", ]
+max10 <- max(unlist(lapply(split(k10one, k10one$cell), function(y) abs(c(
+  vr(y, "theta", "keep", "focal", "fn") - vr(y, "theta", "split", "focal", "fn"),
+  vr(y, "theta", "keep", "focal", "fp") - vr(y, "theta", "split", "focal", "fp"))))))
+# Sum-score rule of RMdifImpact() against the rule simulated here, at the
+# true parameters (dif_impact_sum_rule_check.R)
+srule <- readRDS(file.path("dif_impact_ext_sim", "sum_rule_slim.rds"))$rules
+sim_moves <- srule$split_sim != srule$keep
+pkg_moves <- srule$split_pkg != srule$keep
+stopifnot(all(pkg_moves[srule$d == 0.8 & srule$scenario != "two_opposite"]),
+          !any(pkg_moves[srule$scenario == "two_opposite"]),
+          all(pkg_moves[srule$scenario == "two_same"]),
+          !any(pkg_moves[srule$d == 0.5 & srule$scenario != "two_same"]),
+          all(sim_moves <= pkg_moves))
+eq_ex <- srule[srule$k == 5 & srule$scenario == "one" &
+                 srule$position == "central" & srule$d == 0.8, ]
+```
+
+Under keep, the focal group gets more false negatives and fewer false positives at the $\theta$ cut than under split (@fig-s3-rates). With ten items the reference group shows the reverse, and with five items its rates hardly change. The values are the rates of the fitted rule under the true model, averaged over replications. With five items, one central DIF item of 0.8 raises the focal false-negative rate from `r p3(vr(y5, "theta", "split", "focal", "fn"))` to `r p3(vr(y5, "theta", "keep", "focal", "fn"))` and lowers the false-positive rate from `r p3(vr(y5, "theta", "split", "focal", "fp"))` to `r p3(vr(y5, "theta", "keep", "focal", "fp"))`. With ten items and one DIF item, the focal rates change by at most `r round(100 * max10, 1)` percentage points. The rates also depend on where the cut falls between the WLE values of neighbouring raw scores. With five four-category items there are only 16 raw scores, and in the example above the split rule classifies `r p3(vr(y5, "theta", "split", "focal", "prev"))` of the focal group at or above the cut against a true share of `r p3(true_prev_focal)` (keep `r p3(vr(y5, "theta", "keep", "focal", "prev"))`).
+
+On the sum-score scale, the reference group's rule is the same under keep and split, and the focal group's rule changes only when equating moves a raw score across the cut. With two items in the same direction and DIF = 0.8, the focal rule changed in `r pct(sa$changed[big])` of samples, and the focal false-negative rate at 500/500 fell from `r p3(vr(y2s, "sum", "keep", "focal", "fn"))` under keep to `r p3(vr(y2s, "sum", "split", "focal", "fn"))` under split (two central items). In the other scenarios it changed in at most `r round(100 * max(sa$changed[!big]))`% of samples, and keep and split almost always give the same sum-score classification.
+
+**The sum-score rule in RMdifImpact().** The function classifies a focal person under split by the nearest whole score: at or above the cut when the equated score is at or above the cut minus 0.5. This is also the point RMdifImpact() uses for the true status on the sum-score scale. The rule simulated here, an equated score at or above the cut itself, is lopsided. DIF that on balance makes the items harder for the focal group, as in every simulated setting, raises the equated scores, and the rule moves only once a score has risen by a whole point. DIF in the other direction lowers them, and then any DIF, however small, puts every equated score just below a whole number and moves the cut up by a whole raw score. With the package's rule, the focal cut moves once equating shifts a score by half a point. At the true parameters of the `r nrow(srule)` simulated settings it then differs from keep in `r sum(pkg_moves)`, against `r sum(sim_moves)` with the rule simulated here: every setting with DIF = 0.8 except the two items in opposite directions, and both settings with two items in the same direction at DIF = 0.5. With five items and one central DIF item of 0.8, for example, the focal raw score `r eq_ex$cut_raw - 1` equates to `r r2(eq_ex$eq_below)`, which is below the cut of `r eq_ex$cut_raw` but nearer to it than to `r eq_ex$cut_raw - 1`. With the package's rule, keep − split on the sum-score scale is therefore nonzero more often than the previous paragraph reports. The third run repeated the sum-score rates with this rule (see "Sum-score rates with the package's rule").
+
+```{r fig-s3-rates}
+#| echo: false
+#| fig-height: 5.4
+#| fig-cap: "Study 3. False-negative and false-positive rates at θ = 1 by WLE, under keep and split, as shares of each group. 500/500, focal mean 0.5. True shares at or above the cut: reference .159, focal .309. Each value is the mean over replications of the fitted rule's rates under the true model. Values in @tbl-s3-rates."
+rl <- do.call(rbind, lapply(levels(sr$scen), function(sn) {
+  do.call(rbind, lapply(c(0.5, 0.8), function(dd) {
+    y <- sr[sr$scen == sn & sr$d == dd, ]
+    do.call(rbind, lapply(c("focal", "ref"), function(g) {
+      do.call(rbind, lapply(c("fn", "fp"), function(m) {
+        data.frame(scen = sn, d = dd, group = g, metric = m,
+                   keep = vr(y, "theta", "keep", g, m),
+                   split = vr(y, "theta", "split", g, m))
+      }))
+    }))
+  }))
+}))
+rl$scen <- factor(rl$scen, levels = rev(levels(sr$scen)))
+rl$col <- factor(paste0(ifelse(rl$group == "focal", "Focal", "Reference"), ", DIF = ", rl$d),
+                 levels = c("Focal, DIF = 0.5", "Focal, DIF = 0.8",
+                            "Reference, DIF = 0.5", "Reference, DIF = 0.8"))
+rl$row <- factor(rl$metric, levels = c("fn", "fp"),
+                 labels = c("False negatives", "False positives"))
+pl <- rbind(data.frame(rl[c("scen", "col", "row")], strategy = "Keep", value = rl$keep),
+            data.frame(rl[c("scen", "col", "row")], strategy = "Split", value = rl$split))
+ggplot(rl, aes(y = scen)) +
+  geom_segment(aes(x = keep, xend = split, yend = scen), colour = "grey60") +
+  geom_point(data = pl, aes(x = value, colour = strategy, shape = strategy), size = 2) +
+  facet_grid(row ~ col) +
+  scale_colour_manual(name = "Strategy", values = c(Keep = "#D55E00", Split = "#0072B2")) +
+  scale_shape_manual(name = "Strategy", values = c(Keep = 16, Split = 17)) +
+  scale_x_continuous(breaks = c(0.03, 0.06, 0.09),
+                     labels = function(v) sub("^0", "", formatC(v, format = "f", digits = 2))) +
+  labs(x = "Share of the group", y = NULL)
+```
+
+### Sum-score rates with the package's rule {#sec-s3-pkgrule}
+
+The third run used the same `r nrow(e3$cells)` cells, data-generating model and targets as the second, with the sum-score cut only. Every estimate, SE and classification rule came from the package's internal estimation function, the code RMdifImpact() runs, and the CIs are delta-method CIs. Each replication had its own random-number stream, so the results do not depend on the number of workers.
+
+With the package's rule, the focal group's rule differed between keep and split in `r rng(100 * fd("one", 0.8), function(v) formatC(v, format = "f", digits = 0))`% of samples with one DIF item of 0.8, `r rng(100 * fd("two_same", 0.5), function(v) formatC(v, format = "f", digits = 0))`% with two items in the same direction at 0.5, and in all samples with two items in the same direction at 0.8. With one item of 0.5 it differed in `r rng(100 * fd("one", 0.5), function(v) formatC(v, format = "f", digits = 0))`%, and with two items in opposite directions in at most `r round(100 * max(fd("two_opposite", 0.8)), 1)`%. The reference group's rule never differed. The fitted focal split rule equalled the package rule at the true parameters in `r rng(100 * ru3$match_split_focal, function(v) formatC(v, format = "f", digits = 0))`% of samples, depending on the cell.
+
+The rates of keep and split covered `r mr(k3s$coverage)` in the sample and `r mr(k3p$coverage)` projected (@fig-s3-coverage), against `r mr(k2s$cov_delta)` and `r mr(k2p$cov_delta)` with the rule of the second run on the same cells. The SE ratio was `r mr(k3s$se_ratio, r2)` in the sample. The difference keep − split, over the replications where the rules differ, covered `r p3(pool(dz3s, "coverage"))` pooled in the sample (`r format(sum(dz3s$reps_nonzero), big.mark = " ")` replications) and `r p3(pool(dz3p, "coverage"))` projected. Per cell and quantity with at least 100 such replications the coverage was `r mr(dz3_100$coverage)` over `r nrow(dz3_100)` rows, against `r mr(dz2_100$cov_delta)` over `r nrow(dz2_100)` rows in the second run, where the rules differed far less often. The package's rule thus gives intervals about as accurate as the rule of the second run, and keep − split now shows the change in the focal rule whenever equating shifts a score by half a point or more.
+
+## Implications for RMdifImpact()
+
+1. **The estimation works.** With the right items split, the impact on the group difference (all three estimators), the largest local bias and the local bias at a cut-off are close to unbiased, and the delta-method CIs are close to nominal. No bootstrap is needed for them.
+2. **The item set is the weak point.** Missed DIF items are the main failure, and the function cannot detect them. With few items, a false flag can cancel part of a real impact. The output and the help page have to say that the result holds for the items given.
+3. **Relevance has to be judged by size.** After selection, an impact CI that excludes zero says nothing beyond the DIF test. The size is reported on the scales of @fig-s1-scales: the share of the group difference and the SMD for a group comparison, and the largest local bias in SEM units for individuals. The bias in SE units shows whether a CI for the group difference can be trusted, and it grows with the study size for the same DIF. The function reports all of them without a threshold or a verdict.
+4. **Report the largest local bias with its location**, and the value at a user-supplied cut-off, but not the smallest.
+5. **Split and remove are equivalent for group comparisons.** Split keeps the item's precision for individual scores.
+6. **Individual scores.** Total misclassification hides the direction of the DIF, and the false-negative and false-positive rates per group show it (@fig-s3-rates). The rates are those of the classification rule the fit gives, reported with the rule as a raw-score cut per group and strategy, with delta-method CIs. The difference keep − split is zero whenever both strategies give the same rule, and its CI is the least accurate output. On the sum-score scale, an equated focal score counts as at or above the cut when its nearest whole score is (see "Sum-score rates with the package's rule").
+7. **Per-item impacts and projection.** With several DIF items, the impact of each is reported with the SE $|\widehat{\text{impact}}_j / \widehat{\text{DIF}}_j| \times SE(\widehat{\text{DIF}}_j)$. The impact, its size in SE units and the rates can be projected to a target population with given group sizes and latent distributions.
+
+Open decisions for the function are listed in `dif-impact-design.md`.
+
+## Limitations
+
+The studies cover uniform DIF only, two groups, normal latent distributions with equal SDs, and in Study 2 one item type (four categories) and one focal mean. The strategies in Study 2 were linked to the true metric through the DIF-free items, which isolates the effect of the DIF from anchor error. Anchor error enters only through the flagged item sets. Study 3 used the true DIF items only. The sum-score rates of its second run used a split rule that differs from the one in RMdifImpact(), and the third run repeated them with the package's rule.
+
+## Run notes
+
+- Study 1: `dif_impact_theory.R`, host run 2026-11-17 (8 min, all fits converged). The results file also has scenario rows from earlier sample-size settings, which are not used here.
+- Study 2: `dif_impact_sim.R`, host run 2026-11-17, seeds `20261118 + cell`, L'Ecuyer-CMRG streams per replication. The full results (`dif_impact_sim/sim_results.rds`, 41 MB) are not tracked. `dif_impact_sim_analysis.R` writes the tracked summary file `dif_impact_sim/sim_results_slim.rds` that this document reads.
+- Study 3, first run: `dif_impact_ext_sim.R`, host run 2026-11-18, seeds `20261120 + cell`, 1000 replications. The worker count changed at a restart, and mclapply streams depend on it, so a rerun does not reproduce the file bit for bit. `dif_impact_ext_sim_analysis.R` writes `dif_impact_ext_sim/ext_results_slim.rds`.
+- Study 3, second run: `dif_impact_ext_sim_3b.R`, host run 2026-11-18 on 10 workers, seeds `20261130 + cell`, 500 replications. `dif_impact_ext_sim_3b_analysis.R` writes `dif_impact_ext_sim/ext3b_results_slim.rds`. The full results files of both runs are not tracked.
+- Study 3, third run: `dif_impact_ext_sim_3c.R`, host run 2026-11-19 on 10 workers (1.3 h), seeds `20261140 + cell` with one L'Ecuyer-CMRG stream per replication, 500 replications, easyRasch2 `r e3$package_version`. `dif_impact_ext_sim_3c_analysis.R` writes `dif_impact_ext_sim/ext3c_results_slim.rds`.
+- Sum-score rule check: `dif_impact_sum_rule_check.R` (deterministic, seconds, 2026-11-19) writes `dif_impact_ext_sim/sum_rule_slim.rds`, the focal rule at the true parameters under keep, the simulated split rule and the package's.
+
+## Appendix: tables
+
+```{r tbl-s1-scales}
+#| echo: false
+#| tbl-cap: "Study 1. Bias under keep for one central four-category DIF item on four reference scales. Focal mean 0.5 (Δ = 0.5), latent mean estimator. Bias / SE at 500/500."
+tb <- pick(sc, type = "poly", position = "central")
+tb <- tb[order(tb$k, tb$d), ]
+kable(data.frame(Items = tb$k, DIF = r1(tb$d),
+                 `Bias (logits)` = r3(tb$impact),
+                 `% of Δ` = pc_(tb$share), SMD = r2(tb$smd),
+                 `Largest |b| / SEM` = r2(tb$bsem),
+                 `|Bias| / SE` = r1(tb$bse), check.names = FALSE),
+      align = "rrrrrrr")
+```
+
+```{r tbl-s2-oracle}
+#| echo: false
+#| tbl-cap: "Study 2. Estimates with the true DIF items split, DIF data, range over cells. Impact is in logits for the latent and WLE means and in raw points for the sum score."
+kable(tab_or, align = "llrrr")
+```
+
+```{r tbl-s2-flagged}
+#| echo: false
+#| tbl-cap: "Study 2. Estimates computed for the items RMdifAnchor() flagged, DIF data, by what was flagged. Exact: all DIF items and nothing else. Item missed: a DIF item not flagged, and no false flag. False flag: at least one item without DIF flagged. Share: of all datasets in a cell. Cov.: coverage of the population target by the 95% CI, for the latent-mean impact and the largest absolute local bias. Cells with fewer than 10 datasets in a class are left out."
+kable(tab_fc, row.names = FALSE, align = "llrrr")
+```
+
+```{r tbl-s3-coverage}
+#| echo: false
+#| tbl-cap: "Study 3. Coverage of nominal 95% CIs and SE ratio (mean SE / SD of the error), range over rows with the median in parentheses. Rates: the share classified at or above the cut, false negatives and false positives, per group and for keep and split, delta-method CIs for the rates of the fitted rule. Run: first (1) or second (2). Rows: number of cell × quantity combinations."
+kable(tab_cov, row.names = FALSE, align = "llrrr")
+```
+
+```{r tbl-s3-rates}
+#| echo: false
+#| tbl-cap: "Study 3. False-negative (FN) and false-positive (FP) rates at θ = 1 by WLE, keep / split, as shares of each group. 500/500, focal mean 0.5. True shares at or above the cut: reference .159, focal .309. Mean over replications of the fitted rule's rates under the true model."
+kable(tab_rates, row.names = FALSE, align = "lrcccc")
+```
+

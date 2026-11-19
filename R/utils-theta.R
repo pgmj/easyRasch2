@@ -716,13 +716,17 @@
 #' item and `RMitemRestscore()` NA for the item, with only psychotools'
 #' warnings. The full data can pass `.check_response_categories()` while the
 #' complete cases do not. This runs the full-data check first, then checks
-#' the complete cases and stops naming the item.
+#' the complete cases and stops naming the item. A highest category that
+#' occurs only in incomplete responses also stops: the complete cases would
+#' analyse the item with fewer categories, with no message (the category
+#' check only sees categories up to the observed maximum).
 #'
 #' @param data Response matrix or data.frame (may contain `NA`).
+#' @param who Subject of the message ("This test uses complete cases only").
 #' @return Invisibly `TRUE`; stops with an `easyRasch2_category_error`.
 #' @keywords internal
 #' @noRd
-.check_complete_case_categories <- function(data) {
+.check_complete_case_categories <- function(data, who = "This test") {
   mat <- as.matrix(data)
   # Full data first: a category empty in the full data must not be blamed on
   # complete cases, where the advice to impute could not fix it.
@@ -734,12 +738,32 @@
   if (nrow(cc) == 0L) {
     return(invisible(TRUE)) # callers stop on "no complete cases" themselves
   }
+  full_max <- apply(mat, 2L, max, na.rm = TRUE)
+  cc_max <- apply(cc, 2L, max)
+  lost <- which(cc_max < full_max)
+  if (length(lost) > 0L) {
+    items <- colnames(mat)
+    if (is.null(items)) items <- paste0("item ", seq_len(ncol(mat)))
+    problems <- vapply(lost, function(j) {
+      k <- seq(cc_max[j] + 1, full_max[j])
+      paste0(items[j], if (length(k) == 1L) " (category " else " (categories ",
+             paste(k, collapse = ", "), ")")
+    }, character(1))
+    stop(.category_error(paste0(
+      who, " uses complete cases only (", nrow(cc), " of ", nrow(mat),
+      " respondents), and in them the highest categories of some items ",
+      "occur only in respondents with missing responses: ",
+      paste(problems, collapse = ", "), ". These items would be analysed ",
+      "with fewer categories than the data have. Merge the category with ",
+      "the one below, or impute the missing responses first."
+    ), items[lost]))
+  }
   tryCatch(
     .check_response_categories(cc),
     error = function(e) {
       if (!inherits(e, "easyRasch2_category_error")) stop(e)
       msg <- paste0(
-        "This test uses complete cases only (", nrow(cc), " of ", nrow(mat),
+        who, " uses complete cases only (", nrow(cc), " of ", nrow(mat),
         " respondents), and in them: ", conditionMessage(e),
         " Alternatively, impute the missing responses first."
       )

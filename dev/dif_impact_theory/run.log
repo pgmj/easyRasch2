@@ -1,0 +1,14 @@
+List of 10
+ $ wle_max_abs_diff     : num 1.5e-11
+ $ shift_d_hat          : num 0.7
+ $ shift_thr_max_abs_err: num 3.79e-08
+ $ mml_mu               : num 0.5
+ $ mml_sd               : num 1
+ $ equate_identity_max  : num 5.02e-11
+ $ sim_keep_delta_wle   : num 0.434
+ $ pop_keep_delta_wle   : num 0.434
+ $ pop_keep_se_samp     : num 0.00562
+ $ sim_split_d_hat      : Named num 0.5
+  ..- attr(*, "names")= chr "I05"
+NULL
+Done in 8.169541 mins

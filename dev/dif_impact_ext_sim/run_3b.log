@@ -1,0 +1,44 @@
+42 cells, 500 replications, 10 workers
+cell 1/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_01.rds
+cell 2/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_02.rds
+cell 3/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_03.rds
+cell 4/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_04.rds
+cell 5/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_05.rds
+cell 6/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_06.rds
+cell 7/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_07.rds
+cell 8/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_08.rds
+cell 9/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_09.rds
+cell 10/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_10.rds
+cell 11/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_11.rds
+cell 12/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_12.rds
+cell 13/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_13.rds
+cell 14/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_14.rds
+cell 15/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_15.rds
+cell 16/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_16.rds
+cell 17/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_17.rds
+cell 18/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_18.rds
+cell 19/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_19.rds
+cell 20/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_20.rds
+cell 21/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_21.rds
+cell 22/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_22.rds
+cell 23/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_23.rds
+cell 24/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_24.rds
+cell 25/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_25.rds
+cell 26/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_26.rds
+cell 27/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_27.rds
+cell 28/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_28.rds
+cell 29/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_29.rds
+cell 30/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_30.rds
+cell 31/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_31.rds
+cell 32/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_32.rds
+cell 33/42 read from dev/dif_impact_ext_sim/ext3b_results_cells/cell_33.rds
+cell 34/42 done (2.67 mins), errors: 0
+cell 35/42 done (5.29 mins), errors: 0
+cell 36/42 done (7.93 mins), errors: 0
+cell 37/42 done (10.6 mins), errors: 0
+cell 38/42 done (13.3 mins), errors: 0
+cell 39/42 done (15.9 mins), errors: 0
+cell 40/42 done (18.5 mins), errors: 0
+cell 41/42 done (21.1 mins), errors: 0
+cell 42/42 done (23.7 mins), errors: 0
+Done in 23.66343 mins

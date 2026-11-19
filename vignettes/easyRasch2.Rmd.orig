@@ -200,7 +200,7 @@ issues with local dependency.
 
 Without a cutoff, `RMitemRestscore()` uses an asymptotic *p*-value that is
 miscalibrated under the Rasch model: it flags too many items as overfit in small
-samples and too few as underfit at any sample size, which is in line with the
+samples and too few as underfit at any sample size ([simulation study](https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html)), which is in line with the
 asymptotic test detecting underfit less often than infit in an earlier
 simulation study [@johansson_detecting_2025]. As for infit, passing the full
 `RMitemRestscoreCutoff()` object instead flags items on a multiplicity-corrected
@@ -385,7 +385,7 @@ A statistically significant test indicates that some item parameters differ betw
 
 ### Anchored tests of items and thresholds
 
-To compare single items, the two groups' scales must first be linked. `RMdifAnchor()` links them through anchor items chosen from the data, tests each item location with a Wald test, and corrects the *p*-values for multiple testing.
+To compare single items, the two groups' scales must first be linked. `RMdifAnchor()` links them through anchor items chosen from the data, tests each item location with a Wald test, and corrects the *p*-values for multiple testing. The method and its defaults come from a [simulation study](https://pgmj.github.io/rasch_book/chapters/dif-anchor-tests.html) of anchors and corrections.
 
 ```{r dif-anchor, fig.cap = "Anchored item location differences by gender", fig.height = 6}
 RMdifAnchor(items, dif_var = phq9$gender, output = "ggplot")
@@ -396,6 +396,25 @@ The spacing between an item's thresholds can be compared without an anchor. A di
 ```{r dif-spacing}
 RMdifAnchor(items, dif_var = phq9$gender, level = "spacing")
 ```
+
+### Size of the DIF
+
+A flagged item does not say whether the DIF matters for how the scale is used. `RMdifImpact()` compares the pooled model, where the item has the same parameters in both groups (keep), with a model where the item gets its own location in the focal group (split). The difference is the bias that keeping the item adds to a comparison of the groups and to person scores. It is reported in several units and without a cutoff. The method and its intervals come from a [simulation study](https://pgmj.github.io/rasch_book/chapters/dif-impact.html).
+
+```{r dif-impact}
+RMdifImpact(data = items, dif_var = phq9$gender, items = "q9")
+```
+
+The anchored test flagged q9. Keeping it makes the latent mean difference between men and women 0.05 logits larger (95% CI 0.01 to 0.09). That is 0.04 standard deviations and about a third of the standard error of the difference. The percentage of the difference is large only because the difference itself is close to zero, which is one reason the impact is reported in several units.
+
+A cut-off adds classification rates. At a sum score of 10, proposed for moderate depression by @kroenke_phq9_2001:
+
+```{r dif-impact-rates}
+RMdifImpact(data = items, dif_var = phq9$gender, items = "q9", cut = 10,
+            cut_scale = "sum", table = "rates")
+```
+
+Keep and split classify the same raw scores in both groups, so keeping q9 changes no one's classification at this cut-off in these data. Whether a bias of this size matters depends on how the scale is used, and the function leaves that judgement to the user. `table = "local"` shows the bias in individual scores along the scale, and `target` projects the results to another population or to other group sizes.
 
 ### Partial-gamma DIF
 
@@ -449,24 +468,37 @@ RMdifTree(items, covariates = phq9$gender)
 
 
 The tree splits on gender, and the effect sizes match what the partial
-gamma analysis showed above: q2 is classified as C and q1 and q5 as B,
-while the remaining items are negligible (A). With a single binary
+gamma analysis showed above for q1 and q2, which are classified as B,
+while the remaining items are negligible (A). Partial gamma without
+purification also flagged q5. With a single binary
 covariate the tree reduces to the familiar two-group comparison --- its
 advantages appear when you supply several covariates at once
 (`covariates = phq9[, c("gender", "age")]`), where it tests all of them,
 picks split points for continuous ones, and uncovers interactions.
 
 Three options are worth knowing about: `purification = "iterative"`
-recomputes effect sizes while excluding already-flagged items from the
+(the default) recomputes effect sizes while excluding already-flagged items from the
 matching score; `stability = TRUE` refits the tree on resamples to
 report how often each covariate is selected and where the cutpoints
 land --- a guard against overinterpreting a single sample's tree
 structure; and `output = "plot"` draws the tree with per-node item
 parameters.
 
+### When the methods disagree
+
+The anchored test flags q9. Partial gamma flags q1, q2 and q5, and the tree, which purifies and corrects for multiple testing by default, flags q1 and q2. The anchored test and the bootstrap partial gamma both control the family-wise error rate, so the difference is not one of multiplicity. The methods measure DIF against different references. The anchored test compares each item's location with the anchor items (here q3, q6, q7 and q8), while partial gamma conditions on the rest score, which contains the other items with DIF. Partial gamma can also respond to differences in threshold spacing [@henninger_partial_2025]: q1, which the spacing test flags, has a location difference close to zero.
+
+`RMdifImpact()` shows whether the disagreement matters. With q2 and q9 both split:
+
+```{r dif-impact-q2q9}
+RMdifImpact(data = items, dif_var = phq9$gender, items = c("q2", "q9"))
+```
+
+Keeping both items makes the latent mean difference 0.11 logits larger (95% CI 0.06 to 0.16), which is 0.08 standard deviations and 0.8 of the standard error of the difference. Both items shift scores in the same direction, so their impacts add up. 
+
 ## Next step
 
-Since we found issues with item misfit, local dependence, and gender DIF, these need to be addressed before the scale is used for measurement. Notably, item 2 recurs across all three criteria — overfit, the strongest local dependence (with item 1), and the largest gender DIF — making it the natural first candidate for closer inspection. The recommended approach is iterative: remove a single item (for instance, an underfit item, or one item from an LD pair after reviewing item content), then re-run the full set of analyses, since fit indications for the remaining items change with every removal. Some of the flags above may be consequences of others: overfitting items can push fitting items into the underfit range, and underfitting items, especially from a second dimension, can make fitting items look overfit. When the sample is large enough, it is good practice to set aside a random holdout subsample before the analysis, so that the final item set can be confirmed in data that played no part in the item-reduction decisions.
+Since we found issues with item misfit, local dependence, and gender DIF, these need to be addressed before the scale is used for measurement. Notably, item 2 recurs across all three criteria — overfit, the strongest local dependence (with item 1), and the largest partial-gamma gender DIF — making it the natural first candidate for closer inspection. The recommended approach is iterative: remove a single item (for instance, an underfit item, or one item from an LD pair after reviewing item content), then re-run the full set of analyses, since fit indications for the remaining items change with every removal. Some of the flags above may be consequences of others: overfitting items can push fitting items into the underfit range, and underfitting items, especially from a second dimension, can make fitting items look overfit. When the sample is large enough, it is good practice to set aside a random holdout subsample before the analysis, so that the final item set can be confirmed in data that played no part in the item-reduction decisions.
 
 The following sections are primarily of interest once an acceptable item set has been established; here we continue with all nine items for demonstration purposes.
 

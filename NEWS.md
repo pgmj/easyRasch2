@@ -8,12 +8,32 @@
   DIF effects do not cancel out, as with a single DIF item. Their arguments
   give an error pointing to `RMdifAnchor()`. The LR test does not change.
 
+- New `RMdifImpact()`: the practical size of DIF in given items. It reports
+  the bias in the group difference from keeping them (latent mean, mean WLE
+  and sum score, in several units), the local bias of person scores,
+  classification rates at a cut-off, and a projection to a target
+  population, with delta-method intervals.
+
 - New `RMdifAnchor()`: anchored Wald tests of DIF between two groups for
   item locations, thresholds and threshold spacing (DSF), with corrected
   p-values. The anchor is the forward method (a consensus over random
   tie-breaks) or the Gini anchor point (Strobl et al., 2021).
 
 - `RMitemCatProb()` no longer needs `eRm` installed.
+
+- `RMdifTree()` defaults to `purification = "iterative"` and, for partial
+  gamma, `p_adj = "fdr"` (Benjamini-Hochberg, as for the asymptotic
+  p-values of `RMdifGamma()`), following Henninger et al. (2025). Without
+  an adjustment, the chance of flagging an item without DIF grew with the
+  number of items. The caption names the adjustment. **Item classes
+  change; use `purification = "none", p_adj = "none"` for the old
+  results.**
+
+- `RMitemInfit()`, `RMitemInfitPlot()`, `RMitemRestscore()` and
+  `RMitemRestscoreBoot()` stop when the highest category of an item occurs
+  only in respondents with missing responses. They use complete cases, and
+  previously analysed such an item with fewer categories without a message.
+  **Data that ran before can now give an error.**
 
 - `RMitemRestscore()` bootstrap p-values are equal-tailed (alpha/2 for
   overfit and for underfit). There are fewer false underfit flags when
@@ -39,6 +59,12 @@
 
 - Docs: the DIF functions explain artificial DIF, and a Henninger et al.
   (2025) author and the `phq9` description are corrected.
+
+- Docs: the help pages of `RMdifAnchor()`, `RMdifImpact()`, `RMdifLR()`,
+  `RMitemRestscore()`, `RMitemRestscoreCutoff()`, `RMitemRestscoreBoot()` and
+  `RMpersonChange()`,
+  and the vignette, link to the simulation studies behind them in the
+  book *Rasch Measurement Explorations*.
 
 ## Bug fixes
 

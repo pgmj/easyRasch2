@@ -49,7 +49,9 @@
 #' artificial DIF in the others (Andrich & Hagquist, 2012), so this function
 #' no longer reports per-group locations. \code{\link{RMdifAnchor}} links the
 #' groups through anchor items and tests each item, threshold or threshold
-#' spacing, with a correction for multiple testing.
+#' spacing, with a correction for multiple testing. The simulation study
+#' behind this change is reported at
+#' \url{https://pgmj.github.io/rasch_book/chapters/dif-anchor-tests.html}.
 #'
 #' Like other global tests, the LR test becomes significant for small
 #' amounts of DIF in large samples, and has little power in small ones.

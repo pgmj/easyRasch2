@@ -176,3 +176,296 @@ Power (unadjusted, focus item, rejection at .05):
   test cannot see a person-level style shared by all items.
 - Non-focus items: Holm-adjusted index flags no other item in any
   alternative cell.
+
+Report: `dev/category_conditional_null.qmd` (Typst PDF, 21 pages), written
+2026-11-18 from `results/summary.rds`. Rates leave out the 8 datasets with
+no bootstrap replicate kept. Numbers quoted in the text were rechecked on
+the evaluable datasets.
+
+## Diagnostic plots (prototype, 2026-11-18)
+
+`R/plot_functions.R` + `R/plot_examples.R` (one dataset per condition,
+n = 500, k = 10, B = 199, 1 min in the container). PNGs in
+`results/plots/`, data behind them in `results/plot_examples.rds`.
+
+A bar plot of observed vs expected category counts over the whole sample
+shows nothing: the category counts are sufficient for the item's CML
+parameters, so marginal expected = observed. Every plot below splits by total
+score.
+
+1. `1_cond_prob`: observed share per category at each total score vs
+   P(X = j | r), pointwise binomial 95% band given n_r. Swap is visible in
+   categories 1 and 2, but per-score points are noisy.
+2. `2a_group_bars` / `2b_group_resid`: five score groups of about equal size,
+   observed count (bar) vs expected with a 95% interval, or the same as
+   standardised residuals. 2b is the clearest single picture: swap gives a
+   sign reversal across groups (2 over-used low, 1 over-used high).
+3. `3_deviate_map`: Glas deviates per score level and category, diverging
+   blue-red. Shows the swap band pattern; noisy at single score levels.
+4. `4_adjacent`: share in the upper of two adjacent categories vs its CML
+   curve. Interchangeable or swapped 1/2 gives a flat or falling curve.
+5. `5_focused`: observed minus expected rest-score mean and SD per category
+   against the 2.5-97.5% bootstrap null range. Maps one-to-one to the tests.
+
+None shows step discrimination 2 clearly, matching the low power there.
+All bands are pointwise and (1-4) ignore item-parameter uncertainty.
+
+### PAV calibration of the cumulative events (2026-11-18)
+
+User asked whether the Säilynoja et al. (2025) PAV-adjusted calibration plots
+apply here. `pav_table()` / `plot_pav()` in `R/plot_functions.R`, demo
+`R/plot_pav_examples.R` (same five datasets and seeds, 7 s) ->
+`results/plots/6_pav.png`. The forecast for event X_1 >= k is the CML
+conditional P(X_1 >= k | r), so no theta enters. The band comes from responses
+sampled exactly given totals at the fitted parameters (no refit), PAV in the
+same ordering, pointwise 95%.
+
+- Swapped and interchangeable 1/2: the X >= 2 curve is flat around .5 (62%
+  and 40% of points outside the band). Other events stay on the diagonal, so
+  the plot points to the step.
+- Step 2 discrimination 2: S-shape in X >= 2 (13% outside). This is the first
+  plot here that shows this condition at all.
+- "Don't know" 25%: mild, X >= 3 11%, X >= 2 8%.
+- Null (disordered PCM): 0-5% per event.
+- Curves cannot be off the diagonal on average: CML fits the category counts,
+  so the mean deviation per event is 0. Only shape (slope) shows (same as the
+  easyRaschBayes check of 2026-11-06, dev/pav-calibration-plan.md there).
+
+Monotonicity check (exact ESF, no simulation): P(X_i >= k | r) is
+nondecreasing in r when all OTHER items have ordered thresholds (their ESF is
+then log-concave, so the conditional family is TP2). One disordered other item
+broke it in 30 of 73 random cases. The focus item's own disorder does not.
+PAV orders by p, not by r, so the plot stays valid either way.
+
+Side finding: `.gamma()` uses `stats::convolve` (FFT). Max error in P(X = j |
+r) about 5e-6, but differences of cumulative probabilities at extreme scores
+were off by up to 1e-3. Direct polynomial multiplication is exact and cheap
+at these sizes. Not changed.
+
+### 2026-11-18 later: report, exact ESF, calibration test
+
+- `.gamma()` in `R/functions.R` now multiplies polynomials directly (FFT
+  version kept nowhere; difference to brute-force enumeration 4e-16 vs 2e-10,
+  up to 0.0011 in P(X = j | r) at extreme scores for the k = 10 design). In 60
+  datasets the observed Q_j moved by at most 0.007, other statistics by
+  < 1e-4, so run 2 was not repeated. The report says so in "Run".
+  Example plots regenerated with it (old rds in `results/old_fft_gamma/`),
+  numbers unchanged.
+- Report: new section "Diagnostic plots for single datasets" (2b, 4, 5,
+  PAV) before the Discussion, plus Dimitriadis 2021 and Säilynoja 2025 refs.
+  Rendered, colour + greyscale checked (residual bars now red vs dark navy so
+  the sign legend survives greyscale; dataviz validator not run, no node in
+  the container).
+- Calibration test: `R/calibration_functions.R` (`.pav()` moved here,
+  `mcb_matrix()`, `analyse_calibration()`). Statistic per item and event:
+  CORP Brier miscalibration MCB = mean (p - y)^2 - mean (cep - y)^2 with p the
+  CML P(X_i >= k | r). Reference: exact conditional bootstrap with refit.
+  Raw p per event, single-step min-p over the 4 events of an item, item p =
+  smallest adjusted p, Holm over items. PAV checked against isoreg (5e-17).
+- Host run: `R/run_calibration_study.R` (same 84 cells, reps and B as run 2,
+  new datasets, cells in `results/cal_cells/`, about 2.3 h on 10 cores), then
+  `Rscript R/summarise_calibration.R` -> `results/calibration_summary.rds`.
+  Smoke run done (120 reps, 1 skipped, no repeated datasets; SWAP at the
+  minimum p with B = 19, null mean p .5-.6).
+
+## Package draft: RMitemCatFitPlot() (2026-11-18)
+
+Draft in `package_draft/item_cat_fit_plot.R`, not yet in `R/`. One function,
+`type = "residuals" | "adjacent" | "focused" | "calibration"` (plots 2b, 4, 5,
+6 of the prototype), items in facet rows, `output = "ggplot" | "dataframe"`.
+
+- Reuses package internals: `.fit_cml_thresholds()`, `.esf_convolve()`,
+  `.maybe_parallel_lapply()`, `.n_caption()`, `.attrition_clause()`,
+  `er2_caption()`, `er2_plot_caption()`, `er2_axis_margins()`.
+- New internals: `.cond_cat_probs()` (P(X_i = j | r), all items),
+  `.sim_given_totals()` (vectorised over respondents, unlike the
+  one-pattern-at-a-time `.sim_conditional()`), `.pav()` (stack version),
+  table and ggplot helpers per type.
+- Complete cases only. Extreme total scores excluded. Caption via `.n_caption()`.
+- Focused: refit in every simulated dataset, datasets with an empty category
+  skipped and reported via `.attrition_clause()`. Calibration: band at the
+  fitted parameters without refit, from the same simulation scheme.
+- Checked in a scratch copy of the package with load_all: conditional
+  probabilities match `cond_cat_prob()` to 4e-16, `.pav()` matches the dev
+  `.pav()`, sampler keeps totals and reproduces P(X | r), focused observed
+  values equal `item_stats()`, same seed gives identical output, Rd builds.
+- Timing at n = 500, 10 items, 5 categories, 100 iterations: residuals and
+  adjacent 0.2 s, calibration 1.6 s, focused 7.7 s (sequential).
+- Not done: tests, NAMESPACE/pkgdown/NEWS, palette validator (no node).
+- Renamed from RMitemCategoryPlot() to RMitemCatFitPlot() (user, 2026-11-18).
+  If the calibration test is adopted, it becomes RMitemCatFit() (table of
+  item p-values), and RMitemCatFitPlot() gets a `fit` argument: reuse the
+  test's simulated datasets for the bands (refitted) and put each item's
+  adjusted p in its row strip. Whether RMitemCatFit() also reports the
+  focused statistics is decided after the calibration run.
+
+## Calibration test run, results (2026-11-18 evening)
+
+Host run finished. `summarise_calibration.R` now drops and warns about NULL
+results instead of failing.
+
+- **SWAP_1_2 n1000 k10 is empty.** All 200 results NULL, saved 19:44. The log
+  was restarted, so the run was most likely interrupted during that cell and
+  mclapply returned NULL for killed workers. The cell needs a rerun.
+- Other losses: 16 reps skipped (empty category, n = 250). 5 reps at n250 k5
+  had B_used = 0 (every refit failed).
+- **Raw per-event p calibrated:** P(p <= .05) = .049-.050 for all four events
+  under the null (6000 item-reps).
+- **Item-level min-p p is too small in the lower tail:** P(p <= .01) = .016
+  (k5) / .019 (k10), P(p <= .05) = .057 / .056. Run 2's focused index: .008,
+  .049. Cause: bootstrap p's on denominator Bu, observed on Bu + 1, so with
+  `minp <= p_raw` replicates tied on the same count are not counted. Toy
+  check with 4 exchangeable correlated normals (scratchpad minp_check.R)
+  reproduces it: .0168 at .01, .0564 at .05. Fix: rank observed and
+  replicates in one pool of Bu + 1 and take p = share of the pool with min-p
+  <= the observed min-p. Valid: at B = 199 it gives .0013 / .045 at .01 / .05
+  because the grid is coarse, at B = 999 .0088 / .0497.
+- **Holm columns are uninformative.** At B = 199 the smallest p is .005, and
+  times 10 items that is .05, so nothing can be rejected at k = 10. At B = 99
+  (alternatives) not even at k = 5. any_other_holm at k5 null = .084 is the
+  min-p bug (4 x ~.02).
+- **Power, item 1 at .05 per item, against run 2's focused index** (independent
+  datasets, 200 reps per cell, calibration test's ~.057 null rate noted):
+  - outer categories interchangeable: .42-1.00 vs .04-.32
+  - step discrimination 2: n1000 k10 .555 vs .025, n1000 k5 .345 vs .085
+  - inner categories interchangeable k10: n250 .72 vs .25, n500 .98 vs .55
+  - swap n250 k10: .99 vs .58
+  - don't-know 25% k10 n1000: narrow .505 vs .285, wide .35 vs .145
+  - focused ahead only in don't-know 5-10% narrow, by .03-.05, close to null
+    rates for both. ERS and don't-know 5-10% wide: neither detects.
+- The event that rejects points at the category: outer -> X >= 1, inner and
+  swap -> X >= 2, don't-know narrow -> X >= 2 and X >= 3.
+
+### Fix and rerun prepared (2026-11-18, late)
+
+- `analyse_calibration()` now uses `.minp_pooled()`: observed and replicates
+  ranked in one pool, item p = share of the pool with min-p <= the observed.
+  Matches the toy `pooled_p()` exactly (200 random matrices with ties, and
+  one event). `p_adj` is gone. `boot_mcb` (k x 4 x B_used, 7 significant
+  digits) is stored per replication. Old version in scratchpad
+  calibration_functions_v1.R.
+- First-run results moved to `results/old_minp_bug/` (cells, summaries, log).
+- `summarise_calibration.R`: p_adj columns dropped, p_item_all_1..k added for
+  null calibration over all items.
+- Smoke run in the container: 120 reps, 1 skipped, no repeated datasets.
+  No item rejects at B = 19 (smallest item p about 4/20), as expected.
+- Same seeds and cores as the first run, so the datasets are the same
+  (data_id can be compared). Expected time about 2.3 h. Disk: about 0.6 GB
+  for the cells, twice that with the dated copies.
+- Run script reads CORES=<n> (default 10, smoke 4); a different count gives different datasets than the first run.
+
+### TODO: clean up results/ (user, 2026-11-18)
+After the calibration rerun is analysed: decide what to keep of
+results/old_minp_bug/, results/old_fft_gamma/, smoke summaries and dated
+duplicates, and which rds files the qmd and a rasch_book chapter need.
+
+## Calibration test rerun, results (2026-11-19)
+
+Rerun on 4 cores (so new datasets), 22:25-04:28, all 84 cells complete,
+19 reps skipped (empty category), 5 with B_used = 0 (n250 k5). cal_cells 1.2 GB.
+
+- Null, item p over all items (k5: 14985 item-reps, k10: 29960):
+  P(p <= .05) = .039 / .041, P(p <= .10) = .095 / .094, P(p <= .025) = .019,
+  P(p <= .01) = 0 (smallest item p seen .015). Same at every n. Valid, and
+  below nominal at small alpha because of the grid at B = 199, as the toy
+  check predicted (.045 at .05, .001 at .01).
+- Raw event p: .045-.050 at .05.
+- Holm over items cannot reject at B = 199 (needs p <= .01 at k5), so
+  FWER = 0 is uninformative. The toy check at B = 999 gave .0088 at .01 and
+  .0497 at .05, so the package needs iterations of about 1000.
+- Power at .05 per item barely moved from the first run (differences within
+  +-.07, 200 reps), and the comparison with run 2's focused index stands:
+  outer interchangeable .40-.99 vs .04-.32, step discrimination 2 n1000 k10
+  .53 vs .03, inner interchangeable k10 n250 .73 vs .25, swap n250 k10 .97 vs
+  .58, don't-know 25% narrow n1000 k10 .48 vs .29. Focused ahead only in
+  don't-know 5-10% narrow, by .03-.07, where both are near their null rates.
+  SWAP n1000 k10 (missing in the first run): 1.00.
+
+### Write-up (2026-11-19)
+Section "A calibration test from the PAV curves" added to
+category_conditional_null.qmd (after the diagnostic plots): statistic,
+p-values, run, null figure (share of item p <= alpha), power figure against
+the item index, per-event figure at n1000 k10, appendix table per cell.
+All numbers in the text are inline R from calibration_summary.rds. Discussion
+gets one paragraph and an extra sentence in the multiplicity bullet. Toy
+check saved as R/minp_toy_check.R. Reference added: Ge, Dudoit & Speed
+(2003), checked against Crossref.
+
+## Package draft: RMitemCatFit() (2026-11-19)
+
+`package_draft/item_cat_fit.R`: RMitemCatFit(data, iterations = 1000,
+correction = fwer/fdr_bh/fdr_by/none, item_labels, parallel, n_cores, seed,
+output = kable/dataframe/list) plus the internals shared with the plot
+(.catfit_prepare, .catfit_simulate, .mcb_vector, .catfit_pvalues).
+RMitemCatFitPlot() now uses the same preparation and takes `fit` (the list
+output): no new simulations, the corrected item p under each item label,
+check that fit and data match.
+
+- Every p computed on the pool of observed + B simulated datasets (event p,
+  item p by single-step min-p, fwer = .wy_stepdown() on -item p), so ties
+  count alike for observed and simulated. MCB equals the dev mcb_matrix()
+  (1e-17), item p equals .minp_pooled() exactly, fwer >= p, fwer = p for one
+  item, same seed gives identical output, mismatched data stops.
+- Timing (n = 500, 10 items, sequential): 200 iterations 11 s, 1000
+  iterations 52 s. Plots with `fit` take 0.1-0.2 s.
+- **Floor of the corrected p.** Item p cannot go below m/(B + 1) (m events,
+  one simulated dataset holds rank 1 for each event), and the step-down
+  floor is about m k/(B + 1). Swap example, 1000 iterations: item p .004
+  (= 4/1001), fwer .040. So reaching padj < .05 needs B > 20 m k: 800 for 10
+  items with 5 categories, 2400 for 30 items. Studentised max-T within the
+  item (like .bootstrap_pvalues) would give a floor of 1/(B + 1). It can be
+  evaluated from the stored boot_mcb of the rerun without new simulations.
+
+## Min-p vs studentised max-T (2026-11-19)
+
+`R/compare_combination.R` recomputes both combinations from the stored
+boot_mcb of the rerun (no new simulation, 20 s on 4 cores) and writes
+results/compare_combination.rds. Recomputed min-p equals the stored item p
+(2 of 152,805 items differ by up to .01 from the 7-digit rounding, no
+rejection changes).
+
+- Null, item p over all items: min-p .039 / .040 at .05 (k5 / k10), 0 at
+  .01. Max-T .044 / .046 at .05, .0049 / .0044 at .01, per cell .039-.051 at
+  .05 and .004-.007 at .01. Smallest p: min-p .015, max-T .005 (= 1/200).
+- Null family-wise rate (any item, WY step-down): min-p .003 / .007 (the
+  floor), max-T .045 / .038, per cell .030-.074. The .074 cell is the ordered
+  PCM at n1000 k5 (500 datasets, about 2.5 Monte Carlo SEs above .05). All
+  other cells <= .048.
+- Power per item at .05: the same for both (differences within noise).
+- Power after the correction, B = 99: max-T far ahead. Swap .85-1.00 vs
+  .04-.19, outer interchangeable .23-.97 vs .01-.09, inner interchangeable
+  .36-1.00 vs .03-.09, step discrimination 2 n1000 k10 .24 vs .02.
+- Other items under alternatives, any flagged after the correction: max-T up
+  to .075 per cell (mean .038).
+- Decision: the draft RMitemCatFit() now uses max-T (old version in
+  scratchpad item_cat_fit_minp.R). Draft p and fwer equal the comparison
+  script exactly on 20 stored datasets. Swap example, 200 iterations:
+  item p = padj = .005.
+- Open: confirm the family-wise rate at a larger B, especially the ordered
+  PCM at n1000 k5. The qmd still describes the min-p item p.
+
+## Large-B null check prepared + qmd switched to max-T (2026-11-19)
+
+- `R/run_calibration_B999.R` (host): [revised same day: n = 1000 only by default, both conditions, about 3.1 h, NS env var adds 250/500] six null cells at k = 5 (A0 ordered,
+  A1 disordered, n = 250/500/1000), B = 999, 1000 new datasets per cell,
+  about 7 h on 10 cores. Env vars CORES, REPS, B, SMOKE. Stores per dataset
+  the item statistics (N x 5), min-p and max-T item p and the max-T
+  step-down p (not the full MCB array, about 40 MB per cell). Output in
+  results/cal_b999_cells/. Summary: `R/summarise_calibration_B999.R` ->
+  results/calibration_b999_summary.rds. Smoke-tested in the container.
+- New helpers in R/calibration_functions.R: `.stepdown_maxT()`,
+  `.maxT_items()`, `analyse_calibration_maxT()`. `.maxT_items()` gives the
+  same p and padj as compare_combination.R on a stored dataset.
+- Convention: rejection is p < alpha (strict), as in easyRasch2. With
+  p <= alpha the max-T item p of A0 n1000 k5 is .016 at .01 and .057 at
+  .05 (from ties at the 1/(B+1) grid), which the B = 999 run should settle
+  too. FWER of that cell: .074 strict, .078 with <=.
+- qmd: calibration section now reports the max-T item p and step-down
+  (from results/compare_combination.rds), min-p kept as the first version
+  with its numbers. New appendix tables: null rates per cell (both
+  combinations, FWER) and focus-item power after the step-down. Discussion
+  multiplicity bullet updated. Backup of the previous qmd in the session
+  scratchpad (category_conditional_null_pre_maxT.qmd). Renders, 38 pages.
+- Corrected claim: after the step-down max-T keeps most of the power only
+  for swapped and interchangeable categories, about a third for the weaker
+  departures (step 2 discrimination 2 n1000 k10: .57 -> .24).

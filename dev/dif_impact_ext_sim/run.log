@@ -1,0 +1,43 @@
+cell 1/42 read from dev/dif_impact_ext_sim/ext_results_cells/cell_01.rds
+cell 2/42 read from dev/dif_impact_ext_sim/ext_results_cells/cell_02.rds
+cell 3/42 read from dev/dif_impact_ext_sim/ext_results_cells/cell_03.rds
+cell 4/42 read from dev/dif_impact_ext_sim/ext_results_cells/cell_04.rds
+cell 5/42 read from dev/dif_impact_ext_sim/ext_results_cells/cell_05.rds
+cell 6/42 read from dev/dif_impact_ext_sim/ext_results_cells/cell_06.rds
+cell 7/42 read from dev/dif_impact_ext_sim/ext_results_cells/cell_07.rds
+cell 8/42 read from dev/dif_impact_ext_sim/ext_results_cells/cell_08.rds
+cell 9/42 read from dev/dif_impact_ext_sim/ext_results_cells/cell_09.rds
+cell 10/42 read from dev/dif_impact_ext_sim/ext_results_cells/cell_10.rds
+cell 11/42 read from dev/dif_impact_ext_sim/ext_results_cells/cell_11.rds
+cell 12/42 done (4.84 mins), errors: 0
+cell 13/42 done (13.2 mins), errors: 0
+cell 14/42 done (21.5 mins), errors: 0
+cell 15/42 done (29.8 mins), errors: 0
+cell 16/42 done (38 mins), errors: 0
+cell 17/42 done (46.4 mins), errors: 0
+cell 18/42 done (54.6 mins), errors: 0
+cell 19/42 done (1.05 hours), errors: 0
+cell 20/42 done (1.19 hours), errors: 0
+cell 21/42 done (1.32 hours), errors: 0
+cell 22/42 done (1.46 hours), errors: 0
+cell 23/42 done (1.6 hours), errors: 0
+cell 24/42 done (1.74 hours), errors: 0
+cell 25/42 done (1.91 hours), errors: 0
+cell 26/42 done (2.09 hours), errors: 0
+cell 27/42 done (2.26 hours), errors: 0
+cell 28/42 done (2.44 hours), errors: 0
+cell 29/42 done (2.61 hours), errors: 0
+cell 30/42 done (2.79 hours), errors: 0
+cell 31/42 done (2.96 hours), errors: 0
+cell 32/42 done (3.14 hours), errors: 0
+cell 33/42 done (3.31 hours), errors: 0
+cell 34/42 done (3.49 hours), errors: 0
+cell 35/42 done (3.66 hours), errors: 0
+cell 36/42 done (3.83 hours), errors: 0
+cell 37/42 done (4.01 hours), errors: 0
+cell 38/42 done (4.18 hours), errors: 0
+cell 39/42 done (4.36 hours), errors: 0
+cell 40/42 done (4.53 hours), errors: 0
+cell 41/42 done (4.7 hours), errors: 0
+cell 42/42 done (4.88 hours), errors: 0
+Done in 4.879061 hours

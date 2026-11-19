@@ -119,7 +119,9 @@
 #' dichotomous to polytomous: at six items the value moves from 1.55 with two
 #' categories to 1.72 with three and only 1.78 with seven, while reliability
 #' over the same range climbs from about .60 to about .91. Referring the RCI to
-#' a normal null is conservative, and materially so on short scales.
+#' a normal null is conservative, and materially so on short scales. The
+#' exact null and its critical values are reported at
+#' \url{https://pgmj.github.io/rasch_book/chapters/rci-exact-null.html}.
 #'
 #' **How the null is obtained.** `critical = "exact"` enumerates it. Because
 #' the score is sufficient, \eqn{\hat\theta(r)} and \eqn{SE(r)} are

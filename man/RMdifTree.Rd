@@ -9,8 +9,8 @@ RMdifTree(
   covariates,
   model = c("auto", "PCM", "RM"),
   effect_size = c("auto", "MH", "pgamma"),
-  purification = c("none", "iterative"),
-  p_adj = c("none", "fdr", "bonferroni"),
+  purification = c("iterative", "none"),
+  p_adj = c("fdr", "bonferroni", "none"),
   thresholds = c(0.21, 0.31),
   alpha = 0.05,
   prune_negligible = FALSE,
@@ -40,15 +40,20 @@ factor, or logical. At least one column is required.}
 (Mantel-Haenszel), or \code{"pgamma"} (partial gamma). \code{"auto"}
 uses MH for RM and partial gamma for PCM.}
 
-\item{purification}{\code{"none"} (default) or \code{"iterative"}.
+\item{purification}{\code{"iterative"} (default) or \code{"none"}.
 Iterative purification recomputes the effect size while excluding
 items already classified as DIF from the matching score (Bjorner et
-al., 1998).}
+al., 1998). Henninger et al. (2025) found it most important in short
+tests, where DIF items make up a larger share of the matching score.
+\code{RMdifGamma()} and \code{RMitemICCPlot()} do not purify, so their
+classifications can differ from the tree's on the same data.}
 
 \item{p_adj}{Multiple-testing adjustment for the partial-gamma
-classification: \code{"none"} (default), \code{"fdr"} (Benjamini &
-Hochberg), or \code{"bonferroni"}. Ignored for MH (which uses the
-ETS test directly).}
+classification: \code{"fdr"} (default, Benjamini & Hochberg, as for
+the asymptotic p-values of \code{RMdifGamma()}), \code{"bonferroni"}
+or \code{"none"}. Without an adjustment, the chance of flagging at
+least one item without DIF grows with the number of items (Henninger
+et al., 2025). Ignored for MH (which uses the ETS test directly).}
 
 \item{thresholds}{Numeric length-2 vector with the partial-gamma
 B/C boundaries (default \code{c(0.21, 0.31)}). Ignored for MH (the
@@ -243,7 +248,6 @@ if (requireNamespace("psychotree", quietly = TRUE) &&
   # (use more resamples, e.g. 100+, in real analyses)
   if (requireNamespace("stablelearner", quietly = TRUE)) {
     kbl <- RMdifTree(items, covariates = covs,
-                     purification = "iterative", p_adj = "fdr",
                      stability = TRUE, stability_B = 25)
     kbl                          # main effect-size kable
     attr(kbl, "stability_kable") # pre-rendered stability kable
