@@ -469,3 +469,83 @@ rejection changes).
 - Corrected claim: after the step-down max-T keeps most of the power only
   for swapped and interchangeable categories, about a third for the weaker
   departures (step 2 discrimination 2 n1000 k10: .57 -> .24).
+
+## B = 999 null check, results (2026-11-19)
+
+Host run, 10 cores, 40 min per cell (estimate was 94, so about 3.1 h was
+pessimistic: 81 min total). 1000 datasets per cell, none skipped, all data_id
+unique, min B_used 996. p recomputed from stored Tm equals the stored p.
+
+| Cell (n1000 k5) | item p < .05 | item p < .01 | FWER (padj < .05) | MC SE |
+|---|---|---|---|---|
+| A0 ordered | .052 | .010 | .052 | .007 |
+| A1 disordered | .048 | .008 | .045 | .007 |
+
+With <= instead of <: A0 .053 / .011 / .053, A1 .050 / .009 / .045.
+Min-p item p at B = 999: .050 / .048 at .05 (calibrated once the grid is fine).
+
+Same datasets, first 199 replicates only (studentised with the full-pool
+moments, so an approximation): FWER .043 (A0) and .045 (A1), item p < .01
+.005. So the .074 at B = 199 in the rerun was chance in those 500 datasets,
+not an effect of B. At B = 199 the item p is slightly below nominal at .01
+(.005) from the coarse grid.
+
+Conclusion: max-T with the WY step-down holds the family-wise rate at the
+n1000 k5 null cells. No change to RMitemCatFit needed.
+- qmd updated with these results (inline from results/calibration_b999_summary.rds,
+  whose `strict` table uses p < .05 and holds the B = 199 subsample), and the
+  Discussion multiplicity bullet. summarise_calibration_B999.R now writes `strict`.
+
+## Moved into the package (2026-11-19)
+
+R/item_cat_fit.R and R/item_cat_fit_plot.R are now the source of truth;
+package_draft/ is the pre-move copy. Changes on the move:
+- `.catfit_prepare()` runs `.check_complete_case_categories()` (classed
+  category error, highest category only in incomplete rows) with the calling
+  function named in the message.
+- Score-group labels built without tapply names (en dash as –, no
+  re-encoding warning in a C locale).
+- Roxygen: simulation numbers now say 199 simulated datasets and add the
+  B = 999 check.
+- NAMESPACE, man/, _pkgdown.yml (Item Fit, after RMitemCatProb), NEWS.md (two
+  bullets), README.md (category section).
+- tests/testthat/test-item_cat_fit.R: exactness of .cond_cat_probs (brute
+  force), .sim_given_totals (totals kept, frequencies), .pav vs isoreg,
+  .catfit_pvalues floors and step-down vs an independent implementation,
+  argument checks, category error, output structure, seed reproducibility,
+  swapped-category detection, complete cases, low-iteration notice,
+  parallel = sequential, plots for every type, residual counts summing to
+  zero (CML sufficiency), fit reuse equals the plot's own simulation, strips
+  with p, fit from other data. All pass (126 expectations).
+- The parallel test needs the dev build installed (mirai workers load the
+  installed package). In the container 1.4.0 is installed, so it was run with
+  the dev build in a scratch library via R_LIBS.
+- Found while testing: the adjacent-category binomial band need not contain
+  the expected share when it is near 0 or 1 (discrete quantiles). Test
+  changed, function unchanged.
+
+## Book chapter drafted (2026-11-19)
+
+rasch_book/chapters/category-fit.qmd (Item fit part), scripts in
+rasch_book/scripts/category-fit/ (paths rewritten, dev-history comments
+trimmed), results in rasch_book/results/category-fit/ (summary,
+calibration_summary, compare_combination, calibration_b999_summary). Book
+.gitignore now covers results/**/*cells*/, *smoke*, *.log. Five refs added
+to references.bib (Crossref/arXiv checked). Audit of the dev qmd before
+promotion: every numeric claim in the first study matched the summary.
+Open: study 1 results were computed with the FFT ESF, the scripts now use
+direct multiplication (one sentence in the chapter's Reproduction section).
+The chapter example (n = 1000, 8 items, Q1 swapped, Q2 categories 0/1
+interchangeable, seed 2026) runs RMitemCatFit() at render, about 1 min.
+
+## Code review fixes (2026-11-19)
+
+`/code-review high` on RMitemCatFit/RMitemCatFitPlot, log in dev/code-review/item_cat_fit.md. All seven findings fixed (CF1-CF7). The main one: a category used only by extreme scorers now stops in `.catfit_prepare()` with a classed error naming the item, before any simulation. Before the fix, RMitemCatFit gave a generic refit failure and the adjacent/residual plots were drawn on a diverged threshold with no warning. The chapter's results are unchanged.
+
+## Vignette (2026-11-19)
+
+New subsection "Category fit given the total score" in section 3 of vignettes/easyRasch2.Rmd.orig: kable table, calibration plot with `fit`, adjacent plot. PHQ-9, iterations 200, seed 9. Items 3 and 9 adjusted p < .01 (also at 1000 iterations). Andrich 2013 and Adams et al. 2012 added to vignettes/references.bib. The .Rmd and figures are not regenerated yet (precompile on the host).
+
+## Rename (2026-11-19)
+
+`RMitemCatFitPlot(type = "focused")` renamed to `type = "restscore"`, since the plot shows the rest-score mean and SD per category and "focused" was a dev label. Internal `.catplot_focused*` renamed to `.catplot_restscore*`. Tests, Rd, vignette and the book chapter (label fig-cfit-example-restscore) updated. Earlier sections of this file keep the old name.

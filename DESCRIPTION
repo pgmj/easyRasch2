@@ -1,6 +1,6 @@
 Package: easyRasch2
 Title: Psychometric Analysis with Rasch Measurement Theory
-Version: 1.4.0.9005
+Version: 1.4.0.9006
 Authors@R: c(
     person("Magnus", "Johansson",
            role = c("aut", "cre"),
@@ -19,8 +19,8 @@ Authors@R: c(
            "partial-gamma effect-size and ETS-classification algorithms in dif_tree.R, adapted under MIT licence from the effecttree package")))
 Description: Streamlines reproducible Rasch measurement theory analyses
     for ordinal item-response data, combining estimation routines from
-    'eRm', 'psychotools', 'mirt', 'iarm', and 'lavaan' with consistent
-    diagnostic, plotting, and reporting layers. Covers the four basic
+    'psychotools', 'mirt', 'iarm', 'lavaan', and 'psychotree' with
+    consistent diagnostic, plotting, and reporting layers. Covers the four basic
     psychometric criteria summarised by Christensen et al. (2021)
     <doi:10.1111/sms.13908> -- unidimensionality, local independence,
     ordered response category thresholds, and invariance across
@@ -32,8 +32,7 @@ Description: Streamlines reproducible Rasch measurement theory analyses
     ordinal CFA fit indices, and partial-gamma DIF and local-dependence
     coefficients, optionally augmented with multiplicity-corrected bootstrap
     p-values. Outputs are knitr::kable() tables and
-    'ggplot2' figures suitable for direct inclusion in 'Quarto' and 'R Markdown'
-    reports.
+    'ggplot2' figures suitable for direct inclusion in 'Quarto' reports.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true

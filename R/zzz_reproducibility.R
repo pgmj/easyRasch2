@@ -79,8 +79,8 @@
 #' @section Functions this applies to:
 #' [RMdifGammaCutoff()], [RMdimCFACutoff()], [RMdimMartinLof()],
 #' [RMdimResidualPCACutoff()], [RMitemInfitCutoff()],
-#' [RMitemInfitCutoffMI()], [RMitemRestscoreBoot()],
-#' [RMitemRestscoreCutoff()],
+#' [RMitemCatFit()], [RMitemCatFitPlot()], [RMitemInfitCutoffMI()],
+#' [RMitemRestscoreBoot()], [RMitemRestscoreCutoff()],
 #' [RMlocdepGammaCutoff()], [RMlocdepQ3Cutoff()], [RMpersonFit()] and
 #' [RMreliability()].
 #'

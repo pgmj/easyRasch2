@@ -2,6 +2,17 @@
 
 ## Changes
 
+- New `RMitemCatFit()`: a test of whether each item's response categories
+  work as the partial credit model predicts given the total score, also
+  when the thresholds are ordered. It detects interchangeable or swapped
+  categories and steps that separate respondents more or less than the
+  others, with p-values corrected across items.
+
+- New `RMitemCatFitPlot()`: four plots of category functioning given the
+  total score (residuals by score group, adjacent categories, rest-score
+  statistics per category, and calibration of the cumulative events). It
+  can take the result of `RMitemCatFit()` and show each item's p.
+
 - **`RMdifLR()` reports Andersen's LR test only**, fitted by CML with
   psychotools (no `eRm` needed). The location table, Wald tests and plots
   are removed, because centred locations show artificial DIF whenever the

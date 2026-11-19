@@ -1,0 +1,5 @@
+Running on 10 cores, 1000 datasets per cell, B = 999.
+Sample sizes: 1000.
+[17:29] A0_pcm_ordered_n1000_k5 done: 1000 reps in 40.2 min
+[18:09] A1_pcm_disordered_n1000_k5 done: 1000 reps in 40.5 min
+all cells done

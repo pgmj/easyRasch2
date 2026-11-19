@@ -173,6 +173,15 @@ sr <- merge(pick(th, strategy = "split")[c(key, "se_total_smd")],
             pick(th, strategy = "remove")[c(key, "se_total_smd")], by = key)
 sr$ratio <- sr$se_total_smd.x / sr$se_total_smd.y
 sr_max <- function(est, kk, tp) max(pick(sr, estimator = est, k = kk, type = tp)$ratio)
+# SE of the latent mean difference under split and remove, relative to keep
+lk <- do.call(rbind, lapply(c("split", "remove"), function(s) {
+  m <- merge(pick(th, strategy = s, estimator = "latent")[c(key, "se_total_smd")],
+             pick(th, strategy = "keep", estimator = "latent")[c(key, "se_total_smd")],
+             by = key)
+  m$ratio <- m$se_total_smd.x / m$se_total_smd.y
+  m
+}))
+lk_pct <- function(kk, f) round(100 * (f(pick(lk, k = kk)$ratio) - 1))
 
 kk <- pick(th, strategy = "keep")
 bise <- reshape(kk[c(key[-7], "estimator", "bias_in_se")],
@@ -276,7 +285,7 @@ ggplot(d2, aes(d, ci95_coverage, colour = k_lab, linetype = k_lab, shape = k_lab
   labs(x = "DIF size (logits)", y = "Coverage of the 95% CI")
 ```
 
-**Split against remove.** Both have zero impact. The question is precision. The split item cannot inform $\Delta$, which is identified through the common items, and the error in $\widehat{\text{DIF}}$ is shared by every focal person, so it does not average out. For the latent mean the SE of $\hat\Delta$ is the same under split and remove (largest ratio `r r3(max(pick(sr, estimator = "latent")$ratio))`). For the WLE mean and the sum score, in SMD units, split has a larger SE at five items (largest ratio for the WLE: `r r2(sr_max("wle", 5, "dich"))` dichotomous, `r r2(sr_max("wle", 5, "poly"))` four categories) and practically the same at 20 items (`r r3(max(pick(sr, estimator = "wle", k = 20)$ratio))`). Split is never more than `r round(100 * (1 - min(sr$ratio)), 1)`% more precise than remove, so removing the item costs nothing for a group comparison.
+**Split against remove.** Both have zero impact. The question is precision. The split item cannot inform $\Delta$, which is identified through the common items, and the error in $\widehat{\text{DIF}}$ is shared by every focal person, so it does not average out. For the latent mean the SE of $\hat\Delta$ is the same under split and remove (largest ratio `r r3(max(pick(sr, estimator = "latent")$ratio))`). For the WLE mean and the sum score, in SMD units, split has a larger SE at five items (largest ratio for the WLE: `r r2(sr_max("wle", 5, "dich"))` dichotomous, `r r2(sr_max("wle", 5, "poly"))` four categories) and practically the same at 20 items (`r r3(max(pick(sr, estimator = "wle", k = 20)$ratio))`). Split is never more than `r round(100 * (1 - min(sr$ratio)), 1)`% more precise than remove, so for a group comparison removing the item costs no more than splitting it. Both lose the item's information about the group difference. Compared with keeping the item, this widens the SE of the latent mean difference by `r lk_pct(5, min)` to `r lk_pct(5, max)`% at five items and by at most `r lk_pct(20, max)`% at 20 items, much less than the loss in reliability, since that SE is dominated by the variance between persons.
 
 **Local against group-mean bias.** The largest absolute local bias over the central 95% of the latent distribution is `r rng(pick(kl, position = "central")$loc_ratio, r1)` times the group-mean bias for central items and `r rng(pick(kl, position = "offtarget")$loc_ratio, r1)` times for off-target items. For off-target items the largest local bias is at the edge of the range, so its value depends on how the range is defined, and it has to be reported with its location.
 

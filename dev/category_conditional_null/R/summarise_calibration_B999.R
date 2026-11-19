@@ -38,10 +38,36 @@ cells <- do.call(rbind, lapply(split(items, items[key], drop = TRUE), function(d
              fwer_05 = mean(fw), fwer_se = sqrt(mean(fw) * (1 - mean(fw)) / length(ds)))
 }))
 rownames(cells) <- NULL
+
+# Strict rejection (p < alpha), the easyRasch2 convention, and the same
+# datasets with only the first 199 replicates (the B of the rerun). The
+# subsample keeps the studentisation by the full-pool moments, so it is an
+# approximation of a B = 199 run.
+source("R/calibration_functions.R")
+strict <- do.call(rbind, lapply(files, function(f) {
+  x <- readRDS(f)
+  R <- Filter(function(r) !is.null(r) && is.na(r$skipped) && !is.null(r$Tm), x$results)
+  sub <- t(vapply(R, function(r) {
+    T <- r$Tm[1:min(200L, nrow(r$Tm)), , drop = FALSE]
+    pi <- colMeans(sweep(T, 2L, T[1L, ], `>=`))
+    pj <- pmax(.stepdown_maxT(T[1L, ], T[-1L, , drop = FALSE]), pi)
+    c(any(pj < .05), mean(pi < .05), mean(pi < .01))
+  }, numeric(3)))
+  p <- unlist(lapply(R, `[[`, "p_item"))
+  pm <- unlist(lapply(R, `[[`, "p_item_minp"))
+  data.frame(cond = x$cell$cond, n = x$cell$n, k = x$cell$k, B = x$B, datasets = length(R),
+             item_01 = mean(p < .01), item_05 = mean(p < .05),
+             minp_05 = mean(pm < .05),
+             fwer = mean(vapply(R, function(r) any(r$padj < .05), TRUE)),
+             sub199_fwer = mean(sub[, 1]), sub199_item_05 = mean(sub[, 2]),
+             sub199_item_01 = mean(sub[, 3]))
+}))
+strict$se <- sqrt(.05 * .95 / strict$datasets)
+print(strict, digits = 3)
 print(skipped)
 print(cells, digits = 3)
 
-out <- list(cells = cells, items = items, skipped = skipped, date = Sys.Date())
+out <- list(cells = cells, strict = strict, items = items, skipped = skipped, date = Sys.Date())
 f <- if (smoke) "results/calibration_b999_smoke_summary.rds" else "results/calibration_b999_summary.rds"
 saveRDS(out, f)
 saveRDS(out, sub("\\.rds$", paste0("_", Sys.Date(), ".rds"), f))

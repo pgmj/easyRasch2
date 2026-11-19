@@ -141,6 +141,10 @@ remotes::install_github("pgmj/easyRasch2")
 ### Item category threshold ordering
 
 - `RMitemCatProb()` for classic item probability function trace plots.
+- `RMitemCatFit()` + `RMitemCatFitPlot()` — a test of whether the response
+  categories work as the model predicts given the total score, also when
+  the thresholds are ordered, and four plots that show where an item
+  departs from the model.
 - `RMitemHierarchy()` renders a plot sorting items based on difficulty, showing
   item threshold locations and confidence intervals.
 

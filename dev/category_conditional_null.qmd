@@ -478,6 +478,9 @@ fwer <- cal_items |>
             .groups = "drop") |>
   mutate(se = sqrt(.05 * .95 / datasets))
 fw_top <- slice_max(fwer, fw, n = 1, with_ties = FALSE)
+# Null check at B = 999, n = 1000 and k = 5 (R/run_calibration_B999.R).
+b999 <- readRDS(file.path(RES, "calibration_b999_summary.rds"))$strict
+b9 <- function(cnd, col) b999[[col]][b999$cond == cnd]
 le_top <- slice_max(null_cell, le01, n = 1, with_ties = FALSE)
 # Focus item after the correction, alternative cells.
 pow_adj <- cal_items |>
@@ -629,9 +632,28 @@ per cell for max-T. The largest, `r f3(fw_top$fw)`, is in the
 k = `r fw_top$k`,
 `r sprintf("%.1f", (fw_top$fw - .05) / fw_top$se[1])` Monte Carlo SEs above
 .05 with `r fw_top$datasets` datasets. Every other cell is at or below
-`r f3(sort(fwer$fw, decreasing = TRUE)[2])`. A check with B = 999 and 1000
-datasets per cell for the two null cells at n = 1000 and k = 5 is prepared
-(`R/run_calibration_B999.R`). For min-p the family-wise rate is between
+`r f3(sort(fwer$fw, decreasing = TRUE)[2])`.
+
+The two null cells at n = 1000 and k = 5 were run again with B = 999 and
+`r b999$datasets[1]` new datasets each (`R/run_calibration_B999.R`). The
+family-wise rate was `r f3(b9("A0_pcm_ordered", "fwer"))` for the ordered and
+`r f3(b9("A1_pcm_disordered", "fwer"))` for the disordered PCM, with a Monte
+Carlo SE of `r f3(b999$se[1])`. The item p rejected at .05 in
+`r f3(b9("A0_pcm_ordered", "item_05"))` and
+`r f3(b9("A1_pcm_disordered", "item_05"))` of items, and at .01 in
+`r f3(b9("A0_pcm_ordered", "item_01"))` and
+`r f3(b9("A1_pcm_disordered", "item_01"))`. Using only the first 199
+replicates of the same datasets gives a family-wise rate of
+`r f3(b9("A0_pcm_ordered", "sub199_fwer"))` and
+`r f3(b9("A1_pcm_disordered", "sub199_fwer"))`, so B = 199 does not inflate
+it, and the `r f3(fw_top$fw)` above is most likely chance in those 500
+datasets. This
+subsample keeps the mean and SD of the full pool for the studentisation, so
+it approximates a run with B = 199. At B = 199 the item p rejects at .01 in
+about `r f3(mean(b999$sub199_item_01))` of items, below nominal because of
+the coarse grid of attainable p.
+
+In the B = 199 run, the family-wise rate of min-p is between
 `r f3(min(fwer$fw_minp))` and `r f3(max(fwer$fw_minp))`, held down by its
 smallest attainable p rather than by a correct calibration. Rates per cell
 are in the appendix.
@@ -769,8 +791,8 @@ Limitations of this run:
   statistics together (for example a min-p or max-T adjustment, as in
   Westfall-Young), which this run did not save, and a larger B. For the
   calibration test the max-T step-down across items held the family-wise
-  rate near .05 at B = 199 except in one cell (`r f3(fw_top$fw)`), and the check at
-  B = 999 has not been run yet.
+  rate near .05, which a run with B = 999 at n = 1000 and k = 5 confirmed.
+  Other sample sizes and k = 10 were checked at B = 199 only.
 - **One focus item.** Only item 1 departs from the PCM, and it is located at
   the centre of the person distribution. Departures in several items at once,
   and in items off target, are not studied.
