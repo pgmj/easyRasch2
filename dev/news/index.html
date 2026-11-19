@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9005</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9006</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,7 +37,9 @@
 <h2 class="pkg-version" data-toc-text="development version" id="easyrasch2-development-version">easyRasch2 (development version)<a class="anchor" aria-label="anchor" href="#easyrasch2-development-version"></a></h2>
 <div class="section level3">
 <h3 id="changes-development-version">Changes<a class="anchor" aria-label="anchor" href="#changes-development-version"></a></h3>
-<ul><li><p><strong><code><a href="../reference/RMdifLR.html">RMdifLR()</a></code> reports Andersen’s LR test only</strong>, fitted by CML with psychotools (no <code>eRm</code> needed). The location table, Wald tests and plots are removed, because centred locations show artificial DIF whenever the DIF effects do not cancel out, as with a single DIF item. Their arguments give an error pointing to <code><a href="../reference/RMdifAnchor.html">RMdifAnchor()</a></code>. The LR test does not change.</p></li>
+<ul><li><p>New <code><a href="../reference/RMitemCatFit.html">RMitemCatFit()</a></code>: a test of whether each item’s response categories work as the partial credit model predicts given the total score, also when the thresholds are ordered. It detects interchangeable or swapped categories and steps that separate respondents more or less than the others, with p-values corrected across items.</p></li>
+<li><p>New <code><a href="../reference/RMitemCatFitPlot.html">RMitemCatFitPlot()</a></code>: four plots of category functioning given the total score (residuals by score group, adjacent categories, rest-score statistics per category, and calibration of the cumulative events). It can take the result of <code><a href="../reference/RMitemCatFit.html">RMitemCatFit()</a></code> and show each item’s p.</p></li>
+<li><p><strong><code><a href="../reference/RMdifLR.html">RMdifLR()</a></code> reports Andersen’s LR test only</strong>, fitted by CML with psychotools (no <code>eRm</code> needed). The location table, Wald tests and plots are removed, because centred locations show artificial DIF whenever the DIF effects do not cancel out, as with a single DIF item. Their arguments give an error pointing to <code><a href="../reference/RMdifAnchor.html">RMdifAnchor()</a></code>. The LR test does not change.</p></li>
 <li><p>New <code><a href="../reference/RMdifImpact.html">RMdifImpact()</a></code>: the practical size of DIF in given items. It reports the bias in the group difference from keeping them (latent mean, mean WLE and sum score, in several units), the local bias of person scores, classification rates at a cut-off, and a projection to a target population, with delta-method intervals.</p></li>
 <li><p>New <code><a href="../reference/RMdifAnchor.html">RMdifAnchor()</a></code>: anchored Wald tests of DIF between two groups for item locations, thresholds and threshold spacing (DSF), with corrected p-values. The anchor is the forward method (a consensus over random tie-breaks) or the Gini anchor point (Strobl et al., 2021).</p></li>
 <li><p><code><a href="../reference/RMitemCatProb.html">RMitemCatProb()</a></code> no longer needs <code>eRm</code> installed.</p></li>

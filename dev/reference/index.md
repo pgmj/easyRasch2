@@ -20,6 +20,10 @@ Conditional item fit statistics with simulation-based cutoffs
   : Conditional Item Characteristic Curves
 - [`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatProb.md)
   : Item Category Probability Curves
+- [`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md)
+  : Category Fit Test Given the Total Score
+- [`RMitemCatFitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFitPlot.md)
+  : Category Functioning Given the Total Score
 
 ## Item Restscore
 

@@ -91,6 +91,8 @@ if that matters.
 [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md),
 [`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md),
 [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md),
+[`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md),
+[`RMitemCatFitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFitPlot.md),
 [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md),
 [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md),
 [`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md),

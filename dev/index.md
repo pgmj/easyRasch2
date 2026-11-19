@@ -174,6 +174,11 @@ remotes::install_github("pgmj/easyRasch2")
 
 - [`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatProb.md)
   for classic item probability function trace plots.
+- [`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md) +
+  [`RMitemCatFitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFitPlot.md)
+  — a test of whether the response categories work as the model predicts
+  given the total score, also when the thresholds are ordered, and four
+  plots that show where an item departs from the model.
 - [`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemHierarchy.md)
   renders a plot sorting items based on difficulty, showing item
   threshold locations and confidence intervals.

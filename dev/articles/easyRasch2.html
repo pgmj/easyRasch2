@@ -21,7 +21,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9005</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9006</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -1245,24 +1245,200 @@ thresholds are the points where two adjacent category lines cross each
 other (where they are both equally probable). In the plot above, we can
 see that the second highest category does not work well compared to
 other categories. It is disordered for item 9 and, as is perhaps clearer
-in the plot below, shows very small distances from the adjacent
-categories in most items (see T2 and T3 below, which are the lower and
-upper thresholds for “More than half the days”).</p>
-<p><code><a href="../reference/RMitemHierarchy.html">RMitemHierarchy()</a></code> plots each item’s threshold locations
-on the latent scale, ordered by overall item difficulty. Disordered
-thresholds appear as overlapping or reversed segments and are a clear
-signal that the response categories are not being used in the intended
-order.</p>
+in the plot below, is the most likely response over only a narrow range
+of the latent continuum in most items.</p>
+<p>A targeting plot shows the item thresholds together with the person
+locations, so it also shows where on the scale a category is used. The
+top panel is a histogram of person locations and the middle one a
+histogram of item threshold locations. The bottom panel draws each item
+as a bar partitioned into its response categories, with the threshold
+estimates and their confidence intervals below it. Each band spans the
+locations at which its category is the most likely response.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemHierarchy.html">RMitemHierarchy</a></span><span class="op">(</span><span class="va">items</span>, item_labels <span class="op">=</span> <span class="va">item_desc</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMtargeting.html">RMtargeting</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-threshold-hierarchy-1.png" alt="**Figure 7.** *Item-hierarchy*" width="100%"><p class="caption">
-<strong>Figure 7.</strong> <em>Item-hierarchy</em>
+<img src="figures/rasch-targeting-1.png" alt="**Figure 7.** *Person-item targeting*" width="100%"><p class="caption">
+<strong>Figure 7.</strong> <em>Person-item targeting</em>
 </p>
 </div>
-<p>The same disordering is visible in the bottom panel of the targeting
-plot further down, which marks never-modal categories and threshold
-reversals in red.</p>
+<p>In the bottom panel, the band for category 2 (“More than half the
+days”) is narrow in most items. A category that is never the most likely
+response at any location collapses to a red tick labelled with its
+category number, and red arrows below the bar give the size of each
+threshold reversal in logits, so ordered thresholds leave no red marks
+at all. Item 9 has such a tick. For the dot-and-whisker display of item
+thresholds used before version 1.3.0, pass
+<code>panel = "thresholds"</code>. <code><a href="../reference/RMitemHierarchy.html">RMitemHierarchy()</a></code> gives
+a similar display, with items ordered by their overall location.</p>
+<div class="section level3">
+<h3 id="category-fit-given-the-total-score">Category fit given the total score<a class="anchor" aria-label="anchor" href="#category-fit-given-the-total-score"></a>
+</h3>
+<p>Threshold order describes the estimates, not the responses. Ordered
+thresholds do not show that respondents use the categories as scored,
+and what disordered thresholds mean is debated <span class="citation">(<a href="#ref-andrichExpandedDerivationThreshold2013">Andrich 2013</a>; <a href="#ref-adamsRaschRatingModel2012">Adams et al. 2012</a>)</span>.
+<code><a href="../reference/RMitemCatFit.html">RMitemCatFit()</a></code> tests the responses. Under the partial
+credit model, the probability of each response category given the total
+score depends on the item parameters alone, so the use of each category
+at each total score can be compared with the model without estimating
+person locations. For each item and step <span class="math inline">X \ge
+k</span> (a response in category <span class="math inline">k</span> or
+higher), the statistic measures how far the observed share departs from
+the predicted probability. The reference distribution comes from
+datasets simulated from the model given each respondent’s total score,
+and the item <em>p</em>-values are corrected across items (family-wise
+by default). The test detects categories that respondents do not
+distinguish, categories used in the wrong order, and steps that separate
+respondents more or less than the scoring assumes, also when the
+thresholds are ordered. The method and its calibration come from a <a href="https://pgmj.github.io/rasch_book/chapters/category-fit.html" class="external-link">simulation
+study</a>.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemCatFit.html">RMitemCatFit</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">200</span>, seed <span class="op">=</span> <span class="fl">9</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<caption>Calibration of the cumulative events X ≥ k given the total
+score. Columns X ≥ k: uncorrected p for each event. Item p: the events
+combined (largest studentised value). Adjusted p: item p corrected
+across items with the Westfall-Young step-down (FWER). Reference: 200
+datasets simulated given each respondent’s total score, with item
+parameters re-estimated in each. n = 572 of 600 respondents (extreme
+scores excluded). This is below the recommended 400. The family-wise
+error rate is controlled at any number of iterations. Decisions depend
+on the seed, so use 1000 to 2000 for a final analysis (Johansson,
+2026).</caption>
+<thead><tr class="header">
+<th align="left">Item</th>
+<th align="left">X ≥ 1</th>
+<th align="left">X ≥ 2</th>
+<th align="left">X ≥ 3</th>
+<th align="left">Item p</th>
+<th align="left">Adjusted p</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">q1</td>
+<td align="left">0.0149</td>
+<td align="left">0.5473</td>
+<td align="left">0.0050</td>
+<td align="left">0.0149</td>
+<td align="left">0.1144</td>
+</tr>
+<tr class="even">
+<td align="left">q2</td>
+<td align="left">0.0995</td>
+<td align="left">0.3433</td>
+<td align="left">0.1940</td>
+<td align="left">0.2338</td>
+<td align="left">0.5373</td>
+</tr>
+<tr class="odd">
+<td align="left">q3</td>
+<td align="left">0.0050</td>
+<td align="left">0.5174</td>
+<td align="left">0.4677</td>
+<td align="left">0.0050</td>
+<td align="left">0.0050</td>
+</tr>
+<tr class="even">
+<td align="left">q4</td>
+<td align="left">0.7015</td>
+<td align="left">0.4677</td>
+<td align="left">0.0100</td>
+<td align="left">0.0149</td>
+<td align="left">0.0796</td>
+</tr>
+<tr class="odd">
+<td align="left">q5</td>
+<td align="left">0.4279</td>
+<td align="left">0.3930</td>
+<td align="left">0.1095</td>
+<td align="left">0.2935</td>
+<td align="left">0.5373</td>
+</tr>
+<tr class="even">
+<td align="left">q6</td>
+<td align="left">0.8308</td>
+<td align="left">0.3284</td>
+<td align="left">0.0597</td>
+<td align="left">0.1841</td>
+<td align="left">0.5224</td>
+</tr>
+<tr class="odd">
+<td align="left">q7</td>
+<td align="left">0.8706</td>
+<td align="left">0.7512</td>
+<td align="left">0.2488</td>
+<td align="left">0.5721</td>
+<td align="left">0.5721</td>
+</tr>
+<tr class="even">
+<td align="left">q8</td>
+<td align="left">0.0547</td>
+<td align="left">0.0149</td>
+<td align="left">0.0697</td>
+<td align="left">0.0299</td>
+<td align="left">0.1194</td>
+</tr>
+<tr class="odd">
+<td align="left">q9</td>
+<td align="left">0.0050</td>
+<td align="left">0.0050</td>
+<td align="left">0.0100</td>
+<td align="left">0.0050</td>
+<td align="left">0.0050</td>
+</tr>
+</tbody>
+</table>
+<p>Items 3 and 9 have adjusted <em>p</em>-values below .01. Item 9 is
+the item with disordered thresholds in the plots above. Item 3, on
+sleep, has ordered thresholds. Both were also flagged as underfitting by
+conditional infit. The event columns show where an item departs: for
+item 3 at the first step, <span class="math inline">X \ge 1</span>, and
+for item 9 at all three steps.</p>
+<p>To plot the events, keep the simulations with
+<code>output = "list"</code> and pass them to
+<code><a href="../reference/RMitemCatFitPlot.html">RMitemCatFitPlot()</a></code> as <code>fit</code>. The plot then uses
+the same simulations as the test and shows each item’s adjusted
+<em>p</em>.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">catfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMitemCatFit.html">RMitemCatFit</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">200</span>, seed <span class="op">=</span> <span class="fl">9</span>, output <span class="op">=</span> <span class="st">"list"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/RMitemCatFitPlot.html">RMitemCatFitPlot</a></span><span class="op">(</span><span class="va">items</span>, type <span class="op">=</span> <span class="st">"calibration"</span>, fit <span class="op">=</span> <span class="va">catfit</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="figures/rasch-catfit-calibration-1.png" alt="**Figure 8.** *Calibration of the cumulative events given the total score*" width="100%"><p class="caption">
+<strong>Figure 8.</strong> <em>Calibration of the cumulative events
+given the total score</em>
+</p>
+</div>
+<p>Each panel plots the observed probability of an event, adjusted to be
+non-decreasing, against the probability the model predicts given the
+total score. A fitting item follows the dotted diagonal within the grey
+band. For item 3, the first step rises less steeply than the diagonal.
+Respondents with low total scores report some sleep trouble more often
+than predicted, and respondents with high total scores less often.
+Reporting any sleep trouble is thus less related to the total score than
+the scoring assumes. Item 9 shows the same pattern at its second step,
+and at its top step the observed probability stays below the prediction
+where the predicted values are highest.</p>
+<p>The adjacent-category plot shows the data with less processing: for
+each pair of adjacent categories, the share of respondents in the upper
+one at each total score, with the model’s expectation and a pointwise
+95% band.</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemCatFitPlot.html">RMitemCatFitPlot</a></span><span class="op">(</span><span class="va">items</span>, type <span class="op">=</span> <span class="st">"adjacent"</span>, fit <span class="op">=</span> <span class="va">catfit</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="figures/rasch-catfit-adjacent-1.png" alt="**Figure 9.** *Adjacent categories given the total score*" width="100%"><p class="caption">
+<strong>Figure 9.</strong> <em>Adjacent categories given the total
+score</em>
+</p>
+</div>
+<p>The bands are pointwise. Of the 604 points, 32 fall outside their
+band, close to the 30 that 95% coverage allows by chance, so a single
+point says little. Clusters say more. For categories 1 vs 0 of item 3, 5
+of 24 points lie outside, in line with the test’s first step. Item 1 has
+as many there, with an item <em>p</em> of .015 that is no longer small
+after correction across items. Two more plot types,
+<code>type = "residuals"</code> and <code>type = "restscore"</code>,
+show the category counts within score groups and the rest-score mean and
+SD within each category.</p>
+</div>
 </div>
 <div class="section level2">
 <h2 id="invariance-no-dif">4. Invariance / no DIF<a class="anchor" aria-label="anchor" href="#invariance-no-dif"></a>
@@ -1283,18 +1459,18 @@ a console message and/or table/figure caption output).</p>
 dividing the sample. If there are zero or low (below 8 or so) responses
 in a category, there may be issues with estimating the model
 parameters.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMplotTile.html">RMplotTile</a></span><span class="op">(</span><span class="va">items</span>, category_labels <span class="op">=</span> <span class="va">item_resp</span>, group <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-tile-plot-1.png" alt="**Figure 8.** *DIF grouped response distribution tile plot*" width="100%"><p class="caption">
-<strong>Figure 8.</strong> <em>DIF grouped response distribution tile
+<img src="figures/rasch-tile-plot-1.png" alt="**Figure 10.** *DIF grouped response distribution tile plot*" width="100%"><p class="caption">
+<strong>Figure 10.</strong> <em>DIF grouped response distribution tile
 plot</em>
 </p>
 </div>
 <div class="section level3">
 <h3 id="andersen-lr-test">Andersen LR-test<a class="anchor" aria-label="anchor" href="#andersen-lr-test"></a>
 </h3>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdifLR.html">RMdifLR</a></span><span class="op">(</span><span class="va">items</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Andersen’s likelihood-ratio test of DIF, partial credit model
@@ -1356,18 +1532,18 @@ the data, tests each item location with a Wald test, and corrects the
 <em>p</em>-values for multiple testing. The method and its defaults come
 from a <a href="https://pgmj.github.io/rasch_book/chapters/dif-anchor-tests.html" class="external-link">simulation
 study</a> of anchors and corrections.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdifAnchor.html">RMdifAnchor</a></span><span class="op">(</span><span class="va">items</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-dif-anchor-1.png" alt="**Figure 9.** *Anchored item location differences by gender*" width="100%"><p class="caption">
-<strong>Figure 9.</strong> <em>Anchored item location differences by
+<img src="figures/rasch-dif-anchor-1.png" alt="**Figure 11.** *Anchored item location differences by gender*" width="100%"><p class="caption">
+<strong>Figure 11.</strong> <em>Anchored item location differences by
 gender</em>
 </p>
 </div>
 <p>The spacing between an item’s thresholds can be compared without an
 anchor. A difference in spacing is differential step functioning
 (DSF).</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdifAnchor.html">RMdifAnchor</a></span><span class="op">(</span><span class="va">items</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>, level <span class="op">=</span> <span class="st">"spacing"</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>DIF in threshold spacing (distances between adjacent
@@ -1490,7 +1666,7 @@ difference is the bias that keeping the item adds to a comparison of the
 groups and to person scores. It is reported in several units and without
 a cutoff. The method and its intervals come from a <a href="https://pgmj.github.io/rasch_book/chapters/dif-impact.html" class="external-link">simulation
 study</a>.</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdifImpact.html">RMdifImpact</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">items</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>, items <span class="op">=</span> <span class="st">"q9"</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Impact of keeping the DIF items on the group difference (‘Male’
@@ -1581,7 +1757,7 @@ large only because the difference itself is close to zero, which is one
 reason the impact is reported in several units.</p>
 <p>A cut-off adds classification rates. At a sum score of 10, proposed
 for moderate depression by <span class="citation">Kroenke et al. (<a href="#ref-kroenke_phq9_2001">2001</a>)</span>:</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdifImpact.html">RMdifImpact</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">items</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>, items <span class="op">=</span> <span class="st">"q9"</span>, cut <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>            cut_scale <span class="op">=</span> <span class="st">"sum"</span>, table <span class="op">=</span> <span class="st">"rates"</span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
@@ -1807,11 +1983,11 @@ population or to other group sizes.</p>
 <p>This plot annotates each item with its partial-<span class="math inline">\gamma</span> DIF coefficient and shows group
 differences within class intervals (respondents grouped by their
 total/latent score).</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemICCPlot.html">RMitemICCPlot</a></span><span class="op">(</span><span class="va">items</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>, error_band <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-dif-cicc-1.png" alt="**Figure 10.** *Partial Gamma DIF Conditional Item Characteristic Curves*" width="100%"><p class="caption">
-<strong>Figure 10.</strong> <em>Partial Gamma DIF Conditional Item
+<img src="figures/rasch-dif-cicc-1.png" alt="**Figure 12.** *Partial Gamma DIF Conditional Item Characteristic Curves*" width="100%"><p class="caption">
+<strong>Figure 12.</strong> <em>Partial Gamma DIF Conditional Item
 Characteristic Curves</em>
 </p>
 </div>
@@ -1819,7 +1995,7 @@ Characteristic Curves</em>
 partial-<span class="math inline">\gamma</span> DIF analysis with
 parametric bootstrap (only 100 here for rendering speed, which limits
 the reliability of the <em>p</em>-values).</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">difpg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMdifGammaCutoff.html">RMdifGammaCutoff</a></span><span class="op">(</span><span class="va">items</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>, iterations <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>                          parallel <span class="op">=</span> <span class="cn">FALSE</span>, seed <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/RMdifGamma.html">RMdifGamma</a></span><span class="op">(</span><span class="va">items</span>, cutoff <span class="op">=</span> <span class="va">difpg</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>, p_value <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
@@ -2001,7 +2177,7 @@ educational testing, not values calibrated to your sample and items — in
 contrast to the simulation-based cutoffs used elsewhere in this package
 — so the A/B/C labels are best read as a rough magnitude guide rather
 than a calibrated test.</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdifTree.html">RMdifTree</a></span><span class="op">(</span><span class="va">items</span>, covariates <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span><span class="op">)</span></span></code></pre></div>
 <p><strong>Node 1 – gender: Female vs Male (n left = 426, n right =
 143)</strong></p>
@@ -2119,7 +2295,7 @@ q1, which the spacing test flags, has a location difference close to
 zero.</p>
 <p><code><a href="../reference/RMdifImpact.html">RMdifImpact()</a></code> shows whether the disagreement matters.
 With q2 and q9 both split:</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMdifImpact.html">RMdifImpact</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">items</span>, dif_var <span class="op">=</span> <span class="va">phq9</span><span class="op">$</span><span class="va">gender</span>, items <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"q2"</span>, <span class="st">"q9"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Impact of keeping the DIF items on the group difference (‘Male’
@@ -2234,28 +2410,12 @@ demonstration purposes.</p>
 <div class="section level2">
 <h2 id="targeting">Targeting<a class="anchor" aria-label="anchor" href="#targeting"></a>
 </h2>
-<p>A targeting plot is a Wright-map style display of how well the item
-thresholds match the distribution of person locations on the latent
-scale. The top panel is a histogram of person locations and the middle
-one a histogram of item threshold locations. The bottom panel draws each
-item as a bar partitioned into its response categories, with the
-threshold estimates and their confidence intervals below it. Each band
-spans the locations at which its category is the most likely
-response.</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/RMtargeting.html">RMtargeting</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="figures/rasch-targeting-1.png" alt="**Figure 11.** *Person-item targeting*" width="100%"><p class="caption">
-<strong>Figure 11.</strong> <em>Person-item targeting</em>
-</p>
-</div>
-<p>That bottom panel doubles as a check on criterion 3 above. A category
-that is never the most likely response at any location collapses to a
-red tick labelled with its category number, and red arrows below the bar
-give the size of each threshold reversal in logits, so ordered
-thresholds leave no red marks at all. For the dot-and-whisker display of
-item thresholds used before version 1.3.0, pass
-<code>panel = "thresholds"</code>.</p>
+<p>The targeting plot in section 3 is a Wright-map style display of how
+well the item thresholds match the distribution of person locations on
+the latent scale. Its top two panels compare the histogram of person
+locations with that of the item threshold locations, and the bottom
+panel shows where along the scale each item’s categories are the most
+likely response.</p>
 </div>
 <div class="section level2">
 <h2 id="reliability">Reliability<a class="anchor" aria-label="anchor" href="#reliability"></a>
@@ -2275,7 +2435,7 @@ mean of the conditional reliability curve shown below. Alpha, PSI and
 marginal can use a bootstrap for confidence intervals. All four range
 from 0 to 1, with higher values indicating better separation and
 precision.</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMreliability.html">RMreliability</a></span><span class="op">(</span><span class="va">items</span>, draws <span class="op">=</span> <span class="fl">200</span>, rmu_iter <span class="op">=</span> <span class="fl">20</span>, parallel <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>              seed <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
@@ -2339,11 +2499,11 @@ highest where the item thresholds are concentrated and falls away
 towards the extremes, so the same scale can separate respondents well in
 the middle of its range and poorly at either end.
 <code><a href="../reference/RMreliabilityCurve.html">RMreliabilityCurve()</a></code> shows that directly.</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMreliabilityCurve.html">RMreliabilityCurve</a></span><span class="op">(</span><span class="va">items</span>, statistic <span class="op">=</span> <span class="st">"reliability"</span>, benchmark <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-relcurve-1.png" alt="**Figure 12.** *Conditional reliability across the latent continuum*" width="100%"><p class="caption">
-<strong>Figure 12.</strong> <em>Conditional reliability across the
+<img src="figures/rasch-relcurve-1.png" alt="**Figure 13.** *Conditional reliability across the latent continuum*" width="100%"><p class="caption">
+<strong>Figure 13.</strong> <em>Conditional reliability across the
 latent continuum</em>
 </p>
 </div>
@@ -2364,7 +2524,7 @@ information is also available, using
 </h2>
 <p>Item (threshold) locations can be easily summarized in wide or long
 format, with or without SEs.</p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMitemParameters.html">RMitemParameters</a></span><span class="op">(</span><span class="va">items</span>, format <span class="op">=</span> <span class="st">"wide"</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Item thresholds via CML (Andrich thresholds, logit scale). SE
@@ -2480,7 +2640,7 @@ value and SE for each individual, below reduced to only print the first
 <code>easyRasch2</code> can be output as dataframes instead, if so
 desired. The option <code>output = "file"</code> makes it easy to export
 estimated latent scores for each respondent to a CSV file.</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ppar</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMpersonParameters.html">RMpersonParameters</a></span><span class="op">(</span><span class="va">items</span>, output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">ppar</span>, <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="co">#&gt;         theta       sem sum_score n_answered extreme</span></span>
@@ -2501,15 +2661,15 @@ estimated latent scores for each respondent to a CSV file.</p>
 <p>For converting ordinal sum-scores to interval-scaled person-location
 estimates with associated standard errors, use
 <code><a href="../reference/RMscoreSE.html">RMscoreSE()</a></code>.</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMscoreSE.html">RMscoreSE</a></span><span class="op">(</span><span class="va">items</span>, output <span class="op">=</span> <span class="st">"ggplot"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-scoreSE-1.png" alt="**Figure 13.** *Sum-score to WLE conversion with 95% CIs*" width="100%"><p class="caption">
-<strong>Figure 13.</strong> <em>Sum-score to WLE conversion with 95%
+<img src="figures/rasch-scoreSE-1.png" alt="**Figure 14.** *Sum-score to WLE conversion with 95% CIs*" width="100%"><p class="caption">
+<strong>Figure 14.</strong> <em>Sum-score to WLE conversion with 95%
 CIs</em>
 </p>
 </div>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/RMscoreSE.html">RMscoreSE</a></span><span class="op">(</span><span class="va">items</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Person locations via Warm’s WLE (CML item parameters). n = 600
@@ -2670,12 +2830,12 @@ a posteriori).</p>
 </h2>
 <p>Conditional person infit/outfit MSQ and the <span class="math inline">\ell_z</span> statistic are implemented, with
 Monte-Carlo resampling for <em>p</em>-values.</p>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pfit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/RMpersonFit.html">RMpersonFit</a></span><span class="op">(</span><span class="va">items</span>, iterations <span class="op">=</span> <span class="fl">100</span>, output <span class="op">=</span> <span class="st">"ggplot"</span>, seed <span class="op">=</span> <span class="fl">7</span><span class="op">)</span></span>
 <span><span class="va">pfit</span><span class="op">$</span><span class="va">lz</span></span></code></pre></div>
 <div class="figure">
-<img src="figures/rasch-personfit-1.png" alt="**Figure 14.** *Person fit with the lz statistic*" width="100%"><p class="caption">
-<strong>Figure 14.</strong> <em>Person fit with the lz statistic</em>
+<img src="figures/rasch-personfit-1.png" alt="**Figure 15.** *Person fit with the lz statistic*" width="100%"><p class="caption">
+<strong>Figure 15.</strong> <em>Person fit with the lz statistic</em>
 </p>
 </div>
 </div>
@@ -2700,10 +2860,26 @@ used when rendering Quarto/Rmd files.</li>
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
 <div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-adamsRaschRatingModel2012" class="csl-entry">
+Adams, Raymond J., Margaret L. Wu, and Mark Wilson. 2012. <span>“The
+<span>Rasch</span> <span>Rating</span> <span>Model</span> and the
+<span>Disordered</span> <span>Threshold</span>
+<span>Controversy</span>.”</span> <em>Educational and Psychological
+Measurement</em> 72 (4): 547–73. <a href="https://doi.org/10.1177/0013164411432166" class="external-link">https://doi.org/10.1177/0013164411432166</a>.
+</div>
 <div id="ref-andersen_goodness_1973" class="csl-entry">
 Andersen, Erling B. 1973. <span>“A Goodness of Fit Test for the
 <span>Rasch</span> Model.”</span> <em>Psychometrika</em> 38 (1): 123–40.
 <a href="https://doi.org/10.1007/BF02291180" class="external-link">https://doi.org/10.1007/BF02291180</a>.
+</div>
+<div id="ref-andrichExpandedDerivationThreshold2013" class="csl-entry">
+Andrich, David. 2013. <span>“An <span>Expanded</span>
+<span>Derivation</span> of the <span>Threshold</span>
+<span>Structure</span> of the <span>Polytomous</span> <span>Rasch</span>
+<span>Model</span> <span>That</span> <span>Dispels</span>
+<span>Any</span> <span>‘<span>Threshold</span> <span>Disorder</span>
+<span>Controversy</span>’</span>.”</span> <em>Educational and
+Psychological Measurement</em> 73 (1): 78–124. <a href="https://doi.org/10.1177/0013164412450877" class="external-link">https://doi.org/10.1177/0013164412450877</a>.
 </div>
 <div id="ref-chou_checking_2010" class="csl-entry">
 Chou, Yeh-Tai, and Wen-Chung Wang. 2010. <span>“Checking

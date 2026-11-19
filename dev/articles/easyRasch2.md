@@ -645,29 +645,145 @@ thresholds are the points where two adjacent category lines cross each
 other (where they are both equally probable). In the plot above, we can
 see that the second highest category does not work well compared to
 other categories. It is disordered for item 9 and, as is perhaps clearer
-in the plot below, shows very small distances from the adjacent
-categories in most items (see T2 and T3 below, which are the lower and
-upper thresholds for “More than half the days”).
+in the plot below, is the most likely response over only a narrow range
+of the latent continuum in most items.
 
-[`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemHierarchy.md)
-plots each item’s threshold locations on the latent scale, ordered by
-overall item difficulty. Disordered thresholds appear as overlapping or
-reversed segments and are a clear signal that the response categories
-are not being used in the intended order.
+A targeting plot shows the item thresholds together with the person
+locations, so it also shows where on the scale a category is used. The
+top panel is a histogram of person locations and the middle one a
+histogram of item threshold locations. The bottom panel draws each item
+as a bar partitioned into its response categories, with the threshold
+estimates and their confidence intervals below it. Each band spans the
+locations at which its category is the most likely response.
 
 ``` r
 
-RMitemHierarchy(items, item_labels = item_desc)
+RMtargeting(items)
 ```
 
-![\*\*Figure 7.\*\*
-\*Item-hierarchy\*](figures/rasch-threshold-hierarchy-1.png)
+![\*\*Figure 7.\*\* \*Person-item
+targeting\*](figures/rasch-targeting-1.png)
 
-**Figure 7.** *Item-hierarchy*
+**Figure 7.** *Person-item targeting*
 
-The same disordering is visible in the bottom panel of the targeting
-plot further down, which marks never-modal categories and threshold
-reversals in red.
+In the bottom panel, the band for category 2 (“More than half the days”)
+is narrow in most items. A category that is never the most likely
+response at any location collapses to a red tick labelled with its
+category number, and red arrows below the bar give the size of each
+threshold reversal in logits, so ordered thresholds leave no red marks
+at all. Item 9 has such a tick. For the dot-and-whisker display of item
+thresholds used before version 1.3.0, pass `panel = "thresholds"`.
+[`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemHierarchy.md)
+gives a similar display, with items ordered by their overall location.
+
+### Category fit given the total score
+
+Threshold order describes the estimates, not the responses. Ordered
+thresholds do not show that respondents use the categories as scored,
+and what disordered thresholds mean is debated ([Andrich
+2013](#ref-andrichExpandedDerivationThreshold2013); [Adams et al.
+2012](#ref-adamsRaschRatingModel2012)).
+[`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md)
+tests the responses. Under the partial credit model, the probability of
+each response category given the total score depends on the item
+parameters alone, so the use of each category at each total score can be
+compared with the model without estimating person locations. For each
+item and step X \ge k (a response in category k or higher), the
+statistic measures how far the observed share departs from the predicted
+probability. The reference distribution comes from datasets simulated
+from the model given each respondent’s total score, and the item
+*p*-values are corrected across items (family-wise by default). The test
+detects categories that respondents do not distinguish, categories used
+in the wrong order, and steps that separate respondents more or less
+than the scoring assumes, also when the thresholds are ordered. The
+method and its calibration come from a [simulation
+study](https://pgmj.github.io/rasch_book/chapters/category-fit.html).
+
+``` r
+
+RMitemCatFit(items, iterations = 200, seed = 9)
+```
+
+| Item | X ≥ 1  | X ≥ 2  | X ≥ 3  | Item p | Adjusted p |
+|:-----|:-------|:-------|:-------|:-------|:-----------|
+| q1   | 0.0149 | 0.5473 | 0.0050 | 0.0149 | 0.1144     |
+| q2   | 0.0995 | 0.3433 | 0.1940 | 0.2338 | 0.5373     |
+| q3   | 0.0050 | 0.5174 | 0.4677 | 0.0050 | 0.0050     |
+| q4   | 0.7015 | 0.4677 | 0.0100 | 0.0149 | 0.0796     |
+| q5   | 0.4279 | 0.3930 | 0.1095 | 0.2935 | 0.5373     |
+| q6   | 0.8308 | 0.3284 | 0.0597 | 0.1841 | 0.5224     |
+| q7   | 0.8706 | 0.7512 | 0.2488 | 0.5721 | 0.5721     |
+| q8   | 0.0547 | 0.0149 | 0.0697 | 0.0299 | 0.1194     |
+| q9   | 0.0050 | 0.0050 | 0.0100 | 0.0050 | 0.0050     |
+
+Calibration of the cumulative events X ≥ k given the total score.
+Columns X ≥ k: uncorrected p for each event. Item p: the events combined
+(largest studentised value). Adjusted p: item p corrected across items
+with the Westfall-Young step-down (FWER). Reference: 200 datasets
+simulated given each respondent’s total score, with item parameters
+re-estimated in each. n = 572 of 600 respondents (extreme scores
+excluded). This is below the recommended 400. The family-wise error rate
+is controlled at any number of iterations. Decisions depend on the seed,
+so use 1000 to 2000 for a final analysis (Johansson, 2026). {.table}
+
+Items 3 and 9 have adjusted *p*-values below .01. Item 9 is the item
+with disordered thresholds in the plots above. Item 3, on sleep, has
+ordered thresholds. Both were also flagged as underfitting by
+conditional infit. The event columns show where an item departs: for
+item 3 at the first step, X \ge 1, and for item 9 at all three steps.
+
+To plot the events, keep the simulations with `output = "list"` and pass
+them to
+[`RMitemCatFitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFitPlot.md)
+as `fit`. The plot then uses the same simulations as the test and shows
+each item’s adjusted *p*.
+
+``` r
+
+catfit <- RMitemCatFit(items, iterations = 200, seed = 9, output = "list")
+RMitemCatFitPlot(items, type = "calibration", fit = catfit)
+```
+
+![\*\*Figure 8.\*\* \*Calibration of the cumulative events given the
+total score\*](figures/rasch-catfit-calibration-1.png)
+
+**Figure 8.** *Calibration of the cumulative events given the total
+score*
+
+Each panel plots the observed probability of an event, adjusted to be
+non-decreasing, against the probability the model predicts given the
+total score. A fitting item follows the dotted diagonal within the grey
+band. For item 3, the first step rises less steeply than the diagonal.
+Respondents with low total scores report some sleep trouble more often
+than predicted, and respondents with high total scores less often.
+Reporting any sleep trouble is thus less related to the total score than
+the scoring assumes. Item 9 shows the same pattern at its second step,
+and at its top step the observed probability stays below the prediction
+where the predicted values are highest.
+
+The adjacent-category plot shows the data with less processing: for each
+pair of adjacent categories, the share of respondents in the upper one
+at each total score, with the model’s expectation and a pointwise 95%
+band.
+
+``` r
+
+RMitemCatFitPlot(items, type = "adjacent", fit = catfit)
+```
+
+![\*\*Figure 9.\*\* \*Adjacent categories given the total
+score\*](figures/rasch-catfit-adjacent-1.png)
+
+**Figure 9.** *Adjacent categories given the total score*
+
+The bands are pointwise. Of the 604 points, 32 fall outside their band,
+close to the 30 that 95% coverage allows by chance, so a single point
+says little. Clusters say more. For categories 1 vs 0 of item 3, 5 of 24
+points lie outside, in line with the test’s first step. Item 1 has as
+many there, with an item *p* of .015 that is no longer small after
+correction across items. Two more plot types, `type = "residuals"` and
+`type = "restscore"`, show the category counts within score groups and
+the rest-score mean and SD within each category.
 
 ## 4. Invariance / no DIF
 
@@ -694,10 +810,10 @@ category, there may be issues with estimating the model parameters.
 RMplotTile(items, category_labels = item_resp, group = phq9$gender)
 ```
 
-![\*\*Figure 8.\*\* \*DIF grouped response distribution tile
+![\*\*Figure 10.\*\* \*DIF grouped response distribution tile
 plot\*](figures/rasch-tile-plot-1.png)
 
-**Figure 8.** *DIF grouped response distribution tile plot*
+**Figure 10.** *DIF grouped response distribution tile plot*
 
 ### Andersen LR-test
 
@@ -736,10 +852,10 @@ of anchors and corrections.
 RMdifAnchor(items, dif_var = phq9$gender, output = "ggplot")
 ```
 
-![\*\*Figure 9.\*\* \*Anchored item location differences by
+![\*\*Figure 11.\*\* \*Anchored item location differences by
 gender\*](figures/rasch-dif-anchor-1.png)
 
-**Figure 9.** *Anchored item location differences by gender*
+**Figure 11.** *Anchored item location differences by gender*
 
 The spacing between an item’s thresholds can be compared without an
 anchor. A difference in spacing is differential step functioning (DSF).
@@ -860,10 +976,10 @@ by their total/latent score).
 RMitemICCPlot(items, dif_var = phq9$gender, error_band = TRUE)
 ```
 
-![\*\*Figure 10.\*\* \*Partial Gamma DIF Conditional Item Characteristic
+![\*\*Figure 12.\*\* \*Partial Gamma DIF Conditional Item Characteristic
 Curves\*](figures/rasch-dif-cicc-1.png)
 
-**Figure 10.** *Partial Gamma DIF Conditional Item Characteristic
+**Figure 12.** *Partial Gamma DIF Conditional Item Characteristic
 Curves*
 
 To demonstrate the FWER-adjusted *p*-values, we’ll run the
@@ -1045,30 +1161,12 @@ demonstration purposes.
 
 ## Targeting
 
-A targeting plot is a Wright-map style display of how well the item
-thresholds match the distribution of person locations on the latent
-scale. The top panel is a histogram of person locations and the middle
-one a histogram of item threshold locations. The bottom panel draws each
-item as a bar partitioned into its response categories, with the
-threshold estimates and their confidence intervals below it. Each band
-spans the locations at which its category is the most likely response.
-
-``` r
-
-RMtargeting(items)
-```
-
-![\*\*Figure 11.\*\* \*Person-item
-targeting\*](figures/rasch-targeting-1.png)
-
-**Figure 11.** *Person-item targeting*
-
-That bottom panel doubles as a check on criterion 3 above. A category
-that is never the most likely response at any location collapses to a
-red tick labelled with its category number, and red arrows below the bar
-give the size of each threshold reversal in logits, so ordered
-thresholds leave no red marks at all. For the dot-and-whisker display of
-item thresholds used before version 1.3.0, pass `panel = "thresholds"`.
+The targeting plot in section 3 is a Wright-map style display of how
+well the item thresholds match the distribution of person locations on
+the latent scale. Its top two panels compare the histogram of person
+locations with that of the item threshold locations, and the bottom
+panel shows where along the scale each item’s categories are the most
+likely response.
 
 ## Reliability
 
@@ -1121,10 +1219,10 @@ shows that directly.
 RMreliabilityCurve(items, statistic = "reliability", benchmark = 0.8)
 ```
 
-![\*\*Figure 12.\*\* \*Conditional reliability across the latent
+![\*\*Figure 13.\*\* \*Conditional reliability across the latent
 continuum\*](figures/rasch-relcurve-1.png)
 
-**Figure 12.** *Conditional reliability across the latent continuum*
+**Figure 13.** *Conditional reliability across the latent continuum*
 
 The `benchmark` argument shades the region where the scale reaches a
 stated level and reports the share of respondents inside it, which is
@@ -1198,10 +1296,10 @@ estimates with associated standard errors, use
 RMscoreSE(items, output = "ggplot")
 ```
 
-![\*\*Figure 13.\*\* \*Sum-score to WLE conversion with 95%
+![\*\*Figure 14.\*\* \*Sum-score to WLE conversion with 95%
 CIs\*](figures/rasch-scoreSE-1.png)
 
-**Figure 13.** *Sum-score to WLE conversion with 95% CIs*
+**Figure 14.** *Sum-score to WLE conversion with 95% CIs*
 
 ``` r
 
@@ -1256,10 +1354,10 @@ pfit <- RMpersonFit(items, iterations = 100, output = "ggplot", seed = 7)
 pfit$lz
 ```
 
-![\*\*Figure 14.\*\* \*Person fit with the lz
+![\*\*Figure 15.\*\* \*Person fit with the lz
 statistic\*](figures/rasch-personfit-1.png)
 
-**Figure 14.** *Person fit with the lz statistic*
+**Figure 15.** *Person fit with the lz statistic*
 
 ## Where to next
 
@@ -1274,8 +1372,18 @@ statistic\*](figures/rasch-personfit-1.png)
 
 ## References
 
+Adams, Raymond J., Margaret L. Wu, and Mark Wilson. 2012. “The Rasch
+Rating Model and the Disordered Threshold Controversy.” *Educational and
+Psychological Measurement* 72 (4): 547–73.
+<https://doi.org/10.1177/0013164411432166>.
+
 Andersen, Erling B. 1973. “A Goodness of Fit Test for the Rasch Model.”
 *Psychometrika* 38 (1): 123–40. <https://doi.org/10.1007/BF02291180>.
+
+Andrich, David. 2013. “An Expanded Derivation of the Threshold Structure
+of the Polytomous Rasch Model That Dispels Any ‘Threshold Disorder
+Controversy’.” *Educational and Psychological Measurement* 73 (1):
+78–124. <https://doi.org/10.1177/0013164412450877>.
 
 Chou, Yeh-Tai, and Wen-Chung Wang. 2010. “Checking Dimensionality in
 Item Response Models With Principal Component Analysis on Standardized
