@@ -19,7 +19,7 @@ iterations in which each item is flagged."><meta name="robots" content="noindex"
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9004</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -149,7 +149,8 @@ with Benjamini-Hochberg adjustment, so the result inherits that test's
 calibration at the subsample size. Under a true Rasch model it flags too
 many items as overfit in small or mistargeted samples of dichotomous
 items, too few items of any kind in large polytomous samples, and too few
-underfitting items at every sample size (see <code><a href="RMitemrestscore.html">RMitemRestscore()</a></code>). The
+underfitting items at every sample size (see <code><a href="RMitemrestscore.html">RMitemRestscore()</a></code> and
+<a href="https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html" class="external-link">https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html</a>). The
 percentage is therefore how often that test flags an item in samples of
 size <code>samplesize</code>, not the probability that the item misfits, and it
 changes with <code>samplesize</code>. A low underfit percentage is weak evidence of

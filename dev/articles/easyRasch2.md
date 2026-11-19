@@ -278,10 +278,11 @@ Without a cutoff,
 [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
 uses an asymptotic *p*-value that is miscalibrated under the Rasch
 model: it flags too many items as overfit in small samples and too few
-as underfit at any sample size, which is in line with the asymptotic
-test detecting underfit less often than infit in an earlier simulation
-study ([Johansson 2025](#ref-johansson_detecting_2025)). As for infit,
-passing the full
+as underfit at any sample size ([simulation
+study](https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html)),
+which is in line with the asymptotic test detecting underfit less often
+than infit in an earlier simulation study ([Johansson
+2025](#ref-johansson_detecting_2025)). As for infit, passing the full
 [`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)
 object instead flags items on a multiplicity-corrected bootstrap
 *p*-value, and in simulation this test was more sensitive than infit to
@@ -726,7 +727,9 @@ To compare single items, the two groups’ scales must first be linked.
 [`RMdifAnchor()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md)
 links them through anchor items chosen from the data, tests each item
 location with a Wald test, and corrects the *p*-values for multiple
-testing.
+testing. The method and its defaults come from a [simulation
+study](https://pgmj.github.io/rasch_book/chapters/dif-anchor-tests.html)
+of anchors and corrections.
 
 ``` r
 
@@ -748,21 +751,103 @@ RMdifAnchor(items, dif_var = phq9$gender, level = "spacing")
 
 | Item |     Chisq |    df |          p |       padj | Flagged | MaxSpacingDiff |
 |:-----|----------:|------:|-----------:|-----------:|:--------|---------------:|
-| q1   | **10.60** | **2** | **0.0050** | **0.0424** | **yes** |      **1.579** |
-| q2   |      5.08 |     2 |     0.0789 |     0.5327 | no      |          0.569 |
-| q3   |      1.25 |     2 |     0.5357 |     0.9987 | no      |          0.270 |
-| q4   |      5.29 |     2 |     0.0711 |     0.4945 | no      |          1.180 |
-| q5   |      6.09 |     2 |     0.0475 |     0.3626 | no      |          1.245 |
-| q6   |      3.38 |     2 |     0.1843 |     0.8430 | no      |          0.439 |
-| q7   |      4.17 |     2 |     0.1243 |     0.6986 | no      |          0.971 |
-| q8   |      3.89 |     2 |     0.1433 |     0.7532 | no      |          0.615 |
-| q9   |      3.22 |     2 |     0.1996 |     0.8665 | no      |          0.919 |
+| q1   | **10.60** | **2** | **0.0050** | **0.0446** | **yes** |      **1.579** |
+| q2   |      5.08 |     2 |     0.0789 |     0.5199 | no      |          0.569 |
+| q3   |      1.25 |     2 |     0.5357 |     0.9991 | no      |          0.270 |
+| q4   |      5.29 |     2 |     0.0711 |     0.4788 | no      |          1.180 |
+| q5   |      6.09 |     2 |     0.0475 |     0.3507 | no      |          1.245 |
+| q6   |      3.38 |     2 |     0.1843 |     0.8393 | no      |          0.439 |
+| q7   |      4.17 |     2 |     0.1243 |     0.6957 | no      |          0.971 |
+| q8   |      3.89 |     2 |     0.1433 |     0.7529 | no      |          0.615 |
+| q9   |      3.22 |     2 |     0.1996 |     0.8652 | no      |          0.919 |
 
 DIF in threshold spacing (distances between adjacent thresholds),
 partial credit model, ‘Male’ minus ‘Female’. n = 569 of 600 respondents
 (Female: 426, Male: 143), 9 items. No anchor is needed for spacing. Wald
 chi-square per item, single-step correction (min-p, family-wise error
 rate). **Bold** = padj \< 0.05. {.table}
+
+### Size of the DIF
+
+A flagged item does not say whether the DIF matters for how the scale is
+used.
+[`RMdifImpact()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifImpact.md)
+compares the pooled model, where the item has the same parameters in
+both groups (keep), with a model where the item gets its own location in
+the focal group (split). The difference is the bias that keeping the
+item adds to a comparison of the groups and to person scores. It is
+reported in several units and without a cutoff. The method and its
+intervals come from a [simulation
+study](https://pgmj.github.io/rasch_book/chapters/dif-impact.html).
+
+``` r
+
+RMdifImpact(data = items, dif_var = phq9$gender, items = "q9")
+```
+
+| Estimator | Units | Delta_keep | Delta_split | SE_Delta | Impact | SE | lower | upper | Pct_of_Delta | SMD | Impact_in_SE |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Latent mean | logits | 0.086 | 0.037 | 0.139 | 0.049 | 0.018 | 0.014 | 0.085 | 134.4 | 0.037 | 0.36 |
+| WLE mean | logits | 0.107 | 0.059 | 0.139 | 0.047 | 0.017 | 0.014 | 0.081 | 80.4 | 0.033 | 0.34 |
+| Sum score | raw points | 0.240 | 0.033 | 0.663 | 0.206 | 0.079 | 0.052 | 0.361 | 618.2 | 0.030 | 0.31 |
+
+Impact of keeping the DIF items on the group difference (‘Male’ minus
+‘Female’). Impact = Delta_keep - Delta_split, 95% CI by the delta
+method. Pct_of_Delta: impact as a percentage of \|Delta_split\|. SMD:
+impact / SD (square root of the average of the two group variances).
+Impact_in_SE: impact / SE of Delta_split in these data. No threshold is
+implied. Split: q9 (8 common items). n = 569 of 600 respondents (Female:
+426, Male: 143). {.table}
+
+The anchored test flagged q9. Keeping it makes the latent mean
+difference between men and women 0.05 logits larger (95% CI 0.01 to
+0.09). That is 0.04 standard deviations and about a third of the
+standard error of the difference. The percentage of the difference is
+large only because the difference itself is close to zero, which is one
+reason the impact is reported in several units.
+
+A cut-off adds classification rates. At a sum score of 10, proposed for
+moderate depression by Kroenke et al. ([2001](#ref-kroenke_phq9_2001)):
+
+``` r
+
+RMdifImpact(data = items, dif_var = phq9$gender, items = "q9", cut = 10,
+            cut_scale = "sum", table = "rates")
+```
+
+| Population | Group  | Strategy     | Rate           | Estimate |    SE | lower | upper |
+|:-----------|:-------|:-------------|:---------------|---------:|------:|------:|------:|
+| sample     | Female | keep         | at or above    |    0.770 | 0.017 | 0.736 | 0.803 |
+| sample     | Female | keep         | false negative |    0.044 | 0.002 | 0.040 | 0.048 |
+| sample     | Female | keep         | false positive |    0.032 | 0.002 | 0.029 | 0.035 |
+| sample     | Female | split        | at or above    |    0.770 | 0.017 | 0.736 | 0.803 |
+| sample     | Female | split        | false negative |    0.044 | 0.002 | 0.040 | 0.048 |
+| sample     | Female | split        | false positive |    0.032 | 0.002 | 0.029 | 0.035 |
+| sample     | Female | keep - split | at or above    |    0.000 | 0.000 | 0.000 | 0.000 |
+| sample     | Female | keep - split | false negative |    0.000 | 0.000 | 0.000 | 0.000 |
+| sample     | Female | keep - split | false positive |    0.000 | 0.000 | 0.000 | 0.000 |
+| sample     | Male   | keep         | at or above    |    0.768 | 0.030 | 0.711 | 0.826 |
+| sample     | Male   | keep         | false negative |    0.039 | 0.003 | 0.033 | 0.045 |
+| sample     | Male   | keep         | false positive |    0.032 | 0.003 | 0.027 | 0.038 |
+| sample     | Male   | split        | at or above    |    0.768 | 0.030 | 0.711 | 0.826 |
+| sample     | Male   | split        | false negative |    0.039 | 0.003 | 0.033 | 0.045 |
+| sample     | Male   | split        | false positive |    0.032 | 0.003 | 0.027 | 0.038 |
+| sample     | Male   | keep - split | at or above    |    0.000 | 0.000 | 0.000 | 0.000 |
+| sample     | Male   | keep - split | false negative |    0.000 | 0.000 | 0.000 | 0.000 |
+| sample     | Male   | keep - split | false positive |    0.000 | 0.000 | 0.000 | 0.000 |
+
+Classification at a raw score of 10, as shares of each group, for the
+rule these data give (lowest raw score classified at or above the cut,
+per group and strategy, in the list output). 95% CI by the delta method.
+Split: q9 (8 common items). n = 569 of 600 respondents (Female: 426,
+Male: 143). {.table style="width:100%;"}
+
+Keep and split classify the same raw scores in both groups, so keeping
+q9 changes no one’s classification at this cut-off in these data.
+Whether a bias of this size matters depends on how the scale is used,
+and the function leaves that judgement to the user. `table = "local"`
+shows the bias in individual scores along the scale, and `target`
+projects the results to another population or to other group sizes.
 
 ### Partial-gamma DIF
 
@@ -860,53 +945,99 @@ RMdifTree(items, covariates = phq9$gender)
 
 | Item   | EffectSize |        SE | Class | Flagged |
 |:-------|-----------:|----------:|:------|:--------|
-| **q1** |  **0.251** | **0.104** | **B** | **yes** |
-| **q2** |  **0.411** | **0.094** | **C** | **yes** |
-| q3     |      0.064 |     0.103 | A     | no      |
-| q4     |     -0.092 |     0.114 | A     | no      |
-| **q5** | **-0.286** | **0.092** | **B** | **yes** |
-| q6     |     -0.155 |     0.105 | A     | no      |
-| q7     |     -0.075 |     0.102 | A     | no      |
-| q8     |     -0.112 |     0.102 | A     | no      |
-| q9     |      0.180 |     0.100 | A     | no      |
+| **q1** |  **0.278** | **0.099** | **B** | **yes** |
+| **q2** |  **0.408** | **0.093** | **B** | **yes** |
+| q3     |      0.162 |     0.101 | A     | no      |
+| q4     |     -0.060 |     0.109 | A     | no      |
+| q5     |     -0.161 |     0.096 | A     | no      |
+| q6     |      0.030 |     0.101 | A     | no      |
+| q7     |      0.017 |     0.102 | A     | no      |
+| q8     |     -0.012 |     0.107 | A     | no      |
+| q9     |      0.220 |     0.099 | A     | no      |
 
 Partial Credit Tree (9 items). n = 569 of 600 respondents (complete DIF
 covariates). Effect size: partial gamma (B/C thresholds = 0.21 / 0.31).
-alpha = 0.05. Flagged (Class B or C): 3 / 9 (item x split combinations).
-**Bold** rows are flagged. {.table}
+alpha = 0.05. Iterative purification applied (Bjorner et al. 1998).
+p-values adjusted by Benjamini-Hochberg (false discovery rate). Flagged
+(Class B or C): 2 / 9 (item x split combinations). **Bold** rows are
+flagged. {.table}
 
 The tree splits on gender, and the effect sizes match what the partial
-gamma analysis showed above: q2 is classified as C and q1 and q5 as B,
-while the remaining items are negligible (A). With a single binary
-covariate the tree reduces to the familiar two-group comparison — its
-advantages appear when you supply several covariates at once
+gamma analysis showed above for q1 and q2, which are classified as B,
+while the remaining items are negligible (A). Partial gamma without
+purification also flagged q5. With a single binary covariate the tree
+reduces to the familiar two-group comparison — its advantages appear
+when you supply several covariates at once
 (`covariates = phq9[, c("gender", "age")]`), where it tests all of them,
 picks split points for continuous ones, and uncovers interactions.
 
-Three options are worth knowing about: `purification = "iterative"`
-recomputes effect sizes while excluding already-flagged items from the
-matching score; `stability = TRUE` refits the tree on resamples to
-report how often each covariate is selected and where the cutpoints land
-— a guard against overinterpreting a single sample’s tree structure; and
-`output = "plot"` draws the tree with per-node item parameters.
+Three options are worth knowing about: `purification = "iterative"` (the
+default) recomputes effect sizes while excluding already-flagged items
+from the matching score; `stability = TRUE` refits the tree on resamples
+to report how often each covariate is selected and where the cutpoints
+land — a guard against overinterpreting a single sample’s tree
+structure; and `output = "plot"` draws the tree with per-node item
+parameters.
+
+### When the methods disagree
+
+The anchored test flags q9. Partial gamma flags q1, q2 and q5, and the
+tree, which purifies and corrects for multiple testing by default, flags
+q1 and q2. The anchored test and the bootstrap partial gamma both
+control the family-wise error rate, so the difference is not one of
+multiplicity. The methods measure DIF against different references. The
+anchored test compares each item’s location with the anchor items (here
+q3, q6, q7 and q8), while partial gamma conditions on the rest score,
+which contains the other items with DIF. Partial gamma can also respond
+to differences in threshold spacing ([Henninger et al.
+2025](#ref-henninger_partial_2025)): q1, which the spacing test flags,
+has a location difference close to zero.
+
+[`RMdifImpact()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifImpact.md)
+shows whether the disagreement matters. With q2 and q9 both split:
+
+``` r
+
+RMdifImpact(data = items, dif_var = phq9$gender, items = c("q2", "q9"))
+```
+
+| Estimator | Units | Delta_keep | Delta_split | SE_Delta | Impact | SE | lower | upper | Pct_of_Delta | SMD | Impact_in_SE |
+|:---|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Latent mean | logits | 0.086 | -0.024 | 0.140 | 0.111 | 0.025 | 0.062 | 0.159 | 456.9 | 0.083 | 0.79 |
+| WLE mean | logits | 0.107 | -0.002 | 0.140 | 0.109 | 0.024 | 0.062 | 0.156 | 5085.1 | 0.076 | 0.78 |
+| Sum score | raw points | 0.240 | -0.256 | 0.666 | 0.496 | 0.112 | 0.277 | 0.716 | 193.6 | 0.073 | 0.74 |
+
+Impact of keeping the DIF items on the group difference (‘Male’ minus
+‘Female’). Impact = Delta_keep - Delta_split, 95% CI by the delta
+method. Pct_of_Delta: impact as a percentage of \|Delta_split\|. SMD:
+impact / SD (square root of the average of the two group variances).
+Impact_in_SE: impact / SE of Delta_split in these data. No threshold is
+implied. Split: q2, q9 (7 common items). n = 569 of 600 respondents
+(Female: 426, Male: 143). {.table}
+
+Keeping both items makes the latent mean difference 0.11 logits larger
+(95% CI 0.06 to 0.16), which is 0.08 standard deviations and 0.8 of the
+standard error of the difference. Both items shift scores in the same
+direction, so their impacts add up.
 
 ## Next step
 
 Since we found issues with item misfit, local dependence, and gender
 DIF, these need to be addressed before the scale is used for
 measurement. Notably, item 2 recurs across all three criteria — overfit,
-the strongest local dependence (with item 1), and the largest gender DIF
-— making it the natural first candidate for closer inspection. The
-recommended approach is iterative: remove a single item (for instance,
-an underfit item, or one item from an LD pair after reviewing item
-content), then re-run the full set of analyses, since fit indications
-for the remaining items change with every removal. Some of the flags
-above may be consequences of others: overfitting items can push fitting
-items into the underfit range, and underfitting items, especially from a
-second dimension, can make fitting items look overfit. When the sample
-is large enough, it is good practice to set aside a random holdout
-subsample before the analysis, so that the final item set can be
-confirmed in data that played no part in the item-reduction decisions.
+the strongest local dependence (with item 1), and the largest
+partial-gamma gender DIF — making it the natural first candidate for
+closer inspection. The recommended approach is iterative: remove a
+single item (for instance, an underfit item, or one item from an LD pair
+after reviewing item content), then re-run the full set of analyses,
+since fit indications for the remaining items change with every removal.
+Some of the flags above may be consequences of others: overfitting items
+can push fitting items into the underfit range, and underfitting items,
+especially from a second dimension, can make fitting items look overfit.
+When the sample is large enough, it is good practice to set aside a
+random holdout subsample before the analysis, so that the final item set
+can be confirmed in data that played no part in the item-reduction
+decisions.
 
 The following sections are primarily of interest once an acceptable item
 set has been established; here we continue with all nine items for

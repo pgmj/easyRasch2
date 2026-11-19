@@ -13,7 +13,7 @@ item locations relative to the sample mean person location."><meta name="robots"
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9004</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -182,7 +182,8 @@ least one BH-flagged item in 13 percent of datasets (30 percent when 1.5
 logits off target), almost all of them overfit, while 9 polytomous items
 at n = 1000 gave about 1 percent. Pass the object from
 <code><a href="RMitemRestscoreCutoff.html">RMitemRestscoreCutoff()</a></code> as <code>cutoff</code> for p-values from a parametric
-bootstrap null instead.</p>
+bootstrap null instead. The simulation study is reported at
+<a href="https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html" class="external-link">https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html</a>.</p>
 <p><strong>Bootstrap p-values.</strong> When <code>p_value = TRUE</code>, each item's observed
 <code>Difference</code> is compared against its simulated null distribution (from
 <code>cutoff$results</code>), studentised by the mean and SD of the observed and

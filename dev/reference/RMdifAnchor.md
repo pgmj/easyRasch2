@@ -219,7 +219,8 @@ group. The consensus over orderings kept the error rate and power. The
 share of datasets where two runs with different seeds flag different
 thresholds fell from about .037 with a single ordering to about .012
 with 100 orderings. More than two groups, other DIF sizes and anchors of
-fixed length were not studied.
+fixed length were not studied. The studies are reported in full at
+<https://pgmj.github.io/rasch_book/chapters/dif-anchor-tests.html>.
 
 Every response category must be used in both groups, as in
 [`RMdifLR`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md).

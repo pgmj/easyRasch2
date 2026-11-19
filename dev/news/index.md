@@ -14,6 +14,14 @@
   The LR test does not change.
 
 - New
+  [`RMdifImpact()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifImpact.md):
+  the practical size of DIF in given items. It reports the bias in the
+  group difference from keeping them (latent mean, mean WLE and sum
+  score, in several units), the local bias of person scores,
+  classification rates at a cut-off, and a projection to a target
+  population, with delta-method intervals.
+
+- New
   [`RMdifAnchor()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md):
   anchored Wald tests of DIF between two groups for item locations,
   thresholds and threshold spacing (DSF), with corrected p-values. The
@@ -22,6 +30,25 @@
 
 - [`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatProb.md)
   no longer needs `eRm` installed.
+
+- [`RMdifTree()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md)
+  defaults to `purification = "iterative"` and, for partial gamma,
+  `p_adj = "fdr"` (Benjamini-Hochberg, as for the asymptotic p-values of
+  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)),
+  following Henninger et al. (2025). Without an adjustment, the chance
+  of flagging an item without DIF grew with the number of items. The
+  caption names the adjustment. **Item classes change; use
+  `purification = "none", p_adj = "none"` for the old results.**
+
+- [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
+  [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md),
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+  and
+  [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md)
+  stop when the highest category of an item occurs only in respondents
+  with missing responses. They use complete cases, and previously
+  analysed such an item with fewer categories without a message. **Data
+  that ran before can now give an error.**
 
 - [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
   bootstrap p-values are equal-tailed (alpha/2 for overfit and for
@@ -56,6 +83,18 @@
 - Docs: the DIF functions explain artificial DIF, and a Henninger et al.
 
   2025. author and the `phq9` description are corrected.
+
+- Docs: the help pages of
+  [`RMdifAnchor()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md),
+  [`RMdifImpact()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifImpact.md),
+  [`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md),
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md),
+  [`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md),
+  [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md)
+  and
+  [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonChange.md),
+  and the vignette, link to the simulation studies behind them in the
+  book *Rasch Measurement Explorations*.
 
 ### Bug fixes
 

@@ -27,7 +27,7 @@ stablelearner::stabletree() (Philipp et al., 2018)."><meta name="robots" content
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9004</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,8 +75,8 @@ stability across resamples can be assessed via
 <span>  <span class="va">covariates</span>,</span>
 <span>  model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"PCM"</span>, <span class="st">"RM"</span><span class="op">)</span>,</span>
 <span>  effect_size <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"MH"</span>, <span class="st">"pgamma"</span><span class="op">)</span>,</span>
-<span>  purification <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"iterative"</span><span class="op">)</span>,</span>
-<span>  p_adj <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"fdr"</span>, <span class="st">"bonferroni"</span><span class="op">)</span>,</span>
+<span>  purification <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"iterative"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
+<span>  p_adj <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"fdr"</span>, <span class="st">"bonferroni"</span>, <span class="st">"none"</span><span class="op">)</span>,</span>
 <span>  thresholds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.21</span>, <span class="fl">0.31</span><span class="op">)</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">0.05</span>,</span>
 <span>  prune_negligible <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -119,17 +119,22 @@ uses MH for RM and partial gamma for PCM.</p></dd>
 
 
 <dt id="arg-purification">purification<a class="anchor" aria-label="anchor" href="#arg-purification"></a></dt>
-<dd><p><code>"none"</code> (default) or <code>"iterative"</code>.
+<dd><p><code>"iterative"</code> (default) or <code>"none"</code>.
 Iterative purification recomputes the effect size while excluding
 items already classified as DIF from the matching score (Bjorner et
-al., 1998).</p></dd>
+al., 1998). Henninger et al. (2025) found it most important in short
+tests, where DIF items make up a larger share of the matching score.
+<code><a href="RMdifGamma.html">RMdifGamma()</a></code> and <code><a href="RMitemICCPlot.html">RMitemICCPlot()</a></code> do not purify, so their
+classifications can differ from the tree's on the same data.</p></dd>
 
 
 <dt id="arg-p-adj">p_adj<a class="anchor" aria-label="anchor" href="#arg-p-adj"></a></dt>
 <dd><p>Multiple-testing adjustment for the partial-gamma
-classification: <code>"none"</code> (default), <code>"fdr"</code> (Benjamini &amp;
-Hochberg), or <code>"bonferroni"</code>. Ignored for MH (which uses the
-ETS test directly).</p></dd>
+classification: <code>"fdr"</code> (default, Benjamini &amp; Hochberg, as for
+the asymptotic p-values of <code><a href="RMdifGamma.html">RMdifGamma()</a></code>), <code>"bonferroni"</code>
+or <code>"none"</code>. Without an adjustment, the chance of flagging at
+least one item without DIF grows with the number of items (Henninger
+et al., 2025). Ignored for MH (which uses the ETS test directly).</p></dd>
 
 
 <dt id="arg-thresholds">thresholds<a class="anchor" aria-label="anchor" href="#arg-thresholds"></a></dt>
@@ -372,7 +377,6 @@ Series</em>(1). <a href="https://doi.org/10.1002/j.2333-8504.2012.tb02290.x" cla
 <span class="r-in"><span>  <span class="co"># (use more resamples, e.g. 100+, in real analyses)</span></span></span>
 <span class="r-in"><span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"stablelearner"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>    <span class="va">kbl</span> <span class="op">&lt;-</span> <span class="fu">RMdifTree</span><span class="op">(</span><span class="va">items</span>, covariates <span class="op">=</span> <span class="va">covs</span>,</span></span>
-<span class="r-in"><span>                     purification <span class="op">=</span> <span class="st">"iterative"</span>, p_adj <span class="op">=</span> <span class="st">"fdr"</span>,</span></span>
 <span class="r-in"><span>                     stability <span class="op">=</span> <span class="cn">TRUE</span>, stability_B <span class="op">=</span> <span class="fl">25</span><span class="op">)</span></span></span>
 <span class="r-in"><span>    <span class="va">kbl</span>                          <span class="co"># main effect-size kable</span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">kbl</span>, <span class="st">"stability_kable"</span><span class="op">)</span> <span class="co"># pre-rendered stability kable</span></span></span>
@@ -384,9 +388,11 @@ Series</em>(1). <a href="https://doi.org/10.1002/j.2333-8504.2012.tb02290.x" cla
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Matrix is not positive semidefinite</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Error in root.matrix(switch(vcov, opg = chol2inv(chol(meat)), info = bread,  : </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Matrix is not positive semidefinite</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Error in root.matrix(switch(vcov, opg = chol2inv(chol(meat)), info = bread,  : </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Matrix is not positive semidefinite</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Stability assessment notes (suppressed during fitting): 169 'minimum score not zero' rescaling warning(s); 21 'items with null categories' warning(s). These reflect sparsity in some resamples and are normal sampling variability; selection-frequency and cutpoint summaries are based on resamples that completed successfully.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     Variable    Type Selected_orig Selection_freq_pct Cutpoint_mean Cutpoint_sd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1        age numeric          TRUE                100      44.71053    10.39727</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1        age numeric          TRUE                100      44.10811    9.845427</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2     gender  factor          TRUE                100            NA          NA</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 motivation ordered         FALSE                  4            NA          NA</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

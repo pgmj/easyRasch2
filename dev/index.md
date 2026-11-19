@@ -154,6 +154,10 @@ remotes::install_github("pgmj/easyRasch2")
   — anchored Wald tests of DIF between two groups for item locations,
   thresholds and threshold spacing, with a multiplicity correction and a
   consensus forward or Gini anchor
+- [`RMdifImpact()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifImpact.md)
+  — the practical size of DIF in given items: bias in the group
+  difference and in person scores, rates at a cut-off, and a projection
+  to a target population
 - [`RMdifTree()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md)
   — Rasch / partial-credit trees (`psychotree`) with Mantel-Haenszel or
   partial-γ effect sizes per split, optional iterative purification, and
@@ -252,6 +256,7 @@ plots$fit                                               # fit-index distribution
 grp <- factor(sample(c("A", "B"), nrow(pcmdat2), replace = TRUE))
 RMdifLR(pcmdat2, dif_var = grp)
 RMdifAnchor(pcmdat2, dif_var = grp)    # anchored tests per item
+RMdifImpact(pcmdat2, dif_var = grp, items = "I1")  # size of the DIF in I1
 
 # Rasch-tree DIF with effect-size classification on continuous +
 # categorical covariates simultaneously

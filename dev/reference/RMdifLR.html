@@ -15,7 +15,7 @@ or thresholds have it. For that, use RMdifAnchor."><meta name="robots" content="
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9004</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9005</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -124,7 +124,9 @@ each group on its own mean makes real DIF in some items appear as
 artificial DIF in the others (Andrich &amp; Hagquist, 2012), so this function
 no longer reports per-group locations. <code><a href="RMdifAnchor.html">RMdifAnchor</a></code> links the
 groups through anchor items and tests each item, threshold or threshold
-spacing, with a correction for multiple testing.</p>
+spacing, with a correction for multiple testing. The simulation study
+behind this change is reported at
+<a href="https://pgmj.github.io/rasch_book/chapters/dif-anchor-tests.html" class="external-link">https://pgmj.github.io/rasch_book/chapters/dif-anchor-tests.html</a>.</p>
 <p>Like other global tests, the LR test becomes significant for small
 amounts of DIF in large samples, and has little power in small ones.</p>
 <p><strong>Response categories.</strong> Every category an item uses must be used in

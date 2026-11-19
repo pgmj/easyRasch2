@@ -24,8 +24,8 @@ RMdifTree(
   covariates,
   model = c("auto", "PCM", "RM"),
   effect_size = c("auto", "MH", "pgamma"),
-  purification = c("none", "iterative"),
-  p_adj = c("none", "fdr", "bonferroni"),
+  purification = c("iterative", "none"),
+  p_adj = c("fdr", "bonferroni", "none"),
   thresholds = c(0.21, 0.31),
   alpha = 0.05,
   prune_negligible = FALSE,
@@ -65,15 +65,27 @@ RMdifTree(
 
 - purification:
 
-  `"none"` (default) or `"iterative"`. Iterative purification recomputes
+  `"iterative"` (default) or `"none"`. Iterative purification recomputes
   the effect size while excluding items already classified as DIF from
-  the matching score (Bjorner et al., 1998).
+  the matching score (Bjorner et al., 1998). Henninger et al. (2025)
+  found it most important in short tests, where DIF items make up a
+  larger share of the matching score.
+  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
+  and
+  [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md)
+  do not purify, so their classifications can differ from the tree's on
+  the same data.
 
 - p_adj:
 
   Multiple-testing adjustment for the partial-gamma classification:
-  `"none"` (default), `"fdr"` (Benjamini & Hochberg), or `"bonferroni"`.
-  Ignored for MH (which uses the ETS test directly).
+  `"fdr"` (default, Benjamini & Hochberg, as for the asymptotic p-values
+  of
+  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)),
+  `"bonferroni"` or `"none"`. Without an adjustment, the chance of
+  flagging at least one item without DIF grows with the number of items
+  (Henninger et al., 2025). Ignored for MH (which uses the ETS test
+  directly).
 
 - thresholds:
 
@@ -337,7 +349,6 @@ if (requireNamespace("psychotree", quietly = TRUE) &&
   # (use more resamples, e.g. 100+, in real analyses)
   if (requireNamespace("stablelearner", quietly = TRUE)) {
     kbl <- RMdifTree(items, covariates = covs,
-                     purification = "iterative", p_adj = "fdr",
                      stability = TRUE, stability_B = 25)
     kbl                          # main effect-size kable
     attr(kbl, "stability_kable") # pre-rendered stability kable
@@ -349,9 +360,11 @@ if (requireNamespace("psychotree", quietly = TRUE) &&
 #>   Matrix is not positive semidefinite
 #> Error in root.matrix(switch(vcov, opg = chol2inv(chol(meat)), info = bread,  : 
 #>   Matrix is not positive semidefinite
+#> Error in root.matrix(switch(vcov, opg = chol2inv(chol(meat)), info = bread,  : 
+#>   Matrix is not positive semidefinite
 #> Stability assessment notes (suppressed during fitting): 169 'minimum score not zero' rescaling warning(s); 21 'items with null categories' warning(s). These reflect sparsity in some resamples and are normal sampling variability; selection-frequency and cutpoint summaries are based on resamples that completed successfully.
 #>     Variable    Type Selected_orig Selection_freq_pct Cutpoint_mean Cutpoint_sd
-#> 1        age numeric          TRUE                100      44.71053    10.39727
+#> 1        age numeric          TRUE                100      44.10811    9.845427
 #> 2     gender  factor          TRUE                100            NA          NA
 #> 3 motivation ordered         FALSE                  4            NA          NA
 # }

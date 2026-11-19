@@ -105,7 +105,9 @@ calibration at the subsample size. Under a true Rasch model it flags too
 many items as overfit in small or mistargeted samples of dichotomous
 items, too few items of any kind in large polytomous samples, and too
 few underfitting items at every sample size (see
-[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)).
+[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+and
+<https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html>).
 The percentage is therefore how often that test flags an item in samples
 of size `samplesize`, not the probability that the item misfits, and it
 changes with `samplesize`. A low underfit percentage is weak evidence of

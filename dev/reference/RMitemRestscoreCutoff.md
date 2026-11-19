@@ -166,7 +166,9 @@ small samples. Under a true Rasch model the resulting test is liberal
 for dichotomous items in small or mistargeted samples and conservative
 for polytomous items, in every case flagging too few underfitting items.
 The bootstrap null replaces the asymptotic reference distribution and
-absorbs both problems.
+absorbs both problems. The simulation study of the asymptotic test is
+reported at
+<https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html>.
 
 The generating model is CML item parameters (via `psychotools`) with WLE
 person locations. For each iteration a dataset is simulated under the

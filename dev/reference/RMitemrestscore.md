@@ -164,7 +164,9 @@ gave at least one BH-flagged item in 13 percent of datasets (30 percent
 when 1.5 logits off target), almost all of them overfit, while 9
 polytomous items at n = 1000 gave about 1 percent. Pass the object from
 [`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)
-as `cutoff` for p-values from a parametric bootstrap null instead.
+as `cutoff` for p-values from a parametric bootstrap null instead. The
+simulation study is reported at
+<https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html>.
 
 **Bootstrap p-values.** When `p_value = TRUE`, each item's observed
 `Difference` is compared against its simulated null distribution (from
