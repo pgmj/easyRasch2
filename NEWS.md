@@ -1,135 +1,114 @@
 # easyRasch2 (development version)
 
+## New functions
+
+- `RMitemCatFit()` tests whether each item's categories work as the
+  partial credit model predicts given the total score, also with ordered
+  thresholds, with p-values corrected across items. `RMitemCatFitPlot()`
+  shows category functioning in four plots.
+
+- `RMdifAnchor()`: anchored Wald tests of DIF and DSF between two groups,
+  with corrected p-values. The anchor is the forward method or the Gini
+  anchor point (Strobl et al., 2021).
+
+- `RMdifImpact()`: the practical size of DIF in given items (bias in group
+  differences and person scores, classification at a cut-off, projection
+  to a target population), with delta-method intervals.
+
 ## Changes
 
-- New `RMitemCatFit()`: a test of whether each item's response categories
-  work as the partial credit model predicts given the total score, also
-  when the thresholds are ordered. It detects interchangeable or swapped
-  categories and steps that separate respondents more or less than the
-  others, with p-values corrected across items.
+- **`RMdifLR()` reports Andersen's LR test only**, by CML with
+  psychotools. The location table, Wald tests and plots are removed, and
+  their arguments point to `RMdifAnchor()`. The LR test does not change.
 
-- New `RMitemCatFitPlot()`: four plots of category functioning given the
-  total score (residuals by score group, adjacent categories, rest-score
-  statistics per category, and calibration of the cumulative events). It
-  can take the result of `RMitemCatFit()` and show each item's p.
+- **`RMdifTree()` defaults to `purification = "iterative"` and, for
+  partial gamma, `p_adj = "fdr"`** (Henninger et al., 2025). Item classes
+  change. `purification = "none", p_adj = "none"` gives the old results.
 
-- **`RMdifLR()` reports Andersen's LR test only**, fitted by CML with
-  psychotools (no `eRm` needed). The location table, Wald tests and plots
-  are removed, because centred locations show artificial DIF whenever the
-  DIF effects do not cancel out, as with a single DIF item. Their arguments
-  give an error pointing to `RMdifAnchor()`. The LR test does not change.
+- **Bootstrap p-values studentize the observed and simulated values
+  together**, which keeps the Westfall-Young family-wise error rate nominal
+  (`RMitemInfit()`, `RMitemRestscore()`, `RMdifGamma()`, `RMlocdepQ3()`,
+  `RMlocdepGamma()`, `RMdimCFA()`). Corrected p-values change slightly,
+  mostly below 1000 iterations.
 
-- New `RMdifImpact()`: the practical size of DIF in given items. It reports
-  the bias in the group difference from keeping them (latent mean, mean WLE
-  and sum score, in several units), the local bias of person scores,
-  classification rates at a cut-off, and a projection to a target
-  population, with delta-method intervals.
+- **`RMitemRestscore()` bootstrap p-values are equal-tailed**, giving fewer
+  false underfit flags when other items overfit. `p_restscore`,
+  `padj_restscore` and `Flagged` change.
 
-- New `RMdifAnchor()`: anchored Wald tests of DIF between two groups for
-  item locations, thresholds and threshold spacing (DSF), with corrected
-  p-values. The anchor is the forward method (a consensus over random
-  tie-breaks) or the Gini anchor point (Strobl et al., 2021).
+- `RMitemInfit()` refuses a cutoff from `RMitemInfitCutoffMI()`, whose
+  p-values would not be calibrated. Use it with `RMitemInfitMI()`.
 
-- `RMitemCatProb()` no longer needs `eRm` installed.
+- The simulation plots (`RMitemInfitPlot()`, `RMitemRestscorePlot()`,
+  `RMdimCFAPlot()`, `RMlocdepQ3Plot()`, `RMlocdepGammaPlot()`,
+  `RMdifGammaPlot()`) draw the interval the table uses, where they drew
+  fixed quantile intervals. `RMitemInfitPlot()` without `data` follows an
+  explicit `statistic`. Tables do not change.
 
-- `RMdifTree()` defaults to `purification = "iterative"` and, for partial
-  gamma, `p_adj = "fdr"` (Benjamini-Hochberg, as for the asymptotic
-  p-values of `RMdifGamma()`), following Henninger et al. (2025). Without
-  an adjustment, the chance of flagging an item without DIF grew with the
-  number of items. The caption names the adjustment. **Item classes
-  change; use `purification = "none", p_adj = "none"` for the old
-  results.**
+- `output = "list"` in `RMdimResidualPCA()`, `RMreliabilityCurve()` and
+  `RMpersonChange()`, and more elements in the `RMdifTree()` list, give
+  results that were only attributes. The attributes are kept.
 
-- `RMitemInfit()`, `RMitemInfitPlot()`, `RMitemRestscore()` and
-  `RMitemRestscoreBoot()` stop when the highest category of an item occurs
-  only in respondents with missing responses. They use complete cases, and
-  previously analysed such an item with fewer categories without a message.
-  **Data that ran before can now give an error.**
+- `RMdimCFACutoff()` uses the scaled CFI and RMSEA, refuses `"DWLS"`,
+  `"ULS"` and `"WLS"`, and needs at least 4 items. Results with `"WLSMV"`
+  do not change in practice.
 
-- `RMitemRestscore()` bootstrap p-values are equal-tailed (alpha/2 for
-  overfit and for underfit). There are fewer false underfit flags when
-  other items overfit. **`p_restscore`, `padj_restscore` and `Flagged`
-  change.**
-
-- Bootstrap p-values studentize the observed and simulated values together,
-  which keeps the Westfall-Young family-wise error rate nominal at any number
-  of iterations (`RMitemInfit()`, `RMitemRestscore()`,
-  `RMdifGamma()`, `RMlocdepQ3()`, `RMlocdepGamma()`, `RMdimCFA()`).
-  **Corrected p-values change slightly, mostly below 1000 iterations.**
-
-- `RMdimCFACutoff()` always uses the scaled CFI and RMSEA, refuses `"DWLS"`,
-  `"ULS"` and `"WLS"`, and needs at least 4 items. Results with the default
-  `"WLSMV"` do not change in practice.
-
-- `RMreliabilityCurve()` reports, and draws its reference lines at, the
-  median SEM instead of the average.
+- `RMreliabilityCurve()` reports the median SEM instead of the average.
 
 - `RMitemRestscoreBoot()` warns that its flags come from the miscalibrated
-  asymptotic test. `RMreliability(boot = TRUE)` and
-  `RMreliabilityCurve(boot = TRUE)` report how many resamples were dropped.
+  asymptotic test. `RMreliability()` and `RMreliabilityCurve()` with
+  `boot = TRUE` report dropped resamples.
 
-- Docs: the DIF functions explain artificial DIF, and a Henninger et al.
-  (2025) author and the `phq9` description are corrected.
+- `RMitemCatProb()` no longer needs `eRm`. The `RMtargeting()` caption
+  says "threshold disorder".
 
-- Docs: the help pages of `RMdifAnchor()`, `RMdifImpact()`, `RMdifLR()`,
-  `RMitemRestscore()`, `RMitemRestscoreCutoff()`, `RMitemRestscoreBoot()` and
-  `RMpersonChange()`,
-  and the vignette, link to the simulation studies behind them in the
-  book *Rasch Measurement Explorations*.
+- Help pages reviewed throughout. References are cited or removed,
+  artificial DIF is explained, pages link to the simulation studies in the
+  book *Rasch Measurement Explorations*, and the internal `run_*` helpers
+  no longer have help pages.
 
 ## Bug fixes
 
 - Bootstrap p-values with missing simulated values were too small
-  (`RMdifGamma()`, `RMlocdepGamma()`, `RMdimCFA()`). A message now says when
-  the Westfall-Young correction used fewer than 95% of the simulated
-  datasets. **Results change only when simulated values are missing.**
+  (`RMdifGamma()`, `RMlocdepGamma()`, `RMdimCFA()`). Results change only
+  when simulated values are missing.
 
-- Every function that fits or scores a model stops with a clear message on a
-  single item, duplicated item names, non-numeric columns or infinite values.
+- Clear errors for a single item, duplicated item names, non-numeric or
+  infinite values, and a single or empty lowest or interior category,
+  which used to pair thresholds with the wrong items (`RMdifTree()` is not
+  covered).
 
-- Functions that fit a Rasch or partial credit model stop, naming the item,
-  on a single response category or an empty lowest or interior category,
-  which used to pair thresholds with the wrong items. `RMdifTree()` is not
-  covered.
+- `RMitemInfit()`, `RMitemInfitPlot()`, `RMitemRestscore()` and
+  `RMitemRestscoreBoot()` stop when a category, or an item's highest
+  category, occurs only in incomplete responses. Infit returned 0, or the
+  item was analysed with fewer categories. **Data that ran before can now
+  give an error.**
 
-- With supplied `item_params`, items are matched to `data` by name, and
-  unknown or duplicated names stop (`RMpersonParameters()`,
-  `RMreliabilityCurve()`, `RMretestSD()`, `RMpersonChange()`). Items could
-  silently get another item's thresholds.
+- Supplied `item_params` are matched to `data` by name
+  (`RMpersonParameters()`, `RMreliabilityCurve()`, `RMretestSD()`,
+  `RMpersonChange()`). Items could get another item's thresholds.
 
-- `RMitemInfit()`, `RMitemRestscore()`, `RMitemRestscoreBoot()` and
-  `RMitemInfitPlot()` stop when a category occurs only in incomplete
-  responses. `RMitemInfit()` returned infit 0 for every item.
+- `RMitemInfitMI()` and `RMitemInfitCutoffMI()` stop on imputed factor
+  levels that are labels, and `RMitemInfitMI()` skips, with a warning, an
+  imputation in which an item lacks a category.
 
-- `RMitemInfitMI()` and `RMitemInfitCutoffMI()` stop when imputed factor
-  levels are labels rather than response codes. `RMitemInfitMI()` skips,
-  with a warning, an imputation in which an item lacks its lowest or a
-  middle category.
+- `RMdifLR()` names item, category and group when a category is unused in
+  a group or used only by extreme scores.
 
-- `RMdifLR()` stops, naming item, category and group, when a category is
-  unused in a group or used only by zero or perfect scores.
+- `RMdimCFA()` shows an index lavaan cannot compute as "not tested", and
+  stops, as does `RMdimCFAPlot()`, on a cutoff built with an unscaled
+  estimator or from 3 items.
 
-- `RMdimCFA()` shows an index lavaan cannot compute as "not tested".
-  `RMdimCFA()` and `RMdimCFAPlot()` stop on a saved cutoff object built with
-  an unscaled estimator or from 3 items.
+- `RMitemRestscoreBoot()` leaves an untestable item out of a resample
+  instead of dropping it, and reports `n_tested`. Percentages can change
+  for very sparse items.
 
-- `RMitemRestscoreBoot()` leaves an untestable item out of a resample rather
-  than dropping the resample, and reports `n_tested`. **Percentages can
-  change for data with a very sparse item.**
+- `RMitemParameters(estimator = "MML")` SEs and intervals refer to the
+  centred thresholds. **MML SEs and CIs usually get 2-19% smaller.**
 
-- `RMitemParameters(estimator = "MML")` SEs and Wald intervals refer to the
-  centred thresholds when `center = TRUE`. **MML SEs and CIs usually get
-  smaller (by 2-19%).**
-
-- `RMreliabilityCurve()` stops on an invalid `items` selection.
-
-- Iteration messages and warnings are corrected, and the notice below 400
-  iterations shows once per correction method. Results do not change.
-
-- Person estimates: EAP returns `NA` for a respondent with no answered
-  items, WLE beyond `theta_range` goes to the correct boundary, and
-  `RMreliability()` and `RMreliabilityCurve()` normalise prior weights
-  (results move by at most about 1e-4).
+- Smaller fixes: `RMreliabilityCurve()` stops on an invalid `items`,
+  iteration messages are corrected, EAP gives `NA` with no answered items,
+  WLE beyond `theta_range` goes to the correct boundary, and prior weights
+  are normalised (results move by at most about 1e-4).
 
 # easyRasch2 1.4.0
 

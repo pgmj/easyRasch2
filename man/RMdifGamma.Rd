@@ -2,7 +2,7 @@
 % Please edit documentation in R/dif_partgam.R
 \name{RMdifGamma}
 \alias{RMdifGamma}
-\title{Partial Gamma DIF Analysis}
+\title{Partial gamma DIF}
 \usage{
 RMdifGamma(
   data,
@@ -15,139 +15,128 @@ RMdifGamma(
 )
 }
 \arguments{
-\item{data}{A data.frame or matrix of item responses. Items must be scored
-starting at 0 (non-negative integers). Missing values (\code{NA}) are allowed,
-but at least one complete case must exist after combining \code{data} and
-\code{dif_var}.}
+\item{data}{A data.frame or matrix of item responses, items scored from
+0. Only complete cases (in \code{data} and \code{dif_var}) are used, so at least
+one is needed.}
 
-\item{dif_var}{A vector (factor or character) of the same length as
-\code{nrow(data)}, representing the grouping variable for DIF analysis.}
+\item{dif_var}{A vector (factor or character) of length \code{nrow(data)}
+with the groups, two or more.}
 
-\item{cutoff}{Optional. Default \code{NULL} (no cutoff applied). Can be:
+\item{cutoff}{Optional. Default \code{NULL}, the asymptotic test of
+\code{iarm::partgam_DIF()}. Either of:
 \itemize{
-\item The return value of \code{\link{RMdifGammaCutoff}} (a list with
-\verb{$item_cutoffs}): the data.frame is extracted automatically and
-simulation metadata is included in the kable caption.
-\item The \verb{$item_cutoffs} data.frame from \code{\link{RMdifGammaCutoff}}
-directly: must have columns \code{Item}, \code{gamma_low}, \code{gamma_high}.
-When provided, adds columns \code{Gamma_low}, \code{Gamma_high}, and \code{Flagged}
-(logical; \code{TRUE} when the observed partial gamma falls outside the
-credible range) to the result.
-}}
+\item The full result of \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}}. This enables the bootstrap
+p-values (see \code{p_value}), and the caption reports the simulation
+settings.
+\item Its \verb{$item_cutoffs} data.frame alone, with columns \code{Item},
+\code{gamma_low} and \code{gamma_high}. Items are flagged against the
+interval.
+}
 
-\item{p_value}{Logical or \code{NULL}. When \code{TRUE}, adds two-sided bootstrap
-p-values (\code{p_gamma}, \code{padj_gamma}) comparing each item's observed partial
-gamma against its simulated null distribution, and \code{flagged} reflects
-\code{padj_gamma < alpha} instead of the credible range. The asymptotic
-BH-adjusted p-value and star columns from \code{iarm::partgam_DIF()} are
-\strong{dropped} in this mode (two p-value families in one table would invite
-double-reading); the simulated \code{gamma_low} / \code{gamma_high} band is kept as
-the effect-size reference. \code{TRUE} requires the \strong{full}
-\code{\link{RMdifGammaCutoff}} object as \code{cutoff} (it carries the
-simulated distributions in \verb{$results}). \code{NULL}, the default, means \code{TRUE}
-when \code{cutoff} is that full object and \code{FALSE} otherwise, so calling with
-no cutoff keeps the asymptotic table unchanged. Pass \code{FALSE} to flag
-against the interval instead. The interval makes a poor decision rule,
-since its width sets a family-wise error rate of \code{1 - width^k} over all
-\eqn{k} items at once (Johansson, 2026).}
+Either adds the columns \code{Gamma_low}, \code{Gamma_high} and a logical
+\code{Flagged} (\code{TRUE} when the partial gamma is outside the simulated
+interval, or with p-values when the item is flagged).}
 
-\item{correction}{Character. Multiplicity correction for the bootstrap
-p-values: \code{"fwer"} (default; Westfall-Young studentised-max step-down),
-\code{"fdr_bh"}, \code{"fdr_by"}, or \code{"none"}. Ignored when \code{p_value = FALSE}.}
+\item{p_value}{Logical or \code{NULL}. Whether to flag on two-sided bootstrap
+p-values (\code{p_gamma}, \code{padj_gamma}) from the simulations. The
+asymptotic p-value and star columns are then dropped, so that the
+table has one family of p-values, and the simulated interval is kept
+as a reference. \code{TRUE} needs the full \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}} result.
+\code{NULL} (default) uses the p-values whenever \code{cutoff} is that result,
+so a call without a cutoff keeps the asymptotic table. \code{FALSE} flags
+against the interval, a poor decision rule, since over k items a width
+\code{w} gives a family-wise error rate of \code{1 - w^k} (Johansson, 2026).}
 
-\item{alpha}{Numeric in (0, 1). Significance level used to flag items on
-the corrected p-value. Default \code{0.05}. Ignored when \code{p_value = FALSE}.}
+\item{correction}{Character. Correction of the bootstrap p-values across
+items: \code{"fwer"} (default, Westfall-Young step-down), \code{"fdr_bh"},
+\code{"fdr_by"} or \code{"none"}. Used only with p-values.}
 
-\item{output}{Character string controlling the return value. Either
-\code{"kable"} (default) for a formatted \code{knitr::kable()} table, or
-\code{"dataframe"} for the underlying data.frame.}
+\item{alpha}{Numeric in (0, 1). An item is flagged when its corrected
+p-value is below \code{alpha}. Default \code{0.05}. Used only with p-values.}
+
+\item{output}{Character. \code{"kable"} (default) for a \code{knitr::kable()}
+table, or \code{"dataframe"}.}
 }
 \value{
 \itemize{
-\item If \code{output = "kable"}: a \code{knitr_kable} object with columns "Item",
-"Partial gamma", "SE", "Lower CI", "Upper CI", "Adj. p-value (BH)",
-and "p-value sign." (stars for the BH-adjusted p-value, as \code{iarm}
-shows them). When \code{cutoff} is provided, additional columns
-"Gamma low", "Gamma high", and "Flagged" are included. With
-\code{p_value = TRUE}, the asymptotic p-value columns are replaced by
-bootstrap "p" and "p (adj)".
-\item If \code{output = "dataframe"}: a data.frame with columns \code{Item}, \code{gamma},
-\code{se}, \code{lower}, \code{upper}, \code{padj_bh}, \code{Significance}. When \code{cutoff} is
-provided, columns \code{gamma_low}, \code{gamma_high}, and \code{flagged} are also
-included. With \code{p_value = TRUE}, \code{padj_bh} and \code{Significance} are
-replaced by \code{p_gamma} and \code{padj_gamma}.
+\item \code{output = "kable"}: a \code{knitr_kable} table with the columns "Item",
+"Partial gamma", "SE", "Lower CI", "Upper CI", "Adj. p-value (BH)" and
+"p-value sign." (stars for the adjusted p-value, as iarm shows them),
+plus "Gamma low", "Gamma high" and "Flagged" with a \code{cutoff}. With
+p-values, the asymptotic columns are replaced by "p" and "p (adj)".
+\item \code{output = "dataframe"}: a data.frame with the columns \code{Item}, \code{gamma},
+\code{se}, \code{lower}, \code{upper}, \code{padj_bh} and \code{Significance}, plus
+\code{gamma_low}, \code{gamma_high} and \code{flagged} with a \code{cutoff}. With p-values,
+\code{padj_bh} and \code{Significance} are replaced by \code{p_gamma} and
+\code{padj_gamma}.
 }
 }
 \description{
-Computes partial gamma coefficients for Differential Item Functioning (DIF)
-using \code{iarm::partgam_DIF()}. Each item is tested for association with
-a single categorical DIF variable, controlling for the total score.
+Computes the partial gamma coefficient of each item, the association
+between the item and a grouping variable given the total score, to
+assess differential item functioning (DIF). With the result of
+\code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}}, it tests each item against simulations without
+DIF, by default with a bootstrap p-value corrected across items.
 }
 \details{
-Partial gamma (Bjorner et al., 1998) measures the association between item
-response and an exogenous grouping variable, controlling for the total
-score. Values near 0 indicate no DIF. Recommended interpretive thresholds
-(Bjorner et al., 1998):
-\itemize{
-\item \strong{No or negligible DIF}: gamma within \eqn{[-0.21, 0.21]}, \emph{or} gamma
-not significantly different from 0.
-\item \strong{Slight to moderate DIF}: gamma within \eqn{[-0.31, 0.31]} (and outside
-\eqn{[-0.21, 0.21]}), \emph{or} not significantly outside \eqn{[-0.21, 0.21]}.
-\item \strong{Moderate to large DIF}: gamma outside \eqn{[-0.31, 0.31]}, \strong{and}
-significantly outside \eqn{[-0.21, 0.21]}.
-}
+\strong{Statistic.} The partial gamma (Bjorner et al., 1998) measures the
+association between the item response and an external grouping variable
+given the total score. Values near 0 indicate no DIF. Bjorner et al.
+(1998) also proposed classes of DIF size, which \code{\link[=RMdifTree]{RMdifTree()}} uses.
+They are conventions, not values calibrated to the sample and items at
+hand, and this function does not use them. The \pkg{iarm} package must
+be installed (it is in Suggests).
 
-The \code{iarm} package must be installed (it is in Suggests, not Imports).
-The asymptotic adjusted p-value is a Benjamini-Hochberg adjustment over the
-items of the p-values from \code{iarm::partgam_DIF()}, applied by easyRasch2.
-iarm's own adjusted column is a Bonferroni correction whatever method is
-named, because iarm adjusts one p-value at a time, so it is not used.
+\strong{Asymptotic p-values.} The adjusted p-value is a
+Benjamini-Hochberg adjustment, made by easyRasch2, of the p-values from
+\code{iarm::partgam_DIF()} over the items. iarm's own adjusted column is a
+Bonferroni correction whatever method is named, since iarm adjusts one
+p-value at a time, so it is not used.
 
-\strong{Bootstrap p-values.} When \code{p_value = TRUE}, each item's observed
-partial gamma is compared against its simulated null distribution (from
-\code{cutoff$results}, simulated with no DIF by construction). The
-per-item statistic is the residual studentised by the mean and SD of the
-observed and simulated values together; the marginal p-value is the two-sided Monte-Carlo p-value
-\verb{(1 + #\\\{|t*| >= |t|\\\}) / (B + 1)}, so it can be no smaller than
-\code{1 / (B + 1)}. The test is two-sided because DIF has no privileged
-direction: an item can favour either group. This differs from
-\code{\link[=RMlocdepGamma]{RMlocdepGamma()}}, which tests one-sided for excess positive local
-dependence. \code{correction = "fwer"} uses the Westfall-Young
-studentised-max step-down, which exploits the bootstrap dependence among
-items (Ferreira, 2024). It controls the family-wise error rate at any
-number of iterations in \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}}, but below 400 decisions
-depend on the seed and a message says so. Unlike the
-asymptotic p-values from \code{iarm::partgam_DIF()}, these are calibrated
-against the \emph{simulated Rasch null} rather than the asymptotic SE; they are
-model-conditional and sample-size-sensitive, and are reported alongside
-the simulated effect-size band, not in place of it. The observed partial
-gamma they test is computed by the same internal routine as the simulated
-values, which reproduces \code{iarm::partgam_DIF()} exactly.
+\strong{Bootstrap p-values.} Each item's observed partial gamma is
+compared with its simulated values (\code{cutoff$results}, simulated without
+DIF). The statistic is the deviation from the mean of the observed and
+simulated values together, divided by their SD. The uncorrected p is
+two-sided, \verb{(1 + #\\\{|t*| >= |t|\\\}) / (B + 1)} for B simulated datasets,
+so it can be no smaller than \code{1 / (B + 1)}. It is two-sided since DIF
+can favour either group, unlike \code{\link[=RMlocdepGamma]{RMlocdepGamma()}}, which tests
+one-sided for excess positive local dependence. \code{correction = "fwer"}
+uses the Westfall-Young step-down, which uses the dependence between
+the items (Westfall & Young, 1993, Ferreira, 2024). It controls the
+family-wise error rate at any number of iterations in
+\code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}}, but below 400 decisions depend on the seed and a
+message says so. Unlike the asymptotic p-values, these are calibrated
+against simulations from the Rasch model. They depend on the model and
+the sample size, and are reported with the simulated interval, not
+instead of it. The observed partial gamma they test is computed by the
+same internal routine as the simulations, which reproduces
+\code{iarm::partgam_DIF()} exactly.
 
 \strong{Real and artificial DIF.} Partial gamma conditions on the total
 score, which includes every item. Real DIF in one item then induces
-artificial DIF in the other items, in the opposite direction, because at
-a given total score the item scores must add up to that score (Hagquist &
+artificial DIF in the other items, in the opposite direction, since at a
+given total score the item scores must add up to that score (Hagquist &
 Andrich, 2017). An item can therefore be flagged only because another
-item has DIF. The simulation-based cutoffs from \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}} do
-not guard against this, since their null has no DIF in any item. Resolve
-DIF items one at a time, starting with the largest, and repeat the
-analysis before deciding on the next (Hagquist & Andrich, 2017).
+item has DIF. The simulations in \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}} do not guard
+against this, since they have no DIF in any item. Resolve DIF items one
+at a time, starting with the largest, and repeat the analysis before
+deciding on the next (Hagquist & Andrich, 2017). \code{\link[=RMdifAnchor]{RMdifAnchor()}} avoids
+the problem by linking the groups through anchor items.
 }
 \section{Multiple comparisons}{
 
-The marginal p-value controls the error rate of a \emph{single} comparison: for
-one item (or item pair) decided on in advance it is the relevant value. But
-scanning all \emph{k} comparisons and flagging whichever fall below \code{alpha} tests
-\emph{k} hypotheses at once, so the chance of at least one false flag inflates to
-roughly \eqn{1 - (1 - \alpha)^k} (e.g. about 34\% for \emph{k} = 8 at
-\code{alpha = 0.05}) -- even when every marginal p-value is correctly calibrated.
-The corrected (adjusted) p-value controls this: \code{correction = "fwer"} bounds
-the probability of \emph{any} false flag (strict, lower power), while \code{"fdr_bh"} /
-\code{"fdr_by"} bound the expected \emph{proportion} of false flags among those raised
-(a more lenient middle ground). Rule of thumb: use the marginal p-value for a
-single pre-specified comparison, and a corrected p-value when screening the
-whole table -- the usual workflow.
+The uncorrected p-value controls the error rate of a single comparison.
+For one item (or item pair) chosen in advance it is the relevant value.
+Flagging whichever of k comparisons fall below \code{alpha} tests k
+hypotheses at once, and the chance of at least one false flag rises to
+about \eqn{1 - (1 - \alpha)^k}, for example 34\% for k = 8 at
+\code{alpha = 0.05}, even when every uncorrected p-value is calibrated. The
+corrected p-value controls this. \code{correction = "fwer"} bounds the
+probability of any false flag (strict, less power), and \code{"fdr_bh"} and
+\code{"fdr_by"} bound the expected share of false flags among those raised.
+Use the uncorrected p-value for a single comparison chosen in advance,
+and a corrected one when screening the whole table, which is the usual
+case.
 }
 
 \examples{
@@ -166,7 +155,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
   # Return as data.frame
   RMdifGamma(sim_data, dif_group, output = "dataframe")
 
-  # Simulation-based cutoffs (100 Monte-Carlo iterations)
+  # Simulation-based cutoffs (100 iterations to keep the example quick)
   if (requireNamespace("ggdist", quietly = TRUE)) {
     cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_group,
                                    iterations = 100, parallel = FALSE,
@@ -174,8 +163,8 @@ if (requireNamespace("iarm", quietly = TRUE)) {
     RMdifGamma(sim_data, dif_group, cutoff = cutoff_res)
 
     # The full cutoff object switches on bootstrap p-values with the
-    # family-wise (Westfall-Young) correction; 100 iterations keeps the
-    # example quick, use the default 400 or more in real analyses
+    # family-wise (Westfall-Young) correction. Use 1000 or more
+    # iterations in real analyses.
     RMdifGamma(sim_data, dif_group, cutoff = cutoff_res,
                output = "dataframe")
   }
@@ -197,13 +186,15 @@ differential item functioning in health research using the Rasch model.
 \emph{Health and Quality of Life Outcomes, 15}, 181.
 \doi{10.1186/s12955-017-0755-0}
 
-Westfall, P. H., & Young, S. S. (1993). \emph{Resampling-Based Multiple Testing}.
-Wiley.
-
 Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
 Rasch models: Iterations, multiplicity correction, and decision stability.
 \emph{PsyArXiv}. \doi{10.31234/osf.io/7pqz4_v2}
+
+Westfall, P. H., & Young, S. S. (1993). \emph{Resampling-Based Multiple Testing}.
+Wiley.
 }
 \seealso{
-\code{\link{RMdifGammaCutoff}}
+\code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}} for the simulations, \code{\link[=RMdifGammaPlot]{RMdifGammaPlot()}}
+for the plot, \code{\link[=RMdifAnchor]{RMdifAnchor()}} for anchored tests, \code{\link[=RMdifImpact]{RMdifImpact()}} for
+the size of the impact.
 }

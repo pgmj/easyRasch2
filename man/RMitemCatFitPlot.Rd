@@ -2,7 +2,7 @@
 % Please edit documentation in R/item_cat_fit_plot.R
 \name{RMitemCatFitPlot}
 \alias{RMitemCatFitPlot}
-\title{Category Functioning Given the Total Score}
+\title{Category functioning given the total score}
 \usage{
 RMitemCatFitPlot(
   data,
@@ -24,9 +24,11 @@ RMitemCatFitPlot(
 0. Respondents with missing responses are left out (complete cases),
 since the total score must cover the same items for everyone.}
 
-\item{type}{Character. Which plot to draw:
+\item{type}{Character. Which plot to draw. Default \code{"residuals"}, or
+\code{"calibration"} when \code{fit} is given, since that plot shows the test in
+\code{\link[=RMitemCatFit]{RMitemCatFit()}}.
 \itemize{
-\item \code{"residuals"} (default): standardised residuals of the number of
+\item \code{"residuals"}: standardised residuals of the number of
 respondents in each category, within groups of total scores.
 \item \code{"adjacent"}: for each pair of adjacent categories, the share of
 respondents in the upper one, against the total score.
@@ -38,23 +40,26 @@ intervals.
 }}
 
 \item{fit}{Optional result of \code{\link[=RMitemCatFit]{RMitemCatFit()}} with \code{output = "list"},
-made from the same \code{data}. Its simulations are used for the rest-score and
-calibration plots, so \code{iterations}, \code{parallel}, \code{n_cores} and \code{seed} are
-not needed, and each item's corrected p is shown under its label.}
+made from the same \code{data} (checked). Its simulations are used for the
+rest-score and calibration plots, so \code{iterations}, \code{parallel},
+\code{n_cores} and \code{seed} are ignored. Each item's corrected p from
+\code{\link[=RMitemCatFit]{RMitemCatFit()}} is shown under its label, in bold when below .05
+(marked with an asterisk when \pkg{ggtext} is not installed), and the
+fit's item labels are used unless \code{item_labels} is given.}
 
 \item{score_groups}{Integer. Number of total-score groups for
 \code{type = "residuals"}, formed with roughly equal numbers of
 respondents. Default \code{5L}.}
 
-\item{iterations}{Integer. Number of simulated datasets for
-\code{type = "restscore"} and \code{type = "calibration"} when \code{fit} is not
+\item{iterations}{Integer, at least 20. Number of simulated datasets
+for \code{type = "restscore"} and \code{type = "calibration"} when \code{fit} is not
 given. Default \code{200L}.}
 
 \item{conf_level}{Numeric in (0, 1). Coverage of the pointwise bands and
 intervals. Default \code{0.95}.}
 
-\item{item_labels}{Optional character vector of item labels for the
-row strips, one per column of \code{data}. Default: column names.}
+\item{item_labels}{Optional character vector of unique item labels for
+the row strips, one per column of \code{data}. Default: column names.}
 
 \item{label_wrap}{Integer. Characters per line in the row strips.
 Default \code{15L}.}
@@ -93,13 +98,17 @@ Four diagnostic plots of how each item's response categories are used,
 all built on the probability of each category given the respondent's
 total score, \eqn{P(X_i = j \mid r)}. Under the partial credit model
 this probability depends on the item parameters alone, so no person
-locations are estimated and the comparisons are not affected by the
-error in them. Items are shown in rows.
+locations are estimated and the comparisons are not affected by their
+measurement error. Items are shown in rows. \code{\link[=RMitemCatFit]{RMitemCatFit()}} gives the
+test that the calibration plot shows.
 }
 \details{
 Respondents with the lowest or highest possible total score are left
 out, since their responses are fixed by the score. The item parameters
-are estimated by conditional maximum likelihood (\code{psychotools}).
+are estimated by conditional maximum likelihood (\code{psychotools}). As in
+\code{\link[=RMitemCatFit]{RMitemCatFit()}}, a category that is empty, or used only by respondents
+with an extreme total score, stops the function with an error that
+names the item.
 
 A plain comparison of observed and expected category counts would show
 nothing. The category counts are sufficient statistics for the item
@@ -112,13 +121,16 @@ number of respondents minus the expected number, divided by its
 standard deviation under the model. Dotted lines at \eqn{\pm 1.96} mark
 values that would be unusual for a single cell. The plot has many
 cells, so some values beyond them are expected even when the model
-holds. The expected counts treat the item parameters as known.
+holds. The expected counts treat the item parameters as known. This
+comparison of observed and expected counts within score groups is the
+one behind Glas's (1988) R1c test.
 
 \strong{Adjacent categories.} Among respondents in category \eqn{j - 1} or
 \eqn{j} at total score \eqn{r}, the share in \eqn{j}. Under the model
-this share rises with \eqn{r}. A flat observed curve suggests that
-respondents do not distinguish the two categories. The band is the
-pointwise binomial range given the number of respondents in the pair.
+this share rises with \eqn{r}. Observed shares that do not rise
+suggest that respondents do not distinguish the two categories. The
+band is the pointwise binomial range around the expected share, given
+the number of respondents in the pair.
 
 \strong{Rest score.} The mean and SD of the rest score (total score
 minus the item's score) among respondents in each category, observed
@@ -165,15 +177,16 @@ diagrams for probabilistic classifiers. \emph{Proceedings of the National
 Academy of Sciences, 118}(8), e2016191118.
 \doi{10.1073/pnas.2016191118}
 
-Säilynoja, T., Johnson, A. R., Martin, O. A., & Vehtari, A. (2025).
-Recommendations for visual predictive checks in Bayesian workflow.
-\emph{arXiv}. \doi{10.48550/arXiv.2503.01509}
-
 Glas, C. A. W. (1988). The derivation of some tests for the Rasch model
 from the multinomial distribution. \emph{Psychometrika, 53}(4), 525--546.
 \doi{10.1007/BF02294405}
+
+Säilynoja, T., Johnson, A. R., Martin, O. A., & Vehtari, A. (2025).
+Recommendations for visual predictive checks in Bayesian workflow.
+\emph{arXiv}. \doi{10.48550/arXiv.2503.01509}
 }
 \seealso{
-\code{\link[=RMitemCatFit]{RMitemCatFit()}} for the test, \code{\link[=RMitemCatProb]{RMitemCatProb()}} for the model-implied category curves,
-\code{\link[=RMitemICCPlot]{RMitemICCPlot()}} for conditional item characteristic curves.
+\code{\link[=RMitemCatFit]{RMitemCatFit()}} for the test, \code{\link[=RMitemCatProb]{RMitemCatProb()}} for the
+model-implied category curves, \code{\link[=RMitemICCPlot]{RMitemICCPlot()}} for conditional item
+characteristic curves.
 }

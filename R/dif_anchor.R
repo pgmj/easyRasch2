@@ -10,8 +10,8 @@
 #'   integers, 0-based). One column per item, one row per person. Pass the
 #'   grouping variable separately via \code{dif_var}.
 #' @param dif_var Vector of length \code{nrow(data)} (factor, character or
-#'   numeric) with exactly two groups. Rows where it is \code{NA} are dropped
-#'   with a message.
+#'   numeric) with exactly two groups. Rows where it is \code{NA}, and rows
+#'   with no responses, are dropped with a message.
 #' @param anchor \code{"forward"} (default) or \code{"gini"}. See Details.
 #' @param level What is tested: \code{"item"} (default, item locations),
 #'   \code{"spacing"} (the distances between an item's thresholds, no anchor
@@ -22,20 +22,23 @@
 #'   settings and sample sizes, see Value).
 #' @param plot_type With \code{output = "ggplot"}: \code{"differences"}
 #'   (default) plots the differences at the chosen \code{level} with
-#'   confidence intervals. \code{"criterion"} plots the Gini criterion of
-#'   Strobl et al. (2021), which is available with either anchor.
+#'   confidence intervals. \code{"criterion"} plots each item's location
+#'   difference and the Gini criterion of Strobl et al. (2021) when the
+#'   groups are aligned at that item. It is available with either anchor
+#'   and at any level.
 #' @param correction Multiplicity correction: \code{"fwer"} (default,
 #'   single-step, controls the family-wise error rate), \code{"holm"},
 #'   \code{"fdr_bh"} (Benjamini-Hochberg, controls the false discovery rate)
 #'   or \code{"none"}.
-#' @param alpha A unit is flagged when its corrected p-value is below
-#'   \code{alpha}. Default \code{0.05}.
+#' @param alpha An item, threshold or spacing is flagged when its
+#'   corrected p-value is below \code{alpha}. Default \code{0.05}.
 #' @param conf Confidence level of the intervals. Default \code{0.95}. The
 #'   intervals are not corrected for multiplicity.
 #' @param reference The group subtracted in the differences, one of the two
 #'   levels of \code{dif_var}. Default \code{NULL}, the first level.
-#' @param sort Logical. Sort the table rows by the size of the difference
-#'   (spacing: by the test statistic). Default \code{FALSE}.
+#' @param sort Logical. Sort the table rows with the largest absolute
+#'   difference first (at spacing level, the largest test statistic first).
+#'   Default \code{FALSE}.
 #' @param n_seeds Number of random tie-break orderings for the forward
 #'   anchor. Default \code{100}. Ignored for \code{anchor = "gini"}.
 #' @param seed Integer seed for the tie-break orderings and the Monte-Carlo
@@ -147,19 +150,26 @@
 #' group, equal and unequal sizes, uniform DIF and DSF of 0.6 logits), the
 #' forward anchor with the single-step correction kept the family-wise error
 #' rate close to .05 in most conditions and had the highest power among the
-#' anchors that held it. Its family-wise error rate rose above .05 (up to
-#' about .10) when several items had small location shifts that the
-#' selection missed, and with three of
-#' 10 items with DIF at 150 per group. The consensus over orderings kept
-#' the error rate and power. The share of datasets where two runs with
-#' different seeds flag different thresholds fell from about .037 with a
-#' single ordering to about .012 with 100 orderings.
-#' More than two groups, other DIF sizes and anchors of fixed length were
-#' not studied. The studies are reported in full at
+#' anchors that held it. Its family-wise error rate rose above .05, up to
+#' about .10, in two kinds of condition: when several items had small
+#' location shifts that the selection missed, and when three of 10 items
+#' had DIF with 150 respondents per group. Taking the consensus over
+#' orderings left the error rate and power as they were with a single
+#' ordering. The share of datasets where two runs with different seeds
+#' flag different thresholds fell from about .037 with a single ordering
+#' to about .012 with 100 orderings. More than two groups, other DIF sizes
+#' and anchors of fixed length were not studied. The studies are reported in full at
 #' \url{https://pgmj.github.io/rasch_book/chapters/dif-anchor-tests.html}.
 #'
-#' Every response category must be used in both groups, as in
-#' \code{\link{RMdifLR}}. Respondents with missing responses are kept.
+#' \strong{Data.} As in \code{\link{RMdifLR}}, every response category of
+#' an item must be used in both groups, and not only by respondents with a
+#' zero or perfect score there. Otherwise the function stops and names the
+#' items, categories and groups. Respondents with missing responses are
+#' kept, since CML uses the items they answered.
+#'
+#' A flagged item shows that DIF is there, not that it matters.
+#' \code{\link{RMdifImpact}} estimates its impact on group comparisons and
+#' person scores.
 #'
 #' @references
 #' Andrich, D., & Hagquist, C. (2012). Real and artificial differential item
@@ -196,7 +206,8 @@
 #' \doi{10.3200/JEXE.72.3.221-261}
 #'
 #' @seealso \code{\link{RMdifLR}} for Andersen's likelihood-ratio test of any
-#'   DIF (any number of groups), \code{\link{RMdifGamma}} and
+#'   DIF (any number of groups), \code{\link{RMdifImpact}} for the impact
+#'   of flagged items, \code{\link{RMdifGamma}} and
 #'   \code{\link{RMdifTree}}.
 #'
 #' @examples

@@ -2,7 +2,7 @@
 % Please edit documentation in R/dif_partgam.R
 \name{RMdifGammaCutoff}
 \alias{RMdifGammaCutoff}
-\title{Simulation-Based Partial Gamma DIF Cutoff Determination}
+\title{Simulation-based partial gamma DIF cutoffs}
 \usage{
 RMdifGammaCutoff(
   data,
@@ -18,45 +18,43 @@ RMdifGammaCutoff(
 )
 }
 \arguments{
-\item{data}{A data.frame or matrix of item responses. Items must be scored
-starting at 0 (non-negative integers). Only complete cases (rows without
-any \code{NA}) are used.}
+\item{data}{A data.frame or matrix of item responses, items scored from
+0. Only complete cases (in \code{data} and \code{dif_var}) are used.}
 
-\item{dif_var}{A vector (factor, character, or integer) defining group
-membership for DIF analysis. Must have the same length as \code{nrow(data)}.
+\item{dif_var}{A vector (factor, character or integer) of length
+\code{nrow(data)} with the groups.
 Group membership is held fixed in every simulated dataset, so the group
 sizes and each group's distribution of total scores are those observed.}
 
-\item{iterations}{Integer. Number of simulation iterations (default 400).}
+\item{iterations}{Integer. Number of simulated datasets. Default \code{400}.
+Use 1000 to 2000 for a final analysis.}
 
-\item{parallel}{Logical. Use parallel processing via \code{mirai} if available
-(default \code{TRUE}).}
+\item{parallel}{Logical. Run the simulations in parallel via \pkg{mirai}
+when it is installed. Default \code{TRUE}.}
 
-\item{n_cores}{Integer or \code{NULL}. Number of parallel workers. When \code{NULL},
-\code{getOption("mc.cores")} is checked first. If neither is set and
-\code{parallel = TRUE}, a warning is issued and execution falls back to
-sequential (single core) processing.}
+\item{n_cores}{Integer or \code{NULL}. Number of parallel workers. When
+\code{NULL}, \code{getOption("mc.cores")} is used. If that is unset too, a
+warning is given and the simulations run sequentially.}
 
-\item{verbose}{Logical. Show a progress bar (default \code{FALSE}).}
+\item{verbose}{Logical. Show a progress bar. Default \code{FALSE}.}
 
 \item{seed}{Integer or \code{NULL}. Random seed for reproducibility. See
 \link{easyRasch2-reproducibility} for what this guarantees and how it
 interacts with \code{parallel}.}
 
-\item{cutoff_method}{Character string specifying how cutoff intervals are
-computed. Either \code{"hdci"} (default) for the Highest Density Interval via
-\code{ggdist::hdci()}, or \code{"quantile"} for the 2.5th/97.5th percentiles via
-\code{stats::quantile()}.}
+\item{cutoff_method}{Character. How the interval per item is computed:
+\code{"hdci"} (default), the highest-density continuous interval from
+\code{ggdist::hdci()} (needs \pkg{ggdist}), or \code{"quantile"}, the 2.5th to
+97.5th percentiles.}
 
-\item{hdci_width}{Numeric. Width of the HDCI when \code{cutoff_method = "hdci"}.
-Default is \code{0.95} (95\\% HDCI), matching \code{\link{RMitemInfitCutoff}}.
-Ignored when \code{cutoff_method = "quantile"}.}
+\item{hdci_width}{Numeric. Width of the interval with
+\code{cutoff_method = "hdci"}. Default \code{0.95}, as in \code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}}.
+Ignored with \code{"quantile"}.}
 
-\item{dgp}{Character. How the null datasets are generated.
+\item{dgp}{Character. How the datasets without DIF are simulated.
 \code{"conditional"} (default) draws each respondent's response pattern from
-the Rasch conditional distribution given their observed total score, with
-the CML item thresholds fixed, as the conditional option of
-\code{\link{RMitemRestscoreCutoff}} does. \code{"permutation"} keeps the
+the model given their observed total score, with the CML item thresholds
+fixed, as the conditional option of \code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}} does. \code{"permutation"} keeps the
 observed responses and permutes group membership among respondents with
 the same total score, the Monte Carlo form of an exact conditional test of
 item-group independence given the score (Kreiner, 1987). It needs no item
@@ -65,14 +63,14 @@ parameters, keeps any misfit elsewhere in the observed responses, and is
 simulation, including when the groups differed by 1 SD.}
 }
 \value{
-A list with components:
+A list with:
 \describe{
-\item{\code{results}}{data.frame with columns \code{iteration}, \code{Item}, and
-\code{gamma} (one row per item per successful iteration).}
-\item{\code{item_cutoffs}}{data.frame with per-item cutoff summaries: \code{Item},
-\code{gamma_low}, \code{gamma_high}. Bounds are computed using the method
-specified by \code{cutoff_method}.}
-\item{\code{actual_iterations}}{Number of successful iterations.}
+\item{\code{results}}{data.frame with \code{iteration}, \code{Item} and \code{gamma}, one
+row per item and simulated dataset.}
+\item{\code{item_cutoffs}}{data.frame with the interval per item: \code{Item},
+\code{gamma_low}, \code{gamma_high}, computed by \code{cutoff_method}.}
+\item{\code{actual_iterations}}{Number of simulated datasets that could be
+used.}
 \item{\code{requested_iterations}}{Number of iterations asked for.}
 \item{\code{sample_n}}{Number of complete cases used.}
 \item{\code{sample_n_total}}{Number of respondents in the raw input data,
@@ -93,9 +91,10 @@ every simulated dataset.}
 }
 }
 \description{
-Simulates the distribution of the partial gamma DIF coefficient for each
-item when there is no DIF, to give empirical critical values and the
-simulated null behind the bootstrap p-values in \code{\link{RMdifGamma}}.
+Simulates the partial gamma DIF coefficient (Bjorner et al., 1998,
+Henninger et al., 2025) of each item when there is no DIF. Passed to \code{\link[=RMdifGamma]{RMdifGamma()}}, the result
+gives bootstrap p-values corrected across items, and an interval per
+item.
 Every simulated dataset keeps each respondent's observed group membership
 and total score, so the null reflects the observed group sizes and any
 difference between the groups' latent distributions.
@@ -103,32 +102,31 @@ difference between the groups' latent distributions.
 \details{
 Partial gamma conditions on the total score, and under the Rasch model the
 response to an item is independent of group membership given the total
-score. Both data-generating processes preserve each respondent's group and
-total score, so the simulated null has the observed distribution of groups
-across score strata. An earlier version assigned simulated respondents to
-groups at random, which gave both groups the same latent distribution.
-When a minority group differed from the majority by 1 SD, that null was too
-narrow and flagged at least one item in about 14 percent of datasets with
-no DIF, against a nominal 5 percent.
+score. Both ways of simulating keep each respondent's group and total
+score, so the simulations have the observed distribution of groups over
+the total scores. Assigning simulated respondents to groups at random, as
+an earlier version did, gives both groups the same latent distribution.
+When a minority group differed from the majority by 1 SD, that was too
+narrow and flagged at least one item in about 14\% of datasets without
+DIF, against a nominal 5\%.
 
-For each iteration the function draws one null dataset (see \code{dgp}) and
-computes partial gamma for every item. The computation reproduces
-\code{iarm::partgam_DIF()} exactly but is vectorised, so \code{iarm} is not needed
-here. Iterations that fail are discarded and reported through
-\code{actual_iterations}.
+In each iteration one dataset is simulated (see \code{dgp}) and the partial
+gamma of every item computed. The computation reproduces
+\code{iarm::partgam_DIF()} exactly but is vectorised, so \pkg{iarm} is not
+needed here. Datasets that cannot be used are left out, and
+\code{actual_iterations} gives the number used.
 
 The conditional data-generating process uses CML item thresholds from
 \code{psychotools::pcmodel()} (a dichotomous item is a 2-category PCM). The
 group order follows the levels of \code{dif_var} (alphabetical for character
 vectors), which sets the sign of gamma as in \code{iarm::partgam_DIF()}.
 
-The null has no DIF in any item, so the cutoffs do not guard against
-artificial DIF, which real DIF in one item induces in the others
+The simulations have no DIF in any item, so the cutoffs do not guard
+against artificial DIF, which real DIF in one item induces in the others
 (Hagquist & Andrich, 2017). See "Real and artificial DIF" in
 \code{\link[=RMdifGamma]{RMdifGamma()}}.
 
-Parallel processing is provided by the \code{mirai} package (optional). Install
-it with \code{install.packages("mirai")} to enable parallelisation.
+Parallel processing needs the optional \pkg{mirai} package.
 }
 \examples{
 \donttest{
@@ -140,7 +138,7 @@ if (requireNamespace("ggdist", quietly = TRUE)) {
   colnames(sim_data) <- paste0("Item", 1:10)
   dif_sex <- sample(c("male", "female"), 200, replace = TRUE)
 
-  # Run 100 iterations sequentially for a quick demo
+  # 100 iterations, sequentially, for a quick example
   cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_sex,
                                  iterations = 100, parallel = FALSE,
                                  seed = 42)
@@ -175,6 +173,6 @@ exact conditional tests: Techniques and strategies. \emph{Scandinavian Journal
 of Statistics, 14}(2), 97--112.
 }
 \seealso{
-\code{\link[iarm]{partgam_DIF}}, \code{\link{RMdifGamma}},
-\code{\link{RMdifGammaPlot}}
+\code{\link[=RMdifGamma]{RMdifGamma()}} for the test, \code{\link[=RMdifGammaPlot]{RMdifGammaPlot()}} for the plot,
+\code{\link[iarm:partgam_DIF]{iarm::partgam_DIF()}}.
 }

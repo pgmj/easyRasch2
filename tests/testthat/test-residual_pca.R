@@ -172,3 +172,14 @@ test_that("RMdimResidualPCA stops on a constant item, naming it (CML)", {
   expect_error(suppressWarnings(RMdimResidualPCA(df, output = "dataframe")),
                regexp = paste0(first, " \\(only category 0\\)"))
 })
+
+test_that("output = 'list' returns the variance partition as a table", {
+  d <- phq9[, grep("^q", names(phq9))]
+  df <- RMdimResidualPCA(d, output = "dataframe")
+  res <- RMdimResidualPCA(d, output = "list")
+  expect_named(res, c("components", "variance"))
+  expect_null(attr(res$components, "variance_partition"))
+  expect_equal(res$components, `attr<-`(df, "variance_partition", NULL))
+  expect_equal(nrow(res$variance), 1L)
+  expect_equal(as.list(res$variance), attr(df, "variance_partition"))
+})

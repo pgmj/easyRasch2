@@ -1,72 +1,54 @@
-#' Plot Distribution of Simulated \eqn{Q_3} Residual Correlations
+#' Plot the simulated Q3 residual correlations
 #'
-#' Visualises the distribution of simulation-based Yen's \eqn{Q_3} residual
-#' correlations per item pair from \code{\link{RMlocdepQ3Cutoff}},
-#' optionally overlaying observed \eqn{Q_3} values computed from real data via
-#' \code{mirt::residuals(..., type = "Q3")}.
+#' Plots the simulated \eqn{Q_3} of each item pair from [RMlocdepQ3Cutoff()],
+#' and optionally the observed \eqn{Q_3} in your data and a heatmap of the
+#' observed matrix.
 #'
-#' Uses `ggdist::stat_dotsinterval()` (when `data` is not supplied) or
-#' `ggdist::stat_dots()` (when `data` is supplied) with
-#' `point_interval = "median_hdci"` and `.width = c(0.66, 0.95, 0.99)`.
+#' @param simfit The result of [RMlocdepQ3Cutoff()].
+#' @param data Optional. The item responses the simulations were made from,
+#'   items scored from 0. The observed \eqn{Q_3} is then computed with the
+#'   estimator of `simfit` and drawn as orange diamonds, and the heatmap is
+#'   returned.
+#' @param items Optional character vector of item names. Only pairs with
+#'   both items in it are shown. Default `NULL`, all pairs.
+#' @param n_pairs Optional positive integer. Only the `n_pairs` pairs with
+#'   the largest departure are shown: `|observed - simulated median|` with
+#'   `data`, `|simulated median|` without. Applied after `items`. Values
+#'   above the number of pairs show all pairs.
 #'
-#' @param simfit The return value of \code{\link{RMlocdepQ3Cutoff}} (a list
-#'   with components `pair_results`, `pair_cutoffs`, `actual_iterations`,
-#'   `sample_n`, and `item_names`).
-#' @param data Optional. A data.frame or matrix of item responses for
-#'   computing and overlaying observed \eqn{Q_3} values. Items must be scored
-#'   starting at 0 (non-negative integers). When provided, the plot
-#'   includes orange diamond markers for the observed \eqn{Q_3} alongside the
-#'   simulated distribution, plus segment summaries from the cutoff
-#'   intervals.
-#' @param items Optional character vector of item names to include in the
-#'   plot. Only item pairs where **both** items are in this vector will be
-#'   shown. When `NULL` (default), all item pairs are plotted.
-#' @param n_pairs Optional positive integer. When supplied, only the
-#'   `n_pairs` item pairs with the largest **deviation** from the simulated
-#'   null are plotted, sorted by `|observed Q3 - median(simulated Q3 per
-#'   pair)|` descending when `data` is supplied, or by
-#'   `|median(simulated Q3 per pair)|` otherwise. Applied *after* the
-#'   `items` filter when both are supplied. Values larger than the number
-#'   of available pairs are silently capped.
-#'
-#' @return A named list of two `ggplot` objects (mirroring the `$matrix` /
-#'   `$pairs` structure of \code{\link{RMlocdepQ3}}'s table output):
+#' @return A named list of two `ggplot` objects, with the same structure as
+#'   the tables of [RMlocdepQ3()]:
 #'   \describe{
-#'     \item{`$pairs`}{the per-pair plot described below (always returned).}
-#'     \item{`$matrix`}{a lower-triangle tile heatmap of the **observed** \eqn{Q_3}
-#'       matrix, with pairs above the global dynamic cut-off outlined. This
-#'       needs the observed data, so it is `NULL` (with a message) when `data`
-#'       is not supplied. When `items` is given, the heatmap is subset to those
-#'       items; `n_pairs` does not apply to it.}
+#'     \item{`pairs`}{one row per item pair, labelled "Item1 - Item2".}
+#'     \item{`matrix`}{a heatmap of the lower triangle of the observed
+#'       \eqn{Q_3} matrix, with pairs above the global dynamic cutoff
+#'       outlined. It needs `data`, so it is `NULL` (with a message)
+#'       without it. With `items`, it shows those items only. `n_pairs`
+#'       does not apply to it.}
 #'   }
 #'
 #' @details
-#' The `$pairs` plot shows one row per item pair (labelled as "Item1 - Item2").
-#' Only
-#' the upper triangle of the \eqn{Q_3} matrix is plotted (pairs are unordered
-#' under symmetric \eqn{Q_3}, unlike partial gamma which is direction-dependent).
+#' \eqn{Q_3} is symmetric, so each pair is shown once (unlike partial
+#' gamma, which depends on the direction).
 #'
-#' When `data` is **not** supplied, the function plots the simulated Q3
-#' distributions as dot-interval plots using `ggdist::stat_dotsinterval()`
-#' with median and Highest Density Continuous Interval (HDCI) summaries.
+#' Each pair's simulated values are drawn as dots, with the median, an
+#' inner 66% interval and an outer interval. The outer interval is the one
+#' in `simfit$pair_cutoffs`, which [RMlocdepQ3()] tabulates: the HDCI of
+#' width `hdci_width`, or the 2.5th to 97.5th percentiles with
+#' `cutoff_method = "quantile"`. The inner interval uses the same method.
+#' Without `data` the intervals are drawn with
+#' `ggdist::stat_dotsinterval()`. With `data` they are black segments with
+#' a black dot for the median, and the observed value is an orange diamond.
 #'
-#' When `data` **is** supplied, the function:
-#' \enumerate{
-#'   \item Computes observed \eqn{Q_3} residual correlations under the same
-#'     estimator used to build `simfit` (its `$estimator`: CML/WLE by
-#'     default, or MML via `mirt`).
-#'   \item Overlays observed \eqn{Q_3} values as orange diamond markers on the
-#'     simulated distributions.
-#'   \item Shows per-pair cutoff intervals (from `simfit$pair_cutoffs`)
-#'     as black line segments, with thicker segments for the 66\%
-#'     interval and black dots for the median.
-#' }
+#' The intervals are per pair and not corrected for testing many pairs.
+#' With the full cutoff object, [RMlocdepQ3()] flags pairs by adjusted
+#' p-values instead, so a pair just outside its interval need not be
+#' flagged there. The plot shows no p-values.
 #'
-#' The `ggplot2`, `ggdist`, `mirt`, and `scales` packages must be
-#' installed (most are in Suggests, not Imports).
+#' The \pkg{ggplot2}, \pkg{ggdist} and \pkg{scales} packages must be
+#' installed, and \pkg{mirt} for `estimator = "MML"`.
 #'
-#' @seealso \code{\link{RMlocdepQ3}}, \code{\link{RMlocdepQ3Cutoff}},
-#'   \code{\link{RMlocdepGammaPlot}}
+#' @seealso [RMlocdepQ3()], [RMlocdepQ3Cutoff()], [RMlocdepGammaPlot()]
 #'
 #' @importFrom rlang .data
 #' @export
@@ -81,7 +63,7 @@
 #'   )
 #'   colnames(sim_data) <- paste0("Item", 1:10)
 #'
-#'   # Run simulation (use more iterations, e.g. 500+, in real analyses)
+#'   # Run the simulation (use 1000 or more iterations in real analyses)
 #'   cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 50,
 #'                                  parallel = FALSE, seed = 42)
 #'
@@ -291,24 +273,26 @@ RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
   }
 
   # --- Per-pair summary intervals for segment overlays ------------------------
+  # The outer interval is the one stored in `simfit$pair_cutoffs` (the one
+  # RMlocdepQ3() tabulates) and the inner 66% interval uses the same method.
+  spec <- .sim_interval_spec(simfit)
+  interval_note <- .sim_interval_caption(spec, "pair", "RMlocdepQ3()")
   pair_names <- unique(results_df$Pair)
-  lo_hi <- do.call(
-    rbind,
-    lapply(pair_names, function(pair) {
-      sub <- results_df[results_df$Pair == pair, ]
-      data.frame(
-        Pair = pair,
-        min_Q3 = stats::quantile(sub$Q3, 0.005, na.rm = TRUE),
-        max_Q3 = stats::quantile(sub$Q3, 0.995, na.rm = TRUE),
-        p66lo_Q3 = stats::quantile(sub$Q3, 0.167, na.rm = TRUE),
-        p66hi_Q3 = stats::quantile(sub$Q3, 0.833, na.rm = TRUE),
-        median_Q3 = stats::median(sub$Q3, na.rm = TRUE),
-        stringsAsFactors = FALSE,
-        row.names = NULL
-      )
-    })
+  cut_idx <- match(pair_names, pair_cutoffs$Pair)
+  iv <- .sim_plot_intervals(
+    results_df$Q3, results_df$Pair, pair_names,
+    pair_cutoffs$Q3_low[cut_idx], pair_cutoffs$Q3_high[cut_idx],
+    spec$method
   )
-  rownames(lo_hi) <- NULL
+  lo_hi <- data.frame(
+    Pair = pair_names,
+    min_Q3 = iv$lo,
+    max_Q3 = iv$hi,
+    p66lo_Q3 = iv$lo66,
+    p66hi_Q3 = iv$hi66,
+    median_Q3 = iv$median,
+    stringsAsFactors = FALSE
+  )
 
   # --- Case 1: no observed data, show simulation distribution only ------------
   if (missing(data)) {
@@ -326,10 +310,10 @@ RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
       ggdist::stat_dotsinterval(
         ggplot2::aes(slab_fill = ggplot2::after_stat(.data$level)),
         quantiles = actual_iterations,
-        point_interval = "median_hdci",
+        point_interval = .sim_point_interval(spec),
         layout = "weave",
         slab_color = NA,
-        .width = c(0.66, 0.95, 0.99)
+        .width = c(0.66, spec$width)
       ) +
       ggplot2::geom_vline(
         xintercept = 0,
@@ -345,11 +329,12 @@ RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
           actual_iterations,
           " simulated datasets (no true local dependence). ",
           sample_clause,
-          " per dataset."
+          " per dataset.\n",
+          interval_note
         ))
       ) +
       ggplot2::scale_color_manual(
-        values = scales::brewer_pal()(3),
+        values = scales::brewer_pal()(3)[-1],
         aesthetics = "slab_fill",
         guide = "none"
       ) +
@@ -390,7 +375,8 @@ RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     sample_clause,
     " per dataset.\n",
     "Orange diamonds indicate observed Q3 residual correlation. ",
-    "Black dots indicate median Q3 from simulations."
+    "Black dots indicate median Q3 from simulations.\n",
+    interval_note
   ))
 
   p <- ggplot2::ggplot(
@@ -400,9 +386,10 @@ RMlocdepQ3Plot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     ggdist::stat_dots(
       ggplot2::aes(slab_fill = ggplot2::after_stat(.data$level)),
       quantiles = actual_iterations,
+      point_interval = .sim_point_interval(spec),
       layout = "weave",
       slab_color = NA,
-      .width = c(0.66, 0.95, 0.99)
+      .width = c(0.66, spec$width)
     ) +
     ggplot2::geom_segment(
       data = lo_hi,

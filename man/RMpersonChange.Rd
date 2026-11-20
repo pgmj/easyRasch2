@@ -72,7 +72,7 @@ referred to a normal null (for example \code{1.96}).}
 
 \item{direction}{Character. \code{"two.sided"} (default), or \code{"increase"} /
 \code{"decrease"} for a one-sided test. These name the direction of
-\eqn{\theta}; whether an increase is an improvement depends on how the
+\eqn{\theta}. Whether an increase is an improvement depends on how the
 scale is oriented.}
 
 \item{conditional_crit}{Logical. If \code{TRUE}, critical values are computed
@@ -83,12 +83,14 @@ simulated, per \code{critical}) rather than pooled across the sample. Default
 \item{sim_iter}{Integer. Simulation iterations when
 \code{critical = "simulate"}. Default \code{1000}.}
 
-\item{parallel}{Logical. Use \code{mirai} for the simulation if available.
-Default \code{TRUE}. Only used when \code{critical = "simulate"}.}
+\item{parallel}{Logical. Run the simulation in parallel via \pkg{mirai}
+when it is installed. Default \code{TRUE}. Only used when
+\code{critical = "simulate"}.}
 
-\item{n_cores}{Integer or \code{NULL}. Parallel workers. When \code{NULL},
-\code{getOption("mc.cores")} is checked first; if neither is set, the
-simulation runs sequentially. Only used when \code{critical = "simulate"}.}
+\item{n_cores}{Integer or \code{NULL}. Number of parallel workers. When
+\code{NULL}, \code{getOption("mc.cores")} is used. If that is unset too, the
+simulation runs sequentially. Only used when
+\code{critical = "simulate"}.}
 
 \item{seed}{Integer or \code{NULL}. Random seed. See
 \link{easyRasch2-reproducibility}. Only used when \code{critical = "simulate"}.}
@@ -99,7 +101,8 @@ bounds for the EAP grid. Default \code{c(-10, 10)}.}
 \item{verbose}{Logical. Print a progress bar for the simulation. Default
 \code{FALSE}. Only used when \code{critical = "simulate"}.}
 
-\item{output}{Character. \code{"dataframe"} (default), \code{"kable"}, or \code{"ggplot"}.}
+\item{output}{Character. \code{"dataframe"} (default), \code{"kable"}, \code{"ggplot"},
+or \code{"list"} for the per-respondent table and the analysis settings.}
 }
 \value{
 \itemize{
@@ -108,17 +111,25 @@ bounds for the EAP grid. Default \code{c(-10, 10)}.}
 \code{extreme_t1}, \code{extreme_t2}, \code{change}, \code{se_diff}, \code{rci}, \code{p_value},
 \code{crit_lower}, \code{crit_upper}, \code{change_class}, and \code{retest_sd_tip}.
 Attributes \code{null}, \code{retest_sd}, \code{anchor}, \code{alpha}, \code{direction},
-\code{critical} and \code{sim_iter} (\code{NA} unless simulated) record the analysis.
+\code{critical}, \code{sim_iter} (\code{NA} unless simulated), \code{method} and
+\code{conditional_crit} record the analysis. They are kept for
+compatibility. \code{output = "list"} gives them as a table.
 \item If \code{output = "kable"}: the same content as a \code{knitr_kable}.
 \item If \code{output = "ggplot"}: occasion 1 against occasion 2, with the
 no-change band and points coloured by \code{change_class}.
+\item If \code{output = "list"}: a list with \code{persons} (the data.frame above) and
+\code{settings}, a one-row data.frame with \code{null}, \code{retest_sd} (0 with
+\code{null = "measurement"}), \code{anchor}, \code{method}, \code{estimator}, \code{alpha},
+\code{direction}, \code{critical} (the method used), \code{conditional_crit},
+\code{sim_iter} (\code{NA} unless simulated) and \code{n_persons}.
 }
 }
 \description{
 Tests, for each respondent, whether their person location moved between two
-occasions by more than measurement error allows. The statistic is the Rasch
-change index, \eqn{RCI = (\hat\theta_2 - \hat\theta_1)/SE_{diff}}, referred
-by default to its exact null distribution rather than a normal one.
+occasions by more than measurement error allows. The statistic is a Rasch
+version of the reliable change index (Jacobson & Truax, 1991),
+\eqn{RCI = (\hat\theta_2 - \hat\theta_1)/SE_{diff}}, referred by default
+to its exact null distribution rather than a normal one.
 }
 \details{
 \strong{Which null is tested.} Following Zumbo (2026), the estimand is fixed by
@@ -192,19 +203,20 @@ They part company when exchangeability fails, most commonly when the
 occasions differ in which items were answered.
 
 The pooled critical value is a property of the sample as well as the items,
-because it averages over where the respondents sit. Targeting matters more
-than the shape of the distribution: skewing the sample barely moves it,
-while pushing the same sample off target until 40 percent of respondents
+because it averages over where the respondents are. Targeting matters
+more than the shape of the distribution: skewing the sample barely moves
+it, while pushing the same sample off target until 40\% of respondents
 score at an extreme moved it from 1.70 to 1.52 in one check.
 
 \strong{What the RCI measures, and what it does not.} The RCI answers whether a
 change is distinguishable from the null. It is not a measure of how much
-someone changed, and the two orderings genuinely differ. Its value mixes two
+someone changed, and the two orderings differ. Its value mixes two
 ingredients that it cannot separate: how far the respondent moved, and how
 precisely each of their two positions was pinned down. On a scale of six
 items with four response categories the standard error runs from 0.49 in the
-middle to 1.45 at the boundary, a factor of three within one instrument. A respondent going from
-the minimum to the maximum score moves 7.24 logits and scores RCI 3.53,
+middle to 1.45 at the boundary, a factor of three within one instrument. A
+respondent going from the minimum to the maximum score moves 7.24 logits
+and scores RCI 3.53,
 while one going from 3 to 15 moves 3.11 logits and scores 3.59. The first
 traversed the whole scale, the second less than half of it, and the second
 has the larger statistic. Both statements are correct about their own
@@ -254,7 +266,7 @@ zero at the item mean, positive above it and negative below it. On twenty
 items with four categories and no true change whatever, the simulated mean
 observed change reached +0.46 logits at \eqn{\theta = 2.5} and -0.47 at
 \eqn{\theta = -2.5} when \eqn{d = 1.5}. Two consequences follow. False
-positives stop dividing evenly by direction, reaching 97 percent "increase"
+positives stop dividing evenly by direction, reaching 97\% "increase"
 among respondents above the items. And a uniform true change is read as a
 gradient in baseline severity: a real improvement of 0.50 logits for everyone
 came out as 0.14 for respondents below the items and 0.55 for those above.

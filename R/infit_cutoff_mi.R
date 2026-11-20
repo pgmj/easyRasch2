@@ -1,42 +1,43 @@
-#' Simulation-Based Infit MSQ Cutoff Determination for Multiply Imputed Data
+#' Simulation-based infit MSQ cutoffs for multiply imputed data
 #'
-#' Extends \code{\link{RMitemInfitCutoff}} to work with multiply imputed datasets
-#' produced by the `mice` package. Runs the parametric bootstrap simulation on
-#' each imputed dataset and stacks the resulting distributions, so that the
-#' final cutoff intervals reflect both sampling variability and imputation
-#' uncertainty.
+#' The counterpart of [RMitemInfitCutoff()] for data imputed with the
+#' \pkg{mice} package. Runs the simulations in each imputed dataset and
+#' stacks them, so that the interval per item reflects both sampling
+#' variability and the uncertainty from imputation. The result is used by
+#' [RMitemInfitMI()].
 #'
-#' @param mids_object A `mids` object (multiply imputed dataset) as returned by
-#'   `mice::mice()`. Each completed dataset must contain only the item response
-#'   columns to be analysed (i.e., no ID or grouping variables). Items must be
-#'   scored starting at 0 (non-negative integers).
-#' @param iterations Integer. Total number of simulation iterations to run
-#'   across all imputations. These are distributed approximately evenly across
-#'   the `m` imputed datasets (default 500).
-#' @param parallel Logical. Use parallel processing via `mirai` within each
-#'   imputed dataset (default `TRUE`). Passed to \code{\link{RMitemInfitCutoff}}.
+#' @param mids_object A `mids` object from `mice::mice()`. Each completed
+#'   dataset must contain only the item response columns, with no ID or
+#'   grouping variables. Items are scored from 0. Items imputed as
+#'   factors, as the `polr` method needs, are converted back to numbers.
+#'   Their levels must be the response codes (`"0"`, `"1"`, ...).
+#' @param iterations Integer. Total number of simulated datasets across all
+#'   imputations, split about evenly between the `m` imputed datasets.
+#'   Default `500`. See the section on interval width.
+#' @param parallel Logical. Run the simulations within each imputed
+#'   dataset in parallel via \pkg{mirai}. Default `TRUE`. Passed to
+#'   [RMitemInfitCutoff()].
 #' @param n_cores Integer or `NULL`. Number of parallel workers. Passed to
 #'   \code{\link{RMitemInfitCutoff}}.
 #' @param verbose Logical. Show progress messages (default `FALSE`).
-#' @param seed Integer or `NULL`. Master random seed for reproducibility. A
-#'   unique per-imputation seed is derived from this value. See
+#' @param seed Integer or `NULL`. Random seed for reproducibility, from
+#'   which a seed for each imputation is derived. See
 #'   [easyRasch2-reproducibility] for what this guarantees and how it
 #'   interacts with `parallel`.
-#' @param cutoff_method Character string specifying how cutoff intervals are
-#'   computed from the stacked distribution. Either `"hdci"` (default) for the
-#'   Highest Density Interval via `ggdist::hdci()`, or `"quantile"` for the
-#'   2.5th/97.5th percentiles via `stats::quantile()`.
-#' @param hdci_width Numeric. Width of the HDCI when `cutoff_method = "hdci"`.
-#'   Default is `0.999` (99.9% HDCI). Ignored when
-#'   `cutoff_method = "quantile"`.
+#' @param cutoff_method Character. How the interval per item is computed
+#'   from the stacked simulations: `"hdci"` (default), the highest-density
+#'   continuous interval from `ggdist::hdci()` (needs \pkg{ggdist}), or
+#'   `"quantile"`, the 2.5th to 97.5th percentiles.
+#' @param hdci_width Numeric. Width of the interval with
+#'   `cutoff_method = "hdci"`. Default `0.999`, see the section on interval
+#'   width. Ignored with `"quantile"`.
 #'
-#' @return A list with the same structure as \code{\link{RMitemInfitCutoff}}, so
-#'   that the result can be passed directly to \code{\link{RMitemInfit}},
-#'   \code{\link{RMitemInfitMI}}, and \code{\link{RMitemInfitPlot}}:
+#' @return A list like that of [RMitemInfitCutoff()], which
+#'   [RMitemInfitMI()] and [RMitemInfitPlot()] accept, with:
 #' \describe{
-#'   \item{`results`}{data.frame with columns `iteration`, `imputation`,
-#'     `Item`, `InfitMSQ`, `OutfitMSQ` — the stacked simulation results from
-#'     all imputed datasets.}
+#'   \item{`results`}{data.frame with the columns `iteration`,
+#'     `imputation`, `Item`, `InfitMSQ` and `OutfitMSQ`, the stacked
+#'     simulations from all imputed datasets.}
 #'   \item{`item_cutoffs`}{data.frame with per-item cutoff summaries: `Item`,
 #'     `infit_low`, `infit_high`, `outfit_low`, `outfit_high`. Computed from
 #'     the stacked distribution.}
@@ -56,29 +57,34 @@
 #' }
 #'
 #' @details
-#' The function completes each of the `m` imputed datasets via
-#' `mice::complete()`, then calls \code{\link{RMitemInfitCutoff}} on each one. The
-#' total number of iterations is split approximately evenly across imputations
-#' (i.e., each imputed dataset receives `ceiling(iterations / m)` or
-#' `floor(iterations / m)` iterations). The per-imputation simulation results
-#' are stacked into a single distribution from which cutoff intervals are
-#' computed, naturally incorporating imputation uncertainty.
+#' Each of the `m` imputed datasets is completed with `mice::complete()` and
+#' passed to [RMitemInfitCutoff()], with `ceiling(iterations / m)` or
+#' `floor(iterations / m)` iterations each. The simulations from all
+#' imputations are stacked, and the interval per item is computed from the
+#' stack.
 #'
-#' Imputed datasets that cause model convergence failures are dropped with a
+#' Imputed datasets in which the model cannot be fitted are dropped with a
 #' warning. If all imputations fail, the function stops with an error.
 #'
-#' The `mice` package must be installed (it is in Suggests, not Imports).
+#' The \pkg{mice} package must be installed (it is in Suggests).
 #'
 #' @section Interval width under multiple imputation:
-#' `hdci_width` defaults to `0.999` here, not to the `0.95` used by
-#' \code{\link{RMitemInfitCutoff}}. \code{\link{RMitemInfitMI}} has no
-#' corrected-p-value path yet, so under imputation the interval is still the
-#' decision rule and keeps a width chosen for that job. Combining bootstrap
-#' p-values across imputations is planned but needs its own calibration, since
-#' Johansson (2026) covers complete data only.
+#' `hdci_width` defaults to `0.999` here, not to the `0.95` of
+#' [RMitemInfitCutoff()]. [RMitemInfitMI()] has no corrected p-value yet, so
+#' under imputation the interval is still the decision rule, and it keeps a
+#' width chosen for that. Its family-wise error rate is `1 - 0.999^k` over
+#' `k` items. An interval this wide needs roughly 5000 iterations in all
+#' before it reaches its stated width (Johansson, 2026). Combining bootstrap
+#' p-values across imputations is planned but needs its own calibration,
+#' since Johansson (2026) covers complete data only.
 #'
-#' @seealso \code{\link{RMitemInfitCutoff}}, \code{\link{RMitemInfitMI}},
-#'   \code{\link{RMitemInfitPlot}}
+#' @references
+#' Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
+#' Rasch models: Iterations, multiplicity correction, and decision stability.
+#' *PsyArXiv*. \doi{10.31234/osf.io/7pqz4_v2}
+#'
+#' @seealso [RMitemInfitMI()] for the pooled test, [RMitemInfitPlot()] to
+#'   plot the simulated values, [RMitemInfitCutoff()] for complete data.
 #'
 #' @export
 #'
@@ -103,8 +109,8 @@
 #'   imp <- mice::mice(sim_data, m = 2, method = "polr", seed = 123,
 #'                     printFlag = FALSE)
 #'
-#'   # Compute simulation-based cutoffs across imputations
-#'   # (use more iterations, e.g. 250+, in real analyses)
+#'   # Simulation-based cutoffs across imputations (use far more
+#'   # iterations in real analyses, see the section on interval width)
 #'   cutoff_mi <- RMitemInfitCutoffMI(imp, iterations = 50, parallel = FALSE,
 #'                                 seed = 42)
 #'   cutoff_mi$item_cutoffs

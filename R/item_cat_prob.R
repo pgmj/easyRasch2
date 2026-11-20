@@ -1,18 +1,16 @@
-#' Item Category Probability Curves
+#' Item category probability curves
 #'
-#' Plots model-implied response-category probability curves for each item
-#' as a function of the latent trait \eqn{\theta}. Item parameters are
-#' estimated by conditional maximum likelihood via `psychotools::pcmodel()`
-#' (a dichotomous item is a 2-category PCM). Each item gets
-#' its own facet panel, with one curve per response category coloured
-#' from low to high using the viridis palette. Comparable in scope to
-#' `eRm::plotICC()` and `mirt`'s trace plots, with a `ggplot2` /
-#' viridis output and optional descriptive labels for items and
-#' categories.
+#' Plots the model's probability of each response category against the
+#' latent variable \eqn{\theta}, one panel per item. The item parameters
+#' are estimated by conditional maximum likelihood with
+#' `psychotools::pcmodel()` (a dichotomous item is a 2-category partial
+#' credit model). The curves are coloured from low to high categories with
+#' a viridis palette. Comparable to `eRm::plotICC()` and the trace plots of
+#' \pkg{mirt}, with optional labels for items and categories.
 #'
 #' @param data A data.frame or matrix of item responses. Items must be
-#'   scored starting at 0 (non-negative integers). Missing values
-#'   (`NA`) are allowed --- the model fit handles them.
+#'   scored starting at 0. Missing values (`NA`) are allowed, since CML
+#'   uses the items each respondent answered.
 #' @param item_labels Optional character vector of descriptive item
 #'   labels (facet strip titles). Must be the same length as
 #'   `ncol(data)`. If `NULL` (the default), column names are used.
@@ -23,17 +21,16 @@
 #' @param theta_range Numeric length 2. Range of the latent trait
 #'   \eqn{\theta} (logits) plotted along the x-axis. When `NULL`
 #'   (default) the range is `c(-4, 4)` for `label_curves = "legend"`
-#'   and a wider `c(-5, 5)` for `label_curves = "path"` --- the
-#'   wider range gives `geomtextpath` more horizontal room to place
-#'   per-curve labels at their peaks. Pass an explicit
-#'   `c(lo, hi)` to override.
+#'   and `c(-5, 5)` for `label_curves = "path"`, which gives
+#'   \pkg{geomtextpath} more room to place the labels at the peaks of the
+#'   curves. Pass `c(lo, hi)` to override.
 #' @param n_points Integer. Number of evenly-spaced \eqn{\theta} values
 #'   at which the curves are evaluated. Default `200L`.
 #' @param viridis_option Character. Viridis palette identifier. One of
 #'   `"A"` through `"H"`. Default `"D"` (viridis green).
 #' @param viridis_end Numeric in (0, 1]. Upper end of the viridis
-#'   palette range; lower values keep the palette inside its mid-tones
-#'   (avoids the very bright yellow at `1.0`). Default `0.95`.
+#'   palette range. Lower values keep the palette in its mid-tones and
+#'   avoid the very bright yellow at `1.0`. Default `0.95`.
 #' @param facet_ncol Optional integer. Number of columns in the facet
 #'   layout. Default `NULL` (`ggplot2::facet_wrap()` auto-layout).
 #' @param label_wrap Integer. Characters per line for facet-strip
@@ -45,17 +42,14 @@
 #'   `ggplot` object, or `"dataframe"` for the underlying long-format
 #'   probability table.
 #' @param label_curves Character. How response categories are
-#'   identified. `"legend"` (default) draws lines and a separate
-#'   colour legend with one swatch per category --- the standard
-#'   multi-item presentation. `"path"` uses
-#'   `geomtextpath::geom_textpath()` to write each category's label
-#'   *along* its own curve (a la classic IRT trace plots) and
-#'   suppresses the legend; valid for **a single item at a time**
-#'   because narrow facets do not give path labels enough horizontal
-#'   room to render legibly. The model is still fit on the full
-#'   multi-item `data` (PCM thresholds require multi-item input for
-#'   CML estimation); the `item` argument then selects which item's
-#'   curves to plot. Requires the optional `geomtextpath` package.
+#'   identified. `"legend"` (default) draws lines and a colour legend
+#'   with one entry per category. `"path"` uses
+#'   `geomtextpath::geom_textpath()` to write each category's label along
+#'   its curve, as in classic trace plots, without a legend. It works for
+#'   one item at a time, since narrow panels leave too little room for the
+#'   labels. The model is still fitted on all items in `data`, as CML
+#'   needs, and `item` selects the item to plot. Needs the optional
+#'   \pkg{geomtextpath} package.
 #' @param item Character or integer. Used only when
 #'   `label_curves = "path"`. Either an item name (matching a column
 #'   in `data`) or a column index, identifying which item's category
@@ -67,9 +61,9 @@
 #' * If `output = "ggplot"`: a [ggplot2::ggplot] object, one facet per
 #'   item.
 #' * If `output = "dataframe"`: a long-format data.frame with columns
-#'   `Item` (factor in column order), `Category` (integer), and
-#'   `Theta`, `Probability` (numeric), one row per item × category ×
-#'   theta gridpoint.
+#'   `Item` (factor in column order), `Category` (integer), `Theta` and
+#'   `Probability`, one row per item, category and grid value of
+#'   theta.
 #'
 #' @details
 #' For each polytomous item *i* with response categories
@@ -81,27 +75,23 @@
 #'   (\theta - \delta_{i,j}))}{\sum_{k'=0}^{K_i} \exp(\sum_{j=1}^{k'}
 #'   (\theta - \delta_{i,j}))},}
 #'
-#' with the empty sum (when \eqn{k = 0}) taken as zero. For
-#' dichotomous items the function fits a Rasch model and treats
-#' the item difficulty \eqn{\delta_i = -\beta_i} as the single
-#' threshold, recovering the standard two-category logistic ICC.
+#' with the empty sum (when \eqn{k = 0}) taken as zero. A dichotomous
+#' item has a single threshold, its difficulty, which gives the usual
+#' logistic item characteristic curve.
 #'
-#' The colour mapping uses `scale_color_viridis_c()` against the
-#' integer category value, so the natural ordering of response
-#' categories is preserved visually --- low categories at one end of
-#' the palette, high categories at the other. When `category_labels`
-#' is provided, the legend uses those labels (e.g., "Never" /
-#' "Sometimes" / "Often") while the colour mapping stays on the
-#' integer category value.
+#' The colours follow the category number, so low categories are at one
+#' end of the palette and high categories at the other. With
+#' `category_labels`, the legend shows those labels (for example "Never",
+#' "Sometimes", "Often").
 #'
-#' Items with fewer response categories than the maximum (e.g., an
-#' otherwise four-category scale with one three-category item)
-#' contribute only the categories they actually have to their own
-#' facet --- the y-axis still spans \eqn{[0, 1]}.
+#' An item with fewer categories than the others (for example one
+#' three-category item in a four-category scale) shows only its own
+#' categories. The y-axis still spans \eqn{[0, 1]}.
 #'
-#' @seealso [RMitemICCPlot()] for conditional ICCs binned by total
-#'   score, [RMitemHierarchy()] for item threshold locations on the
-#'   logit scale.
+#' @seealso [RMtargeting()] for the categories' ranges together with the
+#'   person locations, [RMitemHierarchy()] for the threshold locations,
+#'   [RMitemCatFit()] for a test of whether the categories work as scored,
+#'   [RMitemICCPlot()] for conditional ICCs.
 #'
 #' @examples
 #' \donttest{
@@ -123,9 +113,8 @@
 #'   df <- RMitemCatProb(pcmdat2, output = "dataframe")
 #'   head(df)
 #'
-#'   # Single-item plot with labels written along each curve
-#'   # (classic IRT trace-plot style). Model is still fit on all four
-#'   # items; `item` picks which one to plot.
+#'   # One item with the labels written along the curves. The model is
+#'   # still fitted on all four items, and `item` picks the one to plot.
 #'   if (requireNamespace("geomtextpath", quietly = TRUE)) {
 #'     RMitemCatProb(
 #'       pcmdat2,

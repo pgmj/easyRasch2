@@ -95,8 +95,9 @@ remotes::install_github("pgmj/easyRasch2")
 - `RMitemRestscore()` — item-restscore with Goodman-Kruskal's $\gamma$ (gamma)
 - `RMitemRestscoreCutoff()` + `RMitemRestscorePlot()` — parametric bootstrap
   null for item-restscore, flagged on corrected bootstrap *p*-values
-- `RMitemRestscoreBoot()` — non-parametric bootstrap of item-restscore fit
-  (descriptive; see its help page)
+- `RMitemRestscoreBoot()` — how often the asymptotic item-restscore test
+  flags each item across bootstrap samples (a stability check, not a
+  calibrated test)
 - `RMitemICCPlot()` - conditional item characteristic curves
 
 ### Local dependence

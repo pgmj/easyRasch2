@@ -3,7 +3,7 @@
 \docType{data}
 \name{phq9}
 \alias{phq9}
-\title{PHQ-9 Depression Screener (NHANES Subsample)}
+\title{PHQ-9 depression screener (NHANES subsample)}
 \format{
 A data frame with 600 rows and 12 variables:
 \describe{
@@ -48,15 +48,14 @@ A processed subsample of the Patient Health Questionnaire 9-item (PHQ-9)
 depression screener from the U.S. National Health and Nutrition
 Examination Survey (NHANES), September 2024 release. Six hundred
 respondents with complete responses on all nine items were sampled
-from the cycle's PHQ-9 module. Respondents with a sum score of zero
-were reduced by hand to 8, so the sample has much higher symptom
+from the cycle's PHQ-9 module. The number of respondents with a sum
+score of zero was reduced to 8, so the sample has much higher symptom
 levels than the NHANES population and is not representative of it.
 The same data are included in the easyRaschBayes package.
 }
 \details{
-The dataset is a \emph{processed subsample} intended for teaching and for
-the package's worked example; it should not be treated as a canonical
-NHANES microdata file. Users wishing to validate against NCHS-published
+The dataset is a processed subsample for teaching and for the package's
+worked example, not a canonical NHANES microdata file. Users wishing to validate against NCHS-published
 figures should download the original public-use microdata directly
 from the NHANES website (see \emph{Source}).
 }

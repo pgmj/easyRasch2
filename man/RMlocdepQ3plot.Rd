@@ -2,79 +2,63 @@
 % Please edit documentation in R/locdep_q3_plot.R
 \name{RMlocdepQ3Plot}
 \alias{RMlocdepQ3Plot}
-\title{Plot Distribution of Simulated \eqn{Q_3} Residual Correlations}
+\title{Plot the simulated Q3 residual correlations}
 \usage{
 RMlocdepQ3Plot(simfit, data, items = NULL, n_pairs = NULL)
 }
 \arguments{
-\item{simfit}{The return value of \code{\link{RMlocdepQ3Cutoff}} (a list
-with components \code{pair_results}, \code{pair_cutoffs}, \code{actual_iterations},
-\code{sample_n}, and \code{item_names}).}
+\item{simfit}{The result of \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}.}
 
-\item{data}{Optional. A data.frame or matrix of item responses for
-computing and overlaying observed \eqn{Q_3} values. Items must be scored
-starting at 0 (non-negative integers). When provided, the plot
-includes orange diamond markers for the observed \eqn{Q_3} alongside the
-simulated distribution, plus segment summaries from the cutoff
-intervals.}
+\item{data}{Optional. The item responses the simulations were made from,
+items scored from 0. The observed \eqn{Q_3} is then computed with the
+estimator of \code{simfit} and drawn as orange diamonds, and the heatmap is
+returned.}
 
-\item{items}{Optional character vector of item names to include in the
-plot. Only item pairs where \strong{both} items are in this vector will be
-shown. When \code{NULL} (default), all item pairs are plotted.}
+\item{items}{Optional character vector of item names. Only pairs with
+both items in it are shown. Default \code{NULL}, all pairs.}
 
-\item{n_pairs}{Optional positive integer. When supplied, only the
-\code{n_pairs} item pairs with the largest \strong{deviation} from the simulated
-null are plotted, sorted by \verb{|observed Q3 - median(simulated Q3 per pair)|} descending when \code{data} is supplied, or by
-\verb{|median(simulated Q3 per pair)|} otherwise. Applied \emph{after} the
-\code{items} filter when both are supplied. Values larger than the number
-of available pairs are silently capped.}
+\item{n_pairs}{Optional positive integer. Only the \code{n_pairs} pairs with
+the largest departure are shown: \verb{|observed - simulated median|} with
+\code{data}, \verb{|simulated median|} without. Applied after \code{items}. Values
+above the number of pairs show all pairs.}
 }
 \value{
-A named list of two \code{ggplot} objects (mirroring the \verb{$matrix} /
-\verb{$pairs} structure of \code{\link{RMlocdepQ3}}'s table output):
+A named list of two \code{ggplot} objects, with the same structure as
+the tables of \code{\link[=RMlocdepQ3]{RMlocdepQ3()}}:
 \describe{
-\item{\verb{$pairs}}{the per-pair plot described below (always returned).}
-\item{\verb{$matrix}}{a lower-triangle tile heatmap of the \strong{observed} \eqn{Q_3}
-matrix, with pairs above the global dynamic cut-off outlined. This
-needs the observed data, so it is \code{NULL} (with a message) when \code{data}
-is not supplied. When \code{items} is given, the heatmap is subset to those
-items; \code{n_pairs} does not apply to it.}
+\item{\code{pairs}}{one row per item pair, labelled "Item1 - Item2".}
+\item{\code{matrix}}{a heatmap of the lower triangle of the observed
+\eqn{Q_3} matrix, with pairs above the global dynamic cutoff
+outlined. It needs \code{data}, so it is \code{NULL} (with a message)
+without it. With \code{items}, it shows those items only. \code{n_pairs}
+does not apply to it.}
 }
 }
 \description{
-Visualises the distribution of simulation-based Yen's \eqn{Q_3} residual
-correlations per item pair from \code{\link{RMlocdepQ3Cutoff}},
-optionally overlaying observed \eqn{Q_3} values computed from real data via
-\code{mirt::residuals(..., type = "Q3")}.
+Plots the simulated \eqn{Q_3} of each item pair from \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}},
+and optionally the observed \eqn{Q_3} in your data and a heatmap of the
+observed matrix.
 }
 \details{
-Uses \code{ggdist::stat_dotsinterval()} (when \code{data} is not supplied) or
-\code{ggdist::stat_dots()} (when \code{data} is supplied) with
-\code{point_interval = "median_hdci"} and \code{.width = c(0.66, 0.95, 0.99)}.
+\eqn{Q_3} is symmetric, so each pair is shown once (unlike partial
+gamma, which depends on the direction).
 
-The \verb{$pairs} plot shows one row per item pair (labelled as "Item1 - Item2").
-Only
-the upper triangle of the \eqn{Q_3} matrix is plotted (pairs are unordered
-under symmetric \eqn{Q_3}, unlike partial gamma which is direction-dependent).
+Each pair's simulated values are drawn as dots, with the median, an
+inner 66\% interval and an outer interval. The outer interval is the one
+in \code{simfit$pair_cutoffs}, which \code{\link[=RMlocdepQ3]{RMlocdepQ3()}} tabulates: the HDCI of
+width \code{hdci_width}, or the 2.5th to 97.5th percentiles with
+\code{cutoff_method = "quantile"}. The inner interval uses the same method.
+Without \code{data} the intervals are drawn with
+\code{ggdist::stat_dotsinterval()}. With \code{data} they are black segments with
+a black dot for the median, and the observed value is an orange diamond.
 
-When \code{data} is \strong{not} supplied, the function plots the simulated Q3
-distributions as dot-interval plots using \code{ggdist::stat_dotsinterval()}
-with median and Highest Density Continuous Interval (HDCI) summaries.
+The intervals are per pair and not corrected for testing many pairs.
+With the full cutoff object, \code{\link[=RMlocdepQ3]{RMlocdepQ3()}} flags pairs by adjusted
+p-values instead, so a pair just outside its interval need not be
+flagged there. The plot shows no p-values.
 
-When \code{data} \strong{is} supplied, the function:
-\enumerate{
-\item Computes observed \eqn{Q_3} residual correlations under the same
-estimator used to build \code{simfit} (its \verb{$estimator}: CML/WLE by
-default, or MML via \code{mirt}).
-\item Overlays observed \eqn{Q_3} values as orange diamond markers on the
-simulated distributions.
-\item Shows per-pair cutoff intervals (from \code{simfit$pair_cutoffs})
-as black line segments, with thicker segments for the 66\\%
-interval and black dots for the median.
-}
-
-The \code{ggplot2}, \code{ggdist}, \code{mirt}, and \code{scales} packages must be
-installed (most are in Suggests, not Imports).
+The \pkg{ggplot2}, \pkg{ggdist} and \pkg{scales} packages must be
+installed, and \pkg{mirt} for \code{estimator = "MML"}.
 }
 \examples{
 \donttest{
@@ -86,7 +70,7 @@ if (requireNamespace("ggplot2", quietly = TRUE) &&
   )
   colnames(sim_data) <- paste0("Item", 1:10)
 
-  # Run simulation (use more iterations, e.g. 500+, in real analyses)
+  # Run the simulation (use 1000 or more iterations in real analyses)
   cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 50,
                                  parallel = FALSE, seed = 42)
 
@@ -102,6 +86,5 @@ if (requireNamespace("ggplot2", quietly = TRUE) &&
 }
 }
 \seealso{
-\code{\link{RMlocdepQ3}}, \code{\link{RMlocdepQ3Cutoff}},
-\code{\link{RMlocdepGammaPlot}}
+\code{\link[=RMlocdepQ3]{RMlocdepQ3()}}, \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}, \code{\link[=RMlocdepGammaPlot]{RMlocdepGammaPlot()}}
 }

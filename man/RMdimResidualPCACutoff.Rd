@@ -2,7 +2,7 @@
 % Please edit documentation in R/residual_pca.R
 \name{RMdimResidualPCACutoff}
 \alias{RMdimResidualPCACutoff}
-\title{Simulation-based Cutoff for First-Contrast Eigenvalue}
+\title{Simulation-based bound for the first-contrast eigenvalue}
 \usage{
 RMdimResidualPCACutoff(
   data,
@@ -14,17 +14,17 @@ RMdimResidualPCACutoff(
 )
 }
 \arguments{
-\item{data}{A data.frame or matrix of item responses (0-based,
-non-negative integers).}
+\item{data}{A data.frame or matrix of item responses, items scored from
+0. Only complete cases are used.}
 
-\item{iterations}{Integer. Number of simulation iterations. Default \code{250}.}
+\item{iterations}{Integer. Number of simulated datasets. Default \code{250}.}
 
-\item{parallel}{Logical. Use parallel processing via \code{mirai}. Default
-\code{TRUE}.}
+\item{parallel}{Logical. Run the simulations in parallel via \pkg{mirai}
+when it is installed. Default \code{TRUE}.}
 
-\item{n_cores}{Integer or \code{NULL}. Number of parallel workers. When \code{NULL},
-\code{getOption("mc.cores")} is checked first; if neither is set,
-\code{parallel = TRUE} falls back to sequential with a warning.}
+\item{n_cores}{Integer or \code{NULL}. Number of parallel workers. When
+\code{NULL}, \code{getOption("mc.cores")} is used. If that is unset too, a
+warning is given and the simulations run sequentially.}
 
 \item{verbose}{Logical. Show a progress bar. Default \code{FALSE}.}
 
@@ -33,48 +33,44 @@ non-negative integers).}
 interacts with \code{parallel}.}
 }
 \value{
-A list with components:
+A list with:
 \describe{
-\item{\code{results}}{data.frame: \code{iteration}, \code{eigenvalue}.}
-\item{\code{p95}, \code{p99}, \code{p995}, \code{p999}}{Empirical percentiles of
-\code{eigenvalue}.}
+\item{\code{results}}{data.frame with \code{iteration} and \code{eigenvalue}.}
+\item{\code{p95}, \code{p99}, \code{p995}, \code{p999}}{Percentiles of the simulated
+eigenvalues.}
 \item{\code{max}}{The largest simulated eigenvalue.}
-\item{\code{suggested_cutoff}}{The 99th percentile (\code{p99}) — pass this list
-back into \code{\link{RMdimResidualPCA}} via \verb{cutoff = }, or use
-\code{suggested_cutoff} directly.}
-\item{\code{suggested_cutoff_percentile}}{The percentile used for
-\code{suggested_cutoff}, currently always \code{99}.}
-\item{\code{actual_iterations}}{Number of successful iterations.}
+\item{\code{suggested_cutoff}}{The 99th percentile (\code{p99}). Pass the whole
+list to \code{\link[=RMdimResidualPCA]{RMdimResidualPCA()}} as \code{cutoff}, or use this value
+directly.}
+\item{\code{suggested_cutoff_percentile}}{The percentile behind
+\code{suggested_cutoff}, always \code{99}.}
+\item{\code{actual_iterations}}{Number of simulated datasets that could be
+used.}
 \item{\code{sample_n}}{Number of complete cases used.}
-\item{\code{item_names}}{Character vector of item names.}
+\item{\code{item_names}}{Item names.}
 }
 }
 \description{
-Parametric bootstrap producing an empirical upper percentile for the
-largest eigenvalue from a PCA of standardized residuals under a correctly
-fitting Rasch model. For each iteration the function resamples theta
-values from the data-based estimates, simulates response data, refits the
-appropriate Rasch model, and extracts the first-contrast eigenvalue.
-Several upper-tail percentiles of the resulting distribution are returned;
-the 99th percentile is reported as the suggested cutoff (matching the
-convention used by \code{\link{RMlocdepQ3Cutoff}}).
+Simulates datasets from a Rasch or partial credit model that fits and
+resembles your data, and records the largest eigenvalue (the first
+contrast) of the PCA of standardized residuals in each. Returns several
+upper percentiles of these eigenvalues. The 99th is the suggested bound
+for \code{\link[=RMdimResidualPCA]{RMdimResidualPCA()}}, as in \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}. Fixed thresholds
+do not work, since the eigenvalue depends on the sample size, the number
+of items and the spread of the item parameters (Chou & Wang, 2010).
 }
 \details{
-Rule-of-thumb cutoffs for the first-contrast eigenvalue depend strongly on
-sample size, test length, and item-parameter spread; simulation-based
-cutoffs tailored to the data are more defensible (Chou & Wang, 2010).
+The generating model has the CML item parameters (\code{psychotools}) and
+the WLE person locations of \code{data}. In each iteration, person locations
+are drawn with replacement from the WLE estimates, responses are
+simulated from the model, the standardized residuals are computed with
+the same engine as for the observed data, and the largest eigenvalue of
+their PCA is recorded.
 
-The generating model uses CML item parameters (\code{psychotools}) and WLE person
-locations. Per iteration: theta values are sampled with replacement from the
-WLE estimates; response data are simulated under the model
-(\code{psychotools::rrm} for dichotomous, partial-credit simulator for
-polytomous); CML/WLE standardized residuals are computed (the same engine as
-the observed analysis); \code{prcomp()} is run; the first-contrast eigenvalue is
-recorded.
-
-Iterations that fail (e.g., due to a degenerate simulated dataset where
-some category isn't represented) are silently dropped. The \code{iarm} package
-is \strong{not} required.
+A simulated dataset that cannot be refitted, for example because a
+response category is empty, is left out without a message.
+\code{actual_iterations} gives the number that remained. The \pkg{iarm}
+package is not needed.
 }
 \examples{
 \donttest{
@@ -84,7 +80,7 @@ dat <- as.data.frame(
 )
 colnames(dat) <- paste0("I", 1:12)
 
-# Few iterations for a fast example; use 250+ in real analyses
+# Few iterations for a fast example. Use 250 or more in real analyses.
 bound <- RMdimResidualPCACutoff(dat, iterations = 50, parallel = FALSE, seed = 1)
 bound$suggested_cutoff
 
@@ -98,5 +94,5 @@ residuals. \emph{Educational and Psychological Measurement, 70}(5), 717-731.
 \doi{10.1177/0013164410379322}
 }
 \seealso{
-\code{\link{RMdimResidualPCA}}
+\code{\link[=RMdimResidualPCA]{RMdimResidualPCA()}}
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/item_cat_fit.R
 \name{RMitemCatFit}
 \alias{RMitemCatFit}
-\title{Category Fit Test Given the Total Score}
+\title{Category fit test given the total score}
 \usage{
 RMitemCatFit(
   data,
@@ -20,18 +20,20 @@ RMitemCatFit(
 0. Respondents with missing responses are left out (complete cases),
 since the total score must cover the same items for everyone.}
 
-\item{iterations}{Integer. Number of datasets simulated from the model.
-Default \code{1000L}. The p-values are counts out of the number of
-simulated datasets that could be refitted plus one
-(\code{iterations_used + 1}).}
+\item{iterations}{Integer, at least 20. Number of datasets simulated
+from the model. Default \code{1000L}. Below 400 a notice is given. The
+smallest possible p is 1 / (\code{iterations_used} + 1).}
 
 \item{correction}{Character. Correction of the item p-values across
 items: \code{"fwer"} (default, Westfall-Young step-down, controls the
-family-wise error rate), \code{"fdr_bh"}, \code{"fdr_by"} (false discovery rate)
-or \code{"none"}.}
+family-wise error rate), \code{"fdr_bh"} or \code{"fdr_by"} (Benjamini-Hochberg
+or Benjamini-Yekutieli, control the false discovery rate), or \code{"none"}.
+The FDR corrections need more iterations than \code{"fwer"}. A warning says
+when there are too few for a single item to reach .05 after
+correction.}
 
-\item{item_labels}{Optional character vector of item labels, one per
-column of \code{data}. Default: column names.}
+\item{item_labels}{Optional character vector of unique item labels, one
+per column of \code{data}. Default: column names.}
 
 \item{parallel, n_cores}{Logical / integer. Run the simulations in
 parallel via \pkg{mirai} when available. Default sequential. When
@@ -51,9 +53,10 @@ without simulating again.}
 \item \code{output = "kable"}: a \code{knitr::kable()} table, one row per item, with
 the event p-values, the item p and the corrected item p.
 \item \code{output = "dataframe"}: a data.frame with columns \code{item}, \code{mcb_1},
-..., \code{mcb_m} (observed MCB per event, \code{NA} for events an item does not
-have), \code{p_1}, ..., \code{p_m} (uncorrected event p), \code{p} (item p) and
-\code{padj} (item p corrected across items).
+..., \code{mcb_m} (observed MCB per event, where m is the largest number of
+events of any item, \code{NA} for events an item does not have), \code{p_1},
+..., \code{p_m} (uncorrected event p), \code{p} (item p) and \code{padj} (item p
+corrected across items).
 \item \code{output = "list"}: a list of class \code{RMitemCatFit} with \code{table} (the
 data.frame above), \code{correction}, \code{iterations} (requested),
 \code{iterations_used} (refitted), \code{n_used}, \code{n_total}, \code{qualifiers},
@@ -62,58 +65,73 @@ data.frame above), \code{correction}, \code{iterations} (requested),
 }
 }
 \description{
-Tests, for each item, whether its cumulative response events
-\eqn{X_i \ge k} depend on the total score as the partial credit model
-predicts. The prediction is \eqn{P(X_i \ge k \mid r)}, which under the
-model depends on the item parameters alone, so no person locations are
-estimated. The test detects categories that respondents do not
-distinguish, categories used in the wrong order, and steps that separate
-respondents more or less than the scoring assumes, including when the
-threshold estimates are ordered. \code{\link[=RMitemCatFitPlot]{RMitemCatFitPlot()}} shows where an
-item departs.
+Tests, for each item, whether its response categories work as the
+partial credit model predicts given the respondent's total score. Each
+item with categories \eqn{0, \dots, m} has \eqn{m} cumulative events
+\eqn{X_i \ge k} (a response in category \eqn{k} or higher), one per
+step between adjacent categories. The model's prediction for an event,
+\eqn{P(X_i \ge k \mid r)}, depends on the item parameters alone, so no
+person locations are estimated. The test detects categories that
+respondents do not distinguish, categories used in the wrong order, and
+steps that separate respondents more or less than the scoring assumes,
+also when the threshold estimates are ordered. \code{\link[=RMitemCatFitPlot]{RMitemCatFitPlot()}}
+shows where an item departs.
 }
 \details{
-\strong{Statistic.} For each item i and event \eqn{X_i \ge k}, the observed
-events are regressed on the predicted probability
-\eqn{p = P(X_i \ge k \mid r)} by pool-adjacent-violators (PAV). The
-statistic is the miscalibration component of the Brier score in the
-CORP decomposition (Dimitriadis et al., 2021),
+\strong{Data.} Respondents with the lowest or highest possible total score
+are left out, since their responses are fixed by the score. Every
+category of every item must be used by the remaining respondents. A
+category that is empty, or used only by respondents with an extreme
+total score, stops the function with an error that names the item,
+since its threshold cannot be estimated.
+
+\strong{Statistic.} For each item i and event \eqn{X_i \ge k}, let
+\eqn{y_v} be 1 when respondent v's response is in category k or higher
+and 0 otherwise, and \eqn{p_v = P(X_i \ge k \mid r_v)} the model's
+prediction. The observed \eqn{y_v} are regressed on \eqn{p_v} by
+pool-adjacent-violators (PAV), which gives \eqn{\hat c_v}, the best
+non-decreasing fit. The statistic is the miscalibration component of
+the Brier score in the CORP decomposition (Dimitriadis et al., 2021),
 \deqn{\mathrm{MCB} = \frac{1}{n}\sum_v (p_v - y_v)^2 -
   \frac{1}{n}\sum_v (\hat c_v - y_v)^2,}
-where \eqn{\hat c_v} is the PAV-recalibrated probability. MCB is zero
-when the PAV curve lies on the diagonal of the calibration plot in
-\code{\link[=RMitemCatFitPlot]{RMitemCatFitPlot()}} and grows with its distance from it. Respondents
-with the lowest or highest possible total score are left out, since their
-responses are fixed by the score.
+where n is the number of respondents used. MCB is zero when the PAV
+curve lies on the diagonal of the calibration plot in
+\code{\link[=RMitemCatFitPlot]{RMitemCatFitPlot()}} and grows with its distance from it.
 
 \strong{Reference distribution.} Response patterns are simulated from the
 model given each respondent's total score, at the item parameters
 estimated by conditional maximum likelihood, and the parameters are
 re-estimated in every simulated dataset. The fit of the prediction to the
-same data is therefore part of the reference distribution. Datasets in
-which some category of some item is empty cannot be refitted and are
-dropped.
+same data is therefore part of the reference distribution. A simulated
+dataset in which some category of some item is empty cannot be refitted.
+It is left out of the reference distribution, and \code{iterations_used}
+gives the number of simulated datasets that remain.
 
 \strong{p-values.} For each event, p is the share of the observed MCB and the
-simulated ones that lie at or above the observed value. To combine the
-events of an item, each event's MCB is studentised by the mean and SD of
-the observed and simulated values together, and the item statistic is the
-largest of them. The item p is the share of the observed and simulated
-datasets whose item statistic is at or above the observed one. With
-\code{"fwer"} the item p-values are corrected across items by the
-Westfall-Young step-down on the item statistics (Ge et al., 2003).
+simulated ones that lie at or above the observed value, that is
+(1 + the number of simulated values at or above it) divided by
+(\code{iterations_used} + 1). These event p-values are not corrected for the
+several events of an item and serve to show which step departs. The test of an item is
+its item p. To get it, each event's MCB is studentised by the mean and
+SD of the observed and simulated values together, and the item statistic
+is the largest of these. The item p is the share of the observed and
+simulated datasets whose item statistic is at or above the observed one.
+The corrected item p (\code{padj}) adjusts it across items. With \code{"fwer"}
+this is the Westfall-Young step-down on the item statistics (Ge et al.,
+2003; Ferreira, 2024). With \code{"none"}, \code{padj} equals \code{p}.
 
-In a simulation study (5 or 10 items with five categories, n = 250 to
-1000, 199 simulated datasets) the item p rejected at a rate between .039
-and .051 at .05 when the model held, and the family-wise rate over items
-was .030 to .074 per condition (.041 over all of them). A check of the
-condition with the highest rate (n = 1000, 5 items) with 999 simulated
-datasets gave .052 with ordered and .045 with disordered thresholds
-(Monte Carlo SE .007). The test detected
-interchangeable or swapped categories and a step that discriminated twice
-as strongly as the others, also when the thresholds were ordered. It
-rarely detected "don't know" use in up to 10\% of responses or an extreme
-response style shared by all items.
+\strong{Calibration and power.} In a simulation study (5 or 10 items with
+five categories, n = 250 to 1000, 199 simulated datasets), when the
+model held, the item p was below .05 in .039 to .051 of items, and the
+family-wise rate over items was .030 to .074 per condition (.041 over
+all of them). A check of the condition with the highest rate (n = 1000,
+5 items) with 999 simulated datasets gave .052 with ordered and .045
+with disordered thresholds (Monte Carlo SE .007). The test detected
+interchangeable or swapped categories and a step that discriminated
+twice as strongly as the others, also when the thresholds were ordered.
+It rarely detected "don't know" use in up to 10\% of responses or an
+extreme response style shared by all items. The study is described at
+\url{https://pgmj.github.io/rasch_book/chapters/category-fit.html}.
 }
 \examples{
 \donttest{
@@ -122,7 +140,7 @@ if (requireNamespace("eRm", quietly = TRUE)) {
   fit <- RMitemCatFit(pcmdat2, iterations = 200, seed = 1,
                       output = "list")
   fit$table
-  RMitemCatFitPlot(pcmdat2, type = "calibration", fit = fit)
+  RMitemCatFitPlot(pcmdat2, fit = fit)  # calibration plot
 }
 }
 
@@ -132,6 +150,10 @@ Dimitriadis, T., Gneiting, T., & Jordan, A. I. (2021). Stable reliability
 diagrams for probabilistic classifiers. \emph{Proceedings of the National
 Academy of Sciences, 118}(8), e2016191118.
 \doi{10.1073/pnas.2016191118}
+
+Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
+of hypotheses simultaneously. \emph{Journal of Statistical Theory and Practice,
+19}(1), 6. \doi{10.1007/s42519-024-00412-4}
 
 Ge, Y., Dudoit, S., & Speed, T. P. (2003). Resampling-based multiple
 testing for microarray data analysis. \emph{Test, 12}(1), 1--77.

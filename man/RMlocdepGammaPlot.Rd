@@ -2,69 +2,54 @@
 % Please edit documentation in R/ld_partgam.R
 \name{RMlocdepGammaPlot}
 \alias{RMlocdepGammaPlot}
-\title{Plot Distribution of Simulated Partial Gamma LD Values}
+\title{Plot the simulated partial gamma local dependence values}
 \usage{
 RMlocdepGammaPlot(simfit, data, items = NULL, n_pairs = NULL)
 }
 \arguments{
-\item{simfit}{The return value of \code{\link{RMlocdepGammaCutoff}} (a list with
-components \code{results}, \code{pair_cutoffs}, \code{actual_iterations}, \code{sample_n}, and
-\code{item_names}).}
+\item{simfit}{The result of \code{\link[=RMlocdepGammaCutoff]{RMlocdepGammaCutoff()}}.}
 
-\item{data}{Optional. A data.frame or matrix of item responses for computing
-and overlaying observed partial gamma values. Items must be scored starting
-at 0 (non-negative integers). When provided, the plot includes orange
-diamond markers for the observed partial gamma alongside the simulated
-distribution, plus segment summaries from the cutoff intervals.}
+\item{data}{Optional. The item responses the simulations were made from,
+items scored from 0. The observed partial gamma (complete cases) is
+then drawn as orange diamonds.}
 
-\item{items}{Optional character vector of item names to include in the plot.
-Only item pairs where \strong{both} items are in this vector will be shown. When
-\code{NULL} (default), all item pairs are plotted.}
+\item{items}{Optional character vector of item names. Only pairs with
+both items in it are shown. Default \code{NULL}, all pairs.}
 
-\item{n_pairs}{Optional positive integer. When supplied, only the
-\code{n_pairs} item pairs with the largest absolute partial gamma values
-are plotted, sorted by \verb{|gamma|} descending. When \code{data} is
-supplied, the ranking uses the \emph{observed} partial gammas (the
-diamonds you actually want to interpret); otherwise it falls back
-to the per-pair median of the simulated distributions. Applied
-\emph{after} the \code{items} filter when both are supplied. Values larger
-than the number of available pairs are silently capped.}
+\item{n_pairs}{Optional positive integer. Only the \code{n_pairs} pairs with
+the largest absolute partial gamma are shown, largest first: the
+observed values with \code{data}, the simulated medians without. Applied
+after \code{items}. Values above the number of pairs show all pairs.}
 }
 \value{
 A \code{ggplot} object.
 }
 \description{
-Visualises the distribution of simulation-based partial gamma LD values
-from \code{\link{RMlocdepGammaCutoff}}, optionally overlaying observed partial
-gamma values computed from real data via \code{\link[iarm]{partgam_LD}}.
+Plots the simulated partial gamma of each item pair from
+\code{\link[=RMlocdepGammaCutoff]{RMlocdepGammaCutoff()}}, and optionally the observed values in your data.
 }
 \details{
-Uses \code{ggdist::stat_dotsinterval()} (when \code{data} is not supplied) or
-\code{ggdist::stat_dots()} (when \code{data} is supplied) with
-\code{point_interval = "median_hdci"} and \code{.width = c(0.66, 0.95, 0.99)}.
+One row per item pair, labelled "Item1 - Item2". The observed value is
+the larger of the pair's two rest-score directions, the statistic
+\code{\link[=RMlocdepGamma]{RMlocdepGamma()}} tests, computed with the same internal routine as the
+simulations.
 
-The plot shows one row per item pair (labelled as "Item1 - Item2"). The
-observed overlay is the larger of the pair's two rest-score directions,
-matching the statistic \code{RMlocdepGamma()} tests and the simulated null.
+Each pair's simulated values are drawn as dots, with the median, an
+inner 66\% interval and an outer interval. The outer interval is the one
+in \code{simfit$pair_cutoffs}, which \code{\link[=RMlocdepGamma]{RMlocdepGamma()}} tabulates: the HDCI of
+width \code{hdci_width}, or the 2.5th to 97.5th percentiles with
+\code{cutoff_method = "quantile"}. The inner interval uses the same method.
+Without \code{data} the intervals are drawn with
+\code{ggdist::stat_dotsinterval()}. With \code{data} they are black segments with
+a black dot for the median, and the observed value is an orange diamond.
 
-When \code{data} is \strong{not} supplied, the function plots the simulated partial
-gamma distributions as dot-interval plots using
-\code{ggdist::stat_dotsinterval()} with median and Highest Density Continuous
-Interval (HDCI) summaries.
+The intervals are per pair and not corrected for testing many pairs.
+With the full cutoff object, \code{\link[=RMlocdepGamma]{RMlocdepGamma()}} flags pairs by adjusted
+p-values instead, so a pair just outside its interval need not be
+flagged there. The plot shows no p-values.
 
-When \code{data} \strong{is} supplied, the function:
-\enumerate{
-\item Computes observed partial gamma values via
-\code{iarm::partgam_LD()}.
-\item Overlays observed gamma values as orange diamond markers on the
-simulated distributions.
-\item Shows per-pair cutoff intervals (from \code{simfit$pair_cutoffs}) as
-black line segments, with thicker segments for the 66\\% interval and
-black dots for the median.
-}
-
-The \code{ggplot2}, \code{ggdist}, and optionally \code{iarm} packages must be installed
-(they are in Suggests, not Imports).
+The \pkg{ggplot2} and \pkg{ggdist} packages must be installed, and
+\pkg{iarm} with \code{data} (all are in Suggests).
 }
 \examples{
 \donttest{
@@ -94,5 +79,5 @@ if (requireNamespace("iarm", quietly = TRUE) &&
 }
 }
 \seealso{
-\code{\link{RMlocdepGammaCutoff}}, \code{\link{RMlocdepGamma}}
+\code{\link[=RMlocdepGammaCutoff]{RMlocdepGammaCutoff()}}, \code{\link[=RMlocdepGamma]{RMlocdepGamma()}}, \code{\link[=RMlocdepQ3Plot]{RMlocdepQ3Plot()}}
 }

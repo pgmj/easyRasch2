@@ -1,24 +1,21 @@
-#' Item-Threshold Hierarchy Plot
+#' Item and threshold hierarchy plot
 #'
-#' Visualises item and threshold locations on the logit scale for a
-#' Partial Credit Model. Items are sorted by their (mean-threshold)
-#' location; each item shows its location as a black diamond and its
-#' individual thresholds as coloured dots with confidence-interval error
-#' bars.
+#' Plots the item and threshold locations of a partial credit model on the
+#' logit scale. Items are sorted by location (the mean of their
+#' thresholds). Each item's location is a black diamond and its thresholds
+#' are coloured dots with confidence intervals.
 #'
-#' Threshold locations are centred at the grand mean of all thresholds
-#' across items, so the dashed reference line at 0 represents the mean
-#' threshold location across the scale.
+#' The thresholds are centred on the mean of all thresholds, so the dashed
+#' line at 0 marks the average threshold of the scale.
 #'
-#' Confidence intervals around thresholds are 84% by default
-#' (`sem_multiplier = 1.405`), following Payton, Greenstone, & Schenker
-#' (2003) -- non-overlap of 84% intervals approximately corresponds to a
-#' two-sample significance test at \eqn{\alpha = 0.05}. Use
-#' `sem_multiplier = 1.96` for 95% intervals.
+#' The intervals are 84% by default (`sem_multiplier = 1.405`), following
+#' Payton, Greenstone and Schenker (2003). Two 84% intervals that do not
+#' overlap correspond roughly to a two-sample test at
+#' \eqn{\alpha = 0.05}. Use `sem_multiplier = 1.96` for 95% intervals.
 #'
-#' @param data A data.frame or matrix of polytomous item responses
-#'   (non-negative integers, 0-based, max value > 1). One column per
-#'   item, one row per person.
+#' @param data A data.frame or matrix of polytomous item responses, items
+#'   scored from 0, with at least one item above 1. One column per item,
+#'   one row per person. Dichotomous data give an error.
 #' @param show_numbers Logical. When `TRUE` (default), prints the
 #'   numerical item location and threshold values next to the points on
 #'   the plot. When `FALSE`, only the threshold labels (`T1`, `T2`, ...)
@@ -31,9 +28,8 @@
 #'   column names of `data`. Labels are appended to the column names on
 #'   the y-axis (`name - label`) and wrapped at 36 characters via base-R
 #'   `strwrap()`.
-#' @param output One of `"ggplot"` (default) -- a faceted hierarchy
-#'   figure -- or `"dataframe"` -- the long-format underlying data with
-#'   one row per (item × threshold).
+#' @param output `"ggplot"` (default) for the figure, or `"dataframe"`
+#'   for its data, one row per item and threshold.
 #'
 #' @return Either a `ggplot` (default) or a data.frame with columns
 #'   `Item`, `ItemLabel`, `Threshold`, `ThresholdLocation`,
@@ -41,16 +37,13 @@
 #'   thresholds).
 #'
 #' @details
-#' \strong{Polytomous only.} Dichotomous items have a single threshold
-#' that coincides with the item location; the hierarchy plot is
-#' visually degenerate in that case. For dichotomous data use
-#' [RMtargeting()] or [RMscoreSE()] instead.
+#' \strong{Polytomous only.} A dichotomous item has a single threshold, its
+#' location, so the plot would show nothing more. For dichotomous data use
+#' [RMtargeting()] or [RMscoreSE()].
 #'
-#' \strong{Centring convention.} The CML PCM thresholds (estimated via
-#' `psychotools::pcmodel()`) are shifted so that their grand mean is zero;
-#' each item's location is then the mean of its centred thresholds.
-#' The dashed horizontal reference line on the plot marks this zero --
-#' i.e., the average threshold across all items.
+#' \strong{Centring.} The CML thresholds (`psychotools::pcmodel()`) are
+#' shifted so that their mean is zero, and each item's location is the
+#' mean of its centred thresholds. The dashed line marks this zero.
 #'
 #' @references
 #' Payton, M. E., Greenstone, M. H., & Schenker, N. (2003). Overlapping
@@ -58,7 +51,9 @@
 #' in terms of statistical significance? \emph{Journal of Insect Science,
 #' 3}(34), 1-6. \doi{10.1093/jis/3.1.34}
 #'
-#' @seealso [RMtargeting()], [RMscoreSE()], [RMitemICCPlot()]
+#' @seealso [RMtargeting()] for the thresholds together with the person
+#'   locations, [RMitemParameters()] for the estimates as a table,
+#'   [RMitemCatProb()], [RMscoreSE()].
 #'
 #' @examples
 #' \donttest{

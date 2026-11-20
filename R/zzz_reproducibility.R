@@ -78,11 +78,12 @@
 #'
 #' @section Functions this applies to:
 #' [RMdifGammaCutoff()], [RMdimCFACutoff()], [RMdimMartinLof()],
-#' [RMdimResidualPCACutoff()], [RMitemInfitCutoff()],
-#' [RMitemCatFit()], [RMitemCatFitPlot()], [RMitemInfitCutoffMI()],
+#' [RMdimResidualPCACutoff()], [RMitemCatFit()], [RMitemCatFitPlot()],
+#' [RMitemInfitCutoff()], [RMitemInfitCutoffMI()],
 #' [RMitemRestscoreBoot()], [RMitemRestscoreCutoff()],
-#' [RMlocdepGammaCutoff()], [RMlocdepQ3Cutoff()], [RMpersonFit()] and
-#' [RMreliability()].
+#' [RMlocdepGammaCutoff()], [RMlocdepQ3Cutoff()], [RMpersonChange()]
+#' (with `critical = "simulate"`), [RMpersonFit()], [RMreliability()],
+#' [RMreliabilityCurve()] and [RMretestSD()].
 #'
 #' Functions that involve no simulation take no `seed` and are unaffected.
 #'
@@ -105,8 +106,8 @@
 #' across machines. Model fitting can converge to marginally different
 #' optima under different BLAS implementations, and `mirt`-based routines
 #' advance their own internal state. Where a function needs to defend
-#' against that it re-seeds explicitly; see for example the plausible-value
-#' block in `RMreliability()`.
+#' against that it re-seeds explicitly, as the plausible-value block in
+#' `RMreliability()` does.
 #'
 #' @seealso [easyRasch2-renaming]
 #'

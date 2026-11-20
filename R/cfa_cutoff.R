@@ -1,120 +1,109 @@
-#' Simulated null distribution for one-factor CFA fit and loadings under PCM unidimensionality
+#' Simulated reference for one-factor CFA fit and loadings
 #'
-#' Generates a parametric-bootstrap null distribution against which observed
-#' one-factor categorical-CFA results can be compared. The simulation draws
-#' \code{iterations} datasets from the fitted PCM (or RM, for dichotomous
-#' data) using the observed item parameters and a resampled person
-#' distribution; each simulated dataset is fitted with
-#' \code{lavaan::cfa(..., ordered = TRUE, estimator = "WLSMV")} and both the
-#' three fit indices (CFI, RMSEA, SRMR) and the per-item standardized factor
-#' loadings are recorded. Because the simulated data satisfy the PCM
-#' unidimensional assumption by construction, the resulting distributions are
-#' the "expected" reference for what a correctly fitting unidimensional model
-#' produces at this sample size and item structure.
+#' Simulates datasets from the Rasch or partial credit model fitted to your
+#' data, fits a one-factor CFA for ordinal items to each with
+#' `lavaan::cfa()` (Rosseel, 2012), and records the fit indices (CFI,
+#' RMSEA, SRMR) and the standardized loading of each item. The simulated
+#' data are unidimensional by construction, so the result shows what a
+#' unidimensional scale gives at this sample size and with these items.
+#' Pass it to [RMdimCFA()] for the tables and to [RMdimCFAPlot()] for the
+#' figures.
 #'
-#' This function only generates the simulated reference. To obtain the
-#' observed-vs-expected tables, pass its result to \code{\link{RMdimCFA}}; for
-#' the figures, pass it to \code{\link{RMdimCFAPlot}}.
-#'
-#' @param data A data.frame or matrix of item responses (non-negative
-#'   integers, 0-based). One column per item, one row per person. At least
-#'   4 items: with 3 the one-factor model has no degrees of freedom and the
-#'   fit indices are perfect by construction.
-#' @param iterations Integer. Number of parametric-bootstrap iterations.
-#'   Default `250`.
-#' @param percentile Numeric in (50, 100). The strictness of the cutoffs.
-#'   Default `99`. Fit indices use a one-sided cutoff in the unfavourable
-#'   direction (CFI from below; RMSEA and SRMR from above); standardized
-#'   loadings use a two-sided central interval covering `percentile`% of the
-#'   simulated distribution (an item is flagged when its observed loading
-#'   falls in the outer `100 - percentile`%, split across the two tails).
-#' @param output Character. Only `"list"` (the default) is supported and the
-#'   function always returns the simulation object. `"kable"` is retained only
-#'   to raise an informative error: tables now come from
-#'   \code{\link{RMdimCFA}}.
-#' @param parallel Logical. If `TRUE` (default), uses parallel processing
-#'   via `mirai`. Falls back to sequential if `mirai` is not installed or
-#'   `n_cores` cannot be resolved.
+#' @param data A data.frame or matrix of item responses, items scored from
+#'   0. One column per item, one row per person. Only complete cases are
+#'   used. At least 4 items: with 3, the one-factor model has no degrees of
+#'   freedom and the fit indices are perfect by construction.
+#' @param iterations Integer. Number of simulated datasets. Default `250`.
+#'   For p-values in [RMdimCFA()], use at least 1000.
+#' @param percentile Numeric in (50, 100). How strict the cutoffs are.
+#'   Default `99`. The fit indices get a one-sided cutoff in the
+#'   unfavourable direction (CFI from below, RMSEA and SRMR from above).
+#'   The loadings get a two-sided central interval covering `percentile`%
+#'   of the simulated values, so an item is flagged when its observed
+#'   loading falls in the outer `100 - percentile`%, split between the two
+#'   tails.
+#' @param output Character. Only `"list"` (default) is supported, and the
+#'   function always returns the simulations. `"kable"` gives an error that
+#'   points to [RMdimCFA()], where the tables now come from.
+#' @param parallel Logical. Run the simulations in parallel via \pkg{mirai}
+#'   when it is installed. Default `TRUE`.
 #' @param n_cores Integer or `NULL`. Number of parallel workers. When
-#'   `NULL`, `getOption("mc.cores")` is consulted; if neither is set,
-#'   sequential is used.
-#' @param verbose Logical. Show a progress bar (default `FALSE`).
-#' @param seed Integer or `NULL`. Master seed for reproducibility. See
+#'   `NULL`, `getOption("mc.cores")` is used. If that is unset too, a
+#'   warning is given and the simulations run sequentially.
+#' @param verbose Logical. Show a progress bar. Default `FALSE`.
+#' @param seed Integer or `NULL`. Random seed for reproducibility. See
 #'   [easyRasch2-reproducibility] for what this guarantees and how it
 #'   interacts with `parallel`.
-#' @param estimator Character. The lavaan estimator passed to
-#'   `lavaan::cfa()`. One of `"WLSMV"` (default), `"ULSMV"`, `"WLSM"`,
-#'   `"ULSM"`, `"WLSMVS"` or `"ULSMVS"`. The CFI and RMSEA are always the
-#'   scaled versions, so only estimators with a scaled test statistic are
-#'   accepted. Any other estimator stops with an error.
+#' @param estimator Character. The lavaan estimator: `"WLSMV"` (default),
+#'   `"ULSMV"`, `"WLSM"`, `"ULSM"`, `"WLSMVS"` or `"ULSMVS"`. CFI and RMSEA
+#'   are always the scaled versions, so only estimators with a scaled test
+#'   statistic are accepted.
 #'
-#' @return A list (the simulation object), with components:
+#' @return A list with:
 #' \describe{
-#'   \item{`simulated`}{data.frame with one row per successful iteration
-#'     and columns `iteration`, `cfi`, `rmsea`, `srmr`.}
-#'   \item{`simulated_loadings`}{data.frame with one row per successful
-#'     iteration: an `iteration` column followed by one column per item
-#'     holding the simulated standardized loading.}
-#'   \item{`percentile`}{Numeric: the strictness setting used.}
-#'   \item{`cutoffs`}{Named numeric vector (`cfi`, `rmsea`, `srmr`) of
-#'     one-sided fit-index cutoffs at the chosen percentile.}
-#'   \item{`loading_cutoffs`}{data.frame `Item`, `low`, `high` — the
-#'     two-sided expected loading interval per item.}
-#'   \item{`actual_iterations`}{Number of successful MC iterations.}
+#'   \item{`simulated`}{data.frame with one row per simulated dataset and
+#'     the columns `iteration`, `cfi`, `rmsea` and `srmr`.}
+#'   \item{`simulated_loadings`}{data.frame with one row per simulated
+#'     dataset, an `iteration` column and one column per item with its
+#'     standardized loading.}
+#'   \item{`percentile`}{The strictness setting.}
+#'   \item{`cutoffs`}{Named numeric vector (`cfi`, `rmsea`, `srmr`) of the
+#'     one-sided cutoffs.}
+#'   \item{`loading_cutoffs`}{data.frame with `Item`, `low` and `high`, the
+#'     two-sided interval of the loadings per item.}
+#'   \item{`actual_iterations`}{Number of simulated datasets that could be
+#'     used.}
 #'   \item{`sample_n`}{Number of complete cases used.}
-#'   \item{`sample_n_total`}{Number of respondents in the raw input data,
-#'     before the complete-case filter.}
-#'   \item{`sample_has_na`}{Logical. Whether the raw input data contained
-#'     any missing values.}
+#'   \item{`sample_n_total`}{Number of respondents in `data`, before the
+#'     complete-case filter.}
+#'   \item{`sample_has_na`}{Logical. Whether `data` contained missing
+#'     values.}
 #'   \item{`n_items`}{Number of items.}
-#'   \item{`item_names`}{Character vector of item names.}
-#'   \item{`is_polytomous`}{Logical: was a PCM (vs RM) fitted?}
-#'   \item{`estimator`}{The lavaan estimator used.}
+#'   \item{`item_names`}{Item names.}
+#'   \item{`is_polytomous`}{Logical. Whether a PCM (rather than the Rasch
+#'     model) generated the data.}
+#'   \item{`estimator`}{The lavaan estimator.}
 #' }
 #'
 #' @details
-#' \strong{Generative model.} The data-generating process for each
-#' simulated dataset is the PCM (or RM) fitted to the observed data,
-#' with persons drawn from the empirical theta distribution
-#' (resampled with replacement). This means the simulated data perfectly
-#' satisfy the PCM unidimensional assumption.
+#' \strong{Generating model.} Each dataset is simulated from the partial
+#' credit model (or Rasch model, for dichotomous items) fitted to the
+#' observed data, with person locations drawn with replacement from the
+#' estimated ones. The simulated data therefore satisfy unidimensionality.
 #'
-#' \strong{Estimation model.} The CFA on each simulated dataset uses a
-#' single-factor model with all items as ordinal indicators
-#' (`F1 =~ I1 + I2 + ...`), fitted with `WLSMV` by default. Reported
-#' CFI / RMSEA are the scaled variants (`cfi.scaled`, `rmsea.scaled`) for
-#' the observed data and every simulated dataset alike; SRMR is reported
-#' unchanged. A simulated dataset for which lavaan cannot compute a scaled
-#' index gets `NA` for it and is left out of that index's cutoff and
-#' p-value, with a message giving the count. Standardized loadings are the `est.std` of the `=~` paths
-#' from `lavaan::standardizedSolution()`.
+#' \strong{Estimation model.} Each simulated dataset is fitted with a
+#' one-factor model with all items as ordinal indicators
+#' (`F1 =~ I1 + I2 + ...`), by `WLSMV` unless `estimator` says otherwise.
+#' CFI and RMSEA are the scaled versions (`cfi.scaled`, `rmsea.scaled`) for
+#' the observed and the simulated data alike. SRMR is used as it is. A
+#' simulated dataset for which lavaan cannot compute a scaled index gets
+#' `NA` for it and is left out of that index's cutoff and p-value, with a
+#' message giving the count. The standardized loadings are `est.std` of
+#' the `=~` paths from `lavaan::standardizedSolution()`.
 #'
-#' \strong{Why a null distribution.} A perfectly PCM-unidimensional
-#' dataset will typically not yield CFA fit indices at their ideal
-#' values (CFI = 1, RMSEA = 0), nor identical loadings across items: PCM
-#' uses a logistic threshold structure while WLSMV uses a probit link via
-#' the polychoric correlation matrix, and finite samples add sampling
-#' variability. The simulated distributions capture both, giving a more
-#' honest reference than rule-of-thumb cutoffs derived under continuous-data
-#' ML.
+#' \strong{Why simulate.} Data that are unidimensional under the partial
+#' credit model will usually not give CFA fit indices at their ideal
+#' values (CFI = 1, RMSEA = 0), nor equal loadings for all items. The PCM
+#' is a logistic model, while WLSMV fits a probit model to the polychoric
+#' correlations, and finite samples add sampling variability. The
+#' simulations capture both, which gives a better reference than fixed
+#' cutoffs derived for continuous data and ML estimation.
 #'
-#' \strong{Iteration failures.} Some simulated datasets cause WLSMV to
-#' fail (non-positive-definite polychoric matrix, boundary thresholds,
-#' empty categories). Failed iterations are dropped; `actual_iterations`
-#' reflects the number that succeeded.
+#' \strong{Datasets that fail.} Some simulated datasets make the estimation
+#' fail (a polychoric matrix that is not positive definite, thresholds on
+#' the boundary, empty categories). They are left out, and
+#' `actual_iterations` gives the number that remained. If all fail, the
+#' function stops, naming any category used only by respondents with a
+#' zero or perfect total score.
 #'
 #' @references
-#' Yuan, K.-H., & Bentler, P. M. (2000). Three likelihood-based methods
-#' for mean and covariance structure analysis with nonnormal missing
-#' data. \emph{Sociological Methodology, 30}(1), 165-200.
-#' \doi{10.1111/0081-1750.00078}
-#'
 #' Rosseel, Y. (2012). lavaan: An R Package for Structural Equation
 #' Modeling. \emph{Journal of Statistical Software, 48}(2), 1-36.
 #' \doi{10.18637/jss.v048.i02}
 #'
-#' @seealso \code{\link{RMdimCFA}}, \code{\link{RMdimCFAPlot}},
-#'   \code{\link{RMdimResidualPCA}}, \code{\link{RMdimMartinLof}}
+#' @seealso [RMdimCFA()] for the tables, [RMdimCFAPlot()] for the figures,
+#'   [RMdimResidualPCA()] and [RMdimMartinLof()] for other checks of
+#'   unidimensionality.
 #'
 #' @examples
 #' \donttest{
@@ -122,7 +111,7 @@
 #'     requireNamespace("eRm", quietly = TRUE)) {
 #'   data("raschdat1", package = "eRm")
 #'
-#'   # Few iterations for a fast example; use 250+ in real analyses
+#'   # Few iterations for a fast example. Use 250 or more in real analyses.
 #'   sim <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
 #'                         parallel = FALSE, seed = 1)
 #'
@@ -531,64 +520,62 @@ compute_cfa_loading_flagged <- function(observed_loadings, loading_cutoffs) {
 # Observed-vs-expected tables
 # ===========================================================================
 
-#' Observed one-factor CFA fit and loadings vs a simulated reference
+#' One-factor CFA fit and loadings against a simulated reference
 #'
-#' Fits the observed one-factor categorical CFA to `data` and compares its
-#' fit indices and per-item standardized loadings against the simulated null
-#' distribution produced by \code{\link{RMdimCFACutoff}}. Returns a list of
-#' two tables: model-fit indices and per-item loadings, each with the observed
-#' value, the expected reference from the simulation, and a flag.
+#' Fits a one-factor CFA for ordinal items to `data` and compares its fit
+#' indices and the standardized loading of each item with the simulations
+#' from [RMdimCFACutoff()]. Returns two tables, fit indices and loadings,
+#' each with the observed value, the simulated reference and a flag.
 #'
-#' @param data A data.frame or matrix of item responses (non-negative
-#'   integers, 0-based), the same items used for the cutoff simulation.
-#' @param cutoff The list returned by \code{\link{RMdimCFACutoff}}. Required:
-#'   observed CFA fit indices are not interpretable without the simulated
-#'   reference, so the function errors if it is missing.
-#' @param p_value Logical. When `TRUE`, adds bootstrap p-values from the
-#'   simulated null distributions: one-sided in the unfavourable direction
-#'   for the fit indices (CFI low; RMSEA / SRMR high), two-sided for the
-#'   per-item loadings. The `Flagged` columns then reflect
-#'   `padj < alpha` instead of the percentile cutoffs. The fit indices and
-#'   the loadings are corrected as two separate families. Default `FALSE`.
-#' @param correction Character. Multiplicity correction for the p-values:
-#'   `"fwer"` (default; Westfall-Young studentised-max step-down), `"fdr_bh"`
-#'   (Benjamini-Hochberg), `"fdr_by"` (Benjamini-Yekutieli), or `"none"`.
-#'   Ignored when `p_value = FALSE`.
-#' @param alpha Numeric in (0, 1). Significance level used to flag
-#'   comparisons on the corrected p-value. Default `0.05`. Ignored when
-#'   `p_value = FALSE`.
+#' @param data A data.frame or matrix of item responses, items scored from
+#'   0, the same items as in the simulation. Only complete cases are used.
+#' @param cutoff The result of [RMdimCFACutoff()]. Required, since the
+#'   observed fit indices cannot be judged without it.
+#' @param p_value Logical. Add bootstrap p-values from the simulations and
+#'   flag on them instead of on the percentile cutoffs. The p-values are
+#'   one-sided in the unfavourable direction for the fit indices (CFI low,
+#'   RMSEA and SRMR high) and two-sided for the loadings. The fit indices
+#'   and the loadings are corrected as two separate families. Default
+#'   `FALSE`.
+#' @param correction Character. Correction of the p-values: `"fwer"`
+#'   (default, Westfall-Young step-down), `"fdr_bh"` (Benjamini-Hochberg),
+#'   `"fdr_by"` (Benjamini-Yekutieli) or `"none"`. Used only with
+#'   `p_value = TRUE`.
+#' @param alpha Numeric in (0, 1). A comparison is flagged when its
+#'   corrected p-value is below `alpha`. Default `0.05`. Used only with
+#'   `p_value = TRUE`.
 #' @param output Character. `"kable"` (default) returns each table as a
-#'   `knitr::kable()`; `"dataframe"` returns plain data.frames.
+#'   `knitr::kable()`, `"dataframe"` as a data.frame.
 #'
-#' @return A named list with two elements, `fit` and `loadings`:
+#' @return A named list with `fit` and `loadings`, each a `knitr_kable` or
+#'   a data.frame by `output`:
 #' \describe{
-#'   \item{`fit`}{CFI / RMSEA / SRMR with columns `Index`, `Observed`,
-#'     `Cutoff`, `Direction`, `Flagged` (one-sided, in the unfavourable
-#'     direction). With `p_value = TRUE`, columns `p` and `padj` are added
-#'     and `Flagged` reflects `padj < alpha`. An index lavaan could not
-#'     compute for `data` has `Observed = NA` and `Flagged = "not tested"`.}
-#'   \item{`loadings`}{One row per item with columns `Item`, `Observed`,
-#'     `Expected_low`, `Expected_high`, `Flagged` (`"below"` / `"above"` /
-#'     `""`). With `p_value = TRUE`, columns `p_loading` and `padj_loading`
-#'     are added and `Flagged` reflects `padj_loading < alpha` (direction
-#'     from the sign of the deviation from the simulated mean).}
+#'   \item{`fit`}{CFI, RMSEA and SRMR with the columns `Index`, `Observed`,
+#'     `Cutoff`, `Direction` and `Flagged` (one-sided, in the unfavourable
+#'     direction). With `p_value = TRUE`, also `p` and `padj`, and
+#'     `Flagged` marks `padj < alpha`. An index lavaan could not compute
+#'     for `data` has `Observed = NA` and `Flagged = "not tested"`.}
+#'   \item{`loadings`}{One row per item with the columns `Item`,
+#'     `Observed`, `Expected_low`, `Expected_high` and `Flagged`
+#'     (`"below"`, `"above"` or `""`). With `p_value = TRUE`, also
+#'     `p_loading` and `padj_loading`, and `Flagged` marks
+#'     `padj_loading < alpha`, with the direction from the deviation from
+#'     the simulated mean.}
 #' }
-#' Each element is a `knitr_kable` (when `output = "kable"`) or a data.frame
-#' (when `output = "dataframe"`).
 #'
 #' @details
-#' \strong{Bootstrap p-values.} The per-comparison statistic is the residual
-#' studentised by the mean and SD of the observed and simulated values
-#' together. Marginal p-values are Monte-Carlo,
-#' `(1 + count) / (B + 1)`, so they can be no smaller than `1 / (B + 1)`.
-#' `correction = "fwer"` uses the Westfall-Young studentised-max step-down,
-#' which exploits the bootstrap dependence among the statistics (Ferreira,
-#' 2024). It controls the family-wise error rate at any number of
-#' iterations, but small p-values are imprecise and decisions depend on the
-#' seed when the simulation is small, so at least 1000 `iterations` in
-#' [RMdimCFACutoff()] are recommended (a warning is issued below that). These p-values are model-conditional and sample-size-sensitive
-#' and are reported alongside the simulated expected ranges, not in place of
-#' them.
+#' \strong{Bootstrap p-values.} The statistic for each comparison is the
+#' deviation from the mean of the observed and simulated values together,
+#' divided by their SD. The uncorrected p is `(1 + count) / (B + 1)` for B
+#' simulated datasets, so it can be no smaller than `1 / (B + 1)`.
+#' `correction = "fwer"` uses the Westfall-Young step-down on the
+#' studentised maximum, which uses the dependence between the statistics
+#' (Westfall & Young, 1993; Ferreira, 2024). It controls the family-wise
+#' error rate at any number of iterations, but small p-values are imprecise
+#' and decisions depend on the seed when there are few simulations. Use at
+#' least 1000 `iterations` in [RMdimCFACutoff()]. A warning says so below
+#' that. The p-values depend on the model and the sample size, and are
+#' reported with the simulated ranges, not instead of them.
 #'
 #' @inheritSection RMitemInfit Multiple comparisons
 #'
@@ -600,7 +587,8 @@ compute_cfa_loading_flagged <- function(observed_loadings, loading_cutoffs) {
 #' Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple Testing*.
 #' Wiley.
 #'
-#' @seealso \code{\link{RMdimCFACutoff}}, \code{\link{RMdimCFAPlot}}
+#' @seealso [RMdimCFACutoff()] for the simulations, [RMdimCFAPlot()] for
+#'   the figures.
 #'
 #' @examples
 #' \donttest{
@@ -1051,33 +1039,39 @@ render_cfa_loadings_kable <- function(
 # Plot companion
 # ===========================================================================
 
-#' Plot observed CFA fit and loadings against the simulated null
+#' Plot one-factor CFA fit and loadings against the simulations
 #'
-#' Returns two figures (in a list) comparing the observed one-factor CFA to
-#' the simulated null distribution from \code{\link{RMdimCFACutoff}}:
-#' a per-item standardized-loadings plot (observed marker against each item's
-#' simulated distribution and expected range, in the style of
-#' \code{\link{RMitemInfitPlot}}), and a faceted plot of the CFI / RMSEA
-#' / SRMR distributions with the observed value overlaid.
+#' Returns two figures comparing the observed one-factor CFA with the
+#' simulations from [RMdimCFACutoff()]: the standardized loadings per item,
+#' with each item's simulated values and the observed loading, in the style
+#' of [RMitemInfitPlot()], and the simulated CFI, RMSEA and SRMR with the
+#' observed values.
 #'
-#' @param simfit The list returned by \code{\link{RMdimCFACutoff}}.
-#' @param data The item-response data the CFA was run on (the same items used
-#'   for the cutoff). Required: the observed values are computed from it.
-#' @param percentile Numeric in (50, 100) or `NULL`. When supplied, the
-#'   cutoffs and flags are recomputed at this percentile from the stored
-#'   simulated distributions (no re-simulation). When `NULL` (default), the
-#'   percentile from the original `RMdimCFACutoff()` call is reused.
+#' @param simfit The result of [RMdimCFACutoff()].
+#' @param data The item responses the simulations were made from. Required,
+#'   since the observed values are computed from it.
+#' @param percentile Numeric in (50, 100) or `NULL`. When given, the cutoffs
+#'   and flags are recomputed at this percentile from the stored
+#'   simulations, without simulating again. Default `NULL`, the percentile
+#'   of the [RMdimCFACutoff()] call.
 #'
 #' @return A named list of two `ggplot` objects:
 #' \describe{
-#'   \item{`loadings`}{Per-item standardized loadings: simulated distribution
-#'     (dots), expected interval, and the observed loading as a diamond
-#'     (red when flagged).}
-#'   \item{`fit`}{Faceted CFI / RMSEA / SRMR simulated distributions with the
-#'     observed value and cutoff overlaid.}
+#'   \item{`loadings`}{Standardized loadings per item: the simulated values
+#'     (dots), black segments for their central 66% and the expected range
+#'     at `percentile`, the median (black dot), and the observed loading as
+#'     a diamond, red when it is outside the expected range.}
+#'   \item{`fit`}{The simulated CFI, RMSEA and SRMR in panels, with the
+#'     observed value and the cutoff.}
 #' }
 #'
-#' @seealso \code{\link{RMdimCFACutoff}}, \code{\link{RMdimCFA}}
+#' @details
+#' The outer segment in the loadings plot is the expected range that
+#' [RMdimCFA()] flags against: the central interval of the simulated
+#' loadings covering `percentile`%. The inner segment is the central 66%.
+#' The ranges are per item and not corrected for testing several items.
+#'
+#' @seealso [RMdimCFACutoff()], [RMdimCFA()]
 #'
 #' @examples
 #' \donttest{
@@ -1247,24 +1241,20 @@ cfa_loadings_plot <- function(
   )
   sim_long$Item <- factor(sim_long$Item, levels = item_levels)
 
-  # Per-item summary intervals (thin = 0.1/99.9, thick = 16.7/83.3, median)
-  lo_hi <- do.call(
-    rbind,
-    lapply(item_names, function(it) {
-      v <- sim_load[[it]]
-      v <- v[is.finite(v)]
-      data.frame(
-        Item = it,
-        lo = stats::quantile(v, 0.001, na.rm = TRUE),
-        hi = stats::quantile(v, 0.999, na.rm = TRUE),
-        lo66 = stats::quantile(v, 0.167, na.rm = TRUE),
-        hi66 = stats::quantile(v, 0.833, na.rm = TRUE),
-        median = stats::median(v, na.rm = TRUE),
-        stringsAsFactors = FALSE,
-        row.names = NULL
-      )
-    })
+  # Intervals. The outer segment is the expected range at `percentile` (the
+  # one RMdimCFA() flags against), the inner segment the central 66%.
+  spec <- list(
+    method = "quantile",
+    width = percentile / 100,
+    label = paste0("central ", format(percentile), "% interval")
   )
+  cut_idx <- match(item_names, loading_cutoffs$Item)
+  lo_hi <- .sim_plot_intervals(
+    sim_long$Value, as.character(sim_long$Item), item_names,
+    loading_cutoffs$low[cut_idx], loading_cutoffs$high[cut_idx],
+    spec$method
+  )
+  names(lo_hi)[names(lo_hi) == "key"] <- "Item"
   lo_hi$Item_f <- factor(lo_hi$Item, levels = item_levels)
 
   flags <- compute_cfa_loading_flagged(observed_load, loading_cutoffs)
@@ -1289,16 +1279,18 @@ cfa_loadings_plot <- function(
     "\").\n",
     "Diamonds: observed loading (red = outside the two-sided ",
     percentile,
-    "% expected range). Black dots: simulated median."
+    "% expected range). Black dots: simulated median.\n",
+    .sim_interval_caption(spec, "item")
   ))
 
   ggplot2::ggplot(sim_long, ggplot2::aes(x = .data$Value, y = .data$Item)) +
     ggdist::stat_dots(
       ggplot2::aes(slab_fill = ggplot2::after_stat(.data$level)),
       quantiles = simfit$actual_iterations,
+      point_interval = "median_qi",
       layout = "weave",
       slab_color = NA,
-      .width = c(0.666, 0.999)
+      .width = c(0.66, spec$width)
     ) +
     ggplot2::geom_segment(
       data = lo_hi,

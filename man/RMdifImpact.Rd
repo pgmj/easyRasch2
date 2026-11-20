@@ -26,8 +26,9 @@ grouping variable separately via \code{dif_var}.}
 numeric) with exactly two groups. Rows where it is \code{NA} are dropped
 with a message.}
 
-\item{items}{The items with DIF, by column name or position. At least
-one item must stay common to both groups.}
+\item{items}{The items with DIF, by column name or position, usually
+those flagged by \code{\link{RMdifAnchor}}. At least one item must stay
+common to both groups, to link them.}
 
 \item{reference}{The reference group, one of the two levels of
 \code{dif_var}. Default \code{NULL}, the first level. The other group
@@ -63,7 +64,11 @@ see Value).}
 }
 \value{
 A data.frame, a \code{knitr_kable}, a \code{ggplot} or a list,
-depending on \code{output}. Nothing is attached as attributes.
+depending on \code{output}. Nothing is attached as attributes. With
+\code{output = "dataframe"} or \code{"kable"}, the table chosen by
+\code{table}, which is the list element of the same name described
+below (formatted for display in the kable). With
+\code{output = "ggplot"}, a plot of the local bias curve.
 
 With \code{output = "list"}: a list with
 \describe{
@@ -162,10 +167,10 @@ the group difference from keeping the items, reported in the
 estimator's own units, as a percentage of the group difference, as a
 standardised mean difference (the SD is the square root of the average
 of the two group variances, so it does not depend on the ratio of the
-group sizes), and in units of the SE of the group
-difference in these data. The last one grows with the sample size for
-the same DIF: it shows whether a confidence interval for the group
-difference can be trusted, not whether the DIF matters. When the items
+group sizes), and in units of the SE of the group difference in these
+data. The last one grows with the sample size for the same DIF. It
+shows whether a confidence interval for the group difference can be
+trusted, not whether the DIF matters. When the items
 were flagged in the same data, an impact interval that excludes zero
 adds nothing to the DIF test. Its size is what to judge.
 
@@ -177,20 +182,20 @@ two test characteristic curves). It is negative when the DIF makes the
 items harder for the focal group. It is reported where its absolute
 value is largest over the central 95\% of the latent distribution of
 both groups together, with its sign, in logits and in units of the
-reference group's standard error of measurement (SEM). With DIF items in opposite
-directions the group-mean bias can cancel while persons in parts of the
-scale are still shifted.
+reference group's standard error of measurement (SEM). With DIF items in
+opposite directions the group-mean bias can cancel while persons in
+parts of the scale are still shifted.
 
 \strong{Rates at a cut.} With a \code{cut}, persons are classified by
 their WLE (or raw score). Under split, the focal group's WLE comes from
 its own item parameters, and its raw score is equated. The rule (which
 raw scores are classified at or above the cut, per group and strategy)
-is taken from the fit and held fixed (an equated focal score counts as
-at or above a sum-score cut when it is at or above \code{cut - 0.5}), and its rates are computed from
-the split model and each group's estimated latent distribution. The
-rates therefore describe the rule these data give, which can differ
-from the rule of the population by one raw score, and the rule is
-reported with them. The difference keep - split is zero whenever the
+is taken from the fit and held fixed. An equated focal score counts as
+at or above a sum-score cut when it is at or above \code{cut - 0.5}.
+The rates of the rule are computed from the split model and each
+group's estimated latent distribution. They therefore describe the rule
+these data give, which can differ from the rule of the population by
+one raw score, so the rule is reported with them (\code{rule}). The difference keep - split is zero whenever the
 two strategies classify the same raw scores. On the sum-score scale,
 the true status is a latent value at or above the point where the
 reference group's expected score is \code{cut - 0.5}.
@@ -212,7 +217,7 @@ projection assumes that the item parameters and the DIF are the same in
 the target population.
 
 \strong{Scale.} Latent values (\code{cut}, the latent means and SDs, the
-range and location of the local bias, \code{target} means) are on the
+range and location of the local bias, the \code{target} means) are on the
 logit scale of the split model with the reference group's thresholds
 centred to mean zero. \code{\link{RMpersonParameters}} and
 \code{\link{RMitemParameters}} centre all thresholds of the pooled
@@ -224,8 +229,9 @@ same latent value on that scale.
 have delta-method intervals on the estimated shifts. The impact of each
 item has the SE \eqn{|\mathrm{impact}_j / \mathrm{DIF}_j| \times
 SE(\mathrm{DIF}_j)}. The per-item impacts need not add up to the joint
-impact (in the simulations their sum was somewhat larger). The rates have delta-method intervals on all
-parameters of the split model and the latent means and SDs. In
+impact (in the simulations their sum was somewhat larger). The rates
+have delta-method intervals on all parameters of the split model and
+the latent means and SDs. In
 simulations with 5 and 10 four-category items, one or two DIF items of
 0.5 or 0.8 logits and 250 to 800 persons per group, these intervals
 covered close to 95\% when the true DIF items were split (most cells
@@ -240,8 +246,10 @@ reported in full at
 \strong{Data.} Respondents with missing responses are dropped (with a
 message), since the latent means are fitted to the raw-score
 distribution. Every category an item uses must be used in the data,
-but not in both groups: the shift model shares an item's thresholds
-across groups.
+and not only by respondents with a zero or perfect score, or the
+function stops and names the items. Unlike \code{\link{RMdifAnchor}}, a
+category need not be used in both groups, since the shift model shares
+an item's thresholds across groups.
 }
 \examples{
 \donttest{

@@ -549,3 +549,9 @@ New subsection "Category fit given the total score" in section 3 of vignettes/ea
 ## Rename (2026-11-19)
 
 `RMitemCatFitPlot(type = "focused")` renamed to `type = "restscore"`, since the plot shows the rest-score mean and SD per category and "focused" was a dev label. Internal `.catplot_focused*` renamed to `.catplot_restscore*`. Tests, Rd, vignette and the book chapter (label fig-cfit-example-restscore) updated. Earlier sections of this file keep the old name.
+
+## Plot layout and p marking (2026-11-20)
+
+Calibration plot uses coord_cartesian instead of coord_equal, so panels fill the width. With `fit`, strips show the corrected p in bold when < .05 (ggtext, labels escaped as HTML entities), or with " *" without ggtext. The caption says which. Test added. Vignette calibration fig.height 13 -> 11.
+- Rest-score plot: outside points now filled vermillion #D55E00 (as RMdifAnchor flags), inside open black; bars grey60 -> grey85 for contrast. Shape still carries the distinction (CVD-safe, checked with a deutan simulation).
+- 2026-11-20: help pages of both functions reread and revised for clarity (terms defined, Data paragraph, p formula, FDR note, book link, Glas 1988 now cited, refs alphabetical).

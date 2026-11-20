@@ -3,70 +3,62 @@
 \name{RMitemInfitPlot}
 \alias{RMitemInfitPlot}
 \alias{RMitemInfitCutoffPlot}
-\title{Plot Distribution of Simulated Infit and Outfit MSQ Values}
+\title{Plot the simulated infit and outfit MSQ values}
 \usage{
 RMitemInfitPlot(simfit, data, statistic = "infit")
 
 RMitemInfitCutoffPlot(...)
 }
 \arguments{
-\item{simfit}{The return value of \code{\link{RMitemInfitCutoff}} (a list with
-components \code{results}, \code{item_cutoffs}, \code{actual_iterations}, \code{sample_n}, and
-\code{item_names}).}
+\item{simfit}{The result of \code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}} or
+\code{\link[=RMitemInfitCutoffMI]{RMitemInfitCutoffMI()}}.}
 
-\item{data}{Optional. A data.frame or matrix of item responses for computing
-and overlaying observed conditional item fit values. Items must be scored
-starting at 0 (non-negative integers). When provided, the plot includes
-orange diamond markers for the observed infit/outfit MSQ alongside the
-simulated distribution, plus segment summaries from the cutoff intervals.}
+\item{data}{Optional. The item responses the simulations were made from,
+items scored from 0. The observed conditional infit and outfit MSQ are
+then computed (on complete cases) and drawn as orange diamonds.}
 
-\item{statistic}{Character string. Either \code{"infit"} (default) to show only the
-infit panel, \code{"outfit"} to show only the outfit panel, or \code{"both"} to show
-infit and outfit side by side (requires the \code{patchwork} package when
-\code{data} is supplied).}
+\item{statistic}{Character. \code{"infit"}, \code{"outfit"}, or \code{"both"} side
+by side. With \code{data} the default is \code{"infit"}, and \code{"both"} needs
+\pkg{patchwork}. Without \code{data} the default is \code{"both"}, drawn as two
+facets.}
 
 \item{...}{Arguments passed on to \code{RMitemInfitPlot()}.}
 }
 \value{
-A \code{ggplot} object (or a \code{patchwork} object when \code{statistic = "both"}
-and \code{data} is supplied).
+A \code{ggplot} object, or a \code{patchwork} object with
+\code{statistic = "both"} and \code{data}.
 }
 \description{
-Visualises the distribution of simulation-based conditional item fit values
-from \code{\link{RMitemInfitCutoff}}, optionally overlaying observed item fit
-from the original data.
+Plots the simulated conditional item fit values from
+\code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}} (or \code{\link[=RMitemInfitCutoffMI]{RMitemInfitCutoffMI()}}) per item, and
+optionally the observed values in your data.
 }
 \details{
-Uses \code{ggdist::stat_dotsinterval()} (when \code{data} is not supplied) or
-\code{ggdist::stat_dots()} (when \code{data} is supplied) with
-\code{point_interval = "median_hdci"}. The outer \code{.width} follows
-\code{simfit$hdci_width}, so the shaded interval matches the one
-\code{\link[=RMitemInfit]{RMitemInfit()}} tabulates.
+Each item's simulated values are drawn as dots, with the median, an
+inner 66\% interval and an outer interval. The outer interval is the one
+stored in \code{simfit} and tabulated by \code{\link[=RMitemInfit]{RMitemInfit()}}: the HDCI of width
+\code{hdci_width}, or the 2.5th to 97.5th percentiles with
+\code{cutoff_method = "quantile"}. The inner interval uses the same method.
 
-When \code{data} is \strong{not} supplied, the function plots the simulated MSQ
-distributions as dot-interval plots using \code{ggdist::stat_dotsinterval()} with
-median and Highest Density Continuous Interval (HDCI) summaries, faceted by
-statistic (InfitMSQ / OutfitMSQ).
+\strong{Without \code{data}} the intervals are drawn with
+\code{ggdist::stat_dotsinterval()}.
 
-When \code{data} \strong{is} supplied, the function:
-\enumerate{
-\item Fits a Rasch / Partial Credit model by CML via
-\code{psychotools::pcmodel()} (a dichotomous item is a 2-category PCM)
-and computes observed conditional infit and outfit MSQ via
-\code{iarm::out_infit()}.
-\item Overlays observed fit values as orange diamond markers on the
-simulated distributions.
-\item Shows per-item cutoff intervals (from \code{simfit$item_cutoffs}) as
-black line segments, with thicker segments for the 66\% HDCI range and
-black dots for the median.
-}
+\strong{With \code{data}}, the model is fitted by CML (\code{psychotools::pcmodel()})
+and the observed conditional MSQ computed with \code{iarm::out_infit()}. The
+intervals are black segments with a black dot for the median, and the
+observed value is the orange diamond.
 
-The \code{ggplot2}, \code{ggdist}, and optionally \code{patchwork} packages must be
-installed (they are in Suggests, not Imports).
+The intervals are per item and not corrected for testing several items.
+With the full cutoff object, \code{\link[=RMitemInfit]{RMitemInfit()}} flags items by adjusted
+p-values instead, so an item just outside its interval need not be
+flagged there. The plot shows no p-values.
+
+The \pkg{ggplot2} and \pkg{ggdist} packages must be installed, and
+\pkg{patchwork} for \code{statistic = "both"} (all are in Suggests).
 
 \code{RMitemInfitCutoffPlot()} is a deprecated alias for \code{RMitemInfitPlot()},
-retained for backward compatibility with code written against easyRasch2
-0.8.0. It warns and forwards to \code{RMitemInfitPlot()}.
+kept for code written for easyRasch2 0.8.0. It warns and calls
+\code{RMitemInfitPlot()}.
 }
 \examples{
 \donttest{
@@ -83,7 +75,7 @@ if (requireNamespace("iarm", quietly = TRUE) &&
   cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100,
                                   parallel = FALSE, seed = 42)
 
-  # Simulated distribution only (infit + outfit faceted)
+  # Simulated values only (infit and outfit side by side)
   RMitemInfitPlot(cutoff_res)
 
   # With observed fit overlaid (infit only, the default)
@@ -97,5 +89,5 @@ if (requireNamespace("iarm", quietly = TRUE) &&
 }
 }
 \seealso{
-\code{\link{RMitemInfitCutoff}}, \code{\link{RMitemInfit}}
+\code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}}, \code{\link[=RMitemInfit]{RMitemInfit()}}
 }

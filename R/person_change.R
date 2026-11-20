@@ -1,9 +1,10 @@
 #' Single-subject change between two occasions
 #'
 #' Tests, for each respondent, whether their person location moved between two
-#' occasions by more than measurement error allows. The statistic is the Rasch
-#' change index, \eqn{RCI = (\hat\theta_2 - \hat\theta_1)/SE_{diff}}, referred
-#' by default to its exact null distribution rather than a normal one.
+#' occasions by more than measurement error allows. The statistic is a Rasch
+#' version of the reliable change index (Jacobson & Truax, 1991),
+#' \eqn{RCI = (\hat\theta_2 - \hat\theta_1)/SE_{diff}}, referred by default
+#' to its exact null distribution rather than a normal one.
 #'
 #' @param data_t1,data_t2 Data.frames or matrices of item responses at the two
 #'   occasions. Same items, in the same order, one row per respondent, with row
@@ -39,7 +40,7 @@
 #'   `0.05`.
 #' @param direction Character. `"two.sided"` (default), or `"increase"` /
 #'   `"decrease"` for a one-sided test. These name the direction of
-#'   \eqn{\theta}; whether an increase is an improvement depends on how the
+#'   \eqn{\theta}. Whether an increase is an improvement depends on how the
 #'   scale is oriented.
 #' @param conditional_crit Logical. If `TRUE`, critical values are computed
 #'   separately for each respondent at their own location (enumerated or
@@ -47,18 +48,21 @@
 #'   `FALSE`. Ignored when `critical` is numeric.
 #' @param sim_iter Integer. Simulation iterations when
 #'   `critical = "simulate"`. Default `1000`.
-#' @param parallel Logical. Use `mirai` for the simulation if available.
-#'   Default `TRUE`. Only used when `critical = "simulate"`.
-#' @param n_cores Integer or `NULL`. Parallel workers. When `NULL`,
-#'   `getOption("mc.cores")` is checked first; if neither is set, the
-#'   simulation runs sequentially. Only used when `critical = "simulate"`.
+#' @param parallel Logical. Run the simulation in parallel via \pkg{mirai}
+#'   when it is installed. Default `TRUE`. Only used when
+#'   `critical = "simulate"`.
+#' @param n_cores Integer or `NULL`. Number of parallel workers. When
+#'   `NULL`, `getOption("mc.cores")` is used. If that is unset too, the
+#'   simulation runs sequentially. Only used when
+#'   `critical = "simulate"`.
 #' @param seed Integer or `NULL`. Random seed. See
 #'   [easyRasch2-reproducibility]. Only used when `critical = "simulate"`.
 #' @param theta_range Numeric length 2. Search range for the WLE root and
 #'   bounds for the EAP grid. Default `c(-10, 10)`.
 #' @param verbose Logical. Print a progress bar for the simulation. Default
 #'   `FALSE`. Only used when `critical = "simulate"`.
-#' @param output Character. `"dataframe"` (default), `"kable"`, or `"ggplot"`.
+#' @param output Character. `"dataframe"` (default), `"kable"`, `"ggplot"`,
+#'   or `"list"` for the per-respondent table and the analysis settings.
 #'
 #' @return
 #' * If `output = "dataframe"`: one row per respondent, with columns `id`,
@@ -66,10 +70,17 @@
 #'   `extreme_t1`, `extreme_t2`, `change`, `se_diff`, `rci`, `p_value`,
 #'   `crit_lower`, `crit_upper`, `change_class`, and `retest_sd_tip`.
 #'   Attributes `null`, `retest_sd`, `anchor`, `alpha`, `direction`,
-#'   `critical` and `sim_iter` (`NA` unless simulated) record the analysis.
+#'   `critical`, `sim_iter` (`NA` unless simulated), `method` and
+#'   `conditional_crit` record the analysis. They are kept for
+#'   compatibility. `output = "list"` gives them as a table.
 #' * If `output = "kable"`: the same content as a `knitr_kable`.
 #' * If `output = "ggplot"`: occasion 1 against occasion 2, with the
 #'   no-change band and points coloured by `change_class`.
+#' * If `output = "list"`: a list with `persons` (the data.frame above) and
+#'   `settings`, a one-row data.frame with `null`, `retest_sd` (0 with
+#'   `null = "measurement"`), `anchor`, `method`, `estimator`, `alpha`,
+#'   `direction`, `critical` (the method used), `conditional_crit`,
+#'   `sim_iter` (`NA` unless simulated) and `n_persons`.
 #'
 #' @details
 #' **Which null is tested.** Following Zumbo (2026), the estimand is fixed by
@@ -142,19 +153,20 @@
 #' occasions differ in which items were answered.
 #'
 #' The pooled critical value is a property of the sample as well as the items,
-#' because it averages over where the respondents sit. Targeting matters more
-#' than the shape of the distribution: skewing the sample barely moves it,
-#' while pushing the same sample off target until 40 percent of respondents
+#' because it averages over where the respondents are. Targeting matters
+#' more than the shape of the distribution: skewing the sample barely moves
+#' it, while pushing the same sample off target until 40% of respondents
 #' score at an extreme moved it from 1.70 to 1.52 in one check.
 #'
 #' **What the RCI measures, and what it does not.** The RCI answers whether a
 #' change is distinguishable from the null. It is not a measure of how much
-#' someone changed, and the two orderings genuinely differ. Its value mixes two
+#' someone changed, and the two orderings differ. Its value mixes two
 #' ingredients that it cannot separate: how far the respondent moved, and how
 #' precisely each of their two positions was pinned down. On a scale of six
 #' items with four response categories the standard error runs from 0.49 in the
-#' middle to 1.45 at the boundary, a factor of three within one instrument. A respondent going from
-#' the minimum to the maximum score moves 7.24 logits and scores RCI 3.53,
+#' middle to 1.45 at the boundary, a factor of three within one instrument. A
+#' respondent going from the minimum to the maximum score moves 7.24 logits
+#' and scores RCI 3.53,
 #' while one going from 3 to 15 moves 3.11 logits and scores 3.59. The first
 #' traversed the whole scale, the second less than half of it, and the second
 #' has the larger statistic. Both statements are correct about their own
@@ -204,7 +216,7 @@
 #' items with four categories and no true change whatever, the simulated mean
 #' observed change reached +0.46 logits at \eqn{\theta = 2.5} and -0.47 at
 #' \eqn{\theta = -2.5} when \eqn{d = 1.5}. Two consequences follow. False
-#' positives stop dividing evenly by direction, reaching 97 percent "increase"
+#' positives stop dividing evenly by direction, reaching 97% "increase"
 #' among respondents above the items. And a uniform true change is read as a
 #' gradient in baseline severity: a real improvement of 0.50 logits for everyone
 #' came out as 0.14 for respondents below the items and 0.55 for those above.
@@ -325,7 +337,7 @@ RMpersonChange <- function(
   estimator <- match.arg(estimator, c("CML", "MML"))
   null <- match.arg(null, c("measurement", "retest"))
   direction <- match.arg(direction, c("two.sided", "increase", "decrease"))
-  output <- match.arg(output, c("dataframe", "kable", "ggplot"))
+  output <- match.arg(output, c("dataframe", "kable", "ggplot", "list"))
 
   if (!is.numeric(alpha) || length(alpha) != 1L || alpha <= 0 || alpha >= 1) {
     stop("`alpha` must be a numeric value strictly between 0 and 1.",
@@ -558,6 +570,32 @@ RMpersonChange <- function(
 
   if (output == "dataframe") {
     return(result)
+  }
+  if (output == "list") {
+    # The analysis settings as a table (the attributes stay on the dataframe
+    # output for compatibility).
+    persons <- result
+    for (a in c("null", "retest_sd", "anchor", "alpha", "direction",
+                "critical", "sim_iter", "method", "conditional_crit")) {
+      attr(persons, a) <- NULL
+    }
+    return(list(
+      persons = persons,
+      settings = data.frame(
+        null = null,
+        retest_sd = sigma_retest,
+        anchor = anchor,
+        method = method,
+        estimator = estimator,
+        alpha = alpha,
+        direction = direction,
+        critical = attr(result, "critical"),
+        conditional_crit = conditional_crit,
+        sim_iter = actual_iter,
+        n_persons = n_persons,
+        stringsAsFactors = FALSE
+      )
+    ))
   }
 
   n_clause <- .n_caption(

@@ -455,11 +455,31 @@ test_that("output = 'list' returns table + tree from one fit, matching the other
   dd <- make_dif_dichotomous()
 
   res <- suppressMessages(RMdifTree(dd$items, dd$covs, output = "list"))
-  expect_named(res, c("table", "tree"))
+  expect_identical(names(res)[1:2], c("table", "tree"))
   expect_s3_class(res$table, "data.frame")
   expect_s3_class(res$tree, "RMdifTree")
 
   df <- suppressMessages(RMdifTree(dd$items, dd$covs, output = "dataframe"))
   expect_identical(res$table, df)
   expect_identical(attr(res$table, "effect_size"), "MH")
+})
+
+test_that("output = 'list' carries what the attributes carry", {
+  skip_on_cran()
+  need_tree_pkgs()
+  skip_if_not_installed("stablelearner")
+  d <- make_dif_dichotomous()
+  set.seed(1)
+  res <- RMdifTree(d$items, covariates = d$covs, minsize = 50,
+                   stability = TRUE, stability_B = 5L, output = "list")
+  expect_named(res, c("table", "tree", "model", "effect_size", "stability",
+                      "rescaled_terminal_items"))
+  expect_equal(res$model, attr(res$table, "model"))
+  expect_equal(res$effect_size, attr(res$table, "effect_size"))
+  expect_equal(res$stability, attr(res$table, "stability"))
+  expect_null(res$rescaled_terminal_items)
+
+  res2 <- RMdifTree(d$items, covariates = d$covs, minsize = 50,
+                    output = "list")
+  expect_null(res2$stability)
 })

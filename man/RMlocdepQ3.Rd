@@ -2,7 +2,7 @@
 % Please edit documentation in R/local_dependence.R
 \name{RMlocdepQ3}
 \alias{RMlocdepQ3}
-\title{\eqn{Q_3} Residual Correlations for Local Dependence Assessment}
+\title{Yen's Q3 residual correlations}
 \usage{
 RMlocdepQ3(
   data,
@@ -16,141 +16,136 @@ RMlocdepQ3(
 )
 }
 \arguments{
-\item{data}{A data.frame or matrix of item responses. Items must be scored
-starting at 0 (non-negative integers). Missing values (\code{NA}) are allowed.}
+\item{data}{A data.frame or matrix of item responses, items scored from
+0. Missing values (\code{NA}) are allowed. \eqn{Q_3} is computed from the
+respondents who answered both items of a pair, and respondents with no
+responses are dropped.}
 
-\item{cutoff}{Optional. \code{NULL} (default) returns the raw \eqn{Q_3}matrix. A single
-numeric value returns the \eqn{Q_3} matrix with a global dynamic cut-off (the
-value added to the mean off-diagonal \eqn{Q_3}). The \strong{full list} returned by
-\code{\link{RMlocdepQ3Cutoff}} returns a \emph{list of two tables} (see Value):
-the cut-off matrix plus a per-pair table.}
+\item{cutoff}{Optional. Either of:
+\itemize{
+\item \code{NULL} (default): the \eqn{Q_3} matrix.
+\item A single number: the matrix with a global dynamic cutoff, the mean
+off-diagonal \eqn{Q_3} plus this number (for example
+\code{suggested_cutoff} from \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}).
+\item The full result of \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}: a list of two tables, the
+matrix with the global cutoff and a table per pair (see Value).
+}}
 
-\item{output}{Character string controlling the return value. Either
-\code{"kable"} (default) for formatted \code{knitr::kable()} table(s), or
-\code{"dataframe"} for the underlying data.frame(s).}
+\item{output}{Character. \code{"kable"} (default) for \code{knitr::kable()}
+tables, or \code{"dataframe"}.}
 
-\item{n_pairs}{Integer or \code{NULL} (default). When the full cutoff object is
-supplied, limits the per-pair table to the \code{n_pairs} pairs with the
-largest departure from their expected range. \code{NULL} shows all pairs.}
+\item{n_pairs}{Integer or \code{NULL} (default). With the full cutoff object,
+shows only the \code{n_pairs} pairs that depart most from their expected
+range in the pair table. \code{NULL} shows all pairs. The correction always
+covers all pairs.}
 
-\item{p_value}{Logical or \code{NULL}. When \code{TRUE} the per-pair table reports
-one-sided bootstrap p-values (\code{p_q3}, \code{padj_q3}) and flags \code{above} pairs
-(only) on \code{padj_q3 < alpha} instead of on the expected range. \code{NULL}, the
-default, means \code{TRUE} when \code{cutoff} is the full
-\code{\link{RMlocdepQ3Cutoff}} object and \code{FALSE} otherwise, so a
-numeric cutoff or no cutoff keeps the interval. Pass \code{FALSE} for the
-pre-1.2.0 behaviour. The interval is a description of where a pair's
-\eqn{Q_3} is expected to fall and makes a poor decision rule, since its
-width sets a family-wise error rate of \code{1 - width^m} over all \eqn{m}
-pairs at once, and pairs grow quadratically in items (Johansson, 2026).}
+\item{p_value}{Logical or \code{NULL}. Whether to flag pairs on one-sided
+bootstrap p-values (\code{p_q3}, \code{padj_q3}) for excess positive dependence.
+\code{NULL} (default) uses them whenever \code{cutoff} is the full
+\code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}} result, so a numeric cutoff or none keeps the
+interval. \code{FALSE} gives the behaviour before version 1.2.0. The
+interval describes where a pair's \eqn{Q_3} is expected to fall. Used
+as a decision rule over m pairs, a width \code{w} gives a family-wise error
+rate of \code{1 - w^m}, and the number of pairs grows with the square of
+the number of items (Johansson, 2026).}
 
-\item{correction}{Character. Multiple-comparison correction across item
-pairs when \code{p_value = TRUE}: \code{"fwer"} (default) for the Westfall-Young
-studentised-max step-down, \code{"fdr_bh"} / \code{"fdr_by"} for Benjamini-Hochberg
-/ Benjamini-Yekutieli, or \code{"none"}.}
+\item{correction}{Character. Correction of the p-values across all pairs:
+\code{"fwer"} (default, Westfall-Young step-down), \code{"fdr_bh"} or \code{"fdr_by"}
+(Benjamini-Hochberg or Benjamini-Yekutieli), or \code{"none"}.}
 
-\item{alpha}{Numeric in (0, 1). Significance level for \code{Flagged} when
-\code{p_value = TRUE}. Default \code{0.05}.}
+\item{alpha}{Numeric in (0, 1). A pair is flagged when its corrected
+p-value is below \code{alpha}. Default \code{0.05}. Used only with p-values.}
 
-\item{estimator}{Character. Estimation engine for the \eqn{Q_3} residual
-correlations. \code{"CML"} (default) fits item parameters by conditional
-maximum likelihood (\code{psychotools}) and person locations by Warm's
-weighted likelihood (WLE) -- true to the Rasch tradition and finite
-at extreme scores. \code{"MML"} uses the marginal-ML / EAP engine
-(\code{mirt}), retained for backward compatibility. The estimator must
-match the one used by \code{\link{RMlocdepQ3Cutoff}}; when the full
-cutoff object is supplied, its stored estimator takes precedence (a
-mismatching \code{estimator} argument is overridden with a warning).}
+\item{estimator}{Character. How the residuals are computed. \code{"CML"}
+(default) uses CML item parameters (\code{psychotools}) and WLE person
+locations, which are finite at extreme scores. \code{"MML"} uses marginal
+maximum likelihood and EAP (\code{mirt}), kept for older analyses. It must
+match the estimator of \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}. With the full cutoff
+object, its stored estimator is used, with a warning if \code{estimator}
+differs.}
 }
 \value{
-With \code{cutoff = NULL} or a bare numeric cut-off, a single object (\code{kable} or
-data.frame) holding the lower triangle of the \eqn{Q_3} matrix; a numeric cut-off
-adds a \code{Flagged} row flag and a caption describing the dynamic
-cut-off.
+With \code{cutoff = NULL} or a number, one table (\code{knitr_kable} or
+data.frame) with the lower triangle of the \eqn{Q_3} matrix. A number
+adds a flag for pairs above the dynamic cutoff and a caption describing
+it.
 
-With the \strong{full \code{RMlocdepQ3Cutoff()} object}, a named list of two:
+With the full \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}} result, a named list:
 \describe{
-\item{\verb{$matrix}}{the \eqn{Q_3} lower-triangle matrix with the \emph{global} dynamic
-cut-off (mean off-diagonal \eqn{Q_3} + suggested cut-off), as above.}
-\item{\verb{$pairs}}{one row per item pair: \code{Item1}, \code{Item2}, \code{Observed} (\eqn{Q_3}),
-\code{Low}/\code{High} (the per-pair expected range, i.e. the simulated bounds),
-and \code{Flagged} -- \code{"above"} (\eqn{Q_3} above the upper bound, indicating local
-dependence), \code{"below"} (below the lower bound), or \code{""}. Sorted by
-absolute departure from the per-pair simulated median and truncated to
-\code{n_pairs}. With \code{p_value = TRUE}, columns \code{p_q3} and \code{padj_q3} are added
-and \code{Flagged} reflects \code{padj_q3 < alpha} and \strong{only flags \code{"above"}}.}
+\item{\code{matrix}}{the \eqn{Q_3} matrix with the global dynamic cutoff
+(mean off-diagonal \eqn{Q_3} plus \code{suggested_cutoff}), as above.}
+\item{\code{pairs}}{one row per item pair with \code{Item1}, \code{Item2}, \code{Observed}
+(\eqn{Q_3}), \code{Low} and \code{High} (the pair's simulated interval) and
+\code{Flagged}: \code{"above"} (above the interval, local dependence),
+\code{"below"} or \code{""}. Sorted by the departure from the pair's simulated
+median and cut to \code{n_pairs}. With p-values, also \code{p_q3} and
+\code{padj_q3}, and \code{Flagged} marks \code{padj_q3 < alpha}, only as
+\code{"above"}.}
 }
-The \eqn{Q_3} tile heatmap that earlier versions returned as \verb{$plot} is now produced
-by \code{\link{RMlocdepQ3Plot}} (as its \verb{$matrix} element), so the table and
-plot outputs share the same \verb{$matrix}/\verb{$pairs} structure.
+The \eqn{Q_3} heatmap is drawn by \code{\link[=RMlocdepQ3Plot]{RMlocdepQ3Plot()}} (its \code{matrix}
+element), so the tables and plots share the \code{matrix} and \code{pairs}
+structure.
 }
 \description{
-Computes Yen's \eqn{Q_3} residual correlations between item pairs. By default
-the Rasch model is fitted by conditional maximum likelihood with WLE person
-locations (\code{estimator = "CML"}); marginal ML via \code{mirt} is available with
-\code{estimator = "MML"}. High correlations (above the dynamic cut-off) indicate
-potential local dependence between items. See \code{\link{RMlocdepQ3Cutoff}}
-for how to determine the appropriate dynamic cut-off for your data.
+Computes Yen's \eqn{Q_3}, the correlations between the model residuals of
+each pair of items, to assess local dependence. By default the item
+parameters are estimated by conditional maximum likelihood and the person
+locations by WLE (\code{estimator = "CML"}). With the result of
+\code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}, it also tests each pair against simulations, by
+default with a bootstrap p-value corrected across pairs.
 }
 \details{
-The \eqn{Q_3} statistic (Yen, 1984) is the correlation between residuals of pairs
-of items after accounting for the latent trait. Under local independence,
-\eqn{Q_3} values are expected to be around \eqn{-1/(k-1)} where \eqn{k} is the
-number of items. When \code{cutoff} is supplied, the dynamic cut-off is the mean
-of all off-diagonal \eqn{Q_3} values plus \code{cutoff}, following the approach of
-Christensen et al. (2017). Use \code{\link{RMlocdepQ3Cutoff}} to obtain a
-simulation-based cutoff recommendation.
+\strong{Statistic.} \eqn{Q_3} (Yen, 1984) is the correlation between the
+residuals of two items after the latent variable is accounted for. Under
+local independence it is around \eqn{-1/(k-1)} for k items. With a
+\code{cutoff}, the dynamic cutoff is the mean of all off-diagonal \eqn{Q_3}
+plus \code{cutoff} (Christensen et al., 2017).
 
-\eqn{Q_3} is the column-wise correlation matrix of the model standardized
-residuals \eqn{(x - E)/\sqrt{Var}}. By default (\code{estimator = "CML"}) item
-parameters are estimated by conditional maximum likelihood (\code{psychotools})
-and person locations by Warm's weighted likelihood; \code{estimator = "MML"}
-instead uses \code{mirt}'s marginal-ML model and its built-in \eqn{Q_3} residuals.
-The two estimators give very similar \eqn{Q_3} values (off-diagonal correlation
-typically > 0.95); what matters for inference is that the observed \eqn{Q_3} and
-the simulated cut-off in \code{\link{RMlocdepQ3Cutoff}} use the \emph{same}
-estimator, which the functions enforce.
+\strong{Estimation.} \eqn{Q_3} is the correlation matrix of the
+standardized residuals \eqn{(x - E)/\sqrt{Var}}. With \code{"MML"} the residuals
+come from \code{mirt}. The two estimators give very similar \eqn{Q_3} (the
+off-diagonal values typically correlate above .95). What matters for
+inference is that the observed \eqn{Q_3} and the simulations in
+\code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}} use the same estimator, which the functions enforce.
 
-\strong{Two views of local dependence.} Given the full
-\code{\link{RMlocdepQ3Cutoff}} object, two complementary tables are returned.
-The \verb{$matrix} applies a single \emph{global} cut-off (the Christensen et al.
-approach: the 99th percentile of the simulated max-minus-mean \eqn{Q_3}) -- a
-family-wise "is there any local dependence" overview. The \verb{$pairs} table is
-the per-comparison view: each observed \eqn{Q_3} against its own simulated expected
-range (the \code{Low}/\code{High} bounds), so individual dependent pairs can be read
-off and ranked.
+\strong{Two views.} With the full \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}} result, two tables
+are returned. \code{matrix} applies one global cutoff, the 99th percentile of
+the simulated maximum minus mean \eqn{Q_3} (Christensen et al., 2017),
+an overview of whether there is any local dependence. \code{pairs} compares
+each observed \eqn{Q_3} with its own simulated interval, so that single
+dependent pairs can be read off and ranked.
 
-\strong{Bootstrap p-values.} When \code{p_value = TRUE}, the \verb{$pairs} table also
-tests each observed \eqn{Q_3} against its simulated null (from \code{cutoff$pair_results})
-with a one-sided (upper-tail) test for excess local dependence. The pair
-statistic is studentised by the mean and SD of the observed and simulated
-values together; the marginal p-value
-is \verb{(1 + #\{Q3* >= Q3\}) / (B + 1)}, and \code{correction} applies the family-wise
-(Westfall-Young step-down) or FDR adjustment across the \eqn{k(k-1)/2} pairs.
-As for item fit, the family-wise error rate is controlled at any number of
-\code{iterations} in \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}, but decisions depend on the seed.
-Below 400 iterations this is reported once per session, and between 400
-and 1000 the table caption notes it. A false discovery rate correction needs far more
-iterations than the family-wise one, because a bootstrap p-value cannot
-fall below \code{1/(B + 1)} and Benjamini-Hochberg compares the smallest against
+\strong{Bootstrap p-values.} Each observed \eqn{Q_3} is tested against
+its simulated values (\code{cutoff$pair_results}), one-sided for excess local
+dependence. The statistic is the deviation from the mean of the observed
+and simulated values together, divided by their SD. The uncorrected p is
+\verb{(1 + #\{Q3* >= Q3\}) / (B + 1)} for B simulated datasets, and
+\code{correction} adjusts across the \eqn{k(k-1)/2} pairs (Westfall-Young
+step-down, Ferreira, 2024, or FDR). As for item fit, the family-wise
+error rate is controlled at any number of iterations, but decisions
+depend on the seed. Below 400 iterations a message says so once per
+session, and between 400 and 1000 the caption notes it. A false
+discovery rate correction needs far more iterations than the
+family-wise one, since a bootstrap p-value cannot fall below
+\code{1/(B + 1)} and Benjamini-Hochberg compares the smallest with
 \code{alpha/m}. Over the 36 pairs of a nine-item scale that takes 720
-iterations, and over the 190 pairs of a twenty-item scale 3799, against 19
-for Westfall-Young whatever the number of pairs.
+iterations, and over the 190 pairs of a twenty-item scale 3799, against
+19 for Westfall-Young whatever the number of pairs.
 }
 \section{Multiple comparisons}{
 
-The marginal p-value controls the error rate of a \emph{single} comparison: for
-one item (or item pair) decided on in advance it is the relevant value. But
-scanning all \emph{k} comparisons and flagging whichever fall below \code{alpha} tests
-\emph{k} hypotheses at once, so the chance of at least one false flag inflates to
-roughly \eqn{1 - (1 - \alpha)^k} (e.g. about 34\% for \emph{k} = 8 at
-\code{alpha = 0.05}) -- even when every marginal p-value is correctly calibrated.
-The corrected (adjusted) p-value controls this: \code{correction = "fwer"} bounds
-the probability of \emph{any} false flag (strict, lower power), while \code{"fdr_bh"} /
-\code{"fdr_by"} bound the expected \emph{proportion} of false flags among those raised
-(a more lenient middle ground). Rule of thumb: use the marginal p-value for a
-single pre-specified comparison, and a corrected p-value when screening the
-whole table -- the usual workflow.
+The uncorrected p-value controls the error rate of a single comparison.
+For one item (or item pair) chosen in advance it is the relevant value.
+Flagging whichever of k comparisons fall below \code{alpha} tests k
+hypotheses at once, and the chance of at least one false flag rises to
+about \eqn{1 - (1 - \alpha)^k}, for example 34\% for k = 8 at
+\code{alpha = 0.05}, even when every uncorrected p-value is calibrated. The
+corrected p-value controls this. \code{correction = "fwer"} bounds the
+probability of any false flag (strict, less power), and \code{"fdr_bh"} and
+\code{"fdr_by"} bound the expected share of false flags among those raised.
+Use the uncorrected p-value for a single comparison chosen in advance,
+and a corrected one when screening the whole table, which is the usual
+case.
 }
 
 \examples{
@@ -168,14 +163,14 @@ RMlocdepQ3(sim_data)
 # Get the underlying data.frame
 q3_df <- RMlocdepQ3(sim_data, output = "dataframe")
 
-# Simulation-based cutoff (use 500+ iterations in real analyses)
+# Simulation-based cutoff (use 1000 or more iterations in real analyses)
 if (requireNamespace("ggdist", quietly = TRUE)) {
   cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 50, parallel = FALSE)
 
-  # Bare numeric cutoff -> just the matrix
+  # A single number gives the matrix only
   RMlocdepQ3(sim_data, cutoff = cutoff_res$suggested_cutoff)
 
-  # Full object -> list of two tables: $matrix and $pairs
+  # The full object gives two tables, $matrix and $pairs
   res <- RMlocdepQ3(sim_data, cutoff = cutoff_res, output = "dataframe")
   res$pairs
 
@@ -186,11 +181,6 @@ if (requireNamespace("ggdist", quietly = TRUE)) {
 }
 }
 \references{
-Yen, W. M. (1984). Effects of local item dependence on the fit and
-equating performance of the three-parameter logistic model.
-\emph{Applied Psychological Measurement, 8}(2), 125--145.
-\doi{10.1177/014662168400800201}
-
 Christensen, K. B., Makransky, G., & Horton, M. (2017). Critical values
 for Yen's \eqn{Q_3}: Identification of local dependence in the Rasch model.
 \emph{Applied Psychological Measurement, 41}(3), 178--194.
@@ -203,4 +193,13 @@ of hypotheses simultaneously. \emph{Journal of Statistical Theory and Practice,
 Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
 Rasch models: Iterations, multiplicity correction, and decision stability.
 \emph{PsyArXiv}. \doi{10.31234/osf.io/7pqz4_v2}
+
+Yen, W. M. (1984). Effects of local item dependence on the fit and
+equating performance of the three-parameter logistic model.
+\emph{Applied Psychological Measurement, 8}(2), 125--145.
+\doi{10.1177/014662168400800201}
+}
+\seealso{
+\code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}} for the simulations, \code{\link[=RMlocdepQ3Plot]{RMlocdepQ3Plot()}}
+for the plots, \code{\link[=RMlocdepGamma]{RMlocdepGamma()}} for partial gamma.
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ld_partgam.R
 \name{RMlocdepGammaCutoff}
 \alias{RMlocdepGammaCutoff}
-\title{Simulation-Based Partial Gamma LD Cutoff Determination}
+\title{Simulation-based partial gamma local dependence cutoffs}
 \usage{
 RMlocdepGammaCutoff(
   data,
@@ -16,22 +16,20 @@ RMlocdepGammaCutoff(
 )
 }
 \arguments{
-\item{data}{A data.frame or matrix of item responses. Items must be scored
-starting at 0 (non-negative integers). Only complete cases (rows without
-any \code{NA}) are used.}
+\item{data}{A data.frame or matrix of item responses, items scored from
+0. Only complete cases (rows without \code{NA}) are used.}
 
-\item{iterations}{Integer. Number of simulation iterations (default 400,
-was 250 before 1.2.0). 400 is the recommended floor for reproducible
-Westfall-Young decisions (Johansson, 2026) and the count a 95\\% interval
-needs to converge. Use 1000 to 2000 for a final analysis.}
+\item{iterations}{Integer. Number of simulated datasets. Default \code{400}
+(\code{250} before 1.2.0), the recommended minimum for reproducible
+Westfall-Young decisions and the number a 95\% interval needs to
+converge (Johansson, 2026). Use 1000 to 2000 for a final analysis.}
 
-\item{parallel}{Logical. Use parallel processing via \code{mirai} if available
-(default \code{TRUE}).}
+\item{parallel}{Logical. Run the simulations in parallel via \pkg{mirai}
+when it is installed. Default \code{TRUE}.}
 
-\item{n_cores}{Integer or \code{NULL}. Number of parallel workers. When \code{NULL},
-\code{getOption("mc.cores")} is checked first. If neither is set and
-\code{parallel = TRUE}, a warning is issued and execution falls back to
-sequential (single core) processing.}
+\item{n_cores}{Integer or \code{NULL}. Number of parallel workers. When
+\code{NULL}, \code{getOption("mc.cores")} is used. If that is unset too, a
+warning is given and the simulations run sequentially.}
 
 \item{verbose}{Logical. Show a progress bar (default \code{FALSE}).}
 
@@ -52,72 +50,53 @@ at the default iteration count rather than to imply an error rate.
 Ignored when \code{cutoff_method = "quantile"}.}
 }
 \value{
-A list with components:
+A list with:
 \describe{
-\item{\code{results}}{data.frame with columns \code{iteration}, \code{Item1}, \code{Item2},
-and \code{gamma} (one row per item pair per successful iteration). \code{gamma} is
-the larger of the pair's two rest-score directions, the statistic
-\code{RMlocdepGamma()} tests. Rows are keyed by the sorted pair order, with
-\code{Item1} before \code{Item2} in column order.}
-\item{\code{pair_cutoffs}}{data.frame with per-pair cutoff summaries: \code{Item1},
-\code{Item2}, \code{gamma_low}, \code{gamma_high}. Bounds are computed using the method
-specified by \code{cutoff_method}.}
-\item{\code{actual_iterations}}{Number of successful iterations.}
+\item{\code{results}}{data.frame with \code{iteration}, \code{Item1}, \code{Item2} and
+\code{gamma}, one row per item pair and simulated dataset. \code{gamma} is the
+larger of the pair's two rest-score directions, the statistic
+\code{\link[=RMlocdepGamma]{RMlocdepGamma()}} tests. Pairs are keyed in sorted order.}
+\item{\code{pair_cutoffs}}{data.frame with the interval per pair: \code{Item1},
+\code{Item2}, \code{gamma_low}, \code{gamma_high}, computed by \code{cutoff_method}.}
+\item{\code{actual_iterations}}{Number of simulated datasets that could be
+used.}
+\item{\code{requested_iterations}}{The \code{iterations} argument.}
 \item{\code{sample_n}}{Number of complete cases used.}
-\item{\code{sample_n_total}}{Number of respondents in the raw input data,
-before the complete-case filter.}
-\item{\code{sample_has_na}}{Logical. Whether the raw input data contained
-any missing values.}
-\item{\code{sample_summary}}{Summary statistics of estimated person
-parameters.}
-\item{\code{item_names}}{Character vector of item names from data.}
-\item{\code{cutoff_method}}{The method used to compute cutoffs (\code{"hdci"} or
-\code{"quantile"}).}
-\item{\code{hdci_width}}{The HDCI width used (only meaningful when
-\code{cutoff_method = "hdci"}).}
+\item{\code{sample_n_total}}{Number of respondents in \code{data}, before the
+complete-case filter.}
+\item{\code{sample_has_na}}{Logical. Whether \code{data} contained missing
+values.}
+\item{\code{sample_summary}}{Summary of the WLE person locations.}
+\item{\code{item_names}}{Item names.}
+\item{\code{cutoff_method}}{\code{"hdci"} or \code{"quantile"}.}
+\item{\code{hdci_width}}{The HDCI width (used only with \code{"hdci"}).}
 }
 }
 \description{
-Uses parametric bootstrap simulation to determine appropriate cutoff values
-for partial gamma Local Dependence analysis via
-\code{\link[iarm]{partgam_LD}}. Under a correctly fitting Rasch model where
-items are locally independent, this function generates the expected
-distribution of partial gamma values per item pair, providing empirical
-critical values.
+Simulates datasets from a Rasch or partial credit model that fits and
+resembles your data, where items are locally independent by
+construction, and computes the partial gamma of every item pair in each.
+Passed to \code{\link[=RMlocdepGamma]{RMlocdepGamma()}}, the result gives bootstrap p-values
+corrected across pairs, and an interval per pair that describes where a
+locally independent pair's partial gamma is expected to fall.
 }
 \details{
-For each simulation iteration the function:
-\enumerate{
-\item Resamples person parameters (thetas) with replacement from the
-WLE person locations.
-\item Simulates item response data under a Rasch model (dichotomous via
-\code{psychotools::rrm()} or polytomous via an internal partial credit
-simulator).
-\item Computes partial gamma for every item pair in both rest-score
-directions and keeps the larger. The coefficients are identical to
-those of \code{iarm::partgam_LD()}, but are computed by a vectorised
-internal, since \code{iarm} also derives the asymptotic standard error and
-confidence interval that a simulated null does not need and costs
-roughly two orders of magnitude more per iteration.
-}
+The generating model has the CML item parameters
+(\code{psychotools::pcmodel()}) and the WLE person locations of \code{data}. In
+each iteration, person locations are drawn with replacement from the
+WLE estimates, responses are simulated from the model
+(\code{psychotools::rrm()} for dichotomous items, an internal partial credit
+simulator for polytomous ones), and the partial gamma of every pair is
+computed in both directions, keeping the larger. The coefficients equal
+those of \code{iarm::partgam_LD()}, but are computed by a faster internal
+routine, since iarm also computes standard errors and intervals that
+the simulations do not need, at about a hundred times the cost.
 
-Because the data are simulated under the Rasch model, items are locally
-independent by construction. The distribution of partial gamma values
-across iterations provides empirical critical values per item pair. Values
-from real data that fall outside these bounds suggest local dependence that
-exceeds what would be expected by chance. Failed iterations (e.g., due to
-convergence issues or degenerate data) are silently discarded.
+A simulated dataset that cannot be used is left out, and
+\code{\link[=RMlocdepGamma]{RMlocdepGamma()}} reports how many in its caption.
 
-The generating model uses CML item thresholds via \code{psychotools::pcmodel()}
-(a dichotomous item is a 2-category PCM) and WLE person locations,
-consistent with the rest of the package; responses are simulated with
-\code{psychotools::rrm()} (dichotomous) or an internal partial credit score
-simulator (polytomous).
-
-Parallel processing is provided by the \code{mirai} package (optional). Install
-it with \code{install.packages("mirai")} to enable parallelisation.
-
-The \code{iarm} package must be installed (it is in Suggests, not Imports).
+Parallel processing needs the optional \pkg{mirai} package. The
+\pkg{iarm} package must be installed (it is in Suggests).
 }
 \examples{
 \donttest{
@@ -140,8 +119,12 @@ if (requireNamespace("iarm", quietly = TRUE) &&
 Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.) (2013).
 \emph{Rasch Models in Health}, pp. 133--135. ISTE & Wiley.
 \doi{10.1002/9781118574454}
+
+Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
+Rasch models: Iterations, multiplicity correction, and decision stability.
+\emph{PsyArXiv}. \doi{10.31234/osf.io/7pqz4_v2}
 }
 \seealso{
-\code{\link[iarm]{partgam_LD}}, \code{\link{RMlocdepGamma}},
-\code{\link{RMlocdepGammaPlot}}
+\code{\link[=RMlocdepGamma]{RMlocdepGamma()}} for the tables, \code{\link[=RMlocdepGammaPlot]{RMlocdepGammaPlot()}} for the
+plot, \code{\link[iarm:partgam_LD]{iarm::partgam_LD()}}.
 }

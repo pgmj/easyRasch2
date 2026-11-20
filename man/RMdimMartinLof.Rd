@@ -2,7 +2,7 @@
 % Please edit documentation in R/martin_lof.R
 \name{RMdimMartinLof}
 \alias{RMdimMartinLof}
-\title{Martin-Löf Test of Unidimensionality}
+\title{Martin-Löf test of unidimensionality}
 \usage{
 RMdimMartinLof(
   data,
@@ -18,49 +18,51 @@ RMdimMartinLof(
 )
 }
 \arguments{
-\item{data}{A data.frame or matrix of item responses (0-based,
-non-negative integers). Complete cases only: rows with any \code{NA} on the
-items named in \code{partition} are dropped. Missingness on items outside
-\code{partition} is ignored.}
+\item{data}{A data.frame or matrix of item responses, items scored from
+0. Only complete cases on the items in \code{partition} are used. Missing
+values on other items are ignored.}
 
-\item{partition}{The hypothesised partition of items into subscales. One of:
+\item{partition}{The hypothesised partition of the items into subscales.
+Either:
 \itemize{
-\item a \strong{list} of column-name or column-index vectors, e.g.
-\code{list(c("I1","I2","I3"), c("I4","I5","I6"))};
-\item a \strong{vector} of length \code{ncol(data)} indicating each item's subscale
-(factor, character, or integer), e.g. \code{c(1,1,1,2,2,2)}.
-Each subscale must contain at least two items. Subscales must not
-overlap; items not assigned to any subscale are dropped with a warning.
-}}
+\item a list of column-name or column-index vectors, for example
+\code{list(c("I1","I2","I3"), c("I4","I5","I6"))}, or
+\item a vector of length \code{ncol(data)} giving each item's subscale (factor,
+character or integer), for example \code{c(1,1,1,2,2,2)}.
+}
 
-\item{iterations}{Integer. Maximum number of Monte Carlo iterations
-(default \code{1000}).}
+Each subscale must have at least two items, and subscales must not
+overlap. Items not in any subscale are dropped with a warning.}
+
+\item{iterations}{Integer. Largest number of simulated datasets. Default
+\code{1000}.}
 
 \item{stopping}{Character. \code{"none"} (default) runs all iterations.
-\code{"sequential"} uses Besag & Clifford's (1991) sequential rule: stop as
-soon as \code{h} simulated statistics have exceeded the observed value. The
-sequential strategy substantially reduces compute time when H0 holds
-but cannot be parallelised.}
+\code{"sequential"} uses the sequential rule of Besag and Clifford (1991),
+stopping as soon as \code{h} simulated statistics have exceeded the observed
+one. This saves much time when the unidimensional model holds, but it
+cannot run in parallel.}
 
-\item{h}{Integer. Sequential-stopping count threshold (default \code{50}).
-Ignored when \code{stopping = "none"}.}
+\item{h}{Integer. The count for sequential stopping. Default \code{50}.
+Ignored with \code{stopping = "none"}.}
 
-\item{alpha}{Numeric in (0, 1). Nominal significance level used only for
-the \code{rejected} flag in the result; default \code{0.05}.}
+\item{alpha}{Numeric in (0, 1). Used only for the \code{rejected} element of
+the result. Default \code{0.05}.}
 
-\item{parallel}{Logical. Use parallel processing via \code{mirai} (default
-\code{TRUE}). Ignored when \code{stopping = "sequential"}.}
+\item{parallel}{Logical. Run the simulations in parallel via \pkg{mirai}
+when it is installed. Default \code{TRUE}. Ignored with
+\code{stopping = "sequential"}.}
 
-\item{n_cores}{Integer or \code{NULL}. Number of parallel workers. When \code{NULL},
-\code{getOption("mc.cores")} is checked first; if neither is set, falls back
-to sequential with a warning.}
+\item{n_cores}{Integer or \code{NULL}. Number of parallel workers. When
+\code{NULL}, \code{getOption("mc.cores")} is used. If that is unset too, a
+warning is given and the simulations run sequentially.}
 
-\item{verbose}{Logical. Show a progress bar (default \code{FALSE}).}
+\item{verbose}{Logical. Show a progress bar. Default \code{FALSE}.}
 
 \item{seed}{Integer or \code{NULL}. Random seed for reproducibility. Items are
-processed internally in a fixed (alphabetical) order, so the same seed
-reproduces the same p-value regardless of how the data's columns are
-arranged and regardless of the \code{parallel} setting. See
+processed in a fixed (alphabetical) order, so the same seed gives the
+same p-value whatever the order of the columns and the \code{parallel}
+setting. See
 \link{easyRasch2-reproducibility} for what this guarantees and how it
 interacts with \code{parallel}.}
 }
@@ -68,18 +70,17 @@ interacts with \code{parallel}.}
 A list with components:
 \describe{
 \item{\code{T_obs}}{Observed Martin-Löf likelihood-ratio statistic.}
-\item{\code{p_value}}{Monte Carlo p-value with \code{(n_exceed + 1) / (n + 1)}
-correction. The attainable p-values are \code{k / (n + 1)} for
-\verb{k = 1, ..., n + 1}, so the p-value's resolution is limited by the
-number of iterations: with 100 iterations the smallest attainable
-value is \code{1/101 = 0.0099}. A reported p-value \emph{equal to the floor}
-(see \code{p_value_floor}) means no simulated statistic reached the
-observed one and should be read as "p < floor" -- the true p-value
-may be much smaller; increase \code{iterations} for finer resolution.}
+\item{\code{p_value}}{Monte Carlo p-value, \code{(n_exceed + 1) / (n + 1)} for
+n simulated datasets. The possible values are \code{k / (n + 1)} for
+\verb{k = 1, ..., n + 1}, so the number of iterations limits the
+resolution. With 100 iterations the smallest possible value is
+\code{1/101 = 0.0099}. A p-value equal to the floor (\code{p_value_floor})
+means no simulated statistic reached the observed one. Read it as
+"p < floor", since the true p-value may be much smaller, and increase
+\code{iterations} for finer resolution.}
 \item{\code{p_value_floor}}{The smallest attainable p-value,
 \code{1 / (actual_iterations + 1)}.}
-\item{\code{actual_iterations}}{Number of successful MC iterations
-completed.}
+\item{\code{actual_iterations}}{Number of simulated datasets used.}
 \item{\code{rejected}}{Logical: is \code{p_value < alpha}?}
 \item{\code{partition}}{Normalised partition (list of integer indices).}
 \item{\code{n_subscales}}{Number of subscales.}
@@ -93,38 +94,37 @@ any missing values.}
 \item{\code{n_items}}{Number of items.}
 \item{\code{stopping}}{The stopping strategy used.}
 \item{\code{h}}{The sequential-stopping count, or \code{NA} for \code{stopping = "none"}.}
-\item{\code{T_rep}}{Numeric vector of successful MC test statistics.}
+\item{\code{T_rep}}{The simulated test statistics.}
 \item{\code{wle_scores}}{data.frame with one row per person and one column
 per subscale (\code{subscale_1_wle}, ..., \code{subscale_D_wle}), giving Warm's
-Weighted Likelihood Estimate of theta from a CML fit on each subscale
-alone. Persons whose subscore equals the minimum or maximum on a
-subscale produce non-finite WLEs (\code{Inf} / \code{-Inf}) and are excluded
-from \code{wle_correlation} pairwise.}
+weighted likelihood estimate of theta from a CML fit on each subscale
+alone. Persons with the lowest or highest possible subscore on a
+subscale get non-finite WLEs (\code{Inf} or \code{-Inf}) and are left out of
+\code{wle_correlation} pairwise.}
 \item{\code{wle_correlation}}{data.frame of pairwise Pearson correlations
 between subscale WLEs, with columns \code{subscale_a}, \code{subscale_b}, \code{r},
 \code{ci_lower}, \code{ci_upper} (95\% CI from \code{stats::cor.test}), \code{p_value},
 and \code{n} (number of persons with finite WLEs on both subscales). One
-row per pair; for D = 2, a single row. Useful as an effect-size
-companion to \code{p_value} -- a rejected test with \code{r} near 1 indicates a
-small effect; \code{r} clearly below 1 indicates substantive
-multidimensionality.}
+row per pair, so a single row for D = 2. Useful as an effect size
+next to \code{p_value}. A rejected test with \code{r} near 1 indicates a small
+departure, and \code{r} clearly below 1 substantial multidimensionality.}
 }
 }
 \description{
-Likelihood-ratio test of unidimensionality against an \emph{a priori} specified
-multidimensional alternative, generalised to polytomous Rasch / partial
-credit models (Christensen, Bjorner, Kreiner, & Petersen, 2002). The
-p-value is obtained by parametric-bootstrap (Monte Carlo) sampling under
-the unidimensional null, following Christensen & Kreiner (2007), because
-the asymptotic chi-square approximation is biased toward conservatism for
-realistic sample sizes -- especially with polytomous items, where the
-degrees of freedom can be very large.
+Likelihood-ratio test of unidimensionality against a multidimensional
+alternative specified in advance, for Rasch and partial credit models
+(Christensen, Bjorner, Kreiner, & Petersen, 2002). The p-value comes from
+a parametric bootstrap under the unidimensional model, following
+Christensen and Kreiner (2007), since the asymptotic chi-square
+distribution makes the test conservative at realistic sample sizes,
+especially with polytomous items, where the degrees of freedom can be
+very large.
 }
 \details{
-This is \strong{not} a routine screening tool. The test requires an \emph{a priori}
-partition of items into subscales; using it post-hoc on, e.g., the
-partition suggested by \code{RMdimResidualPCA()}'s PC1 sign would inflate the
-Type-I error rate. Both source papers state this explicitly.
+This is not a screening tool. The partition of items into subscales must
+be decided in advance. Testing a partition suggested by the data, such
+as the signs of the first-component loadings in \code{\link[=RMdimResidualPCA]{RMdimResidualPCA()}},
+would inflate the type I error rate. Both source papers say so.
 
 \strong{Test statistic.} With items partitioned into D subscales, total score
 \eqn{t} and subscores \eqn{(t_1, \ldots, t_D)} (Christensen et al. 2002,
@@ -140,7 +140,7 @@ CML fits use \code{psychotools::raschmodel()} (RM) or \code{psychotools::pcmodel
 
 \strong{Monte Carlo sampling under H0.} Following Christensen & Kreiner (2007):
 (a) sample N total scores from the empirical score distribution
-\eqn{n_t/N}; (b) for each sampled score, sample an item-response vector
+\eqn{n_t/N}, and (b) for each sampled score, sample an item-response vector
 from the conditional distribution \eqn{p(x \mid t, \hat{\epsilon})} given
 by eq. 4 of the paper. Step (b) uses the recursive \eqn{\gamma}-function
 algorithm (Andersen, 1995, eq. 15.22 and 15.27) for dichotomous and
@@ -157,8 +157,9 @@ successive sampling of that kind follows a Wallenius-type distribution,
 whereas the Rasch conditional distribution weights a set of items by the
 \emph{product} of their easinesses. See the note on validation below.
 
-Iterations that fail (e.g., simulated dataset has an empty category for an
-item) are silently dropped.
+A simulated dataset that cannot be refitted, for example because a
+category of an item is empty, is left out without a message.
+\code{actual_iterations} gives the number used.
 
 Item parameters are estimated once on the observed data and held fixed
 across MC iterations. Christensen & Kreiner (2007) use the extended
@@ -167,9 +168,9 @@ a non-parametric estimate of the latent distribution, so no distributional
 assumption about \eqn{\theta} is needed.
 
 \strong{Missing data.} Complete cases only. The statistic is built from the
-joint table of subscores, so a respondent needs a defined subscore on
-every subscale; there is no partial-missingness path, and the SAS macro
-this implementation was validated against has the same requirement. Rows
+joint table of subscores, so a respondent needs a subscore on every
+subscale. The SAS macro this implementation was validated against has
+the same requirement. Rows
 with \code{NA} are dropped \emph{after} items outside \code{partition} have been
 removed, so missingness on items the test does not use costs no
 respondents. \code{sample_n} reports the respondents analysed and
@@ -186,20 +187,24 @@ dichotomous shortcut published in Christensen & Kreiner (2007).
 \examples{
 \donttest{
 set.seed(1)
-# Build 2-dimensional polytomous data: 4 items per subscale, 5 categories
-n     <- 400
+# Two-dimensional partial credit data: 4 items per subscale, 5 categories,
+# latent correlation 0.6
+n <- 400
 theta1 <- rnorm(n)
 theta2 <- 0.6 * theta1 + sqrt(1 - 0.6^2) * rnorm(n)
-make_pcm <- function(theta, n_items, taus) {
+sim_pcm <- function(theta, n_items) {
   sapply(seq_len(n_items), function(j) {
-    # ... toy simulation here
-    sample(0:4, n, replace = TRUE)
+    thr <- c(-1.5, -0.5, 0.5, 1.5) + (j - 2.5) * 0.3
+    lp <- outer(theta, 0:4) - matrix(c(0, cumsum(thr)), length(theta), 5,
+                                     byrow = TRUE)
+    p <- exp(lp) / rowSums(exp(lp))
+    apply(p, 1, function(pr) sample(0:4, 1, prob = pr))
   })
 }
-dat <- cbind(make_pcm(theta1, 4, NULL), make_pcm(theta2, 4, NULL))
+dat <- cbind(sim_pcm(theta1, 4), sim_pcm(theta2, 4))
 colnames(dat) <- paste0("I", 1:8)
 
-# Few iterations for a fast example; use 1000+ in real analyses
+# Few iterations for a fast example. Use 1000 or more in real analyses.
 RMdimMartinLof(dat,
             partition = list(c("I1","I2","I3","I4"),
                              c("I5","I6","I7","I8")),
@@ -234,7 +239,13 @@ Christensen, K. B., & Kreiner, S. (2007). A Monte Carlo approach to
 unidimensionality testing in polytomous Rasch models. \emph{Applied
 Psychological Measurement, 31}(1), 20-30.
 \doi{10.1177/0146621605286204}
+
+Tjur, T. (1982). A connection between Rasch's item analysis model and a
+multiplicative Poisson model. \emph{Scandinavian Journal of Statistics, 9}(1),
+23-30.
 }
 \seealso{
-\code{\link{RMdimResidualPCA}}, \code{\link{RMdimResidualPCACutoff}}
+\code{\link[=RMdimMartinLofResiduals]{RMdimMartinLofResiduals()}} for where the partition departs,
+\code{\link[=RMdimResidualPCA]{RMdimResidualPCA()}} and \code{\link[=RMdimCFA]{RMdimCFA()}} for other checks of
+unidimensionality.
 }

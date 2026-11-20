@@ -2,7 +2,7 @@
 % Please edit documentation in R/cfa_cutoff.R
 \name{RMdimCFA}
 \alias{RMdimCFA}
-\title{Observed one-factor CFA fit and loadings vs a simulated reference}
+\title{One-factor CFA fit and loadings against a simulated reference}
 \usage{
 RMdimCFA(
   data,
@@ -14,84 +14,82 @@ RMdimCFA(
 )
 }
 \arguments{
-\item{data}{A data.frame or matrix of item responses (non-negative
-integers, 0-based), the same items used for the cutoff simulation.}
+\item{data}{A data.frame or matrix of item responses, items scored from
+0, the same items as in the simulation. Only complete cases are used.}
 
-\item{cutoff}{The list returned by \code{\link{RMdimCFACutoff}}. Required:
-observed CFA fit indices are not interpretable without the simulated
-reference, so the function errors if it is missing.}
+\item{cutoff}{The result of \code{\link[=RMdimCFACutoff]{RMdimCFACutoff()}}. Required, since the
+observed fit indices cannot be judged without it.}
 
-\item{p_value}{Logical. When \code{TRUE}, adds bootstrap p-values from the
-simulated null distributions: one-sided in the unfavourable direction
-for the fit indices (CFI low; RMSEA / SRMR high), two-sided for the
-per-item loadings. The \code{Flagged} columns then reflect
-\code{padj < alpha} instead of the percentile cutoffs. The fit indices and
-the loadings are corrected as two separate families. Default \code{FALSE}.}
+\item{p_value}{Logical. Add bootstrap p-values from the simulations and
+flag on them instead of on the percentile cutoffs. The p-values are
+one-sided in the unfavourable direction for the fit indices (CFI low,
+RMSEA and SRMR high) and two-sided for the loadings. The fit indices
+and the loadings are corrected as two separate families. Default
+\code{FALSE}.}
 
-\item{correction}{Character. Multiplicity correction for the p-values:
-\code{"fwer"} (default; Westfall-Young studentised-max step-down), \code{"fdr_bh"}
-(Benjamini-Hochberg), \code{"fdr_by"} (Benjamini-Yekutieli), or \code{"none"}.
-Ignored when \code{p_value = FALSE}.}
+\item{correction}{Character. Correction of the p-values: \code{"fwer"}
+(default, Westfall-Young step-down), \code{"fdr_bh"} (Benjamini-Hochberg),
+\code{"fdr_by"} (Benjamini-Yekutieli) or \code{"none"}. Used only with
+\code{p_value = TRUE}.}
 
-\item{alpha}{Numeric in (0, 1). Significance level used to flag
-comparisons on the corrected p-value. Default \code{0.05}. Ignored when
-\code{p_value = FALSE}.}
+\item{alpha}{Numeric in (0, 1). A comparison is flagged when its
+corrected p-value is below \code{alpha}. Default \code{0.05}. Used only with
+\code{p_value = TRUE}.}
 
 \item{output}{Character. \code{"kable"} (default) returns each table as a
-\code{knitr::kable()}; \code{"dataframe"} returns plain data.frames.}
+\code{knitr::kable()}, \code{"dataframe"} as a data.frame.}
 }
 \value{
-A named list with two elements, \code{fit} and \code{loadings}:
+A named list with \code{fit} and \code{loadings}, each a \code{knitr_kable} or
+a data.frame by \code{output}:
 \describe{
-\item{\code{fit}}{CFI / RMSEA / SRMR with columns \code{Index}, \code{Observed},
-\code{Cutoff}, \code{Direction}, \code{Flagged} (one-sided, in the unfavourable
-direction). With \code{p_value = TRUE}, columns \code{p} and \code{padj} are added
-and \code{Flagged} reflects \code{padj < alpha}. An index lavaan could not
-compute for \code{data} has \code{Observed = NA} and \code{Flagged = "not tested"}.}
-\item{\code{loadings}}{One row per item with columns \code{Item}, \code{Observed},
-\code{Expected_low}, \code{Expected_high}, \code{Flagged} (\code{"below"} / \code{"above"} /
-\code{""}). With \code{p_value = TRUE}, columns \code{p_loading} and \code{padj_loading}
-are added and \code{Flagged} reflects \code{padj_loading < alpha} (direction
-from the sign of the deviation from the simulated mean).}
+\item{\code{fit}}{CFI, RMSEA and SRMR with the columns \code{Index}, \code{Observed},
+\code{Cutoff}, \code{Direction} and \code{Flagged} (one-sided, in the unfavourable
+direction). With \code{p_value = TRUE}, also \code{p} and \code{padj}, and
+\code{Flagged} marks \code{padj < alpha}. An index lavaan could not compute
+for \code{data} has \code{Observed = NA} and \code{Flagged = "not tested"}.}
+\item{\code{loadings}}{One row per item with the columns \code{Item},
+\code{Observed}, \code{Expected_low}, \code{Expected_high} and \code{Flagged}
+(\code{"below"}, \code{"above"} or \code{""}). With \code{p_value = TRUE}, also
+\code{p_loading} and \code{padj_loading}, and \code{Flagged} marks
+\code{padj_loading < alpha}, with the direction from the deviation from
+the simulated mean.}
 }
-Each element is a \code{knitr_kable} (when \code{output = "kable"}) or a data.frame
-(when \code{output = "dataframe"}).
 }
 \description{
-Fits the observed one-factor categorical CFA to \code{data} and compares its
-fit indices and per-item standardized loadings against the simulated null
-distribution produced by \code{\link{RMdimCFACutoff}}. Returns a list of
-two tables: model-fit indices and per-item loadings, each with the observed
-value, the expected reference from the simulation, and a flag.
+Fits a one-factor CFA for ordinal items to \code{data} and compares its fit
+indices and the standardized loading of each item with the simulations
+from \code{\link[=RMdimCFACutoff]{RMdimCFACutoff()}}. Returns two tables, fit indices and loadings,
+each with the observed value, the simulated reference and a flag.
 }
 \details{
-\strong{Bootstrap p-values.} The per-comparison statistic is the residual
-studentised by the mean and SD of the observed and simulated values
-together. Marginal p-values are Monte-Carlo,
-\code{(1 + count) / (B + 1)}, so they can be no smaller than \code{1 / (B + 1)}.
-\code{correction = "fwer"} uses the Westfall-Young studentised-max step-down,
-which exploits the bootstrap dependence among the statistics (Ferreira,
-2024). It controls the family-wise error rate at any number of
-iterations, but small p-values are imprecise and decisions depend on the
-seed when the simulation is small, so at least 1000 \code{iterations} in
-\code{\link[=RMdimCFACutoff]{RMdimCFACutoff()}} are recommended (a warning is issued below that). These p-values are model-conditional and sample-size-sensitive
-and are reported alongside the simulated expected ranges, not in place of
-them.
+\strong{Bootstrap p-values.} The statistic for each comparison is the
+deviation from the mean of the observed and simulated values together,
+divided by their SD. The uncorrected p is \code{(1 + count) / (B + 1)} for B
+simulated datasets, so it can be no smaller than \code{1 / (B + 1)}.
+\code{correction = "fwer"} uses the Westfall-Young step-down on the
+studentised maximum, which uses the dependence between the statistics
+(Westfall & Young, 1993; Ferreira, 2024). It controls the family-wise
+error rate at any number of iterations, but small p-values are imprecise
+and decisions depend on the seed when there are few simulations. Use at
+least 1000 \code{iterations} in \code{\link[=RMdimCFACutoff]{RMdimCFACutoff()}}. A warning says so below
+that. The p-values depend on the model and the sample size, and are
+reported with the simulated ranges, not instead of them.
 }
 \section{Multiple comparisons}{
 
-The marginal p-value controls the error rate of a \emph{single} comparison: for
-one item (or item pair) decided on in advance it is the relevant value. But
-scanning all \emph{k} comparisons and flagging whichever fall below \code{alpha} tests
-\emph{k} hypotheses at once, so the chance of at least one false flag inflates to
-roughly \eqn{1 - (1 - \alpha)^k} (e.g. about 34\% for \emph{k} = 8 at
-\code{alpha = 0.05}) -- even when every marginal p-value is correctly calibrated.
-The corrected (adjusted) p-value controls this: \code{correction = "fwer"} bounds
-the probability of \emph{any} false flag (strict, lower power), while \code{"fdr_bh"} /
-\code{"fdr_by"} bound the expected \emph{proportion} of false flags among those raised
-(a more lenient middle ground). Rule of thumb: use the marginal p-value for a
-single pre-specified comparison, and a corrected p-value when screening the
-whole table -- the usual workflow.
+The uncorrected p-value controls the error rate of a single comparison.
+For one item (or item pair) chosen in advance it is the relevant value.
+Flagging whichever of k comparisons fall below \code{alpha} tests k
+hypotheses at once, and the chance of at least one false flag rises to
+about \eqn{1 - (1 - \alpha)^k}, for example 34\% for k = 8 at
+\code{alpha = 0.05}, even when every uncorrected p-value is calibrated. The
+corrected p-value controls this. \code{correction = "fwer"} bounds the
+probability of any false flag (strict, less power), and \code{"fdr_bh"} and
+\code{"fdr_by"} bound the expected share of false flags among those raised.
+Use the uncorrected p-value for a single comparison chosen in advance,
+and a corrected one when screening the whole table, which is the usual
+case.
 }
 
 \examples{
@@ -121,5 +119,6 @@ Westfall, P. H., & Young, S. S. (1993). \emph{Resampling-Based Multiple Testing}
 Wiley.
 }
 \seealso{
-\code{\link{RMdimCFACutoff}}, \code{\link{RMdimCFAPlot}}
+\code{\link[=RMdimCFACutoff]{RMdimCFACutoff()}} for the simulations, \code{\link[=RMdimCFAPlot]{RMdimCFAPlot()}} for
+the figures.
 }

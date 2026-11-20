@@ -2,7 +2,7 @@
 % Please edit documentation in R/targeting_plot.R
 \name{RMtargeting}
 \alias{RMtargeting}
-\title{Person-Item Targeting Plot (Wright Map)}
+\title{Person-item targeting plot (Wright map)}
 \usage{
 RMtargeting(
   data,
@@ -24,8 +24,9 @@ RMtargeting(
 )
 }
 \arguments{
-\item{data}{A data.frame or matrix of item responses. Items must be scored
-starting at 0 (non-negative integers). Missing values (\code{NA}) are allowed.}
+\item{data}{A data.frame or matrix of item responses, items scored from
+0. Missing values (\code{NA}) are allowed. Person locations use the items
+each respondent answered.}
 
 \item{panel}{Character string selecting the bottom panel. \code{"categories"}
 (the default) draws each item as a bar partitioned into response-category
@@ -41,8 +42,8 @@ of the bottom panel. \code{"data"} (the default) preserves the column order in
 \code{data} (first item at top). \code{"location"} sorts items by their average
 threshold location (easiest at top, hardest at bottom).}
 
-\item{bins}{Integer. Number of bins for both histograms. Default is number of
-unique scores divided by 2 (rounded up), but no less than 11.}
+\item{bins}{Integer. Number of bins for both histograms. Default: the
+number of distinct scores divided by 2 (rounded up), at least 11.}
 
 \item{xlim}{Numeric vector of length 2. Initial lower and upper limits for
 the shared x-axis. Automatically expanded if any person or item threshold
@@ -73,9 +74,9 @@ categories are darker.}
 \code{"categories"} panel. Default \code{NULL} uses \code{1}, widened to \code{1.18} when at
 least one category collapses, so that its label has room above the bar.}
 
-\item{height_ratios}{Numeric vector of length 3 specifying the relative
-heights of the top (person), middle (threshold), and bottom (dot-whisker)
-panels. Default \code{c(3, 2, 5)}.}
+\item{height_ratios}{Numeric vector of length 3, the relative heights of
+the top (persons), middle (thresholds) and bottom panels. Default
+\code{c(3, 2, 5)}.}
 
 \item{output}{Character string. \code{"patchwork"} (the default) returns the
 combined patchwork plot. \code{"list"} returns a named list of the three
@@ -90,13 +91,13 @@ ggplot objects (\code{p1}, \code{p2}, \code{p3}) for further customisation.}
 }
 }
 \description{
-Produces a three-panel targeting plot with a shared logit scale x-axis:
+Draws a targeting plot, a Wright map (Wright & Stone, 1979), in three
+panels on a shared logit scale:
 \enumerate{
-\item \strong{Top}: Histogram of person location estimates, with a
-reference line for the mean (or median) and shading for ±1 SD
-(or ±1 MAD).
-\item \strong{Middle}: Inverted histogram of item threshold locations,
-with the same summary annotations.
+\item \strong{Top}: a histogram of the person locations, with a line
+for the mean (or median) and shading for ±1 SD (or ±1 MAD).
+\item \strong{Middle}: an inverted histogram of the item threshold
+locations, with the same summaries.
 \item \strong{Bottom}: one bar per item, either partitioned into
 response-category bands (\code{panel = "categories"}, the default) or drawn
 as a dot-and-whisker plot of the individual thresholds
@@ -104,49 +105,43 @@ as a dot-and-whisker plot of the individual thresholds
 }
 }
 \details{
-Together, the top and middle panels form a back-to-back histogram that
-makes it easy to assess whether the test is well-targeted to the sample.
-The bottom panel places the items on the same scale, so the category bands
-show which response is the most likely one at the locations where the
-persons actually sit.
+The top and middle panels form a back-to-back histogram that shows
+whether the items are targeted to the sample. The bottom panel places the
+items on the same scale, so the category bands show which response is
+the most likely one where the persons are.
 
-\strong{Estimation method selection.}
-The function checks whether any item response category has fewer than 3
-observations. If all categories have at least 3 responses, item threshold
-locations and their standard errors are estimated via Conditional Maximum
-Likelihood (CML) using \code{psychotools::pcmodel()} (a dichotomous item is a
-2-category PCM). If any category has fewer than 3 responses, the function
-falls back to Marginal Maximum Likelihood (MML) estimation via
-\code{mirt::mirt()} with \code{itemtype = "Rasch"} and \code{SE = TRUE}, which is more
-numerically stable under sparse-category conditions. A message is emitted
-when the MML fallback is used.
-
-In both cases, item threshold locations are centered (shifted so the grand
-mean of all thresholds equals zero).
+\strong{Estimation.} If every response category of every item has at
+least 3 responses, the thresholds and their standard errors are estimated
+by conditional maximum likelihood (CML) with \code{psychotools::pcmodel()} (a
+dichotomous item is a 2-category partial credit model). Otherwise the
+function uses marginal maximum likelihood (MML) with \code{mirt::mirt()}
+(\code{itemtype = "Rasch"}), which is more stable with sparse categories, and
+says so in a message. In both cases the thresholds are centred on their
+mean.
 
 \strong{Person estimates} are obtained by Warm's weighted likelihood (WLE)
 from the fitted item thresholds, consistent with the rest of the package.
 WLE is finite at extreme scores, so all-zero and perfect responders are
 located rather than dropped.
 
-\strong{Confidence intervals} for item thresholds are based on Wald-type
-intervals: threshold estimate ± z × SE, where z is the standard normal
-quantile corresponding to \code{ci_level}.
+\strong{Confidence intervals} for the thresholds are Wald intervals,
+estimate ± z × SE, with z the standard normal quantile for
+\code{ci_level}.
 
 \strong{Category bands.} With \code{panel = "categories"}, each band spans the
 locations at which its response category is the most likely response. When
 an item's thresholds are ordered these boundaries are the Andrich
 thresholds themselves. When they are not, the disordered run is pooled by
-averaging and the categories it skips over, which are never the most likely
-response at any location, collapse to a red tick labelled with the category
-number. Red arrows below the bar give the size of each threshold reversal in
-logits. Ordered thresholds therefore leave no red marks at all.
+averaging, and the categories it skips over, which are never the most
+likely response at any location, collapse to a red tick labelled with the
+category number. Red arrows below the bar give the size of each threshold
+disorder in logits. Ordered thresholds therefore leave no red marks.
 
 The two outer bands are open-ended and fade towards the panel edge, since
 the lowest and highest categories have no outer boundary.
 
-The \code{ggplot2} and \code{patchwork} packages must be installed (they are in
-Suggests, not Imports).
+The \pkg{ggplot2} and \pkg{patchwork} packages must be installed (they
+are in Suggests).
 }
 \examples{
 \donttest{
@@ -190,5 +185,7 @@ if (requireNamespace("ggplot2", quietly = TRUE) &&
 Wright, B. D. & Stone, M. H. (1979). \emph{Best Test Design}. MESA Press.
 }
 \seealso{
-\code{\link[psychotools:pcmodel]{psychotools::pcmodel()}}, \code{\link[mirt:mirt]{mirt::mirt()}}
+\code{\link[=RMitemHierarchy]{RMitemHierarchy()}}, \code{\link[=RMitemCatProb]{RMitemCatProb()}}, \code{\link[=RMitemCatFit]{RMitemCatFit()}} for a
+test of the response categories, \code{\link[=RMreliabilityCurve]{RMreliabilityCurve()}} for precision
+along the same scale.
 }

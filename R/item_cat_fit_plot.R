@@ -1,17 +1,20 @@
-#' Category Functioning Given the Total Score
+#' Category functioning given the total score
 #'
 #' Four diagnostic plots of how each item's response categories are used,
 #' all built on the probability of each category given the respondent's
 #' total score, \eqn{P(X_i = j \mid r)}. Under the partial credit model
 #' this probability depends on the item parameters alone, so no person
-#' locations are estimated and the comparisons are not affected by the
-#' error in them. Items are shown in rows.
+#' locations are estimated and the comparisons are not affected by their
+#' measurement error. Items are shown in rows. [RMitemCatFit()] gives the
+#' test that the calibration plot shows.
 #'
 #' @param data A data.frame or matrix of item responses, items scored from
 #'   0. Respondents with missing responses are left out (complete cases),
 #'   since the total score must cover the same items for everyone.
-#' @param type Character. Which plot to draw:
-#'   * `"residuals"` (default): standardised residuals of the number of
+#' @param type Character. Which plot to draw. Default `"residuals"`, or
+#'   `"calibration"` when `fit` is given, since that plot shows the test in
+#'   [RMitemCatFit()].
+#'   * `"residuals"`: standardised residuals of the number of
 #'     respondents in each category, within groups of total scores.
 #'   * `"adjacent"`: for each pair of adjacent categories, the share of
 #'     respondents in the upper one, against the total score.
@@ -21,19 +24,22 @@
 #'   * `"calibration"`: PAV-adjusted calibration of the cumulative events
 #'     \eqn{X_i \ge k} against the model's predicted probability.
 #' @param fit Optional result of [RMitemCatFit()] with `output = "list"`,
-#'   made from the same `data`. Its simulations are used for the rest-score and
-#'   calibration plots, so `iterations`, `parallel`, `n_cores` and `seed` are
-#'   not needed, and each item's corrected p is shown under its label.
+#'   made from the same `data` (checked). Its simulations are used for the
+#'   rest-score and calibration plots, so `iterations`, `parallel`,
+#'   `n_cores` and `seed` are ignored. Each item's corrected p from
+#'   [RMitemCatFit()] is shown under its label, in bold when below .05
+#'   (marked with an asterisk when \pkg{ggtext} is not installed), and the
+#'   fit's item labels are used unless `item_labels` is given.
 #' @param score_groups Integer. Number of total-score groups for
 #'   `type = "residuals"`, formed with roughly equal numbers of
 #'   respondents. Default `5L`.
-#' @param iterations Integer. Number of simulated datasets for
-#'   `type = "restscore"` and `type = "calibration"` when `fit` is not
+#' @param iterations Integer, at least 20. Number of simulated datasets
+#'   for `type = "restscore"` and `type = "calibration"` when `fit` is not
 #'   given. Default `200L`.
 #' @param conf_level Numeric in (0, 1). Coverage of the pointwise bands and
 #'   intervals. Default `0.95`.
-#' @param item_labels Optional character vector of item labels for the
-#'   row strips, one per column of `data`. Default: column names.
+#' @param item_labels Optional character vector of unique item labels for
+#'   the row strips, one per column of `data`. Default: column names.
 #' @param label_wrap Integer. Characters per line in the row strips.
 #'   Default `15L`.
 #' @param parallel,n_cores Logical / integer. Run the simulations in
@@ -48,7 +54,10 @@
 #' @details
 #' Respondents with the lowest or highest possible total score are left
 #' out, since their responses are fixed by the score. The item parameters
-#' are estimated by conditional maximum likelihood (`psychotools`).
+#' are estimated by conditional maximum likelihood (`psychotools`). As in
+#' [RMitemCatFit()], a category that is empty, or used only by respondents
+#' with an extreme total score, stops the function with an error that
+#' names the item.
 #'
 #' A plain comparison of observed and expected category counts would show
 #' nothing. The category counts are sufficient statistics for the item
@@ -61,13 +70,16 @@
 #' standard deviation under the model. Dotted lines at \eqn{\pm 1.96} mark
 #' values that would be unusual for a single cell. The plot has many
 #' cells, so some values beyond them are expected even when the model
-#' holds. The expected counts treat the item parameters as known.
+#' holds. The expected counts treat the item parameters as known. This
+#' comparison of observed and expected counts within score groups is the
+#' one behind Glas's (1988) R1c test.
 #'
 #' **Adjacent categories.** Among respondents in category \eqn{j - 1} or
 #' \eqn{j} at total score \eqn{r}, the share in \eqn{j}. Under the model
-#' this share rises with \eqn{r}. A flat observed curve suggests that
-#' respondents do not distinguish the two categories. The band is the
-#' pointwise binomial range given the number of respondents in the pair.
+#' this share rises with \eqn{r}. Observed shares that do not rise
+#' suggest that respondents do not distinguish the two categories. The
+#' band is the pointwise binomial range around the expected share, given
+#' the number of respondents in the pair.
 #'
 #' **Rest score.** The mean and SD of the rest score (total score
 #' minus the item's score) among respondents in each category, observed
@@ -116,16 +128,17 @@
 #' Academy of Sciences, 118*(8), e2016191118.
 #' \doi{10.1073/pnas.2016191118}
 #'
-#' Säilynoja, T., Johnson, A. R., Martin, O. A., & Vehtari, A. (2025).
-#' Recommendations for visual predictive checks in Bayesian workflow.
-#' *arXiv*. \doi{10.48550/arXiv.2503.01509}
-#'
 #' Glas, C. A. W. (1988). The derivation of some tests for the Rasch model
 #' from the multinomial distribution. *Psychometrika, 53*(4), 525--546.
 #' \doi{10.1007/BF02294405}
 #'
-#' @seealso [RMitemCatFit()] for the test, [RMitemCatProb()] for the model-implied category curves,
-#'   [RMitemICCPlot()] for conditional item characteristic curves.
+#' Säilynoja, T., Johnson, A. R., Martin, O. A., & Vehtari, A. (2025).
+#' Recommendations for visual predictive checks in Bayesian workflow.
+#' *arXiv*. \doi{10.48550/arXiv.2503.01509}
+#'
+#' @seealso [RMitemCatFit()] for the test, [RMitemCatProb()] for the
+#'   model-implied category curves, [RMitemICCPlot()] for conditional item
+#'   characteristic curves.
 #'
 #' @examples
 #' \donttest{
@@ -154,7 +167,8 @@ RMitemCatFitPlot <- function(
   seed = NULL,
   output = c("ggplot", "dataframe")
 ) {
-  type <- match.arg(type)
+  # With `fit`, the default is the plot of the test that `fit` holds.
+  type <- if (missing(type) && !is.null(fit)) "calibration" else match.arg(type)
   output <- match.arg(output)
   if (output == "ggplot" && !requireNamespace("ggplot2", quietly = TRUE)) {
     stop("Package 'ggplot2' is required for output = \"ggplot\".",
@@ -221,9 +235,37 @@ RMitemCatFitPlot <- function(
   strip_lab <- vapply(item_labels, function(l) {
     paste(strwrap(l, width = label_wrap), collapse = "\n")
   }, character(1L), USE.NAMES = FALSE)
+  # Corrected p < .05 is set in bold when ggtext is installed, and marked
+  # with an asterisk otherwise.
+  md_strip <- !is.null(fit) && requireNamespace("ggtext", quietly = TRUE)
   if (!is.null(fit)) {
-    strip_lab <- paste0(strip_lab, "\n",
-                        vapply(fit$table$padj, .format_p, character(1L)))
+    p_lab <- vapply(fit$table$padj, .format_p, character(1L))
+    sig <- !is.na(fit$table$padj) & fit$table$padj < 0.05
+    if (md_strip) {
+      # Item labels are text, not markdown: escape what gridtext would parse.
+      esc <- function(x) {
+        x <- gsub("&", "&amp;", x, fixed = TRUE)
+        x <- gsub("<", "&lt;", x, fixed = TRUE)
+        x <- gsub("\\", "&#92;", x, fixed = TRUE)
+        x <- gsub("[", "&#91;", x, fixed = TRUE)
+        x <- gsub("*", "&#42;", x, fixed = TRUE)
+        x <- gsub("_", "&#95;", x, fixed = TRUE)
+        x <- gsub("`", "&#96;", x, fixed = TRUE)
+        # A label starting with "1. ", "1) ", "- ", "+ ", "# " or "> " would
+        # become a list, heading or quote, which gridtext cannot draw.
+        x <- sub("^(\\s*[0-9]+)\\.", "\\1&#46;", x)
+        x <- sub("^(\\s*[0-9]+)\\)", "\\1&#41;", x)
+        x <- sub("^(\\s*)-", "\\1&#45;", x)
+        x <- sub("^(\\s*)\\+", "\\1&#43;", x)
+        x <- sub("^(\\s*)#", "\\1&#35;", x)
+        sub("^(\\s*)>", "\\1&#62;", x)
+      }
+      p_lab <- ifelse(sig, paste0("**", p_lab, "**"), p_lab)
+      strip_lab <- paste0(gsub("\n", "<br>", esc(strip_lab), fixed = TRUE),
+                          "<br>", p_lab)
+    } else {
+      strip_lab <- paste0(strip_lab, "\n", p_lab, ifelse(sig, " *", ""))
+    }
   }
   tab$item <- factor(strip_lab[tab$item], levels = strip_lab)
   tab <- tab[, c("item", setdiff(names(tab), "item"))]
@@ -236,7 +278,8 @@ RMitemCatFitPlot <- function(
   pct <- paste0(format(100 * conf_level), "%")
   fit_clause <- if (is.null(fit)) "" else paste0(
     " Under each item: its p from RMitemCatFit(), corrected across items ",
-    "with the ", .correction_label(fit$correction), ".")
+    "with the ", .correction_label(fit$correction), ", ",
+    if (md_strip) "in bold" else "marked *", " when below .05.")
   caption <- switch(
     type,
     residuals = paste(
@@ -277,7 +320,11 @@ RMitemCatFitPlot <- function(
     ggplot2::labs(caption = er2_caption(caption)) +
     ggplot2::theme_bw() +
     ggplot2::theme(legend.position = "bottom",
-                   strip.text.y = ggplot2::element_text(angle = 0)) +
+                   strip.text.y = if (md_strip) {
+                     ggtext::element_markdown(angle = 0)
+                   } else {
+                     ggplot2::element_text(angle = 0)
+                   }) +
     er2_plot_caption() +
     er2_axis_margins()
 }
@@ -617,12 +664,17 @@ RMitemCatFitPlot <- function(
                         linetype = "dotted") +
     ggplot2::geom_linerange(ggplot2::aes(ymin = .data$lower,
                                          ymax = .data$upper),
-                            colour = "grey60", linewidth = 2.5,
+                            colour = "grey85", linewidth = 2.5,
                             na.rm = TRUE) +
+    # Outside points differ in both fill (shape) and colour, so they stand
+    # out without colour vision. Light bars keep the vermillion visible.
     ggplot2::geom_point(ggplot2::aes(y = .data$observed,
-                                     shape = .data$outside),
+                                     shape = .data$outside,
+                                     colour = .data$outside),
                         size = 2.2, na.rm = TRUE) +
     ggplot2::scale_shape_manual(NULL, values = c(1, 16), drop = FALSE) +
+    ggplot2::scale_colour_manual(NULL, values = c("black", "#D55E00"),
+                                 drop = FALSE) +
     ggplot2::facet_grid(labeller = strip, rows = ggplot2::vars(.data$item),
                         cols = ggplot2::vars(.data$statistic),
                         scales = "free_y") +
@@ -650,7 +702,9 @@ RMitemCatFitPlot <- function(
                                 labels = c("0", ".5", "1")) +
     ggplot2::scale_y_continuous(breaks = c(0, 0.5, 1),
                                 labels = c("0", ".5", "1")) +
-    ggplot2::coord_equal(xlim = c(0, 1), ylim = c(0, 1)) +
+    # Not coord_equal(): with one row per item, square panels leave most of
+    # the width empty. The dotted diagonal still marks perfect calibration.
+    ggplot2::coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
     ggplot2::facet_grid(labeller = strip, rows = ggplot2::vars(.data$item),
                         cols = ggplot2::vars(.data$event)) +
     ggplot2::labs(x = "Predicted probability given the total score",

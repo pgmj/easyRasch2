@@ -2,7 +2,9 @@
 % Please edit documentation in R/ld_partgam.R
 \name{RMlocdepGamma}
 \alias{RMlocdepGamma}
-\title{Partial Gamma Local Dependence Analysis}
+\alias{print.RMlocdepGamma}
+\alias{knit_print.RMlocdepGamma}
+\title{Partial gamma local dependence}
 \usage{
 RMlocdepGamma(
   data,
@@ -13,148 +15,140 @@ RMlocdepGamma(
   output = "kable",
   n_pairs = NULL
 )
+
+\method{print}{RMlocdepGamma}(x, ...)
+
+\method{knit_print}{RMlocdepGamma}(x, ...)
 }
 \arguments{
-\item{data}{A data.frame or matrix of item responses. Items must be scored
-starting at 0 (non-negative integers). Missing values (\code{NA}) are allowed,
-but at least one complete case must exist.}
+\item{data}{A data.frame or matrix of item responses, items scored from
+0. Missing values (\code{NA}) are allowed, but only complete cases are used,
+so at least one is needed.}
 
-\item{cutoff}{Optional. Default \code{NULL} (no cutoff applied). Can be:
+\item{cutoff}{Optional. Default \code{NULL}, the asymptotic test of
+\code{iarm::partgam_LD()}. Either of:
 \itemize{
-\item The return value of \code{\link{RMlocdepGammaCutoff}} (a list with
-\verb{$pair_cutoffs}): the data.frame is extracted automatically and
-simulation metadata is included in the kable caption.
-\item The \verb{$pair_cutoffs} data.frame from \code{\link{RMlocdepGammaCutoff}}
-directly: must have columns \code{Item1}, \code{Item2}, \code{gamma_low}, \code{gamma_high}.
-When provided, adds columns \code{Gamma_low}, \code{Gamma_high}, and \code{Flagged}
-(logical; \code{TRUE} when the observed partial gamma falls outside the
-credible range) to the result.
-}}
+\item The full result of \code{\link[=RMlocdepGammaCutoff]{RMlocdepGammaCutoff()}}. This enables the
+bootstrap p-values (see \code{p_value}), and the caption reports the
+simulation settings.
+\item Its \verb{$pair_cutoffs} data.frame alone, with columns \code{Item1}, \code{Item2},
+\code{gamma_low} and \code{gamma_high}. Pairs are flagged against the interval.
+}
 
-\item{p_value}{Logical or \code{NULL}. When \code{TRUE}, adds one-sided bootstrap
-p-values for \emph{excess positive} local dependence (\code{p_gamma},
-\code{padj_gamma}), matching the \code{p_value} semantics of
-\code{\link{RMlocdepQ3}}, and \code{flagged} reflects \code{padj_gamma < alpha}
-(positive deviations only) instead of the credible range. One test per
-item pair: the p-value is computed on \code{gamma_pair}, the larger of the two
-conditioning directions, and repeated in the direction-2 table for the
-same pair. The asymptotic adjusted p-value and star columns from
-\code{iarm::partgam_LD()} are \strong{dropped} in this mode, and the simulated
-\code{gamma_low} / \code{gamma_high} band is kept as the effect-size reference.
-\code{NULL}, the default, means \code{TRUE} when \code{cutoff} is the \strong{full}
-\code{\link{RMlocdepGammaCutoff}} object (it carries the simulated
-distributions in \verb{$results}) and \code{FALSE} otherwise, so calling with no
-cutoff keeps the asymptotic table unchanged. Pass \code{FALSE} for the
-pre-1.2.0 behaviour. The interval makes a poor decision rule, since its
-width sets a family-wise error rate of \code{1 - width^m} over all \eqn{m}
-pairs at once (Johansson, 2026).}
+Either adds the columns \code{Gamma_low}, \code{Gamma_high} and a logical
+\code{Flagged} (\code{TRUE} when the partial gamma is outside the simulated
+interval, or with p-values when the pair is flagged).}
 
-\item{correction}{Character. Multiplicity correction for the bootstrap
-p-values, applied over the family of all item pairs (before any
-\code{n_pairs} display filter): \code{"fwer"} (default; Westfall-Young
-studentised-max step-down), \code{"fdr_bh"}, \code{"fdr_by"}, or \code{"none"}. Ignored
-when \code{p_value = FALSE}.}
+\item{p_value}{Logical or \code{NULL}. Whether to flag on one-sided bootstrap
+p-values for excess positive local dependence (\code{p_gamma},
+\code{padj_gamma}), as in \code{\link[=RMlocdepQ3]{RMlocdepQ3()}}. Each pair is tested once, on
+\code{gamma_pair}, the larger of its two rest-score directions, and the
+p-value is repeated in both tables. The asymptotic p-value and star
+columns are then dropped, and the simulated interval is kept as a
+reference. \code{NULL} (default) uses the p-values whenever \code{cutoff} is the
+full \code{\link[=RMlocdepGammaCutoff]{RMlocdepGammaCutoff()}} result, so a call without a cutoff keeps
+the asymptotic table. \code{FALSE} gives the behaviour before version
+1.2.0. The interval is a poor decision rule, since over m pairs a
+width \code{w} gives a family-wise error rate of \code{1 - w^m} (Johansson,
+2026).}
 
-\item{alpha}{Numeric in (0, 1). Significance level used to flag pairs on
-the corrected p-value. Default \code{0.05}. Ignored when \code{p_value = FALSE}.}
+\item{correction}{Character. Correction of the bootstrap p-values across
+all pairs (before any \code{n_pairs} filter): \code{"fwer"} (default,
+Westfall-Young step-down), \code{"fdr_bh"}, \code{"fdr_by"} or \code{"none"}. Used
+only with p-values.}
 
-\item{output}{Character string controlling the return value. Either
-\code{"kable"} (default) for a formatted \code{knitr::kable()} table, or
-\code{"dataframe"} for the underlying data.frame.}
+\item{alpha}{Numeric in (0, 1). A pair is flagged when its corrected
+p-value is below \code{alpha}. Default \code{0.05}. Used only with p-values.}
 
-\item{n_pairs}{Optional positive integer. When supplied, only the
-\code{n_pairs} item pairs with the largest absolute partial-gamma values
-(i.e., strongest residual dependence in either direction) are
-retained per rest-score direction, sorted by \verb{|gamma|} descending.
-When \code{NULL} (default), all pairs are returned in \code{iarm}'s native
-ordering. Values larger than the total number of pairs are silently
-capped at that total.}
+\item{output}{Character. \code{"kable"} (default) for \code{knitr::kable()}
+tables, or \code{"dataframe"}.}
+
+\item{n_pairs}{Optional positive integer. Keeps only the \code{n_pairs} pairs
+with the largest absolute partial gamma in each table, largest first.
+Default \code{NULL}, all pairs in iarm's order. Values above the number of
+pairs keep all pairs.}
+
+\item{x}{An \code{RMlocdepGamma} object (the kable output), for the print
+methods.}
+
+\item{...}{Not used by \code{print()}. Passed to \code{knitr::asis_output()} by
+\code{knit_print()}.}
 }
 \value{
 \itemize{
-\item If \code{output = "kable"}: an object of class \code{"RMlocdepGamma"}. Internally
-a list with two \code{knitr_kable} elements, \verb{$direction1} and
-\verb{$direction2}. In both, the rest score is the total score minus
-Item 2 (the second column); the two elements list each item pair in
-the two possible orders, so together they cover both rest-score
-directions for every pair. Each has columns "Item 1", "Item 2",
-"Partial gamma",
-"Adj. p-value (BH)", and "p-value sign." (stars for the BH-adjusted
-p-value, as \code{iarm} shows them). When \code{cutoff} is provided, additional
-columns "Gamma low", "Gamma high", and "Flagged" are included.
-
-The object has custom \code{print()} and \code{knitr::knit_print()} methods:
-in the R console it prints the two tables stacked vertically; in a
-Quarto / R Markdown chunk it renders as two distinct pipe tables.
-Access the individual tables explicitly as \code{result$direction1} and
-\code{result$direction2} if needed.
-\item If \code{output = "dataframe"}: a named list of two data.frames
-(\verb{$direction1}, \verb{$direction2}) with columns \code{Item1}, \code{Item2},
-\code{gamma}, \code{se}, \code{lower}, \code{upper} (95\% Wald CI), \code{padj_bh},
-\code{Significance}. When \code{cutoff} is provided, columns \code{gamma_low},
-\code{gamma_high}, and \code{flagged} are also included.
-With \code{p_value = TRUE}, \code{padj_bh} and \code{Significance} are replaced by
-\code{p_gamma} and \code{padj_gamma} (identical for a pair in both directions).
+\item \code{output = "kable"}: an object of class \code{"RMlocdepGamma"}, a list of
+two \code{knitr_kable} tables, \code{direction1} and \code{direction2}. In both, the
+rest score is the total score minus Item 2, and the two tables list
+each pair in its two orders, so together they cover both rest-score
+directions. The columns are "Item 1", "Item 2", "Partial gamma",
+"Adj. p-value (BH)" and "p-value sign." (stars, as iarm shows them),
+plus "Gamma low", "Gamma high" and "Flagged" with a \code{cutoff}. In the
+console the object prints the two tables one after the other, and in
+a Quarto or R Markdown chunk it renders as two tables.
+\item \code{output = "dataframe"}: a named list of two data.frames,
+\code{direction1} and \code{direction2}, with the columns \code{Item1}, \code{Item2},
+\code{gamma}, \code{se}, \code{lower} and \code{upper} (95\% Wald interval), \code{padj_bh},
+\code{Significance} and \code{gamma_pair} (the larger of the pair's two
+directions). With a \code{cutoff}, also \code{gamma_low}, \code{gamma_high} and
+\code{flagged}. With p-values, \code{padj_bh} and \code{Significance} are replaced by
+\code{p_gamma} and \code{padj_gamma}, the same for a pair in both tables.
 }
 }
 \description{
-Computes partial gamma coefficients for Local Dependence (LD) assessment
-using \code{iarm::partgam_LD()}. Each pair of items is tested for residual
-association, controlling for the rest score (total score minus one of the
-items in the pair).
+Computes the partial gamma coefficient for each pair of items, the
+association between the two items given the rest score (the total score
+minus one item of the pair), to assess local dependence. With the
+result of \code{\link[=RMlocdepGammaCutoff]{RMlocdepGammaCutoff()}}, it tests each pair against
+simulations, by default with a bootstrap p-value corrected across pairs.
 }
 \details{
-Partial gamma (Christensen, Kreiner & Mesbah, 2013) measures the residual
-association between pairs of items after controlling for the rest score
-(total score minus one item). Because it matters which item is subtracted,
-calculations are done for each pair in both directions, yielding two
-data.frames.
+\strong{Statistic.} The partial gamma (Christensen, Kreiner & Mesbah,
+2013) measures the association between two items after controlling for
+the rest score. Which item is subtracted from the total matters, so each
+pair is computed in both directions, which gives the two tables. Values
+near 0 indicate local independence, large positive values positive
+dependence (the items share variance beyond the latent variable), and
+large negative values negative dependence. The \pkg{iarm} package must
+be installed (it is in Suggests).
 
-Values near 0 indicate no local dependence. Large positive values suggest
-positive LD (items share variance beyond the latent trait), while large
-negative values suggest negative LD.
+\strong{Asymptotic p-values.} The adjusted p-value is a
+Benjamini-Hochberg adjustment, made by easyRasch2, of the p-values from
+\code{iarm::partgam_LD()} over all \eqn{k(k-1)} tests in both directions.
+iarm's own adjusted column is a Bonferroni correction whatever method
+is named, since iarm adjusts one p-value at a time, so it is not used.
 
-The \code{iarm} package must be installed (it is in Suggests, not Imports).
-The asymptotic adjusted p-value is a Benjamini-Hochberg adjustment of the
-p-values from \code{iarm::partgam_LD()} over all \eqn{k(k-1)} tests in both
-directions, applied by easyRasch2. iarm's own adjusted column is a
-Bonferroni correction whatever method is named, because iarm adjusts one
-p-value at a time, so it is not used.
-
-\strong{Bootstrap p-values.} When \code{p_value = TRUE}, each pair is tested
-once, on the larger of its two rest-score directions (the \code{gamma_pair}
-column), against its simulated null distribution (from \code{cutoff$results},
-simulated under local independence and built from that same maximum).
-The per-pair statistic is the residual studentised by the mean and SD of
-the observed and simulated values together; the marginal p-value is the one-sided Monte-Carlo p-value
-\verb{(1 + #\\\{t* >= t\\\}) / (B + 1)} for excess \emph{positive} LD (redundancy, the
-diagnostic target — matching \code{\link{RMlocdepQ3}}), so it can be no
-smaller than \code{1 / (B + 1)}. The band still shows both bounds for
-reference. \code{correction = "fwer"} uses the Westfall-Young studentised-max
-step-down over the family of all pairs, which exploits the bootstrap
-dependence among them (Ferreira, 2024). It controls the family-wise error
-rate at any number of \code{iterations} in \code{\link[=RMlocdepGammaCutoff]{RMlocdepGammaCutoff()}}, but below
-400 decisions depend on the seed and a message says so, and 1000 to 2000
-are recommended for a final analysis. Unlike the asymptotic
-p-values from \code{iarm::partgam_LD()}, these are calibrated against the
-\emph{simulated Rasch null} rather than the asymptotic SE; they are
-model-conditional and sample-size-sensitive, and are reported alongside
-the simulated effect-size band, not in place of it.
+\strong{Bootstrap p-values.} Each pair is tested once, on the larger of
+its two directions (\code{gamma_pair}), against its simulated values
+(\code{cutoff$results}, simulated under local independence and built from
+the same maximum). The statistic is the deviation from the mean of the
+observed and simulated values together, divided by their SD. The
+uncorrected p is one-sided for excess positive dependence (redundancy,
+as in \code{\link[=RMlocdepQ3]{RMlocdepQ3()}}), \verb{(1 + #\\\{t* >= t\\\}) / (B + 1)} for B simulated
+datasets, so it can be no smaller than \code{1 / (B + 1)}. The interval still
+shows both bounds. \code{correction = "fwer"} uses the Westfall-Young
+step-down over all pairs, which uses the dependence between them
+(Westfall & Young, 1993, Ferreira, 2024). It controls the family-wise
+error rate at any number of iterations in \code{\link[=RMlocdepGammaCutoff]{RMlocdepGammaCutoff()}}, but
+below 400 decisions depend on the seed and a message says so. Use 1000
+to 2000 for a final analysis. Unlike the asymptotic p-values, these are
+calibrated against simulations from the Rasch model. They depend on the
+model and the sample size, and are reported with the simulated
+interval, not instead of it.
 }
 \section{Multiple comparisons}{
 
-The marginal p-value controls the error rate of a \emph{single} comparison: for
-one item (or item pair) decided on in advance it is the relevant value. But
-scanning all \emph{k} comparisons and flagging whichever fall below \code{alpha} tests
-\emph{k} hypotheses at once, so the chance of at least one false flag inflates to
-roughly \eqn{1 - (1 - \alpha)^k} (e.g. about 34\% for \emph{k} = 8 at
-\code{alpha = 0.05}) -- even when every marginal p-value is correctly calibrated.
-The corrected (adjusted) p-value controls this: \code{correction = "fwer"} bounds
-the probability of \emph{any} false flag (strict, lower power), while \code{"fdr_bh"} /
-\code{"fdr_by"} bound the expected \emph{proportion} of false flags among those raised
-(a more lenient middle ground). Rule of thumb: use the marginal p-value for a
-single pre-specified comparison, and a corrected p-value when screening the
-whole table -- the usual workflow.
+The uncorrected p-value controls the error rate of a single comparison.
+For one item (or item pair) chosen in advance it is the relevant value.
+Flagging whichever of k comparisons fall below \code{alpha} tests k
+hypotheses at once, and the chance of at least one false flag rises to
+about \eqn{1 - (1 - \alpha)^k}, for example 34\% for k = 8 at
+\code{alpha = 0.05}, even when every uncorrected p-value is calibrated. The
+corrected p-value controls this. \code{correction = "fwer"} bounds the
+probability of any false flag (strict, less power), and \code{"fdr_bh"} and
+\code{"fdr_by"} bound the expected share of false flags among those raised.
+Use the uncorrected p-value for a single comparison chosen in advance,
+and a corrected one when screening the whole table, which is the usual
+case.
 }
 
 \examples{
@@ -172,7 +166,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
   # Return as data.frame list
   RMlocdepGamma(sim_data, output = "dataframe")
 
-  # Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
+  # Simulation-based cutoffs (use 1000 or more iterations in real analyses)
   if (requireNamespace("ggdist", quietly = TRUE)) {
     cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100,
                                       parallel = FALSE, seed = 42)
@@ -195,9 +189,14 @@ Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
 of hypotheses simultaneously. \emph{Journal of Statistical Theory and Practice,
 19}(1), 6. \doi{10.1007/s42519-024-00412-4}
 
+Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
+Rasch models: Iterations, multiplicity correction, and decision stability.
+\emph{PsyArXiv}. \doi{10.31234/osf.io/7pqz4_v2}
+
 Westfall, P. H., & Young, S. S. (1993). \emph{Resampling-Based Multiple Testing}.
 Wiley.
 }
 \seealso{
-\code{\link{RMlocdepGammaCutoff}}, \code{\link{RMlocdepGammaPlot}}
+\code{\link[=RMlocdepGammaCutoff]{RMlocdepGammaCutoff()}} for the simulations,
+\code{\link[=RMlocdepGammaPlot]{RMlocdepGammaPlot()}} for the plot, \code{\link[=RMlocdepQ3]{RMlocdepQ3()}} for \eqn{Q_3}.
 }

@@ -44,7 +44,7 @@ density overlay and the \code{benchmark} percentage, and is ignored when
 \item{benchmark}{Numeric in (0, 1) or \code{NULL} (default). When supplied, the
 region of the scale whose conditional reliability reaches \code{benchmark} is
 shaded, and the percentage of respondents located inside it is reported.
-There is deliberately no default value; see Details.}
+There is deliberately no default value (see Details).}
 
 \item{reference}{Character. Horizontal reference line: \code{"marginal"}
 (default) draws the median SEM or median test information over the
@@ -75,12 +75,12 @@ giving how many and why.}
 \item{conf_int}{Numeric in (0, 1). HDCI width for the bootstrap band.
 Default \code{0.95}.}
 
-\item{parallel}{Logical. Use \code{mirai} for the bootstrap if available.
-Default \code{TRUE}.}
+\item{parallel}{Logical. Run the bootstrap in parallel via \pkg{mirai}
+when it is installed. Default \code{TRUE}.}
 
-\item{n_cores}{Integer or \code{NULL}. Number of parallel workers. When \code{NULL},
-\code{getOption("mc.cores")} is checked first; if neither is set, the bootstrap
-falls back to sequential.}
+\item{n_cores}{Integer or \code{NULL}. Number of parallel workers. When
+\code{NULL}, \code{getOption("mc.cores")} is used. If that is unset too, the
+bootstrap runs sequentially.}
 
 \item{seed}{Integer or \code{NULL}. Random seed for the bootstrap. See
 \link{easyRasch2-reproducibility}.}
@@ -97,7 +97,8 @@ background band. Default \code{TRUE}.}
 \code{FALSE}.}
 
 \item{output}{Character. \code{"ggplot"} (default), \code{"dataframe"} for the curve,
-or \code{"kable"} for a summary table.}
+\code{"kable"} for a summary table, or \code{"list"} for the curve and the summary
+as data.frames.}
 }
 \value{
 \itemize{
@@ -105,7 +106,8 @@ or \code{"kable"} for a summary table.}
 \item If \code{output = "dataframe"}: a data.frame with one row per grid point and
 columns \code{theta}, \code{information}, \code{sem}, \code{reliability}, plus
 \verb{<statistic>_lower} / \verb{<statistic>_upper} band columns when
-\code{boot = TRUE}. Attributes carry the summary quantities: \code{sigma},
+\code{boot = TRUE}. The summary quantities are attached as attributes, kept
+for compatibility (\code{output = "list"} gives them as a table): \code{sigma},
 \code{marginal_ratio} (the latent-density-weighted mean of the reliability
 curve, matching \code{\link[=RMreliability]{RMreliability()}}), \code{marginal_green} (the superseded
 subtractive coefficient), \code{sem_median} (the median SEM over the latent
@@ -122,6 +124,15 @@ the sample 2 logits off target returned 2.02 rather than 0.96, and pushed
 marginal reliability from 0.81 up to 0.90 when it should have fallen to
 0.73. Well-targeted samples are unaffected.
 \item If \code{output = "kable"}: a \code{knitr_kable} summary table of those quantities.
+\item If \code{output = "list"}: a list with \code{curve} (the data.frame above),
+\code{summary} (a one-row data.frame with \code{latent_mean}, \code{sigma},
+\code{marginal_ratio}, \code{marginal_green}, \code{sem_median}, \code{sem_average},
+\code{benchmark}, \code{benchmark_percent}, \code{n_respondents}, \code{n_total},
+\code{n_not_estimable} and \code{boot_iter} (bootstrap samples used), \code{NA}
+where not computed) and
+\code{benchmark_range} (the theta ranges where the curve reaches
+\code{benchmark}, with columns \code{xmin} and \code{xmax}, \code{NULL} without a
+benchmark or when it is never reached).
 }
 }
 \description{
@@ -156,8 +167,8 @@ true-score variance, which is what the MML estimate of the latent SD is.
 And it tracks the reliability of the observed scores far more closely.
 Milanzi et al. (2015) report the subtractive coefficient falling to
 \eqn{-0.120} against a true value of \eqn{0.480} for a 1PL with
-\eqn{\sigma^2 = 0.25}. Replicating their design (\code{dev/milanzi_check.R},
-1000 replications per cell) gives a mean absolute error against the exact
+\eqn{\sigma^2 = 0.25}. Replicating their design (1000 replications per
+cell) gives a mean absolute error against the exact
 expected-sum-score reliability of \eqn{0.22} for the subtractive form and
 \eqn{0.018} for the ratio form, with the subtractive form negative in 99.7\%
 of replications of their lowest-variance cell. For polytomous Rasch data at
@@ -177,12 +188,12 @@ against 0.015 for polytomous).
 
 \code{\link[=RMreliability]{RMreliability()}} reports the same ratio-form coefficient in its
 "Marginal (curve mean)" row, so the scalar and the curve agree. The
-superseded subtractive value is still returned as \code{marginal_green} for
-comparison with easyRasch2 1.2.0 and earlier, and with \code{mirt::marginal_rxx()}
-and similar software.
+superseded subtractive value (Green et al., 1984) is still returned as
+\code{marginal_green} for comparison with easyRasch2 1.2.0 and earlier, and
+with \code{mirt::marginal_rxx()} and similar software.
 
-\strong{Limits.} The information-based standard error is asymptotic, and is only
-an approximation for short scales; Milanzi et al. (2015) find the worst
+\strong{Limits.} The information-based standard error is asymptotic, and only
+an approximation for short scales. Milanzi et al. (2015) find the worst
 behaviour with six items. The curve describes the precision of the person
 location estimate on the logit scale, which is not the same quantity as the
 reliability of a raw sum score, and reliability computed on a latent scale
@@ -227,5 +238,6 @@ correlation functions. \emph{British Journal of Mathematical and Statistical
 Psychology, 68}(1), 43-64. \doi{10.1111/bmsp.12033}
 }
 \seealso{
-\code{\link[=RMreliability]{RMreliability()}}, \code{\link[=RMscoreSE]{RMscoreSE()}}, \code{\link[=RMtargeting]{RMtargeting()}}
+\code{\link[=RMreliability]{RMreliability()}} for the coefficients, \code{\link[=RMscoreSE]{RMscoreSE()}},
+\code{\link[=RMtargeting]{RMtargeting()}}, \code{\link[=RMpersonParameters]{RMpersonParameters()}}
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/data_plots.R
 \name{RMplotBar}
 \alias{RMplotBar}
-\title{Item Response Distribution Bar Chart}
+\title{Bar chart of item response distributions}
 \usage{
 RMplotBar(
   data,
@@ -58,27 +58,21 @@ the bar colours. Default is \code{0.9}.}
 A \link[ggplot2:ggplot]{ggplot2::ggplot} object.
 }
 \description{
-Creates a faceted bar chart showing the response distribution for each
-item, with counts and percentages displayed on each bar. Each item gets
-its own panel, with response categories on the x-axis and percentage of
-responses on the y-axis. This is a descriptive data visualization tool
-intended for use before model fitting.
+Draws one panel per item with the response categories on the x-axis and
+the percentage of responses on the y-axis, with the count on each bar.
+A descriptive plot for use before any model is fitted.
 }
 \details{
 Each item is displayed as a separate facet panel with the item label
 in the strip on the left side. Bars are coloured by response category
 using the viridis palette. Each bar shows the count (\code{n = X}) as text.
 
-The plot caption reports the sample in the standard
-\verb{n = X respondents (policy)} form; item-level \code{NA}s are retained --
-each bar counts the non-missing responses for that item.
+The caption gives the sample size in the form
+\verb{n = X respondents (policy)}. Missing responses are kept, and each bar
+counts the responses to that item.
 
-\strong{Input requirements:}
-\itemize{
-\item All columns must be numeric (integer-valued).
-\item The data frame must contain at least 2 columns (items)
-and at least 1 row (person).
-}
+The data must have at least 2 numeric (integer-valued) columns and at
+least 1 row.
 }
 \examples{
 if (requireNamespace("eRm", quietly = TRUE) &&

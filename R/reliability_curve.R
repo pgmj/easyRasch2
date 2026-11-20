@@ -22,7 +22,7 @@
 #' @param benchmark Numeric in (0, 1) or `NULL` (default). When supplied, the
 #'   region of the scale whose conditional reliability reaches `benchmark` is
 #'   shaded, and the percentage of respondents located inside it is reported.
-#'   There is deliberately no default value; see Details.
+#'   There is deliberately no default value (see Details).
 #' @param reference Character. Horizontal reference line: `"marginal"`
 #'   (default) draws the median SEM or median test information over the
 #'   latent distribution, or the marginal reliability, matching `statistic`.
@@ -46,11 +46,11 @@
 #'   giving how many and why.
 #' @param conf_int Numeric in (0, 1). HDCI width for the bootstrap band.
 #'   Default `0.95`.
-#' @param parallel Logical. Use `mirai` for the bootstrap if available.
-#'   Default `TRUE`.
-#' @param n_cores Integer or `NULL`. Number of parallel workers. When `NULL`,
-#'   `getOption("mc.cores")` is checked first; if neither is set, the bootstrap
-#'   falls back to sequential.
+#' @param parallel Logical. Run the bootstrap in parallel via \pkg{mirai}
+#'   when it is installed. Default `TRUE`.
+#' @param n_cores Integer or `NULL`. Number of parallel workers. When
+#'   `NULL`, `getOption("mc.cores")` is used. If that is unset too, the
+#'   bootstrap runs sequentially.
 #' @param seed Integer or `NULL`. Random seed for the bootstrap. See
 #'   [easyRasch2-reproducibility].
 #' @param show_density Logical. Draw the respondent location distribution as a
@@ -61,14 +61,16 @@
 #' @param verbose Logical. Print a progress bar for the bootstrap. Default
 #'   `FALSE`.
 #' @param output Character. `"ggplot"` (default), `"dataframe"` for the curve,
-#'   or `"kable"` for a summary table.
+#'   `"kable"` for a summary table, or `"list"` for the curve and the summary
+#'   as data.frames.
 #'
 #' @return
 #' * If `output = "ggplot"`: a `ggplot` object.
 #' * If `output = "dataframe"`: a data.frame with one row per grid point and
 #'   columns `theta`, `information`, `sem`, `reliability`, plus
 #'   `<statistic>_lower` / `<statistic>_upper` band columns when
-#'   `boot = TRUE`. Attributes carry the summary quantities: `sigma`,
+#'   `boot = TRUE`. The summary quantities are attached as attributes, kept
+#'   for compatibility (`output = "list"` gives them as a table): `sigma`,
 #'   `marginal_ratio` (the latent-density-weighted mean of the reliability
 #'   curve, matching [RMreliability()]), `marginal_green` (the superseded
 #'   subtractive coefficient), `sem_median` (the median SEM over the latent
@@ -85,6 +87,15 @@
 #'   marginal reliability from 0.81 up to 0.90 when it should have fallen to
 #'   0.73. Well-targeted samples are unaffected.
 #' * If `output = "kable"`: a `knitr_kable` summary table of those quantities.
+#' * If `output = "list"`: a list with `curve` (the data.frame above),
+#'   `summary` (a one-row data.frame with `latent_mean`, `sigma`,
+#'   `marginal_ratio`, `marginal_green`, `sem_median`, `sem_average`,
+#'   `benchmark`, `benchmark_percent`, `n_respondents`, `n_total`,
+#'   `n_not_estimable` and `boot_iter` (bootstrap samples used), `NA`
+#'   where not computed) and
+#'   `benchmark_range` (the theta ranges where the curve reaches
+#'   `benchmark`, with columns `xmin` and `xmax`, `NULL` without a
+#'   benchmark or when it is never reached).
 #'
 #' @details
 #' **What the curve is.** Test information \eqn{I(\theta) = \sum_i
@@ -110,8 +121,8 @@
 #' And it tracks the reliability of the observed scores far more closely.
 #' Milanzi et al. (2015) report the subtractive coefficient falling to
 #' \eqn{-0.120} against a true value of \eqn{0.480} for a 1PL with
-#' \eqn{\sigma^2 = 0.25}. Replicating their design (`dev/milanzi_check.R`,
-#' 1000 replications per cell) gives a mean absolute error against the exact
+#' \eqn{\sigma^2 = 0.25}. Replicating their design (1000 replications per
+#' cell) gives a mean absolute error against the exact
 #' expected-sum-score reliability of \eqn{0.22} for the subtractive form and
 #' \eqn{0.018} for the ratio form, with the subtractive form negative in 99.7%
 #' of replications of their lowest-variance cell. For polytomous Rasch data at
@@ -131,12 +142,12 @@
 #'
 #' [RMreliability()] reports the same ratio-form coefficient in its
 #' "Marginal (curve mean)" row, so the scalar and the curve agree. The
-#' superseded subtractive value is still returned as `marginal_green` for
-#' comparison with easyRasch2 1.2.0 and earlier, and with `mirt::marginal_rxx()`
-#' and similar software.
+#' superseded subtractive value (Green et al., 1984) is still returned as
+#' `marginal_green` for comparison with easyRasch2 1.2.0 and earlier, and
+#' with `mirt::marginal_rxx()` and similar software.
 #'
-#' **Limits.** The information-based standard error is asymptotic, and is only
-#' an approximation for short scales; Milanzi et al. (2015) find the worst
+#' **Limits.** The information-based standard error is asymptotic, and only
+#' an approximation for short scales. Milanzi et al. (2015) find the worst
 #' behaviour with six items. The curve describes the precision of the person
 #' location estimate on the logit scale, which is not the same quantity as the
 #' reliability of a raw sum score, and reliability computed on a latent scale
@@ -165,7 +176,8 @@
 #' correlation functions. *British Journal of Mathematical and Statistical
 #' Psychology, 68*(1), 43-64. \doi{10.1111/bmsp.12033}
 #'
-#' @seealso [RMreliability()], [RMscoreSE()], [RMtargeting()]
+#' @seealso [RMreliability()] for the coefficients, [RMscoreSE()],
+#'   [RMtargeting()], [RMpersonParameters()]
 #'
 #' @export
 #'
@@ -229,7 +241,7 @@ RMreliabilityCurve <- function(
   statistic <- match.arg(statistic, stat_choices)
   method <- match.arg(method, method_choices)
   reference <- match.arg(reference, c("marginal", "none"))
-  output <- match.arg(output, c("ggplot", "dataframe", "kable"))
+  output <- match.arg(output, c("ggplot", "dataframe", "kable", "list"))
 
   validate_response_data(data)
 
@@ -415,6 +427,35 @@ RMreliabilityCurve <- function(
 
   if (output == "dataframe") {
     return(curve_df)
+  }
+  if (output == "list") {
+    # Everything the attributes carry, as tables (the attributes stay on the
+    # dataframe output for compatibility).
+    curve_plain <- curve_df
+    for (a in c("latent_mean", "sigma", "marginal_ratio", "marginal_green",
+                "sem_median", "sem_average", "benchmark", "benchmark_range",
+                "benchmark_percent", "n_not_estimable", "boot_iter")) {
+      attr(curve_plain, a) <- NULL
+    }
+    return(list(
+      curve = curve_plain,
+      summary = data.frame(
+        latent_mean = mu,
+        sigma = sigma,
+        marginal_ratio = marginal_ratio,
+        marginal_green = marginal_green,
+        sem_median = sem_med,
+        sem_average = sem_bar,
+        benchmark = if (is.null(benchmark)) NA_real_ else benchmark,
+        benchmark_percent = benchmark_percent,
+        n_respondents = n_used,
+        n_total = n_total,
+        n_not_estimable = n_not_estimable,
+        boot_iter = actual_boot,
+        stringsAsFactors = FALSE
+      ),
+      benchmark_range = benchmark_range
+    ))
   }
 
   # --- Caption pieces --------------------------------------------------------

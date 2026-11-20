@@ -2,7 +2,7 @@
 % Please edit documentation in R/residual_pca.R
 \name{RMdimResidualPCA}
 \alias{RMdimResidualPCA}
-\title{PCA of Standardized Rasch Residuals}
+\title{PCA of standardized Rasch residuals}
 \usage{
 RMdimResidualPCA(
   data,
@@ -13,102 +13,89 @@ RMdimResidualPCA(
 )
 }
 \arguments{
-\item{data}{A data.frame or matrix of item responses. Items must be scored
-starting at 0 (non-negative integers). Rows with any \code{NA} are dropped
-before PCA, since \code{prcomp()} does not accept missing values.}
+\item{data}{A data.frame or matrix of item responses, items scored from
+0. Rows with any \code{NA} are dropped before the PCA, since \code{prcomp()} does
+not accept missing values.}
 
-\item{cutoff}{Optional. The list returned by \code{\link{RMdimResidualPCACutoff}} (its
-\code{suggested_cutoff} is used), or a single numeric value to use as the
-cutoff directly. When provided, the result includes a \code{Flagged} column
-(logical: is the eigenvalue above the simulated bound?) and the kable
-caption notes the cutoff.}
+\item{cutoff}{Optional. The result of \code{\link[=RMdimResidualPCACutoff]{RMdimResidualPCACutoff()}} (its
+\code{suggested_cutoff}, the 99th percentile, is used), or a single number
+to use as the bound. Adds a logical \code{Flagged} column (is the
+eigenvalue above the bound?), and the caption reports the bound.}
 
-\item{p_value}{Logical. When \code{TRUE}, adds a one-sided bootstrap p-value for
-the first-contrast eigenvalue: the proportion of simulated first-contrast
-eigenvalues at least as large as the observed one,
-\verb{(1 + #\\\{lambda* >= lambda\\\}) / (B + 1)}. Requires the \strong{full}
-\code{\link{RMdimResidualPCACutoff}} object as \code{cutoff} (it carries the
-simulated eigenvalues in \verb{$results}); a bare numeric cutoff is not
-sufficient. The simulated null is the distribution of the \emph{largest}
-eigenvalue, so the p-value applies to PC1 only (\code{NA} for the other
-components). This is a single test — no multiplicity correction is
-involved. Default \code{FALSE}.}
+\item{p_value}{Logical. Add a one-sided bootstrap p-value for the
+first-contrast eigenvalue, the share of simulated largest eigenvalues
+at least as large as the observed one,
+\verb{(1 + #\\\{lambda* >= lambda\\\}) / (B + 1)} for B simulated datasets.
+Needs the full \code{\link[=RMdimResidualPCACutoff]{RMdimResidualPCACutoff()}} result as \code{cutoff}. The
+simulations are of the largest eigenvalue, so the p-value is given for
+the first component only (\code{NA} for the others). It is a single test,
+so no correction for multiple testing is needed. Default \code{FALSE}.}
 
-\item{n_components}{Integer. Number of eigenvalues to report. Capped at the
-number of items. Default \code{5}.}
+\item{n_components}{Integer. Number of eigenvalues to report, at most
+the number of items. Default \code{5}.}
 
-\item{output}{Character. \code{"kable"} (default) for a formatted
-\code{knitr::kable()} table, \code{"dataframe"} for the underlying data.frame, or
-\code{"ggplot"} for a ggplot of PC1 loadings against item locations.
-\code{"loadings"} is accepted as a backward-compatible alias for \code{"ggplot"}.}
+\item{output}{Character. \code{"kable"} (default) for a \code{knitr::kable()}
+table, \code{"dataframe"}, \code{"list"} for the table and the variance
+partition, or \code{"ggplot"} for a plot of the first-component loadings
+against the item locations. \code{"loadings"} is an old name for
+\code{"ggplot"}, still accepted.}
 }
 \value{
 \itemize{
-\item If \code{output = "kable"}: a \code{knitr_kable} object with columns Component,
-Eigenvalue, Proportion of variance (and \code{Flagged} when \code{cutoff} is
-provided; \code{p} when \code{p_value = TRUE}). The caption gives the variance
-partition (\% of total observed variance explained by measures vs.
-unexplained), the model fitted, sample size, and cutoff/p-value metadata
-if applicable.
-\item If \code{output = "dataframe"}: a data.frame with columns \code{Component},
-\code{Eigenvalue}, \code{Proportion_of_variance} (and \code{Flagged} when \code{cutoff} is
-provided; \code{p} when \code{p_value = TRUE}, non-\code{NA} for PC1 only). The
-variance partition is attached as the
-\code{"variance_partition"} attribute — a list with elements \code{total},
-\code{explained}, \code{unexplained}, \code{pct_explained}, \code{pct_unexplained},
-\code{n_persons}. Access via
-\code{attr(result, "variance_partition")}.
-\item If \code{output = "ggplot"}: a ggplot showing each item's PC1 loading on
-the x-axis and Rasch item location on the y-axis, with dashed reference
-lines at zero, and the variance partition in the figure caption. Item
-names are labelled via \code{ggrepel::geom_text_repel()} when \code{ggrepel} is
-installed; otherwise plain \code{geom_text()}.
+\item \code{output = "kable"}: a \code{knitr_kable} table with the columns Component,
+Eigenvalue and Proportion of variance, plus \code{Flagged} with a \code{cutoff}
+and \code{p} with \code{p_value = TRUE}. The caption gives the variance partition
+(the percentages of the observed variance explained by the model and
+unexplained), the model, the sample size, and the bound or p-value.
+\item \code{output = "dataframe"}: a data.frame with the columns \code{Component},
+\code{Eigenvalue} and \code{Proportion_of_variance}, plus \code{Flagged} and \code{p} as
+above. The variance partition is also attached as
+\code{attr(result, "variance_partition")}, kept for compatibility. Use
+\code{output = "list"} to get it as a table.
+\item \code{output = "list"}: a list with \code{components}, the data.frame above, and
+\code{variance}, a one-row data.frame with \code{total}, \code{explained},
+\code{unexplained}, \code{pct_explained}, \code{pct_unexplained} and \code{n_persons}.
+\item \code{output = "ggplot"}: each item's first-component loading (x-axis)
+against its location (y-axis), with dashed lines at zero and the
+variance partition in the caption. Item names are placed with
+\code{ggrepel::geom_text_repel()} when \pkg{ggrepel} is installed.
 }
 }
 \description{
-Fits a Rasch model by CML via \code{psychotools} (a dichotomous item is a
-2-category PCM), extracts the standardized residuals \eqn{(x - E)/\sqrt{Var}}
-at WLE person locations, and runs an unrotated principal-component
-analysis on those residuals via \code{stats::prcomp()}. The function reports
-the top \code{n_components} eigenvalues and their proportions of unexplained
-variance, and optionally compares the first-contrast eigenvalue against
-a simulation-based bound from \code{\link{RMdimResidualPCACutoff}}.
+Fits a Rasch or partial credit model by CML (\code{psychotools}), computes the
+standardized residuals \eqn{(x - E)/\sqrt{Var}} at the WLE person
+locations, and runs an unrotated principal component analysis on them
+with \code{stats::prcomp()}. Reports the largest eigenvalues and their shares
+of the unexplained variance. With the result of
+\code{\link[=RMdimResidualPCACutoff]{RMdimResidualPCACutoff()}}, it compares the largest eigenvalue (the
+first contrast) with a simulated bound.
 }
 \details{
-Rule-of-thumb thresholds for the first-contrast eigenvalue (e.g., the
-"> 2" heuristic occasionally cited from Winsteps documentation) are not
-reliable indicators of multidimensionality; the first-contrast eigenvalue
-under a correctly fitting unidimensional model varies systematically with
-sample size, test length, and item-parameter spread. Empirical (simulated)
-bounds tailored to the data structure should be used instead — see
-\code{\link{RMdimResidualPCACutoff}}, and Chou & Wang (2010) for the underlying
-simulation argument.
+Fixed thresholds for the first-contrast eigenvalue, such as "above 2",
+do not indicate multidimensionality reliably. Under a unidimensional
+model that fits, the eigenvalue varies with the sample size, the number
+of items and the spread of the item parameters, so the bound should be
+simulated for the data at hand (Chou & Wang, 2010).
 
-The PCA is performed on the standardized residuals
-\eqn{(x - E)/\sqrt{Var}} from the shared CML/WLE engine (CML item
-parameters via \code{psychotools}, WLE person locations). The reported
-eigenvalues are unrotated; rotation is appropriate for \emph{interpreting} a
-multidimensional solution but obscures the dominant first contrast that
-dimensionality assessment is concerned with.
+The residuals come from the package's CML and WLE engine. The
+eigenvalues are unrotated. Rotation helps interpret a multidimensional
+solution, but it hides the dominant first contrast that the assessment
+of dimensionality is about. The item locations in the plot are the
+means of each item's CML thresholds.
 
-Item locations on the loadings plot are the per-item mean of the CML
-Andrich thresholds.
+The variance partition follows Linacre's convention: each item's
+observed variance is compared with its expected variance under the
+model, summed over items. The expected scores use the CML item
+parameters and the WLE person locations. WLE estimates are finite at
+extreme scores, so all respondents are kept.
 
-The variance partition follows Linacre's convention: per-item observed
-variance is compared to per-item \emph{expected} variance under the fitted
-model, summed across items. Expected scores are computed from the CML item
-parameters and WLE person locations. WLE is finite at extreme scores, so
-all persons are retained (the previous MLE partition dropped extreme-score
-cases).
-
-\strong{Bootstrap p-value.} When \code{p_value = TRUE}, the observed
-first-contrast eigenvalue is compared against the simulated null
-distribution of largest eigenvalues (from \code{cutoff$results}), giving the
-one-sided Monte-Carlo p-value \verb{(1 + #\\\{lambda* >= lambda\\\}) / (B + 1)}.
-Because the maximum eigenvalue is a single family-wise statistic, no
-multiplicity correction applies. The p-value is model-conditional and
-sample-size-sensitive; it is reported alongside the simulated cutoff, not
-in place of it, and can be no smaller than \code{1 / (B + 1)}.
+\strong{Bootstrap p-value.} With \code{p_value = TRUE}, the observed
+first-contrast eigenvalue is compared with the simulated largest
+eigenvalues in \code{cutoff$results}. The largest eigenvalue is already a
+single statistic over all components, so no correction for multiple
+testing applies. The p-value depends on the model and the sample size,
+is reported with the simulated bound, not instead of it, and can be no
+smaller than \code{1 / (B + 1)}.
 }
 \examples{
 \donttest{
@@ -142,5 +129,7 @@ residuals. \emph{Educational and Psychological Measurement, 70}(5), 717-731.
 \doi{10.1177/0013164410379322}
 }
 \seealso{
-\code{\link{RMdimResidualPCACutoff}}
+\code{\link[=RMdimResidualPCACutoff]{RMdimResidualPCACutoff()}} for the simulated bound,
+\code{\link[=RMdimCFA]{RMdimCFA()}} and \code{\link[=RMdimMartinLof]{RMdimMartinLof()}} for other checks of
+unidimensionality.
 }

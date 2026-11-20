@@ -36,11 +36,12 @@ implies.}
 \item{sim_iter}{Integer. Iterations used to simulate the measurement-error
 component. Default \code{500}.}
 
-\item{parallel}{Logical. Use \code{mirai} for the simulation if available.
-Default \code{TRUE}.}
+\item{parallel}{Logical. Run the simulation in parallel via \pkg{mirai}
+when it is installed. Default \code{TRUE}.}
 
-\item{n_cores}{Integer or \code{NULL}. Parallel workers. When \code{NULL},
-\code{getOption("mc.cores")} is checked first.}
+\item{n_cores}{Integer or \code{NULL}. Number of parallel workers. When
+\code{NULL}, \code{getOption("mc.cores")} is used. If that is unset too, the
+simulation runs sequentially.}
 
 \item{verbose}{Logical. Progress bar for the simulation. Default \code{FALSE}.}
 
@@ -51,7 +52,8 @@ respondents. Default \code{TRUE}.}
 
 \item{conf_int}{Numeric in (0, 1). HDCI width. Default \code{0.95}.}
 
-\item{seed}{Integer or \code{NULL}. Random seed.}
+\item{seed}{Integer or \code{NULL}. Random seed for the simulation and the
+bootstrap. See \link{easyRasch2-reproducibility}.}
 
 \item{output}{Character. \code{"kable"} (default) or \code{"dataframe"}.}
 }
@@ -185,6 +187,13 @@ r2 <- as.data.frame(easyRasch2:::sim_partial_score(thr, theta + rnorm(200, 0, 0.
 colnames(r1) <- colnames(r2) <- paste0("I", 1:6)
 RMretestSD(r1, r2, sim_iter = 100, parallel = FALSE, boot = FALSE)
 }
+}
+\references{
+Caronni, A., Picardi, M., Scarano, S., Rota, V., & Amadei, M. (2026).
+Improving single-subject change assessment: Deriving the minimal detectable
+change of questionnaires' ordinal scores from Rasch analysis measures.
+\emph{Disability and Rehabilitation, 48}(7), 2169-2186.
+\doi{10.1080/09638288.2025.2547398}
 }
 \seealso{
 \code{\link[=RMpersonChange]{RMpersonChange()}}

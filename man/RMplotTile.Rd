@@ -2,7 +2,7 @@
 % Please edit documentation in R/tile_plot.R
 \name{RMplotTile}
 \alias{RMplotTile}
-\title{Tile Plot of Item Response Distributions}
+\title{Tile plot of item response distributions}
 \usage{
 RMplotTile(
   data,
@@ -25,8 +25,8 @@ RMplotTile(
 response columns. Each column is one item, each row is one person.
 All columns must be numeric (integer-valued). Response categories
 may be coded starting from 0 or 1. Do not include person IDs,
-grouping variables, or other non-item columns -- supply the grouping
-variable separately via \code{group}.}
+grouping variables, or other non-item columns. Pass the grouping
+variable in \code{group}.}
 
 \item{group}{Optional vector of length \code{nrow(data)} (factor, character,
 or numeric) defining a grouping variable. When provided, the plot is
@@ -52,10 +52,10 @@ Default \code{"orange"}.}
 \code{ggplot2::geom_text()}). Default \code{4}, matching \code{\link[=RMitemCatProb]{RMitemCatProb()}}.}
 
 \item{zero_fill}{Colour for cells with zero responses, or \code{NULL} to
-keep them on the fill scale. Default \code{"white"}: empty cells are
-shown unfilled with a light grey outline, so the \emph{absence} of data
-reads as absence rather than as the darkest end of the colour
-scale (where \code{n = 0} is nearly indistinguishable from \code{n = 1}).}
+keep them on the fill scale. Default \code{"white"}, which shows empty
+cells unfilled with a light grey outline, so that no data reads as
+absence rather than as the darkest end of the colour scale, where
+\code{n = 0} is hard to tell from \code{n = 1}.}
 
 \item{item_labels}{Optional character vector of descriptive labels
 for the items (y-axis), same length as \code{ncol(data)}. Default \code{NULL}
@@ -73,22 +73,20 @@ Order corresponds to \code{levels(as.factor(group))}.}
 \item{facet_ncol}{Integer or \code{NULL}. Number of columns in the facet
 grid when \code{group} is supplied. Default \code{NULL} (ggplot2 chooses).}
 
-\item{output}{Character. \code{"ggplot"} (default) returns the plot;
-\code{"dataframe"} returns the underlying per-cell counts (one row per
-item x category, plus group when supplied).}
+\item{output}{Character. \code{"ggplot"} (default) for the plot, or
+\code{"dataframe"} for the counts per cell (one row per item and category,
+and group when given).}
 }
 \value{
 Either a \code{ggplot} object or a data.frame, depending on
 \code{output}.
 }
 \description{
-Creates a tile (heat map) plot showing the distribution of responses
-across all items and response categories. Each cell displays the count
-(or percentage) of responses, with optional conditional highlighting
-for cells with low counts. Optional faceting by a grouping variable
-is provided for inspecting subgroup response distributions before DIF
-analyses -- particularly useful for spotting empty categories or
-under-represented subgroups before fitting Rasch models per group.
+Draws a tile plot (heat map) of the responses over items and response
+categories, with the count (or percentage) in each cell and low counts
+highlighted. With \code{group}, it draws one panel per group, which shows
+empty or sparse categories within groups before a DIF analysis, where
+they can stop the model from being fitted in a group.
 }
 \details{
 Adapted from \code{easyRaschBayes::plot_tile()} and extended with the
@@ -97,20 +95,19 @@ Adapted from \code{easyRaschBayes::plot_tile()} and extended with the
 Items are placed on the y-axis (in the same order as the columns of
 \code{data}, top to bottom) and response categories on the x-axis. Cell
 shading represents the count of responses (darker = more responses).
-Categories with zero responses are explicitly shown (\code{n = 0}), which
-helps identify gaps in the response distribution -- one of the primary
-purposes of the plot, especially before DIF analyses where
-under-represented categories within a subgroup can break model
-fitting on that subgroup.
+Categories with zero responses are shown (\code{n = 0}), since finding such
+gaps is a main purpose of the plot, especially before DIF analyses,
+where a sparse category within a group can stop the model from being
+fitted in that group.
 
 When \code{group} is supplied, percentages and the highlight cutoff are
 applied within each group, so a cell labelled "5" in the group-A
 facet contains the count for group A only.
 
-The plot caption reports the sample in the standard
-\verb{n = X of Y respondents (policy)} form: rows with \code{NA} group are
-dropped (and counted in \code{Y} only), while item-level \code{NA}s are retained
--- each cell simply counts the non-missing responses for that item.
+The caption gives the sample size in the form
+\verb{n = X of Y respondents (policy)}. Rows with a missing group are dropped
+(counted in \code{Y} only), while missing responses are kept, and each cell
+counts the responses to that item.
 }
 \examples{
 \donttest{
@@ -140,4 +137,8 @@ if (requireNamespace("eRm", quietly = TRUE)) {
 }
 }
 
+}
+\seealso{
+\code{\link[=RMplotBar]{RMplotBar()}}, \code{\link[=RMplotStackedbar]{RMplotStackedbar()}}, \code{\link[=RMdifGamma]{RMdifGamma()}} and
+\code{\link[=RMdifAnchor]{RMdifAnchor()}} for DIF tests.
 }

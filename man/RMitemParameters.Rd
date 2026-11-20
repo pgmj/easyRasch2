@@ -2,7 +2,7 @@
 % Please edit documentation in R/item_parameters.R
 \name{RMitemParameters}
 \alias{RMitemParameters}
-\title{Item Parameters for a Rasch / Partial Credit Model}
+\title{Item parameters for a Rasch or partial credit model}
 \usage{
 RMitemParameters(
   data,
@@ -17,19 +17,19 @@ RMitemParameters(
 }
 \arguments{
 \item{data}{A data.frame or matrix of item responses. Items must be
-scored starting at 0 (non-negative integers). Missing values (\code{NA})
-are allowed; both estimators handle them.}
+scored starting at 0. Missing values (\code{NA}) are allowed, and both
+estimators handle them.}
 
 \item{estimator}{Character. \code{"CML"} (default) estimates item
 parameters with \code{\link[psychotools:pcmodel]{psychotools::pcmodel()}} (a dichotomous item is a
-2-category PCM); \code{"MML"} uses \code{\link[mirt:mirt]{mirt::mirt()}} with
-\code{itemtype = "Rasch"}. CML is preferred for
-Rasch measurement; MML can be more robust when data are sparse.
+2-category PCM), and \code{"MML"} uses \code{\link[mirt:mirt]{mirt::mirt()}} with
+\code{itemtype = "Rasch"}. CML is preferred for Rasch measurement, and MML
+can be more robust when data are sparse.
 Neither estimator can fit an item with one response category or an
 empty lowest or interior category (see Details).}
 
 \item{format}{Character. \code{"long"} (default) returns one row per item
-(dichotomous) or per item-threshold (polytomous); \code{"wide"} returns
+(dichotomous) or per item threshold (polytomous), \code{"wide"} returns
 one row per item with threshold columns \code{t1}, \code{t2}, ... plus a mean
 \code{location} column.}
 
@@ -41,8 +41,8 @@ interval (\verb{estimate +/- z * SE}). Default \code{0.95}.}
 
 \item{center}{Logical. If \code{TRUE} (default), all thresholds are shifted
 so their grand mean is zero, the usual Rasch identification. CML
-estimates are already centred; the shift mainly affects the MML
-path, keeping the two estimators on a common scale.}
+estimates are already centred, so the shift mainly affects MML and
+puts the two estimators on a common scale.}
 
 \item{output}{Character. \code{"kable"} (default) for a formatted
 \code{\link[knitr:kable]{knitr::kable()}} table, \code{"dataframe"} for the underlying
@@ -50,15 +50,15 @@ data.frame, or \code{"file"} to write that data.frame to a CSV at
 \code{filename} (the data.frame is also returned invisibly).}
 
 \item{filename}{Character. Path to the CSV file to write when
-\code{output = "file"}. Required in that case; ignored otherwise.}
+\code{output = "file"}. Required in that case, ignored otherwise.}
 }
 \value{
 For \code{output = "dataframe"}, a data.frame. In \strong{long} format the
-columns are \code{item}, \code{threshold} (integer; \code{1} for dichotomous items),
-\code{location}, and -- when \code{se = TRUE} -- \code{se}, \code{ci_lower}, \code{ci_upper}.
+columns are \code{item}, \code{threshold} (integer, \code{1} for dichotomous items),
+\code{location}, and with \code{se = TRUE} also \code{se}, \code{ci_lower} and \code{ci_upper}.
 In \strong{wide} format the columns are \code{item}, the threshold locations
 (\code{t1}, \code{t2}, ... or \code{location} for dichotomous items), and a mean
-\code{location}; when \code{se = TRUE}, matching \code{se_t1}, \code{se_t2}, ... columns
+\code{location}. With \code{se = TRUE}, matching \code{se_t1}, \code{se_t2}, ... columns
 are appended. For \code{output = "kable"}, the same content as a
 \code{knitr_kable} object.
 }
@@ -73,9 +73,9 @@ parameters are estimated by conditional maximum likelihood (CML, via
 \details{
 Items are detected as dichotomous (maximum score 1) or polytomous
 (maximum score > 1), and the Rasch or Partial Credit model is chosen
-accordingly. Thresholds are reported as Andrich thresholds (the
-person locations at which adjacent response categories are equally
-probable) on the logit difficulty scale, matching \code{\link[=RMtargeting]{RMtargeting()}}.
+accordingly. Thresholds are reported as Andrich thresholds (Andrich,
+1978), the person locations at which adjacent response categories are
+equally probable, on the logit scale, as in \code{\link[=RMtargeting]{RMtargeting()}}.
 
 \strong{Standard errors.} For the CML path, threshold SEs come from the
 threshold-parameter covariance of \code{psychotools::threshpar(vcov = TRUE)}.
@@ -92,8 +92,10 @@ logit scale.
 the item when an item has one response category, or an empty lowest or
 interior category. Such categories have no threshold that the data can
 estimate. Merge them with an adjacent category, or remove the item. An
-empty top category is allowed: the item is then fitted with one
-threshold fewer.
+empty top category is allowed, and the item is then fitted with one
+threshold fewer. A category used only by respondents with a zero or
+perfect total score gives a warning, since CML leaves those respondents
+out and its threshold cannot be estimated well.
 }
 \examples{
 \donttest{
@@ -125,11 +127,8 @@ RMitemParameters(poly, output = "file",
 Andrich, D. (1978). A rating formulation for ordered response
 categories. \emph{Psychometrika, 43}(4), 561-573.
 \doi{10.1007/BF02293814}
-
-Mair, P., & Hatzinger, R. (2007). Extended Rasch modeling: The eRm
-package for the application of IRT models in R. \emph{Journal of
-Statistical Software, 20}(9), 1-20. \doi{10.18637/jss.v020.i09}
 }
 \seealso{
-\code{\link[=RMpersonParameters]{RMpersonParameters()}}, \code{\link[=RMscoreSE]{RMscoreSE()}}, \code{\link[=RMtargeting]{RMtargeting()}}
+\code{\link[=RMpersonParameters]{RMpersonParameters()}}, \code{\link[=RMscoreSE]{RMscoreSE()}}, \code{\link[=RMtargeting]{RMtargeting()}},
+\code{\link[=RMitemHierarchy]{RMitemHierarchy()}}
 }

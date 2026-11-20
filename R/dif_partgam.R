@@ -1,111 +1,101 @@
-#' Partial Gamma DIF Analysis
+#' Partial gamma DIF
 #'
-#' Computes partial gamma coefficients for Differential Item Functioning (DIF)
-#' using \code{iarm::partgam_DIF()}. Each item is tested for association with
-#' a single categorical DIF variable, controlling for the total score.
+#' Computes the partial gamma coefficient of each item, the association
+#' between the item and a grouping variable given the total score, to
+#' assess differential item functioning (DIF). With the result of
+#' [RMdifGammaCutoff()], it tests each item against simulations without
+#' DIF, by default with a bootstrap p-value corrected across items.
 #'
-#' @param data A data.frame or matrix of item responses. Items must be scored
-#'   starting at 0 (non-negative integers). Missing values (`NA`) are allowed,
-#'   but at least one complete case must exist after combining `data` and
-#'   `dif_var`.
-#' @param dif_var A vector (factor or character) of the same length as
-#'   `nrow(data)`, representing the grouping variable for DIF analysis.
-#' @param cutoff Optional. Default `NULL` (no cutoff applied). Can be:
-#'   * The return value of \code{\link{RMdifGammaCutoff}} (a list with
-#'     `$item_cutoffs`): the data.frame is extracted automatically and
-#'     simulation metadata is included in the kable caption.
-#'   * The `$item_cutoffs` data.frame from \code{\link{RMdifGammaCutoff}}
-#'     directly: must have columns `Item`, `gamma_low`, `gamma_high`.
-#'   When provided, adds columns `Gamma_low`, `Gamma_high`, and `Flagged`
-#'   (logical; `TRUE` when the observed partial gamma falls outside the
-#'   credible range) to the result.
-#' @param p_value Logical or `NULL`. When `TRUE`, adds two-sided bootstrap
-#'   p-values (`p_gamma`, `padj_gamma`) comparing each item's observed partial
-#'   gamma against its simulated null distribution, and `flagged` reflects
-#'   `padj_gamma < alpha` instead of the credible range. The asymptotic
-#'   BH-adjusted p-value and star columns from `iarm::partgam_DIF()` are
-#'   **dropped** in this mode (two p-value families in one table would invite
-#'   double-reading); the simulated `gamma_low` / `gamma_high` band is kept as
-#'   the effect-size reference. `TRUE` requires the **full**
-#'   \code{\link{RMdifGammaCutoff}} object as `cutoff` (it carries the
-#'   simulated distributions in `$results`). `NULL`, the default, means `TRUE`
-#'   when `cutoff` is that full object and `FALSE` otherwise, so calling with
-#'   no cutoff keeps the asymptotic table unchanged. Pass `FALSE` to flag
-#'   against the interval instead. The interval makes a poor decision rule,
-#'   since its width sets a family-wise error rate of `1 - width^k` over all
-#'   \eqn{k} items at once (Johansson, 2026).
-#' @param correction Character. Multiplicity correction for the bootstrap
-#'   p-values: `"fwer"` (default; Westfall-Young studentised-max step-down),
-#'   `"fdr_bh"`, `"fdr_by"`, or `"none"`. Ignored when `p_value = FALSE`.
-#' @param alpha Numeric in (0, 1). Significance level used to flag items on
-#'   the corrected p-value. Default `0.05`. Ignored when `p_value = FALSE`.
-#' @param output Character string controlling the return value. Either
-#'   `"kable"` (default) for a formatted `knitr::kable()` table, or
-#'   `"dataframe"` for the underlying data.frame.
+#' @param data A data.frame or matrix of item responses, items scored from
+#'   0. Only complete cases (in `data` and `dif_var`) are used, so at least
+#'   one is needed.
+#' @param dif_var A vector (factor or character) of length `nrow(data)`
+#'   with the groups, two or more.
+#' @param cutoff Optional. Default `NULL`, the asymptotic test of
+#'   `iarm::partgam_DIF()`. Either of:
+#'   * The full result of [RMdifGammaCutoff()]. This enables the bootstrap
+#'     p-values (see `p_value`), and the caption reports the simulation
+#'     settings.
+#'   * Its `$item_cutoffs` data.frame alone, with columns `Item`,
+#'     `gamma_low` and `gamma_high`. Items are flagged against the
+#'     interval.
+#'
+#'   Either adds the columns `Gamma_low`, `Gamma_high` and a logical
+#'   `Flagged` (`TRUE` when the partial gamma is outside the simulated
+#'   interval, or with p-values when the item is flagged).
+#' @param p_value Logical or `NULL`. Whether to flag on two-sided bootstrap
+#'   p-values (`p_gamma`, `padj_gamma`) from the simulations. The
+#'   asymptotic p-value and star columns are then dropped, so that the
+#'   table has one family of p-values, and the simulated interval is kept
+#'   as a reference. `TRUE` needs the full [RMdifGammaCutoff()] result.
+#'   `NULL` (default) uses the p-values whenever `cutoff` is that result,
+#'   so a call without a cutoff keeps the asymptotic table. `FALSE` flags
+#'   against the interval, a poor decision rule, since over k items a width
+#'   `w` gives a family-wise error rate of `1 - w^k` (Johansson, 2026).
+#' @param correction Character. Correction of the bootstrap p-values across
+#'   items: `"fwer"` (default, Westfall-Young step-down), `"fdr_bh"`,
+#'   `"fdr_by"` or `"none"`. Used only with p-values.
+#' @param alpha Numeric in (0, 1). An item is flagged when its corrected
+#'   p-value is below `alpha`. Default `0.05`. Used only with p-values.
+#' @param output Character. `"kable"` (default) for a `knitr::kable()`
+#'   table, or `"dataframe"`.
 #'
 #' @return
-#' * If `output = "kable"`: a `knitr_kable` object with columns "Item",
-#'   "Partial gamma", "SE", "Lower CI", "Upper CI", "Adj. p-value (BH)",
-#'   and "p-value sign." (stars for the BH-adjusted p-value, as `iarm`
-#'   shows them). When `cutoff` is provided, additional columns
-#'   "Gamma low", "Gamma high", and "Flagged" are included. With
-#'   `p_value = TRUE`, the asymptotic p-value columns are replaced by
-#'   bootstrap "p" and "p (adj)".
-#' * If `output = "dataframe"`: a data.frame with columns `Item`, `gamma`,
-#'   `se`, `lower`, `upper`, `padj_bh`, `Significance`. When `cutoff` is
-#'   provided, columns `gamma_low`, `gamma_high`, and `flagged` are also
-#'   included. With `p_value = TRUE`, `padj_bh` and `Significance` are
-#'   replaced by `p_gamma` and `padj_gamma`.
+#' * `output = "kable"`: a `knitr_kable` table with the columns "Item",
+#'   "Partial gamma", "SE", "Lower CI", "Upper CI", "Adj. p-value (BH)" and
+#'   "p-value sign." (stars for the adjusted p-value, as iarm shows them),
+#'   plus "Gamma low", "Gamma high" and "Flagged" with a `cutoff`. With
+#'   p-values, the asymptotic columns are replaced by "p" and "p (adj)".
+#' * `output = "dataframe"`: a data.frame with the columns `Item`, `gamma`,
+#'   `se`, `lower`, `upper`, `padj_bh` and `Significance`, plus
+#'   `gamma_low`, `gamma_high` and `flagged` with a `cutoff`. With p-values,
+#'   `padj_bh` and `Significance` are replaced by `p_gamma` and
+#'   `padj_gamma`.
 #'
 #' @details
-#' Partial gamma (Bjorner et al., 1998) measures the association between item
-#' response and an exogenous grouping variable, controlling for the total
-#' score. Values near 0 indicate no DIF. Recommended interpretive thresholds
-#' (Bjorner et al., 1998):
+#' \strong{Statistic.} The partial gamma (Bjorner et al., 1998) measures the
+#' association between the item response and an external grouping variable
+#' given the total score. Values near 0 indicate no DIF. Bjorner et al.
+#' (1998) also proposed classes of DIF size, which [RMdifTree()] uses.
+#' They are conventions, not values calibrated to the sample and items at
+#' hand, and this function does not use them. The \pkg{iarm} package must
+#' be installed (it is in Suggests).
 #'
-#' * **No or negligible DIF**: gamma within \eqn{[-0.21, 0.21]}, *or* gamma
-#'   not significantly different from 0.
-#' * **Slight to moderate DIF**: gamma within \eqn{[-0.31, 0.31]} (and outside
-#'   \eqn{[-0.21, 0.21]}), *or* not significantly outside \eqn{[-0.21, 0.21]}.
-#' * **Moderate to large DIF**: gamma outside \eqn{[-0.31, 0.31]}, **and**
-#'   significantly outside \eqn{[-0.21, 0.21]}.
+#' \strong{Asymptotic p-values.} The adjusted p-value is a
+#' Benjamini-Hochberg adjustment, made by easyRasch2, of the p-values from
+#' `iarm::partgam_DIF()` over the items. iarm's own adjusted column is a
+#' Bonferroni correction whatever method is named, since iarm adjusts one
+#' p-value at a time, so it is not used.
 #'
-#' The `iarm` package must be installed (it is in Suggests, not Imports).
-#' The asymptotic adjusted p-value is a Benjamini-Hochberg adjustment over the
-#' items of the p-values from `iarm::partgam_DIF()`, applied by easyRasch2.
-#' iarm's own adjusted column is a Bonferroni correction whatever method is
-#' named, because iarm adjusts one p-value at a time, so it is not used.
-#'
-#' \strong{Bootstrap p-values.} When `p_value = TRUE`, each item's observed
-#' partial gamma is compared against its simulated null distribution (from
-#' `cutoff$results`, simulated with no DIF by construction). The
-#' per-item statistic is the residual studentised by the mean and SD of the
-#' observed and simulated values together; the marginal p-value is the two-sided Monte-Carlo p-value
-#' `(1 + #\{|t*| >= |t|\}) / (B + 1)`, so it can be no smaller than
-#' `1 / (B + 1)`. The test is two-sided because DIF has no privileged
-#' direction: an item can favour either group. This differs from
-#' [RMlocdepGamma()], which tests one-sided for excess positive local
-#' dependence. `correction = "fwer"` uses the Westfall-Young
-#' studentised-max step-down, which exploits the bootstrap dependence among
-#' items (Ferreira, 2024). It controls the family-wise error rate at any
-#' number of iterations in [RMdifGammaCutoff()], but below 400 decisions
-#' depend on the seed and a message says so. Unlike the
-#' asymptotic p-values from `iarm::partgam_DIF()`, these are calibrated
-#' against the *simulated Rasch null* rather than the asymptotic SE; they are
-#' model-conditional and sample-size-sensitive, and are reported alongside
-#' the simulated effect-size band, not in place of it. The observed partial
-#' gamma they test is computed by the same internal routine as the simulated
-#' values, which reproduces `iarm::partgam_DIF()` exactly.
+#' \strong{Bootstrap p-values.} Each item's observed partial gamma is
+#' compared with its simulated values (`cutoff$results`, simulated without
+#' DIF). The statistic is the deviation from the mean of the observed and
+#' simulated values together, divided by their SD. The uncorrected p is
+#' two-sided, `(1 + #\{|t*| >= |t|\}) / (B + 1)` for B simulated datasets,
+#' so it can be no smaller than `1 / (B + 1)`. It is two-sided since DIF
+#' can favour either group, unlike [RMlocdepGamma()], which tests
+#' one-sided for excess positive local dependence. `correction = "fwer"`
+#' uses the Westfall-Young step-down, which uses the dependence between
+#' the items (Westfall & Young, 1993, Ferreira, 2024). It controls the
+#' family-wise error rate at any number of iterations in
+#' [RMdifGammaCutoff()], but below 400 decisions depend on the seed and a
+#' message says so. Unlike the asymptotic p-values, these are calibrated
+#' against simulations from the Rasch model. They depend on the model and
+#' the sample size, and are reported with the simulated interval, not
+#' instead of it. The observed partial gamma they test is computed by the
+#' same internal routine as the simulations, which reproduces
+#' `iarm::partgam_DIF()` exactly.
 #'
 #' \strong{Real and artificial DIF.} Partial gamma conditions on the total
 #' score, which includes every item. Real DIF in one item then induces
-#' artificial DIF in the other items, in the opposite direction, because at
-#' a given total score the item scores must add up to that score (Hagquist &
+#' artificial DIF in the other items, in the opposite direction, since at a
+#' given total score the item scores must add up to that score (Hagquist &
 #' Andrich, 2017). An item can therefore be flagged only because another
-#' item has DIF. The simulation-based cutoffs from [RMdifGammaCutoff()] do
-#' not guard against this, since their null has no DIF in any item. Resolve
-#' DIF items one at a time, starting with the largest, and repeat the
-#' analysis before deciding on the next (Hagquist & Andrich, 2017).
+#' item has DIF. The simulations in [RMdifGammaCutoff()] do not guard
+#' against this, since they have no DIF in any item. Resolve DIF items one
+#' at a time, starting with the largest, and repeat the analysis before
+#' deciding on the next (Hagquist & Andrich, 2017). [RMdifAnchor()] avoids
+#' the problem by linking the groups through anchor items.
 #'
 #' @inheritSection RMitemInfit Multiple comparisons
 #'
@@ -124,14 +114,16 @@
 #' *Health and Quality of Life Outcomes, 15*, 181.
 #' \doi{10.1186/s12955-017-0755-0}
 #'
-#' Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple Testing*.
-#' Wiley.
-#'
 #' Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
 #' Rasch models: Iterations, multiplicity correction, and decision stability.
 #' *PsyArXiv*. \doi{10.31234/osf.io/7pqz4_v2}
 #'
-#' @seealso \code{\link{RMdifGammaCutoff}}
+#' Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple Testing*.
+#' Wiley.
+#'
+#' @seealso [RMdifGammaCutoff()] for the simulations, [RMdifGammaPlot()]
+#'   for the plot, [RMdifAnchor()] for anchored tests, [RMdifImpact()] for
+#'   the size of the impact.
 #'
 #' @export
 #'
@@ -151,7 +143,7 @@
 #'   # Return as data.frame
 #'   RMdifGamma(sim_data, dif_group, output = "dataframe")
 #'
-#'   # Simulation-based cutoffs (100 Monte-Carlo iterations)
+#'   # Simulation-based cutoffs (100 iterations to keep the example quick)
 #'   if (requireNamespace("ggdist", quietly = TRUE)) {
 #'     cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_group,
 #'                                    iterations = 100, parallel = FALSE,
@@ -159,8 +151,8 @@
 #'     RMdifGamma(sim_data, dif_group, cutoff = cutoff_res)
 #'
 #'     # The full cutoff object switches on bootstrap p-values with the
-#'     # family-wise (Westfall-Young) correction; 100 iterations keeps the
-#'     # example quick, use the default 400 or more in real analyses
+#'     # family-wise (Westfall-Young) correction. Use 1000 or more
+#'     # iterations in real analyses.
 #'     RMdifGamma(sim_data, dif_group, cutoff = cutoff_res,
 #'                output = "dataframe")
 #'   }
@@ -574,7 +566,7 @@ RMdifGamma <- function(
 #' @param cutoff_method Character. `"hdci"`, `"quantile"`, or `NULL`.
 #' @param hdci_width Numeric or `NULL`. HDCI width (e.g., `0.99`).
 #' @return A character label, or `NULL` if the method is unknown/unset.
-#' @keywords internal
+#' @noRd
 .format_gamma_cutoff_method_label <- function(cutoff_method, hdci_width) {
   if (is.null(cutoff_method)) {
     return(NULL)
@@ -592,45 +584,44 @@ RMdifGamma <- function(
 }
 
 
-#' Simulation-Based Partial Gamma DIF Cutoff Determination
+#' Simulation-based partial gamma DIF cutoffs
 #'
-#' Simulates the distribution of the partial gamma DIF coefficient for each
-#' item when there is no DIF, to give empirical critical values and the
-#' simulated null behind the bootstrap p-values in \code{\link{RMdifGamma}}.
+#' Simulates the partial gamma DIF coefficient (Bjorner et al., 1998,
+#' Henninger et al., 2025) of each item when there is no DIF. Passed to [RMdifGamma()], the result
+#' gives bootstrap p-values corrected across items, and an interval per
+#' item.
 #' Every simulated dataset keeps each respondent's observed group membership
 #' and total score, so the null reflects the observed group sizes and any
 #' difference between the groups' latent distributions.
 #'
-#' @param data A data.frame or matrix of item responses. Items must be scored
-#'   starting at 0 (non-negative integers). Only complete cases (rows without
-#'   any `NA`) are used.
-#' @param dif_var A vector (factor, character, or integer) defining group
-#'   membership for DIF analysis. Must have the same length as `nrow(data)`.
+#' @param data A data.frame or matrix of item responses, items scored from
+#'   0. Only complete cases (in `data` and `dif_var`) are used.
+#' @param dif_var A vector (factor, character or integer) of length
+#'   `nrow(data)` with the groups.
 #'   Group membership is held fixed in every simulated dataset, so the group
 #'   sizes and each group's distribution of total scores are those observed.
-#' @param iterations Integer. Number of simulation iterations (default 400).
-#' @param parallel Logical. Use parallel processing via `mirai` if available
-#'   (default `TRUE`).
-#' @param n_cores Integer or `NULL`. Number of parallel workers. When `NULL`,
-#'   `getOption("mc.cores")` is checked first. If neither is set and
-#'   `parallel = TRUE`, a warning is issued and execution falls back to
-#'   sequential (single core) processing.
-#' @param verbose Logical. Show a progress bar (default `FALSE`).
+#' @param iterations Integer. Number of simulated datasets. Default `400`.
+#'   Use 1000 to 2000 for a final analysis.
+#' @param parallel Logical. Run the simulations in parallel via \pkg{mirai}
+#'   when it is installed. Default `TRUE`.
+#' @param n_cores Integer or `NULL`. Number of parallel workers. When
+#'   `NULL`, `getOption("mc.cores")` is used. If that is unset too, a
+#'   warning is given and the simulations run sequentially.
+#' @param verbose Logical. Show a progress bar. Default `FALSE`.
 #' @param seed Integer or `NULL`. Random seed for reproducibility. See
 #'   [easyRasch2-reproducibility] for what this guarantees and how it
 #'   interacts with `parallel`.
-#' @param cutoff_method Character string specifying how cutoff intervals are
-#'   computed. Either `"hdci"` (default) for the Highest Density Interval via
-#'   `ggdist::hdci()`, or `"quantile"` for the 2.5th/97.5th percentiles via
-#'   `stats::quantile()`.
-#' @param hdci_width Numeric. Width of the HDCI when `cutoff_method = "hdci"`.
-#'   Default is `0.95` (95\% HDCI), matching \code{\link{RMitemInfitCutoff}}.
-#'   Ignored when `cutoff_method = "quantile"`.
-#' @param dgp Character. How the null datasets are generated.
+#' @param cutoff_method Character. How the interval per item is computed:
+#'   `"hdci"` (default), the highest-density continuous interval from
+#'   `ggdist::hdci()` (needs \pkg{ggdist}), or `"quantile"`, the 2.5th to
+#'   97.5th percentiles.
+#' @param hdci_width Numeric. Width of the interval with
+#'   `cutoff_method = "hdci"`. Default `0.95`, as in [RMitemInfitCutoff()].
+#'   Ignored with `"quantile"`.
+#' @param dgp Character. How the datasets without DIF are simulated.
 #'   `"conditional"` (default) draws each respondent's response pattern from
-#'   the Rasch conditional distribution given their observed total score, with
-#'   the CML item thresholds fixed, as the conditional option of
-#'   \code{\link{RMitemRestscoreCutoff}} does. `"permutation"` keeps the
+#'   the model given their observed total score, with the CML item thresholds
+#'   fixed, as the conditional option of [RMitemRestscoreCutoff()] does. `"permutation"` keeps the
 #'   observed responses and permutes group membership among respondents with
 #'   the same total score, the Monte Carlo form of an exact conditional test of
 #'   item-group independence given the score (Kreiner, 1987). It needs no item
@@ -638,14 +629,14 @@ RMdifGamma <- function(
 #'   25 to 60 times faster per iteration. Both held the nominal error rate in
 #'   simulation, including when the groups differed by 1 SD.
 #'
-#' @return A list with components:
+#' @return A list with:
 #' \describe{
-#'   \item{`results`}{data.frame with columns `iteration`, `Item`, and
-#'     `gamma` (one row per item per successful iteration).}
-#'   \item{`item_cutoffs`}{data.frame with per-item cutoff summaries: `Item`,
-#'     `gamma_low`, `gamma_high`. Bounds are computed using the method
-#'     specified by `cutoff_method`.}
-#'   \item{`actual_iterations`}{Number of successful iterations.}
+#'   \item{`results`}{data.frame with `iteration`, `Item` and `gamma`, one
+#'     row per item and simulated dataset.}
+#'   \item{`item_cutoffs`}{data.frame with the interval per item: `Item`,
+#'     `gamma_low`, `gamma_high`, computed by `cutoff_method`.}
+#'   \item{`actual_iterations`}{Number of simulated datasets that could be
+#'     used.}
 #'   \item{`requested_iterations`}{Number of iterations asked for.}
 #'   \item{`sample_n`}{Number of complete cases used.}
 #'   \item{`sample_n_total`}{Number of respondents in the raw input data,
@@ -668,32 +659,31 @@ RMdifGamma <- function(
 #' @details
 #' Partial gamma conditions on the total score, and under the Rasch model the
 #' response to an item is independent of group membership given the total
-#' score. Both data-generating processes preserve each respondent's group and
-#' total score, so the simulated null has the observed distribution of groups
-#' across score strata. An earlier version assigned simulated respondents to
-#' groups at random, which gave both groups the same latent distribution.
-#' When a minority group differed from the majority by 1 SD, that null was too
-#' narrow and flagged at least one item in about 14 percent of datasets with
-#' no DIF, against a nominal 5 percent.
+#' score. Both ways of simulating keep each respondent's group and total
+#' score, so the simulations have the observed distribution of groups over
+#' the total scores. Assigning simulated respondents to groups at random, as
+#' an earlier version did, gives both groups the same latent distribution.
+#' When a minority group differed from the majority by 1 SD, that was too
+#' narrow and flagged at least one item in about 14% of datasets without
+#' DIF, against a nominal 5%.
 #'
-#' For each iteration the function draws one null dataset (see `dgp`) and
-#' computes partial gamma for every item. The computation reproduces
-#' `iarm::partgam_DIF()` exactly but is vectorised, so `iarm` is not needed
-#' here. Iterations that fail are discarded and reported through
-#' `actual_iterations`.
+#' In each iteration one dataset is simulated (see `dgp`) and the partial
+#' gamma of every item computed. The computation reproduces
+#' `iarm::partgam_DIF()` exactly but is vectorised, so \pkg{iarm} is not
+#' needed here. Datasets that cannot be used are left out, and
+#' `actual_iterations` gives the number used.
 #'
 #' The conditional data-generating process uses CML item thresholds from
 #' `psychotools::pcmodel()` (a dichotomous item is a 2-category PCM). The
 #' group order follows the levels of `dif_var` (alphabetical for character
 #' vectors), which sets the sign of gamma as in `iarm::partgam_DIF()`.
 #'
-#' The null has no DIF in any item, so the cutoffs do not guard against
-#' artificial DIF, which real DIF in one item induces in the others
+#' The simulations have no DIF in any item, so the cutoffs do not guard
+#' against artificial DIF, which real DIF in one item induces in the others
 #' (Hagquist & Andrich, 2017). See "Real and artificial DIF" in
 #' [RMdifGamma()].
 #'
-#' Parallel processing is provided by the `mirai` package (optional). Install
-#' it with `install.packages("mirai")` to enable parallelisation.
+#' Parallel processing needs the optional \pkg{mirai} package.
 #'
 #' @references
 #' Bjorner, J. B., Kreiner, S., Ware, J. E., Damsgaard, M. T., &
@@ -715,8 +705,8 @@ RMdifGamma <- function(
 #' exact conditional tests: Techniques and strategies. *Scandinavian Journal
 #' of Statistics, 14*(2), 97--112.
 #'
-#' @seealso \code{\link[iarm]{partgam_DIF}}, \code{\link{RMdifGamma}},
-#'   \code{\link{RMdifGammaPlot}}
+#' @seealso [RMdifGamma()] for the test, [RMdifGammaPlot()] for the plot,
+#'   [iarm::partgam_DIF()].
 #'
 #' @export
 #'
@@ -730,7 +720,7 @@ RMdifGamma <- function(
 #'   colnames(sim_data) <- paste0("Item", 1:10)
 #'   dif_sex <- sample(c("male", "female"), 200, replace = TRUE)
 #'
-#'   # Run 100 iterations sequentially for a quick demo
+#'   # 100 iterations, sequentially, for a quick example
 #'   cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_sex,
 #'                                  iterations = 100, parallel = FALSE,
 #'                                  seed = 42)
@@ -1097,7 +1087,7 @@ RMdifGammaCutoff <- function(
 #' @param data_list List produced inside [RMdifGammaCutoff()].
 #' @return A data.frame with columns `Item` and `gamma`, or a character string
 #'   on failure.
-#' @keywords internal
+#' @noRd
 run_single_partgam_sim <- function(seed, data_list) {
   # The RNG kind is pinned, not just the seed: mirai daemons start under
   # L'Ecuyer-CMRG while the calling session uses the Mersenne-Twister
@@ -1143,7 +1133,7 @@ run_single_partgam_sim <- function(seed, data_list) {
 #' @param n_cores Number of mirai daemons.
 #' @param verbose Show progress bar.
 #' @return List of raw results (one element per iteration).
-#' @keywords internal
+#' @noRd
 run_partgam_sim_parallel <- function(
   iterations,
   sim_seeds,
@@ -1212,7 +1202,7 @@ run_partgam_sim_parallel <- function(
 #' @param sim_data_list List of data passed to each worker.
 #' @param verbose Show progress bar.
 #' @return List of raw results (one element per iteration).
-#' @keywords internal
+#' @noRd
 run_partgam_sim_sequential <- function(
   iterations,
   sim_seeds,
@@ -1240,52 +1230,40 @@ run_partgam_sim_sequential <- function(
 }
 
 
-#' Plot Distribution of Simulated Partial Gamma DIF Values
+#' Plot the simulated partial gamma DIF values
 #'
-#' Visualises the distribution of simulation-based partial gamma DIF values
-#' from \code{\link{RMdifGammaCutoff}}, optionally overlaying observed partial
-#' gamma values computed from real data with the same routine the simulation
-#' uses, which reproduces \code{\link[iarm]{partgam_DIF}} exactly.
+#' Plots the simulated partial gamma of each item from [RMdifGammaCutoff()],
+#' and optionally the observed values in your data, computed with the same
+#' routine as the simulations, which reproduces `iarm::partgam_DIF()`.
 #'
-#' Uses `ggdist::stat_dotsinterval()` (when `data` is not supplied) or
-#' `ggdist::stat_dots()` (when `data` is supplied) with
-#' `point_interval = "median_hdci"` and `.width = c(0.66, 0.95, 0.99)`.
-#'
-#' @param simfit The return value of \code{\link{RMdifGammaCutoff}} (a list with
-#'   components `results`, `item_cutoffs`, `actual_iterations`, `sample_n`, and
-#'   `item_names`).
-#' @param data Optional. A data.frame or matrix of item responses for computing
-#'   and overlaying observed partial gamma values. Items must be scored starting
-#'   at 0 (non-negative integers). When provided, the plot includes orange
-#'   diamond markers for the observed partial gamma alongside the simulated
-#'   distribution, plus segment summaries from the cutoff intervals.
-#' @param dif_var Required when `data` is supplied. A vector (factor, character,
-#'   or integer) defining group membership for the DIF analysis. Must have the
-#'   same length as `nrow(data)`.
+#' @param simfit The result of [RMdifGammaCutoff()].
+#' @param data Optional. The item responses the simulations were made from,
+#'   items scored from 0. The observed partial gamma is then drawn as orange
+#'   diamonds.
+#' @param dif_var Needed with `data`. The vector of groups used in
+#'   [RMdifGammaCutoff()], of length `nrow(data)`.
 #'
 #' @return A `ggplot` object.
 #'
 #' @details
-#' When `data` is **not** supplied, the function plots the simulated partial
-#' gamma distributions as dot-interval plots using
-#' `ggdist::stat_dotsinterval()` with median and Highest Density Continuous
-#' Interval (HDCI) summaries.
+#' Each item's simulated values are drawn as dots, with the median, an
+#' inner 66% interval and an outer interval. The outer interval is the one
+#' in `simfit$item_cutoffs`, which [RMdifGamma()] tabulates: the HDCI of
+#' width `hdci_width`, or the 2.5th to 97.5th percentiles with
+#' `cutoff_method = "quantile"`. The inner interval uses the same method.
+#' Without `data` the intervals are drawn with
+#' `ggdist::stat_dotsinterval()`. With `data` they are black segments with
+#' a black dot for the median, and the observed value is an orange diamond.
 #'
-#' When `data` **is** supplied (along with `dif_var`), the function:
-#' \enumerate{
-#'   \item Computes observed partial gamma values (identical to
-#'     `iarm::partgam_DIF()`).
-#'   \item Overlays observed gamma values as orange diamond markers on the
-#'     simulated distributions.
-#'   \item Shows per-item cutoff intervals (from `simfit$item_cutoffs`) as
-#'     black line segments, with thicker segments for the 66\% interval and
-#'     black dots for the median.
-#' }
+#' The intervals are per item and not corrected for testing several items.
+#' With the full cutoff object, [RMdifGamma()] flags items by adjusted
+#' p-values instead, so an item just outside its interval need not be
+#' flagged there. The plot shows no p-values.
 #'
-#' The `ggplot2` and `ggdist` packages must be installed (they are in
-#' Suggests, not Imports).
+#' The \pkg{ggplot2} and \pkg{ggdist} packages must be installed (they are
+#' in Suggests).
 #'
-#' @seealso \code{\link{RMdifGammaCutoff}}, \code{\link{RMdifGamma}}
+#' @seealso [RMdifGammaCutoff()], [RMdifGamma()]
 #'
 #' @importFrom rlang .data
 #' @export
@@ -1301,7 +1279,7 @@ run_partgam_sim_sequential <- function(
 #'   colnames(sim_data) <- paste0("Item", 1:10)
 #'   dif_group <- factor(sample(c("A", "B"), 200, replace = TRUE))
 #'
-#'   # Run simulation
+#'   # Run the simulation
 #'   cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_group,
 #'                                  iterations = 100, parallel = FALSE,
 #'                                  seed = 42)
@@ -1367,23 +1345,26 @@ RMdifGammaPlot <- function(simfit, data, dif_var) {
   item_levels <- rev(item_names)
 
   # --- Compute per-item summary intervals for segment overlays ----------------
-  lo_hi <- do.call(
-    rbind,
-    lapply(item_names, function(item) {
-      sub <- results_df[results_df$Item == item, ]
-      data.frame(
-        Item = item,
-        min_gamma = stats::quantile(sub$gamma, 0.005, na.rm = TRUE),
-        max_gamma = stats::quantile(sub$gamma, 0.995, na.rm = TRUE),
-        p66lo_gamma = stats::quantile(sub$gamma, 0.167, na.rm = TRUE),
-        p66hi_gamma = stats::quantile(sub$gamma, 0.833, na.rm = TRUE),
-        median_gamma = stats::median(sub$gamma, na.rm = TRUE),
-        stringsAsFactors = FALSE,
-        row.names = NULL
-      )
-    })
+  # The outer interval is the one stored in `simfit$item_cutoffs` (the one
+  # RMdifGamma() tabulates) and the inner 66% interval uses the same method.
+  spec <- .sim_interval_spec(simfit)
+  interval_note <- .sim_interval_caption(spec, "item", "RMdifGamma()")
+  key_names <- item_names
+  cut_idx <- match(key_names, item_cutoffs$Item)
+  iv <- .sim_plot_intervals(
+    results_df$gamma, results_df$Item, key_names,
+    item_cutoffs$gamma_low[cut_idx], item_cutoffs$gamma_high[cut_idx],
+    spec$method
   )
-  rownames(lo_hi) <- NULL
+  lo_hi <- data.frame(
+    Item = key_names,
+    min_gamma = iv$lo,
+    max_gamma = iv$hi,
+    p66lo_gamma = iv$lo66,
+    p66hi_gamma = iv$hi66,
+    median_gamma = iv$median,
+    stringsAsFactors = FALSE
+  )
 
   # --- Case 1: no observed data, show simulation distribution only ------------
   if (missing(data)) {
@@ -1404,10 +1385,10 @@ RMdifGammaPlot <- function(simfit, data, dif_var) {
       ggdist::stat_dotsinterval(
         ggplot2::aes(slab_fill = ggplot2::after_stat(.data$level)),
         quantiles = actual_iterations,
-        point_interval = "median_hdci",
+        point_interval = .sim_point_interval(spec),
         layout = "weave",
         slab_color = NA,
-        .width = c(0.66, 0.95, 0.99)
+        .width = c(0.66, spec$width)
       ) +
       ggplot2::labs(
         x = "Partial gamma",
@@ -1417,11 +1398,12 @@ RMdifGammaPlot <- function(simfit, data, dif_var) {
           actual_iterations,
           " simulated datasets. ",
           sample_clause,
-          " per dataset."
+          " per dataset.\n",
+          interval_note
         ))
       ) +
       ggplot2::scale_color_manual(
-        values = scales::brewer_pal()(4)[-1],
+        values = scales::brewer_pal()(3)[-1],
         aesthetics = "slab_fill",
         guide = "none"
       ) +
@@ -1489,7 +1471,8 @@ RMdifGammaPlot <- function(simfit, data, dif_var) {
     sample_clause,
     " per dataset.\n",
     "Orange diamonds indicate observed partial gamma DIF. ",
-    "Black dots indicate median gamma from simulations."
+    "Black dots indicate median gamma from simulations.\n",
+    interval_note
   ))
 
   p <- ggplot2::ggplot(
@@ -1502,9 +1485,10 @@ RMdifGammaPlot <- function(simfit, data, dif_var) {
     ggdist::stat_dots(
       ggplot2::aes(slab_fill = ggplot2::after_stat(.data$level)),
       quantiles = actual_iterations,
+      point_interval = .sim_point_interval(spec),
       layout = "weave",
       slab_color = NA,
-      .width = c(0.66, 0.95, 0.99)
+      .width = c(0.66, spec$width)
     ) +
     ggplot2::geom_segment(
       data = lo_hi,
@@ -1555,7 +1539,7 @@ RMdifGammaPlot <- function(simfit, data, dif_var) {
       caption = caption_text
     ) +
     ggplot2::scale_color_manual(
-      values = scales::brewer_pal()(4)[-1],
+      values = scales::brewer_pal()(3)[-1],
       aesthetics = "slab_fill",
       guide = "none"
     ) +

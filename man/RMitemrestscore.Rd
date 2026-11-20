@@ -2,7 +2,7 @@
 % Please edit documentation in R/item_restscore.R
 \name{RMitemRestscore}
 \alias{RMitemRestscore}
-\title{Item Restscore Analysis}
+\title{Item-restscore association}
 \usage{
 RMitemRestscore(
   data,
@@ -16,199 +16,191 @@ RMitemRestscore(
 )
 }
 \arguments{
-\item{data}{A data.frame or matrix of item responses. Items must be scored
-starting at 0 (non-negative integers). Missing values (\code{NA}) are allowed,
-but at least one complete case (row with no \code{NA}) must be present.}
+\item{data}{A data.frame or matrix of item responses, items scored from
+0. Missing values (\code{NA}) are allowed, but the statistic uses complete
+cases only, so at least one is needed.}
 
-\item{cutoff}{Optional. Default \code{NULL}, which tests each item against the
-asymptotic normal reference distribution from \code{iarm::item_restscore()},
-adjusted by \code{p_adj}. Can be:
+\item{cutoff}{Optional. Default \code{NULL}, which tests each item with the
+asymptotic normal test of \code{iarm::item_restscore()}, adjusted by
+\code{p_adj}. Either of:
 \itemize{
-\item The return value of \code{\link{RMitemRestscoreCutoff}}: the parametric
-bootstrap null distribution of the observed minus expected gamma.
-Adds the columns \code{Diff_low} and \code{Diff_high} (the descriptive interval),
-and, with \code{p_value} resolving to \code{TRUE}, \code{p_restscore} and
-\code{padj_restscore}.
-\item The \verb{$item_cutoffs} data.frame from \code{\link{RMitemRestscoreCutoff}}
-directly (columns \code{Item}, \code{diff_low}, \code{diff_high}). Items are then
-flagged against the interval.
+\item The full result of \code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}}. This enables the
+bootstrap p-values (see \code{p_value}) and adds the columns \code{Diff_low}
+and \code{Diff_high}, the interval of the simulated differences.
+\item Its \verb{$item_cutoffs} data.frame alone (columns \code{Item}, \code{diff_low},
+\code{diff_high}). Items are then flagged against the interval.
 }
 
 With a \code{cutoff}, the asymptotic \code{p_adjusted} column is dropped and
 \code{p_adj} is ignored.}
 
-\item{p_value}{Logical or \code{NULL}. Whether to compute bootstrap p-values
-from the simulated null distribution and flag on them.
+\item{p_value}{Logical or \code{NULL}. Whether to flag on bootstrap p-values
+from the simulated values in \code{cutoff}. \code{NULL} (default) uses them
+whenever \code{cutoff} is the full \code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}} result.
+\code{TRUE} without it is an error. With \code{FALSE} and a \code{cutoff}, items are
+flagged against the interval, and a one-time message gives the
+family-wise error rate that implies.}
 
-\code{NULL} (the default) means \strong{use them when they are available}: \code{TRUE}
-when \code{cutoff} is the full \code{\link{RMitemRestscoreCutoff}} object,
-which carries the per-item simulated values in its \verb{$results} element,
-and \code{FALSE} otherwise. Explicit \code{TRUE} without the full object is an
-error rather than a silent downgrade. With \code{FALSE} and a \code{cutoff}, items
-are flagged against the interval instead, and a one-time message reports
-the family-wise error rate that implies.}
+\item{correction}{Character. Correction of the bootstrap p-values across
+items: \code{"fwer"} (default, Westfall-Young step-down, controls the
+family-wise error rate), \code{"fdr_bh"} or \code{"fdr_by"} (Benjamini-Hochberg
+or Benjamini-Yekutieli, control the false discovery rate), or
+\code{"none"}.}
 
-\item{correction}{Character. Multiple-comparison correction applied across
-items when \code{p_value = TRUE}: \code{"fwer"} (default) for the Westfall-Young
-studentised-max step-down (family-wise error rate), \code{"fdr_bh"} /
-\code{"fdr_by"} for Benjamini-Hochberg / Benjamini-Yekutieli false discovery
-rate control, or \code{"none"} for uncorrected per-item p-values.}
+\item{alpha}{Numeric in (0, 1). An item is flagged when its corrected
+bootstrap p-value is below \code{alpha}. Default \code{0.05}. The asymptotic
+test without a \code{cutoff} always flags at .05.}
 
-\item{alpha}{Numeric in (0, 1). Significance level for the \code{Flagged} column
-when \code{p_value = TRUE}. Default \code{0.05}.}
+\item{output}{Character. \code{"kable"} (default) for a \code{knitr::kable()}
+table, or \code{"dataframe"}.}
 
-\item{output}{Character string controlling the return value. Either
-\code{"kable"} (default) for a formatted \code{knitr::kable()} table, or
-\code{"dataframe"} for the underlying data.frame.}
+\item{sort}{Optional. \code{sort = "diff"} sorts the rows by the absolute
+\code{Difference}, largest first, so that over- and underfitting items both
+come first. Other values leave the order unchanged.}
 
-\item{sort}{Optional character string. When \code{sort = "diff"}, rows are sorted
-by the absolute magnitude of \code{Difference} in descending order, so that
-both over- and underfitting items appear near the top.}
-
-\item{p_adj}{Character string specifying the p-value adjustment method
-passed to \code{iarm::item_restscore()}. Default \code{"BH"} (Benjamini-Hochberg);
-use \code{"none"} for unadjusted p-values. Run \code{?stats::p.adjust} for the list
-of available methods. Only used when \code{cutoff = NULL}.}
+\item{p_adj}{Character. Adjustment of the asymptotic p-values across
+items, passed to \code{iarm::item_restscore()}. Default \code{"BH"}
+(Benjamini-Hochberg). \code{"none"} gives unadjusted p-values, and any
+method of \code{\link[stats:p.adjust]{stats::p.adjust()}} can be used. Only used when
+\code{cutoff = NULL}.}
 }
 \value{
 \itemize{
-\item If \code{output = "kable"}: a \code{knitr_kable} object (plain text table via
-\code{format = "pipe"}) with columns for item name, observed and expected
-restscore correlations, the signed difference (observed minus
-expected), adjusted p-value, the \code{Flagged} misfit label, and item
-location relative to the sample mean person location.
-\item If \code{output = "dataframe"}: a data.frame with columns \code{Item}, \code{Observed},
-\code{Expected}, \code{Difference}, \code{p_adjusted}, \code{Flagged}, and
-\code{Relative_location}. \code{Flagged} is \code{"overfit"} (observed above expected,
-adj. p < .05), \code{"underfit"} (below, adj. p < .05), or \code{""} (not flagged).
+\item \code{output = "kable"}: a \code{knitr_kable} table with the item name, the
+observed and expected gamma, their difference, the adjusted p-value,
+the \code{Flagged} label and the relative item location.
+\item \code{output = "dataframe"}: a data.frame with the columns \code{Item},
+\code{Observed}, \code{Expected}, \code{Difference}, \code{p_adjusted}, \code{Flagged} and
+\code{Relative_location}. \code{Flagged} is \code{"overfit"} (observed above
+expected, adjusted p < .05), \code{"underfit"} (below, adjusted p < .05) or
+\code{""}.
 }
 
 With a \code{cutoff}, \code{p_adjusted} is replaced by \code{Diff_low} and \code{Diff_high},
-followed by \code{p_restscore} (marginal equal-tailed bootstrap p-value) and
-\code{padj_restscore} (corrected p-value) when \code{p_value} resolves to \code{TRUE}.
-\code{Flagged} then reflects \code{padj_restscore < alpha}, or the interval when
-\code{p_value = FALSE}.
+followed by \code{p_restscore} (uncorrected equal-tailed bootstrap p) and
+\code{padj_restscore} (corrected p) when bootstrap p-values are used.
+\code{Flagged} then marks \code{padj_restscore < alpha}, or values outside the
+interval with \code{p_value = FALSE}.
 
-The \code{Difference} column is signed (observed minus expected):
-\emph{positive} values indicate that the item correlates more strongly with
-the rest-score than the Rasch model predicts (over-discrimination /
-\emph{overfit}, often associated with local dependence), and \emph{negative}
-values indicate weaker-than-expected association (under-discrimination
-/ \emph{underfit}, often associated with multidimensionality or noise).
+\code{Difference} is observed minus expected gamma. Positive values mean the
+item is more strongly associated with the rest score than the model
+predicts (overfit, often from local dependence). Negative values mean a
+weaker association (underfit, often from multidimensionality or noise).
 }
 \description{
-Computes observed and model-expected item-restscore correlations using
-\code{iarm::item_restscore()}, and enriches the output with the absolute
-difference between observed and expected values, item average locations, and
-item locations relative to the sample mean person location.
+Computes, for each item, the observed and model-expected association
+between the item and the rest score (the total score on the other
+items), measured by Goodman-Kruskal's gamma with \code{iarm::item_restscore()}.
+Reports their signed difference, the item's location relative to the mean
+person location, and a misfit flag. With the result of
+\code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}}, items are flagged on a bootstrap p-value
+corrected across items, which is recommended over the default
+asymptotic test (see Details).
 }
 \details{
-Item-restscore correlations using Goodman-Kruskal's gamma (Kreiner, 2011) measure
-the association between a person's score on a single item and their total
-score on the remaining items (the "restscore"). Under a correctly fitting
-Rasch model, observed and model-expected correlations should agree closely.
+\strong{Statistic.} The item-restscore gamma (Kreiner, 2011) measures the
+association between the responses to one item and the rest score.
+Under the Rasch model the observed and expected gamma agree, apart from
+sampling error. The statistic is conditional on the total score.
 
-Item parameters are estimated by conditional maximum likelihood via
-\code{psychotools::pcmodel()} (a dichotomous item is a 2-category PCM); the
-item-restscore statistic itself comes from \code{iarm::item_restscore()} and is
-conditional on the total score, so it is invariant to the estimation engine.
-Per-item average locations are the means of the CML thresholds, and the
-person-location reference is the mean of the Warm WLE estimates.
-
-Relative item location is defined as the item's average location minus the
-sample mean person location, providing a measure of item targeting.
-
-The \code{iarm} package must be installed (it is in Suggests, not Imports).
+\strong{Data and model.} The item parameters are estimated by conditional
+maximum likelihood with \code{psychotools::pcmodel()} (a dichotomous item is
+a 2-category partial credit model). The statistic uses complete cases,
+and every response category must be used in them, or the function stops
+and names the item. The relative item location is the mean of the
+item's CML thresholds minus the mean WLE person location, a description
+of targeting. The \pkg{iarm} package must be installed (it is in
+Suggests).
 
 \strong{The asymptotic p-value is miscalibrated.} Without a \code{cutoff}, each
 item is tested with \code{(observed - expected) / SE} against the standard
 normal, where the SE is that of the observed gamma alone. The expected
 gamma is estimated from the same data and correlates with the observed
 one, so the SE is too large for the difference. The difference is also
-biased upwards in small samples. Under a true Rasch model the test
-therefore flags too many items as overfit in small samples and too few as
-underfit at every sample size, and the adjustment chosen in \code{p_adj} does
-not correct either. In simulation, 20 dichotomous items at n = 150 gave at
-least one BH-flagged item in 13 percent of datasets (30 percent when 1.5
-logits off target), almost all of them overfit, while 9 polytomous items
-at n = 1000 gave about 1 percent. Pass the object from
-\code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}} as \code{cutoff} for p-values from a parametric
-bootstrap null instead. The simulation study is reported at
+biased upwards in small samples. When the Rasch model holds, the test
+therefore flags too many items as overfit in small samples and too few
+as underfit at every sample size, and the adjustment in \code{p_adj} corrects
+neither. In simulation, 20 dichotomous items at n = 150 gave at least one
+BH-flagged item in 13\% of datasets (30\% when 1.5 logits off target),
+almost all of them overfit, while 9 polytomous items at n = 1000 gave
+about 1\%. Pass the result of \code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}} as \code{cutoff} for
+p-values from a parametric bootstrap instead. The simulation study is
+reported at
 \url{https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html}.
 
-\strong{Bootstrap p-values.} When \code{p_value = TRUE}, each item's observed
-\code{Difference} is compared against its simulated null distribution (from
-\code{cutoff$results}), studentised by the mean and SD of the observed and
-simulated values together. Because that mean is subtracted, the
-small-sample upward bias of the difference is removed, and because that SD
-is used, the
-correlation between observed and expected gamma is accounted for.
+\strong{Bootstrap p-values.} Each item's observed \code{Difference} is compared
+with its simulated values from \code{cutoff$results}, studentised by the mean
+and SD of the observed and simulated values together. Subtracting that
+mean removes the small-sample bias of the difference, and dividing by
+that SD accounts for the correlation between the observed and expected
+gamma.
 
-The test is equal-tailed: overfit and underfit each get alpha/2. Gamma is
-bounded at 1, so the null of \code{Difference} is left-skewed, and a two-sided
-test on \verb{|t|} would reject more often in the long (underfit) tail. The
-marginal p-value is twice the smaller of the one-sided Monte-Carlo
-p-values, \verb{(1 + #\{t* >= t\}) / (B + 1)} and \verb{(1 + #\{t* <= t\}) / (B + 1)},
-so it cannot be smaller than \code{2 / (B + 1)}. With \code{correction = "fwer"},
-the Westfall-Young studentised-max step-down (Ferreira, 2024) is run once
-for each direction, and \code{padj_restscore} is twice the smaller of the two
-adjusted p-values. \code{"fdr_bh"} and \code{"fdr_by"} adjust the equal-tailed
-marginal p-values.
+The test is equal-tailed: overfit and underfit each get \code{alpha / 2}.
+Gamma is bounded at 1, so the simulated \code{Difference} is skewed to the
+left, and a two-sided test on \verb{|t|} would reject more often in the long
+(underfit) tail. The uncorrected p is twice the smaller of the one-sided
+Monte Carlo p-values, \verb{(1 + #\{t* >= t\}) / (B + 1)} and
+\verb{(1 + #\{t* <= t\}) / (B + 1)} for B simulated datasets, so it cannot be
+smaller than \code{2 / (B + 1)}. With \code{correction = "fwer"}, the
+Westfall-Young step-down on the studentised maximum (Ferreira, 2024) is
+run once in each direction, and \code{padj_restscore} is twice the smaller
+of the two corrected p-values. \code{"fdr_bh"} and \code{"fdr_by"} adjust the
+equal-tailed uncorrected p-values.
 
-In simulation under a true Rasch model, over four conditions (20
+In simulation with the Rasch model true, over four conditions (20
 dichotomous or 9 polytomous items, n = 150 to 1000, on or off target),
-\code{correction = "fwer"} flagged at least one item in 5.0 percent of
-datasets: 2.4 percent underfit and 2.75 percent overfit. A test on \verb{|t|}
-also held 5.0 percent, but split it 3.7 and 1.6. The equal-tailed test
-also gave fewer false underfit flags when other items overfit (4.7
-against 6.2 percent with two overfitting items), at a cost of 2 to 3
-percentage points of power to detect underfitting items. Before
-easyRasch2 1.4.0.9004 the test was on \verb{|t|}.
+\code{correction = "fwer"} flagged at least one item in 5.0\% of datasets,
+2.4\% underfit and 2.75\% overfit. A test on \verb{|t|} also held 5.0\%, but
+split it 3.7\% and 1.6\%. The equal-tailed test also gave fewer false
+underfit flags when other items overfit (4.7\% against 6.2\% with two
+overfitting items), at a cost of 2 to 3 percentage points of power to
+detect underfitting items. Before easyRasch2 1.4.0.9004 the test was on
+\verb{|t|}.
 
-\strong{Reproducibility.} The bootstrap p-values depend on the simulated
-null, so two analyses of the same data with different seeds can disagree
-about items near the decision boundary. In simulation, in conditions
-chosen to include such items, two seeds disagreed about the flag of at
-least one item in about 10 percent of analyses at 400 iterations and about
-6 percent at 1000 with \code{correction = "fwer"}, and in 13 and 11 percent with
-\code{correction = "fdr_bh"}. Set \code{seed} in \code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}} for a
-reproducible analysis, and use 1000 or more iterations for a final one.
+\strong{Reproducibility.} The bootstrap p-values depend on the simulations, so
+two analyses of the same data with different seeds can disagree about
+items near the decision boundary. In simulation, in conditions chosen to
+include such items, two seeds disagreed about the flag of at least one
+item in about 10\% of analyses at 400 iterations and 6\% at 1000 with
+\code{correction = "fwer"}, and in 13\% and 11\% with \code{"fdr_bh"}. Set \code{seed} in
+\code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}} for a reproducible analysis, and use 1000 or
+more iterations for a final one.
 
-The direction in \code{Flagged} follows the studentised value, not the sign of
-\code{Difference}. At small sample sizes the null mean of \code{Difference} is
-slightly positive, so an item can be flagged \code{"underfit"} while its
-\code{Difference} is still just above zero. This is rare.
+The direction in \code{Flagged} follows the studentised value, not the sign
+of \code{Difference}. At small sample sizes the simulated \code{Difference} has a
+slightly positive mean, so an item can, rarely, be flagged \code{"underfit"}
+while its \code{Difference} is just above zero.
 }
 \section{Multiple comparisons}{
 
-The marginal p-value controls the error rate of a \emph{single} comparison: for
-one item (or item pair) decided on in advance it is the relevant value. But
-scanning all \emph{k} comparisons and flagging whichever fall below \code{alpha} tests
-\emph{k} hypotheses at once, so the chance of at least one false flag inflates to
-roughly \eqn{1 - (1 - \alpha)^k} (e.g. about 34\% for \emph{k} = 8 at
-\code{alpha = 0.05}) -- even when every marginal p-value is correctly calibrated.
-The corrected (adjusted) p-value controls this: \code{correction = "fwer"} bounds
-the probability of \emph{any} false flag (strict, lower power), while \code{"fdr_bh"} /
-\code{"fdr_by"} bound the expected \emph{proportion} of false flags among those raised
-(a more lenient middle ground). Rule of thumb: use the marginal p-value for a
-single pre-specified comparison, and a corrected p-value when screening the
-whole table -- the usual workflow.
+The uncorrected p-value controls the error rate of a single comparison.
+For one item (or item pair) chosen in advance it is the relevant value.
+Flagging whichever of k comparisons fall below \code{alpha} tests k
+hypotheses at once, and the chance of at least one false flag rises to
+about \eqn{1 - (1 - \alpha)^k}, for example 34\% for k = 8 at
+\code{alpha = 0.05}, even when every uncorrected p-value is calibrated. The
+corrected p-value controls this. \code{correction = "fwer"} bounds the
+probability of any false flag (strict, less power), and \code{"fdr_bh"} and
+\code{"fdr_by"} bound the expected share of false flags among those raised.
+Use the uncorrected p-value for a single comparison chosen in advance,
+and a corrected one when screening the whole table, which is the usual
+case.
 }
 
 \section{Flags depend on the other items}{
 
 Item infit and item-restscore both judge each item against expectations
-from a Rasch model fitted to all items, so misfitting items change what is
-expected of the others. A flag in one direction can therefore produce
-flags in the other. Overfitting items can push fitting items into the
-underfit range, and underfitting items, for example from a second
-dimension, can make fitting items look overfit. How large the effect is
-depends on how strong the misfit is and how many items share it. In
-simulation with seven polytomous items, two overfitting items led to
-about 6 percent of the fitting items being flagged as underfit, and one
-or two mildly multidimensional items to 1 to 2 percent being flagged as
-overfit. When items are flagged in both directions, consider removing
-the clearest misfit and testing again before interpreting the rest.
+from a Rasch model fitted to all items, so misfitting items change what
+is expected of the others. A flag in one direction can therefore
+produce flags in the other. Overfitting items can push fitting items
+into the underfit range, and underfitting items, for example from a
+second dimension, can make fitting items look overfit. How large the
+effect is depends on how strong the misfit is and how many items share
+it. In simulation with seven polytomous items, two overfitting items led
+to about 6\% of the fitting items being flagged as underfit, and one or
+two mildly multidimensional items to 1\% to 2\% being flagged as overfit.
+When items are flagged in both directions, consider removing the
+clearest misfit and testing again before interpreting the rest.
 }
 
 \examples{
@@ -241,15 +233,16 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 }
 }
 \references{
-Kreiner, S. (2011). A Note on Item–Restscore Association in Rasch Models.
-\emph{Applied Psychological Measurement, 35}(7), 557–561.
-\doi{10.1177/0146621611410227}
-
 Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
 of hypotheses simultaneously. \emph{Journal of Statistical Theory and Practice,
 19}(1), 6. \doi{10.1007/s42519-024-00412-4}
+
+Kreiner, S. (2011). A Note on Item–Restscore Association in Rasch Models.
+\emph{Applied Psychological Measurement, 35}(7), 557–561.
+\doi{10.1177/0146621611410227}
 }
 \seealso{
-\code{\link{RMitemRestscoreCutoff}},
-\code{\link{RMitemRestscorePlot}}
+\code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}} for the simulations,
+\code{\link[=RMitemRestscorePlot]{RMitemRestscorePlot()}} to plot them, \code{\link[=RMitemRestscoreBoot]{RMitemRestscoreBoot()}} for
+large samples, and \code{\link[=RMitemInfit]{RMitemInfit()}} for a second item fit test.
 }

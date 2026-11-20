@@ -2,7 +2,7 @@
 % Please edit documentation in R/martin_lof.R
 \name{RMdimMartinLofResiduals}
 \alias{RMdimMartinLofResiduals}
-\title{Standardised Residuals from the Joint Subscore Distribution}
+\title{Residuals of the joint subscore table for the Martin-Löf test}
 \usage{
 RMdimMartinLofResiduals(
   data,
@@ -15,63 +15,61 @@ RMdimMartinLofResiduals(
 )
 }
 \arguments{
-\item{data}{A data.frame or matrix of item responses (0-based,
-non-negative integers). Complete cases only: rows with any \code{NA} on the
-items named in \code{partition} are dropped. Missingness on items outside
-\code{partition} is ignored.}
+\item{data}{A data.frame or matrix of item responses, items scored from
+0. Only complete cases on the items in \code{partition} are used. Missing
+values on other items are ignored.}
 
-\item{partition}{Same format as in \code{\link{RMdimMartinLof}}: a list of
-item-name/index vectors, or a length-\code{ncol(data)} vector of group
-labels. Each subscale must contain at least 2 items.}
+\item{partition}{As in \code{\link[=RMdimMartinLof]{RMdimMartinLof()}}: a list of item-name or index
+vectors, or a vector of length \code{ncol(data)} with each item's
+subscale. Each subscale must have at least 2 items.}
 
-\item{output}{Character. \code{"kable"} (default) for a 2-D pipe-format
-residual table when D = 2 (long-format kable when D > 2), \code{"dataframe"}
-for the underlying long-format data.frame, or \code{"ggplot"} for a
-diverging-fill heatmap (with \code{facet_wrap} over \code{t3} for D = 3, error
-for D > 3).}
+\item{output}{Character. \code{"kable"} (default) for a two-way residual
+table when D = 2 (a long table when D > 2), \code{"dataframe"} for the
+long data.frame, or \code{"ggplot"} for a heatmap (D = 2, or D = 3 with a
+panel per value of \code{t3}, an error for D > 3).}
 
 \item{flag_threshold}{Numeric. Cells with \verb{|residual| > flag_threshold}
-are flagged: marked as \verb{**bold**} in the kable, shown in the \code{flagged}
-column of the dataframe. Default \code{2}.}
+are flagged, in bold in the kable and in the \code{flagged} column of the
+data.frame. Default \code{2}. These are single-cell flags, and with many
+cells some are expected even under unidimensionality.}
 
-\item{color_by}{Character. For \code{output = "ggplot"}, what the tile fill
-colour encodes. \code{"residual"} (default) -- diverging red-white-blue scale
-centred at 0, the most directly diagnostic. \code{"n"} -- sequential blue
-scale on the observed cell count, useful for spotting whether
-large-magnitude residuals are driven by sparse cells. Either way, the
-numeric residual is printed inside each cell.}
+\item{color_by}{Character. What the tile colour shows with
+\code{output = "ggplot"}. \code{"residual"} (default), a diverging red-white-blue
+scale centred at 0. \code{"n"}, a sequential blue scale of the observed
+cell count, which shows whether large residuals come from sparse
+cells. In both, the residual is printed in each cell.}
 
-\item{color_limits}{Numeric length-2 vector or \code{NULL}. Caps the colour
-scale for \code{output = "ggplot"}. Default \code{c(-5, 5)} when
-\code{color_by = "residual"} (sparse-cell residuals from
-\code{(o-e)/sqrt(n*p*(1-p))} can be enormous when expected counts are tiny;
-capping the scale stops outliers from compressing the rest of the
-plot). The unclipped residual values still appear as cell labels.
-\code{NULL} for \code{color_by = "n"}, which uses the natural data range.}
+\item{color_limits}{Numeric vector of length 2, or \code{NULL}. Limits of the
+colour scale with \code{output = "ggplot"}. Default \code{c(-5, 5)} with
+\code{color_by = "residual"}, since residuals in cells with tiny expected
+counts can be very large and would compress the rest of the scale. The
+cell labels show the values without the limits. \code{NULL} with
+\code{color_by = "n"}, which uses the range of the data.}
 
-\item{min_expected}{Numeric or \code{NULL}. If set, cells with \code{expected < min_expected} have their residual set to \code{NA} (they appear grey in the
-heatmap and are not flagged). Default \code{NULL} (no filtering). Setting
-\code{min_expected = 1} (or \code{5}) is the analogue of the Cochran rule for
-sparse-cell chi-square contributions and removes residuals whose
-asymptotic standard normal approximation is unreliable.}
+\item{min_expected}{Numeric or \code{NULL}. If set, cells with an expected
+count below \code{min_expected} get the residual \code{NA} (grey in the heatmap,
+never flagged). Default \code{NULL}. A value of 1 or 5 is the analogue of
+the Cochran rule for sparse cells in chi-square tests, and removes
+residuals whose normal approximation is unreliable.}
 }
 \value{
 \itemize{
 \item \code{output = "kable"}: a \code{knitr_kable} object. For D = 2, a wide table
-with rows = \code{t1}, columns = \code{t2}, cells = standardised residual
-(\verb{**bold**} if flagged, em-dash if NA). For D > 2, long-format with
-one row per cell.
-\item \code{output = "dataframe"}: a long-format data.frame with columns \code{t1},
-..., \code{tD}, \code{total}, \code{observed}, \code{expected}, \code{residual}, \code{flagged}.
+with \code{t1} in rows, \code{t2} in columns and the standardised residual in
+the cells (bold if flagged, a dash if \code{NA}). For D > 2, one row per
+cell.
+\item \code{output = "dataframe"}: a data.frame with one row per cell and the
+columns \code{t1}, ..., \code{tD}, \code{total}, \code{observed}, \code{expected}, \code{residual}
+and \code{flagged}.
 \item \code{output = "ggplot"}: a \code{geom_tile()} heatmap (D = 2 or 3 only).
 }
 }
 \description{
-Diagnostic accompanying \code{\link{RMdimMartinLof}}: per-cell standardised
-residuals from the joint distribution of subscores under unidimensionality
-(Christensen, Bjorner, Kreiner, & Petersen, 2002, eq. 13). Useful for
-identifying \emph{where} a partition deviates from the unidimensional null
-rather than just whether it does (which \code{RMdimMartinLof()} answers).
+Standardised residuals for each cell of the joint table of subscores,
+compared with its distribution under unidimensionality (Christensen,
+Bjorner, Kreiner, & Petersen, 2002, eq. 13). \code{\link[=RMdimMartinLof]{RMdimMartinLof()}} tests
+whether a partition departs from unidimensionality, and this table shows
+where.
 }
 \details{
 For each cell of the joint subscore table (indexed by
@@ -82,15 +80,15 @@ the expected count is \eqn{e = n_t \cdot p}, and the residual is
 \eqn{(o - e) / \sqrt{n_t \cdot p \cdot (1 - p)}}. CML estimates from the
 unidimensional model are used for the \eqn{\gamma}-functions.
 
-Reading the table (D = 2): under the unidimensional null, residuals
-should be patternless and roughly N(0, 1). Multidimensionality with
+Reading the table (D = 2): under unidimensionality, the residuals
+should show no pattern and be roughly N(0, 1). Multidimensionality with
 positively correlated dimensions typically shows up as \strong{positive}
 residuals at the corners of each antidiagonal (high \code{t1} + low \code{t2},
 low \code{t1} + high \code{t2}) and \strong{negative} residuals near the antidiagonal
 centre (matched subscores). Negatively correlated dimensions show
 positive residuals at the table corners (high/low and low/high) and
 negative residuals at high/high and low/low. See Christensen et al.
-(2002, section7) for a worked example.
+(2002, section 7) for a worked example.
 
 Cells where the total score has no observed cases (\code{n_t = 0}) are
 uninformative and are dropped from the output.
@@ -143,5 +141,5 @@ Testing unidimensionality in polytomous Rasch models. \emph{Psychometrika,
 67}(4), 563-574. \doi{10.1007/BF02295131}
 }
 \seealso{
-\code{\link{RMdimMartinLof}}
+\code{\link[=RMdimMartinLof]{RMdimMartinLof()}}
 }

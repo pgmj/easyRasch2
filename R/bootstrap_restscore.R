@@ -1,108 +1,96 @@
-#' Bootstrap Item-Restscore Misfit Detection
+#' Bootstrap flag rates of the asymptotic item-restscore test
 #'
-#' Non-parametric bootstrap of item-restscore fit using
-#' `iarm::item_restscore()`. For each iteration, a sample of size `samplesize`
-#' is drawn from `data` with replacement, the appropriate Rasch model is
-#' refitted, and item-restscore results are classified as `"overfit"`,
-#' `"underfit"`, or `"no misfit"` based on the BH-adjusted p-value (< .05) and
-#' the sign of `expected - observed`. The function returns the percentage of
-#' iterations in which each item is flagged.
+#' Draws bootstrap samples of size `samplesize` from `data`, runs the
+#' asymptotic item-restscore test of `iarm::item_restscore()` in each, and
+#' reports how often each item is flagged as overfit or underfit. This
+#' describes how stable the asymptotic flags are across samples of a given
+#' size. It is not a calibrated test of item fit. For that, use
+#' [RMitemRestscoreCutoff()] with [RMitemRestscore()].
 #'
-#' Each iteration uses the asymptotic test from `iarm::item_restscore()`
-#' with Benjamini-Hochberg adjustment, so the result inherits that test's
-#' calibration at the subsample size. Under a true Rasch model it flags too
-#' many items as overfit in small or mistargeted samples of dichotomous
-#' items, too few items of any kind in large polytomous samples, and too few
-#' underfitting items at every sample size (see [RMitemRestscore()] and
-#' \url{https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html}). The
-#' percentage is therefore how often that test flags an item in samples of
-#' size `samplesize`, not the probability that the item misfits, and it
-#' changes with `samplesize`. A low underfit percentage is weak evidence of
-#' fit. For a test of item fit, use [RMitemRestscoreCutoff()] with
-#' [RMitemRestscore()], whose bootstrap p-values are calibrated at the
-#' observed sample size. This function is best read as a description of how
-#' stable the asymptotic flags are across resamples.
-#'
-#' @param data A data.frame or matrix of item responses. Items must be scored
-#'   starting at 0 (non-negative integers).
-#' @param iterations Integer. Number of bootstrap samples (default 200).
-#' @param samplesize Integer. Size of each bootstrap sample (default 600). Must
-#'   not exceed `nrow(data)`.
-#' @param parallel Logical. Use parallel processing via `mirai` if available
-#'   (default `TRUE`).
-#' @param n_cores Integer or `NULL`. Number of parallel workers. When `NULL`,
-#'   `getOption("mc.cores")` is checked first. If neither is set and
-#'   `parallel = TRUE`, a warning is issued and execution falls back to
-#'   sequential processing.
-#' @param cutoff Numeric. Items flagged in fewer than this percentage of
-#'   iterations are excluded from the kable output (default 5). Has no effect
-#'   when `output = "dataframe"` or `output = "raw"`.
-#' @param verbose Logical. Show a progress bar (default `FALSE`).
+#' @param data A data.frame or matrix of item responses, items scored from
+#'   0.
+#' @param iterations Integer. Number of bootstrap samples. Default `200`.
+#' @param samplesize Integer. Size of each bootstrap sample. Default `600`.
+#'   Must not exceed `nrow(data)`.
+#' @param parallel Logical. Run the bootstrap in parallel via \pkg{mirai}
+#'   when it is installed. Default `TRUE`.
+#' @param n_cores Integer or `NULL`. Number of parallel workers. When
+#'   `NULL`, `getOption("mc.cores")` is used. If that is unset too, a
+#'   warning is given and the bootstrap runs sequentially.
+#' @param cutoff Numeric. The kable shows only items flagged in more than
+#'   `cutoff` percent of the samples. Default `5`. Not used by the other
+#'   outputs.
+#' @param verbose Logical. Show a progress bar. Default `FALSE`.
 #' @param seed Integer or `NULL`. Random seed for reproducibility. See
 #'   [easyRasch2-reproducibility] for what this guarantees and how it
 #'   interacts with `parallel`.
-#' @param output Either `"kable"` (default) for a formatted `knitr::kable()`
-#'   table, `"dataframe"` for the per-item summary data.frame, or `"raw"` for
-#'   the per-iteration long data.frame (useful for custom plotting).
+#' @param output Character. `"kable"` (default) for a `knitr::kable()`
+#'   table, `"dataframe"` for the summary per item, or `"raw"` for one row
+#'   per item and bootstrap sample (for custom plots).
 #'
 #' @return
-#' * If `output = "kable"`: a `knitr_kable` object listing items flagged in
-#'   more than `cutoff`% of iterations, with columns Item, Item-restscore
-#'   result, % of iterations, Conditional MSQ infit, and Relative item
-#'   location, and a caption noting iteration count, bootstrap size, and
-#'   number of complete cases.
-#' * If `output = "dataframe"`: a data.frame with one row per item ×
-#'   classification combination (`Item`, `item_restscore`, `n`, `n_tested`,
-#'   `percent`, `Infit_MSQ`, `Relative_location`), including `"no misfit"`
-#'   rows. `percent` is `n` out of `n_tested`, the resamples in which the item
-#'   could be tested, and `NA` when it never could.
-#' * If `output = "raw"`: a long data.frame with one row per item ×
-#'   successful iteration (`iteration`, `Item`, `item_restscore`, `diff`,
-#'   `diff_abs`), where `diff = expected - observed`. Rows for an item that
-#'   could not be tested in that resample have `NA` in `item_restscore`,
-#'   `diff` and `diff_abs`.
+#' * `output = "kable"`: a `knitr_kable` table of the items flagged in more
+#'   than `cutoff` percent of the samples, with the columns Item,
+#'   Item-restscore result, % of iterations, Conditional MSQ infit and
+#'   Relative item location. The caption gives the number of samples, the
+#'   sample size and the number of complete cases.
+#' * `output = "dataframe"`: a data.frame with one row per item and result
+#'   (`"overfit"`, `"underfit"`, `"no misfit"`), with the columns `Item`,
+#'   `item_restscore`, `n`, `n_tested`, `percent`, `Infit_MSQ` and
+#'   `Relative_location`. `percent` is `n` out of `n_tested`, the samples
+#'   in which the item could be tested, and `NA` when it never could.
+#' * `output = "raw"`: a data.frame with one row per item and bootstrap
+#'   sample, with the columns `iteration`, `Item`, `item_restscore`, `diff`
+#'   and `diff_abs`. Note that `diff` is expected minus observed gamma, the
+#'   opposite sign of `Difference` in [RMitemRestscore()]. Rows for an item
+#'   that could not be tested in that sample have `NA` in
+#'   `item_restscore`, `diff` and `diff_abs`.
 #'
 #' @details
-#' The full-sample model is fitted by CML via `psychotools::pcmodel()` (a
-#' dichotomous item is a 2-category partial credit model), and item locations
-#' (mean of the grand-mean-centred CML Andrich thresholds) and the mean WLE
-#' person location are computed from it — consistent with
-#' \code{\link{RMitemRestscore}} and the rest of the package. Each bootstrap
-#' iteration draws a sample of size `samplesize` with replacement and refits via
-#' `psychotools::pcmodel(..., hessian = FALSE)` for speed;
-#' `iarm::item_restscore()` accepts the fitted model.
+#' **What the percentage means.** Each sample is tested with the asymptotic
+#' test of `iarm::item_restscore()` with Benjamini-Hochberg adjustment, and
+#' an item is flagged when its adjusted p is below .05, as overfit or
+#' underfit by the sign of the difference. The result inherits that test's
+#' calibration at `samplesize`. With the Rasch model true, it flags too many
+#' items as overfit in small or mistargeted samples of dichotomous items,
+#' too few items of any kind in large polytomous samples, and too few
+#' underfitting items at every sample size (see [RMitemRestscore()] and
+#' \url{https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html}).
+#' The percentage is therefore how often that test flags an item in
+#' samples of size `samplesize`, not the probability that the item misfits,
+#' and it changes with `samplesize`. A low underfit percentage is weak
+#' evidence of fit.
 #'
-#' Conditional infit MSQ (computed once on the full sample via
-#' `iarm::out_infit()`) and relative item locations are reported alongside the
-#' bootstrap percentages for context. The item-restscore classification and the
-#' infit statistic are conditional and engine-invariant; only the relative-item
-#' location shifts slightly relative to the previous `eRm` implementation,
-#' because it now uses the WLE person mean (finite at extreme scores) rather
-#' than the `eRm` MLE mean.
+#' **Model.** The full sample is fitted by CML with
+#' `psychotools::pcmodel()` (a dichotomous item is a 2-category partial
+#' credit model). The conditional infit MSQ (`iarm::out_infit()`, on
+#' complete cases) and the relative item location (the mean of the item's
+#' CML thresholds minus the mean WLE person location) are computed once on
+#' the full sample and shown for context. Each bootstrap sample is refitted
+#' by CML.
 #'
-#' Iterations that fail (e.g., due to convergence issues on a degenerate
-#' bootstrap sample) are discarded, and the caption and `actual_iterations`
-#' count only successful runs. A polytomous item that is constant in a
-#' resample makes that resample fail. A dichotomous item that is constant, or a
-#' polytomous item with an empty middle category, cannot be tested in that
-#' resample: it is left out of that item's percentages, and the other items
-#' keep the resample. Its percentages are then based on fewer resamples, which
-#' the caption lists. When the left-out item is a constant dichotomous item,
-#' the Benjamini-Hochberg adjustment in that resample covers only the items
-#' tested there, since iarm drops the item before testing. An item with an empty lowest category is shifted to start
-#' at 0 by psychotools and is still tested.
+#' **Samples that fail.** A sample in which the model cannot be fitted is
+#' left out, and the caption and the counts include only the samples that
+#' could be used. A polytomous item that is constant in a sample makes that
+#' sample fail. A dichotomous item that is constant, or a polytomous item
+#' with an empty middle category, cannot be tested in that sample. It is
+#' then left out of that item's percentages, the other items keep the
+#' sample, and the caption lists the items with fewer samples. When a
+#' constant dichotomous item is left out, the Benjamini-Hochberg adjustment
+#' in that sample covers only the items tested there, since iarm drops the
+#' item before testing. An item with an empty lowest category is shifted to
+#' start at 0 by psychotools and is still tested.
 #'
-#' Parallel processing is provided by the `mirai` package (optional). Install
-#' it with `install.packages("mirai")` to enable parallelisation.
-#'
-#' The `iarm` package must be installed (it is in Suggests, not Imports).
+#' Parallel processing needs the optional \pkg{mirai} package. The
+#' \pkg{iarm} package must be installed (it is in Suggests).
 #'
 #' @references
 #' Kreiner, S. (2011). A Note on Item-Restscore Association in Rasch Models.
 #' *Applied Psychological Measurement, 35*(7), 557-561.
 #' \doi{10.1177/0146621611410227}
 #'
-#' @seealso \code{\link{RMitemRestscore}}, \code{\link{RMitemInfit}}
+#' @seealso [RMitemRestscore()] and [RMitemRestscoreCutoff()] for a
+#'   calibrated test, [RMitemInfit()].
 #'
 #' @export
 #'
@@ -115,7 +103,7 @@
 #' )
 #' colnames(sim_data) <- paste0("Item", 1:8)
 #'
-#' # Few iterations for a fast example; use 100+ in real analyses
+#' # Few iterations for a fast example. Use 100 or more in real analyses.
 #' # Default kable output (only items flagged > cutoff%)
 #' RMitemRestscoreBoot(sim_data, iterations = 50, samplesize = 300,
 #'                 parallel = FALSE, seed = 1)
@@ -135,14 +123,14 @@
 #'   ggplot(raw_df, aes(x = Item, y = diff)) +
 #'     geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
 #'     geom_violin(fill = "grey90", colour = NA) +
-#'     geom_jitter(aes(colour = item_restscore),
+#'     geom_jitter(aes(colour = item_restscore, shape = item_restscore),
 #'                 width = 0.15, alpha = 0.5, size = 0.8) +
-#'     scale_colour_manual(values = c("overfit"   = "#377eb8",
-#'                                    "underfit"  = "#e41a1c",
+#'     scale_colour_manual(values = c("overfit"   = "#0072B2",
+#'                                    "underfit"  = "#D55E00",
 #'                                    "no misfit" = "grey60")) +
-#'     labs(y = "Expected - observed restscore correlation",
-#'          colour = NULL) +
-#'     theme_minimal() +
+#'     labs(y = "Expected minus observed item-restscore gamma",
+#'          colour = NULL, shape = NULL) +
+#'     theme_bw() +
 #'     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 #' }
 #' }
@@ -479,7 +467,7 @@ RMitemRestscoreBoot <- function(
 #'   `samplesize`, `item_names`.
 #' @return A data.frame with columns `Item`, `item_restscore`, `diff`,
 #'   `diff_abs`, or a character string on failure.
-#' @keywords internal
+#' @noRd
 run_single_boot_restscore <- function(seed, data_list) {
   # The RNG kind is pinned, not just the seed: mirai daemons start under
   # L'Ecuyer-CMRG while the calling session uses the Mersenne-Twister
@@ -555,7 +543,7 @@ run_single_boot_restscore <- function(seed, data_list) {
 #' @param n_cores Number of mirai daemons.
 #' @param verbose Show progress bar.
 #' @return List of raw results (one element per iteration).
-#' @keywords internal
+#' @noRd
 run_boot_restscore_parallel <- function(
   iterations,
   boot_seeds,
@@ -609,7 +597,7 @@ run_boot_restscore_parallel <- function(
 #' @param boot_data_list List of data passed to each worker.
 #' @param verbose Show progress bar.
 #' @return List of raw results (one element per iteration).
-#' @keywords internal
+#' @noRd
 run_boot_restscore_sequential <- function(
   iterations,
   boot_seeds,

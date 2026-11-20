@@ -2,7 +2,7 @@
 % Please edit documentation in R/person_parameters.R
 \name{RMpersonParameters}
 \alias{RMpersonParameters}
-\title{Person Locations for a Rasch / Partial Credit Model}
+\title{Person locations for a Rasch or partial credit model}
 \usage{
 RMpersonParameters(
   data,
@@ -21,9 +21,10 @@ RMpersonParameters(
 scored starting at 0 (non-negative integers). Missing values (\code{NA})
 are allowed.}
 
-\item{method}{Character. \code{"WLE"} (default) for Warm's Weighted
-Likelihood Estimate (lower bias than MLE; Warm, 1989), or \code{"EAP"}
-for the Expected A Posteriori estimate under a normal prior.}
+\item{method}{Character. \code{"WLE"} (default) for Warm's weighted
+likelihood estimate, which has less bias than the MLE (Warm, 1989), or
+\code{"EAP"} for the expected a posteriori estimate under a normal prior
+(Bock & Mislevy, 1982).}
 
 \item{item_params}{Optional pre-specified item parameters, e.g. for
 anchoring or equating. Either a named list of Andrich-threshold
@@ -48,9 +49,9 @@ parameters are centred at mean difficulty zero. Ignored for WLE.}
 \item{prior_sd}{Numeric or \code{NULL}. Standard deviation of the normal
 prior used by \code{method = "EAP"}. When \code{NULL} (default) it is
 estimated from the data by marginal maximum likelihood, holding the
-item parameters fixed. Supply a number (e.g. \code{1} for a standard
-\code{N(0, 1)} prior, or a value carried over from a reference sample
-for equating) to fix it. Ignored for WLE.}
+item parameters fixed. Supply a number to fix it, for example \code{1} for
+an \code{N(0, 1)} prior, or a value carried over from a reference sample
+for equating. Ignored for WLE.}
 
 \item{output}{Character. \code{"kable"} (default) for a formatted
 \code{\link[knitr:kable]{knitr::kable()}} table, \code{"dataframe"} for the underlying
@@ -59,17 +60,25 @@ locations, or \code{"file"} to write the data.frame to a CSV at
 \code{filename} (the data.frame is also returned invisibly).}
 
 \item{filename}{Character. Path to the CSV file to write when
-\code{output = "file"}. Required in that case; ignored otherwise.}
+\code{output = "file"}. Required in that case, ignored otherwise.}
 }
 \value{
-For \code{output = "dataframe"}, a data.frame with one row per respondent
-(in input order; respondents with no responses are dropped with a
-message) and columns \code{theta} (the person location), \code{sem}
+For \code{output = "dataframe"}, a data.frame with one row per respondent,
+in input order (respondents with no responses are dropped with a
+message), and the columns \code{theta} (the person location), \code{sem}
 (standard error of measurement), \code{sum_score}, \code{n_answered} (number of
-non-missing responses), and \code{extreme} (logical: a minimum or maximum
-possible score given the items answered). For \code{output = "kable"}, the
+responses) and \code{extreme} (logical, the lowest or highest possible score
+on the items answered). For \code{output = "kable"}, the
 same content as a \code{knitr_kable} object. For \code{output = "ggplot"}, a
 histogram of \code{theta}.
+
+With \code{method = "EAP"}, the prior used is attached to the data.frame as
+\code{attr(result, "prior")}, a named numeric vector with \code{mean}, \code{sd} and
+\code{estimated} (1 when \code{prior_sd} was estimated from the data, 0 when it
+was supplied). The kable caption also states it. The CSV written by
+\code{output = "file"} and the histogram do not include it, so keep the
+data.frame, or the kable, if you need to report the prior or reuse an
+estimated SD as \code{prior_sd}.
 }
 \description{
 Estimates a person location (theta) and its standard error of
@@ -89,22 +98,20 @@ estimated from the items they answered.
 \verb{l'(theta) + J(theta) / (2 I(theta)) = 0} by bracketed root finding,
 where the bias-correction term \verb{J / (2 I)} keeps the equation solvable
 at the boundaries. The SEM is \code{1 / sqrt(I(theta))}. Unlike the MLE,
-Warm's estimator therefore yields \emph{finite} locations for the minimum
-and maximum possible scores (a sensible step beyond the next-most
-extreme score rather than +/-Inf; cf. Warm, 1989), matching
-established implementations such as \pkg{catR} and \pkg{TAM}. Such
+Warm's estimator therefore gives finite locations for the lowest and
+highest possible scores, a step beyond the next score rather than
++/-Inf (Warm, 1989, Magis, 2015 for polytomous items), as in \pkg{catR}
+and \pkg{TAM}. Such
 scores are still marked in the \code{extreme} column because they are
 extrapolated and carry large standard errors. Only if the root lies
 outside \code{theta_range} is the boundary returned with \code{NA} SEM.
 
 \strong{EAP} integrates the pattern likelihood against a normal prior
-over a quadrature grid; the estimate is the posterior mean and the
-SEM is the posterior standard deviation. Unlike WLE, EAP is finite at
-extreme scores because the prior shrinks them inward, at the cost of
-depending on the assumed prior. The prior actually used -- including
-the marginal-ML estimate of \code{prior_sd} when it is left \code{NULL} -- is
-reported in the kable caption and attached to the result as
-\code{attr(result, "prior")}.
+over a quadrature grid. The estimate is the posterior mean and the SEM
+the posterior standard deviation. EAP is finite at extreme scores
+because the prior shrinks them inward, at the cost of depending on the
+prior. The prior used, including the estimate of \code{prior_sd} when it is
+left \code{NULL}, is reported as described under Value.
 }
 \examples{
 \donttest{
@@ -121,7 +128,7 @@ RMpersonParameters(dat, output = "dataframe") |> head()
 
 # EAP with a data-estimated prior SD
 eap <- RMpersonParameters(dat, method = "EAP", output = "dataframe")
-attr(eap, "prior")
+attr(eap, "prior") # mean, sd and whether the sd was estimated
 
 # EAP with a fixed N(0, 1) prior
 RMpersonParameters(dat, method = "EAP", prior_sd = 1, output = "dataframe") |>
@@ -133,10 +140,6 @@ RMpersonParameters(dat, output = "file",
 }
 }
 \references{
-Warm, T. A. (1989). Weighted likelihood estimation of ability in item
-response theory. \emph{Psychometrika, 54}(3), 427-450.
-\doi{10.1007/BF02294627}
-
 Bock, R. D., & Mislevy, R. J. (1982). Adaptive EAP estimation of
 ability in a microcomputer environment. \emph{Applied Psychological
 Measurement, 6}(4), 431-444. \doi{10.1177/014662168200600405}
@@ -144,6 +147,10 @@ Measurement, 6}(4), 431-444. \doi{10.1177/014662168200600405}
 Magis, D. (2015). A note on weighted likelihood and Jeffreys modal
 estimation of proficiency levels in polytomous item response models.
 \emph{Psychometrika, 80}(1), 200-204. \doi{10.1007/s11336-013-9378-5}
+
+Warm, T. A. (1989). Weighted likelihood estimation of ability in item
+response theory. \emph{Psychometrika, 54}(3), 427-450.
+\doi{10.1007/BF02294627}
 }
 \seealso{
 \code{\link[=RMitemParameters]{RMitemParameters()}}, \code{\link[=RMscoreSE]{RMscoreSE()}}, \code{\link[=RMreliability]{RMreliability()}}

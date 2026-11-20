@@ -334,6 +334,7 @@ test_that("calibration and rest-score plots reuse the simulations of a fit", {
   # Same seed and iterations: the per-iteration draws are the same, so the
   # calibration band from the fit equals the band simulated by the plot.
   a <- RMitemCatFitPlot(df, type = "calibration", fit = fit, output = "dataframe")
+  expect_identical(RMitemCatFitPlot(df, fit = fit, output = "dataframe"), a)
   b <- RMitemCatFitPlot(df, type = "calibration", iterations = 30, seed = 9,
                         output = "dataframe")
   expect_equal(a, b)
@@ -349,9 +350,40 @@ test_that("RMitemCatFitPlot shows each item's adjusted p with a fit", {
   p <- RMitemCatFitPlot(df, type = "residuals", fit = fit)
   strips <- levels(p$data$item)
   expect_length(strips, 4L)
-  expect_true(all(grepl("\n", strips, fixed = TRUE)))
+  expect_true(all(grepl("\n|<br>", strips)))
   expect_true(all(startsWith(strips, colnames(df))))
   expect_match(p$labels$caption, "RMitemCatFit")
+})
+
+test_that("RMitemCatFitPlot marks adjusted p < .05 in the strips", {
+  skip_if_not_installed("ggplot2")
+  df <- make_pcm(n = 400, k = 4, swap = TRUE)
+  fit <- suppressMessages(RMitemCatFit(df, iterations = 40, seed = 2,
+                                       output = "list"))
+  sig <- fit$table$padj < 0.05
+  expect_true(sig[1L])
+  p <- RMitemCatFitPlot(df, fit = fit)
+  strips <- levels(p$data$item)
+  if (requireNamespace("ggtext", quietly = TRUE)) {
+    expect_identical(grepl("**p", strips, fixed = TRUE), sig)
+    expect_match(p$labels$caption, "in bold when below .05")
+    # Labels are escaped, not read as markdown.
+    q <- RMitemCatFitPlot(df, fit = fit,
+                          item_labels = c("a*b*", "c_d", "<e>", "f"))
+    expect_match(levels(q$data$item)[1L], "^a&#42;b&#42;")
+    expect_match(levels(q$data$item)[3L], "^&lt;e>")
+    expect_no_error(ggplot2::ggplotGrob(q))
+    # Labels that start like a list, heading or quote must still draw.
+    # ggplot_build() does not draw the strips, so use ggplotGrob().
+    b <- RMitemCatFitPlot(df, fit = fit,
+                          item_labels = c("1. Feeling down", "- Worry",
+                                          "# Sleep", "> [Pain](x) 2)"))
+    expect_match(levels(b$data$item)[1L], "^1&#46; Feeling")
+    expect_no_error(ggplot2::ggplotGrob(b))
+  } else {
+    expect_identical(endsWith(strips, " *"), sig)
+  }
+  expect_no_error(ggplot2::ggplot_build(p))
 })
 
 test_that("RMitemCatFitPlot stops when the fit comes from other data", {

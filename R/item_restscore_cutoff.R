@@ -1,119 +1,114 @@
-#' Simulation-Based Item-Restscore Null Distribution
+#' Simulation-based item-restscore cutoffs
 #'
-#' Uses parametric bootstrap simulation to build the null distribution of the
-#' item-restscore statistic for \code{\link{RMitemRestscore}}. This function
-#' simulates data from a correctly fitting Rasch model that mimics your data
-#' and returns, per item, the simulated difference between observed and
-#' expected item-restscore gamma.
+#' Simulates datasets from a Rasch or partial credit model that fits and
+#' resembles your data, and computes each item's observed minus expected
+#' item-restscore gamma (Kreiner, 2011) in each. Passed to
+#' [RMitemRestscore()], the result gives bootstrap p-values corrected across
+#' items, and an interval per item that describes where a fitting item's
+#' difference is expected to fall.
 #'
-#' @param data A data.frame or matrix of item responses. Items must be scored
-#'   starting at 0 (non-negative integers). Only complete cases (rows without
-#'   any `NA`) are used.
-#' @param iterations Integer. Number of simulation iterations (default 400).
-#' @param parallel Logical. Use parallel processing via `mirai` if available
-#'   (default `TRUE`).
-#' @param n_cores Integer or `NULL`. Number of parallel workers. When `NULL`,
-#'   `getOption("mc.cores")` is checked first. If neither is set and
-#'   `parallel = TRUE`, a warning is issued and execution falls back to
-#'   sequential (single core) processing.
-#' @param verbose Logical. Show a progress bar (default `FALSE`).
+#' @param data A data.frame or matrix of item responses, items scored from
+#'   0. Only complete cases (rows without `NA`) are used.
+#' @param iterations Integer. Number of simulated datasets. Default `400`.
+#'   Use 1000 or more for a final analysis (see Reproducibility in
+#'   [RMitemRestscore()]).
+#' @param parallel Logical. Run the simulations in parallel via \pkg{mirai}
+#'   when it is installed. Default `TRUE`.
+#' @param n_cores Integer or `NULL`. Number of parallel workers. When
+#'   `NULL`, `getOption("mc.cores")` is used. If that is unset too, a
+#'   warning is given and the simulations run sequentially.
+#' @param verbose Logical. Show a progress bar. Default `FALSE`.
 #' @param seed Integer or `NULL`. Random seed for reproducibility. See
 #'   [easyRasch2-reproducibility] for what this guarantees and how it
 #'   interacts with `parallel`.
-#' @param cutoff_method Character string specifying how the intervals are
-#'   computed. Either `"hdci"` (default) for the Highest Density Interval via
-#'   `ggdist::hdci()`, or `"quantile"` for the 2.5th/97.5th percentiles via
-#'   `stats::quantile()`.
-#' @param hdci_width Numeric. Width of the HDCI when `cutoff_method = "hdci"`.
-#'   Default is `0.95` (95% HDCI). Ignored when `cutoff_method = "quantile"`.
+#' @param cutoff_method Character. How the interval per item is computed:
+#'   `"hdci"` (default), the highest-density continuous interval from
+#'   `ggdist::hdci()` (needs \pkg{ggdist}), or `"quantile"`, the 2.5th to
+#'   97.5th percentiles.
+#' @param hdci_width Numeric. Width of the interval with
+#'   `cutoff_method = "hdci"`. Default `0.95`. Ignored with `"quantile"`.
 #'
-#'   The interval is a **description** of where a fitting item's difference is
-#'   expected to fall, not a decision rule. Flagging every item outside a
-#'   width-`w` interval tests all `k` items at once, so the family-wise error
-#'   rate is `1 - w^k`. Decisions should come from the corrected p-value
-#'   instead (\code{\link{RMitemRestscore}} with `p_value = NULL` and the full
-#'   object returned here).
-#' @param dgp Character. Data-generating process for the parametric bootstrap.
-#'   `"conditional"` (default) simulates each respondent's pattern from the
-#'   exact Rasch conditional distribution given their observed total score,
-#'   item parameters fixed (a *conditional* null). The expected gamma is
-#'   computed from the observed score distribution, which the conditional
-#'   null holds fixed. `"resample"` resamples WLE person locations with
-#'   replacement and simulates responses under the model (a *marginal* null).
-#'   In simulation under a true Rasch model, the conditional null gave a
-#'   family-wise rate of 5.0 percent with `correction = "fwer"` and the
-#'   resample null 6.4 percent, pooled over four designs. The conditional
-#'   null takes about 1.2 to 1.6 times as long.
-#'   \strong{Experimental.}
+#'   The interval describes where a fitting item's difference is expected
+#'   to fall. It is not a decision rule. Flagging every item outside a
+#'   width-`w` interval tests all `k` items at once, with a family-wise
+#'   error rate of `1 - w^k`. Decisions come from the corrected p-value in
+#'   [RMitemRestscore()], as shown for infit in Johansson (2026).
+#' @param dgp Character. How datasets are simulated. `"conditional"`
+#'   (default) simulates each respondent's response pattern from the model
+#'   given their observed total score, with the item parameters fixed (a
+#'   conditional null). The expected gamma is computed from the observed
+#'   score distribution, which the conditional null keeps. `"resample"`
+#'   draws person locations from the WLE estimates with replacement and
+#'   simulates responses from the model (a marginal null). With the Rasch
+#'   model true, pooled over four designs, the family-wise rate with
+#'   `correction = "fwer"` was 5.0% with the conditional null and 6.4% with
+#'   the resample null. The conditional null takes about 1.2 to 1.6 times
+#'   as long. \strong{Experimental.}
 #'
-#' @return A list with components:
+#' @return A list with:
 #' \describe{
-#'   \item{`results`}{data.frame with columns `iteration`, `Item`, `Observed`,
-#'     `Expected`, `Difference` (one row per item per successful iteration).
-#'     `Difference` is `Observed - Expected`, the statistic
-#'     \code{\link{RMitemRestscore}} tests.}
-#'   \item{`item_cutoffs`}{data.frame with per-item interval bounds for the
-#'     difference: `Item`, `diff_low`, `diff_high`. Bounds are computed using
-#'     the method specified by `cutoff_method`.}
-#'   \item{`actual_iterations`}{Number of successful iterations. Everything
-#'     downstream rests on this rather than on `iterations`, so it is the
-#'     number to report.}
-#'   \item{`requested_iterations`}{The `iterations` argument, kept so callers
-#'     can tell how many simulated datasets were discarded.}
+#'   \item{`results`}{data.frame with the columns `iteration`, `Item`,
+#'     `Observed`, `Expected` and `Difference`, one row per item and
+#'     simulated dataset. `Difference` is `Observed - Expected`, the
+#'     statistic [RMitemRestscore()] tests.}
+#'   \item{`item_cutoffs`}{data.frame with the interval per item: `Item`,
+#'     `diff_low`, `diff_high`, computed by `cutoff_method`.}
+#'   \item{`actual_iterations`}{Number of simulated datasets that could be
+#'     used. Everything downstream rests on this rather than on
+#'     `iterations`, so it is the number to report.}
+#'   \item{`requested_iterations`}{The `iterations` argument, so that
+#'     callers can tell how many simulated datasets were left out.}
 #'   \item{`sample_n`}{Number of complete cases used.}
-#'   \item{`sample_n_total`}{Number of respondents in the raw input data,
-#'     before the complete-case filter.}
-#'   \item{`sample_has_na`}{Logical. Whether the raw input data contained
-#'     any missing values.}
-#'   \item{`sample_summary`}{Summary statistics of estimated person parameters.}
-#'   \item{`item_names`}{Character vector of item names from data.}
-#'   \item{`cutoff_method`}{The method used to compute the intervals (`"hdci"`
-#'     or `"quantile"`).}
-#'   \item{`hdci_width`}{The HDCI width used (only meaningful when
-#'     `cutoff_method = "hdci"`).}
-#'   \item{`dgp`}{The data-generating process used (`"resample"` or
-#'     `"conditional"`).}
+#'   \item{`sample_n_total`}{Number of respondents in `data`, before the
+#'     complete-case filter.}
+#'   \item{`sample_has_na`}{Logical. Whether `data` contained missing
+#'     values.}
+#'   \item{`sample_summary`}{Summary of the WLE person locations.}
+#'   \item{`item_names`}{Item names from `data`.}
+#'   \item{`cutoff_method`}{`"hdci"` or `"quantile"`.}
+#'   \item{`hdci_width`}{The HDCI width (used only with `"hdci"`).}
+#'   \item{`dgp`}{`"conditional"` or `"resample"`.}
 #' }
 #'
 #' @details
-#' The asymptotic test in `iarm::item_restscore()` divides the observed minus
-#' expected gamma by the standard error of the observed gamma alone. The
-#' expected gamma is estimated from the same data and correlates with the
-#' observed one, so that standard error is too large for the difference, and
-#' the difference is also biased upwards in small samples. Under a true Rasch
-#' model the resulting test is liberal for dichotomous items in small or
-#' mistargeted samples and conservative for polytomous items, in every case
-#' flagging too few underfitting items. The bootstrap null replaces the
-#' asymptotic reference distribution and absorbs both problems. The
-#' simulation study of the asymptotic test is reported at
+#' **Why simulate.** The asymptotic test in `iarm::item_restscore()` divides
+#' the observed minus expected gamma by the standard error of the observed
+#' gamma alone. The expected gamma is estimated from the same data and
+#' correlates with the observed one, so that standard error is too large for
+#' the difference, and the difference is also biased upwards in small
+#' samples. With the Rasch model true, the test is liberal for dichotomous
+#' items in small or mistargeted samples and conservative for polytomous
+#' items, and it flags too few underfitting items in every case. The
+#' simulated reference distribution replaces the asymptotic one and absorbs
+#' both problems. The simulation study of the asymptotic test is reported at
 #' \url{https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html}.
 #'
-#' The generating model is CML item parameters (via `psychotools`) with WLE
-#' person locations. For each iteration a dataset is simulated under the chosen
-#' `dgp`, the model is **refitted** by CML (`psychotools::pcmodel()`), and the
-#' observed and expected item-restscore gamma are computed as in
-#' `iarm::item_restscore()`, by a faster internal routine that skips the
-#' standard errors and the rounding of the printed values. The refit matters:
-#' the expected gamma varies from
-#' sample to sample because the thresholds do, and holding them fixed would
-#' reproduce the problem the bootstrap exists to solve. Failed iterations
-#' (e.g., degenerate simulated data) are silently discarded.
+#' **Simulation.** The generating model has the CML item parameters
+#' (`psychotools`) and the WLE person locations of `data`. In each
+#' iteration a dataset is simulated by `dgp`, the model is refitted by CML
+#' (`psychotools::pcmodel()`), and the observed and expected gamma are
+#' computed as in `iarm::item_restscore()`, by a faster internal routine
+#' that skips the standard errors and the rounding of the printed values.
+#' The refit matters. The expected gamma varies from sample to sample
+#' because the thresholds do, and holding them fixed would reproduce the
+#' problem the simulation is meant to solve. A simulated dataset that cannot
+#' be refitted, for example because a response category is empty, is left
+#' out, and [RMitemRestscore()] reports how many in its caption.
 #'
-#' Parallel processing is provided by the `mirai` package (optional). Install
-#' it with `install.packages("mirai")` to enable parallelisation.
-#'
-#' The `iarm` package must be installed (it is in Suggests, not Imports).
+#' Parallel processing needs the optional \pkg{mirai} package. The
+#' \pkg{iarm} package must be installed (it is in Suggests).
 #'
 #' @references
-#' Kreiner, S. (2011). A Note on Item-Restscore Association in Rasch Models.
-#' *Applied Psychological Measurement, 35*(7), 557-561.
-#' \doi{10.1177/0146621611410227}
-#'
 #' Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
 #' Rasch models: Iterations, multiplicity correction, and decision stability.
 #' *PsyArXiv*. \doi{10.31234/osf.io/7pqz4_v2}
 #'
-#' @seealso \code{\link{RMitemRestscore}}, \code{\link{RMitemRestscorePlot}}
+#' Kreiner, S. (2011). A Note on Item-Restscore Association in Rasch Models.
+#' *Applied Psychological Measurement, 35*(7), 557-561.
+#' \doi{10.1177/0146621611410227}
+#'
+#' @seealso [RMitemRestscore()] for the test, [RMitemRestscorePlot()] to
+#'   plot the simulated values.
 #'
 #' @export
 #'
@@ -350,7 +345,7 @@ RMitemRestscoreCutoff <- function(
 #' @param data_list List produced inside [RMitemRestscoreCutoff()].
 #' @return A data.frame with columns `Item`, `Observed`, `Expected`,
 #'   `Difference`, or a character string on failure.
-#' @keywords internal
+#' @noRd
 run_single_restscore_sim <- function(seed, data_list) {
   # The RNG kind is pinned, not just the seed: mirai daemons start under
   # L'Ecuyer-CMRG while the calling session uses the Mersenne-Twister
@@ -540,7 +535,7 @@ run_single_restscore_sim <- function(seed, data_list) {
 #' @param n_cores Number of mirai daemons.
 #' @param verbose Show progress bar.
 #' @return List of raw results (one element per iteration).
-#' @keywords internal
+#' @noRd
 run_restscore_sim_parallel <- function(
   iterations,
   sim_seeds,
@@ -612,7 +607,7 @@ run_restscore_sim_parallel <- function(
 #' @param sim_data_list List of data passed to each worker.
 #' @param verbose Show progress bar.
 #' @return List of raw results (one element per iteration).
-#' @keywords internal
+#' @noRd
 run_restscore_sim_sequential <- function(
   iterations,
   sim_seeds,

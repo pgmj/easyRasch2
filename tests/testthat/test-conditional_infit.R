@@ -438,3 +438,25 @@ test_that("dataframe output is unrounded (kable-only display rounding)", {
   fit <- psychotools::pcmodel(as.matrix(df))
   expect_equal(result$Infit_MSQ, as.numeric(iarm::out_infit(fit)$Infit))
 })
+
+test_that("RMitemInfit refuses a cutoff from RMitemInfitCutoffMI()", {
+  skip_on_cran()
+  skip_if_not_installed("iarm")
+  set.seed(42)
+  df <- as.data.frame(
+    matrix(sample(0:1, 1000, replace = TRUE), nrow = 200, ncol = 5)
+  )
+  colnames(df) <- paste0("Item", 1:5)
+  res <- RMitemInfitCutoff(df, iterations = 20, parallel = FALSE, seed = 42,
+                           cutoff_method = "quantile")
+  # RMitemInfitCutoffMI() results carry n_imputations; mimic one.
+  mi_like <- res
+  mi_like$n_imputations <- 2L
+  expect_error(suppressMessages(RMitemInfit(df, cutoff = mi_like)),
+               "RMitemInfitCutoffMI")
+  expect_error(suppressMessages(RMitemInfit(df, cutoff = mi_like,
+                                            p_value = FALSE)),
+               "RMitemInfitMI")
+  # The complete-data cutoff is still accepted.
+  expect_no_error(suppressMessages(RMitemInfit(df, cutoff = res)))
+})

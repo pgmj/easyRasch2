@@ -2,51 +2,50 @@
 % Please edit documentation in R/item_restscore_plot.R
 \name{RMitemRestscorePlot}
 \alias{RMitemRestscorePlot}
-\title{Plot the Simulated Item-Restscore Null Distribution}
+\title{Plot the simulated item-restscore differences}
 \usage{
 RMitemRestscorePlot(simfit, data)
 }
 \arguments{
-\item{simfit}{The return value of \code{\link{RMitemRestscoreCutoff}} (a
-list with components \code{results}, \code{item_cutoffs}, \code{actual_iterations},
-\code{sample_n}, and \code{item_names}).}
+\item{simfit}{The result of \code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}}.}
 
-\item{data}{Optional. A data.frame or matrix of item responses for computing
-and overlaying the observed item-restscore differences. Items must be
-scored starting at 0 (non-negative integers). When provided, the plot
-includes orange diamond markers for the observed difference alongside the
-simulated distribution, plus segment summaries of the intervals.}
+\item{data}{Optional. The item responses the simulations were made from,
+items scored from 0. The observed differences are then computed with
+\code{\link[=RMitemRestscore]{RMitemRestscore()}} and drawn as orange diamonds.}
 }
 \value{
 A \code{ggplot} object.
 }
 \description{
-Visualises the per-item null distribution of the observed minus expected
-item-restscore gamma from \code{\link{RMitemRestscoreCutoff}}, optionally
-overlaying the observed differences from the original data.
+Plots each item's simulated observed minus expected item-restscore gamma
+from \code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}}, and optionally the observed differences
+in your data.
 }
 \details{
-Uses \code{ggdist::stat_dotsinterval()} (when \code{data} is not supplied) or
-\code{ggdist::stat_dots()} (when \code{data} is supplied) with
-\code{point_interval = "median_hdci"}. The outer \code{.width} follows
-\code{simfit$hdci_width}, so the shaded interval matches the one
-\code{\link[=RMitemRestscore]{RMitemRestscore()}} tabulates.
+The x-axis is the observed minus expected gamma, the statistic
+\code{\link[=RMitemRestscore]{RMitemRestscore()}} tests, with a dashed line at zero. Positive values
+indicate overfit, negative values underfit. In small samples the
+simulated differences are generally not centred on zero, which is one
+reason the asymptotic test is miscalibrated (see
+\code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}}).
 
-The x-axis is the difference between observed and model-expected gamma, the
-statistic \code{\link{RMitemRestscore}} tests. A dashed line marks zero.
-The simulated distributions are generally not centred on zero in small
-samples, which is one of the reasons the asymptotic test is miscalibrated
-(see \code{\link{RMitemRestscoreCutoff}}). Positive values indicate
-over-discrimination (overfit), negative values under-discrimination
-(underfit).
+Each item's simulated values are drawn as dots, with the median, an
+inner 66\% interval and an outer interval. The outer interval is the one
+stored in \code{simfit} and tabulated by \code{\link[=RMitemRestscore]{RMitemRestscore()}}: the HDCI of
+width \code{hdci_width}, or the 2.5th to 97.5th percentiles with
+\code{cutoff_method = "quantile"}. The inner interval uses the same method.
+Without \code{data} the intervals are drawn with
+\code{ggdist::stat_dotsinterval()}. With \code{data} they are black segments with
+a black dot for the median, and the observed value is the orange
+diamond.
 
-When \code{data} \strong{is} supplied, the observed differences are computed with
-\code{\link{RMitemRestscore}} and overlaid as orange diamonds, with per-item
-intervals drawn as black line segments (thicker for the 66\% range) and
-black dots for the simulated median.
+The intervals are per item and not corrected for testing several items.
+With the full cutoff object, \code{\link[=RMitemRestscore]{RMitemRestscore()}} flags items by adjusted
+p-values instead, so an item just outside its interval need not be
+flagged there. The plot shows no p-values.
 
-The \code{ggplot2} and \code{ggdist} packages must be installed (they are in
-Suggests, not Imports).
+The \pkg{ggplot2} and \pkg{ggdist} packages must be installed (they are
+in Suggests).
 }
 \examples{
 \donttest{
@@ -62,7 +61,7 @@ if (requireNamespace("iarm", quietly = TRUE) &&
   cutoff_res <- RMitemRestscoreCutoff(sim_data, iterations = 100,
                                       parallel = FALSE, seed = 42)
 
-  # Simulated distribution only
+  # Simulated differences only
   RMitemRestscorePlot(cutoff_res)
 
   # With the observed differences overlaid
@@ -71,5 +70,5 @@ if (requireNamespace("iarm", quietly = TRUE) &&
 }
 }
 \seealso{
-\code{\link{RMitemRestscoreCutoff}}, \code{\link{RMitemRestscore}}
+\code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}}, \code{\link[=RMitemRestscore]{RMitemRestscore()}}
 }

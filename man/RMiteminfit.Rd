@@ -2,7 +2,7 @@
 % Please edit documentation in R/conditional_infit.R
 \name{RMitemInfit}
 \alias{RMitemInfit}
-\title{Conditional Item Infit MSQ}
+\title{Conditional item infit MSQ}
 \usage{
 RMitemInfit(
   data,
@@ -16,188 +16,166 @@ RMitemInfit(
 )
 }
 \arguments{
-\item{data}{A data.frame or matrix of item responses. Items must be scored
-starting at 0 (non-negative integers). Missing values (\code{NA}) are allowed,
-but at least one complete case (row with no \code{NA}) must be present.}
+\item{data}{A data.frame or matrix of item responses, items scored from
+0. Missing values (\code{NA}) are allowed, but the infit statistic uses
+complete cases only (see Details), so at least one is needed.}
 
-\item{cutoff}{Optional. Default \code{NULL} (no cutoff applied, behaviour is
-identical to the current version). Can be:
+\item{cutoff}{Optional. Default \code{NULL}, no flagging. Either of:
 \itemize{
-\item The return value of \code{\link{RMitemInfitCutoff}} (a list with \verb{$item_cutoffs}):
-the data.frame is extracted automatically and the number of simulation
-iterations, \code{cutoff_method}, and \code{hdci_width} are included in the kable
-caption.
-\item The \verb{$item_cutoffs} data.frame from \code{\link{RMitemInfitCutoff}} directly: must
-have columns \code{Item}, \code{infit_low}, and \code{infit_high} (or \code{outfit_low} and
-\code{outfit_high} when \code{statistic = "outfit"}).
-When provided, adds columns \code{Infit_low}, \code{Infit_high}, and \code{Flagged}
-to the result. \code{Flagged} labels the misfit direction: \code{"overfit"}
-(infit below the range),
-\code{"underfit"} (above the range), or \code{""} (within
-range, no misfit).
-}}
+\item The full result of \code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}}. This enables the p-values
+(see \code{p_value}), and the caption reports the number of iterations
+and the interval method. A result of \code{\link[=RMitemInfitCutoffMI]{RMitemInfitCutoffMI()}} gives
+an error, since its simulations come from imputed data. Use it with
+\code{\link[=RMitemInfitMI]{RMitemInfitMI()}}.
+\item Its \verb{$item_cutoffs} data.frame alone, with columns \code{Item},
+\code{infit_low} and \code{infit_high} (or \code{outfit_low} and \code{outfit_high} with
+\code{statistic = "outfit"}). Items are then flagged against the interval.
+}
 
-\item{p_value}{Logical or \code{NULL}. Whether to compute bootstrap p-values
-from the simulated null distribution and flag on them.
+Either adds the columns \code{Infit_low}, \code{Infit_high} and \code{Flagged}.
+\code{Flagged} gives the direction of misfit: \code{"overfit"} (below 1, or
+below the interval), \code{"underfit"} (above) or \code{""} (no misfit).}
 
-\code{NULL} (the default) means \strong{use them when they are available}: \code{TRUE}
-when \code{cutoff} is the full \code{\link{RMitemInfitCutoff}} object, which
-carries the per-item simulated values in its \verb{$results} element, and
-\code{FALSE} when \code{cutoff} is \code{NULL} or the summarised \verb{$item_cutoffs}
-data.frame, neither of which can support a p-value. Explicit \code{TRUE} with
-an insufficient \code{cutoff} is an error rather than a silent downgrade.
+\item{p_value}{Logical or \code{NULL}. Whether to flag on bootstrap p-values
+computed from the simulated values in \code{cutoff}. \code{NULL} (default) uses
+them whenever \code{cutoff} is the full \code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}} result, and
+flags against the interval otherwise. \code{TRUE} without the full result is
+an error.
 
-With \code{FALSE}, items are flagged against the interval instead, and a
-one-time message reports the family-wise error rate that implies. The
-interval describes where a fitting item's statistic is expected to fall.
-Using it as a decision rule tests all \code{k} items at once, so its width
-sets a family-wise error rate of \code{1 - width^k}, which is 37\% for the
-default 95\% interval over nine items. The corrected p-value targets
-\code{alpha} directly and needs far fewer iterations to do it (Johansson,
-2026).
+With \code{FALSE}, items are flagged against the interval and a one-time
+message gives the family-wise error rate that implies. The interval
+describes where a fitting item's statistic is expected to fall. Used
+as a decision rule over \code{k} items, a width \code{w} gives a family-wise
+error rate of \code{1 - w^k}, 37\% for the default 95\% interval over nine
+items. The corrected p-value keeps the error rate at \code{alpha} and needs
+far fewer iterations to do so (Johansson, 2026). Versions up to 1.1.1
+flagged against the interval by default, so older scripts that pass
+the full cutoff object may now flag different items.}
 
-Up to and including version 1.1.1 the default was \code{FALSE}, so \code{Flagged}
-came from the interval. Existing scripts that pass the full cutoff object
-will now flag on the corrected p-value instead and may report different
-items.}
+\item{correction}{Character. Correction of the p-values across items
+when they are used: \code{"fwer"} (default, Westfall-Young step-down,
+controls the family-wise error rate), \code{"fdr_bh"} or \code{"fdr_by"}
+(Benjamini-Hochberg or Benjamini-Yekutieli, control the false
+discovery rate), or \code{"none"}.}
 
-\item{correction}{Character. Multiple-comparison correction applied across
-items when \code{p_value = TRUE}: \code{"fwer"} (default) for the Westfall-Young
-studentised-max step-down (family-wise error rate), \code{"fdr_bh"} /
-\code{"fdr_by"} for Benjamini-Hochberg / Benjamini-Yekutieli false discovery
-rate control, or \code{"none"} for uncorrected per-item p-values.}
+\item{alpha}{Numeric in (0, 1). An item is flagged when its corrected
+p-value is below \code{alpha}. Default \code{0.05}. Used only with p-values.}
 
-\item{alpha}{Numeric in (0, 1). Significance level for the \code{Flagged} column
-when \code{p_value = TRUE} (an item is flagged when its corrected p-value is
-below \code{alpha}). Default \code{0.05}.}
+\item{output}{Character. \code{"kable"} (default) for a \code{knitr::kable()}
+table, or \code{"dataframe"}.}
 
-\item{output}{Character string controlling the return value. Either
-\code{"kable"} (default) for a formatted \code{knitr::kable()} table, or
-\code{"dataframe"} for the underlying data.frame.}
+\item{sort}{Optional. \code{sort = "infit"} (or \code{"outfit"}, matching
+\code{statistic}) sorts the rows by MSQ, largest first. Other values leave
+the order unchanged.}
 
-\item{sort}{Optional character string. When \code{sort} matches \code{statistic}
-(\code{"infit"} by default), rows are sorted by the reported MSQ column in
-descending order before output.}
-
-\item{statistic}{Character string. Which conditional fit statistic the table
-reports: \code{"infit"} (default) or \code{"outfit"}. Both come from the same
-\code{iarm::out_infit()} call and the same parametric bootstrap, so the choice
-only selects which one is displayed and tested. Column names, cutoff
-bounds, p-values and \code{Flagged} all follow it, and when \code{p_value = TRUE}
-the multiplicity correction is applied across items \emph{within} the selected
-statistic (the family is the \emph{k} items, not 2\emph{k} item-by-statistic
-combinations). Testing both statistics on the same items and reporting
-whichever flags is a larger family than either call corrects for.}
+\item{statistic}{Character. Which conditional fit statistic to report
+and test: \code{"infit"} (default) or \code{"outfit"}. Both come from the same
+\code{iarm::out_infit()} call and the same simulations, and the column
+names, interval, p-values and \code{Flagged} follow the choice. The
+correction is applied across the k items for the chosen statistic.
+Testing both statistics and reporting whichever flags is a family of
+2k tests, larger than either call corrects for.}
 }
 \value{
 \itemize{
-\item If \code{output = "kable"}: a \code{knitr_kable} object (plain text table via
-\code{format = "pipe"}) with columns "Item", "Infit MSQ", and "Relative
-location", and a caption showing the number of complete cases. When
-\code{cutoff} is provided, columns "Infit low", "Infit high", and "Flagged"
-are also included, and the caption notes the simulation-based cutoffs.
-\item If \code{output = "dataframe"}: a data.frame with columns \code{Item},
-\code{Infit_MSQ}, and \code{Relative_location}. When \code{cutoff} is provided, columns
-\code{Infit_low}, \code{Infit_high}, and \code{Flagged} are also included (inserted
-after \code{Infit_MSQ}, before \code{Relative_location}). \code{Flagged} is a character
-column with values \code{"overfit"}, \code{"underfit"}, or \code{""} (not the previous
-logical). When \code{p_value = TRUE}, columns \code{p_infit} (marginal two-sided
-p-value) and \code{padj_infit} (corrected p-value) are added and \code{Flagged}
-reflects items with \code{padj_infit < alpha} (direction from \code{Infit_MSQ}
-relative to 1).
+\item \code{output = "kable"}: a \code{knitr_kable} table with the columns "Item",
+"Infit MSQ" and "Relative location", and a caption with the sample
+size. With \code{cutoff}, also "Infit low", "Infit high" and "Flagged",
+and with p-values "p" and "p (adj)".
+\item \code{output = "dataframe"}: a data.frame with the columns \code{Item},
+\code{Infit_MSQ} and \code{Relative_location}. With \code{cutoff}, also
+\code{Infit_low}, \code{Infit_high} and \code{Flagged} (after \code{Infit_MSQ}). With
+p-values, also \code{p_infit} (uncorrected two-sided p) and \code{padj_infit}
+(corrected p). \code{Flagged} then marks items with \code{padj_infit < alpha},
+with the direction from \code{Infit_MSQ} relative to 1.
 }
 
-With \code{statistic = "outfit"} the layout is identical and the column names
-follow the statistic: \code{Outfit_MSQ}, \code{Outfit_low}, \code{Outfit_high}, \code{p_outfit},
-\code{padj_outfit}.
+With \code{statistic = "outfit"} the columns are named after it:
+\code{Outfit_MSQ}, \code{Outfit_low}, \code{Outfit_high}, \code{p_outfit}, \code{padj_outfit}.
 }
 \description{
-Computes conditional infit mean-square (MSQ) statistics for each item using
-\code{iarm::out_infit()}, enriched with item locations relative to the sample
-mean person location.
+Computes the conditional infit mean-square (MSQ) of each item with
+\code{iarm::out_infit()}, and each item's location relative to the mean
+person location. Given the result of \code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}}, it also
+flags misfitting items, by default on a bootstrap p-value corrected
+across items.
 }
 \details{
-Infit MSQ is a weighted fit statistic that emphasises deviations near the
-item location. Values close to 1.0 indicate good fit. Values substantially
-above 1.0 suggest underfit (unexpected responses), while values substantially
-below 1.0 suggest overfit (overly predictable responses). The definition of
-"substantially" depends on several factors such as sample size, and needs to
-be determined by simulation using \code{\link{RMitemInfitCutoff}}. There is no general
-rule-of-thumb value that is correct.
+\strong{Statistic.} Infit MSQ is a weighted fit statistic that emphasises
+unexpected responses near the item's location. Values near 1 indicate
+fit. Values above 1 indicate underfit (responses less predictable than
+the model expects), and values below 1 overfit (responses more
+predictable). How far from 1 is too far depends on the sample size and
+the items, so it is judged against simulations from
+\code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}}. No fixed value is right in general. The
+conditional statistic from \code{iarm::out_infit()} uses the distribution of
+the responses given the total score (Müller, 2020).
 
-Conditional infit MSQ statistics are computed via \code{iarm::out_infit()}, which
-uses the conditional distribution of the sufficient statistics (Müller, 2020).
-Only complete cases (rows without any \code{NA}) are used in the conditional fit
-calculation.
+\strong{Data and model.} The item parameters are estimated by conditional
+maximum likelihood with \code{psychotools::pcmodel()} (a dichotomous item is
+a 2-category partial credit model). The conditional infit uses complete
+cases only, and every response category must be used in them, or the
+function stops and names the item. The relative item location is the
+mean of the item's CML thresholds minus the mean WLE person location,
+a description of targeting. The \code{iarm} package must be installed (it is
+in Suggests).
 
-Item parameters are estimated by conditional maximum likelihood via
-\code{psychotools::pcmodel()} (a dichotomous item is a 2-category PCM); the
-conditional infit/outfit MSQ comes from \code{iarm::out_infit()} and is invariant
-to the estimation engine. Per-item average locations are the means of the
-CML thresholds, and the person-location reference is the mean of the Warm
-WLE estimates.
+\strong{Bootstrap p-values.} Each item's observed statistic is compared with
+its simulated values from \code{cutoff$results}. The test statistic is the
+deviation from the mean of the observed and simulated values together,
+divided by their SD. The ZSTD (Wilson-Hilferty) transform is not used,
+since it does not work for the conditional MSQ (Müller, 2020). The
+uncorrected p is two-sided, \verb{(1 + #\{|t*| >= |t|\}) / (B + 1)} for B
+simulated datasets, so it can be no smaller than \code{1 / (B + 1)}. With
+\code{"fwer"} the correction is the Westfall-Young step-down on the
+studentised maximum, which uses the dependence between the items'
+statistics and has more power than Bonferroni or Holm (Westfall &
+Young, 1993; Ferreira, 2024). Its validity rests on subset pivotality.
+\code{"fdr_bh"} and \code{"fdr_by"} apply Benjamini-Hochberg or
+Benjamini-Yekutieli. The p-values depend on the model and the sample
+size, and are reported with the simulated interval, not instead of it.
 
-Relative item location is defined as the item's average location minus the
-sample mean person location, providing a measure of item targeting.
-
-The \code{iarm} package must be installed (it is in Suggests, not Imports).
-
-\strong{Bootstrap p-values.} When \code{p_value = TRUE}, each item's observed
-infit (or outfit, per \code{statistic}) is compared against its simulated null
-distribution (from \code{cutoff$results}). The per-item statistic is the residual studentised by
-the mean and SD of the observed and simulated values together --
-deliberately the empirical SD rather than the
-Wilson-Hilferty / ZSTD transform, which is uninformative for conditional
-MSQ (Müller, 2020). The marginal p-value is the two-sided Monte-Carlo
-p-value \verb{(1 + #\{|t*| >= |t|\}) / (B + 1)}. For \code{correction = "fwer"} the
-family-wise adjustment uses the Westfall-Young studentised-max step-down,
-which exploits the bootstrap dependence among items and is more powerful
-than Bonferroni/Holm (Ferreira, 2024); its validity rests on subset
-pivotality. \code{"fdr_bh"}/\code{"fdr_by"} apply Benjamini-Hochberg / Benjamini-
-Yekutieli instead. These are model-conditional, sample-size-sensitive
-p-values and are reported alongside the simulated effect-size band, not in
-place of it. p-values can be no smaller than \code{1 / (B + 1)}. Because the
-observed value contributes to the mean and SD it is studentised by, the
-observed and simulated statistics are exchangeable under the null, and the
-family-wise error rate is at the nominal level at any number of
-\code{iterations} in \code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}}. More iterations improve
-reproducibility instead, and a message says so below 400: two analysts using different seeds
-disagree about at least one item roughly 10 percent of the time at 400
-iterations against 4 percent at 2000 (Johansson, 2026). The table caption
-notes this below 1000 iterations, so use 1000 to 2000 for a final
-analysis. The marginal p-values are well calibrated even at a few hundred
-iterations.
+\strong{Iterations.} The observed value is part of the mean and SD it is
+studentised by, so the observed and simulated statistics are
+exchangeable under the model, and the family-wise error rate is at the
+nominal level at any number of iterations in \code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}}.
+More iterations make decisions reproducible. Two analysts using
+different seeds disagree about at least one item roughly 10\% of the
+time at 400 iterations and 4\% at 2000 (Johansson, 2026). A message says
+so below 400 iterations, and the caption below 1000. Use 1000 to 2000
+for a final analysis. The uncorrected p-values are well calibrated even
+at a few hundred iterations.
 }
 \section{Multiple comparisons}{
 
-The marginal p-value controls the error rate of a \emph{single} comparison: for
-one item (or item pair) decided on in advance it is the relevant value. But
-scanning all \emph{k} comparisons and flagging whichever fall below \code{alpha} tests
-\emph{k} hypotheses at once, so the chance of at least one false flag inflates to
-roughly \eqn{1 - (1 - \alpha)^k} (e.g. about 34\% for \emph{k} = 8 at
-\code{alpha = 0.05}) -- even when every marginal p-value is correctly calibrated.
-The corrected (adjusted) p-value controls this: \code{correction = "fwer"} bounds
-the probability of \emph{any} false flag (strict, lower power), while \code{"fdr_bh"} /
-\code{"fdr_by"} bound the expected \emph{proportion} of false flags among those raised
-(a more lenient middle ground). Rule of thumb: use the marginal p-value for a
-single pre-specified comparison, and a corrected p-value when screening the
-whole table -- the usual workflow.
+The uncorrected p-value controls the error rate of a single comparison.
+For one item (or item pair) chosen in advance it is the relevant value.
+Flagging whichever of k comparisons fall below \code{alpha} tests k
+hypotheses at once, and the chance of at least one false flag rises to
+about \eqn{1 - (1 - \alpha)^k}, for example 34\% for k = 8 at
+\code{alpha = 0.05}, even when every uncorrected p-value is calibrated. The
+corrected p-value controls this. \code{correction = "fwer"} bounds the
+probability of any false flag (strict, less power), and \code{"fdr_bh"} and
+\code{"fdr_by"} bound the expected share of false flags among those raised.
+Use the uncorrected p-value for a single comparison chosen in advance,
+and a corrected one when screening the whole table, which is the usual
+case.
 }
 
 \section{Flags depend on the other items}{
 
 Item infit and item-restscore both judge each item against expectations
-from a Rasch model fitted to all items, so misfitting items change what is
-expected of the others. A flag in one direction can therefore produce
-flags in the other. Overfitting items can push fitting items into the
-underfit range, and underfitting items, for example from a second
-dimension, can make fitting items look overfit. How large the effect is
-depends on how strong the misfit is and how many items share it. In
-simulation with seven polytomous items, two overfitting items led to
-about 6 percent of the fitting items being flagged as underfit, and one
-or two mildly multidimensional items to 1 to 2 percent being flagged as
-overfit. When items are flagged in both directions, consider removing
-the clearest misfit and testing again before interpreting the rest.
+from a Rasch model fitted to all items, so misfitting items change what
+is expected of the others. A flag in one direction can therefore
+produce flags in the other. Overfitting items can push fitting items
+into the underfit range, and underfitting items, for example from a
+second dimension, can make fitting items look overfit. How large the
+effect is depends on how strong the misfit is and how many items share
+it. In simulation with seven polytomous items, two overfitting items led
+to about 6\% of the fitting items being flagged as underfit, and one or
+two mildly multidimensional items to 1\% to 2\% being flagged as overfit.
+When items are flagged in both directions, consider removing the
+clearest misfit and testing again before interpreting the rest.
 }
 
 \examples{
@@ -239,21 +217,23 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 }
 }
 \references{
-Müller, M. (2020). Item fit statistics for Rasch analysis: Can we trust
-them? \emph{Journal of Statistical Distributions and Applications}, 7(5).
-\doi{10.1186/s40488-020-00108-7}
-
 Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate' number
 of hypotheses simultaneously. \emph{Journal of Statistical Theory and Practice,
 19}(1), 6. \doi{10.1007/s42519-024-00412-4}
 
-Westfall, P. H., & Young, S. S. (1993). \emph{Resampling-Based Multiple Testing}.
-Wiley.
-
 Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
 Rasch models: Iterations, multiplicity correction, and decision stability.
 \emph{PsyArXiv}. \doi{10.31234/osf.io/7pqz4_v2}
+
+Müller, M. (2020). Item fit statistics for Rasch analysis: Can we trust
+them? \emph{Journal of Statistical Distributions and Applications}, 7(5).
+\doi{10.1186/s40488-020-00108-7}
+
+Westfall, P. H., & Young, S. S. (1993). \emph{Resampling-Based Multiple Testing}.
+Wiley.
 }
 \seealso{
-\code{\link{RMitemInfitCutoff}}
+\code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}} for the simulations, \code{\link[=RMitemInfitPlot]{RMitemInfitPlot()}}
+to plot them with the observed values, \code{\link[=RMitemInfitMI]{RMitemInfitMI()}} for multiply
+imputed data, and \code{\link[=RMitemRestscore]{RMitemRestscore()}} for a second item fit test.
 }

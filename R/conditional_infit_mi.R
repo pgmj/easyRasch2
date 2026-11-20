@@ -1,18 +1,20 @@
-#' Conditional Item Infit MSQ for Multiply Imputed Data
+#' Conditional item infit MSQ for multiply imputed data
 #'
-#' Extends \code{\link{RMitemInfit}} to work with multiply imputed datasets
-#' produced by the `mice` package. Computes conditional infit MSQ on each
-#' imputed dataset and pools the results using Rubin's rules.
+#' The counterpart of [RMitemInfit()] for data imputed with the \pkg{mice}
+#' package. Computes the conditional infit MSQ in each imputed dataset and
+#' pools the results with Rubin's rules. Items are flagged against the
+#' simulated interval, since this function has no p-values yet (see the
+#' section below).
 #'
-#' @param mids_object A `mids` object (multiply imputed dataset) as returned by
-#'   `mice::mice()`. Each completed dataset must contain only the item response
-#'   columns to be analysed (i.e., no ID or grouping variables). Items must be
-#'   scored starting at 0 (non-negative integers).
+#' @param mids_object A `mids` object from `mice::mice()`. Each completed
+#'   dataset must contain only the item response columns, with no ID or
+#'   grouping variables. Items are scored from 0. Items imputed as
+#'   factors, as the `polr` method needs, are converted back to numbers.
+#'   Their levels must be the response codes (`"0"`, `"1"`, ...).
 #' @param cutoff Optional. Default `NULL` (no cutoff applied). Can be:
-#'   * The return value of \code{\link{RMitemInfitCutoff}} or
-#'     \code{\link{RMitemInfitCutoffMI}} (a list with `$item_cutoffs`): the
-#'     data.frame is extracted automatically and metadata is included in the
-#'     kable caption.
+#'   * The result of [RMitemInfitCutoffMI()] (or [RMitemInfitCutoff()]):
+#'     its `$item_cutoffs` are used, and the caption reports the
+#'     simulation settings.
 #'   * The `$item_cutoffs` data.frame directly: must have columns `Item`,
 #'     `infit_low`, and `infit_high`.
 #'   When provided, adds columns `Infit_low`, `Infit_high`, and `Flagged` to
@@ -22,8 +24,8 @@
 #' @param output Character string controlling the return value. Either
 #'   `"kable"` (default) for a formatted `knitr::kable()` table, or
 #'   `"dataframe"` for the underlying data.frame.
-#' @param sort Optional character string. When `sort = "infit"`, rows are
-#'   sorted by `Infit_MSQ` in descending order before output.
+#' @param sort Optional. `sort = "infit"` sorts the rows by `Infit_MSQ`,
+#'   largest first.
 #'
 #' @return
 #' * If `output = "kable"`: a `knitr_kable` object (plain text table via
@@ -35,8 +37,7 @@
 #'   `Infit_MSQ`, `Infit_SE`, and `Relative_location`. When `cutoff` is
 #'   provided, columns `Infit_low`, `Infit_high`, and `Flagged` are also
 #'   included (inserted after `Infit_SE`, before `Relative_location`).
-#'   `Flagged` is a character column (`"overfit"` / `"underfit"` / `""`),
-#'   not the previous logical.
+#'   `Flagged` is `"overfit"`, `"underfit"` or `""`.
 #'
 #' @details
 #' For each of the `m` imputed datasets, the function:
@@ -65,29 +66,32 @@
 #' (item location minus sample mean person location).
 #'
 #' \strong{Caveat on the pooled SE.} The within-imputation variance is the
-#' squared conditional infit SE from `iarm::out_infit()`. Müller (2020) showed
-#' that this asymptotic SE is an unreliable measure of uncertainty for the
-#' conditional infit statistic; Rubin's pooled SE inherits that limitation, so
-#' the `Infit_SE`/`Infit SE` column should be read as an approximate indication
-#' of imputation-related variability rather than a trustworthy inferential
-#' standard error. For item misfit decisions, prefer the simulation-based
+#' squared conditional infit SE from `iarm::out_infit()`. Müller (2020)
+#' showed that this asymptotic SE is an unreliable measure of uncertainty
+#' for the conditional infit statistic, and Rubin's pooled SE inherits that
+#' limitation. Read the `Infit_SE` column as a rough indication of the
+#' variability between imputations, not as a standard error for
+#' inference. For item misfit decisions, prefer the simulation-based
 #' cutoffs from \code{\link{RMitemInfitCutoffMI}}.
 #'
-#' Imputed datasets that cause model convergence failures are dropped with a
+#' Imputed datasets in which the model cannot be fitted are dropped with a
 #' warning. So are imputed datasets in which an item lacks its lowest or a
 #' middle response category, which can happen with `polr`, `polyreg` or
 #' `norm` imputation of a rare category. The warning names the items, since
 #' the pooled results then come only from imputations that filled the
 #' category. If every imputation lacks the category (as with `pmm` when the
-#' observed data lack it), the function stops naming the item. If all
-#' imputations fail, the function stops with an error. At
-#' least two successful imputations are required to estimate between-imputation
-#' variance.
+#' observed data lack it), the function stops and names the item. If all
+#' imputations fail, the function stops with an error. At least two
+#' imputations must succeed to estimate the between-imputation variance.
 #'
-#' The `mice` and `iarm` packages must be installed (they are in Suggests, not
-#' Imports).
+#' The \pkg{mice} and \pkg{iarm} packages must be installed (they are in
+#' Suggests).
 #'
 #' @references
+#' Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
+#' Rasch models: Iterations, multiplicity correction, and decision stability.
+#' *PsyArXiv*. \doi{10.31234/osf.io/7pqz4_v2}
+#'
 #' Müller, M. (2020). Item fit statistics for Rasch analysis: Can we trust
 #' them? *Journal of Statistical Distributions and Applications*, 7(5).
 #' \doi{10.1186/s40488-020-00108-7}
@@ -101,7 +105,8 @@
 #' keeps `hdci_width = 0.999`, a width suited to a decision rule, and the
 #' family-wise error rate of that rule is `1 - 0.999^k` over `k` items.
 #'
-#' @seealso \code{\link{RMitemInfit}}, \code{\link{RMitemInfitCutoffMI}}
+#' @seealso [RMitemInfitCutoffMI()] for the simulations, [RMitemInfit()]
+#'   for complete data.
 #'
 #' @export
 #'
@@ -129,8 +134,8 @@
 #'   # Pooled infit table (no cutoffs)
 #'   RMitemInfitMI(imp)
 #'
-#'   # With simulation-based cutoffs
-#'   # (use more iterations, e.g. 250+, in real analyses)
+#'   # With simulation-based cutoffs (use far more iterations in real
+#'   # analyses, see RMitemInfitCutoffMI())
 #'   cutoff_mi <- RMitemInfitCutoffMI(imp, iterations = 50, parallel = FALSE,
 #'                                 seed = 42)
 #'   RMitemInfitMI(imp, cutoff = cutoff_mi)

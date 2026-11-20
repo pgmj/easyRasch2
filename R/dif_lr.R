@@ -8,18 +8,18 @@
 #'
 #' @param data A data.frame or matrix of item responses (non-negative
 #'   integers, 0-based). One column per item, one row per person. Person
-#'   IDs and grouping variables must not be included -- pass the grouping
+#'   IDs and grouping variables must not be included. Pass the grouping
 #'   variable separately via \code{dif_var}.
 #' @param dif_var Vector of length \code{nrow(data)} (factor, character,
-#'   or numeric) defining the DIF grouping variable. Coerced to factor;
-#'   unused levels are dropped. Rows where \code{dif_var} is \code{NA} are
-#'   dropped with a message. Must result in at least 2 groups after
-#'   cleaning.
+#'   or numeric) defining the groups, two or more. It is coerced to a
+#'   factor and unused levels are dropped. Rows where \code{dif_var} is
+#'   \code{NA}, and rows with no responses, are dropped with a message.
 #' @param model One of \code{"auto"} (default), \code{"PCM"}, or
-#'   \code{"RM"}. \code{"auto"} reports the Rasch model when the data are
-#'   dichotomous (max response = 1) and the partial credit model otherwise
-#'   (the two coincide for dichotomous data). \code{"RM"} errors on
-#'   polytomous data.
+#'   \code{"RM"}. The fit is the same for dichotomous data, where the two
+#'   models coincide, so the choice only sets the label in \code{Model}.
+#'   \code{"auto"} labels the result \code{"RM"} when every item is
+#'   dichotomous and \code{"PCM"} otherwise. \code{"RM"} gives an error
+#'   for polytomous data.
 #' @param output \code{"kable"} (default) or \code{"dataframe"}.
 #' @param ... Not used. Arguments that earlier versions accepted for the
 #'   per-group location table and plots (\code{level}, \code{cutoff},
@@ -55,6 +55,8 @@
 #'
 #' Like other global tests, the LR test becomes significant for small
 #' amounts of DIF in large samples, and has little power in small ones.
+#' \code{\link{RMdifImpact}} estimates whether the DIF matters for group
+#' comparisons and person scores.
 #'
 #' \strong{Response categories.} Every category an item uses must be used in
 #' every group, or the group fits have different thresholds and the test is
@@ -75,7 +77,8 @@
 #' 387-416. \doi{10.3102/1076998611411913}
 #'
 #' @seealso \code{\link{RMdifAnchor}} for anchored tests of single items,
-#'   thresholds and threshold spacing, \code{\link{RMdifGamma}} and
+#'   thresholds and threshold spacing, \code{\link{RMdifImpact}} for the
+#'   size of the DIF's impact, \code{\link{RMdifGamma}} and
 #'   \code{\link{RMdifTree}}.
 #'
 #' @examples

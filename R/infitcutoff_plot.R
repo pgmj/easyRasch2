@@ -1,54 +1,46 @@
-#' Plot Distribution of Simulated Infit and Outfit MSQ Values
+#' Plot the simulated infit and outfit MSQ values
 #'
-#' Visualises the distribution of simulation-based conditional item fit values
-#' from \code{\link{RMitemInfitCutoff}}, optionally overlaying observed item fit
-#' from the original data.
+#' Plots the simulated conditional item fit values from
+#' [RMitemInfitCutoff()] (or [RMitemInfitCutoffMI()]) per item, and
+#' optionally the observed values in your data.
 #'
-#' Uses `ggdist::stat_dotsinterval()` (when `data` is not supplied) or
-#' `ggdist::stat_dots()` (when `data` is supplied) with
-#' `point_interval = "median_hdci"`. The outer `.width` follows
-#' `simfit$hdci_width`, so the shaded interval matches the one
-#' [RMitemInfit()] tabulates.
+#' @param simfit The result of [RMitemInfitCutoff()] or
+#'   [RMitemInfitCutoffMI()].
+#' @param data Optional. The item responses the simulations were made from,
+#'   items scored from 0. The observed conditional infit and outfit MSQ are
+#'   then computed (on complete cases) and drawn as orange diamonds.
+#' @param statistic Character. `"infit"`, `"outfit"`, or `"both"` side
+#'   by side. With `data` the default is `"infit"`, and `"both"` needs
+#'   \pkg{patchwork}. Without `data` the default is `"both"`, drawn as two
+#'   facets.
 #'
-#' @param simfit The return value of \code{\link{RMitemInfitCutoff}} (a list with
-#'   components `results`, `item_cutoffs`, `actual_iterations`, `sample_n`, and
-#'   `item_names`).
-#' @param data Optional. A data.frame or matrix of item responses for computing
-#'   and overlaying observed conditional item fit values. Items must be scored
-#'   starting at 0 (non-negative integers). When provided, the plot includes
-#'   orange diamond markers for the observed infit/outfit MSQ alongside the
-#'   simulated distribution, plus segment summaries from the cutoff intervals.
-#' @param statistic Character string. Either `"infit"` (default) to show only the
-#'   infit panel, `"outfit"` to show only the outfit panel, or `"both"` to show
-#'   infit and outfit side by side (requires the `patchwork` package when
-#'   `data` is supplied).
-#'
-#' @return A `ggplot` object (or a `patchwork` object when `statistic = "both"`
-#'   and `data` is supplied).
+#' @return A `ggplot` object, or a `patchwork` object with
+#'   `statistic = "both"` and `data`.
 #'
 #' @details
-#' When `data` is **not** supplied, the function plots the simulated MSQ
-#' distributions as dot-interval plots using `ggdist::stat_dotsinterval()` with
-#' median and Highest Density Continuous Interval (HDCI) summaries, faceted by
-#' statistic (InfitMSQ / OutfitMSQ).
+#' Each item's simulated values are drawn as dots, with the median, an
+#' inner 66% interval and an outer interval. The outer interval is the one
+#' stored in `simfit` and tabulated by [RMitemInfit()]: the HDCI of width
+#' `hdci_width`, or the 2.5th to 97.5th percentiles with
+#' `cutoff_method = "quantile"`. The inner interval uses the same method.
 #'
-#' When `data` **is** supplied, the function:
-#' \enumerate{
-#'   \item Fits a Rasch / Partial Credit model by CML via
-#'     `psychotools::pcmodel()` (a dichotomous item is a 2-category PCM)
-#'     and computes observed conditional infit and outfit MSQ via
-#'     `iarm::out_infit()`.
-#'   \item Overlays observed fit values as orange diamond markers on the
-#'     simulated distributions.
-#'   \item Shows per-item cutoff intervals (from `simfit$item_cutoffs`) as
-#'     black line segments, with thicker segments for the 66% HDCI range and
-#'     black dots for the median.
-#' }
+#' **Without `data`** the intervals are drawn with
+#' `ggdist::stat_dotsinterval()`.
 #'
-#' The `ggplot2`, `ggdist`, and optionally `patchwork` packages must be
-#' installed (they are in Suggests, not Imports).
+#' **With `data`**, the model is fitted by CML (`psychotools::pcmodel()`)
+#' and the observed conditional MSQ computed with `iarm::out_infit()`. The
+#' intervals are black segments with a black dot for the median, and the
+#' observed value is the orange diamond.
 #'
-#' @seealso \code{\link{RMitemInfitCutoff}}, \code{\link{RMitemInfit}}
+#' The intervals are per item and not corrected for testing several items.
+#' With the full cutoff object, [RMitemInfit()] flags items by adjusted
+#' p-values instead, so an item just outside its interval need not be
+#' flagged there. The plot shows no p-values.
+#'
+#' The \pkg{ggplot2} and \pkg{ggdist} packages must be installed, and
+#' \pkg{patchwork} for `statistic = "both"` (all are in Suggests).
+#'
+#' @seealso [RMitemInfitCutoff()], [RMitemInfit()]
 #'
 #' @importFrom rlang .data
 #' @export
@@ -68,7 +60,7 @@
 #'   cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100,
 #'                                   parallel = FALSE, seed = 42)
 #'
-#'   # Simulated distribution only (infit + outfit faceted)
+#'   # Simulated values only (infit and outfit side by side)
 #'   RMitemInfitPlot(cutoff_res)
 #'
 #'   # With observed fit overlaid (infit only, the default)
@@ -97,7 +89,13 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
     )
   }
 
-  statistic <- match.arg(statistic, c("infit", "outfit", "both"))
+  # Without `data` the default shows both panels, as before `statistic` was
+  # honoured there. An explicit `statistic` is followed in both cases.
+  statistic <- if (missing(statistic) && missing(data)) {
+    "both"
+  } else {
+    match.arg(statistic, c("infit", "outfit", "both"))
+  }
 
   # --- Validate simfit --------------------------------------------------------
   required_names <- c(
@@ -135,63 +133,55 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
   # Item factor levels (reversed for plotting top-to-bottom)
   item_levels <- rev(item_names)
 
-  # Outer interval width. The plot used to draw a fixed 0.1st-to-99.9th
-  # percentile whisker regardless of how the cutoffs were computed, so it
-  # could show a wider interval than the one RMitemInfit() tabulates. It now
-  # follows the cutoff object, which keeps the plot and the table describing
-  # the same interval. Objects made by older versions carry no width, and
-  # `cutoff_method = "quantile"` fixes the interval at the 2.5th/97.5th
-  # percentiles, so both fall back to .95.
-  outer_width <- if (
-    identical(simfit$cutoff_method, "hdci") && !is.null(simfit$hdci_width)
-  ) {
-    simfit$hdci_width
-  } else {
-    0.95
-  }
-  outer_lo <- (1 - outer_width) / 2
-  outer_hi <- 1 - outer_lo
-
-  # --- Compute per-item summary intervals for segment overlays ----------------
-  lo_hi <- do.call(
-    rbind,
-    lapply(item_names, function(item) {
-      sub <- results_df[results_df$Item == item, ]
-      data.frame(
-        Item = item,
-        min_infit_msq = stats::quantile(sub$InfitMSQ, outer_lo, na.rm = TRUE),
-        max_infit_msq = stats::quantile(sub$InfitMSQ, outer_hi, na.rm = TRUE),
-        p66lo_infit_msq = stats::quantile(sub$InfitMSQ, 0.167, na.rm = TRUE),
-        p66hi_infit_msq = stats::quantile(sub$InfitMSQ, 0.833, na.rm = TRUE),
-        median_infit = stats::median(sub$InfitMSQ, na.rm = TRUE),
-        min_outfit_msq = stats::quantile(sub$OutfitMSQ, outer_lo, na.rm = TRUE),
-        max_outfit_msq = stats::quantile(sub$OutfitMSQ, outer_hi, na.rm = TRUE),
-        p66lo_outfit_msq = stats::quantile(sub$OutfitMSQ, 0.167, na.rm = TRUE),
-        p66hi_outfit_msq = stats::quantile(sub$OutfitMSQ, 0.833, na.rm = TRUE),
-        median_outfit = stats::median(sub$OutfitMSQ, na.rm = TRUE),
-        stringsAsFactors = FALSE,
-        row.names = NULL
-      )
-    })
+  # Intervals. The outer segment is the interval stored in `simfit` (the
+  # one RMitemInfit() tabulates) and the inner 66% segment uses the same
+  # method, so the plot and the table describe the same interval.
+  spec <- .sim_interval_spec(simfit)
+  outer_width <- spec$width
+  cut_idx <- match(item_names, item_cutoffs$Item)
+  iv_infit <- .sim_plot_intervals(
+    results_df$InfitMSQ, results_df$Item, item_names,
+    item_cutoffs$infit_low[cut_idx], item_cutoffs$infit_high[cut_idx],
+    spec$method
   )
-  rownames(lo_hi) <- NULL
+  iv_outfit <- .sim_plot_intervals(
+    results_df$OutfitMSQ, results_df$Item, item_names,
+    item_cutoffs$outfit_low[cut_idx], item_cutoffs$outfit_high[cut_idx],
+    spec$method
+  )
+  lo_hi <- data.frame(
+    Item = item_names,
+    min_infit_msq = iv_infit$lo,
+    max_infit_msq = iv_infit$hi,
+    p66lo_infit_msq = iv_infit$lo66,
+    p66hi_infit_msq = iv_infit$hi66,
+    median_infit = iv_infit$median,
+    min_outfit_msq = iv_outfit$lo,
+    max_outfit_msq = iv_outfit$hi,
+    p66lo_outfit_msq = iv_outfit$lo66,
+    p66hi_outfit_msq = iv_outfit$hi66,
+    median_outfit = iv_outfit$median,
+    stringsAsFactors = FALSE
+  )
+  interval_note <- .sim_interval_caption(spec, "item", "RMitemInfit()")
 
   # --- Case 1: no observed data, show simulation distribution only ------------
   if (missing(data)) {
     # Pivot results to long format
-    infit_long <- data.frame(
-      Item = results_df$Item,
-      statistic = "InfitMSQ",
-      Value = results_df$InfitMSQ,
-      stringsAsFactors = FALSE
+    stat_cols <- switch(
+      statistic,
+      infit = "InfitMSQ",
+      outfit = "OutfitMSQ",
+      both = c("InfitMSQ", "OutfitMSQ")
     )
-    outfit_long <- data.frame(
-      Item = results_df$Item,
-      statistic = "OutfitMSQ",
-      Value = results_df$OutfitMSQ,
-      stringsAsFactors = FALSE
-    )
-    results_long <- rbind(infit_long, outfit_long)
+    results_long <- do.call(rbind, lapply(stat_cols, function(sc) {
+      data.frame(
+        Item = results_df$Item,
+        statistic = sc,
+        Value = results_df[[sc]],
+        stringsAsFactors = FALSE
+      )
+    }))
     results_long$Item <- factor(results_long$Item, levels = item_levels)
 
     p <- ggplot2::ggplot(
@@ -204,7 +194,7 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
       ggdist::stat_dotsinterval(
         ggplot2::aes(slab_fill = ggplot2::after_stat(.data$level)),
         quantiles = actual_iterations,
-        point_interval = "median_hdci",
+        point_interval = .sim_point_interval(spec),
         layout = "weave",
         slab_color = NA,
         .width = c(0.66, outer_width)
@@ -217,7 +207,8 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
           actual_iterations,
           " simulated datasets. ",
           sample_clause,
-          " per dataset."
+          " per dataset.\n",
+          interval_note
         ))
       ) +
       ggplot2::scale_color_manual(
@@ -225,7 +216,7 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
         aesthetics = "slab_fill",
         guide = "none"
       ) +
-      ggplot2::facet_wrap(~statistic, ncol = 2) +
+      ggplot2::facet_wrap(~statistic, ncol = length(stat_cols)) +
       ggplot2::scale_x_continuous(
         breaks = seq(0.5, 1.5, 0.1),
         minor_breaks = NULL
@@ -299,8 +290,9 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
     " simulated datasets. ",
     sample_clause,
     " per dataset.\n",
-    "Orange dots indicate observed conditional item fit. ",
-    "Black dots indicate median fit from simulations."
+    "Orange diamonds indicate observed conditional item fit. ",
+    "Black dots indicate median fit from simulations.\n",
+    interval_note
   ))
 
   infit_p <- ggplot2::ggplot(
@@ -313,9 +305,10 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
     ggdist::stat_dots(
       ggplot2::aes(slab_fill = ggplot2::after_stat(.data$level)),
       quantiles = actual_iterations,
+      point_interval = .sim_point_interval(spec),
       layout = "weave",
       slab_color = NA,
-      .width = c(0.666, outer_width)
+      .width = c(0.66, outer_width)
     ) +
     ggplot2::geom_segment(
       data = lo_hi,
@@ -396,9 +389,10 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
     ggdist::stat_dots(
       ggplot2::aes(slab_fill = ggplot2::after_stat(.data$level)),
       quantiles = actual_iterations,
+      point_interval = .sim_point_interval(spec),
       layout = "weave",
       slab_color = NA,
-      .width = c(0.666, outer_width)
+      .width = c(0.66, outer_width)
     ) +
     ggplot2::geom_segment(
       data = lo_hi,
@@ -480,8 +474,8 @@ RMitemInfitPlot <- function(simfit, data, statistic = "infit") {
 #' @param ... Arguments passed on to \code{RMitemInfitPlot()}.
 #' @details
 #' `RMitemInfitCutoffPlot()` is a deprecated alias for `RMitemInfitPlot()`,
-#' retained for backward compatibility with code written against easyRasch2
-#' 0.8.0. It warns and forwards to `RMitemInfitPlot()`.
+#' kept for code written for easyRasch2 0.8.0. It warns and calls
+#' `RMitemInfitPlot()`.
 #' @export
 RMitemInfitCutoffPlot <- function(...) {
   .Deprecated("RMitemInfitPlot")

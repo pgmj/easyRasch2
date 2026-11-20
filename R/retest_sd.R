@@ -14,16 +14,18 @@
 #'   implies.
 #' @param sim_iter Integer. Iterations used to simulate the measurement-error
 #'   component. Default `500`.
-#' @param parallel Logical. Use `mirai` for the simulation if available.
-#'   Default `TRUE`.
-#' @param n_cores Integer or `NULL`. Parallel workers. When `NULL`,
-#'   `getOption("mc.cores")` is checked first.
+#' @param parallel Logical. Run the simulation in parallel via \pkg{mirai}
+#'   when it is installed. Default `TRUE`.
+#' @param n_cores Integer or `NULL`. Number of parallel workers. When
+#'   `NULL`, `getOption("mc.cores")` is used. If that is unset too, the
+#'   simulation runs sequentially.
 #' @param verbose Logical. Progress bar for the simulation. Default `FALSE`.
 #' @param boot Logical. Bootstrap a confidence interval by resampling
 #'   respondents. Default `TRUE`.
 #' @param boot_iter Integer. Bootstrap iterations. Default `500`.
 #' @param conf_int Numeric in (0, 1). HDCI width. Default `0.95`.
-#' @param seed Integer or `NULL`. Random seed.
+#' @param seed Integer or `NULL`. Random seed for the simulation and the
+#'   bootstrap. See [easyRasch2-reproducibility].
 #' @param output Character. `"kable"` (default) or `"dataframe"`.
 #'
 #' @return A one-row data.frame (or its `knitr_kable`) with `variance`, `sd`,
@@ -136,6 +138,13 @@
 #' answers the practical question from the other end: it reports how much
 #' occasion noise each flagged result would tolerate, which you can weigh
 #' against a published coefficient without converting anything.
+#'
+#' @references
+#' Caronni, A., Picardi, M., Scarano, S., Rota, V., & Amadei, M. (2026).
+#' Improving single-subject change assessment: Deriving the minimal detectable
+#' change of questionnaires' ordinal scores from Rasch analysis measures.
+#' *Disability and Rehabilitation, 48*(7), 2169-2186.
+#' \doi{10.1080/09638288.2025.2547398}
 #'
 #' @seealso [RMpersonChange()]
 #'

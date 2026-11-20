@@ -1,119 +1,105 @@
-#' Partial Gamma Local Dependence Analysis
+#' Partial gamma local dependence
 #'
-#' Computes partial gamma coefficients for Local Dependence (LD) assessment
-#' using \code{iarm::partgam_LD()}. Each pair of items is tested for residual
-#' association, controlling for the rest score (total score minus one of the
-#' items in the pair).
+#' Computes the partial gamma coefficient for each pair of items, the
+#' association between the two items given the rest score (the total score
+#' minus one item of the pair), to assess local dependence. With the
+#' result of [RMlocdepGammaCutoff()], it tests each pair against
+#' simulations, by default with a bootstrap p-value corrected across pairs.
 #'
-#' @param data A data.frame or matrix of item responses. Items must be scored
-#'   starting at 0 (non-negative integers). Missing values (`NA`) are allowed,
-#'   but at least one complete case must exist.
-#' @param cutoff Optional. Default `NULL` (no cutoff applied). Can be:
-#'   * The return value of \code{\link{RMlocdepGammaCutoff}} (a list with
-#'     `$pair_cutoffs`): the data.frame is extracted automatically and
-#'     simulation metadata is included in the kable caption.
-#'   * The `$pair_cutoffs` data.frame from \code{\link{RMlocdepGammaCutoff}}
-#'     directly: must have columns `Item1`, `Item2`, `gamma_low`, `gamma_high`.
-#'   When provided, adds columns `Gamma_low`, `Gamma_high`, and `Flagged`
-#'   (logical; `TRUE` when the observed partial gamma falls outside the
-#'   credible range) to the result.
-#' @param p_value Logical or `NULL`. When `TRUE`, adds one-sided bootstrap
-#'   p-values for *excess positive* local dependence (`p_gamma`,
-#'   `padj_gamma`), matching the `p_value` semantics of
-#'   \code{\link{RMlocdepQ3}}, and `flagged` reflects `padj_gamma < alpha`
-#'   (positive deviations only) instead of the credible range. One test per
-#'   item pair: the p-value is computed on `gamma_pair`, the larger of the two
-#'   conditioning directions, and repeated in the direction-2 table for the
-#'   same pair. The asymptotic adjusted p-value and star columns from
-#'   `iarm::partgam_LD()` are **dropped** in this mode, and the simulated
-#'   `gamma_low` / `gamma_high` band is kept as the effect-size reference.
-#'   `NULL`, the default, means `TRUE` when `cutoff` is the **full**
-#'   \code{\link{RMlocdepGammaCutoff}} object (it carries the simulated
-#'   distributions in `$results`) and `FALSE` otherwise, so calling with no
-#'   cutoff keeps the asymptotic table unchanged. Pass `FALSE` for the
-#'   pre-1.2.0 behaviour. The interval makes a poor decision rule, since its
-#'   width sets a family-wise error rate of `1 - width^m` over all \eqn{m}
-#'   pairs at once (Johansson, 2026).
-#' @param correction Character. Multiplicity correction for the bootstrap
-#'   p-values, applied over the family of all item pairs (before any
-#'   `n_pairs` display filter): `"fwer"` (default; Westfall-Young
-#'   studentised-max step-down), `"fdr_bh"`, `"fdr_by"`, or `"none"`. Ignored
-#'   when `p_value = FALSE`.
-#' @param alpha Numeric in (0, 1). Significance level used to flag pairs on
-#'   the corrected p-value. Default `0.05`. Ignored when `p_value = FALSE`.
-#' @param output Character string controlling the return value. Either
-#'   `"kable"` (default) for a formatted `knitr::kable()` table, or
-#'   `"dataframe"` for the underlying data.frame.
-#' @param n_pairs Optional positive integer. When supplied, only the
-#'   `n_pairs` item pairs with the largest absolute partial-gamma values
-#'   (i.e., strongest residual dependence in either direction) are
-#'   retained per rest-score direction, sorted by `|gamma|` descending.
-#'   When `NULL` (default), all pairs are returned in `iarm`'s native
-#'   ordering. Values larger than the total number of pairs are silently
-#'   capped at that total.
+#' @param data A data.frame or matrix of item responses, items scored from
+#'   0. Missing values (`NA`) are allowed, but only complete cases are used,
+#'   so at least one is needed.
+#' @param cutoff Optional. Default `NULL`, the asymptotic test of
+#'   `iarm::partgam_LD()`. Either of:
+#'   * The full result of [RMlocdepGammaCutoff()]. This enables the
+#'     bootstrap p-values (see `p_value`), and the caption reports the
+#'     simulation settings.
+#'   * Its `$pair_cutoffs` data.frame alone, with columns `Item1`, `Item2`,
+#'     `gamma_low` and `gamma_high`. Pairs are flagged against the interval.
+#'
+#'   Either adds the columns `Gamma_low`, `Gamma_high` and a logical
+#'   `Flagged` (`TRUE` when the partial gamma is outside the simulated
+#'   interval, or with p-values when the pair is flagged).
+#' @param p_value Logical or `NULL`. Whether to flag on one-sided bootstrap
+#'   p-values for excess positive local dependence (`p_gamma`,
+#'   `padj_gamma`), as in [RMlocdepQ3()]. Each pair is tested once, on
+#'   `gamma_pair`, the larger of its two rest-score directions, and the
+#'   p-value is repeated in both tables. The asymptotic p-value and star
+#'   columns are then dropped, and the simulated interval is kept as a
+#'   reference. `NULL` (default) uses the p-values whenever `cutoff` is the
+#'   full [RMlocdepGammaCutoff()] result, so a call without a cutoff keeps
+#'   the asymptotic table. `FALSE` gives the behaviour before version
+#'   1.2.0. The interval is a poor decision rule, since over m pairs a
+#'   width `w` gives a family-wise error rate of `1 - w^m` (Johansson,
+#'   2026).
+#' @param correction Character. Correction of the bootstrap p-values across
+#'   all pairs (before any `n_pairs` filter): `"fwer"` (default,
+#'   Westfall-Young step-down), `"fdr_bh"`, `"fdr_by"` or `"none"`. Used
+#'   only with p-values.
+#' @param alpha Numeric in (0, 1). A pair is flagged when its corrected
+#'   p-value is below `alpha`. Default `0.05`. Used only with p-values.
+#' @param output Character. `"kable"` (default) for `knitr::kable()`
+#'   tables, or `"dataframe"`.
+#' @param n_pairs Optional positive integer. Keeps only the `n_pairs` pairs
+#'   with the largest absolute partial gamma in each table, largest first.
+#'   Default `NULL`, all pairs in iarm's order. Values above the number of
+#'   pairs keep all pairs.
+#' @param x An `RMlocdepGamma` object (the kable output), for the print
+#'   methods.
+#' @param ... Not used by `print()`. Passed to `knitr::asis_output()` by
+#'   `knit_print()`.
 #'
 #' @return
-#' * If `output = "kable"`: an object of class `"RMlocdepGamma"`. Internally
-#'   a list with two `knitr_kable` elements, `$direction1` and
-#'   `$direction2`. In both, the rest score is the total score minus
-#'   Item 2 (the second column); the two elements list each item pair in
-#'   the two possible orders, so together they cover both rest-score
-#'   directions for every pair. Each has columns "Item 1", "Item 2",
-#'   "Partial gamma",
-#'   "Adj. p-value (BH)", and "p-value sign." (stars for the BH-adjusted
-#'   p-value, as `iarm` shows them). When `cutoff` is provided, additional
-#'   columns "Gamma low", "Gamma high", and "Flagged" are included.
-#'
-#'   The object has custom `print()` and `knitr::knit_print()` methods:
-#'   in the R console it prints the two tables stacked vertically; in a
-#'   Quarto / R Markdown chunk it renders as two distinct pipe tables.
-#'   Access the individual tables explicitly as `result$direction1` and
-#'   `result$direction2` if needed.
-#' * If `output = "dataframe"`: a named list of two data.frames
-#'   (`$direction1`, `$direction2`) with columns `Item1`, `Item2`,
-#'   `gamma`, `se`, `lower`, `upper` (95% Wald CI), `padj_bh`,
-#'   `Significance`. When `cutoff` is provided, columns `gamma_low`,
-#'   `gamma_high`, and `flagged` are also included.
-#'   With `p_value = TRUE`, `padj_bh` and `Significance` are replaced by
-#'   `p_gamma` and `padj_gamma` (identical for a pair in both directions).
+#' * `output = "kable"`: an object of class `"RMlocdepGamma"`, a list of
+#'   two `knitr_kable` tables, `direction1` and `direction2`. In both, the
+#'   rest score is the total score minus Item 2, and the two tables list
+#'   each pair in its two orders, so together they cover both rest-score
+#'   directions. The columns are "Item 1", "Item 2", "Partial gamma",
+#'   "Adj. p-value (BH)" and "p-value sign." (stars, as iarm shows them),
+#'   plus "Gamma low", "Gamma high" and "Flagged" with a `cutoff`. In the
+#'   console the object prints the two tables one after the other, and in
+#'   a Quarto or R Markdown chunk it renders as two tables.
+#' * `output = "dataframe"`: a named list of two data.frames,
+#'   `direction1` and `direction2`, with the columns `Item1`, `Item2`,
+#'   `gamma`, `se`, `lower` and `upper` (95% Wald interval), `padj_bh`,
+#'   `Significance` and `gamma_pair` (the larger of the pair's two
+#'   directions). With a `cutoff`, also `gamma_low`, `gamma_high` and
+#'   `flagged`. With p-values, `padj_bh` and `Significance` are replaced by
+#'   `p_gamma` and `padj_gamma`, the same for a pair in both tables.
 #'
 #' @details
-#' Partial gamma (Christensen, Kreiner & Mesbah, 2013) measures the residual
-#' association between pairs of items after controlling for the rest score
-#' (total score minus one item). Because it matters which item is subtracted,
-#' calculations are done for each pair in both directions, yielding two
-#' data.frames.
+#' \strong{Statistic.} The partial gamma (Christensen, Kreiner & Mesbah,
+#' 2013) measures the association between two items after controlling for
+#' the rest score. Which item is subtracted from the total matters, so each
+#' pair is computed in both directions, which gives the two tables. Values
+#' near 0 indicate local independence, large positive values positive
+#' dependence (the items share variance beyond the latent variable), and
+#' large negative values negative dependence. The \pkg{iarm} package must
+#' be installed (it is in Suggests).
 #'
-#' Values near 0 indicate no local dependence. Large positive values suggest
-#' positive LD (items share variance beyond the latent trait), while large
-#' negative values suggest negative LD.
+#' \strong{Asymptotic p-values.} The adjusted p-value is a
+#' Benjamini-Hochberg adjustment, made by easyRasch2, of the p-values from
+#' `iarm::partgam_LD()` over all \eqn{k(k-1)} tests in both directions.
+#' iarm's own adjusted column is a Bonferroni correction whatever method
+#' is named, since iarm adjusts one p-value at a time, so it is not used.
 #'
-#' The `iarm` package must be installed (it is in Suggests, not Imports).
-#' The asymptotic adjusted p-value is a Benjamini-Hochberg adjustment of the
-#' p-values from `iarm::partgam_LD()` over all \eqn{k(k-1)} tests in both
-#' directions, applied by easyRasch2. iarm's own adjusted column is a
-#' Bonferroni correction whatever method is named, because iarm adjusts one
-#' p-value at a time, so it is not used.
-#'
-#' \strong{Bootstrap p-values.} When `p_value = TRUE`, each pair is tested
-#' once, on the larger of its two rest-score directions (the `gamma_pair`
-#' column), against its simulated null distribution (from `cutoff$results`,
-#' simulated under local independence and built from that same maximum).
-#' The per-pair statistic is the residual studentised by the mean and SD of
-#' the observed and simulated values together; the marginal p-value is the one-sided Monte-Carlo p-value
-#' `(1 + #\{t* >= t\}) / (B + 1)` for excess *positive* LD (redundancy, the
-#' diagnostic target — matching \code{\link{RMlocdepQ3}}), so it can be no
-#' smaller than `1 / (B + 1)`. The band still shows both bounds for
-#' reference. `correction = "fwer"` uses the Westfall-Young studentised-max
-#' step-down over the family of all pairs, which exploits the bootstrap
-#' dependence among them (Ferreira, 2024). It controls the family-wise error
-#' rate at any number of `iterations` in [RMlocdepGammaCutoff()], but below
-#' 400 decisions depend on the seed and a message says so, and 1000 to 2000
-#' are recommended for a final analysis. Unlike the asymptotic
-#' p-values from `iarm::partgam_LD()`, these are calibrated against the
-#' *simulated Rasch null* rather than the asymptotic SE; they are
-#' model-conditional and sample-size-sensitive, and are reported alongside
-#' the simulated effect-size band, not in place of it.
+#' \strong{Bootstrap p-values.} Each pair is tested once, on the larger of
+#' its two directions (`gamma_pair`), against its simulated values
+#' (`cutoff$results`, simulated under local independence and built from
+#' the same maximum). The statistic is the deviation from the mean of the
+#' observed and simulated values together, divided by their SD. The
+#' uncorrected p is one-sided for excess positive dependence (redundancy,
+#' as in [RMlocdepQ3()]), `(1 + #\{t* >= t\}) / (B + 1)` for B simulated
+#' datasets, so it can be no smaller than `1 / (B + 1)`. The interval still
+#' shows both bounds. `correction = "fwer"` uses the Westfall-Young
+#' step-down over all pairs, which uses the dependence between them
+#' (Westfall & Young, 1993, Ferreira, 2024). It controls the family-wise
+#' error rate at any number of iterations in [RMlocdepGammaCutoff()], but
+#' below 400 decisions depend on the seed and a message says so. Use 1000
+#' to 2000 for a final analysis. Unlike the asymptotic p-values, these are
+#' calibrated against simulations from the Rasch model. They depend on the
+#' model and the sample size, and are reported with the simulated
+#' interval, not instead of it.
 #'
 #' @inheritSection RMitemInfit Multiple comparisons
 #'
@@ -126,10 +112,15 @@
 #' of hypotheses simultaneously. *Journal of Statistical Theory and Practice,
 #' 19*(1), 6. \doi{10.1007/s42519-024-00412-4}
 #'
+#' Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
+#' Rasch models: Iterations, multiplicity correction, and decision stability.
+#' *PsyArXiv*. \doi{10.31234/osf.io/7pqz4_v2}
+#'
 #' Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple Testing*.
 #' Wiley.
 #'
-#' @seealso \code{\link{RMlocdepGammaCutoff}}, \code{\link{RMlocdepGammaPlot}}
+#' @seealso [RMlocdepGammaCutoff()] for the simulations,
+#'   [RMlocdepGammaPlot()] for the plot, [RMlocdepQ3()] for \eqn{Q_3}.
 #'
 #' @export
 #'
@@ -148,7 +139,7 @@
 #'   # Return as data.frame list
 #'   RMlocdepGamma(sim_data, output = "dataframe")
 #'
-#'   # Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
+#'   # Simulation-based cutoffs (use 1000 or more iterations in real analyses)
 #'   if (requireNamespace("ggdist", quietly = TRUE)) {
 #'     cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100,
 #'                                       parallel = FALSE, seed = 42)
@@ -700,17 +691,7 @@ RMlocdepGamma <- function(
   out
 }
 
-#' Print method for RMlocdepGamma kable output
-#'
-#' Prints the two rest-score direction tables stacked vertically with a
-#' blank line between them. Each table renders via `knitr_kable`'s own
-#' print method as a clean pipe-markdown table.
-#'
-#' @param x An object of class `"RMlocdepGamma"` returned by
-#'   \code{\link{RMlocdepGamma}} with `output = "kable"`.
-#' @param ... Further arguments (currently unused).
-#' @return Invisibly returns `x`.
-#' @keywords internal
+#' @rdname RMlocdepGamma
 #' @exportS3Method base::print
 print.RMlocdepGamma <- function(x, ...) {
   print(x$direction1)
@@ -719,44 +700,32 @@ print.RMlocdepGamma <- function(x, ...) {
   invisible(x)
 }
 
-#' knitr knit_print method for RMlocdepGamma kable output
-#'
-#' Inside a knitr / Quarto / R Markdown chunk, returns the pre-combined
-#' two-table asis string so pandoc renders them as two distinct pipe
-#' tables. Outside knitr, R's normal dispatch falls back to
-#' `print.RMlocdepGamma()`.
-#'
-#' @param x An object of class `"RMlocdepGamma"`.
-#' @param ... Further arguments passed to `knitr::asis_output()`.
-#' @return A `knit_asis` character object.
-#' @keywords internal
+#' @rdname RMlocdepGamma
 #' @exportS3Method knitr::knit_print
 knit_print.RMlocdepGamma <- function(x, ...) {
   knitr::asis_output(x$.combined)
 }
 
-#' Simulation-Based Partial Gamma LD Cutoff Determination
+#' Simulation-based partial gamma local dependence cutoffs
 #'
-#' Uses parametric bootstrap simulation to determine appropriate cutoff values
-#' for partial gamma Local Dependence analysis via
-#' \code{\link[iarm]{partgam_LD}}. Under a correctly fitting Rasch model where
-#' items are locally independent, this function generates the expected
-#' distribution of partial gamma values per item pair, providing empirical
-#' critical values.
+#' Simulates datasets from a Rasch or partial credit model that fits and
+#' resembles your data, where items are locally independent by
+#' construction, and computes the partial gamma of every item pair in each.
+#' Passed to [RMlocdepGamma()], the result gives bootstrap p-values
+#' corrected across pairs, and an interval per pair that describes where a
+#' locally independent pair's partial gamma is expected to fall.
 #'
-#' @param data A data.frame or matrix of item responses. Items must be scored
-#'   starting at 0 (non-negative integers). Only complete cases (rows without
-#'   any `NA`) are used.
-#' @param iterations Integer. Number of simulation iterations (default 400,
-#'   was 250 before 1.2.0). 400 is the recommended floor for reproducible
-#'   Westfall-Young decisions (Johansson, 2026) and the count a 95\% interval
-#'   needs to converge. Use 1000 to 2000 for a final analysis.
-#' @param parallel Logical. Use parallel processing via `mirai` if available
-#'   (default `TRUE`).
-#' @param n_cores Integer or `NULL`. Number of parallel workers. When `NULL`,
-#'   `getOption("mc.cores")` is checked first. If neither is set and
-#'   `parallel = TRUE`, a warning is issued and execution falls back to
-#'   sequential (single core) processing.
+#' @param data A data.frame or matrix of item responses, items scored from
+#'   0. Only complete cases (rows without `NA`) are used.
+#' @param iterations Integer. Number of simulated datasets. Default `400`
+#'   (`250` before 1.2.0), the recommended minimum for reproducible
+#'   Westfall-Young decisions and the number a 95% interval needs to
+#'   converge (Johansson, 2026). Use 1000 to 2000 for a final analysis.
+#' @param parallel Logical. Run the simulations in parallel via \pkg{mirai}
+#'   when it is installed. Default `TRUE`.
+#' @param n_cores Integer or `NULL`. Number of parallel workers. When
+#'   `NULL`, `getOption("mc.cores")` is used. If that is unset too, a
+#'   warning is given and the simulations run sequentially.
 #' @param verbose Logical. Show a progress bar (default `FALSE`).
 #' @param seed Integer or `NULL`. Random seed for reproducibility. See
 #'   [easyRasch2-reproducibility] for what this guarantees and how it
@@ -772,72 +741,57 @@ knit_print.RMlocdepGamma <- function(x, ...) {
 #'   at the default iteration count rather than to imply an error rate.
 #'   Ignored when `cutoff_method = "quantile"`.
 #'
-#' @return A list with components:
+#' @return A list with:
 #' \describe{
-#'   \item{`results`}{data.frame with columns `iteration`, `Item1`, `Item2`,
-#'     and `gamma` (one row per item pair per successful iteration). `gamma` is
-#'     the larger of the pair's two rest-score directions, the statistic
-#'     `RMlocdepGamma()` tests. Rows are keyed by the sorted pair order, with
-#'     `Item1` before `Item2` in column order.}
-#'   \item{`pair_cutoffs`}{data.frame with per-pair cutoff summaries: `Item1`,
-#'     `Item2`, `gamma_low`, `gamma_high`. Bounds are computed using the method
-#'     specified by `cutoff_method`.}
-#'   \item{`actual_iterations`}{Number of successful iterations.}
+#'   \item{`results`}{data.frame with `iteration`, `Item1`, `Item2` and
+#'     `gamma`, one row per item pair and simulated dataset. `gamma` is the
+#'     larger of the pair's two rest-score directions, the statistic
+#'     [RMlocdepGamma()] tests. Pairs are keyed in sorted order.}
+#'   \item{`pair_cutoffs`}{data.frame with the interval per pair: `Item1`,
+#'     `Item2`, `gamma_low`, `gamma_high`, computed by `cutoff_method`.}
+#'   \item{`actual_iterations`}{Number of simulated datasets that could be
+#'     used.}
+#'   \item{`requested_iterations`}{The `iterations` argument.}
 #'   \item{`sample_n`}{Number of complete cases used.}
-#'   \item{`sample_n_total`}{Number of respondents in the raw input data,
-#'     before the complete-case filter.}
-#'   \item{`sample_has_na`}{Logical. Whether the raw input data contained
-#'     any missing values.}
-#'   \item{`sample_summary`}{Summary statistics of estimated person
-#'     parameters.}
-#'   \item{`item_names`}{Character vector of item names from data.}
-#'   \item{`cutoff_method`}{The method used to compute cutoffs (`"hdci"` or
-#'     `"quantile"`).}
-#'   \item{`hdci_width`}{The HDCI width used (only meaningful when
-#'     `cutoff_method = "hdci"`).}
+#'   \item{`sample_n_total`}{Number of respondents in `data`, before the
+#'     complete-case filter.}
+#'   \item{`sample_has_na`}{Logical. Whether `data` contained missing
+#'     values.}
+#'   \item{`sample_summary`}{Summary of the WLE person locations.}
+#'   \item{`item_names`}{Item names.}
+#'   \item{`cutoff_method`}{`"hdci"` or `"quantile"`.}
+#'   \item{`hdci_width`}{The HDCI width (used only with `"hdci"`).}
 #' }
 #'
 #' @details
-#' For each simulation iteration the function:
-#' \enumerate{
-#'   \item Resamples person parameters (thetas) with replacement from the
-#'     WLE person locations.
-#'   \item Simulates item response data under a Rasch model (dichotomous via
-#'     `psychotools::rrm()` or polytomous via an internal partial credit
-#'     simulator).
-#'   \item Computes partial gamma for every item pair in both rest-score
-#'     directions and keeps the larger. The coefficients are identical to
-#'     those of `iarm::partgam_LD()`, but are computed by a vectorised
-#'     internal, since `iarm` also derives the asymptotic standard error and
-#'     confidence interval that a simulated null does not need and costs
-#'     roughly two orders of magnitude more per iteration.
-#' }
+#' The generating model has the CML item parameters
+#' (`psychotools::pcmodel()`) and the WLE person locations of `data`. In
+#' each iteration, person locations are drawn with replacement from the
+#' WLE estimates, responses are simulated from the model
+#' (`psychotools::rrm()` for dichotomous items, an internal partial credit
+#' simulator for polytomous ones), and the partial gamma of every pair is
+#' computed in both directions, keeping the larger. The coefficients equal
+#' those of `iarm::partgam_LD()`, but are computed by a faster internal
+#' routine, since iarm also computes standard errors and intervals that
+#' the simulations do not need, at about a hundred times the cost.
 #'
-#' Because the data are simulated under the Rasch model, items are locally
-#' independent by construction. The distribution of partial gamma values
-#' across iterations provides empirical critical values per item pair. Values
-#' from real data that fall outside these bounds suggest local dependence that
-#' exceeds what would be expected by chance. Failed iterations (e.g., due to
-#' convergence issues or degenerate data) are silently discarded.
+#' A simulated dataset that cannot be used is left out, and
+#' [RMlocdepGamma()] reports how many in its caption.
 #'
-#' The generating model uses CML item thresholds via `psychotools::pcmodel()`
-#' (a dichotomous item is a 2-category PCM) and WLE person locations,
-#' consistent with the rest of the package; responses are simulated with
-#' `psychotools::rrm()` (dichotomous) or an internal partial credit score
-#' simulator (polytomous).
-#'
-#' Parallel processing is provided by the `mirai` package (optional). Install
-#' it with `install.packages("mirai")` to enable parallelisation.
-#'
-#' The `iarm` package must be installed (it is in Suggests, not Imports).
+#' Parallel processing needs the optional \pkg{mirai} package. The
+#' \pkg{iarm} package must be installed (it is in Suggests).
 #'
 #' @references
 #' Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.) (2013).
 #' \emph{Rasch Models in Health}, pp. 133--135. ISTE & Wiley.
 #' \doi{10.1002/9781118574454}
 #'
-#' @seealso \code{\link[iarm]{partgam_LD}}, \code{\link{RMlocdepGamma}},
-#'   \code{\link{RMlocdepGammaPlot}}
+#' Johansson, M. (2026). Simulation-based cutoffs for conditional item fit in
+#' Rasch models: Iterations, multiplicity correction, and decision stability.
+#' *PsyArXiv*. \doi{10.31234/osf.io/7pqz4_v2}
+#'
+#' @seealso [RMlocdepGamma()] for the tables, [RMlocdepGammaPlot()] for the
+#'   plot, [iarm::partgam_LD()].
 #'
 #' @export
 #'
@@ -1315,7 +1269,7 @@ RMlocdepGammaCutoff <- function(
 #' @param data_list List produced inside [RMlocdepGammaCutoff()].
 #' @return A data.frame with columns `Item1`, `Item2`, and `gamma`, or a
 #'   character string on failure.
-#' @keywords internal
+#' @noRd
 run_single_partgam_LD_sim <- function(seed, data_list) {
   # The RNG kind is pinned, not just the seed: mirai daemons start under
   # L'Ecuyer-CMRG while the calling session uses the Mersenne-Twister
@@ -1408,7 +1362,7 @@ run_single_partgam_LD_sim <- function(seed, data_list) {
 #' @param n_cores Number of mirai daemons.
 #' @param verbose Show progress bar.
 #' @return List of raw results (one element per iteration).
-#' @keywords internal
+#' @noRd
 run_partgam_LD_sim_parallel <- function(
   iterations,
   sim_seeds,
@@ -1473,7 +1427,7 @@ run_partgam_LD_sim_parallel <- function(
 #' @param sim_data_list List of data passed to each worker.
 #' @param verbose Show progress bar.
 #' @return List of raw results (one element per iteration).
-#' @keywords internal
+#' @noRd
 run_partgam_LD_sim_sequential <- function(
   iterations,
   sim_seeds,
@@ -1500,63 +1454,48 @@ run_partgam_LD_sim_sequential <- function(
   results
 }
 
-#' Plot Distribution of Simulated Partial Gamma LD Values
+#' Plot the simulated partial gamma local dependence values
 #'
-#' Visualises the distribution of simulation-based partial gamma LD values
-#' from \code{\link{RMlocdepGammaCutoff}}, optionally overlaying observed partial
-#' gamma values computed from real data via \code{\link[iarm]{partgam_LD}}.
+#' Plots the simulated partial gamma of each item pair from
+#' [RMlocdepGammaCutoff()], and optionally the observed values in your data.
 #'
-#' Uses `ggdist::stat_dotsinterval()` (when `data` is not supplied) or
-#' `ggdist::stat_dots()` (when `data` is supplied) with
-#' `point_interval = "median_hdci"` and `.width = c(0.66, 0.95, 0.99)`.
-#'
-#' @param simfit The return value of \code{\link{RMlocdepGammaCutoff}} (a list with
-#'   components `results`, `pair_cutoffs`, `actual_iterations`, `sample_n`, and
-#'   `item_names`).
-#' @param data Optional. A data.frame or matrix of item responses for computing
-#'   and overlaying observed partial gamma values. Items must be scored starting
-#'   at 0 (non-negative integers). When provided, the plot includes orange
-#'   diamond markers for the observed partial gamma alongside the simulated
-#'   distribution, plus segment summaries from the cutoff intervals.
-#' @param items Optional character vector of item names to include in the plot.
-#'   Only item pairs where **both** items are in this vector will be shown. When
-#'   `NULL` (default), all item pairs are plotted.
-#' @param n_pairs Optional positive integer. When supplied, only the
-#'   `n_pairs` item pairs with the largest absolute partial gamma values
-#'   are plotted, sorted by `|gamma|` descending. When `data` is
-#'   supplied, the ranking uses the *observed* partial gammas (the
-#'   diamonds you actually want to interpret); otherwise it falls back
-#'   to the per-pair median of the simulated distributions. Applied
-#'   *after* the `items` filter when both are supplied. Values larger
-#'   than the number of available pairs are silently capped.
+#' @param simfit The result of [RMlocdepGammaCutoff()].
+#' @param data Optional. The item responses the simulations were made from,
+#'   items scored from 0. The observed partial gamma (complete cases) is
+#'   then drawn as orange diamonds.
+#' @param items Optional character vector of item names. Only pairs with
+#'   both items in it are shown. Default `NULL`, all pairs.
+#' @param n_pairs Optional positive integer. Only the `n_pairs` pairs with
+#'   the largest absolute partial gamma are shown, largest first: the
+#'   observed values with `data`, the simulated medians without. Applied
+#'   after `items`. Values above the number of pairs show all pairs.
 #'
 #' @return A `ggplot` object.
 #'
 #' @details
-#' The plot shows one row per item pair (labelled as "Item1 - Item2"). The
-#' observed overlay is the larger of the pair's two rest-score directions,
-#' matching the statistic `RMlocdepGamma()` tests and the simulated null.
+#' One row per item pair, labelled "Item1 - Item2". The observed value is
+#' the larger of the pair's two rest-score directions, the statistic
+#' [RMlocdepGamma()] tests, computed with the same internal routine as the
+#' simulations.
 #'
-#' When `data` is **not** supplied, the function plots the simulated partial
-#' gamma distributions as dot-interval plots using
-#' `ggdist::stat_dotsinterval()` with median and Highest Density Continuous
-#' Interval (HDCI) summaries.
+#' Each pair's simulated values are drawn as dots, with the median, an
+#' inner 66% interval and an outer interval. The outer interval is the one
+#' in `simfit$pair_cutoffs`, which [RMlocdepGamma()] tabulates: the HDCI of
+#' width `hdci_width`, or the 2.5th to 97.5th percentiles with
+#' `cutoff_method = "quantile"`. The inner interval uses the same method.
+#' Without `data` the intervals are drawn with
+#' `ggdist::stat_dotsinterval()`. With `data` they are black segments with
+#' a black dot for the median, and the observed value is an orange diamond.
 #'
-#' When `data` **is** supplied, the function:
-#' \enumerate{
-#'   \item Computes observed partial gamma values via
-#'     `iarm::partgam_LD()`.
-#'   \item Overlays observed gamma values as orange diamond markers on the
-#'     simulated distributions.
-#'   \item Shows per-pair cutoff intervals (from `simfit$pair_cutoffs`) as
-#'     black line segments, with thicker segments for the 66\% interval and
-#'     black dots for the median.
-#' }
+#' The intervals are per pair and not corrected for testing many pairs.
+#' With the full cutoff object, [RMlocdepGamma()] flags pairs by adjusted
+#' p-values instead, so a pair just outside its interval need not be
+#' flagged there. The plot shows no p-values.
 #'
-#' The `ggplot2`, `ggdist`, and optionally `iarm` packages must be installed
-#' (they are in Suggests, not Imports).
+#' The \pkg{ggplot2} and \pkg{ggdist} packages must be installed, and
+#' \pkg{iarm} with `data` (all are in Suggests).
 #'
-#' @seealso \code{\link{RMlocdepGammaCutoff}}, \code{\link{RMlocdepGamma}}
+#' @seealso [RMlocdepGammaCutoff()], [RMlocdepGamma()], [RMlocdepQ3Plot()]
 #'
 #' @importFrom rlang .data
 #' @export
@@ -1773,24 +1712,26 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
   }
 
   # --- Compute per-pair summary intervals for segment overlays ----------------
-  pair_names <- unique(results_df$Pair)
-  lo_hi <- do.call(
-    rbind,
-    lapply(pair_names, function(pair) {
-      sub <- results_df[results_df$Pair == pair, ]
-      data.frame(
-        Pair = pair,
-        min_gamma = stats::quantile(sub$gamma, 0.005, na.rm = TRUE),
-        max_gamma = stats::quantile(sub$gamma, 0.995, na.rm = TRUE),
-        p66lo_gamma = stats::quantile(sub$gamma, 0.167, na.rm = TRUE),
-        p66hi_gamma = stats::quantile(sub$gamma, 0.833, na.rm = TRUE),
-        median_gamma = stats::median(sub$gamma, na.rm = TRUE),
-        stringsAsFactors = FALSE,
-        row.names = NULL
-      )
-    })
+  # The outer interval is the one stored in `simfit$pair_cutoffs` (the one
+  # RMlocdepGamma() tabulates) and the inner 66% interval uses the same method.
+  spec <- .sim_interval_spec(simfit)
+  interval_note <- .sim_interval_caption(spec, "pair", "RMlocdepGamma()")
+  key_names <- unique(results_df$Pair)
+  cut_idx <- match(key_names, pair_cutoffs$Pair)
+  iv <- .sim_plot_intervals(
+    results_df$gamma, results_df$Pair, key_names,
+    pair_cutoffs$gamma_low[cut_idx], pair_cutoffs$gamma_high[cut_idx],
+    spec$method
   )
-  rownames(lo_hi) <- NULL
+  lo_hi <- data.frame(
+    Pair = key_names,
+    min_gamma = iv$lo,
+    max_gamma = iv$hi,
+    p66lo_gamma = iv$lo66,
+    p66hi_gamma = iv$hi66,
+    median_gamma = iv$median,
+    stringsAsFactors = FALSE
+  )
 
   # --- Case 1: no observed data, show simulation distribution only ------------
   if (missing(data)) {
@@ -1811,10 +1752,10 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
       ggdist::stat_dotsinterval(
         ggplot2::aes(slab_fill = ggplot2::after_stat(.data$level)),
         quantiles = actual_iterations,
-        point_interval = "median_hdci",
+        point_interval = .sim_point_interval(spec),
         layout = "weave",
         slab_color = NA,
-        .width = c(0.66, 0.95, 0.99)
+        .width = c(0.66, spec$width)
       ) +
       ggplot2::geom_vline(
         xintercept = 0,
@@ -1830,11 +1771,12 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
           actual_iterations,
           " simulated datasets (no true local dependence). ",
           sample_clause,
-          " per dataset."
+          " per dataset.\n",
+          interval_note
         ))
       ) +
       ggplot2::scale_color_manual(
-        values = scales::brewer_pal()(3),
+        values = scales::brewer_pal()(3)[-1],
         aesthetics = "slab_fill",
         guide = "none"
       ) +
@@ -1873,7 +1815,8 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     sample_clause,
     " per dataset.\n",
     "Orange diamonds indicate observed partial gamma LD. ",
-    "Black dots indicate median gamma from simulations."
+    "Black dots indicate median gamma from simulations.\n",
+    interval_note
   ))
 
   p <- ggplot2::ggplot(
@@ -1886,9 +1829,10 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
     ggdist::stat_dots(
       ggplot2::aes(slab_fill = ggplot2::after_stat(.data$level)),
       quantiles = actual_iterations,
+      point_interval = .sim_point_interval(spec),
       layout = "weave",
       slab_color = NA,
-      .width = c(0.66, 0.95, 0.99)
+      .width = c(0.66, spec$width)
     ) +
     ggplot2::geom_segment(
       data = lo_hi,
@@ -1933,7 +1877,7 @@ RMlocdepGammaPlot <- function(simfit, data, items = NULL, n_pairs = NULL) {
       caption = caption_text
     ) +
     ggplot2::scale_color_manual(
-      values = scales::brewer_pal()(3),
+      values = scales::brewer_pal()(3)[-1],
       aesthetics = "slab_fill",
       guide = "none"
     ) +

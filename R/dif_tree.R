@@ -52,188 +52,181 @@
 
 #' Tree-based DIF analysis with effect-size classification
 #'
-#' Detects Differential Item Functioning (DIF) by recursively splitting
-#' the sample on one or more covariates using \code{psychotree::raschtree()}
-#' (dichotomous data) or \code{psychotree::pctree()} (polytomous data),
-#' then computes per-split effect-size measures for every item -- the
-#' Mantel-Haenszel odds-ratio (Holland & Thayer, 1986), on the Delta scale
-#' developed at the Educational Testing Service (ETS; Zwick, 2012), for
-#' dichotomous data, or the partial gamma coefficient for polytomous data -- and
-#' classifies them into ETS A/B/C categories (Bjorner et al., 1998). Optionally,
-#' an iterative purification step (Henninger et al., 2025) is applied, and tree
-#' stability across resamples can be assessed via
-#' \code{stablelearner::stabletree()} (Philipp et al., 2018).
+#' Detects differential item functioning (DIF) by splitting the sample on one
+#' or more covariates with model-based recursive partitioning:
+#' `psychotree::raschtree()` for dichotomous data (Strobl et al., 2015) or
+#' `psychotree::pctree()` for polytomous data (Komboz et al., 2018). For
+#' every split it computes an effect size per item, the Mantel-Haenszel
+#' odds ratio on the Delta scale of the Educational Testing Service (ETS)
+#' for dichotomous data (Holland & Thayer, 1986, Zwick, 2012, Henninger et
+#' al., 2023), or the partial gamma coefficient for polytomous data
+#' (Bjorner et al., 1998, Henninger et al., 2025), and classifies it as A,
+#' B or C. Optional steps are iterative purification (Henninger et al.,
+#' 2025) and an assessment of the stability of the tree across resamples
+#' with `stablelearner::stabletree()` (Philipp et al., 2018).
 #'
-#' Continuous covariates (e.g., age in years) and interactions among
-#' multiple covariates are handled natively by the model-based
-#' recursive-partitioning machinery of \code{partykit} / \code{psychotree}.
+#' Continuous covariates (for example age in years) and interactions
+#' between covariates are handled by the recursive partitioning in
+#' \pkg{partykit} and \pkg{psychotree}.
 #'
-#' @param data A data.frame or matrix of item responses (non-negative
-#'   integers, 0-based). One column per item. Items only -- pass
-#'   covariates separately via \code{covariates}.
-#' @param covariates A data.frame with \code{nrow(data)} rows giving the
-#'   DIF covariates. Columns may be numeric (continuous), factor, ordered
-#'   factor, or logical. At least one column is required.
-#' @param model One of \code{"auto"} (default), \code{"PCM"}, or
-#'   \code{"RM"}. \code{"auto"} picks RM when the data are dichotomous
-#'   (max response = 1) and PCM otherwise.
-#' @param effect_size One of \code{"auto"} (default), \code{"MH"}
-#'   (Mantel-Haenszel), or \code{"pgamma"} (partial gamma). \code{"auto"}
-#'   uses MH for RM and partial gamma for PCM.
-#' @param purification \code{"iterative"} (default) or \code{"none"}.
-#'   Iterative purification recomputes the effect size while excluding
-#'   items already classified as DIF from the matching score (Bjorner et
-#'   al., 1998). Henninger et al. (2025) found it most important in short
-#'   tests, where DIF items make up a larger share of the matching score.
-#'   \code{RMdifGamma()} and \code{RMitemICCPlot()} do not purify, so their
-#'   classifications can differ from the tree's on the same data.
-#' @param p_adj Multiple-testing adjustment for the partial-gamma
-#'   classification: \code{"fdr"} (default, Benjamini & Hochberg, as for
-#'   the asymptotic p-values of \code{RMdifGamma()}), \code{"bonferroni"}
-#'   or \code{"none"}. Without an adjustment, the chance of flagging at
-#'   least one item without DIF grows with the number of items (Henninger
-#'   et al., 2025). Ignored for MH (which uses the ETS test directly).
-#' @param thresholds Numeric length-2 vector with the partial-gamma
-#'   B/C boundaries (default \code{c(0.21, 0.31)}). Ignored for MH (the
-#'   ETS Delta-scale boundaries 1.0 / 1.5 are used).
-#' @param alpha Significance level for the A/C tests. Default
-#'   \code{0.05}.
-#' @param prune_negligible Logical. If \code{TRUE}, splits whose every
-#'   item is classified as A are pruned from the tree. Default
-#'   \code{FALSE}.
-#' @param stability Logical. If \code{TRUE}, runs
-#'   \code{stablelearner::stabletree()} on the fitted tree to assess
-#'   variable-selection and cutpoint stability across resamples.
-#'   Default \code{FALSE}.
-#' @param stability_B Integer. Number of resamples for stability
-#'   assessment. Default \code{100}.
-#' @param stability_sampler One of \code{"subsampling"} (default) or
-#'   \code{"bootstrap"}. Subsampling is recommended for tree stability
-#'   because bootstrap resamples can drop levels of categorical
-#'   covariates, breaking the model fit on small subsamples.
-#' @param min_n_per_level Integer. Minimum count required for any factor
-#'   level in \code{covariates}. Default \code{20}. Set to \code{0} to
-#'   disable.
-#' @param on_rescale One of \code{"message"} (default), \code{"warning"},
-#'   or \code{"stop"}. Controls how the function reports the situation
-#'   in which one or more items have no responses in their lowest
-#'   category within a terminal node of the tree (psychotree silently
-#'   rescales those items per node, which leaves the per-node item
-#'   parameters on a different metric). \emph{The MH and partial-gamma
-#'   effect sizes reported here are computed on the raw responses and
-#'   are not affected.} The diagnostic concerns only the per-node item
-#'   parameters that are visible via \code{plot(tree)}.
-#' @param output One of \code{"kable"} (default), \code{"dataframe"},
-#'   \code{"tree"}, \code{"plot"}, or \code{"list"}. \code{"kable"}
-#'   renders the
-#'   per-split per-item effect-size table as a \code{knitr::kable()};
-#'   \code{"dataframe"} returns the underlying tidy data.frame;
-#'   \code{"tree"} returns the augmented partykit tree object;
-#'   \code{"plot"} returns the partykit tree plot with item names on
-#'   the terminal-node x-axis (\code{tp_args = list(names = TRUE)});
-#'   \code{"list"} returns both views from a single fit, as
-#'   \code{list(table = <data.frame>, tree = <tree object>)}.
-#'   For full control over the plot, use \code{output = "tree"} and
-#'   call \code{plot()} on the result with your own \code{tp_args}.
-#'   When
-#'   \code{stability = TRUE}, the stability summary is attached as
-#'   \code{attr(result, "stability")} (a small data.frame) and
-#'   \code{attr(result, "stability_kable")} (pre-rendered kable).
-#' @param ... Additional arguments forwarded to
-#'   \code{psychotree::raschtree()} or \code{psychotree::pctree()}, e.g.
-#'   \code{minsize}, \code{alpha} for the parameter-instability test.
-#'   Note: this \code{alpha} (the tree-fitting argument) is independent
-#'   of the \code{alpha} for ETS classification above; pass it via
-#'   \code{...}.
+#' @param data A data.frame or matrix of item responses, items scored from
+#'   0. One column per item and items only. Pass the covariates in
+#'   `covariates`.
+#' @param covariates A data.frame with `nrow(data)` rows and at least one
+#'   column of DIF covariates. Columns can be numeric (continuous), factor,
+#'   ordered factor or logical. Rows with a missing covariate are dropped
+#'   with a message, and at least 30 rows must remain.
+#' @param model One of `"auto"` (default), `"PCM"` or `"RM"`. `"auto"`
+#'   picks the Rasch model when every item is dichotomous and the partial
+#'   credit model otherwise.
+#' @param effect_size One of `"auto"` (default), `"MH"` (Mantel-Haenszel)
+#'   or `"pgamma"` (partial gamma). `"auto"` uses MH with the Rasch model
+#'   and partial gamma with the PCM.
+#' @param purification `"iterative"` (default) or `"none"`. Iterative
+#'   purification recomputes the effect size with the items already
+#'   classified as DIF left out of the matching score (Bjorner et al.,
+#'   1998). Henninger et al. (2025) found it matters most in short tests,
+#'   where DIF items make up more of the matching score. [RMdifGamma()] and
+#'   [RMitemICCPlot()] do not purify, so their results can differ from the
+#'   tree's on the same data.
+#' @param p_adj Adjustment for multiple testing in the partial gamma
+#'   classification: `"fdr"` (default, Benjamini-Hochberg, as for the
+#'   asymptotic p-values of [RMdifGamma()]), `"bonferroni"` or `"none"`.
+#'   Without an adjustment, the chance of flagging at least one item
+#'   without DIF grows with the number of items (Henninger et al., 2025).
+#'   Not used for MH, which uses the ETS test directly.
+#' @param thresholds Numeric vector of length 2, the partial gamma
+#'   boundaries between A and B and between B and C. Default
+#'   `c(0.21, 0.31)`. Not used for MH, which uses the ETS boundaries 1.0
+#'   and 1.5 on the Delta scale.
+#' @param alpha Significance level of the tests in the A and C rules.
+#'   Default `0.05`.
+#' @param prune_negligible Logical. Prune splits in which every item is
+#'   classified A. Default `FALSE`.
+#' @param stability Logical. Run `stablelearner::stabletree()` on the
+#'   fitted tree to assess how stable the selected covariates and cutpoints
+#'   are across resamples. Default `FALSE`.
+#' @param stability_B Integer. Number of resamples for the stability
+#'   assessment. Default `100`.
+#' @param stability_sampler `"subsampling"` (default) or `"bootstrap"`.
+#'   Subsampling is recommended for trees, since bootstrap resamples can
+#'   lose levels of categorical covariates, which breaks the fit in small
+#'   subsamples.
+#' @param min_n_per_level Integer. Smallest count allowed for a level of a
+#'   factor covariate. Default `20`. `0` turns the check off.
+#' @param on_rescale One of `"message"` (default), `"warning"` or
+#'   `"stop"`. How to report items with no responses in their lowest
+#'   category within a terminal node. psychotree rescales such items per
+#'   node without saying so, which puts that node's item parameters on a
+#'   different metric. The MH and partial gamma effect sizes are computed
+#'   on the raw responses and are not affected. Only the item parameters
+#'   shown by `plot(tree)` are.
+#' @param output One of `"kable"` (default), `"dataframe"`, `"tree"`,
+#'   `"plot"` or `"list"`. See Value. For full control of the plot, use
+#'   `output = "tree"` and call `plot()` on it with your own `tp_args`.
+#' @param ... Further arguments passed to `psychotree::raschtree()` or
+#'   `psychotree::pctree()`, for example `minsize`, or `alpha` for the
+#'   test of parameter instability. That `alpha` is separate from the
+#'   `alpha` of the classification above, and has to be passed through
+#'   `...`.
 #'
-#' @return Depending on \code{output}:
+#' @return By `output`:
 #' \describe{
-#'   \item{\code{"kable"}}{A \code{knitr_kable} object with one row per
-#'     (split node x item), grouped by node via \code{pack_rows}-style
-#'     section headers. The caption summarises model, effect-size
-#'     measure, purification, and (if requested) stability.}
-#'   \item{\code{"dataframe"}}{A data.frame with one row per (split node
-#'     x item): columns \code{NodeID}, \code{Split} (human-readable
-#'     description of the split), \code{Variable}, \code{Direction},
-#'     \code{Item}, \code{EffectSize}, \code{SE}, \code{Class} (A/B/C),
-#'     \code{Flagged} (TRUE for B or C), \code{n_left}, \code{n_right}.}
-#'   \item{\code{"tree"}}{The fitted partykit tree object with class
-#'     \code{c("RMdifTree", ...)}, with effect-size results stored at
-#'     \code{tree$info$effectsize}.}
-#'   \item{\code{"plot"}}{A plotted partykit tree.}
-#'   \item{\code{"list"}}{A list with both views from a single fit:
-#'     \code{table} (the \code{"dataframe"} result, with its attributes)
-#'     and \code{tree} (the \code{"tree"} result).}
+#'   \item{`"kable"`}{A `knitr_kable` table with one row per split and
+#'     item, grouped by split. The caption gives the model, the effect size,
+#'     the purification and, if requested, the stability.}
+#'   \item{`"dataframe"`}{A data.frame with one row per split and item and
+#'     the columns `NodeID`, `Split` (a readable description of the split),
+#'     `Variable`, `Direction`, `Item`, `EffectSize`, `SE`, `Class` (A, B
+#'     or C), `Flagged` (`TRUE` for B or C), `n_left` and `n_right`.}
+#'   \item{`"tree"`}{The fitted partykit tree, with class
+#'     `c("RMdifTree", ...)` and the effect sizes in
+#'     `tree$info$effectsize`.}
+#'   \item{`"plot"`}{The partykit tree plotted, with item names on the
+#'     x-axis of the terminal nodes (`tp_args = list(names = TRUE)`).}
+#'   \item{`"list"`}{Both views from one fit and the analysis details:
+#'     `table` (the `"dataframe"` result), `tree` (the `"tree"` result),
+#'     `model` (`"RM"` or `"PCM"`), `effect_size` (`"MH"` or `"pgamma"`),
+#'     `stability` (the stability summary as a data.frame, `NULL` unless
+#'     `stability = TRUE`) and `rescaled_terminal_items` (a data.frame of
+#'     `NodeID` and `Item` for items that psychotree rescaled within a
+#'     terminal node, see `on_rescale`, `NULL` if none).}
 #' }
 #'
-#' Stability results (when \code{stability = TRUE}) are attached to the
-#' return value as \code{attr(result, "stability")} (data.frame) and
-#' \code{attr(result, "stability_kable")} (pre-rendered kable).
+#' The `"dataframe"`, `"kable"` and `"tree"` results also carry these
+#' details as attributes (`model`, `effect_size`, `stability`,
+#' `stability_kable`, `rescaled_terminal_items`), kept for compatibility.
+#' Use `output = "list"` to get them without [attr()].
 #'
 #' @details
-#' \strong{ETS Delta-scale Mantel-Haenszel.} The MH common odds ratio
-#' \eqn{\hat{\alpha}_{MH}} is mapped to the ETS Delta scale via
-#' \eqn{\Delta_{MH} = -2.35 \log \hat{\alpha}_{MH}}. The classification
-#' rules (Holland & Thayer, 1988; Zwick, 2012) are:
+#' \strong{Mantel-Haenszel on the ETS Delta scale.} The MH common odds
+#' ratio \eqn{\hat{\alpha}_{MH}} is put on the ETS Delta scale as
+#' \eqn{\Delta_{MH} = -2.35 \log \hat{\alpha}_{MH}}. The classes (Holland &
+#' Thayer, 1986, Zwick, 2012) are:
 #' \itemize{
-#'   \item Class \strong{A}: \eqn{|\Delta_{MH}| < 1} or test of
-#'     \eqn{\Delta_{MH} = 0} not rejected at \code{alpha}.
-#'   \item Class \strong{C}: \eqn{|\Delta_{MH}| \ge 1.5} and test of
-#'     \eqn{|\Delta_{MH}| \le 1} rejected at \code{alpha}.
-#'   \item Class \strong{B}: otherwise.
+#'   \item \strong{A}: \eqn{|\Delta_{MH}| < 1}, or the test of
+#'     \eqn{\Delta_{MH} = 0} is not rejected at `alpha`.
+#'   \item \strong{C}: \eqn{|\Delta_{MH}| \ge 1.5}, and the test of
+#'     \eqn{|\Delta_{MH}| \le 1} is rejected at `alpha`.
+#'   \item \strong{B}: otherwise.
 #' }
-#' easyRasch2 uses the sign convention of \code{effecttree}: positive
-#' \eqn{\Delta} indicates that the item is more difficult for the second
-#' (reference) group.
+#' The sign follows `effecttree`: a positive \eqn{\Delta} means the item is
+#' more difficult for the second (reference) group.
 #'
-#' \strong{Partial gamma.} \code{iarm::partgam_DIF()} provides the gamma
-#' estimate and SE per item. ETS-style classification follows Bjorner et
-#' al. (1998): A if \eqn{|\gamma| < 0.21} or the test of \eqn{\gamma = 0}
-#' is not rejected at \code{alpha}; C if \eqn{|\gamma| > 0.31} and the
-#' test of \eqn{|\gamma| \le 0.21} is rejected at \code{alpha}; B
-#' otherwise.
+#' \strong{Partial gamma.} `iarm::partgam_DIF()` gives the estimate and SE
+#' per item. The classes follow Bjorner et al. (1998): A if
+#' \eqn{|\gamma| < 0.21} or the test of \eqn{\gamma = 0} is not rejected at
+#' `alpha`, C if \eqn{|\gamma| > 0.31} and the test of
+#' \eqn{|\gamma| \le 0.21} is rejected at `alpha`, and B otherwise.
 #'
-#' \strong{Rule-of-thumb caveat.} The A/B/C boundaries (Delta 1.0 / 1.5;
-#' gamma 0.21 / 0.31) are conventions carried over from large-scale
-#' educational testing, not values calibrated to the sample and items at
-#' hand -- in contrast to the simulation-based cutoffs used elsewhere in
-#' this package -- so the classification is best read as a rough
-#' magnitude guide rather than a calibrated test. For a sample-calibrated
-#' partial-gamma DIF test, see [RMdifGamma()] with an
-#' [RMdifGammaCutoff()] object (optionally with `p_value = TRUE`).
+#' \strong{These boundaries are conventions.} The A, B and C boundaries
+#' (Delta 1.0 and 1.5, gamma 0.21 and 0.31) come from large-scale
+#' educational testing and are not calibrated to the sample and items at
+#' hand, unlike the simulation-based cutoffs elsewhere in this package.
+#' Read the classes as a rough guide to size, not as a calibrated test. For
+#' a calibrated partial gamma DIF test, use [RMdifGamma()] with the result
+#' of [RMdifGammaCutoff()].
 #'
-#' \strong{Continuous and interaction effects.} The recursive
-#' partitioning step automatically handles continuous covariates (the
-#' parameter-instability test searches for the optimal cutpoint) and
-#' multivariate interactions (later splits are conditional on earlier
-#' ones). To assess sensitivity of variable selection and cutpoints to
-#' the particular sample, set \code{stability = TRUE}.
+#' \strong{Continuous covariates and interactions.} The recursive
+#' partitioning handles continuous covariates (the test of parameter
+#' instability searches for the best cutpoint) and interactions (later
+#' splits are conditional on earlier ones). To see how much the selected
+#' covariates and cutpoints depend on the sample, set `stability = TRUE`.
 #'
-#' \strong{Stability assessment.} When \code{stability = TRUE}, the same
-#' tree-fitting call is replayed on \code{stability_B} resamples of the
-#' data. The returned \code{stabletree} object reports, per covariate,
-#' the proportion of resamples in which it was selected at any split,
-#' and (for continuous covariates) the empirical distribution of
-#' cutpoints. Stability is independent of effect-size classification --
-#' a stable split with a negligible effect is still negligible, and a
-#' large effect on an unstable split should be interpreted with care.
-#' Cost is roughly \code{stability_B} times the original fitting time.
+#' \strong{Stability.} With `stability = TRUE`, the same tree is fitted to
+#' `stability_B` resamples of the data. For each covariate, the result
+#' gives the share of resamples in which it was selected for a split, and
+#' for continuous covariates the distribution of the cutpoints. Stability
+#' is separate from the effect sizes. A stable split with a negligible
+#' effect is still negligible, and a large effect on an unstable split
+#' needs care. It takes about `stability_B` times as long as one fit.
 #'
 #' \strong{Real and artificial DIF.} The splits come from a joint test of
-#' all item parameters. The per-node effect sizes, however, condition on
+#' all item parameters. The effect sizes per node, however, condition on
 #' the total score, so real DIF in one item can induce artificial DIF of
 #' the opposite sign in the others (Hagquist & Andrich, 2017). An item can
 #' then be classified B or C only because another item has DIF.
-#' \code{purification = "iterative"} limits this by removing items
-#' classified as DIF from the matching score (Bjorner et al., 1998).
+#' `purification = "iterative"` limits this by leaving items classified as
+#' DIF out of the matching score (Bjorner et al., 1998).
 #'
-#' \strong{Acknowledgement.} The effect-size machinery -- MH and partial
-#' gamma per node, iterative purification, ETS A/B/C classification --
-#' follows the implementations by Henninger & Radek in the GitHub
-#' packages \emph{raschtreeMH} and \emph{effecttree}. The relevant code
-#' has been adapted here under the MIT licence (see file header).
+#' \strong{Performance.} In a simulation study of the Rasch tree, Asamoah
+#' et al. (2025) found the best detection of DIF when it was balanced and
+#' large, and lower accuracy when it was unbalanced and more items had DIF.
+#' Adding an effect size reduced the detection of negligible DIF. Detection
+#' was lowest in small samples.
+#'
+#' \strong{Acknowledgement.} The effect-size computations (MH and partial
+#' gamma per node, iterative purification, the A, B and C classes) follow
+#' the implementations by Henninger and Radek in the GitHub packages
+#' raschtreeMH and effecttree, adapted here under the MIT licence (see the
+#' header of the source file).
 #'
 #' @references
+#' Asamoah, N. A. B., Turner, R. C., Lo, W.-J., Crawford, B. L., & Jozkowski,
+#' K. N. (2025). Impacts of DIF Item Balance and Effect Size Incorporation With
+#' the Rasch Tree. \emph{Educational and Psychological Measurement}.
+#' \doi{10.1177/00131644251370605}
+#'
 #' Bjorner, J. B., Kreiner, S., Ware, J. E., Damsgaard, M. T., & Bech,
 #' P. (1998). Differential item functioning in the Danish translation
 #' of the SF-36. \emph{Journal of Clinical Epidemiology, 51}(11),
@@ -259,22 +252,26 @@
 #' \emph{ETS Research Report Series}(2).
 #' \doi{10.1002/j.2330-8516.1986.tb00186.x}
 #'
+#' Komboz, B., Strobl, C., & Zeileis, A. (2018). Tree-based global model
+#' tests for polytomous Rasch models. \emph{Educational and Psychological
+#' Measurement, 78}(1), 128-166. \doi{10.1177/0013164416664394}
+#'
 #' Philipp, M., Rusch, T., Hornik, K., & Strobl, C. (2018). Measuring
 #' the stability of results from supervised statistical learning.
 #' \emph{Journal of Computational and Graphical Statistics, 27},
 #' 685-700. \doi{10.1080/10618600.2018.1473779}
 #'
-#' Asamoah, N. A. B., Turner, R. C., Lo, W.-J., Crawford, B. L., & Jozkowski,
-#' K. N. (2025). Impacts of DIF Item Balance and Effect Size Incorporation With
-#' the Rasch Tree. \emph{Educational and Psychological Measurement}.
-#' \doi{10.1177/00131644251370605}
+#' Strobl, C., Kopf, J., & Zeileis, A. (2015). Rasch trees: A new method
+#' for detecting differential item functioning in the Rasch model.
+#' \emph{Psychometrika, 80}(2), 289-316. \doi{10.1007/s11336-013-9388-3}
 #'
 #' Zwick, R. (2012). A review of ETS differential item functioning
 #' assessment procedures: Flagging rules, minimum sample size
 #' requirements, and criterion refinement. \emph{ETS Research Report
 #' Series}(1). \doi{10.1002/j.2333-8504.2012.tb02290.x}
 #'
-#' @seealso \code{\link{RMdifLR}}, \code{\link{RMdifGamma}}
+#' @seealso [RMdifLR()] for a global test, [RMdifAnchor()] for anchored
+#'   tests of items, [RMdifGamma()], [RMdifImpact()].
 #'
 #' @examples
 #' \donttest{
@@ -290,7 +287,7 @@
 #'   # Default: kable of per-split effect sizes
 #'   RMdifTree(items, covariates = covs)
 #'
-#'   # Tidy data.frame -- one row per (split node x item)
+#'   # data.frame with one row per split and item
 #'   df <- RMdifTree(items, covariates = covs, output = "dataframe")
 #'   df[df$Flagged, ]
 #'
@@ -298,14 +295,14 @@
 #'   tree <- RMdifTree(items, covariates = covs, output = "tree")
 #'   plot(tree)
 #'
-#'   # Stability assessment refits the tree on B resamples.
-#'   # (use more resamples, e.g. 100+, in real analyses)
+#'   # Stability assessment refits the tree on B resamples
+#'   # (use 100 or more in real analyses)
 #'   if (requireNamespace("stablelearner", quietly = TRUE)) {
-#'     kbl <- RMdifTree(items, covariates = covs,
-#'                      stability = TRUE, stability_B = 25)
-#'     kbl                          # main effect-size kable
-#'     attr(kbl, "stability_kable") # pre-rendered stability kable
-#'     attr(kbl, "stability")       # raw stability data.frame
+#'     res <- RMdifTree(items, covariates = covs,
+#'                      stability = TRUE, stability_B = 25,
+#'                      output = "list")
+#'     res$table     # effect sizes per split and item
+#'     res$stability # selection frequency per covariate
 #'   }
 #' }
 #' }
@@ -773,9 +770,19 @@ RMdifTree <- function(
       attr(tree, "rescaled_terminal_items") <- rescale_info$per_terminal
     }
     if (output == "list") {
-      # One fit, both views: the tidy per-split table (with its
-      # attributes) and the augmented tree object (for plotting).
-      return(list(table = df, tree = tree))
+      # One fit, both views, plus everything the attributes carry, so the
+      # list is complete without attr() (the attributes stay for
+      # compatibility).
+      return(list(
+        table = df,
+        tree = tree,
+        model = resolved_model,
+        effect_size = resolved_es,
+        stability = stab_df,
+        rescaled_terminal_items = if (rescale_info$n_terminal_cells > 0L) {
+          rescale_info$per_terminal
+        }
+      ))
     }
     return(tree)
   }

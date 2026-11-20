@@ -689,3 +689,22 @@ test_that("the kable and the SEM reference line use the median SEM", {
   expect_equal(ggplot2::layer_data(pi, which(vapply(pi$layers, function(l)
     inherits(l$geom, "GeomHline"), TRUE)))$yintercept, 1 / attr(res, "sem_median")^2)
 })
+
+test_that("output = 'list' returns the summary quantities as a table", {
+  d <- phq9[, grep("^q", names(phq9))]
+  df <- RMreliabilityCurve(d, benchmark = 0.7, output = "dataframe")
+  res <- RMreliabilityCurve(d, benchmark = 0.7, output = "list")
+  expect_named(res, c("curve", "summary", "benchmark_range"))
+  expect_equal(nrow(res$summary), 1L)
+  for (a in c("latent_mean", "sigma", "marginal_ratio", "marginal_green",
+              "sem_median", "sem_average", "benchmark", "benchmark_percent",
+              "n_not_estimable", "boot_iter")) {
+    expect_equal(res$summary[[a]], attr(df, a), info = a)
+  }
+  expect_equal(res$benchmark_range, attr(df, "benchmark_range"))
+  expect_null(attr(res$curve, "sigma"))
+  expect_equal(nrow(res$curve), nrow(df))
+  res0 <- RMreliabilityCurve(d, output = "list")
+  expect_true(is.na(res0$summary$benchmark))
+  expect_null(res0$benchmark_range)
+})

@@ -90,11 +90,12 @@ will not see the stream it would have seen without one. Use
 \section{Functions this applies to}{
 
 \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}}, \code{\link[=RMdimCFACutoff]{RMdimCFACutoff()}}, \code{\link[=RMdimMartinLof]{RMdimMartinLof()}},
-\code{\link[=RMdimResidualPCACutoff]{RMdimResidualPCACutoff()}}, \code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}},
-\code{\link[=RMitemCatFit]{RMitemCatFit()}}, \code{\link[=RMitemCatFitPlot]{RMitemCatFitPlot()}}, \code{\link[=RMitemInfitCutoffMI]{RMitemInfitCutoffMI()}},
+\code{\link[=RMdimResidualPCACutoff]{RMdimResidualPCACutoff()}}, \code{\link[=RMitemCatFit]{RMitemCatFit()}}, \code{\link[=RMitemCatFitPlot]{RMitemCatFitPlot()}},
+\code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}}, \code{\link[=RMitemInfitCutoffMI]{RMitemInfitCutoffMI()}},
 \code{\link[=RMitemRestscoreBoot]{RMitemRestscoreBoot()}}, \code{\link[=RMitemRestscoreCutoff]{RMitemRestscoreCutoff()}},
-\code{\link[=RMlocdepGammaCutoff]{RMlocdepGammaCutoff()}}, \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}, \code{\link[=RMpersonFit]{RMpersonFit()}} and
-\code{\link[=RMreliability]{RMreliability()}}.
+\code{\link[=RMlocdepGammaCutoff]{RMlocdepGammaCutoff()}}, \code{\link[=RMlocdepQ3Cutoff]{RMlocdepQ3Cutoff()}}, \code{\link[=RMpersonChange]{RMpersonChange()}}
+(with \code{critical = "simulate"}), \code{\link[=RMpersonFit]{RMpersonFit()}}, \code{\link[=RMreliability]{RMreliability()}},
+\code{\link[=RMreliabilityCurve]{RMreliabilityCurve()}} and \code{\link[=RMretestSD]{RMretestSD()}}.
 
 Functions that involve no simulation take no \code{seed} and are unaffected.
 
@@ -119,8 +120,8 @@ A reproducible \code{seed} does not make every downstream number identical
 across machines. Model fitting can converge to marginally different
 optima under different BLAS implementations, and \code{mirt}-based routines
 advance their own internal state. Where a function needs to defend
-against that it re-seeds explicitly; see for example the plausible-value
-block in \code{RMreliability()}.
+against that it re-seeds explicitly, as the plausible-value block in
+\code{RMreliability()} does.
 }
 
 \seealso{

@@ -2,7 +2,7 @@
 % Please edit documentation in R/data_plots.R
 \name{RMplotStackedbar}
 \alias{RMplotStackedbar}
-\title{Stacked Bar Chart of Item Response Distributions}
+\title{Stacked bar chart of item response distributions}
 \usage{
 RMplotStackedbar(
   data,
@@ -38,8 +38,9 @@ observed value, ordered from lowest to highest category. If \code{NULL}
 \item{show_n}{Logical. If \code{TRUE} (the default), the count of responses
 is displayed as a text label inside each bar segment.}
 
-\item{show_percent}{Logical. If \code{TRUE}, the percentage of responses is
-displayed instead of (or in addition to) counts. Default is \code{FALSE}.}
+\item{show_percent}{Logical. Show the percentage of responses in each
+segment. With \code{show_n = TRUE} as well, the label is "n (p\%)". Default
+\code{FALSE}.}
 
 \item{text_color}{Character. Colour for the count/percentage labels.
 Default is \code{"sienna1"}.}
@@ -64,11 +65,9 @@ colour scale. Default is \code{0.99}.}
 A \link[ggplot2:ggplot]{ggplot2::ggplot} object.
 }
 \description{
-Creates a horizontal stacked bar chart showing the response
-distribution for all items. Each bar represents one item, with segments
-coloured by response category. Counts are displayed as text labels
-within each segment. This is a descriptive data visualization tool
-intended for use before model fitting.
+Draws one horizontal bar per item, divided into segments coloured by
+response category, with the count in each segment. A descriptive plot
+for use before any model is fitted.
 }
 \details{
 Items are displayed on the y-axis in the same order as the columns
@@ -81,16 +80,12 @@ Categories with zero responses still appear in the legend but produce
 no visible bar segment, which helps identify gaps in the response
 distribution.
 
-The plot caption reports the sample in the standard
-\verb{n = X respondents (policy)} form; item-level \code{NA}s are retained --
-each bar counts the non-missing responses for that item.
+The caption gives the sample size in the form
+\verb{n = X respondents (policy)}. Missing responses are kept, and each bar
+counts the responses to that item.
 
-\strong{Input requirements:}
-\itemize{
-\item All columns must be numeric (integer-valued).
-\item The data frame must contain at least 2 columns (items)
-and at least 1 row (person).
-}
+The data must have at least 2 numeric (integer-valued) columns and at
+least 1 row.
 }
 \examples{
 if (requireNamespace("eRm", quietly = TRUE) &&

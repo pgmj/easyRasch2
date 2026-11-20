@@ -2,7 +2,7 @@
 % Please edit documentation in R/cfa_cutoff.R
 \name{RMdimCFACutoff}
 \alias{RMdimCFACutoff}
-\title{Simulated null distribution for one-factor CFA fit and loadings under PCM unidimensionality}
+\title{Simulated reference for one-factor CFA fit and loadings}
 \usage{
 RMdimCFACutoff(
   data,
@@ -17,118 +17,111 @@ RMdimCFACutoff(
 )
 }
 \arguments{
-\item{data}{A data.frame or matrix of item responses (non-negative
-integers, 0-based). One column per item, one row per person. At least
-4 items: with 3 the one-factor model has no degrees of freedom and the
-fit indices are perfect by construction.}
+\item{data}{A data.frame or matrix of item responses, items scored from
+0. One column per item, one row per person. Only complete cases are
+used. At least 4 items: with 3, the one-factor model has no degrees of
+freedom and the fit indices are perfect by construction.}
 
-\item{iterations}{Integer. Number of parametric-bootstrap iterations.
-Default \code{250}.}
+\item{iterations}{Integer. Number of simulated datasets. Default \code{250}.
+For p-values in \code{\link[=RMdimCFA]{RMdimCFA()}}, use at least 1000.}
 
-\item{percentile}{Numeric in (50, 100). The strictness of the cutoffs.
-Default \code{99}. Fit indices use a one-sided cutoff in the unfavourable
-direction (CFI from below; RMSEA and SRMR from above); standardized
-loadings use a two-sided central interval covering \code{percentile}\% of the
-simulated distribution (an item is flagged when its observed loading
-falls in the outer \code{100 - percentile}\%, split across the two tails).}
+\item{percentile}{Numeric in (50, 100). How strict the cutoffs are.
+Default \code{99}. The fit indices get a one-sided cutoff in the
+unfavourable direction (CFI from below, RMSEA and SRMR from above).
+The loadings get a two-sided central interval covering \code{percentile}\%
+of the simulated values, so an item is flagged when its observed
+loading falls in the outer \code{100 - percentile}\%, split between the two
+tails.}
 
-\item{output}{Character. Only \code{"list"} (the default) is supported and the
-function always returns the simulation object. \code{"kable"} is retained only
-to raise an informative error: tables now come from
-\code{\link{RMdimCFA}}.}
+\item{output}{Character. Only \code{"list"} (default) is supported, and the
+function always returns the simulations. \code{"kable"} gives an error that
+points to \code{\link[=RMdimCFA]{RMdimCFA()}}, where the tables now come from.}
 
-\item{parallel}{Logical. If \code{TRUE} (default), uses parallel processing
-via \code{mirai}. Falls back to sequential if \code{mirai} is not installed or
-\code{n_cores} cannot be resolved.}
+\item{parallel}{Logical. Run the simulations in parallel via \pkg{mirai}
+when it is installed. Default \code{TRUE}.}
 
 \item{n_cores}{Integer or \code{NULL}. Number of parallel workers. When
-\code{NULL}, \code{getOption("mc.cores")} is consulted; if neither is set,
-sequential is used.}
+\code{NULL}, \code{getOption("mc.cores")} is used. If that is unset too, a
+warning is given and the simulations run sequentially.}
 
-\item{verbose}{Logical. Show a progress bar (default \code{FALSE}).}
+\item{verbose}{Logical. Show a progress bar. Default \code{FALSE}.}
 
-\item{seed}{Integer or \code{NULL}. Master seed for reproducibility. See
+\item{seed}{Integer or \code{NULL}. Random seed for reproducibility. See
 \link{easyRasch2-reproducibility} for what this guarantees and how it
 interacts with \code{parallel}.}
 
-\item{estimator}{Character. The lavaan estimator passed to
-\code{lavaan::cfa()}. One of \code{"WLSMV"} (default), \code{"ULSMV"}, \code{"WLSM"},
-\code{"ULSM"}, \code{"WLSMVS"} or \code{"ULSMVS"}. The CFI and RMSEA are always the
-scaled versions, so only estimators with a scaled test statistic are
-accepted. Any other estimator stops with an error.}
+\item{estimator}{Character. The lavaan estimator: \code{"WLSMV"} (default),
+\code{"ULSMV"}, \code{"WLSM"}, \code{"ULSM"}, \code{"WLSMVS"} or \code{"ULSMVS"}. CFI and RMSEA
+are always the scaled versions, so only estimators with a scaled test
+statistic are accepted.}
 }
 \value{
-A list (the simulation object), with components:
+A list with:
 \describe{
-\item{\code{simulated}}{data.frame with one row per successful iteration
-and columns \code{iteration}, \code{cfi}, \code{rmsea}, \code{srmr}.}
-\item{\code{simulated_loadings}}{data.frame with one row per successful
-iteration: an \code{iteration} column followed by one column per item
-holding the simulated standardized loading.}
-\item{\code{percentile}}{Numeric: the strictness setting used.}
-\item{\code{cutoffs}}{Named numeric vector (\code{cfi}, \code{rmsea}, \code{srmr}) of
-one-sided fit-index cutoffs at the chosen percentile.}
-\item{\code{loading_cutoffs}}{data.frame \code{Item}, \code{low}, \code{high} — the
-two-sided expected loading interval per item.}
-\item{\code{actual_iterations}}{Number of successful MC iterations.}
+\item{\code{simulated}}{data.frame with one row per simulated dataset and
+the columns \code{iteration}, \code{cfi}, \code{rmsea} and \code{srmr}.}
+\item{\code{simulated_loadings}}{data.frame with one row per simulated
+dataset, an \code{iteration} column and one column per item with its
+standardized loading.}
+\item{\code{percentile}}{The strictness setting.}
+\item{\code{cutoffs}}{Named numeric vector (\code{cfi}, \code{rmsea}, \code{srmr}) of the
+one-sided cutoffs.}
+\item{\code{loading_cutoffs}}{data.frame with \code{Item}, \code{low} and \code{high}, the
+two-sided interval of the loadings per item.}
+\item{\code{actual_iterations}}{Number of simulated datasets that could be
+used.}
 \item{\code{sample_n}}{Number of complete cases used.}
-\item{\code{sample_n_total}}{Number of respondents in the raw input data,
-before the complete-case filter.}
-\item{\code{sample_has_na}}{Logical. Whether the raw input data contained
-any missing values.}
+\item{\code{sample_n_total}}{Number of respondents in \code{data}, before the
+complete-case filter.}
+\item{\code{sample_has_na}}{Logical. Whether \code{data} contained missing
+values.}
 \item{\code{n_items}}{Number of items.}
-\item{\code{item_names}}{Character vector of item names.}
-\item{\code{is_polytomous}}{Logical: was a PCM (vs RM) fitted?}
-\item{\code{estimator}}{The lavaan estimator used.}
+\item{\code{item_names}}{Item names.}
+\item{\code{is_polytomous}}{Logical. Whether a PCM (rather than the Rasch
+model) generated the data.}
+\item{\code{estimator}}{The lavaan estimator.}
 }
 }
 \description{
-Generates a parametric-bootstrap null distribution against which observed
-one-factor categorical-CFA results can be compared. The simulation draws
-\code{iterations} datasets from the fitted PCM (or RM, for dichotomous
-data) using the observed item parameters and a resampled person
-distribution; each simulated dataset is fitted with
-\code{lavaan::cfa(..., ordered = TRUE, estimator = "WLSMV")} and both the
-three fit indices (CFI, RMSEA, SRMR) and the per-item standardized factor
-loadings are recorded. Because the simulated data satisfy the PCM
-unidimensional assumption by construction, the resulting distributions are
-the "expected" reference for what a correctly fitting unidimensional model
-produces at this sample size and item structure.
+Simulates datasets from the Rasch or partial credit model fitted to your
+data, fits a one-factor CFA for ordinal items to each with
+\code{lavaan::cfa()} (Rosseel, 2012), and records the fit indices (CFI,
+RMSEA, SRMR) and the standardized loading of each item. The simulated
+data are unidimensional by construction, so the result shows what a
+unidimensional scale gives at this sample size and with these items.
+Pass it to \code{\link[=RMdimCFA]{RMdimCFA()}} for the tables and to \code{\link[=RMdimCFAPlot]{RMdimCFAPlot()}} for the
+figures.
 }
 \details{
-This function only generates the simulated reference. To obtain the
-observed-vs-expected tables, pass its result to \code{\link{RMdimCFA}}; for
-the figures, pass it to \code{\link{RMdimCFAPlot}}.
+\strong{Generating model.} Each dataset is simulated from the partial
+credit model (or Rasch model, for dichotomous items) fitted to the
+observed data, with person locations drawn with replacement from the
+estimated ones. The simulated data therefore satisfy unidimensionality.
 
-\strong{Generative model.} The data-generating process for each
-simulated dataset is the PCM (or RM) fitted to the observed data,
-with persons drawn from the empirical theta distribution
-(resampled with replacement). This means the simulated data perfectly
-satisfy the PCM unidimensional assumption.
+\strong{Estimation model.} Each simulated dataset is fitted with a
+one-factor model with all items as ordinal indicators
+(\code{F1 =~ I1 + I2 + ...}), by \code{WLSMV} unless \code{estimator} says otherwise.
+CFI and RMSEA are the scaled versions (\code{cfi.scaled}, \code{rmsea.scaled}) for
+the observed and the simulated data alike. SRMR is used as it is. A
+simulated dataset for which lavaan cannot compute a scaled index gets
+\code{NA} for it and is left out of that index's cutoff and p-value, with a
+message giving the count. The standardized loadings are \code{est.std} of
+the \verb{=~} paths from \code{lavaan::standardizedSolution()}.
 
-\strong{Estimation model.} The CFA on each simulated dataset uses a
-single-factor model with all items as ordinal indicators
-(\code{F1 =~ I1 + I2 + ...}), fitted with \code{WLSMV} by default. Reported
-CFI / RMSEA are the scaled variants (\code{cfi.scaled}, \code{rmsea.scaled}) for
-the observed data and every simulated dataset alike; SRMR is reported
-unchanged. A simulated dataset for which lavaan cannot compute a scaled
-index gets \code{NA} for it and is left out of that index's cutoff and
-p-value, with a message giving the count. Standardized loadings are the \code{est.std} of the \verb{=~} paths
-from \code{lavaan::standardizedSolution()}.
+\strong{Why simulate.} Data that are unidimensional under the partial
+credit model will usually not give CFA fit indices at their ideal
+values (CFI = 1, RMSEA = 0), nor equal loadings for all items. The PCM
+is a logistic model, while WLSMV fits a probit model to the polychoric
+correlations, and finite samples add sampling variability. The
+simulations capture both, which gives a better reference than fixed
+cutoffs derived for continuous data and ML estimation.
 
-\strong{Why a null distribution.} A perfectly PCM-unidimensional
-dataset will typically not yield CFA fit indices at their ideal
-values (CFI = 1, RMSEA = 0), nor identical loadings across items: PCM
-uses a logistic threshold structure while WLSMV uses a probit link via
-the polychoric correlation matrix, and finite samples add sampling
-variability. The simulated distributions capture both, giving a more
-honest reference than rule-of-thumb cutoffs derived under continuous-data
-ML.
-
-\strong{Iteration failures.} Some simulated datasets cause WLSMV to
-fail (non-positive-definite polychoric matrix, boundary thresholds,
-empty categories). Failed iterations are dropped; \code{actual_iterations}
-reflects the number that succeeded.
+\strong{Datasets that fail.} Some simulated datasets make the estimation
+fail (a polychoric matrix that is not positive definite, thresholds on
+the boundary, empty categories). They are left out, and
+\code{actual_iterations} gives the number that remained. If all fail, the
+function stops, naming any category used only by respondents with a
+zero or perfect total score.
 }
 \examples{
 \donttest{
@@ -136,7 +129,7 @@ if (requireNamespace("lavaan", quietly = TRUE) &&
     requireNamespace("eRm", quietly = TRUE)) {
   data("raschdat1", package = "eRm")
 
-  # Few iterations for a fast example; use 250+ in real analyses
+  # Few iterations for a fast example. Use 250 or more in real analyses.
   sim <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
                         parallel = FALSE, seed = 1)
 
@@ -153,16 +146,12 @@ if (requireNamespace("lavaan", quietly = TRUE) &&
 
 }
 \references{
-Yuan, K.-H., & Bentler, P. M. (2000). Three likelihood-based methods
-for mean and covariance structure analysis with nonnormal missing
-data. \emph{Sociological Methodology, 30}(1), 165-200.
-\doi{10.1111/0081-1750.00078}
-
 Rosseel, Y. (2012). lavaan: An R Package for Structural Equation
 Modeling. \emph{Journal of Statistical Software, 48}(2), 1-36.
 \doi{10.18637/jss.v048.i02}
 }
 \seealso{
-\code{\link{RMdimCFA}}, \code{\link{RMdimCFAPlot}},
-\code{\link{RMdimResidualPCA}}, \code{\link{RMdimMartinLof}}
+\code{\link[=RMdimCFA]{RMdimCFA()}} for the tables, \code{\link[=RMdimCFAPlot]{RMdimCFAPlot()}} for the figures,
+\code{\link[=RMdimResidualPCA]{RMdimResidualPCA()}} and \code{\link[=RMdimMartinLof]{RMdimMartinLof()}} for other checks of
+unidimensionality.
 }

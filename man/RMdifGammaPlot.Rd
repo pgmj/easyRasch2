@@ -2,57 +2,45 @@
 % Please edit documentation in R/dif_partgam.R
 \name{RMdifGammaPlot}
 \alias{RMdifGammaPlot}
-\title{Plot Distribution of Simulated Partial Gamma DIF Values}
+\title{Plot the simulated partial gamma DIF values}
 \usage{
 RMdifGammaPlot(simfit, data, dif_var)
 }
 \arguments{
-\item{simfit}{The return value of \code{\link{RMdifGammaCutoff}} (a list with
-components \code{results}, \code{item_cutoffs}, \code{actual_iterations}, \code{sample_n}, and
-\code{item_names}).}
+\item{simfit}{The result of \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}}.}
 
-\item{data}{Optional. A data.frame or matrix of item responses for computing
-and overlaying observed partial gamma values. Items must be scored starting
-at 0 (non-negative integers). When provided, the plot includes orange
-diamond markers for the observed partial gamma alongside the simulated
-distribution, plus segment summaries from the cutoff intervals.}
+\item{data}{Optional. The item responses the simulations were made from,
+items scored from 0. The observed partial gamma is then drawn as orange
+diamonds.}
 
-\item{dif_var}{Required when \code{data} is supplied. A vector (factor, character,
-or integer) defining group membership for the DIF analysis. Must have the
-same length as \code{nrow(data)}.}
+\item{dif_var}{Needed with \code{data}. The vector of groups used in
+\code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}}, of length \code{nrow(data)}.}
 }
 \value{
 A \code{ggplot} object.
 }
 \description{
-Visualises the distribution of simulation-based partial gamma DIF values
-from \code{\link{RMdifGammaCutoff}}, optionally overlaying observed partial
-gamma values computed from real data with the same routine the simulation
-uses, which reproduces \code{\link[iarm]{partgam_DIF}} exactly.
+Plots the simulated partial gamma of each item from \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}},
+and optionally the observed values in your data, computed with the same
+routine as the simulations, which reproduces \code{iarm::partgam_DIF()}.
 }
 \details{
-Uses \code{ggdist::stat_dotsinterval()} (when \code{data} is not supplied) or
-\code{ggdist::stat_dots()} (when \code{data} is supplied) with
-\code{point_interval = "median_hdci"} and \code{.width = c(0.66, 0.95, 0.99)}.
+Each item's simulated values are drawn as dots, with the median, an
+inner 66\% interval and an outer interval. The outer interval is the one
+in \code{simfit$item_cutoffs}, which \code{\link[=RMdifGamma]{RMdifGamma()}} tabulates: the HDCI of
+width \code{hdci_width}, or the 2.5th to 97.5th percentiles with
+\code{cutoff_method = "quantile"}. The inner interval uses the same method.
+Without \code{data} the intervals are drawn with
+\code{ggdist::stat_dotsinterval()}. With \code{data} they are black segments with
+a black dot for the median, and the observed value is an orange diamond.
 
-When \code{data} is \strong{not} supplied, the function plots the simulated partial
-gamma distributions as dot-interval plots using
-\code{ggdist::stat_dotsinterval()} with median and Highest Density Continuous
-Interval (HDCI) summaries.
+The intervals are per item and not corrected for testing several items.
+With the full cutoff object, \code{\link[=RMdifGamma]{RMdifGamma()}} flags items by adjusted
+p-values instead, so an item just outside its interval need not be
+flagged there. The plot shows no p-values.
 
-When \code{data} \strong{is} supplied (along with \code{dif_var}), the function:
-\enumerate{
-\item Computes observed partial gamma values (identical to
-\code{iarm::partgam_DIF()}).
-\item Overlays observed gamma values as orange diamond markers on the
-simulated distributions.
-\item Shows per-item cutoff intervals (from \code{simfit$item_cutoffs}) as
-black line segments, with thicker segments for the 66\\% interval and
-black dots for the median.
-}
-
-The \code{ggplot2} and \code{ggdist} packages must be installed (they are in
-Suggests, not Imports).
+The \pkg{ggplot2} and \pkg{ggdist} packages must be installed (they are
+in Suggests).
 }
 \examples{
 \donttest{
@@ -65,7 +53,7 @@ if (requireNamespace("ggdist", quietly = TRUE) &&
   colnames(sim_data) <- paste0("Item", 1:10)
   dif_group <- factor(sample(c("A", "B"), 200, replace = TRUE))
 
-  # Run simulation
+  # Run the simulation
   cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_group,
                                  iterations = 100, parallel = FALSE,
                                  seed = 42)
@@ -79,5 +67,5 @@ if (requireNamespace("ggdist", quietly = TRUE) &&
 }
 }
 \seealso{
-\code{\link{RMdifGammaCutoff}}, \code{\link{RMdifGamma}}
+\code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}}, \code{\link[=RMdifGamma]{RMdifGamma()}}
 }

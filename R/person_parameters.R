@@ -1,4 +1,4 @@
-#' Person Locations for a Rasch / Partial Credit Model
+#' Person locations for a Rasch or partial credit model
 #'
 #' Estimates a person location (theta) and its standard error of
 #' measurement (SEM) for every respondent. Estimation is performed
@@ -11,9 +11,10 @@
 #' @param data A data.frame or matrix of item responses. Items must be
 #'   scored starting at 0 (non-negative integers). Missing values (`NA`)
 #'   are allowed.
-#' @param method Character. `"WLE"` (default) for Warm's Weighted
-#'   Likelihood Estimate (lower bias than MLE; Warm, 1989), or `"EAP"`
-#'   for the Expected A Posteriori estimate under a normal prior.
+#' @param method Character. `"WLE"` (default) for Warm's weighted
+#'   likelihood estimate, which has less bias than the MLE (Warm, 1989), or
+#'   `"EAP"` for the expected a posteriori estimate under a normal prior
+#'   (Bock & Mislevy, 1982).
 #' @param item_params Optional pre-specified item parameters, e.g. for
 #'   anchoring or equating. Either a named list of Andrich-threshold
 #'   vectors (one per item) or the long-format data.frame returned by
@@ -33,26 +34,34 @@
 #' @param prior_sd Numeric or `NULL`. Standard deviation of the normal
 #'   prior used by `method = "EAP"`. When `NULL` (default) it is
 #'   estimated from the data by marginal maximum likelihood, holding the
-#'   item parameters fixed. Supply a number (e.g. `1` for a standard
-#'   `N(0, 1)` prior, or a value carried over from a reference sample
-#'   for equating) to fix it. Ignored for WLE.
+#'   item parameters fixed. Supply a number to fix it, for example `1` for
+#'   an `N(0, 1)` prior, or a value carried over from a reference sample
+#'   for equating. Ignored for WLE.
 #' @param output Character. `"kable"` (default) for a formatted
 #'   [knitr::kable()] table, `"dataframe"` for the underlying
 #'   data.frame, `"ggplot"` for a histogram of the estimated person
 #'   locations, or `"file"` to write the data.frame to a CSV at
 #'   `filename` (the data.frame is also returned invisibly).
 #' @param filename Character. Path to the CSV file to write when
-#'   `output = "file"`. Required in that case; ignored otherwise.
+#'   `output = "file"`. Required in that case, ignored otherwise.
 #'
 #' @return
-#' For `output = "dataframe"`, a data.frame with one row per respondent
-#' (in input order; respondents with no responses are dropped with a
-#' message) and columns `theta` (the person location), `sem`
+#' For `output = "dataframe"`, a data.frame with one row per respondent,
+#' in input order (respondents with no responses are dropped with a
+#' message), and the columns `theta` (the person location), `sem`
 #' (standard error of measurement), `sum_score`, `n_answered` (number of
-#' non-missing responses), and `extreme` (logical: a minimum or maximum
-#' possible score given the items answered). For `output = "kable"`, the
+#' responses) and `extreme` (logical, the lowest or highest possible score
+#' on the items answered). For `output = "kable"`, the
 #' same content as a `knitr_kable` object. For `output = "ggplot"`, a
 #' histogram of `theta`.
+#'
+#' With `method = "EAP"`, the prior used is attached to the data.frame as
+#' `attr(result, "prior")`, a named numeric vector with `mean`, `sd` and
+#' `estimated` (1 when `prior_sd` was estimated from the data, 0 when it
+#' was supplied). The kable caption also states it. The CSV written by
+#' `output = "file"` and the histogram do not include it, so keep the
+#' data.frame, or the kable, if you need to report the prior or reuse an
+#' estimated SD as `prior_sd`.
 #'
 #' @details
 #' Item parameters are obtained once (by CML or MML, or taken from
@@ -63,28 +72,22 @@
 #' `l'(theta) + J(theta) / (2 I(theta)) = 0` by bracketed root finding,
 #' where the bias-correction term `J / (2 I)` keeps the equation solvable
 #' at the boundaries. The SEM is `1 / sqrt(I(theta))`. Unlike the MLE,
-#' Warm's estimator therefore yields *finite* locations for the minimum
-#' and maximum possible scores (a sensible step beyond the next-most
-#' extreme score rather than +/-Inf; cf. Warm, 1989), matching
-#' established implementations such as \pkg{catR} and \pkg{TAM}. Such
+#' Warm's estimator therefore gives finite locations for the lowest and
+#' highest possible scores, a step beyond the next score rather than
+#' +/-Inf (Warm, 1989, Magis, 2015 for polytomous items), as in \pkg{catR}
+#' and \pkg{TAM}. Such
 #' scores are still marked in the `extreme` column because they are
 #' extrapolated and carry large standard errors. Only if the root lies
 #' outside `theta_range` is the boundary returned with `NA` SEM.
 #'
 #' \strong{EAP} integrates the pattern likelihood against a normal prior
-#' over a quadrature grid; the estimate is the posterior mean and the
-#' SEM is the posterior standard deviation. Unlike WLE, EAP is finite at
-#' extreme scores because the prior shrinks them inward, at the cost of
-#' depending on the assumed prior. The prior actually used -- including
-#' the marginal-ML estimate of `prior_sd` when it is left `NULL` -- is
-#' reported in the kable caption and attached to the result as
-#' `attr(result, "prior")`.
+#' over a quadrature grid. The estimate is the posterior mean and the SEM
+#' the posterior standard deviation. EAP is finite at extreme scores
+#' because the prior shrinks them inward, at the cost of depending on the
+#' prior. The prior used, including the estimate of `prior_sd` when it is
+#' left `NULL`, is reported as described under Value.
 #'
 #' @references
-#' Warm, T. A. (1989). Weighted likelihood estimation of ability in item
-#' response theory. *Psychometrika, 54*(3), 427-450.
-#' \doi{10.1007/BF02294627}
-#'
 #' Bock, R. D., & Mislevy, R. J. (1982). Adaptive EAP estimation of
 #' ability in a microcomputer environment. *Applied Psychological
 #' Measurement, 6*(4), 431-444. \doi{10.1177/014662168200600405}
@@ -92,6 +95,10 @@
 #' Magis, D. (2015). A note on weighted likelihood and Jeffreys modal
 #' estimation of proficiency levels in polytomous item response models.
 #' *Psychometrika, 80*(1), 200-204. \doi{10.1007/s11336-013-9378-5}
+#'
+#' Warm, T. A. (1989). Weighted likelihood estimation of ability in item
+#' response theory. *Psychometrika, 54*(3), 427-450.
+#' \doi{10.1007/BF02294627}
 #'
 #' @seealso [RMitemParameters()], [RMscoreSE()], [RMreliability()]
 #'
@@ -113,7 +120,7 @@
 #'
 #' # EAP with a data-estimated prior SD
 #' eap <- RMpersonParameters(dat, method = "EAP", output = "dataframe")
-#' attr(eap, "prior")
+#' attr(eap, "prior") # mean, sd and whether the sd was estimated
 #'
 #' # EAP with a fixed N(0, 1) prior
 #' RMpersonParameters(dat, method = "EAP", prior_sd = 1, output = "dataframe") |>

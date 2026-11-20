@@ -601,3 +601,18 @@ test_that("a fixed seed reproduces the simulated null", {
   expect_identical(a$crit_upper, b$crit_upper)
   expect_identical(a$p_value, b$p_value)
 })
+
+test_that("output = 'list' returns the settings as a table", {
+  d <- make_pair(n = 60)
+  df <- RMpersonChange(d$t1, d$t2)
+  res <- RMpersonChange(d$t1, d$t2, output = "list")
+  expect_named(res, c("persons", "settings"))
+  expect_equal(nrow(res$settings), 1L)
+  for (a in c("null", "retest_sd", "anchor", "alpha", "direction",
+              "critical", "sim_iter", "method", "conditional_crit")) {
+    expect_equal(res$settings[[a]], attr(df, a), info = a)
+  }
+  expect_equal(res$settings$n_persons, nrow(df))
+  expect_null(attr(res$persons, "null"))
+  expect_equal(res$persons$rci, df$rci)
+})

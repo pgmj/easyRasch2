@@ -4,26 +4,25 @@
 \alias{easyRasch2-renaming}
 \title{Function renaming in easyRasch2 0.8.0}
 \description{
-In version 0.8.0, 22 exported functions were renamed under a
-consistent \emph{domain-prefix \eqn{\to} method \eqn{\to} variant-suffix}
-scheme. The renames have no semantic effect --- only names changed.
-Use the table below to migrate existing scripts.
+In version 0.8.0, 25 exported functions were renamed under one scheme:
+domain prefix, then method, then variant suffix. Only the names
+changed. Use the table below to update existing scripts.
 }
 \section{Domain prefixes}{
 
 \itemize{
-\item \code{RMdif} --- differential item functioning
-\item \code{RMlocdep} --- local dependence
-\item \code{RMitem} --- per-item statistics (fit, restscore, ICC, hierarchy)
-\item \code{RMdim} --- dimensionality assessment
-\item \code{RMplot} --- descriptive response-distribution plots
+\item \code{RMdif}: differential item functioning
+\item \code{RMlocdep}: local dependence
+\item \code{RMitem}: item statistics (fit, restscore, ICC, hierarchy)
+\item \code{RMdim}: dimensionality
+\item \code{RMplot}: descriptive plots of the response distributions
 }
 
 Variant suffixes attached at the end:
 \itemize{
-\item \code{Cutoff} --- simulation-based critical values
-\item \code{Plot} --- visualisation
-\item \code{MI} --- multiple-imputation variant (replaces former \verb{_mi})
+\item \code{Cutoff}: simulation-based critical values
+\item \code{Plot}: plots
+\item \code{MI}: version for multiply imputed data (replaces \verb{_mi})
 }
 }
 
@@ -63,11 +62,12 @@ Unchanged: \code{RMreliability()}, \code{RMUreliability()},
 \code{RMtargeting()}, \code{RMscoreSE()}.
 }
 
-\section{No deprecation aliases}{
+\section{No aliases for the old names}{
 
-No deprecation shims are shipped: each old name is simply gone. This
-keeps the export list clean ahead of the first CRAN submission. Run a
-search-and-replace against the table above to migrate.
+The old names were removed without aliases, to keep the export list
+clean before the first CRAN release. Search and replace with the table
+above to update a script. \code{RMitemInfitCutoffPlot()} has since been
+replaced by \code{\link[=RMitemInfitPlot]{RMitemInfitPlot()}} and remains as a deprecated alias.
 }
 
 \keyword{internal}

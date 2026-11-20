@@ -2,7 +2,7 @@
 % Please edit documentation in R/infit_cutoff.R
 \name{RMitemInfitCutoff}
 \alias{RMitemInfitCutoff}
-\title{Simulation-Based Infit MSQ Cutoff Determination}
+\title{Simulation-based infit MSQ cutoffs}
 \usage{
 RMitemInfitCutoff(
   data,
@@ -17,101 +17,101 @@ RMitemInfitCutoff(
 )
 }
 \arguments{
-\item{data}{A data.frame or matrix of item responses. Items must be scored
-starting at 0 (non-negative integers). Only complete cases (rows without
-any \code{NA}) are used.}
+\item{data}{A data.frame or matrix of item responses, items scored from
+0. Only complete cases (rows without \code{NA}) are used.}
 
-\item{iterations}{Integer. Number of simulation iterations (default 400).}
+\item{iterations}{Integer. Number of simulated datasets. Default \code{400},
+the recommended minimum for reproducible decisions. Use 1000 to 2000
+for a final analysis (Johansson, 2026).}
 
-\item{parallel}{Logical. Use parallel processing via \code{mirai} if available
-(default \code{TRUE}).}
+\item{parallel}{Logical. Run the simulations in parallel via \pkg{mirai}
+when it is installed. Default \code{TRUE}.}
 
-\item{n_cores}{Integer or \code{NULL}. Number of parallel workers. When \code{NULL},
-\code{getOption("mc.cores")} is checked first. If neither is set and
-\code{parallel = TRUE}, a warning is issued and execution falls back to
-sequential (single core) processing.}
+\item{n_cores}{Integer or \code{NULL}. Number of parallel workers. When
+\code{NULL}, \code{getOption("mc.cores")} is used. If that is unset too, a
+warning is given and the simulations run sequentially.}
 
-\item{verbose}{Logical. Show a progress bar (default \code{FALSE}).}
+\item{verbose}{Logical. Show a progress bar. Default \code{FALSE}.}
 
 \item{seed}{Integer or \code{NULL}. Random seed for reproducibility. See
 \link{easyRasch2-reproducibility} for what this guarantees and how it
 interacts with \code{parallel}.}
 
-\item{cutoff_method}{Character string specifying how cutoff intervals are
-computed. Either \code{"hdci"} (default) for the Highest Density Interval via
-\code{ggdist::hdci()}, or \code{"quantile"} for the 2.5th/97.5th percentiles via
-\code{stats::quantile()}.}
+\item{cutoff_method}{Character. How the interval per item is computed:
+\code{"hdci"} (default), the highest-density continuous interval from
+\code{ggdist::hdci()} (needs \pkg{ggdist}), or \code{"quantile"}, the 2.5th to
+97.5th percentiles.}
 
-\item{hdci_width}{Numeric. Width of the HDCI when \code{cutoff_method = "hdci"}.
-Default is \code{0.95} (95\% HDCI). Ignored when \code{cutoff_method = "quantile"}.
+\item{hdci_width}{Numeric. Width of the interval with
+\code{cutoff_method = "hdci"}. Default \code{0.95}. Ignored with \code{"quantile"}.
 
-The interval is a \strong{description} of where a fitting item's statistic is
-expected to fall, not a decision rule. Flagging every item outside a
-width-\code{w} interval tests all \code{k} items at once, so the family-wise error
-rate is \code{1 - w^k}, which is 37\% for a 95\% interval over nine items.
-Decisions should come from the corrected p-value instead
-(\code{\link{RMitemInfit}} with \code{p_value = NULL} and the full object
-returned here). The default was \code{0.999} up to and including version
-1.1.1, which needs roughly 5000 iterations before the interval reaches
-its stated width; \code{0.95} reaches it by about 1000, so the band shown to
-readers means close to what it says (Johansson, 2026).}
+The interval describes where a fitting item's statistic is expected
+to fall. It is not a decision rule. Flagging every item outside a
+width-\code{w} interval tests all \code{k} items at once, with a family-wise
+error rate of \code{1 - w^k}, 37\% for a 95\% interval over nine items.
+Decisions come from the corrected p-value in \code{\link[=RMitemInfit]{RMitemInfit()}}. Up to
+version 1.1.1 the default was \code{0.999}, which needs roughly 5000
+iterations before the interval reaches its stated width. A 95\%
+interval reaches it by about 1000 (Johansson, 2026).}
 
-\item{dgp}{Character. Data-generating process for the parametric bootstrap.
-\code{"resample"} (default) resamples WLE person locations with replacement and
-simulates responses under the model (a \emph{marginal} null). \code{"conditional"}
-simulates each respondent's pattern from the exact Rasch conditional
-distribution given their observed total score, item parameters fixed (a
-\emph{conditional} null). Because the conditional infit/outfit statistic is
-itself conditional on the total score, \code{"conditional"} is its naturally
-matched null. \strong{Experimental.}}
+\item{dgp}{Character. How datasets are simulated. \code{"resample"}
+(default) draws person locations from the WLE estimates with
+replacement and simulates responses from the model (a marginal null).
+\code{"conditional"} simulates each respondent's response pattern from the
+model given their observed total score, with the item parameters fixed
+(a conditional null). The conditional infit is itself conditional on
+the total score, so \code{"conditional"} is its natural null.
+\strong{Experimental.}}
 }
 \value{
-A list with components:
+A list with:
 \describe{
-\item{\code{results}}{data.frame with columns \code{iteration}, \code{Item},
-\code{InfitMSQ}, \code{OutfitMSQ} (one row per item per successful iteration).}
-\item{\code{item_cutoffs}}{data.frame with per-item cutoff summaries: \code{Item},
-\code{infit_low}, \code{infit_high}, \code{outfit_low}, \code{outfit_high}. Bounds are
-computed using the method specified by \code{cutoff_method}.}
-\item{\code{actual_iterations}}{Number of successful iterations. Everything
-downstream rests on this rather than on \code{iterations}, so it is the
-number to report.}
-\item{\code{requested_iterations}}{The \code{iterations} argument, kept so callers
-can tell how many simulated datasets were discarded.}
+\item{\code{results}}{data.frame with the columns \code{iteration}, \code{Item},
+\code{InfitMSQ} and \code{OutfitMSQ}, one row per item and simulated dataset.}
+\item{\code{item_cutoffs}}{data.frame with the interval per item: \code{Item},
+\code{infit_low}, \code{infit_high}, \code{outfit_low}, \code{outfit_high}, computed by
+\code{cutoff_method}.}
+\item{\code{actual_iterations}}{Number of simulated datasets that could be
+used. Everything downstream rests on this rather than on
+\code{iterations}, so it is the number to report.}
+\item{\code{requested_iterations}}{The \code{iterations} argument, so that
+callers can tell how many simulated datasets were left out.}
 \item{\code{sample_n}}{Number of complete cases used.}
-\item{\code{sample_n_total}}{Number of respondents in the raw input data,
-before the complete-case filter.}
-\item{\code{sample_has_na}}{Logical. Whether the raw input data contained
-any missing values.}
-\item{\code{sample_summary}}{Summary statistics of estimated person parameters.}
-\item{\code{item_names}}{Character vector of item names from data.}
-\item{\code{cutoff_method}}{The method used to compute cutoffs (\code{"hdci"} or
-\code{"quantile"}).}
-\item{\code{hdci_width}}{The HDCI width used (only meaningful when
-\code{cutoff_method = "hdci"}).}
-\item{\code{dgp}}{The data-generating process used (\code{"resample"} or
-\code{"conditional"}).}
+\item{\code{sample_n_total}}{Number of respondents in \code{data}, before the
+complete-case filter.}
+\item{\code{sample_has_na}}{Logical. Whether \code{data} contained missing
+values.}
+\item{\code{sample_summary}}{Summary of the WLE person locations.}
+\item{\code{item_names}}{Item names from \code{data}.}
+\item{\code{cutoff_method}}{\code{"hdci"} or \code{"quantile"}.}
+\item{\code{hdci_width}}{The HDCI width (used only with \code{"hdci"}).}
+\item{\code{dgp}}{\code{"resample"} or \code{"conditional"}.}
 }
 }
 \description{
-Uses parametric bootstrap simulation to determine appropriate cutoff values
-for \code{\link{RMitemInfit}}. This function simulates data from a correctly fitting
-Rasch model that mimics your data and returns per-item empirical cutoffs.
+Simulates datasets from a Rasch or partial credit model that fits and
+resembles your data, and computes the conditional infit and outfit MSQ of
+every item in each. Passed to \code{\link[=RMitemInfit]{RMitemInfit()}}, the result gives
+bootstrap p-values corrected across items, and an interval per item that
+describes where a fitting item's statistic is expected to fall.
 }
 \details{
-The generating model is CML item parameters (via \code{psychotools}) with WLE
-person locations. For each iteration a dataset is simulated under the chosen
-\code{dgp}, the model is refitted by CML (\code{psychotools::pcmodel()}, which handles
-dichotomous and polytomous data and is accepted by \code{iarm}), and conditional
-infit and outfit MSQ are computed via \code{iarm::out_infit()}. The distribution
-of these statistics across iterations provides empirical critical values per
-item. Failed iterations (e.g., degenerate simulated data) are silently
-discarded.
+The generating model has the CML item parameters (\code{psychotools}) and the
+WLE person locations of \code{data}. In each iteration a dataset is simulated
+by \code{dgp}, the model is refitted by CML (\code{psychotools::pcmodel()}), and the
+conditional infit and outfit MSQ are computed with \code{iarm::out_infit()}.
+A simulated dataset that cannot be refitted, for example because a
+response category is empty, is left out. \code{\link[=RMitemInfit]{RMitemInfit()}} reports how
+many were left out in its caption. If none can be refitted, the function
+stops, naming any category used only by respondents with a zero or
+perfect total score.
 
-Parallel processing is provided by the \code{mirai} package (optional). Install
-it with \code{install.packages("mirai")} to enable parallelisation.
+The method and the default settings come from simulation studies of
+detection (Johansson, 2025) and of iterations and multiplicity
+correction (Johansson, 2026).
 
-The \code{iarm} package must be installed (it is in Suggests, not Imports).
+Parallel processing needs the optional \pkg{mirai} package. The
+\pkg{iarm} package must be installed (it is in Suggests).
 }
 \examples{
 \donttest{
@@ -128,8 +128,8 @@ if (requireNamespace("iarm", quietly = TRUE) &&
                                   parallel = FALSE, seed = 42)
   cutoff_res$item_cutoffs
 
-  # Use the cutoffs in RMitemInfit()
-  RMitemInfit(sim_data)
+  # Use the simulations in RMitemInfit()
+  RMitemInfit(sim_data, cutoff = cutoff_res)
 }
 }
 }
@@ -143,5 +143,6 @@ Rasch models: Iterations, multiplicity correction, and decision stability.
 \emph{PsyArXiv}. \doi{10.31234/osf.io/7pqz4_v2}
 }
 \seealso{
-\code{\link{RMitemInfit}}
+\code{\link[=RMitemInfit]{RMitemInfit()}} for the test, \code{\link[=RMitemInfitPlot]{RMitemInfitPlot()}} to plot the
+simulated values, \code{\link[=RMitemInfitCutoffMI]{RMitemInfitCutoffMI()}} for multiply imputed data.
 }

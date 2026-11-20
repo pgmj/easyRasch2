@@ -1,69 +1,70 @@
-#' Martin-Löf Test of Unidimensionality
+#' Martin-Löf test of unidimensionality
 #'
-#' Likelihood-ratio test of unidimensionality against an *a priori* specified
-#' multidimensional alternative, generalised to polytomous Rasch / partial
-#' credit models (Christensen, Bjorner, Kreiner, & Petersen, 2002). The
-#' p-value is obtained by parametric-bootstrap (Monte Carlo) sampling under
-#' the unidimensional null, following Christensen & Kreiner (2007), because
-#' the asymptotic chi-square approximation is biased toward conservatism for
-#' realistic sample sizes -- especially with polytomous items, where the
-#' degrees of freedom can be very large.
+#' Likelihood-ratio test of unidimensionality against a multidimensional
+#' alternative specified in advance, for Rasch and partial credit models
+#' (Christensen, Bjorner, Kreiner, & Petersen, 2002). The p-value comes from
+#' a parametric bootstrap under the unidimensional model, following
+#' Christensen and Kreiner (2007), since the asymptotic chi-square
+#' distribution makes the test conservative at realistic sample sizes,
+#' especially with polytomous items, where the degrees of freedom can be
+#' very large.
 #'
-#' This is **not** a routine screening tool. The test requires an *a priori*
-#' partition of items into subscales; using it post-hoc on, e.g., the
-#' partition suggested by `RMdimResidualPCA()`'s PC1 sign would inflate the
-#' Type-I error rate. Both source papers state this explicitly.
+#' This is not a screening tool. The partition of items into subscales must
+#' be decided in advance. Testing a partition suggested by the data, such
+#' as the signs of the first-component loadings in [RMdimResidualPCA()],
+#' would inflate the type I error rate. Both source papers say so.
 #'
-#' @param data A data.frame or matrix of item responses (0-based,
-#'   non-negative integers). Complete cases only: rows with any `NA` on the
-#'   items named in `partition` are dropped. Missingness on items outside
-#'   `partition` is ignored.
-#' @param partition The hypothesised partition of items into subscales. One of:
-#'   * a **list** of column-name or column-index vectors, e.g.
-#'     `list(c("I1","I2","I3"), c("I4","I5","I6"))`;
-#'   * a **vector** of length `ncol(data)` indicating each item's subscale
-#'     (factor, character, or integer), e.g. `c(1,1,1,2,2,2)`.
-#'   Each subscale must contain at least two items. Subscales must not
-#'   overlap; items not assigned to any subscale are dropped with a warning.
-#' @param iterations Integer. Maximum number of Monte Carlo iterations
-#'   (default `1000`).
+#' @param data A data.frame or matrix of item responses, items scored from
+#'   0. Only complete cases on the items in `partition` are used. Missing
+#'   values on other items are ignored.
+#' @param partition The hypothesised partition of the items into subscales.
+#'   Either:
+#'   * a list of column-name or column-index vectors, for example
+#'     `list(c("I1","I2","I3"), c("I4","I5","I6"))`, or
+#'   * a vector of length `ncol(data)` giving each item's subscale (factor,
+#'     character or integer), for example `c(1,1,1,2,2,2)`.
+#'
+#'   Each subscale must have at least two items, and subscales must not
+#'   overlap. Items not in any subscale are dropped with a warning.
+#' @param iterations Integer. Largest number of simulated datasets. Default
+#'   `1000`.
 #' @param stopping Character. `"none"` (default) runs all iterations.
-#'   `"sequential"` uses Besag & Clifford's (1991) sequential rule: stop as
-#'   soon as `h` simulated statistics have exceeded the observed value. The
-#'   sequential strategy substantially reduces compute time when H0 holds
-#'   but cannot be parallelised.
-#' @param h Integer. Sequential-stopping count threshold (default `50`).
-#'   Ignored when `stopping = "none"`.
-#' @param alpha Numeric in (0, 1). Nominal significance level used only for
-#'   the `rejected` flag in the result; default `0.05`.
-#' @param parallel Logical. Use parallel processing via `mirai` (default
-#'   `TRUE`). Ignored when `stopping = "sequential"`.
-#' @param n_cores Integer or `NULL`. Number of parallel workers. When `NULL`,
-#'   `getOption("mc.cores")` is checked first; if neither is set, falls back
-#'   to sequential with a warning.
-#' @param verbose Logical. Show a progress bar (default `FALSE`).
+#'   `"sequential"` uses the sequential rule of Besag and Clifford (1991),
+#'   stopping as soon as `h` simulated statistics have exceeded the observed
+#'   one. This saves much time when the unidimensional model holds, but it
+#'   cannot run in parallel.
+#' @param h Integer. The count for sequential stopping. Default `50`.
+#'   Ignored with `stopping = "none"`.
+#' @param alpha Numeric in (0, 1). Used only for the `rejected` element of
+#'   the result. Default `0.05`.
+#' @param parallel Logical. Run the simulations in parallel via \pkg{mirai}
+#'   when it is installed. Default `TRUE`. Ignored with
+#'   `stopping = "sequential"`.
+#' @param n_cores Integer or `NULL`. Number of parallel workers. When
+#'   `NULL`, `getOption("mc.cores")` is used. If that is unset too, a
+#'   warning is given and the simulations run sequentially.
+#' @param verbose Logical. Show a progress bar. Default `FALSE`.
 #' @param seed Integer or `NULL`. Random seed for reproducibility. Items are
-#'   processed internally in a fixed (alphabetical) order, so the same seed
-#'   reproduces the same p-value regardless of how the data's columns are
-#'   arranged and regardless of the `parallel` setting. See
+#'   processed in a fixed (alphabetical) order, so the same seed gives the
+#'   same p-value whatever the order of the columns and the `parallel`
+#'   setting. See
 #'   [easyRasch2-reproducibility] for what this guarantees and how it
 #'   interacts with `parallel`.
 #'
 #' @return A list with components:
 #' \describe{
 #'   \item{`T_obs`}{Observed Martin-Löf likelihood-ratio statistic.}
-#'   \item{`p_value`}{Monte Carlo p-value with `(n_exceed + 1) / (n + 1)`
-#'     correction. The attainable p-values are `k / (n + 1)` for
-#'     `k = 1, ..., n + 1`, so the p-value's resolution is limited by the
-#'     number of iterations: with 100 iterations the smallest attainable
-#'     value is `1/101 = 0.0099`. A reported p-value *equal to the floor*
-#'     (see `p_value_floor`) means no simulated statistic reached the
-#'     observed one and should be read as "p < floor" -- the true p-value
-#'     may be much smaller; increase `iterations` for finer resolution.}
+#'   \item{`p_value`}{Monte Carlo p-value, `(n_exceed + 1) / (n + 1)` for
+#'     n simulated datasets. The possible values are `k / (n + 1)` for
+#'     `k = 1, ..., n + 1`, so the number of iterations limits the
+#'     resolution. With 100 iterations the smallest possible value is
+#'     `1/101 = 0.0099`. A p-value equal to the floor (`p_value_floor`)
+#'     means no simulated statistic reached the observed one. Read it as
+#'     "p < floor", since the true p-value may be much smaller, and increase
+#'     `iterations` for finer resolution.}
 #'   \item{`p_value_floor`}{The smallest attainable p-value,
 #'     `1 / (actual_iterations + 1)`.}
-#'   \item{`actual_iterations`}{Number of successful MC iterations
-#'     completed.}
+#'   \item{`actual_iterations`}{Number of simulated datasets used.}
 #'   \item{`rejected`}{Logical: is `p_value < alpha`?}
 #'   \item{`partition`}{Normalised partition (list of integer indices).}
 #'   \item{`n_subscales`}{Number of subscales.}
@@ -77,21 +78,20 @@
 #'   \item{`n_items`}{Number of items.}
 #'   \item{`stopping`}{The stopping strategy used.}
 #'   \item{`h`}{The sequential-stopping count, or `NA` for `stopping = "none"`.}
-#'   \item{`T_rep`}{Numeric vector of successful MC test statistics.}
+#'   \item{`T_rep`}{The simulated test statistics.}
 #'   \item{`wle_scores`}{data.frame with one row per person and one column
 #'     per subscale (`subscale_1_wle`, ..., `subscale_D_wle`), giving Warm's
-#'     Weighted Likelihood Estimate of theta from a CML fit on each subscale
-#'     alone. Persons whose subscore equals the minimum or maximum on a
-#'     subscale produce non-finite WLEs (`Inf` / `-Inf`) and are excluded
-#'     from `wle_correlation` pairwise.}
+#'     weighted likelihood estimate of theta from a CML fit on each subscale
+#'     alone. Persons with the lowest or highest possible subscore on a
+#'     subscale get non-finite WLEs (`Inf` or `-Inf`) and are left out of
+#'     `wle_correlation` pairwise.}
 #'   \item{`wle_correlation`}{data.frame of pairwise Pearson correlations
 #'     between subscale WLEs, with columns `subscale_a`, `subscale_b`, `r`,
 #'     `ci_lower`, `ci_upper` (95% CI from `stats::cor.test`), `p_value`,
 #'     and `n` (number of persons with finite WLEs on both subscales). One
-#'     row per pair; for D = 2, a single row. Useful as an effect-size
-#'     companion to `p_value` -- a rejected test with `r` near 1 indicates a
-#'     small effect; `r` clearly below 1 indicates substantive
-#'     multidimensionality.}
+#'     row per pair, so a single row for D = 2. Useful as an effect size
+#'     next to `p_value`. A rejected test with `r` near 1 indicates a small
+#'     departure, and `r` clearly below 1 substantial multidimensionality.}
 #' }
 #'
 #' @details
@@ -109,7 +109,7 @@
 #'
 #' **Monte Carlo sampling under H0.** Following Christensen & Kreiner (2007):
 #' (a) sample N total scores from the empirical score distribution
-#' \eqn{n_t/N}; (b) for each sampled score, sample an item-response vector
+#' \eqn{n_t/N}, and (b) for each sampled score, sample an item-response vector
 #' from the conditional distribution \eqn{p(x \mid t, \hat{\epsilon})} given
 #' by eq. 4 of the paper. Step (b) uses the recursive \eqn{\gamma}-function
 #' algorithm (Andersen, 1995, eq. 15.22 and 15.27) for dichotomous and
@@ -126,8 +126,9 @@
 #' whereas the Rasch conditional distribution weights a set of items by the
 #' *product* of their easinesses. See the note on validation below.
 #'
-#' Iterations that fail (e.g., simulated dataset has an empty category for an
-#' item) are silently dropped.
+#' A simulated dataset that cannot be refitted, for example because a
+#' category of an item is empty, is left out without a message.
+#' `actual_iterations` gives the number used.
 #'
 #' Item parameters are estimated once on the observed data and held fixed
 #' across MC iterations. Christensen & Kreiner (2007) use the extended
@@ -136,9 +137,9 @@
 #' assumption about \eqn{\theta} is needed.
 #'
 #' **Missing data.** Complete cases only. The statistic is built from the
-#' joint table of subscores, so a respondent needs a defined subscore on
-#' every subscale; there is no partial-missingness path, and the SAS macro
-#' this implementation was validated against has the same requirement. Rows
+#' joint table of subscores, so a respondent needs a subscore on every
+#' subscale. The SAS macro this implementation was validated against has
+#' the same requirement. Rows
 #' with `NA` are dropped *after* items outside `partition` have been
 #' removed, so missingness on items the test does not use costs no
 #' respondents. `sample_n` reports the respondents analysed and
@@ -174,27 +175,37 @@
 #' Psychological Measurement, 31*(1), 20-30.
 #' \doi{10.1177/0146621605286204}
 #'
-#' @seealso \code{\link{RMdimResidualPCA}}, \code{\link{RMdimResidualPCACutoff}}
+#' Tjur, T. (1982). A connection between Rasch's item analysis model and a
+#' multiplicative Poisson model. *Scandinavian Journal of Statistics, 9*(1),
+#' 23-30.
+#'
+#' @seealso [RMdimMartinLofResiduals()] for where the partition departs,
+#'   [RMdimResidualPCA()] and [RMdimCFA()] for other checks of
+#'   unidimensionality.
 #'
 #' @export
 #'
 #' @examples
 #' \donttest{
 #' set.seed(1)
-#' # Build 2-dimensional polytomous data: 4 items per subscale, 5 categories
-#' n     <- 400
+#' # Two-dimensional partial credit data: 4 items per subscale, 5 categories,
+#' # latent correlation 0.6
+#' n <- 400
 #' theta1 <- rnorm(n)
 #' theta2 <- 0.6 * theta1 + sqrt(1 - 0.6^2) * rnorm(n)
-#' make_pcm <- function(theta, n_items, taus) {
+#' sim_pcm <- function(theta, n_items) {
 #'   sapply(seq_len(n_items), function(j) {
-#'     # ... toy simulation here
-#'     sample(0:4, n, replace = TRUE)
+#'     thr <- c(-1.5, -0.5, 0.5, 1.5) + (j - 2.5) * 0.3
+#'     lp <- outer(theta, 0:4) - matrix(c(0, cumsum(thr)), length(theta), 5,
+#'                                      byrow = TRUE)
+#'     p <- exp(lp) / rowSums(exp(lp))
+#'     apply(p, 1, function(pr) sample(0:4, 1, prob = pr))
 #'   })
 #' }
-#' dat <- cbind(make_pcm(theta1, 4, NULL), make_pcm(theta2, 4, NULL))
+#' dat <- cbind(sim_pcm(theta1, 4), sim_pcm(theta2, 4))
 #' colnames(dat) <- paste0("I", 1:8)
 #'
-#' # Few iterations for a fast example; use 1000+ in real analyses
+#' # Few iterations for a fast example. Use 1000 or more in real analyses.
 #' RMdimMartinLof(dat,
 #'             partition = list(c("I1","I2","I3","I4"),
 #'                              c("I5","I6","I7","I8")),
@@ -944,13 +955,13 @@ run_ml_sim_sequential <- function(
 # RMdimMartinLofResiduals: standardised residuals from the joint subscore table
 # ===========================================================================
 
-#' Standardised Residuals from the Joint Subscore Distribution
+#' Residuals of the joint subscore table for the Martin-Löf test
 #'
-#' Diagnostic accompanying \code{\link{RMdimMartinLof}}: per-cell standardised
-#' residuals from the joint distribution of subscores under unidimensionality
-#' (Christensen, Bjorner, Kreiner, & Petersen, 2002, eq. 13). Useful for
-#' identifying *where* a partition deviates from the unidimensional null
-#' rather than just whether it does (which `RMdimMartinLof()` answers).
+#' Standardised residuals for each cell of the joint table of subscores,
+#' compared with its distribution under unidimensionality (Christensen,
+#' Bjorner, Kreiner, & Petersen, 2002, eq. 13). [RMdimMartinLof()] tests
+#' whether a partition departs from unidimensionality, and this table shows
+#' where.
 #'
 #' For each cell of the joint subscore table (indexed by
 #' \eqn{(t_1, \ldots, t_D)}), the conditional probability under H0 given the
@@ -960,15 +971,15 @@ run_ml_sim_sequential <- function(
 #' \eqn{(o - e) / \sqrt{n_t \cdot p \cdot (1 - p)}}. CML estimates from the
 #' unidimensional model are used for the \eqn{\gamma}-functions.
 #'
-#' Reading the table (D = 2): under the unidimensional null, residuals
-#' should be patternless and roughly N(0, 1). Multidimensionality with
+#' Reading the table (D = 2): under unidimensionality, the residuals
+#' should show no pattern and be roughly N(0, 1). Multidimensionality with
 #' positively correlated dimensions typically shows up as **positive**
 #' residuals at the corners of each antidiagonal (high `t1` + low `t2`,
 #' low `t1` + high `t2`) and **negative** residuals near the antidiagonal
 #' centre (matched subscores). Negatively correlated dimensions show
 #' positive residuals at the table corners (high/low and low/high) and
 #' negative residuals at high/high and low/low. See Christensen et al.
-#' (2002, section7) for a worked example.
+#' (2002, section 7) for a worked example.
 #'
 #' Cells where the total score has no observed cases (`n_t = 0`) are
 #' uninformative and are dropped from the output.
@@ -984,48 +995,45 @@ run_ml_sim_sequential <- function(
 #' `t = max`, where the conditional probability is 1 and the residual is
 #' undefined: the macro prints 0, this function returns `NA`.
 #'
-#' @param data A data.frame or matrix of item responses (0-based,
-#'   non-negative integers). Complete cases only: rows with any `NA` on the
-#'   items named in `partition` are dropped. Missingness on items outside
-#'   `partition` is ignored.
-#' @param partition Same format as in \code{\link{RMdimMartinLof}}: a list of
-#'   item-name/index vectors, or a length-`ncol(data)` vector of group
-#'   labels. Each subscale must contain at least 2 items.
-#' @param output Character. `"kable"` (default) for a 2-D pipe-format
-#'   residual table when D = 2 (long-format kable when D > 2), `"dataframe"`
-#'   for the underlying long-format data.frame, or `"ggplot"` for a
-#'   diverging-fill heatmap (with `facet_wrap` over `t3` for D = 3, error
-#'   for D > 3).
+#' @param data A data.frame or matrix of item responses, items scored from
+#'   0. Only complete cases on the items in `partition` are used. Missing
+#'   values on other items are ignored.
+#' @param partition As in [RMdimMartinLof()]: a list of item-name or index
+#'   vectors, or a vector of length `ncol(data)` with each item's
+#'   subscale. Each subscale must have at least 2 items.
+#' @param output Character. `"kable"` (default) for a two-way residual
+#'   table when D = 2 (a long table when D > 2), `"dataframe"` for the
+#'   long data.frame, or `"ggplot"` for a heatmap (D = 2, or D = 3 with a
+#'   panel per value of `t3`, an error for D > 3).
 #' @param flag_threshold Numeric. Cells with `|residual| > flag_threshold`
-#'   are flagged: marked as `**bold**` in the kable, shown in the `flagged`
-#'   column of the dataframe. Default `2`.
-#' @param color_by Character. For `output = "ggplot"`, what the tile fill
-#'   colour encodes. `"residual"` (default) -- diverging red-white-blue scale
-#'   centred at 0, the most directly diagnostic. `"n"` -- sequential blue
-#'   scale on the observed cell count, useful for spotting whether
-#'   large-magnitude residuals are driven by sparse cells. Either way, the
-#'   numeric residual is printed inside each cell.
-#' @param color_limits Numeric length-2 vector or `NULL`. Caps the colour
-#'   scale for `output = "ggplot"`. Default `c(-5, 5)` when
-#'   `color_by = "residual"` (sparse-cell residuals from
-#'   `(o-e)/sqrt(n*p*(1-p))` can be enormous when expected counts are tiny;
-#'   capping the scale stops outliers from compressing the rest of the
-#'   plot). The unclipped residual values still appear as cell labels.
-#'   `NULL` for `color_by = "n"`, which uses the natural data range.
-#' @param min_expected Numeric or `NULL`. If set, cells with `expected <
-#'   min_expected` have their residual set to `NA` (they appear grey in the
-#'   heatmap and are not flagged). Default `NULL` (no filtering). Setting
-#'   `min_expected = 1` (or `5`) is the analogue of the Cochran rule for
-#'   sparse-cell chi-square contributions and removes residuals whose
-#'   asymptotic standard normal approximation is unreliable.
+#'   are flagged, in bold in the kable and in the `flagged` column of the
+#'   data.frame. Default `2`. These are single-cell flags, and with many
+#'   cells some are expected even under unidimensionality.
+#' @param color_by Character. What the tile colour shows with
+#'   `output = "ggplot"`. `"residual"` (default), a diverging red-white-blue
+#'   scale centred at 0. `"n"`, a sequential blue scale of the observed
+#'   cell count, which shows whether large residuals come from sparse
+#'   cells. In both, the residual is printed in each cell.
+#' @param color_limits Numeric vector of length 2, or `NULL`. Limits of the
+#'   colour scale with `output = "ggplot"`. Default `c(-5, 5)` with
+#'   `color_by = "residual"`, since residuals in cells with tiny expected
+#'   counts can be very large and would compress the rest of the scale. The
+#'   cell labels show the values without the limits. `NULL` with
+#'   `color_by = "n"`, which uses the range of the data.
+#' @param min_expected Numeric or `NULL`. If set, cells with an expected
+#'   count below `min_expected` get the residual `NA` (grey in the heatmap,
+#'   never flagged). Default `NULL`. A value of 1 or 5 is the analogue of
+#'   the Cochran rule for sparse cells in chi-square tests, and removes
+#'   residuals whose normal approximation is unreliable.
 #'
 #' @return
 #' * `output = "kable"`: a `knitr_kable` object. For D = 2, a wide table
-#'   with rows = `t1`, columns = `t2`, cells = standardised residual
-#'   (`**bold**` if flagged, em-dash if NA). For D > 2, long-format with
-#'   one row per cell.
-#' * `output = "dataframe"`: a long-format data.frame with columns `t1`,
-#'   ..., `tD`, `total`, `observed`, `expected`, `residual`, `flagged`.
+#'   with `t1` in rows, `t2` in columns and the standardised residual in
+#'   the cells (bold if flagged, a dash if `NA`). For D > 2, one row per
+#'   cell.
+#' * `output = "dataframe"`: a data.frame with one row per cell and the
+#'   columns `t1`, ..., `tD`, `total`, `observed`, `expected`, `residual`
+#'   and `flagged`.
 #' * `output = "ggplot"`: a `geom_tile()` heatmap (D = 2 or 3 only).
 #'
 #' @references
@@ -1038,7 +1046,7 @@ run_ml_sim_sequential <- function(
 #' Testing unidimensionality in polytomous Rasch models. *Psychometrika,
 #' 67*(4), 563-574. \doi{10.1007/BF02295131}
 #'
-#' @seealso \code{\link{RMdimMartinLof}}
+#' @seealso [RMdimMartinLof()]
 #'
 #' @export
 #'

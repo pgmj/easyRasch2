@@ -1,24 +1,23 @@
 #' Function renaming in easyRasch2 0.8.0
 #'
-#' In version 0.8.0, 22 exported functions were renamed under a
-#' consistent *domain-prefix \eqn{\to} method \eqn{\to} variant-suffix*
-#' scheme. The renames have no semantic effect --- only names changed.
-#' Use the table below to migrate existing scripts.
+#' In version 0.8.0, 25 exported functions were renamed under one scheme:
+#' domain prefix, then method, then variant suffix. Only the names
+#' changed. Use the table below to update existing scripts.
 #'
 #' @section Domain prefixes:
 #' \itemize{
-#'   \item `RMdif` --- differential item functioning
-#'   \item `RMlocdep` --- local dependence
-#'   \item `RMitem` --- per-item statistics (fit, restscore, ICC, hierarchy)
-#'   \item `RMdim` --- dimensionality assessment
-#'   \item `RMplot` --- descriptive response-distribution plots
+#'   \item `RMdif`: differential item functioning
+#'   \item `RMlocdep`: local dependence
+#'   \item `RMitem`: item statistics (fit, restscore, ICC, hierarchy)
+#'   \item `RMdim`: dimensionality
+#'   \item `RMplot`: descriptive plots of the response distributions
 #' }
 #'
 #' Variant suffixes attached at the end:
 #' \itemize{
-#'   \item `Cutoff` --- simulation-based critical values
-#'   \item `Plot` --- visualisation
-#'   \item `MI` --- multiple-imputation variant (replaces former `_mi`)
+#'   \item `Cutoff`: simulation-based critical values
+#'   \item `Plot`: plots
+#'   \item `MI`: version for multiply imputed data (replaces `_mi`)
 #' }
 #'
 #' @section Old to new name map:
@@ -55,10 +54,11 @@
 #' `RMitemHierarchy()`, `RMdifLR()`, `RMdifTree()`, `RMlocdepQ3()`,
 #' `RMtargeting()`, `RMscoreSE()`.
 #'
-#' @section No deprecation aliases:
-#' No deprecation shims are shipped: each old name is simply gone. This
-#' keeps the export list clean ahead of the first CRAN submission. Run a
-#' search-and-replace against the table above to migrate.
+#' @section No aliases for the old names:
+#' The old names were removed without aliases, to keep the export list
+#' clean before the first CRAN release. Search and replace with the table
+#' above to update a script. `RMitemInfitCutoffPlot()` has since been
+#' replaced by [RMitemInfitPlot()] and remains as a deprecated alias.
 #'
 #' @name easyRasch2-renaming
 #' @aliases easyRasch2-renaming
