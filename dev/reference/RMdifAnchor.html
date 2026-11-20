@@ -15,7 +15,7 @@ spacing test of thresholds needs no anchor."><meta name="robots" content="noinde
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9006</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9007</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,8 +81,8 @@ grouping variable separately via <code>dif_var</code>.</p></dd>
 
 <dt id="arg-dif-var">dif_var<a class="anchor" aria-label="anchor" href="#arg-dif-var"></a></dt>
 <dd><p>Vector of length <code>nrow(data)</code> (factor, character or
-numeric) with exactly two groups. Rows where it is <code>NA</code> are dropped
-with a message.</p></dd>
+numeric) with exactly two groups. Rows where it is <code>NA</code>, and rows
+with no responses, are dropped with a message.</p></dd>
 
 
 <dt id="arg-anchor">anchor<a class="anchor" aria-label="anchor" href="#arg-anchor"></a></dt>
@@ -105,8 +105,10 @@ settings and sample sizes, see Value).</p></dd>
 <dt id="arg-plot-type">plot_type<a class="anchor" aria-label="anchor" href="#arg-plot-type"></a></dt>
 <dd><p>With <code>output = "ggplot"</code>: <code>"differences"</code>
 (default) plots the differences at the chosen <code>level</code> with
-confidence intervals. <code>"criterion"</code> plots the Gini criterion of
-Strobl et al. (2021), which is available with either anchor.</p></dd>
+confidence intervals. <code>"criterion"</code> plots each item's location
+difference and the Gini criterion of Strobl et al. (2021) when the
+groups are aligned at that item. It is available with either anchor
+and at any level.</p></dd>
 
 
 <dt id="arg-correction">correction<a class="anchor" aria-label="anchor" href="#arg-correction"></a></dt>
@@ -117,8 +119,8 @@ or <code>"none"</code>.</p></dd>
 
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
-<dd><p>A unit is flagged when its corrected p-value is below
-<code>alpha</code>. Default <code>0.05</code>.</p></dd>
+<dd><p>An item, threshold or spacing is flagged when its
+corrected p-value is below <code>alpha</code>. Default <code>0.05</code>.</p></dd>
 
 
 <dt id="arg-conf">conf<a class="anchor" aria-label="anchor" href="#arg-conf"></a></dt>
@@ -132,8 +134,9 @@ levels of <code>dif_var</code>. Default <code>NULL</code>, the first level.</p><
 
 
 <dt id="arg-sort">sort<a class="anchor" aria-label="anchor" href="#arg-sort"></a></dt>
-<dd><p>Logical. Sort the table rows by the size of the difference
-(spacing: by the test statistic). Default <code>FALSE</code>.</p></dd>
+<dd><p>Logical. Sort the table rows with the largest absolute
+difference first (at spacing level, the largest test statistic first).
+Default <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-n-seeds">n_seeds<a class="anchor" aria-label="anchor" href="#arg-n-seeds"></a></dt>
@@ -254,18 +257,24 @@ categories, 20 items with 2 or 3 categories, 150 to 600 respondents per
 group, equal and unequal sizes, uniform DIF and DSF of 0.6 logits), the
 forward anchor with the single-step correction kept the family-wise error
 rate close to .05 in most conditions and had the highest power among the
-anchors that held it. Its family-wise error rate rose above .05 (up to
-about .10) when several items had small location shifts that the
-selection missed, and with three of
-10 items with DIF at 150 per group. The consensus over orderings kept
-the error rate and power. The share of datasets where two runs with
-different seeds flag different thresholds fell from about .037 with a
-single ordering to about .012 with 100 orderings.
-More than two groups, other DIF sizes and anchors of fixed length were
-not studied. The studies are reported in full at
+anchors that held it. Its family-wise error rate rose above .05, up to
+about .10, in two kinds of condition: when several items had small
+location shifts that the selection missed, and when three of 10 items
+had DIF with 150 respondents per group. Taking the consensus over
+orderings left the error rate and power as they were with a single
+ordering. The share of datasets where two runs with different seeds
+flag different thresholds fell from about .037 with a single ordering
+to about .012 with 100 orderings. More than two groups, other DIF sizes
+and anchors of fixed length were not studied. The studies are reported in full at
 <a href="https://pgmj.github.io/rasch_book/chapters/dif-anchor-tests.html" class="external-link">https://pgmj.github.io/rasch_book/chapters/dif-anchor-tests.html</a>.</p>
-<p>Every response category must be used in both groups, as in
-<code><a href="RMdifLR.html">RMdifLR</a></code>. Respondents with missing responses are kept.</p>
+<p><strong>Data.</strong> As in <code><a href="RMdifLR.html">RMdifLR</a></code>, every response category of
+an item must be used in both groups, and not only by respondents with a
+zero or perfect score there. Otherwise the function stops and names the
+items, categories and groups. Respondents with missing responses are
+kept, since CML uses the items they answered.</p>
+<p>A flagged item shows that DIF is there, not that it matters.
+<code><a href="RMdifImpact.html">RMdifImpact</a></code> estimates its impact on group comparisons and
+person scores.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -299,7 +308,8 @@ differential item functioning within the family of Rasch models.
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="RMdifLR.html">RMdifLR</a></code> for Andersen's likelihood-ratio test of any
-DIF (any number of groups), <code><a href="RMdifGamma.html">RMdifGamma</a></code> and
+DIF (any number of groups), <code><a href="RMdifImpact.html">RMdifImpact</a></code> for the impact
+of flagged items, <code><a href="RMdifGamma.html">RMdifGamma</a></code> and
 <code><a href="RMdifTree.html">RMdifTree</a></code>.</p></div>
     </div>
 

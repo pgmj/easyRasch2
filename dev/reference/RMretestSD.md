@@ -52,12 +52,14 @@ RMretestSD(
 
 - parallel:
 
-  Logical. Use `mirai` for the simulation if available. Default `TRUE`.
+  Logical. Run the simulation in parallel via mirai when it is
+  installed. Default `TRUE`.
 
 - n_cores:
 
-  Integer or `NULL`. Parallel workers. When `NULL`,
-  `getOption("mc.cores")` is checked first.
+  Integer or `NULL`. Number of parallel workers. When `NULL`,
+  `getOption("mc.cores")` is used. If that is unset too, the simulation
+  runs sequentially.
 
 - verbose:
 
@@ -78,7 +80,9 @@ RMretestSD(
 
 - seed:
 
-  Integer or `NULL`. Random seed.
+  Integer or `NULL`. Random seed for the simulation and the bootstrap.
+  See
+  [easyRasch2-reproducibility](https://pgmj.github.io/easyRasch2/dev/reference/easyRasch2-reproducibility.md).
 
 - output:
 
@@ -202,6 +206,14 @@ When that is the situation you are in, `retest_sd_tip` from
 answers the practical question from the other end: it reports how much
 occasion noise each flagged result would tolerate, which you can weigh
 against a published coefficient without converting anything.
+
+## References
+
+Caronni, A., Picardi, M., Scarano, S., Rota, V., & Amadei, M. (2026).
+Improving single-subject change assessment: Deriving the minimal
+detectable change of questionnaires' ordinal scores from Rasch analysis
+measures. *Disability and Rehabilitation, 48*(7), 2169-2186.
+[doi:10.1080/09638288.2025.2547398](https://doi.org/10.1080/09638288.2025.2547398)
 
 ## See also
 

@@ -1,29 +1,28 @@
 # Function renaming in easyRasch2 0.8.0
 
-In version 0.8.0, 22 exported functions were renamed under a consistent
-*domain-prefix \\\to\\ method \\\to\\ variant-suffix* scheme. The
-renames have no semantic effect — only names changed. Use the table
-below to migrate existing scripts.
+In version 0.8.0, 25 exported functions were renamed under one scheme:
+domain prefix, then method, then variant suffix. Only the names changed.
+Use the table below to update existing scripts.
 
 ## Domain prefixes
 
-- `RMdif` — differential item functioning
+- `RMdif`: differential item functioning
 
-- `RMlocdep` — local dependence
+- `RMlocdep`: local dependence
 
-- `RMitem` — per-item statistics (fit, restscore, ICC, hierarchy)
+- `RMitem`: item statistics (fit, restscore, ICC, hierarchy)
 
-- `RMdim` — dimensionality assessment
+- `RMdim`: dimensionality
 
-- `RMplot` — descriptive response-distribution plots
+- `RMplot`: descriptive plots of the response distributions
 
 Variant suffixes attached at the end:
 
-- `Cutoff` — simulation-based critical values
+- `Cutoff`: simulation-based critical values
 
-- `Plot` — visualisation
+- `Plot`: plots
 
-- `MI` — multiple-imputation variant (replaces former `_mi`)
+- `MI`: version for multiply imputed data (replaces `_mi`)
 
 ## Old to new name map
 
@@ -66,8 +65,12 @@ Unchanged:
 [`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md),
 [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md).
 
-## No deprecation aliases
+## No aliases for the old names
 
-No deprecation shims are shipped: each old name is simply gone. This
-keeps the export list clean ahead of the first CRAN submission. Run a
-search-and-replace against the table above to migrate.
+The old names were removed without aliases, to keep the export list
+clean before the first CRAN release. Search and replace with the table
+above to update a script.
+[`RMitemInfitCutoffPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
+has since been replaced by
+[`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
+and remains as a deprecated alias.

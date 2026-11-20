@@ -15,7 +15,7 @@ or thresholds have it. For that, use RMdifAnchor."><meta name="robots" content="
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9006</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9007</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,24 +68,24 @@ or thresholds have it. For that, use <code><a href="RMdifAnchor.html">RMdifAncho
 <dl><dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
 <dd><p>A data.frame or matrix of item responses (non-negative
 integers, 0-based). One column per item, one row per person. Person
-IDs and grouping variables must not be included – pass the grouping
+IDs and grouping variables must not be included. Pass the grouping
 variable separately via <code>dif_var</code>.</p></dd>
 
 
 <dt id="arg-dif-var">dif_var<a class="anchor" aria-label="anchor" href="#arg-dif-var"></a></dt>
 <dd><p>Vector of length <code>nrow(data)</code> (factor, character,
-or numeric) defining the DIF grouping variable. Coerced to factor;
-unused levels are dropped. Rows where <code>dif_var</code> is <code>NA</code> are
-dropped with a message. Must result in at least 2 groups after
-cleaning.</p></dd>
+or numeric) defining the groups, two or more. It is coerced to a
+factor and unused levels are dropped. Rows where <code>dif_var</code> is
+<code>NA</code>, and rows with no responses, are dropped with a message.</p></dd>
 
 
 <dt id="arg-model">model<a class="anchor" aria-label="anchor" href="#arg-model"></a></dt>
 <dd><p>One of <code>"auto"</code> (default), <code>"PCM"</code>, or
-<code>"RM"</code>. <code>"auto"</code> reports the Rasch model when the data are
-dichotomous (max response = 1) and the partial credit model otherwise
-(the two coincide for dichotomous data). <code>"RM"</code> errors on
-polytomous data.</p></dd>
+<code>"RM"</code>. The fit is the same for dichotomous data, where the two
+models coincide, so the choice only sets the label in <code>Model</code>.
+<code>"auto"</code> labels the result <code>"RM"</code> when every item is
+dichotomous and <code>"PCM"</code> otherwise. <code>"RM"</code> gives an error
+for polytomous data.</p></dd>
 
 
 <dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
@@ -128,7 +128,9 @@ spacing, with a correction for multiple testing. The simulation study
 behind this change is reported at
 <a href="https://pgmj.github.io/rasch_book/chapters/dif-anchor-tests.html" class="external-link">https://pgmj.github.io/rasch_book/chapters/dif-anchor-tests.html</a>.</p>
 <p>Like other global tests, the LR test becomes significant for small
-amounts of DIF in large samples, and has little power in small ones.</p>
+amounts of DIF in large samples, and has little power in small ones.
+<code><a href="RMdifImpact.html">RMdifImpact</a></code> estimates whether the DIF matters for group
+comparisons and person scores.</p>
 <p><strong>Response categories.</strong> Every category an item uses must be used in
 every group, or the group fits have different thresholds and the test is
 not defined. The same holds when a category is used in a group only by
@@ -150,7 +152,8 @@ functioning. <em>Journal of Educational and Behavioral Statistics, 37</em>(3),
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="RMdifAnchor.html">RMdifAnchor</a></code> for anchored tests of single items,
-thresholds and threshold spacing, <code><a href="RMdifGamma.html">RMdifGamma</a></code> and
+thresholds and threshold spacing, <code><a href="RMdifImpact.html">RMdifImpact</a></code> for the
+size of the DIF's impact, <code><a href="RMdifGamma.html">RMdifGamma</a></code> and
 <code><a href="RMdifTree.html">RMdifTree</a></code>.</p></div>
     </div>
 

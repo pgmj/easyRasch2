@@ -1,11 +1,12 @@
-# Relative Measurement Uncertainty (RMU)
+# Relative measurement uncertainty (RMU)
 
-Bayesian-style reliability estimate (Bignardi, Kievit & Bürkner, 2026)
-computed from a matrix of posterior or plausible-value draws. The
-columns of `input_draws` are split at random into two halves;
-reliability is the Pearson correlation across persons of paired columns
-from the two halves, summarised across pairs as a posterior mean with
-HDCI.
+Reliability estimated from a matrix of posterior or plausible-value
+draws (Bignardi, Kievit & Bürkner, 2026). The columns of `input_draws`
+are split at random into two halves, and the reliability is the Pearson
+correlation across persons between paired columns of the two halves,
+summarised over the pairs as a mean with an HDCI.
+[`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
+uses it with plausible values from mirt.
 
 ## Usage
 
@@ -17,8 +18,8 @@ RMUreliability(input_draws, level = 0.95, verbose = FALSE)
 
 - input_draws:
 
-  Numeric matrix or data.frame of draws. Rows are subjects; columns are
-  draws. Must have at least two columns; ideally many.
+  Numeric matrix or data.frame of draws, one row per person and one
+  column per draw. At least two columns, ideally many.
 
 - level:
 
@@ -41,10 +42,14 @@ Adapted (with permission, GPL-2/3) from `rmu()`, formerly
 `reliability()`, in the 'gbtoolbox' package,
 <https://github.com/giac01/gbtoolbox>.
 
-The function silently returns 0 for any column pair where either side
-has zero variance (the correlation is undefined there).
+A column pair in which either column has zero variance gets a
+correlation of 0, without a message, since the correlation is undefined
+there.
 
-Requires the `ggdist` package (Suggests).
+The function takes no `seed`. The split of the columns is random and
+follows the session's random number stream (see
+[easyRasch2-reproducibility](https://pgmj.github.io/easyRasch2/dev/reference/easyRasch2-reproducibility.md)).
+Needs the ggdist package (in Suggests).
 
 ## References
 

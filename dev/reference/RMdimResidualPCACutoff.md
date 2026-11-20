@@ -1,14 +1,16 @@
-# Simulation-based Cutoff for First-Contrast Eigenvalue
+# Simulation-based bound for the first-contrast eigenvalue
 
-Parametric bootstrap producing an empirical upper percentile for the
-largest eigenvalue from a PCA of standardized residuals under a
-correctly fitting Rasch model. For each iteration the function resamples
-theta values from the data-based estimates, simulates response data,
-refits the appropriate Rasch model, and extracts the first-contrast
-eigenvalue. Several upper-tail percentiles of the resulting distribution
-are returned; the 99th percentile is reported as the suggested cutoff
-(matching the convention used by
-[`RMlocdepQ3Cutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md)).
+Simulates datasets from a Rasch or partial credit model that fits and
+resembles your data, and records the largest eigenvalue (the first
+contrast) of the PCA of standardized residuals in each. Returns several
+upper percentiles of these eigenvalues. The 99th is the suggested bound
+for
+[`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md),
+as in
+[`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md).
+Fixed thresholds do not work, since the eigenvalue depends on the sample
+size, the number of items and the spread of the item parameters (Chou &
+Wang, 2010).
 
 ## Usage
 
@@ -27,22 +29,23 @@ RMdimResidualPCACutoff(
 
 - data:
 
-  A data.frame or matrix of item responses (0-based, non-negative
-  integers).
+  A data.frame or matrix of item responses, items scored from 0. Only
+  complete cases are used.
 
 - iterations:
 
-  Integer. Number of simulation iterations. Default `250`.
+  Integer. Number of simulated datasets. Default `250`.
 
 - parallel:
 
-  Logical. Use parallel processing via `mirai`. Default `TRUE`.
+  Logical. Run the simulations in parallel via mirai when it is
+  installed. Default `TRUE`.
 
 - n_cores:
 
   Integer or `NULL`. Number of parallel workers. When `NULL`,
-  `getOption("mc.cores")` is checked first; if neither is set,
-  `parallel = TRUE` falls back to sequential with a warning.
+  `getOption("mc.cores")` is used. If that is unset too, a warning is
+  given and the simulations run sequentially.
 
 - verbose:
 
@@ -56,15 +59,15 @@ RMdimResidualPCACutoff(
 
 ## Value
 
-A list with components:
+A list with:
 
 - `results`:
 
-  data.frame: `iteration`, `eigenvalue`.
+  data.frame with `iteration` and `eigenvalue`.
 
 - `p95`, `p99`, `p995`, `p999`:
 
-  Empirical percentiles of `eigenvalue`.
+  Percentiles of the simulated eigenvalues.
 
 - `max`:
 
@@ -72,17 +75,17 @@ A list with components:
 
 - `suggested_cutoff`:
 
-  The 99th percentile (`p99`) — pass this list back into
-  [`RMdimResidualPCA`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md)
-  via `cutoff = `, or use `suggested_cutoff` directly.
+  The 99th percentile (`p99`). Pass the whole list to
+  [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md)
+  as `cutoff`, or use this value directly.
 
 - `suggested_cutoff_percentile`:
 
-  The percentile used for `suggested_cutoff`, currently always `99`.
+  The percentile behind `suggested_cutoff`, always `99`.
 
 - `actual_iterations`:
 
-  Number of successful iterations.
+  Number of simulated datasets that could be used.
 
 - `sample_n`:
 
@@ -90,27 +93,21 @@ A list with components:
 
 - `item_names`:
 
-  Character vector of item names.
+  Item names.
 
 ## Details
 
-Rule-of-thumb cutoffs for the first-contrast eigenvalue depend strongly
-on sample size, test length, and item-parameter spread; simulation-based
-cutoffs tailored to the data are more defensible (Chou & Wang, 2010).
+The generating model has the CML item parameters (`psychotools`) and the
+WLE person locations of `data`. In each iteration, person locations are
+drawn with replacement from the WLE estimates, responses are simulated
+from the model, the standardized residuals are computed with the same
+engine as for the observed data, and the largest eigenvalue of their PCA
+is recorded.
 
-The generating model uses CML item parameters (`psychotools`) and WLE
-person locations. Per iteration: theta values are sampled with
-replacement from the WLE estimates; response data are simulated under
-the model
-([`psychotools::rrm`](https://rdrr.io/pkg/psychotools/man/rrm.html) for
-dichotomous, partial-credit simulator for polytomous); CML/WLE
-standardized residuals are computed (the same engine as the observed
-analysis); [`prcomp()`](https://rdrr.io/r/stats/prcomp.html) is run; the
-first-contrast eigenvalue is recorded.
-
-Iterations that fail (e.g., due to a degenerate simulated dataset where
-some category isn't represented) are silently dropped. The `iarm`
-package is **not** required.
+A simulated dataset that cannot be refitted, for example because a
+response category is empty, is left out without a message.
+`actual_iterations` gives the number that remained. The iarm package is
+not needed.
 
 ## References
 
@@ -121,7 +118,7 @@ residuals. *Educational and Psychological Measurement, 70*(5), 717-731.
 
 ## See also
 
-[`RMdimResidualPCA`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md)
+[`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md)
 
 ## Examples
 
@@ -133,7 +130,7 @@ dat <- as.data.frame(
 )
 colnames(dat) <- paste0("I", 1:12)
 
-# Few iterations for a fast example; use 250+ in real analyses
+# Few iterations for a fast example. Use 250 or more in real analyses.
 bound <- RMdimResidualPCACutoff(dat, iterations = 50, parallel = FALSE, seed = 1)
 bound$suggested_cutoff
 #> [1] 1.623358

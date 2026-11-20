@@ -1,11 +1,13 @@
-# Category Functioning Given the Total Score
+# Category functioning given the total score
 
 Four diagnostic plots of how each item's response categories are used,
 all built on the probability of each category given the respondent's
 total score, \\P(X_i = j \mid r)\\. Under the partial credit model this
 probability depends on the item parameters alone, so no person locations
-are estimated and the comparisons are not affected by the error in them.
-Items are shown in rows.
+are estimated and the comparisons are not affected by their measurement
+error. Items are shown in rows.
+[`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md)
+gives the test that the calibration plot shows.
 
 ## Usage
 
@@ -36,10 +38,12 @@ RMitemCatFitPlot(
 
 - type:
 
-  Character. Which plot to draw:
+  Character. Which plot to draw. Default `"residuals"`, or
+  `"calibration"` when `fit` is given, since that plot shows the test in
+  [`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md).
 
-  - `"residuals"` (default): standardised residuals of the number of
-    respondents in each category, within groups of total scores.
+  - `"residuals"`: standardised residuals of the number of respondents
+    in each category, within groups of total scores.
 
   - `"adjacent"`: for each pair of adjacent categories, the share of
     respondents in the upper one, against the total score.
@@ -55,10 +59,14 @@ RMitemCatFitPlot(
 
   Optional result of
   [`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md)
-  with `output = "list"`, made from the same `data`. Its simulations are
-  used for the rest-score and calibration plots, so `iterations`,
-  `parallel`, `n_cores` and `seed` are not needed, and each item's
-  corrected p is shown under its label.
+  with `output = "list"`, made from the same `data` (checked). Its
+  simulations are used for the rest-score and calibration plots, so
+  `iterations`, `parallel`, `n_cores` and `seed` are ignored. Each
+  item's corrected p from
+  [`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md)
+  is shown under its label, in bold when below .05 (marked with an
+  asterisk when ggtext is not installed), and the fit's item labels are
+  used unless `item_labels` is given.
 
 - score_groups:
 
@@ -67,8 +75,9 @@ RMitemCatFitPlot(
 
 - iterations:
 
-  Integer. Number of simulated datasets for `type = "restscore"` and
-  `type = "calibration"` when `fit` is not given. Default `200L`.
+  Integer, at least 20. Number of simulated datasets for
+  `type = "restscore"` and `type = "calibration"` when `fit` is not
+  given. Default `200L`.
 
 - conf_level:
 
@@ -77,8 +86,8 @@ RMitemCatFitPlot(
 
 - item_labels:
 
-  Optional character vector of item labels for the row strips, one per
-  column of `data`. Default: column names.
+  Optional character vector of unique item labels for the row strips,
+  one per column of `data`. Default: column names.
 
 - label_wrap:
 
@@ -125,7 +134,10 @@ RMitemCatFitPlot(
 
 Respondents with the lowest or highest possible total score are left
 out, since their responses are fixed by the score. The item parameters
-are estimated by conditional maximum likelihood (`psychotools`).
+are estimated by conditional maximum likelihood (`psychotools`). As in
+[`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md),
+a category that is empty, or used only by respondents with an extreme
+total score, stops the function with an error that names the item.
 
 A plain comparison of observed and expected category counts would show
 nothing. The category counts are sufficient statistics for the item
@@ -138,13 +150,16 @@ number of respondents minus the expected number, divided by its standard
 deviation under the model. Dotted lines at \\\pm 1.96\\ mark values that
 would be unusual for a single cell. The plot has many cells, so some
 values beyond them are expected even when the model holds. The expected
-counts treat the item parameters as known.
+counts treat the item parameters as known. This comparison of observed
+and expected counts within score groups is the one behind Glas's (1988)
+R1c test.
 
 **Adjacent categories.** Among respondents in category \\j - 1\\ or
 \\j\\ at total score \\r\\, the share in \\j\\. Under the model this
-share rises with \\r\\. A flat observed curve suggests that respondents
-do not distinguish the two categories. The band is the pointwise
-binomial range given the number of respondents in the pair.
+share rises with \\r\\. Observed shares that do not rise suggest that
+respondents do not distinguish the two categories. The band is the
+pointwise binomial range around the expected share, given the number of
+respondents in the pair.
 
 **Rest score.** The mean and SD of the rest score (total score minus the
 item's score) among respondents in each category, observed minus
@@ -179,14 +194,14 @@ reliability diagrams for probabilistic classifiers. *Proceedings of the
 National Academy of Sciences, 118*(8), e2016191118.
 [doi:10.1073/pnas.2016191118](https://doi.org/10.1073/pnas.2016191118)
 
+Glas, C. A. W. (1988). The derivation of some tests for the Rasch model
+from the multinomial distribution. *Psychometrika, 53*(4), 525–546.
+[doi:10.1007/BF02294405](https://doi.org/10.1007/BF02294405)
+
 Säilynoja, T., Johnson, A. R., Martin, O. A., & Vehtari, A. (2025).
 Recommendations for visual predictive checks in Bayesian workflow.
 *arXiv*.
 [doi:10.48550/arXiv.2503.01509](https://doi.org/10.48550/arXiv.2503.01509)
-
-Glas, C. A. W. (1988). The derivation of some tests for the Rasch model
-from the multinomial distribution. *Psychometrika, 53*(4), 525–546.
-[doi:10.1007/BF02294405](https://doi.org/10.1007/BF02294405)
 
 ## See also
 

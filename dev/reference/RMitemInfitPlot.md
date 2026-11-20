@@ -1,9 +1,10 @@
-# Plot Distribution of Simulated Infit and Outfit MSQ Values
+# Plot the simulated infit and outfit MSQ values
 
-Visualises the distribution of simulation-based conditional item fit
-values from
-[`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md),
-optionally overlaying observed item fit from the original data.
+Plots the simulated conditional item fit values from
+[`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
+(or
+[`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md))
+per item, and optionally the observed values in your data.
 
 ## Usage
 
@@ -17,26 +18,22 @@ RMitemInfitCutoffPlot(...)
 
 - simfit:
 
-  The return value of
-  [`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
-  (a list with components `results`, `item_cutoffs`,
-  `actual_iterations`, `sample_n`, and `item_names`).
+  The result of
+  [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
+  or
+  [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md).
 
 - data:
 
-  Optional. A data.frame or matrix of item responses for computing and
-  overlaying observed conditional item fit values. Items must be scored
-  starting at 0 (non-negative integers). When provided, the plot
-  includes orange diamond markers for the observed infit/outfit MSQ
-  alongside the simulated distribution, plus segment summaries from the
-  cutoff intervals.
+  Optional. The item responses the simulations were made from, items
+  scored from 0. The observed conditional infit and outfit MSQ are then
+  computed (on complete cases) and drawn as orange diamonds.
 
 - statistic:
 
-  Character string. Either `"infit"` (default) to show only the infit
-  panel, `"outfit"` to show only the outfit panel, or `"both"` to show
-  infit and outfit side by side (requires the `patchwork` package when
-  `data` is supplied).
+  Character. `"infit"`, `"outfit"`, or `"both"` side by side. With
+  `data` the default is `"infit"`, and `"both"` needs patchwork. Without
+  `data` the default is `"both"`, drawn as two facets.
 
 - ...:
 
@@ -44,53 +41,45 @@ RMitemInfitCutoffPlot(...)
 
 ## Value
 
-A `ggplot` object (or a `patchwork` object when `statistic = "both"` and
-`data` is supplied).
+A `ggplot` object, or a `patchwork` object with `statistic = "both"` and
+`data`.
 
 ## Details
 
-Uses
-[`ggdist::stat_dotsinterval()`](https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html)
-(when `data` is not supplied) or
-[`ggdist::stat_dots()`](https://mjskay.github.io/ggdist/reference/stat_dots.html)
-(when `data` is supplied) with `point_interval = "median_hdci"`. The
-outer `.width` follows `simfit$hdci_width`, so the shaded interval
-matches the one
+Each item's simulated values are drawn as dots, with the median, an
+inner 66% interval and an outer interval. The outer interval is the one
+stored in `simfit` and tabulated by
+[`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md):
+the HDCI of width `hdci_width`, or the 2.5th to 97.5th percentiles with
+`cutoff_method = "quantile"`. The inner interval uses the same method.
+
+**Without `data`** the intervals are drawn with
+[`ggdist::stat_dotsinterval()`](https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html).
+
+**With `data`**, the model is fitted by CML
+([`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html))
+and the observed conditional MSQ computed with
+[`iarm::out_infit()`](https://rdrr.io/pkg/iarm/man/out_infit.html). The
+intervals are black segments with a black dot for the median, and the
+observed value is the orange diamond.
+
+The intervals are per item and not corrected for testing several items.
+With the full cutoff object,
 [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
-tabulates.
+flags items by adjusted p-values instead, so an item just outside its
+interval need not be flagged there. The plot shows no p-values.
 
-When `data` is **not** supplied, the function plots the simulated MSQ
-distributions as dot-interval plots using
-[`ggdist::stat_dotsinterval()`](https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html)
-with median and Highest Density Continuous Interval (HDCI) summaries,
-faceted by statistic (InfitMSQ / OutfitMSQ).
-
-When `data` **is** supplied, the function:
-
-1.  Fits a Rasch / Partial Credit model by CML via
-    [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
-    (a dichotomous item is a 2-category PCM) and computes observed
-    conditional infit and outfit MSQ via
-    [`iarm::out_infit()`](https://rdrr.io/pkg/iarm/man/out_infit.html).
-
-2.  Overlays observed fit values as orange diamond markers on the
-    simulated distributions.
-
-3.  Shows per-item cutoff intervals (from `simfit$item_cutoffs`) as
-    black line segments, with thicker segments for the 66% HDCI range
-    and black dots for the median.
-
-The `ggplot2`, `ggdist`, and optionally `patchwork` packages must be
-installed (they are in Suggests, not Imports).
+The ggplot2 and ggdist packages must be installed, and patchwork for
+`statistic = "both"` (all are in Suggests).
 
 `RMitemInfitCutoffPlot()` is a deprecated alias for `RMitemInfitPlot()`,
-retained for backward compatibility with code written against easyRasch2
-0.8.0. It warns and forwards to `RMitemInfitPlot()`.
+kept for code written for easyRasch2 0.8.0. It warns and calls
+`RMitemInfitPlot()`.
 
 ## See also
 
-[`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md),
-[`RMitemInfit`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
+[`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md),
+[`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
 
 ## Examples
 
@@ -109,7 +98,7 @@ if (requireNamespace("iarm", quietly = TRUE) &&
   cutoff_res <- RMitemInfitCutoff(sim_data, iterations = 100,
                                   parallel = FALSE, seed = 42)
 
-  # Simulated distribution only (infit + outfit faceted)
+  # Simulated values only (infit and outfit side by side)
   RMitemInfitPlot(cutoff_res)
 
   # With observed fit overlaid (infit only, the default)

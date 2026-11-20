@@ -1,12 +1,11 @@
-# Observed one-factor CFA fit and loadings vs a simulated reference
+# One-factor CFA fit and loadings against a simulated reference
 
-Fits the observed one-factor categorical CFA to `data` and compares its
-fit indices and per-item standardized loadings against the simulated
-null distribution produced by
-[`RMdimCFACutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md).
-Returns a list of two tables: model-fit indices and per-item loadings,
-each with the observed value, the expected reference from the
-simulation, and a flag.
+Fits a one-factor CFA for ordinal items to `data` and compares its fit
+indices and the standardized loading of each item with the simulations
+from
+[`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md).
+Returns two tables, fit indices and loadings, each with the observed
+value, the simulated reference and a flag.
 
 ## Usage
 
@@ -25,97 +24,92 @@ RMdimCFA(
 
 - data:
 
-  A data.frame or matrix of item responses (non-negative integers,
-  0-based), the same items used for the cutoff simulation.
+  A data.frame or matrix of item responses, items scored from 0, the
+  same items as in the simulation. Only complete cases are used.
 
 - cutoff:
 
-  The list returned by
-  [`RMdimCFACutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md).
-  Required: observed CFA fit indices are not interpretable without the
-  simulated reference, so the function errors if it is missing.
+  The result of
+  [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md).
+  Required, since the observed fit indices cannot be judged without it.
 
 - p_value:
 
-  Logical. When `TRUE`, adds bootstrap p-values from the simulated null
-  distributions: one-sided in the unfavourable direction for the fit
-  indices (CFI low; RMSEA / SRMR high), two-sided for the per-item
-  loadings. The `Flagged` columns then reflect `padj < alpha` instead of
-  the percentile cutoffs. The fit indices and the loadings are corrected
-  as two separate families. Default `FALSE`.
+  Logical. Add bootstrap p-values from the simulations and flag on them
+  instead of on the percentile cutoffs. The p-values are one-sided in
+  the unfavourable direction for the fit indices (CFI low, RMSEA and
+  SRMR high) and two-sided for the loadings. The fit indices and the
+  loadings are corrected as two separate families. Default `FALSE`.
 
 - correction:
 
-  Character. Multiplicity correction for the p-values: `"fwer"`
-  (default; Westfall-Young studentised-max step-down), `"fdr_bh"`
-  (Benjamini-Hochberg), `"fdr_by"` (Benjamini-Yekutieli), or `"none"`.
-  Ignored when `p_value = FALSE`.
+  Character. Correction of the p-values: `"fwer"` (default,
+  Westfall-Young step-down), `"fdr_bh"` (Benjamini-Hochberg), `"fdr_by"`
+  (Benjamini-Yekutieli) or `"none"`. Used only with `p_value = TRUE`.
 
 - alpha:
 
-  Numeric in (0, 1). Significance level used to flag comparisons on the
-  corrected p-value. Default `0.05`. Ignored when `p_value = FALSE`.
+  Numeric in (0, 1). A comparison is flagged when its corrected p-value
+  is below `alpha`. Default `0.05`. Used only with `p_value = TRUE`.
 
 - output:
 
   Character. `"kable"` (default) returns each table as a
-  [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html);
-  `"dataframe"` returns plain data.frames.
+  [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html),
+  `"dataframe"` as a data.frame.
 
 ## Value
 
-A named list with two elements, `fit` and `loadings`:
+A named list with `fit` and `loadings`, each a `knitr_kable` or a
+data.frame by `output`:
 
 - `fit`:
 
-  CFI / RMSEA / SRMR with columns `Index`, `Observed`, `Cutoff`,
-  `Direction`, `Flagged` (one-sided, in the unfavourable direction).
-  With `p_value = TRUE`, columns `p` and `padj` are added and `Flagged`
-  reflects `padj < alpha`. An index lavaan could not compute for `data`
-  has `Observed = NA` and `Flagged = "not tested"`.
+  CFI, RMSEA and SRMR with the columns `Index`, `Observed`, `Cutoff`,
+  `Direction` and `Flagged` (one-sided, in the unfavourable direction).
+  With `p_value = TRUE`, also `p` and `padj`, and `Flagged` marks
+  `padj < alpha`. An index lavaan could not compute for `data` has
+  `Observed = NA` and `Flagged = "not tested"`.
 
 - `loadings`:
 
-  One row per item with columns `Item`, `Observed`, `Expected_low`,
-  `Expected_high`, `Flagged` (`"below"` / `"above"` / `""`). With
-  `p_value = TRUE`, columns `p_loading` and `padj_loading` are added and
-  `Flagged` reflects `padj_loading < alpha` (direction from the sign of
-  the deviation from the simulated mean).
-
-Each element is a `knitr_kable` (when `output = "kable"`) or a
-data.frame (when `output = "dataframe"`).
+  One row per item with the columns `Item`, `Observed`, `Expected_low`,
+  `Expected_high` and `Flagged` (`"below"`, `"above"` or `""`). With
+  `p_value = TRUE`, also `p_loading` and `padj_loading`, and `Flagged`
+  marks `padj_loading < alpha`, with the direction from the deviation
+  from the simulated mean.
 
 ## Details
 
-**Bootstrap p-values.** The per-comparison statistic is the residual
-studentised by the mean and SD of the observed and simulated values
-together. Marginal p-values are Monte-Carlo, `(1 + count) / (B + 1)`, so
-they can be no smaller than `1 / (B + 1)`. `correction = "fwer"` uses
-the Westfall-Young studentised-max step-down, which exploits the
-bootstrap dependence among the statistics (Ferreira, 2024). It controls
-the family-wise error rate at any number of iterations, but small
-p-values are imprecise and decisions depend on the seed when the
-simulation is small, so at least 1000 `iterations` in
-[`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md)
-are recommended (a warning is issued below that). These p-values are
-model-conditional and sample-size-sensitive and are reported alongside
-the simulated expected ranges, not in place of them.
+**Bootstrap p-values.** The statistic for each comparison is the
+deviation from the mean of the observed and simulated values together,
+divided by their SD. The uncorrected p is `(1 + count) / (B + 1)` for B
+simulated datasets, so it can be no smaller than `1 / (B + 1)`.
+`correction = "fwer"` uses the Westfall-Young step-down on the
+studentised maximum, which uses the dependence between the statistics
+(Westfall & Young, 1993; Ferreira, 2024). It controls the family-wise
+error rate at any number of iterations, but small p-values are imprecise
+and decisions depend on the seed when there are few simulations. Use at
+least 1000 `iterations` in
+[`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md).
+A warning says so below that. The p-values depend on the model and the
+sample size, and are reported with the simulated ranges, not instead of
+them.
 
 ## Multiple comparisons
 
-The marginal p-value controls the error rate of a *single* comparison:
-for one item (or item pair) decided on in advance it is the relevant
-value. But scanning all *k* comparisons and flagging whichever fall
-below `alpha` tests *k* hypotheses at once, so the chance of at least
-one false flag inflates to roughly \\1 - (1 - \alpha)^k\\ (e.g. about
-34% for *k* = 8 at `alpha = 0.05`) – even when every marginal p-value is
-correctly calibrated. The corrected (adjusted) p-value controls this:
-`correction = "fwer"` bounds the probability of *any* false flag
-(strict, lower power), while `"fdr_bh"` / `"fdr_by"` bound the expected
-*proportion* of false flags among those raised (a more lenient middle
-ground). Rule of thumb: use the marginal p-value for a single
-pre-specified comparison, and a corrected p-value when screening the
-whole table – the usual workflow.
+The uncorrected p-value controls the error rate of a single comparison.
+For one item (or item pair) chosen in advance it is the relevant value.
+Flagging whichever of k comparisons fall below `alpha` tests k
+hypotheses at once, and the chance of at least one false flag rises to
+about \\1 - (1 - \alpha)^k\\, for example 34% for k = 8 at
+`alpha = 0.05`, even when every uncorrected p-value is calibrated. The
+corrected p-value controls this. `correction = "fwer"` bounds the
+probability of any false flag (strict, less power), and `"fdr_bh"` and
+`"fdr_by"` bound the expected share of false flags among those raised.
+Use the uncorrected p-value for a single comparison chosen in advance,
+and a corrected one when screening the whole table, which is the usual
+case.
 
 ## References
 
@@ -129,8 +123,10 @@ Testing*. Wiley.
 
 ## See also
 
-[`RMdimCFACutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md),
-[`RMdimCFAPlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFAPlot.md)
+[`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md)
+for the simulations,
+[`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFAPlot.md)
+for the figures.
 
 ## Examples
 

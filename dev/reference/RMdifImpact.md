@@ -42,8 +42,10 @@ RMdifImpact(
 
 - items:
 
-  The items with DIF, by column name or position. At least one item must
-  stay common to both groups.
+  The items with DIF, by column name or position, usually those flagged
+  by
+  [`RMdifAnchor`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md).
+  At least one item must stay common to both groups, to link them.
 
 - reference:
 
@@ -91,7 +93,10 @@ RMdifImpact(
 ## Value
 
 A data.frame, a `knitr_kable`, a `ggplot` or a list, depending on
-`output`. Nothing is attached as attributes.
+`output`. Nothing is attached as attributes. With `output = "dataframe"`
+or `"kable"`, the table chosen by `table`, which is the list element of
+the same name described below (formatted for display in the kable). With
+`output = "ggplot"`, a plot of the local bias curve.
 
 With `output = "list"`: a list with
 
@@ -191,7 +196,7 @@ units, as a percentage of the group difference, as a standardised mean
 difference (the SD is the square root of the average of the two group
 variances, so it does not depend on the ratio of the group sizes), and
 in units of the SE of the group difference in these data. The last one
-grows with the sample size for the same DIF: it shows whether a
+grows with the sample size for the same DIF. It shows whether a
 confidence interval for the group difference can be trusted, not whether
 the DIF matters. When the items were flagged in the same data, an impact
 interval that excludes zero adds nothing to the DIF test. Its size is
@@ -212,13 +217,13 @@ bias can cancel while persons in parts of the scale are still shifted.
 (or raw score). Under split, the focal group's WLE comes from its own
 item parameters, and its raw score is equated. The rule (which raw
 scores are classified at or above the cut, per group and strategy) is
-taken from the fit and held fixed (an equated focal score counts as at
-or above a sum-score cut when it is at or above `cut - 0.5`), and its
-rates are computed from the split model and each group's estimated
-latent distribution. The rates therefore describe the rule these data
-give, which can differ from the rule of the population by one raw score,
-and the rule is reported with them. The difference keep - split is zero
-whenever the two strategies classify the same raw scores. On the
+taken from the fit and held fixed. An equated focal score counts as at
+or above a sum-score cut when it is at or above `cut - 0.5`. The rates
+of the rule are computed from the split model and each group's estimated
+latent distribution. They therefore describe the rule these data give,
+which can differ from the rule of the population by one raw score, so
+the rule is reported with them (`rule`). The difference keep - split is
+zero whenever the two strategies classify the same raw scores. On the
 sum-score scale, the true status is a latent value at or above the point
 where the reference group's expected score is `cut - 0.5`.
 
@@ -238,8 +243,8 @@ itself, so only a `theta` cut is affected. The projection assumes that
 the item parameters and the DIF are the same in the target population.
 
 **Scale.** Latent values (`cut`, the latent means and SDs, the range and
-location of the local bias, `target` means) are on the logit scale of
-the split model with the reference group's thresholds centred to mean
+location of the local bias, the `target` means) are on the logit scale
+of the split model with the reference group's thresholds centred to mean
 zero.
 [`RMpersonParameters`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md)
 and
@@ -267,9 +272,12 @@ reported in full at
 
 **Data.** Respondents with missing responses are dropped (with a
 message), since the latent means are fitted to the raw-score
-distribution. Every category an item uses must be used in the data, but
-not in both groups: the shift model shares an item's thresholds across
-groups.
+distribution. Every category an item uses must be used in the data, and
+not only by respondents with a zero or perfect score, or the function
+stops and names the items. Unlike
+[`RMdifAnchor`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md),
+a category need not be used in both groups, since the shift model shares
+an item's thresholds across groups.
 
 ## References
 

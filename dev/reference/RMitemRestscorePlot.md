@@ -1,9 +1,9 @@
-# Plot the Simulated Item-Restscore Null Distribution
+# Plot the simulated item-restscore differences
 
-Visualises the per-item null distribution of the observed minus expected
-item-restscore gamma from
-[`RMitemRestscoreCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md),
-optionally overlaying the observed differences from the original data.
+Plots each item's simulated observed minus expected item-restscore gamma
+from
+[`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md),
+and optionally the observed differences in your data.
 
 ## Usage
 
@@ -15,18 +15,15 @@ RMitemRestscorePlot(simfit, data)
 
 - simfit:
 
-  The return value of
-  [`RMitemRestscoreCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)
-  (a list with components `results`, `item_cutoffs`,
-  `actual_iterations`, `sample_n`, and `item_names`).
+  The result of
+  [`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md).
 
 - data:
 
-  Optional. A data.frame or matrix of item responses for computing and
-  overlaying the observed item-restscore differences. Items must be
-  scored starting at 0 (non-negative integers). When provided, the plot
-  includes orange diamond markers for the observed difference alongside
-  the simulated distribution, plus segment summaries of the intervals.
+  Optional. The item responses the simulations were made from, items
+  scored from 0. The observed differences are then computed with
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+  and drawn as orange diamonds.
 
 ## Value
 
@@ -34,39 +31,38 @@ A `ggplot` object.
 
 ## Details
 
-Uses
-[`ggdist::stat_dotsinterval()`](https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html)
-(when `data` is not supplied) or
-[`ggdist::stat_dots()`](https://mjskay.github.io/ggdist/reference/stat_dots.html)
-(when `data` is supplied) with `point_interval = "median_hdci"`. The
-outer `.width` follows `simfit$hdci_width`, so the shaded interval
-matches the one
+The x-axis is the observed minus expected gamma, the statistic
 [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
-tabulates.
+tests, with a dashed line at zero. Positive values indicate overfit,
+negative values underfit. In small samples the simulated differences are
+generally not centred on zero, which is one reason the asymptotic test
+is miscalibrated (see
+[`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)).
 
-The x-axis is the difference between observed and model-expected gamma,
-the statistic
-[`RMitemRestscore`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
-tests. A dashed line marks zero. The simulated distributions are
-generally not centred on zero in small samples, which is one of the
-reasons the asymptotic test is miscalibrated (see
-[`RMitemRestscoreCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)).
-Positive values indicate over-discrimination (overfit), negative values
-under-discrimination (underfit).
+Each item's simulated values are drawn as dots, with the median, an
+inner 66% interval and an outer interval. The outer interval is the one
+stored in `simfit` and tabulated by
+[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md):
+the HDCI of width `hdci_width`, or the 2.5th to 97.5th percentiles with
+`cutoff_method = "quantile"`. The inner interval uses the same method.
+Without `data` the intervals are drawn with
+[`ggdist::stat_dotsinterval()`](https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html).
+With `data` they are black segments with a black dot for the median, and
+the observed value is the orange diamond.
 
-When `data` **is** supplied, the observed differences are computed with
-[`RMitemRestscore`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
-and overlaid as orange diamonds, with per-item intervals drawn as black
-line segments (thicker for the 66% range) and black dots for the
-simulated median.
+The intervals are per item and not corrected for testing several items.
+With the full cutoff object,
+[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+flags items by adjusted p-values instead, so an item just outside its
+interval need not be flagged there. The plot shows no p-values.
 
-The `ggplot2` and `ggdist` packages must be installed (they are in
-Suggests, not Imports).
+The ggplot2 and ggdist packages must be installed (they are in
+Suggests).
 
 ## See also
 
-[`RMitemRestscoreCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md),
-[`RMitemRestscore`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+[`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md),
+[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
 
 ## Examples
 
@@ -84,7 +80,7 @@ if (requireNamespace("iarm", quietly = TRUE) &&
   cutoff_res <- RMitemRestscoreCutoff(sim_data, iterations = 100,
                                       parallel = FALSE, seed = 42)
 
-  # Simulated distribution only
+  # Simulated differences only
   RMitemRestscorePlot(cutoff_res)
 
   # With the observed differences overlaid

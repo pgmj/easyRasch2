@@ -1,12 +1,13 @@
-# Person-Item Targeting Plot (Wright Map)
+# Person-item targeting plot (Wright map)
 
-Produces a three-panel targeting plot with a shared logit scale x-axis:
+Draws a targeting plot, a Wright map (Wright & Stone, 1979), in three
+panels on a shared logit scale:
 
-1.  **Top**: Histogram of person location estimates, with a reference
-    line for the mean (or median) and shading for ±1 SD (or ±1 MAD).
+1.  **Top**: a histogram of the person locations, with a line for the
+    mean (or median) and shading for ±1 SD (or ±1 MAD).
 
-2.  **Middle**: Inverted histogram of item threshold locations, with the
-    same summary annotations.
+2.  **Middle**: an inverted histogram of the item threshold locations,
+    with the same summaries.
 
 3.  **Bottom**: one bar per item, either partitioned into
     response-category bands (`panel = "categories"`, the default) or
@@ -40,9 +41,9 @@ RMtargeting(
 
 - data:
 
-  A data.frame or matrix of item responses. Items must be scored
-  starting at 0 (non-negative integers). Missing values (`NA`) are
-  allowed.
+  A data.frame or matrix of item responses, items scored from 0. Missing
+  values (`NA`) are allowed. Person locations use the items each
+  respondent answered.
 
 - panel:
 
@@ -66,8 +67,8 @@ RMtargeting(
 
 - bins:
 
-  Integer. Number of bins for both histograms. Default is number of
-  unique scores divided by 2 (rounded up), but no less than 11.
+  Integer. Number of bins for both histograms. Default: the number of
+  distinct scores divided by 2 (rounded up), at least 11.
 
 - xlim:
 
@@ -114,9 +115,8 @@ RMtargeting(
 
 - height_ratios:
 
-  Numeric vector of length 3 specifying the relative heights of the top
-  (person), middle (threshold), and bottom (dot-whisker) panels. Default
-  `c(3, 2, 5)`.
+  Numeric vector of length 3, the relative heights of the top (persons),
+  middle (thresholds) and bottom panels. Default `c(3, 2, 5)`.
 
 - output:
 
@@ -134,52 +134,45 @@ RMtargeting(
 
 ## Details
 
-Together, the top and middle panels form a back-to-back histogram that
-makes it easy to assess whether the test is well-targeted to the sample.
-The bottom panel places the items on the same scale, so the category
-bands show which response is the most likely one at the locations where
-the persons actually sit.
+The top and middle panels form a back-to-back histogram that shows
+whether the items are targeted to the sample. The bottom panel places
+the items on the same scale, so the category bands show which response
+is the most likely one where the persons are.
 
-**Estimation method selection.** The function checks whether any item
-response category has fewer than 3 observations. If all categories have
-at least 3 responses, item threshold locations and their standard errors
-are estimated via Conditional Maximum Likelihood (CML) using
+**Estimation.** If every response category of every item has at least 3
+responses, the thresholds and their standard errors are estimated by
+conditional maximum likelihood (CML) with
 [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
-(a dichotomous item is a 2-category PCM). If any category has fewer than
-3 responses, the function falls back to Marginal Maximum Likelihood
-(MML) estimation via
+(a dichotomous item is a 2-category partial credit model). Otherwise the
+function uses marginal maximum likelihood (MML) with
 [`mirt::mirt()`](https://philchalmers.github.io/mirt/reference/mirt.html)
-with `itemtype = "Rasch"` and `SE = TRUE`, which is more numerically
-stable under sparse-category conditions. A message is emitted when the
-MML fallback is used.
-
-In both cases, item threshold locations are centered (shifted so the
-grand mean of all thresholds equals zero).
+(`itemtype = "Rasch"`), which is more stable with sparse categories, and
+says so in a message. In both cases the thresholds are centred on their
+mean.
 
 **Person estimates** are obtained by Warm's weighted likelihood (WLE)
 from the fitted item thresholds, consistent with the rest of the
 package. WLE is finite at extreme scores, so all-zero and perfect
 responders are located rather than dropped.
 
-**Confidence intervals** for item thresholds are based on Wald-type
-intervals: threshold estimate ± z × SE, where z is the standard normal
-quantile corresponding to `ci_level`.
+**Confidence intervals** for the thresholds are Wald intervals, estimate
+± z × SE, with z the standard normal quantile for `ci_level`.
 
 **Category bands.** With `panel = "categories"`, each band spans the
 locations at which its response category is the most likely response.
 When an item's thresholds are ordered these boundaries are the Andrich
 thresholds themselves. When they are not, the disordered run is pooled
-by averaging and the categories it skips over, which are never the most
+by averaging, and the categories it skips over, which are never the most
 likely response at any location, collapse to a red tick labelled with
 the category number. Red arrows below the bar give the size of each
-threshold reversal in logits. Ordered thresholds therefore leave no red
-marks at all.
+threshold disorder in logits. Ordered thresholds therefore leave no red
+marks.
 
 The two outer bands are open-ended and fade towards the panel edge,
 since the lowest and highest categories have no outer boundary.
 
-The `ggplot2` and `patchwork` packages must be installed (they are in
-Suggests, not Imports).
+The ggplot2 and patchwork packages must be installed (they are in
+Suggests).
 
 ## References
 
@@ -187,8 +180,12 @@ Wright, B. D. & Stone, M. H. (1979). *Best Test Design*. MESA Press.
 
 ## See also
 
-[`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html),
-[`mirt::mirt()`](https://philchalmers.github.io/mirt/reference/mirt.html)
+[`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemHierarchy.md),
+[`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatProb.md),
+[`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md)
+for a test of the response categories,
+[`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md)
+for precision along the same scale.
 
 ## Examples
 

@@ -1,11 +1,12 @@
-# Simulation-Based Item-Restscore Null Distribution
+# Simulation-based item-restscore cutoffs
 
-Uses parametric bootstrap simulation to build the null distribution of
-the item-restscore statistic for
-[`RMitemRestscore`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md).
-This function simulates data from a correctly fitting Rasch model that
-mimics your data and returns, per item, the simulated difference between
-observed and expected item-restscore gamma.
+Simulates datasets from a Rasch or partial credit model that fits and
+resembles your data, and computes each item's observed minus expected
+item-restscore gamma (Kreiner, 2011) in each. Passed to
+[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md),
+the result gives bootstrap p-values corrected across items, and an
+interval per item that describes where a fitting item's difference is
+expected to fall.
 
 ## Usage
 
@@ -27,29 +28,29 @@ RMitemRestscoreCutoff(
 
 - data:
 
-  A data.frame or matrix of item responses. Items must be scored
-  starting at 0 (non-negative integers). Only complete cases (rows
-  without any `NA`) are used.
+  A data.frame or matrix of item responses, items scored from 0. Only
+  complete cases (rows without `NA`) are used.
 
 - iterations:
 
-  Integer. Number of simulation iterations (default 400).
+  Integer. Number of simulated datasets. Default `400`. Use 1000 or more
+  for a final analysis (see Reproducibility in
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)).
 
 - parallel:
 
-  Logical. Use parallel processing via `mirai` if available (default
-  `TRUE`).
+  Logical. Run the simulations in parallel via mirai when it is
+  installed. Default `TRUE`.
 
 - n_cores:
 
   Integer or `NULL`. Number of parallel workers. When `NULL`,
-  `getOption("mc.cores")` is checked first. If neither is set and
-  `parallel = TRUE`, a warning is issued and execution falls back to
-  sequential (single core) processing.
+  `getOption("mc.cores")` is used. If that is unset too, a warning is
+  given and the simulations run sequentially.
 
 - verbose:
 
-  Logical. Show a progress bar (default `FALSE`).
+  Logical. Show a progress bar. Default `FALSE`.
 
 - seed:
 
@@ -59,67 +60,64 @@ RMitemRestscoreCutoff(
 
 - cutoff_method:
 
-  Character string specifying how the intervals are computed. Either
-  `"hdci"` (default) for the Highest Density Interval via
-  [`ggdist::hdci()`](https://mjskay.github.io/ggdist/reference/point_interval.html),
-  or `"quantile"` for the 2.5th/97.5th percentiles via
-  [`stats::quantile()`](https://rdrr.io/r/stats/quantile.html).
+  Character. How the interval per item is computed: `"hdci"` (default),
+  the highest-density continuous interval from
+  [`ggdist::hdci()`](https://mjskay.github.io/ggdist/reference/point_interval.html)
+  (needs ggdist), or `"quantile"`, the 2.5th to 97.5th percentiles.
 
 - hdci_width:
 
-  Numeric. Width of the HDCI when `cutoff_method = "hdci"`. Default is
-  `0.95` (95% HDCI). Ignored when `cutoff_method = "quantile"`.
+  Numeric. Width of the interval with `cutoff_method = "hdci"`. Default
+  `0.95`. Ignored with `"quantile"`.
 
-  The interval is a **description** of where a fitting item's difference
-  is expected to fall, not a decision rule. Flagging every item outside
-  a width-`w` interval tests all `k` items at once, so the family-wise
-  error rate is `1 - w^k`. Decisions should come from the corrected
-  p-value instead
-  ([`RMitemRestscore`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
-  with `p_value = NULL` and the full object returned here).
+  The interval describes where a fitting item's difference is expected
+  to fall. It is not a decision rule. Flagging every item outside a
+  width-`w` interval tests all `k` items at once, with a family-wise
+  error rate of `1 - w^k`. Decisions come from the corrected p-value in
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md),
+  as shown for infit in Johansson (2026).
 
 - dgp:
 
-  Character. Data-generating process for the parametric bootstrap.
-  `"conditional"` (default) simulates each respondent's pattern from the
-  exact Rasch conditional distribution given their observed total score,
-  item parameters fixed (a *conditional* null). The expected gamma is
-  computed from the observed score distribution, which the conditional
-  null holds fixed. `"resample"` resamples WLE person locations with
-  replacement and simulates responses under the model (a *marginal*
-  null). In simulation under a true Rasch model, the conditional null
-  gave a family-wise rate of 5.0 percent with `correction = "fwer"` and
-  the resample null 6.4 percent, pooled over four designs. The
-  conditional null takes about 1.2 to 1.6 times as long.
-  **Experimental.**
+  Character. How datasets are simulated. `"conditional"` (default)
+  simulates each respondent's response pattern from the model given
+  their observed total score, with the item parameters fixed (a
+  conditional null). The expected gamma is computed from the observed
+  score distribution, which the conditional null keeps. `"resample"`
+  draws person locations from the WLE estimates with replacement and
+  simulates responses from the model (a marginal null). With the Rasch
+  model true, pooled over four designs, the family-wise rate with
+  `correction = "fwer"` was 5.0% with the conditional null and 6.4% with
+  the resample null. The conditional null takes about 1.2 to 1.6 times
+  as long. **Experimental.**
 
 ## Value
 
-A list with components:
+A list with:
 
 - `results`:
 
-  data.frame with columns `iteration`, `Item`, `Observed`, `Expected`,
-  `Difference` (one row per item per successful iteration). `Difference`
-  is `Observed - Expected`, the statistic
-  [`RMitemRestscore`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+  data.frame with the columns `iteration`, `Item`, `Observed`,
+  `Expected` and `Difference`, one row per item and simulated dataset.
+  `Difference` is `Observed - Expected`, the statistic
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
   tests.
 
 - `item_cutoffs`:
 
-  data.frame with per-item interval bounds for the difference: `Item`,
-  `diff_low`, `diff_high`. Bounds are computed using the method
-  specified by `cutoff_method`.
+  data.frame with the interval per item: `Item`, `diff_low`,
+  `diff_high`, computed by `cutoff_method`.
 
 - `actual_iterations`:
 
-  Number of successful iterations. Everything downstream rests on this
-  rather than on `iterations`, so it is the number to report.
+  Number of simulated datasets that could be used. Everything downstream
+  rests on this rather than on `iterations`, so it is the number to
+  report.
 
 - `requested_iterations`:
 
-  The `iterations` argument, kept so callers can tell how many simulated
-  datasets were discarded.
+  The `iterations` argument, so that callers can tell how many simulated
+  datasets were left out.
 
 - `sample_n`:
 
@@ -127,81 +125,83 @@ A list with components:
 
 - `sample_n_total`:
 
-  Number of respondents in the raw input data, before the complete-case
-  filter.
+  Number of respondents in `data`, before the complete-case filter.
 
 - `sample_has_na`:
 
-  Logical. Whether the raw input data contained any missing values.
+  Logical. Whether `data` contained missing values.
 
 - `sample_summary`:
 
-  Summary statistics of estimated person parameters.
+  Summary of the WLE person locations.
 
 - `item_names`:
 
-  Character vector of item names from data.
+  Item names from `data`.
 
 - `cutoff_method`:
 
-  The method used to compute the intervals (`"hdci"` or `"quantile"`).
+  `"hdci"` or `"quantile"`.
 
 - `hdci_width`:
 
-  The HDCI width used (only meaningful when `cutoff_method = "hdci"`).
+  The HDCI width (used only with `"hdci"`).
 
 - `dgp`:
 
-  The data-generating process used (`"resample"` or `"conditional"`).
+  `"conditional"` or `"resample"`.
 
 ## Details
 
-The asymptotic test in
+**Why simulate.** The asymptotic test in
 [`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html)
 divides the observed minus expected gamma by the standard error of the
 observed gamma alone. The expected gamma is estimated from the same data
 and correlates with the observed one, so that standard error is too
 large for the difference, and the difference is also biased upwards in
-small samples. Under a true Rasch model the resulting test is liberal
-for dichotomous items in small or mistargeted samples and conservative
-for polytomous items, in every case flagging too few underfitting items.
-The bootstrap null replaces the asymptotic reference distribution and
+small samples. With the Rasch model true, the test is liberal for
+dichotomous items in small or mistargeted samples and conservative for
+polytomous items, and it flags too few underfitting items in every case.
+The simulated reference distribution replaces the asymptotic one and
 absorbs both problems. The simulation study of the asymptotic test is
 reported at
 <https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html>.
 
-The generating model is CML item parameters (via `psychotools`) with WLE
-person locations. For each iteration a dataset is simulated under the
-chosen `dgp`, the model is **refitted** by CML
+**Simulation.** The generating model has the CML item parameters
+(`psychotools`) and the WLE person locations of `data`. In each
+iteration a dataset is simulated by `dgp`, the model is refitted by CML
 ([`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)),
-and the observed and expected item-restscore gamma are computed as in
+and the observed and expected gamma are computed as in
 [`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html),
 by a faster internal routine that skips the standard errors and the
-rounding of the printed values. The refit matters: the expected gamma
+rounding of the printed values. The refit matters. The expected gamma
 varies from sample to sample because the thresholds do, and holding them
-fixed would reproduce the problem the bootstrap exists to solve. Failed
-iterations (e.g., degenerate simulated data) are silently discarded.
+fixed would reproduce the problem the simulation is meant to solve. A
+simulated dataset that cannot be refitted, for example because a
+response category is empty, is left out, and
+[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+reports how many in its caption.
 
-Parallel processing is provided by the `mirai` package (optional).
-Install it with `install.packages("mirai")` to enable parallelisation.
-
-The `iarm` package must be installed (it is in Suggests, not Imports).
+Parallel processing needs the optional mirai package. The iarm package
+must be installed (it is in Suggests).
 
 ## References
-
-Kreiner, S. (2011). A Note on Item-Restscore Association in Rasch
-Models. *Applied Psychological Measurement, 35*(7), 557-561.
-[doi:10.1177/0146621611410227](https://doi.org/10.1177/0146621611410227)
 
 Johansson, M. (2026). Simulation-based cutoffs for conditional item fit
 in Rasch models: Iterations, multiplicity correction, and decision
 stability. *PsyArXiv*.
 [doi:10.31234/osf.io/7pqz4_v2](https://doi.org/10.31234/osf.io/7pqz4_v2)
 
+Kreiner, S. (2011). A Note on Item-Restscore Association in Rasch
+Models. *Applied Psychological Measurement, 35*(7), 557-561.
+[doi:10.1177/0146621611410227](https://doi.org/10.1177/0146621611410227)
+
 ## See also
 
-[`RMitemRestscore`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md),
-[`RMitemRestscorePlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscorePlot.md)
+[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+for the test,
+[`RMitemRestscorePlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscorePlot.md)
+to plot the simulated values.
 
 ## Examples
 

@@ -1,10 +1,8 @@
-# Plot Distribution of Simulated Partial Gamma LD Values
+# Plot the simulated partial gamma local dependence values
 
-Visualises the distribution of simulation-based partial gamma LD values
-from
-[`RMlocdepGammaCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md),
-optionally overlaying observed partial gamma values computed from real
-data via [`partgam_LD`](https://rdrr.io/pkg/iarm/man/partgam_LD.html).
+Plots the simulated partial gamma of each item pair from
+[`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md),
+and optionally the observed values in your data.
 
 ## Usage
 
@@ -16,36 +14,26 @@ RMlocdepGammaPlot(simfit, data, items = NULL, n_pairs = NULL)
 
 - simfit:
 
-  The return value of
-  [`RMlocdepGammaCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md)
-  (a list with components `results`, `pair_cutoffs`,
-  `actual_iterations`, `sample_n`, and `item_names`).
+  The result of
+  [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md).
 
 - data:
 
-  Optional. A data.frame or matrix of item responses for computing and
-  overlaying observed partial gamma values. Items must be scored
-  starting at 0 (non-negative integers). When provided, the plot
-  includes orange diamond markers for the observed partial gamma
-  alongside the simulated distribution, plus segment summaries from the
-  cutoff intervals.
+  Optional. The item responses the simulations were made from, items
+  scored from 0. The observed partial gamma (complete cases) is then
+  drawn as orange diamonds.
 
 - items:
 
-  Optional character vector of item names to include in the plot. Only
-  item pairs where **both** items are in this vector will be shown. When
-  `NULL` (default), all item pairs are plotted.
+  Optional character vector of item names. Only pairs with both items in
+  it are shown. Default `NULL`, all pairs.
 
 - n_pairs:
 
-  Optional positive integer. When supplied, only the `n_pairs` item
-  pairs with the largest absolute partial gamma values are plotted,
-  sorted by `|gamma|` descending. When `data` is supplied, the ranking
-  uses the *observed* partial gammas (the diamonds you actually want to
-  interpret); otherwise it falls back to the per-pair median of the
-  simulated distributions. Applied *after* the `items` filter when both
-  are supplied. Values larger than the number of available pairs are
-  silently capped.
+  Optional positive integer. Only the `n_pairs` pairs with the largest
+  absolute partial gamma are shown, largest first: the observed values
+  with `data`, the simulated medians without. Applied after `items`.
+  Values above the number of pairs show all pairs.
 
 ## Value
 
@@ -53,43 +41,36 @@ A `ggplot` object.
 
 ## Details
 
-Uses
-[`ggdist::stat_dotsinterval()`](https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html)
-(when `data` is not supplied) or
-[`ggdist::stat_dots()`](https://mjskay.github.io/ggdist/reference/stat_dots.html)
-(when `data` is supplied) with `point_interval = "median_hdci"` and
-`.width = c(0.66, 0.95, 0.99)`.
-
-The plot shows one row per item pair (labelled as "Item1 - Item2"). The
-observed overlay is the larger of the pair's two rest-score directions,
-matching the statistic
+One row per item pair, labelled "Item1 - Item2". The observed value is
+the larger of the pair's two rest-score directions, the statistic
 [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
-tests and the simulated null.
+tests, computed with the same internal routine as the simulations.
 
-When `data` is **not** supplied, the function plots the simulated
-partial gamma distributions as dot-interval plots using
-[`ggdist::stat_dotsinterval()`](https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html)
-with median and Highest Density Continuous Interval (HDCI) summaries.
+Each pair's simulated values are drawn as dots, with the median, an
+inner 66% interval and an outer interval. The outer interval is the one
+in `simfit$pair_cutoffs`, which
+[`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
+tabulates: the HDCI of width `hdci_width`, or the 2.5th to 97.5th
+percentiles with `cutoff_method = "quantile"`. The inner interval uses
+the same method. Without `data` the intervals are drawn with
+[`ggdist::stat_dotsinterval()`](https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html).
+With `data` they are black segments with a black dot for the median, and
+the observed value is an orange diamond.
 
-When `data` **is** supplied, the function:
+The intervals are per pair and not corrected for testing many pairs.
+With the full cutoff object,
+[`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
+flags pairs by adjusted p-values instead, so a pair just outside its
+interval need not be flagged there. The plot shows no p-values.
 
-1.  Computes observed partial gamma values via
-    [`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html).
-
-2.  Overlays observed gamma values as orange diamond markers on the
-    simulated distributions.
-
-3.  Shows per-pair cutoff intervals (from `simfit$pair_cutoffs`) as
-    black line segments, with thicker segments for the 66\\ black dots
-    for the median.
-
-The `ggplot2`, `ggdist`, and optionally `iarm` packages must be
-installed (they are in Suggests, not Imports).
+The ggplot2 and ggdist packages must be installed, and iarm with `data`
+(all are in Suggests).
 
 ## See also
 
-[`RMlocdepGammaCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md),
-[`RMlocdepGamma`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
+[`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md),
+[`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md),
+[`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md)
 
 ## Examples
 

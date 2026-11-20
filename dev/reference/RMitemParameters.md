@@ -1,4 +1,4 @@
-# Item Parameters for a Rasch / Partial Credit Model
+# Item parameters for a Rasch or partial credit model
 
 Estimates item difficulty (dichotomous) or item-category threshold
 (polytomous) parameters and returns them in long or wide format, with
@@ -27,24 +27,24 @@ RMitemParameters(
 - data:
 
   A data.frame or matrix of item responses. Items must be scored
-  starting at 0 (non-negative integers). Missing values (`NA`) are
-  allowed; both estimators handle them.
+  starting at 0. Missing values (`NA`) are allowed, and both estimators
+  handle them.
 
 - estimator:
 
   Character. `"CML"` (default) estimates item parameters with
   [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
-  (a dichotomous item is a 2-category PCM); `"MML"` uses
+  (a dichotomous item is a 2-category PCM), and `"MML"` uses
   [`mirt::mirt()`](https://philchalmers.github.io/mirt/reference/mirt.html)
-  with `itemtype = "Rasch"`. CML is preferred for Rasch measurement; MML
-  can be more robust when data are sparse. Neither estimator can fit an
-  item with one response category or an empty lowest or interior
+  with `itemtype = "Rasch"`. CML is preferred for Rasch measurement, and
+  MML can be more robust when data are sparse. Neither estimator can fit
+  an item with one response category or an empty lowest or interior
   category (see Details).
 
 - format:
 
   Character. `"long"` (default) returns one row per item (dichotomous)
-  or per item-threshold (polytomous); `"wide"` returns one row per item
+  or per item threshold (polytomous), `"wide"` returns one row per item
   with threshold columns `t1`, `t2`, ... plus a mean `location` column.
 
 - se:
@@ -61,8 +61,8 @@ RMitemParameters(
 
   Logical. If `TRUE` (default), all thresholds are shifted so their
   grand mean is zero, the usual Rasch identification. CML estimates are
-  already centred; the shift mainly affects the MML path, keeping the
-  two estimators on a common scale.
+  already centred, so the shift mainly affects MML and puts the two
+  estimators on a common scale.
 
 - output:
 
@@ -75,25 +75,26 @@ RMitemParameters(
 - filename:
 
   Character. Path to the CSV file to write when `output = "file"`.
-  Required in that case; ignored otherwise.
+  Required in that case, ignored otherwise.
 
 ## Value
 
 For `output = "dataframe"`, a data.frame. In **long** format the columns
-are `item`, `threshold` (integer; `1` for dichotomous items),
-`location`, and – when `se = TRUE` – `se`, `ci_lower`, `ci_upper`. In
-**wide** format the columns are `item`, the threshold locations (`t1`,
-`t2`, ... or `location` for dichotomous items), and a mean `location`;
-when `se = TRUE`, matching `se_t1`, `se_t2`, ... columns are appended.
-For `output = "kable"`, the same content as a `knitr_kable` object.
+are `item`, `threshold` (integer, `1` for dichotomous items),
+`location`, and with `se = TRUE` also `se`, `ci_lower` and `ci_upper`.
+In **wide** format the columns are `item`, the threshold locations
+(`t1`, `t2`, ... or `location` for dichotomous items), and a mean
+`location`. With `se = TRUE`, matching `se_t1`, `se_t2`, ... columns are
+appended. For `output = "kable"`, the same content as a `knitr_kable`
+object.
 
 ## Details
 
 Items are detected as dichotomous (maximum score 1) or polytomous
 (maximum score \> 1), and the Rasch or Partial Credit model is chosen
-accordingly. Thresholds are reported as Andrich thresholds (the person
-locations at which adjacent response categories are equally probable) on
-the logit difficulty scale, matching
+accordingly. Thresholds are reported as Andrich thresholds (Andrich,
+1978), the person locations at which adjacent response categories are
+equally probable, on the logit scale, as in
 [`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md).
 
 **Standard errors.** For the CML path, threshold SEs come from the
@@ -110,8 +111,10 @@ Wald intervals and are symmetric on the logit scale.
 item when an item has one response category, or an empty lowest or
 interior category. Such categories have no threshold that the data can
 estimate. Merge them with an adjacent category, or remove the item. An
-empty top category is allowed: the item is then fitted with one
-threshold fewer.
+empty top category is allowed, and the item is then fitted with one
+threshold fewer. A category used only by respondents with a zero or
+perfect total score gives a warning, since CML leaves those respondents
+out and its threshold cannot be estimated well.
 
 ## References
 
@@ -119,16 +122,12 @@ Andrich, D. (1978). A rating formulation for ordered response
 categories. *Psychometrika, 43*(4), 561-573.
 [doi:10.1007/BF02293814](https://doi.org/10.1007/BF02293814)
 
-Mair, P., & Hatzinger, R. (2007). Extended Rasch modeling: The eRm
-package for the application of IRT models in R. *Journal of Statistical
-Software, 20*(9), 1-20.
-[doi:10.18637/jss.v020.i09](https://doi.org/10.18637/jss.v020.i09)
-
 ## See also
 
 [`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md),
 [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md),
-[`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md)
+[`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md),
+[`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemHierarchy.md)
 
 ## Examples
 
@@ -185,6 +184,6 @@ RMitemParameters(dich, output = "dataframe")
 # Write the parameter table to a CSV (also returned invisibly)
 RMitemParameters(poly, output = "file",
                  filename = tempfile(fileext = ".csv"))
-#> Wrote 10 row(s) to '/tmp/Rtmpl1Ov4H/file1c601d0e152a.csv'.
+#> Wrote 10 row(s) to '/tmp/RtmpSXG5Mp/file1b514cce58b1.csv'.
 # }
 ```

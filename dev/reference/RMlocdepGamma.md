@@ -1,10 +1,12 @@
-# Partial Gamma Local Dependence Analysis
+# Partial gamma local dependence
 
-Computes partial gamma coefficients for Local Dependence (LD) assessment
-using
-[`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html).
-Each pair of items is tested for residual association, controlling for
-the rest score (total score minus one of the items in the pair).
+Computes the partial gamma coefficient for each pair of items, the
+association between the two items given the rest score (the total score
+minus one item of the pair), to assess local dependence. With the result
+of
+[`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md),
+it tests each pair against simulations, by default with a bootstrap
+p-value corrected across pairs.
 
 ## Usage
 
@@ -18,171 +20,165 @@ RMlocdepGamma(
   output = "kable",
   n_pairs = NULL
 )
+
+# S3 method for class 'RMlocdepGamma'
+print(x, ...)
+
+# S3 method for class 'RMlocdepGamma'
+knit_print(x, ...)
 ```
 
 ## Arguments
 
 - data:
 
-  A data.frame or matrix of item responses. Items must be scored
-  starting at 0 (non-negative integers). Missing values (`NA`) are
-  allowed, but at least one complete case must exist.
+  A data.frame or matrix of item responses, items scored from 0. Missing
+  values (`NA`) are allowed, but only complete cases are used, so at
+  least one is needed.
 
 - cutoff:
 
-  Optional. Default `NULL` (no cutoff applied). Can be:
+  Optional. Default `NULL`, the asymptotic test of
+  [`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html).
+  Either of:
 
-  - The return value of
-    [`RMlocdepGammaCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md)
-    (a list with `$pair_cutoffs`): the data.frame is extracted
-    automatically and simulation metadata is included in the kable
-    caption.
+  - The full result of
+    [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md).
+    This enables the bootstrap p-values (see `p_value`), and the caption
+    reports the simulation settings.
 
-  - The `$pair_cutoffs` data.frame from
-    [`RMlocdepGammaCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md)
-    directly: must have columns `Item1`, `Item2`, `gamma_low`,
-    `gamma_high`. When provided, adds columns `Gamma_low`, `Gamma_high`,
-    and `Flagged` (logical; `TRUE` when the observed partial gamma falls
-    outside the credible range) to the result.
+  - Its `$pair_cutoffs` data.frame alone, with columns `Item1`, `Item2`,
+    `gamma_low` and `gamma_high`. Pairs are flagged against the
+    interval.
+
+  Either adds the columns `Gamma_low`, `Gamma_high` and a logical
+  `Flagged` (`TRUE` when the partial gamma is outside the simulated
+  interval, or with p-values when the pair is flagged).
 
 - p_value:
 
-  Logical or `NULL`. When `TRUE`, adds one-sided bootstrap p-values for
-  *excess positive* local dependence (`p_gamma`, `padj_gamma`), matching
-  the `p_value` semantics of
-  [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md),
-  and `flagged` reflects `padj_gamma < alpha` (positive deviations only)
-  instead of the credible range. One test per item pair: the p-value is
-  computed on `gamma_pair`, the larger of the two conditioning
-  directions, and repeated in the direction-2 table for the same pair.
-  The asymptotic adjusted p-value and star columns from
-  [`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html)
-  are **dropped** in this mode, and the simulated `gamma_low` /
-  `gamma_high` band is kept as the effect-size reference. `NULL`, the
-  default, means `TRUE` when `cutoff` is the **full**
-  [`RMlocdepGammaCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md)
-  object (it carries the simulated distributions in `$results`) and
-  `FALSE` otherwise, so calling with no cutoff keeps the asymptotic
-  table unchanged. Pass `FALSE` for the pre-1.2.0 behaviour. The
-  interval makes a poor decision rule, since its width sets a
-  family-wise error rate of `1 - width^m` over all \\m\\ pairs at once
-  (Johansson, 2026).
+  Logical or `NULL`. Whether to flag on one-sided bootstrap p-values for
+  excess positive local dependence (`p_gamma`, `padj_gamma`), as in
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md).
+  Each pair is tested once, on `gamma_pair`, the larger of its two
+  rest-score directions, and the p-value is repeated in both tables. The
+  asymptotic p-value and star columns are then dropped, and the
+  simulated interval is kept as a reference. `NULL` (default) uses the
+  p-values whenever `cutoff` is the full
+  [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md)
+  result, so a call without a cutoff keeps the asymptotic table. `FALSE`
+  gives the behaviour before version 1.2.0. The interval is a poor
+  decision rule, since over m pairs a width `w` gives a family-wise
+  error rate of `1 - w^m` (Johansson, 2026).
 
 - correction:
 
-  Character. Multiplicity correction for the bootstrap p-values, applied
-  over the family of all item pairs (before any `n_pairs` display
-  filter): `"fwer"` (default; Westfall-Young studentised-max step-down),
-  `"fdr_bh"`, `"fdr_by"`, or `"none"`. Ignored when `p_value = FALSE`.
+  Character. Correction of the bootstrap p-values across all pairs
+  (before any `n_pairs` filter): `"fwer"` (default, Westfall-Young
+  step-down), `"fdr_bh"`, `"fdr_by"` or `"none"`. Used only with
+  p-values.
 
 - alpha:
 
-  Numeric in (0, 1). Significance level used to flag pairs on the
-  corrected p-value. Default `0.05`. Ignored when `p_value = FALSE`.
+  Numeric in (0, 1). A pair is flagged when its corrected p-value is
+  below `alpha`. Default `0.05`. Used only with p-values.
 
 - output:
 
-  Character string controlling the return value. Either `"kable"`
-  (default) for a formatted
-  [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html) table, or
-  `"dataframe"` for the underlying data.frame.
+  Character. `"kable"` (default) for
+  [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html) tables,
+  or `"dataframe"`.
 
 - n_pairs:
 
-  Optional positive integer. When supplied, only the `n_pairs` item
-  pairs with the largest absolute partial-gamma values (i.e., strongest
-  residual dependence in either direction) are retained per rest-score
-  direction, sorted by `|gamma|` descending. When `NULL` (default), all
-  pairs are returned in `iarm`'s native ordering. Values larger than the
-  total number of pairs are silently capped at that total.
+  Optional positive integer. Keeps only the `n_pairs` pairs with the
+  largest absolute partial gamma in each table, largest first. Default
+  `NULL`, all pairs in iarm's order. Values above the number of pairs
+  keep all pairs.
+
+- x:
+
+  An `RMlocdepGamma` object (the kable output), for the print methods.
+
+- ...:
+
+  Not used by [`print()`](https://rdrr.io/r/base/print.html). Passed to
+  [`knitr::asis_output()`](https://rdrr.io/pkg/knitr/man/asis_output.html)
+  by `knit_print()`.
 
 ## Value
 
-- If `output = "kable"`: an object of class `"RMlocdepGamma"`.
-  Internally a list with two `knitr_kable` elements, `$direction1` and
-  `$direction2`. In both, the rest score is the total score minus Item 2
-  (the second column); the two elements list each item pair in the two
-  possible orders, so together they cover both rest-score directions for
-  every pair. Each has columns "Item 1", "Item 2", "Partial gamma",
-  "Adj. p-value (BH)", and "p-value sign." (stars for the BH-adjusted
-  p-value, as `iarm` shows them). When `cutoff` is provided, additional
-  columns "Gamma low", "Gamma high", and "Flagged" are included.
+- `output = "kable"`: an object of class `"RMlocdepGamma"`, a list of
+  two `knitr_kable` tables, `direction1` and `direction2`. In both, the
+  rest score is the total score minus Item 2, and the two tables list
+  each pair in its two orders, so together they cover both rest-score
+  directions. The columns are "Item 1", "Item 2", "Partial gamma", "Adj.
+  p-value (BH)" and "p-value sign." (stars, as iarm shows them), plus
+  "Gamma low", "Gamma high" and "Flagged" with a `cutoff`. In the
+  console the object prints the two tables one after the other, and in a
+  Quarto or R Markdown chunk it renders as two tables.
 
-  The object has custom [`print()`](https://rdrr.io/r/base/print.html)
-  and
-  [`knitr::knit_print()`](https://rdrr.io/pkg/knitr/man/knit_print.html)
-  methods: in the R console it prints the two tables stacked vertically;
-  in a Quarto / R Markdown chunk it renders as two distinct pipe tables.
-  Access the individual tables explicitly as `result$direction1` and
-  `result$direction2` if needed.
-
-- If `output = "dataframe"`: a named list of two data.frames
-  (`$direction1`, `$direction2`) with columns `Item1`, `Item2`, `gamma`,
-  `se`, `lower`, `upper` (95% Wald CI), `padj_bh`, `Significance`. When
-  `cutoff` is provided, columns `gamma_low`, `gamma_high`, and `flagged`
-  are also included. With `p_value = TRUE`, `padj_bh` and `Significance`
-  are replaced by `p_gamma` and `padj_gamma` (identical for a pair in
-  both directions).
+- `output = "dataframe"`: a named list of two data.frames, `direction1`
+  and `direction2`, with the columns `Item1`, `Item2`, `gamma`, `se`,
+  `lower` and `upper` (95% Wald interval), `padj_bh`, `Significance` and
+  `gamma_pair` (the larger of the pair's two directions). With a
+  `cutoff`, also `gamma_low`, `gamma_high` and `flagged`. With p-values,
+  `padj_bh` and `Significance` are replaced by `p_gamma` and
+  `padj_gamma`, the same for a pair in both tables.
 
 ## Details
 
-Partial gamma (Christensen, Kreiner & Mesbah, 2013) measures the
-residual association between pairs of items after controlling for the
-rest score (total score minus one item). Because it matters which item
-is subtracted, calculations are done for each pair in both directions,
-yielding two data.frames.
+**Statistic.** The partial gamma (Christensen, Kreiner & Mesbah, 2013)
+measures the association between two items after controlling for the
+rest score. Which item is subtracted from the total matters, so each
+pair is computed in both directions, which gives the two tables. Values
+near 0 indicate local independence, large positive values positive
+dependence (the items share variance beyond the latent variable), and
+large negative values negative dependence. The iarm package must be
+installed (it is in Suggests).
 
-Values near 0 indicate no local dependence. Large positive values
-suggest positive LD (items share variance beyond the latent trait),
-while large negative values suggest negative LD.
-
-The `iarm` package must be installed (it is in Suggests, not Imports).
-The asymptotic adjusted p-value is a Benjamini-Hochberg adjustment of
-the p-values from
+**Asymptotic p-values.** The adjusted p-value is a Benjamini-Hochberg
+adjustment, made by easyRasch2, of the p-values from
 [`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html)
-over all \\k(k-1)\\ tests in both directions, applied by easyRasch2.
-iarm's own adjusted column is a Bonferroni correction whatever method is
-named, because iarm adjusts one p-value at a time, so it is not used.
+over all \\k(k-1)\\ tests in both directions. iarm's own adjusted column
+is a Bonferroni correction whatever method is named, since iarm adjusts
+one p-value at a time, so it is not used.
 
-**Bootstrap p-values.** When `p_value = TRUE`, each pair is tested once,
-on the larger of its two rest-score directions (the `gamma_pair`
-column), against its simulated null distribution (from `cutoff$results`,
-simulated under local independence and built from that same maximum).
-The per-pair statistic is the residual studentised by the mean and SD of
-the observed and simulated values together; the marginal p-value is the
-one-sided Monte-Carlo p-value `(1 + #\{t* >= t\}) / (B + 1)` for excess
-*positive* LD (redundancy, the diagnostic target — matching
-[`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)),
-so it can be no smaller than `1 / (B + 1)`. The band still shows both
-bounds for reference. `correction = "fwer"` uses the Westfall-Young
-studentised-max step-down over the family of all pairs, which exploits
-the bootstrap dependence among them (Ferreira, 2024). It controls the
-family-wise error rate at any number of `iterations` in
+**Bootstrap p-values.** Each pair is tested once, on the larger of its
+two directions (`gamma_pair`), against its simulated values
+(`cutoff$results`, simulated under local independence and built from the
+same maximum). The statistic is the deviation from the mean of the
+observed and simulated values together, divided by their SD. The
+uncorrected p is one-sided for excess positive dependence (redundancy,
+as in
+[`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)),
+`(1 + #\{t* >= t\}) / (B + 1)` for B simulated datasets, so it can be no
+smaller than `1 / (B + 1)`. The interval still shows both bounds.
+`correction = "fwer"` uses the Westfall-Young step-down over all pairs,
+which uses the dependence between them (Westfall & Young, 1993,
+Ferreira, 2024). It controls the family-wise error rate at any number of
+iterations in
 [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md),
-but below 400 decisions depend on the seed and a message says so, and
-1000 to 2000 are recommended for a final analysis. Unlike the asymptotic
-p-values from
-[`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html),
-these are calibrated against the *simulated Rasch null* rather than the
-asymptotic SE; they are model-conditional and sample-size-sensitive, and
-are reported alongside the simulated effect-size band, not in place of
-it.
+but below 400 decisions depend on the seed and a message says so. Use
+1000 to 2000 for a final analysis. Unlike the asymptotic p-values, these
+are calibrated against simulations from the Rasch model. They depend on
+the model and the sample size, and are reported with the simulated
+interval, not instead of it.
 
 ## Multiple comparisons
 
-The marginal p-value controls the error rate of a *single* comparison:
-for one item (or item pair) decided on in advance it is the relevant
-value. But scanning all *k* comparisons and flagging whichever fall
-below `alpha` tests *k* hypotheses at once, so the chance of at least
-one false flag inflates to roughly \\1 - (1 - \alpha)^k\\ (e.g. about
-34% for *k* = 8 at `alpha = 0.05`) – even when every marginal p-value is
-correctly calibrated. The corrected (adjusted) p-value controls this:
-`correction = "fwer"` bounds the probability of *any* false flag
-(strict, lower power), while `"fdr_bh"` / `"fdr_by"` bound the expected
-*proportion* of false flags among those raised (a more lenient middle
-ground). Rule of thumb: use the marginal p-value for a single
-pre-specified comparison, and a corrected p-value when screening the
-whole table – the usual workflow.
+The uncorrected p-value controls the error rate of a single comparison.
+For one item (or item pair) chosen in advance it is the relevant value.
+Flagging whichever of k comparisons fall below `alpha` tests k
+hypotheses at once, and the chance of at least one false flag rises to
+about \\1 - (1 - \alpha)^k\\, for example 34% for k = 8 at
+`alpha = 0.05`, even when every uncorrected p-value is calibrated. The
+corrected p-value controls this. `correction = "fwer"` bounds the
+probability of any false flag (strict, less power), and `"fdr_bh"` and
+`"fdr_by"` bound the expected share of false flags among those raised.
+Use the uncorrected p-value for a single comparison chosen in advance,
+and a corrected one when screening the whole table, which is the usual
+case.
 
 ## References
 
@@ -195,13 +191,22 @@ number of hypotheses simultaneously. *Journal of Statistical Theory and
 Practice, 19*(1), 6.
 [doi:10.1007/s42519-024-00412-4](https://doi.org/10.1007/s42519-024-00412-4)
 
+Johansson, M. (2026). Simulation-based cutoffs for conditional item fit
+in Rasch models: Iterations, multiplicity correction, and decision
+stability. *PsyArXiv*.
+[doi:10.31234/osf.io/7pqz4_v2](https://doi.org/10.31234/osf.io/7pqz4_v2)
+
 Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple
 Testing*. Wiley.
 
 ## See also
 
-[`RMlocdepGammaCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md),
-[`RMlocdepGammaPlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaPlot.md)
+[`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md)
+for the simulations,
+[`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaPlot.md)
+for the plot,
+[`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
+for \\Q_3\\.
 
 ## Examples
 
@@ -220,7 +225,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
   # Return as data.frame list
   RMlocdepGamma(sim_data, output = "dataframe")
 
-  # Simulation-based cutoffs (slow): 100+ Monte-Carlo iterations
+  # Simulation-based cutoffs (use 1000 or more iterations in real analyses)
   if (requireNamespace("ggdist", quietly = TRUE)) {
     cutoff_res <- RMlocdepGammaCutoff(sim_data, iterations = 100,
                                       parallel = FALSE, seed = 42)

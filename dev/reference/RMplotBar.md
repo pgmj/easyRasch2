@@ -1,10 +1,8 @@
-# Item Response Distribution Bar Chart
+# Bar chart of item response distributions
 
-Creates a faceted bar chart showing the response distribution for each
-item, with counts and percentages displayed on each bar. Each item gets
-its own panel, with response categories on the x-axis and percentage of
-responses on the y-axis. This is a descriptive data visualization tool
-intended for use before model fitting.
+Draws one panel per item with the response categories on the x-axis and
+the percentage of responses on the y-axis, with the count on each bar. A
+descriptive plot for use before any model is fitted.
 
 ## Usage
 
@@ -86,16 +84,12 @@ Each item is displayed as a separate facet panel with the item label in
 the strip on the left side. Bars are coloured by response category using
 the viridis palette. Each bar shows the count (`n = X`) as text.
 
-The plot caption reports the sample in the standard
-`n = X respondents (policy)` form; item-level `NA`s are retained – each
-bar counts the non-missing responses for that item.
+The caption gives the sample size in the form
+`n = X respondents (policy)`. Missing responses are kept, and each bar
+counts the responses to that item.
 
-**Input requirements:**
-
-- All columns must be numeric (integer-valued).
-
-- The data frame must contain at least 2 columns (items) and at least 1
-  row (person).
+The data must have at least 2 numeric (integer-valued) columns and at
+least 1 row.
 
 ## See also
 

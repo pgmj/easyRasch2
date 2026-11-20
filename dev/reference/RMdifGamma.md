@@ -1,10 +1,11 @@
-# Partial Gamma DIF Analysis
+# Partial gamma DIF
 
-Computes partial gamma coefficients for Differential Item Functioning
-(DIF) using
-[`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html).
-Each item is tested for association with a single categorical DIF
-variable, controlling for the total score.
+Computes the partial gamma coefficient of each item, the association
+between the item and a grouping variable given the total score, to
+assess differential item functioning (DIF). With the result of
+[`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md),
+it tests each item against simulations without DIF, by default with a
+bootstrap p-value corrected across items.
 
 ## Usage
 
@@ -24,163 +25,146 @@ RMdifGamma(
 
 - data:
 
-  A data.frame or matrix of item responses. Items must be scored
-  starting at 0 (non-negative integers). Missing values (`NA`) are
-  allowed, but at least one complete case must exist after combining
-  `data` and `dif_var`.
+  A data.frame or matrix of item responses, items scored from 0. Only
+  complete cases (in `data` and `dif_var`) are used, so at least one is
+  needed.
 
 - dif_var:
 
-  A vector (factor or character) of the same length as `nrow(data)`,
-  representing the grouping variable for DIF analysis.
+  A vector (factor or character) of length `nrow(data)` with the groups,
+  two or more.
 
 - cutoff:
 
-  Optional. Default `NULL` (no cutoff applied). Can be:
+  Optional. Default `NULL`, the asymptotic test of
+  [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html).
+  Either of:
 
-  - The return value of
-    [`RMdifGammaCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
-    (a list with `$item_cutoffs`): the data.frame is extracted
-    automatically and simulation metadata is included in the kable
-    caption.
+  - The full result of
+    [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md).
+    This enables the bootstrap p-values (see `p_value`), and the caption
+    reports the simulation settings.
 
-  - The `$item_cutoffs` data.frame from
-    [`RMdifGammaCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
-    directly: must have columns `Item`, `gamma_low`, `gamma_high`. When
-    provided, adds columns `Gamma_low`, `Gamma_high`, and `Flagged`
-    (logical; `TRUE` when the observed partial gamma falls outside the
-    credible range) to the result.
+  - Its `$item_cutoffs` data.frame alone, with columns `Item`,
+    `gamma_low` and `gamma_high`. Items are flagged against the
+    interval.
+
+  Either adds the columns `Gamma_low`, `Gamma_high` and a logical
+  `Flagged` (`TRUE` when the partial gamma is outside the simulated
+  interval, or with p-values when the item is flagged).
 
 - p_value:
 
-  Logical or `NULL`. When `TRUE`, adds two-sided bootstrap p-values
-  (`p_gamma`, `padj_gamma`) comparing each item's observed partial gamma
-  against its simulated null distribution, and `flagged` reflects
-  `padj_gamma < alpha` instead of the credible range. The asymptotic
-  BH-adjusted p-value and star columns from
-  [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html)
-  are **dropped** in this mode (two p-value families in one table would
-  invite double-reading); the simulated `gamma_low` / `gamma_high` band
-  is kept as the effect-size reference. `TRUE` requires the **full**
-  [`RMdifGammaCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
-  object as `cutoff` (it carries the simulated distributions in
-  `$results`). `NULL`, the default, means `TRUE` when `cutoff` is that
-  full object and `FALSE` otherwise, so calling with no cutoff keeps the
-  asymptotic table unchanged. Pass `FALSE` to flag against the interval
-  instead. The interval makes a poor decision rule, since its width sets
-  a family-wise error rate of `1 - width^k` over all \\k\\ items at once
-  (Johansson, 2026).
+  Logical or `NULL`. Whether to flag on two-sided bootstrap p-values
+  (`p_gamma`, `padj_gamma`) from the simulations. The asymptotic p-value
+  and star columns are then dropped, so that the table has one family of
+  p-values, and the simulated interval is kept as a reference. `TRUE`
+  needs the full
+  [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+  result. `NULL` (default) uses the p-values whenever `cutoff` is that
+  result, so a call without a cutoff keeps the asymptotic table. `FALSE`
+  flags against the interval, a poor decision rule, since over k items a
+  width `w` gives a family-wise error rate of `1 - w^k` (Johansson,
+  2026).
 
 - correction:
 
-  Character. Multiplicity correction for the bootstrap p-values:
-  `"fwer"` (default; Westfall-Young studentised-max step-down),
-  `"fdr_bh"`, `"fdr_by"`, or `"none"`. Ignored when `p_value = FALSE`.
+  Character. Correction of the bootstrap p-values across items: `"fwer"`
+  (default, Westfall-Young step-down), `"fdr_bh"`, `"fdr_by"` or
+  `"none"`. Used only with p-values.
 
 - alpha:
 
-  Numeric in (0, 1). Significance level used to flag items on the
-  corrected p-value. Default `0.05`. Ignored when `p_value = FALSE`.
+  Numeric in (0, 1). An item is flagged when its corrected p-value is
+  below `alpha`. Default `0.05`. Used only with p-values.
 
 - output:
 
-  Character string controlling the return value. Either `"kable"`
-  (default) for a formatted
+  Character. `"kable"` (default) for a
   [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html) table, or
-  `"dataframe"` for the underlying data.frame.
+  `"dataframe"`.
 
 ## Value
 
-- If `output = "kable"`: a `knitr_kable` object with columns "Item",
-  "Partial gamma", "SE", "Lower CI", "Upper CI", "Adj. p-value (BH)",
-  and "p-value sign." (stars for the BH-adjusted p-value, as `iarm`
-  shows them). When `cutoff` is provided, additional columns "Gamma
-  low", "Gamma high", and "Flagged" are included. With `p_value = TRUE`,
-  the asymptotic p-value columns are replaced by bootstrap "p" and "p
-  (adj)".
+- `output = "kable"`: a `knitr_kable` table with the columns "Item",
+  "Partial gamma", "SE", "Lower CI", "Upper CI", "Adj. p-value (BH)" and
+  "p-value sign." (stars for the adjusted p-value, as iarm shows them),
+  plus "Gamma low", "Gamma high" and "Flagged" with a `cutoff`. With
+  p-values, the asymptotic columns are replaced by "p" and "p (adj)".
 
-- If `output = "dataframe"`: a data.frame with columns `Item`, `gamma`,
-  `se`, `lower`, `upper`, `padj_bh`, `Significance`. When `cutoff` is
-  provided, columns `gamma_low`, `gamma_high`, and `flagged` are also
-  included. With `p_value = TRUE`, `padj_bh` and `Significance` are
-  replaced by `p_gamma` and `padj_gamma`.
+- `output = "dataframe"`: a data.frame with the columns `Item`, `gamma`,
+  `se`, `lower`, `upper`, `padj_bh` and `Significance`, plus
+  `gamma_low`, `gamma_high` and `flagged` with a `cutoff`. With
+  p-values, `padj_bh` and `Significance` are replaced by `p_gamma` and
+  `padj_gamma`.
 
 ## Details
 
-Partial gamma (Bjorner et al., 1998) measures the association between
-item response and an exogenous grouping variable, controlling for the
-total score. Values near 0 indicate no DIF. Recommended interpretive
-thresholds (Bjorner et al., 1998):
+**Statistic.** The partial gamma (Bjorner et al., 1998) measures the
+association between the item response and an external grouping variable
+given the total score. Values near 0 indicate no DIF. Bjorner et al.
+(1998) also proposed classes of DIF size, which
+[`RMdifTree()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md)
+uses. They are conventions, not values calibrated to the sample and
+items at hand, and this function does not use them. The iarm package
+must be installed (it is in Suggests).
 
-- **No or negligible DIF**: gamma within \\\[-0.21, 0.21\]\\, *or* gamma
-  not significantly different from 0.
+**Asymptotic p-values.** The adjusted p-value is a Benjamini-Hochberg
+adjustment, made by easyRasch2, of the p-values from
+[`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html)
+over the items. iarm's own adjusted column is a Bonferroni correction
+whatever method is named, since iarm adjusts one p-value at a time, so
+it is not used.
 
-- **Slight to moderate DIF**: gamma within \\\[-0.31, 0.31\]\\ (and
-  outside \\\[-0.21, 0.21\]\\), *or* not significantly outside
-  \\\[-0.21, 0.21\]\\.
-
-- **Moderate to large DIF**: gamma outside \\\[-0.31, 0.31\]\\, **and**
-  significantly outside \\\[-0.21, 0.21\]\\.
-
-The `iarm` package must be installed (it is in Suggests, not Imports).
-The asymptotic adjusted p-value is a Benjamini-Hochberg adjustment over
-the items of the p-values from
-[`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html),
-applied by easyRasch2. iarm's own adjusted column is a Bonferroni
-correction whatever method is named, because iarm adjusts one p-value at
-a time, so it is not used.
-
-**Bootstrap p-values.** When `p_value = TRUE`, each item's observed
-partial gamma is compared against its simulated null distribution (from
-`cutoff$results`, simulated with no DIF by construction). The per-item
-statistic is the residual studentised by the mean and SD of the observed
-and simulated values together; the marginal p-value is the two-sided
-Monte-Carlo p-value `(1 + #\{|t*| >= |t|\}) / (B + 1)`, so it can be no
-smaller than `1 / (B + 1)`. The test is two-sided because DIF has no
-privileged direction: an item can favour either group. This differs from
+**Bootstrap p-values.** Each item's observed partial gamma is compared
+with its simulated values (`cutoff$results`, simulated without DIF). The
+statistic is the deviation from the mean of the observed and simulated
+values together, divided by their SD. The uncorrected p is two-sided,
+`(1 + #\{|t*| >= |t|\}) / (B + 1)` for B simulated datasets, so it can
+be no smaller than `1 / (B + 1)`. It is two-sided since DIF can favour
+either group, unlike
 [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md),
 which tests one-sided for excess positive local dependence.
-`correction = "fwer"` uses the Westfall-Young studentised-max step-down,
-which exploits the bootstrap dependence among items (Ferreira, 2024). It
-controls the family-wise error rate at any number of iterations in
+`correction = "fwer"` uses the Westfall-Young step-down, which uses the
+dependence between the items (Westfall & Young, 1993, Ferreira, 2024).
+It controls the family-wise error rate at any number of iterations in
 [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md),
 but below 400 decisions depend on the seed and a message says so. Unlike
-the asymptotic p-values from
-[`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html),
-these are calibrated against the *simulated Rasch null* rather than the
-asymptotic SE; they are model-conditional and sample-size-sensitive, and
-are reported alongside the simulated effect-size band, not in place of
-it. The observed partial gamma they test is computed by the same
-internal routine as the simulated values, which reproduces
+the asymptotic p-values, these are calibrated against simulations from
+the Rasch model. They depend on the model and the sample size, and are
+reported with the simulated interval, not instead of it. The observed
+partial gamma they test is computed by the same internal routine as the
+simulations, which reproduces
 [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html)
 exactly.
 
 **Real and artificial DIF.** Partial gamma conditions on the total
 score, which includes every item. Real DIF in one item then induces
-artificial DIF in the other items, in the opposite direction, because at
-a given total score the item scores must add up to that score (Hagquist
-& Andrich, 2017). An item can therefore be flagged only because another
-item has DIF. The simulation-based cutoffs from
+artificial DIF in the other items, in the opposite direction, since at a
+given total score the item scores must add up to that score (Hagquist &
+Andrich, 2017). An item can therefore be flagged only because another
+item has DIF. The simulations in
 [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
-do not guard against this, since their null has no DIF in any item.
-Resolve DIF items one at a time, starting with the largest, and repeat
-the analysis before deciding on the next (Hagquist & Andrich, 2017).
+do not guard against this, since they have no DIF in any item. Resolve
+DIF items one at a time, starting with the largest, and repeat the
+analysis before deciding on the next (Hagquist & Andrich, 2017).
+[`RMdifAnchor()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md)
+avoids the problem by linking the groups through anchor items.
 
 ## Multiple comparisons
 
-The marginal p-value controls the error rate of a *single* comparison:
-for one item (or item pair) decided on in advance it is the relevant
-value. But scanning all *k* comparisons and flagging whichever fall
-below `alpha` tests *k* hypotheses at once, so the chance of at least
-one false flag inflates to roughly \\1 - (1 - \alpha)^k\\ (e.g. about
-34% for *k* = 8 at `alpha = 0.05`) – even when every marginal p-value is
-correctly calibrated. The corrected (adjusted) p-value controls this:
-`correction = "fwer"` bounds the probability of *any* false flag
-(strict, lower power), while `"fdr_bh"` / `"fdr_by"` bound the expected
-*proportion* of false flags among those raised (a more lenient middle
-ground). Rule of thumb: use the marginal p-value for a single
-pre-specified comparison, and a corrected p-value when screening the
-whole table – the usual workflow.
+The uncorrected p-value controls the error rate of a single comparison.
+For one item (or item pair) chosen in advance it is the relevant value.
+Flagging whichever of k comparisons fall below `alpha` tests k
+hypotheses at once, and the chance of at least one false flag rises to
+about \\1 - (1 - \alpha)^k\\, for example 34% for k = 8 at
+`alpha = 0.05`, even when every uncorrected p-value is calibrated. The
+corrected p-value controls this. `correction = "fwer"` bounds the
+probability of any false flag (strict, less power), and `"fdr_bh"` and
+`"fdr_by"` bound the expected share of false flags among those raised.
+Use the uncorrected p-value for a single comparison chosen in advance,
+and a corrected one when screening the whole table, which is the usual
+case.
 
 ## References
 
@@ -199,17 +183,24 @@ differential item functioning in health research using the Rasch model.
 *Health and Quality of Life Outcomes, 15*, 181.
 [doi:10.1186/s12955-017-0755-0](https://doi.org/10.1186/s12955-017-0755-0)
 
-Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple
-Testing*. Wiley.
-
 Johansson, M. (2026). Simulation-based cutoffs for conditional item fit
 in Rasch models: Iterations, multiplicity correction, and decision
 stability. *PsyArXiv*.
 [doi:10.31234/osf.io/7pqz4_v2](https://doi.org/10.31234/osf.io/7pqz4_v2)
 
+Westfall, P. H., & Young, S. S. (1993). *Resampling-Based Multiple
+Testing*. Wiley.
+
 ## See also
 
-[`RMdifGammaCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+[`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+for the simulations,
+[`RMdifGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaPlot.md)
+for the plot,
+[`RMdifAnchor()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md)
+for anchored tests,
+[`RMdifImpact()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifImpact.md)
+for the size of the impact.
 
 ## Examples
 
@@ -229,7 +220,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
   # Return as data.frame
   RMdifGamma(sim_data, dif_group, output = "dataframe")
 
-  # Simulation-based cutoffs (100 Monte-Carlo iterations)
+  # Simulation-based cutoffs (100 iterations to keep the example quick)
   if (requireNamespace("ggdist", quietly = TRUE)) {
     cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_group,
                                    iterations = 100, parallel = FALSE,
@@ -237,12 +228,16 @@ if (requireNamespace("iarm", quietly = TRUE)) {
     RMdifGamma(sim_data, dif_group, cutoff = cutoff_res)
 
     # The full cutoff object switches on bootstrap p-values with the
-    # family-wise (Westfall-Young) correction; 100 iterations keeps the
-    # example quick, use the default 400 or more in real analyses
+    # family-wise (Westfall-Young) correction. Use 1000 or more
+    # iterations in real analyses.
     RMdifGamma(sim_data, dif_group, cutoff = cutoff_res,
                output = "dataframe")
   }
 }
+#> Registered S3 methods overwritten by 'vcdExtra':
+#>   method      from
+#>   pairs.table vcd 
+#>   print.Kappa vcd 
 #> Bootstrap p-values are based on 100 iterations, below the recommended 400.
 #> ℹ The family-wise error rate is controlled at any number of iterations. With few iterations the p-values are coarse, and which comparisons get flagged depends on the seed.
 #> ℹ See Johansson (2026), doi:10.31234/osf.io/7pqz4_v2.

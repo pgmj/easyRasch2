@@ -1,10 +1,8 @@
-# Stacked Bar Chart of Item Response Distributions
+# Stacked bar chart of item response distributions
 
-Creates a horizontal stacked bar chart showing the response distribution
-for all items. Each bar represents one item, with segments coloured by
-response category. Counts are displayed as text labels within each
-segment. This is a descriptive data visualization tool intended for use
-before model fitting.
+Draws one horizontal bar per item, divided into segments coloured by
+response category, with the count in each segment. A descriptive plot
+for use before any model is fitted.
 
 ## Usage
 
@@ -55,8 +53,8 @@ RMplotStackedbar(
 
 - show_percent:
 
-  Logical. If `TRUE`, the percentage of responses is displayed instead
-  of (or in addition to) counts. Default is `FALSE`.
+  Logical. Show the percentage of responses in each segment. With
+  `show_n = TRUE` as well, the label is "n (p%)". Default `FALSE`.
 
 - text_color:
 
@@ -104,16 +102,12 @@ Categories with zero responses still appear in the legend but produce no
 visible bar segment, which helps identify gaps in the response
 distribution.
 
-The plot caption reports the sample in the standard
-`n = X respondents (policy)` form; item-level `NA`s are retained – each
-bar counts the non-missing responses for that item.
+The caption gives the sample size in the form
+`n = X respondents (policy)`. Missing responses are kept, and each bar
+counts the responses to that item.
 
-**Input requirements:**
-
-- All columns must be numeric (integer-valued).
-
-- The data frame must contain at least 2 columns (items) and at least 1
-  row (person).
+The data must have at least 2 numeric (integer-valued) columns and at
+least 1 row.
 
 ## See also
 

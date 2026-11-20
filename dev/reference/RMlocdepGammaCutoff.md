@@ -1,11 +1,13 @@
-# Simulation-Based Partial Gamma LD Cutoff Determination
+# Simulation-based partial gamma local dependence cutoffs
 
-Uses parametric bootstrap simulation to determine appropriate cutoff
-values for partial gamma Local Dependence analysis via
-[`partgam_LD`](https://rdrr.io/pkg/iarm/man/partgam_LD.html). Under a
-correctly fitting Rasch model where items are locally independent, this
-function generates the expected distribution of partial gamma values per
-item pair, providing empirical critical values.
+Simulates datasets from a Rasch or partial credit model that fits and
+resembles your data, where items are locally independent by
+construction, and computes the partial gamma of every item pair in each.
+Passed to
+[`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md),
+the result gives bootstrap p-values corrected across pairs, and an
+interval per pair that describes where a locally independent pair's
+partial gamma is expected to fall.
 
 ## Usage
 
@@ -26,28 +28,26 @@ RMlocdepGammaCutoff(
 
 - data:
 
-  A data.frame or matrix of item responses. Items must be scored
-  starting at 0 (non-negative integers). Only complete cases (rows
-  without any `NA`) are used.
+  A data.frame or matrix of item responses, items scored from 0. Only
+  complete cases (rows without `NA`) are used.
 
 - iterations:
 
-  Integer. Number of simulation iterations (default 400, was 250 before
-  1.2.0). 400 is the recommended floor for reproducible Westfall-Young
-  decisions (Johansson, 2026) and the count a 95\\ needs to converge.
-  Use 1000 to 2000 for a final analysis.
+  Integer. Number of simulated datasets. Default `400` (`250` before
+  1.2.0), the recommended minimum for reproducible Westfall-Young
+  decisions and the number a 95% interval needs to converge (Johansson,
+  2026). Use 1000 to 2000 for a final analysis.
 
 - parallel:
 
-  Logical. Use parallel processing via `mirai` if available (default
-  `TRUE`).
+  Logical. Run the simulations in parallel via mirai when it is
+  installed. Default `TRUE`.
 
 - n_cores:
 
   Integer or `NULL`. Number of parallel workers. When `NULL`,
-  `getOption("mc.cores")` is checked first. If neither is set and
-  `parallel = TRUE`, a warning is issued and execution falls back to
-  sequential (single core) processing.
+  `getOption("mc.cores")` is used. If that is unset too, a warning is
+  given and the simulations run sequentially.
 
 - verbose:
 
@@ -77,26 +77,28 @@ RMlocdepGammaCutoff(
 
 ## Value
 
-A list with components:
+A list with:
 
 - `results`:
 
-  data.frame with columns `iteration`, `Item1`, `Item2`, and `gamma`
-  (one row per item pair per successful iteration). `gamma` is the
-  larger of the pair's two rest-score directions, the statistic
+  data.frame with `iteration`, `Item1`, `Item2` and `gamma`, one row per
+  item pair and simulated dataset. `gamma` is the larger of the pair's
+  two rest-score directions, the statistic
   [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
-  tests. Rows are keyed by the sorted pair order, with `Item1` before
-  `Item2` in column order.
+  tests. Pairs are keyed in sorted order.
 
 - `pair_cutoffs`:
 
-  data.frame with per-pair cutoff summaries: `Item1`, `Item2`,
-  `gamma_low`, `gamma_high`. Bounds are computed using the method
-  specified by `cutoff_method`.
+  data.frame with the interval per pair: `Item1`, `Item2`, `gamma_low`,
+  `gamma_high`, computed by `cutoff_method`.
 
 - `actual_iterations`:
 
-  Number of successful iterations.
+  Number of simulated datasets that could be used.
+
+- `requested_iterations`:
+
+  The `iterations` argument.
 
 - `sample_n`:
 
@@ -104,69 +106,50 @@ A list with components:
 
 - `sample_n_total`:
 
-  Number of respondents in the raw input data, before the complete-case
-  filter.
+  Number of respondents in `data`, before the complete-case filter.
 
 - `sample_has_na`:
 
-  Logical. Whether the raw input data contained any missing values.
+  Logical. Whether `data` contained missing values.
 
 - `sample_summary`:
 
-  Summary statistics of estimated person parameters.
+  Summary of the WLE person locations.
 
 - `item_names`:
 
-  Character vector of item names from data.
+  Item names.
 
 - `cutoff_method`:
 
-  The method used to compute cutoffs (`"hdci"` or `"quantile"`).
+  `"hdci"` or `"quantile"`.
 
 - `hdci_width`:
 
-  The HDCI width used (only meaningful when `cutoff_method = "hdci"`).
+  The HDCI width (used only with `"hdci"`).
 
 ## Details
 
-For each simulation iteration the function:
+The generating model has the CML item parameters
+([`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html))
+and the WLE person locations of `data`. In each iteration, person
+locations are drawn with replacement from the WLE estimates, responses
+are simulated from the model
+([`psychotools::rrm()`](https://rdrr.io/pkg/psychotools/man/rrm.html)
+for dichotomous items, an internal partial credit simulator for
+polytomous ones), and the partial gamma of every pair is computed in
+both directions, keeping the larger. The coefficients equal those of
+[`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html),
+but are computed by a faster internal routine, since iarm also computes
+standard errors and intervals that the simulations do not need, at about
+a hundred times the cost.
 
-1.  Resamples person parameters (thetas) with replacement from the WLE
-    person locations.
+A simulated dataset that cannot be used is left out, and
+[`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
+reports how many in its caption.
 
-2.  Simulates item response data under a Rasch model (dichotomous via
-    [`psychotools::rrm()`](https://rdrr.io/pkg/psychotools/man/rrm.html)
-    or polytomous via an internal partial credit simulator).
-
-3.  Computes partial gamma for every item pair in both rest-score
-    directions and keeps the larger. The coefficients are identical to
-    those of
-    [`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html),
-    but are computed by a vectorised internal, since `iarm` also derives
-    the asymptotic standard error and confidence interval that a
-    simulated null does not need and costs roughly two orders of
-    magnitude more per iteration.
-
-Because the data are simulated under the Rasch model, items are locally
-independent by construction. The distribution of partial gamma values
-across iterations provides empirical critical values per item pair.
-Values from real data that fall outside these bounds suggest local
-dependence that exceeds what would be expected by chance. Failed
-iterations (e.g., due to convergence issues or degenerate data) are
-silently discarded.
-
-The generating model uses CML item thresholds via
-[`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
-(a dichotomous item is a 2-category PCM) and WLE person locations,
-consistent with the rest of the package; responses are simulated with
-[`psychotools::rrm()`](https://rdrr.io/pkg/psychotools/man/rrm.html)
-(dichotomous) or an internal partial credit score simulator
-(polytomous).
-
-Parallel processing is provided by the `mirai` package (optional).
-Install it with `install.packages("mirai")` to enable parallelisation.
-
-The `iarm` package must be installed (it is in Suggests, not Imports).
+Parallel processing needs the optional mirai package. The iarm package
+must be installed (it is in Suggests).
 
 ## References
 
@@ -174,11 +157,18 @@ Christensen, K. B., Kreiner, S. & Mesbah, M. (Eds.) (2013). *Rasch
 Models in Health*, pp. 133–135. ISTE & Wiley.
 [doi:10.1002/9781118574454](https://doi.org/10.1002/9781118574454)
 
+Johansson, M. (2026). Simulation-based cutoffs for conditional item fit
+in Rasch models: Iterations, multiplicity correction, and decision
+stability. *PsyArXiv*.
+[doi:10.31234/osf.io/7pqz4_v2](https://doi.org/10.31234/osf.io/7pqz4_v2)
+
 ## See also
 
-[`partgam_LD`](https://rdrr.io/pkg/iarm/man/partgam_LD.html),
-[`RMlocdepGamma`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md),
-[`RMlocdepGammaPlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaPlot.md)
+[`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md)
+for the tables,
+[`RMlocdepGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaPlot.md)
+for the plot,
+[`iarm::partgam_LD()`](https://rdrr.io/pkg/iarm/man/partgam_LD.html).
 
 ## Examples
 

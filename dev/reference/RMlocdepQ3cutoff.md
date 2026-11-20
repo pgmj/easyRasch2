@@ -1,11 +1,11 @@
-# Simulation-Based \\Q_3\\ Cutoff Determination
+# Simulation-based Q3 cutoffs
 
-Uses parametric bootstrap simulation to determine an appropriate cutoff
-value for
-[`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md).
-Under a correctly fitting Rasch model, \\Q_3\\ residuals have an unknown
-distribution; this function simulates that distribution and returns
-empirical percentiles.
+Simulates datasets from a Rasch or partial credit model that fits and
+resembles your data, and computes \\Q_3\\ for every item pair in each.
+Returns percentiles of the maximum minus mean \\Q_3\\ for a global
+cutoff (Christensen et al., 2017) and an interval per pair. Passed to
+[`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md),
+the result gives bootstrap p-values corrected across pairs.
 
 ## Usage
 
@@ -28,31 +28,30 @@ RMlocdepQ3Cutoff(
 
 - data:
 
-  A data.frame or matrix of item responses. Items must be scored
-  starting at 0 (non-negative integers).
+  A data.frame or matrix of item responses, items scored from 0.
+  Respondents with no responses are dropped, incomplete ones are kept.
 
 - iterations:
 
-  Integer. Number of simulation iterations (default 400). 400 is the
-  recommended floor for reproducible Westfall-Young decisions
-  (Johansson, 2026) and the count a 95\\ 1000 to 2000 for a final
-  analysis.
+  Integer. Number of simulated datasets. Default `400`, the recommended
+  minimum for reproducible Westfall-Young decisions and the number a 95%
+  interval needs to converge (Johansson, 2026). Use 1000 to 2000 for a
+  final analysis.
 
 - parallel:
 
-  Logical. Use parallel processing via `mirai` if available (default
-  `TRUE`).
+  Logical. Run the simulations in parallel via mirai when it is
+  installed. Default `TRUE`.
 
 - n_cores:
 
   Integer or `NULL`. Number of parallel workers. When `NULL`,
-  `getOption("mc.cores")` is checked first. If neither is set and
-  `parallel = TRUE`, a warning is issued and execution falls back to
-  sequential (single core) processing.
+  `getOption("mc.cores")` is used. If that is unset too, a warning is
+  given and the simulations run sequentially.
 
 - verbose:
 
-  Logical. Show a progress bar (default `FALSE`).
+  Logical. Show a progress bar. Default `FALSE`.
 
 - seed:
 
@@ -62,153 +61,148 @@ RMlocdepQ3Cutoff(
 
 - cutoff_method:
 
-  Character. Method used to compute per-pair \\Q_3\\ credible intervals
-  in `pair_cutoffs`. One of `"hdci"` (the default, Highest Density
-  Continuous Interval via
-  [`ggdist::hdci()`](https://mjskay.github.io/ggdist/reference/point_interval.html))
-  or `"quantile"` (symmetric 2.5th / 97.5th percentiles). Only affects
-  `pair_cutoffs`; the global `$suggested_cutoff` (99th percentile of
-  `max(Q3) - mean(Q3)`) is unaffected.
+  Character. How the interval per pair in `pair_cutoffs` is computed:
+  `"hdci"` (default), the highest-density continuous interval from
+  [`ggdist::hdci()`](https://mjskay.github.io/ggdist/reference/point_interval.html)
+  (needs ggdist), or `"quantile"`, the 2.5th to 97.5th percentiles. The
+  global `suggested_cutoff` is not affected.
 
 - hdci_width:
 
-  Numeric in (0, 1). Width of the HDCI when `cutoff_method = "hdci"`.
-  Default `0.95`, was `0.99` before 1.2.0. The interval describes where
-  a fitting pair's \\Q_3\\ is expected to fall and is no longer the
-  default decision rule, so the width is chosen to converge at the
-  default iteration count rather than to imply an error rate. Ignored
-  when `cutoff_method = "quantile"`.
+  Numeric in (0, 1). Width of the interval with
+  `cutoff_method = "hdci"`. Default `0.95` (`0.99` before 1.2.0). The
+  interval describes where a fitting pair's \\Q_3\\ is expected to fall
+  and is no longer the default decision rule, so the width is chosen to
+  converge at the default number of iterations. Ignored with
+  `"quantile"`.
 
 - estimator:
 
-  Character. Estimation engine for the simulated \\Q_3\\ values, passed
-  through to the per-iteration computation. `"CML"` (default) uses CML
-  item parameters and WLE person locations; `"MML"` uses `mirt`. This
-  must match the `estimator` later given to
-  [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md);
-  the value is stored in the returned object's `$estimator` and reused
-  automatically.
+  Character. `"CML"` (default, CML item parameters and WLE person
+  locations) or `"MML"` (`mirt`). It is stored in the result and used by
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
+  and
+  [`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md).
 
 - dgp:
 
-  Character. Data-generating process for the parametric bootstrap.
-  `"resample"` (default) draws person locations by resampling the WLE
-  estimates with replacement and simulates responses under the model – a
-  *marginal* null. Each resampled respondent keeps their pattern of
-  missing responses, so incomplete data are simulated as incomplete and
-  the pairwise-complete \\Q_3\\ of the null rests on as many respondents
-  per pair as the observed one. `"conditional"` instead simulates each
-  respondent's pattern from the exact Rasch conditional distribution
-  given their observed total score (and answered items), with item
-  parameters fixed – a *conditional* null that fixes the score margin
-  and needs no latent distribution, avoiding the over-dispersion of
-  resampled point estimates. The two give different cut-offs; see the
-  package's comparison study. **Experimental.**
+  Character. How datasets are simulated. `"resample"` (default) draws
+  person locations from the WLE estimates with replacement and simulates
+  responses from the model (a marginal null). Each drawn respondent
+  keeps their pattern of missing responses, so the simulated \\Q_3\\ of
+  a pair rests on as many respondents as the observed one.
+  `"conditional"` simulates each respondent's pattern from the model
+  given their observed total score and answered items, with the item
+  parameters fixed (a conditional null). It needs no latent distribution
+  and avoids the over-dispersion of resampled point estimates. The two
+  give different cutoffs. **Experimental.**
 
 ## Value
 
-A list with components:
+A list with:
 
 - `results`:
 
-  data.frame with columns `mean`, `max`, `diff` (one row per successful
-  iteration).
+  data.frame with `mean`, `max` and `diff` (maximum minus mean \\Q_3\\),
+  one row per simulated dataset.
 
 - `pair_results`:
 
-  Long data.frame with columns `Item1`, `Item2`, `Q3`, `iteration` — one
-  row per item pair per successful iteration. Used by
-  [`RMlocdepQ3Plot`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md).
+  data.frame with `Item1`, `Item2`, `Q3` and `iteration`, one row per
+  item pair and simulated dataset.
 
 - `pair_cutoffs`:
 
-  data.frame with per-pair cutoff summaries: `Item1`, `Item2`, `Q3_low`,
-  `Q3_high`. Boundaries are computed via the method specified by
-  `cutoff_method`.
+  data.frame with the interval per pair: `Item1`, `Item2`, `Q3_low`,
+  `Q3_high`, computed by `cutoff_method`.
 
 - `actual_iterations`:
 
-  Number of successful iterations.
+  Number of simulated datasets that could be used.
+
+- `requested_iterations`:
+
+  The `iterations` argument.
 
 - `sample_n`:
 
-  Number of persons used: respondents with no responses at all (all-`NA`
-  rows) are dropped, as in
-  [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md);
-  incomplete response patterns are retained.
+  Number of respondents used (those with at least one response).
 
 - `sample_n_total`:
 
-  Number of respondents in the raw input data, before dropping all-`NA`
-  rows.
+  Number of respondents in `data`.
 
 - `sample_has_na`:
 
-  Logical. Whether the data contained any missing values.
+  Logical. Whether `data` contained missing values.
 
 - `sample_summary`:
 
-  Summary statistics of estimated person parameters.
+  Summary of the WLE person locations.
 
 - `item_names`:
 
-  Character vector of item names from `data`.
+  Item names.
 
 - `max_diff`, `sd_diff`:
 
-  Max and SD of the `diff` distribution.
+  Maximum and SD of `diff`.
 
 - `p95`, `p99`, `p995`, `p999`:
 
-  Empirical percentiles of `diff`.
+  Percentiles of `diff`.
 
 - `suggested_cutoff`:
 
-  The 99th percentile (`p99`) — recommended scalar cutoff for
-  [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md).
+  The 99th percentile (`p99`), the global cutoff for
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md).
 
 - `cutoff_method`:
 
-  The method used for `pair_cutoffs` (`"hdci"` or `"quantile"`).
+  `"hdci"` or `"quantile"`.
 
 - `hdci_width`:
 
-  The HDCI width used (only meaningful when `cutoff_method = "hdci"`).
+  The HDCI width (used only with `"hdci"`).
 
 - `estimator`:
 
-  The estimator used for the simulated \\Q_3\\ (`"CML"` or `"MML"`);
-  reused by
-  [`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
-  and
-  [`RMlocdepQ3Plot`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md).
+  `"CML"` or `"MML"`.
 
 - `dgp`:
 
-  The data-generating process used (`"resample"` or `"conditional"`).
+  `"resample"` or `"conditional"`.
 
 ## Details
 
-The generating model is fitted once: CML item parameters (via
-`psychotools`) and WLE person locations. For each simulation iteration,
-those WLE thetas are resampled with replacement, response data are
-simulated under the Rasch / Partial Credit model, the model is refitted,
-and \\Q_3\\ residuals are computed under `estimator`. The distribution
-of `max(Q3) - mean(Q3)` across iterations provides empirical critical
-values. Failed iterations (e.g., due to convergence issues) are silently
-discarded.
+The generating model is fitted once, with CML item parameters
+(`psychotools`) and WLE person locations. In each iteration a dataset is
+simulated by `dgp`, the model is refitted, and \\Q_3\\ is computed with
+`estimator`. A simulated dataset that cannot be refitted is left out,
+and
+[`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
+reports how many in its caption.
 
-Supports both **dichotomous** data (simulated via
-[`psychotools::rrm()`](https://rdrr.io/pkg/psychotools/man/rrm.html))
-and **polytomous** data (via an internal partial credit score
-simulator).
+Parallel processing needs the optional mirai package.
 
-Parallel processing is provided by the `mirai` package (optional).
-Install it with `install.packages("mirai")` to enable parallelisation.
+## References
+
+Christensen, K. B., Makransky, G., & Horton, M. (2017). Critical values
+for Yen's \\Q_3\\: Identification of local dependence in the Rasch
+model. *Applied Psychological Measurement, 41*(3), 178–194.
+[doi:10.1177/0146621616677520](https://doi.org/10.1177/0146621616677520)
+
+Johansson, M. (2026). Simulation-based cutoffs for conditional item fit
+in Rasch models: Iterations, multiplicity correction, and decision
+stability. *PsyArXiv*.
+[doi:10.31234/osf.io/7pqz4_v2](https://doi.org/10.31234/osf.io/7pqz4_v2)
 
 ## See also
 
-[`RMlocdepQ3`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
+[`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md)
+for the tables,
+[`RMlocdepQ3Plot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3plot.md)
+for the plots.
 
 ## Examples
 
@@ -221,7 +215,7 @@ if (requireNamespace("ggdist", quietly = TRUE)) {
   )
   colnames(sim_data) <- paste0("Item", 1:10)
 
-  # Few iterations for a fast example; use 500+ in real analyses
+  # Few iterations for a fast example. Use 1000 or more in real analyses.
   cutoff_res <- RMlocdepQ3Cutoff(sim_data, iterations = 50, parallel = FALSE,
                                  seed = 42)
   cutoff_res$suggested_cutoff  # 99th percentile

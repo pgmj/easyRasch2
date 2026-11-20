@@ -62,7 +62,7 @@ RMreliabilityCurve(
   Numeric in (0, 1) or `NULL` (default). When supplied, the region of
   the scale whose conditional reliability reaches `benchmark` is shaded,
   and the percentage of respondents located inside it is reported. There
-  is deliberately no default value; see Details.
+  is deliberately no default value (see Details).
 
 - reference:
 
@@ -109,13 +109,14 @@ RMreliabilityCurve(
 
 - parallel:
 
-  Logical. Use `mirai` for the bootstrap if available. Default `TRUE`.
+  Logical. Run the bootstrap in parallel via mirai when it is installed.
+  Default `TRUE`.
 
 - n_cores:
 
   Integer or `NULL`. Number of parallel workers. When `NULL`,
-  `getOption("mc.cores")` is checked first; if neither is set, the
-  bootstrap falls back to sequential.
+  `getOption("mc.cores")` is used. If that is unset too, the bootstrap
+  runs sequentially.
 
 - seed:
 
@@ -141,8 +142,9 @@ RMreliabilityCurve(
 
 - output:
 
-  Character. `"ggplot"` (default), `"dataframe"` for the curve, or
-  `"kable"` for a summary table.
+  Character. `"ggplot"` (default), `"dataframe"` for the curve,
+  `"kable"` for a summary table, or `"list"` for the curve and the
+  summary as data.frames.
 
 ## Value
 
@@ -151,7 +153,8 @@ RMreliabilityCurve(
 - If `output = "dataframe"`: a data.frame with one row per grid point
   and columns `theta`, `information`, `sem`, `reliability`, plus
   `<statistic>_lower` / `<statistic>_upper` band columns when
-  `boot = TRUE`. Attributes carry the summary quantities: `sigma`,
+  `boot = TRUE`. The summary quantities are attached as attributes, kept
+  for compatibility (`output = "list"` gives them as a table): `sigma`,
   `marginal_ratio` (the latent-density-weighted mean of the reliability
   curve, matching
   [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)),
@@ -172,6 +175,15 @@ RMreliabilityCurve(
 
 - If `output = "kable"`: a `knitr_kable` summary table of those
   quantities.
+
+- If `output = "list"`: a list with `curve` (the data.frame above),
+  `summary` (a one-row data.frame with `latent_mean`, `sigma`,
+  `marginal_ratio`, `marginal_green`, `sem_median`, `sem_average`,
+  `benchmark`, `benchmark_percent`, `n_respondents`, `n_total`,
+  `n_not_estimable` and `boot_iter` (bootstrap samples used), `NA` where
+  not computed) and `benchmark_range` (the theta ranges where the curve
+  reaches `benchmark`, with columns `xmin` and `xmax`, `NULL` without a
+  benchmark or when it is never reached).
 
 ## Details
 
@@ -200,13 +212,12 @@ true-score variance, which is what the MML estimate of the latent SD is.
 And it tracks the reliability of the observed scores far more closely.
 Milanzi et al. (2015) report the subtractive coefficient falling to
 \\-0.120\\ against a true value of \\0.480\\ for a 1PL with \\\sigma^2 =
-0.25\\. Replicating their design (`dev/milanzi_check.R`, 1000
-replications per cell) gives a mean absolute error against the exact
-expected-sum-score reliability of \\0.22\\ for the subtractive form and
-\\0.018\\ for the ratio form, with the subtractive form negative in
-99.7% of replications of their lowest-variance cell. For polytomous
-Rasch data at 5 to 20 items the corresponding errors are \\0.18\\ and
-\\0.015\\.
+0.25\\. Replicating their design (1000 replications per cell) gives a
+mean absolute error against the exact expected-sum-score reliability of
+\\0.22\\ for the subtractive form and \\0.018\\ for the ratio form, with
+the subtractive form negative in 99.7% of replications of their
+lowest-variance cell. For polytomous Rasch data at 5 to 20 items the
+corresponding errors are \\0.18\\ and \\0.015\\.
 
 The advantage is concentrated where it matters rather than uniform.
 Where information is high relative to the trait variance the two forms
@@ -223,14 +234,14 @@ data, 0.010 against 0.015 for polytomous).
 [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
 reports the same ratio-form coefficient in its "Marginal (curve mean)"
 row, so the scalar and the curve agree. The superseded subtractive value
-is still returned as `marginal_green` for comparison with easyRasch2
-1.2.0 and earlier, and with
+(Green et al., 1984) is still returned as `marginal_green` for
+comparison with easyRasch2 1.2.0 and earlier, and with
 [`mirt::marginal_rxx()`](https://philchalmers.github.io/mirt/reference/marginal_rxx.html)
 and similar software.
 
-**Limits.** The information-based standard error is asymptotic, and is
-only an approximation for short scales; Milanzi et al. (2015) find the
-worst behaviour with six items. The curve describes the precision of the
+**Limits.** The information-based standard error is asymptotic, and only
+an approximation for short scales. Milanzi et al. (2015) find the worst
+behaviour with six items. The curve describes the precision of the
 person location estimate on the logit scale, which is not the same
 quantity as the reliability of a raw sum score, and reliability computed
 on a latent scale is consistently higher than its manifest counterpart.
@@ -264,9 +275,11 @@ Statistical Psychology, 68*(1), 43-64.
 
 ## See also
 
-[`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md),
+[`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
+for the coefficients,
 [`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md),
-[`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md)
+[`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md),
+[`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md)
 
 ## Examples
 

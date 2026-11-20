@@ -17,7 +17,7 @@ either."><meta name="robots" content="noindex"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9006</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9007</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -106,7 +106,7 @@ density overlay and the <code>benchmark</code> percentage, and is ignored when
 <dd><p>Numeric in (0, 1) or <code>NULL</code> (default). When supplied, the
 region of the scale whose conditional reliability reaches <code>benchmark</code> is
 shaded, and the percentage of respondents located inside it is reported.
-There is deliberately no default value; see Details.</p></dd>
+There is deliberately no default value (see Details).</p></dd>
 
 
 <dt id="arg-reference">reference<a class="anchor" aria-label="anchor" href="#arg-reference"></a></dt>
@@ -151,14 +151,14 @@ Default <code>0.95</code>.</p></dd>
 
 
 <dt id="arg-parallel">parallel<a class="anchor" aria-label="anchor" href="#arg-parallel"></a></dt>
-<dd><p>Logical. Use <code>mirai</code> for the bootstrap if available.
-Default <code>TRUE</code>.</p></dd>
+<dd><p>Logical. Run the bootstrap in parallel via <span class="pkg">mirai</span>
+when it is installed. Default <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-n-cores">n_cores<a class="anchor" aria-label="anchor" href="#arg-n-cores"></a></dt>
-<dd><p>Integer or <code>NULL</code>. Number of parallel workers. When <code>NULL</code>,
-<code>getOption("mc.cores")</code> is checked first; if neither is set, the bootstrap
-falls back to sequential.</p></dd>
+<dd><p>Integer or <code>NULL</code>. Number of parallel workers. When
+<code>NULL</code>, <code>getOption("mc.cores")</code> is used. If that is unset too, the
+bootstrap runs sequentially.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
@@ -187,7 +187,8 @@ background band. Default <code>TRUE</code>.</p></dd>
 
 <dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
 <dd><p>Character. <code>"ggplot"</code> (default), <code>"dataframe"</code> for the curve,
-or <code>"kable"</code> for a summary table.</p></dd>
+<code>"kable"</code> for a summary table, or <code>"list"</code> for the curve and the summary
+as data.frames.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -197,7 +198,8 @@ or <code>"kable"</code> for a summary table.</p></dd>
 <li><p>If <code>output = "dataframe"</code>: a data.frame with one row per grid point and
 columns <code>theta</code>, <code>information</code>, <code>sem</code>, <code>reliability</code>, plus
 <code>&lt;statistic&gt;_lower</code> / <code>&lt;statistic&gt;_upper</code> band columns when
-<code>boot = TRUE</code>. Attributes carry the summary quantities: <code>sigma</code>,
+<code>boot = TRUE</code>. The summary quantities are attached as attributes, kept
+for compatibility (<code>output = "list"</code> gives them as a table): <code>sigma</code>,
 <code>marginal_ratio</code> (the latent-density-weighted mean of the reliability
 curve, matching <code><a href="RMreliability.html">RMreliability()</a></code>), <code>marginal_green</code> (the superseded
 subtractive coefficient), <code>sem_median</code> (the median SEM over the latent
@@ -213,6 +215,15 @@ the sample 2 logits off target returned 2.02 rather than 0.96, and pushed
 marginal reliability from 0.81 up to 0.90 when it should have fallen to
 0.73. Well-targeted samples are unaffected.</p></li>
 <li><p>If <code>output = "kable"</code>: a <code>knitr_kable</code> summary table of those quantities.</p></li>
+<li><p>If <code>output = "list"</code>: a list with <code>curve</code> (the data.frame above),
+<code>summary</code> (a one-row data.frame with <code>latent_mean</code>, <code>sigma</code>,
+<code>marginal_ratio</code>, <code>marginal_green</code>, <code>sem_median</code>, <code>sem_average</code>,
+<code>benchmark</code>, <code>benchmark_percent</code>, <code>n_respondents</code>, <code>n_total</code>,
+<code>n_not_estimable</code> and <code>boot_iter</code> (bootstrap samples used), <code>NA</code>
+where not computed) and
+<code>benchmark_range</code> (the theta ranges where the curve reaches
+<code>benchmark</code>, with columns <code>xmin</code> and <code>xmax</code>, <code>NULL</code> without a
+benchmark or when it is never reached).</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -236,8 +247,8 @@ true-score variance, which is what the MML estimate of the latent SD is.
 And it tracks the reliability of the observed scores far more closely.
 Milanzi et al. (2015) report the subtractive coefficient falling to
 \(-0.120\) against a true value of \(0.480\) for a 1PL with
-\(\sigma^2 = 0.25\). Replicating their design (<code>dev/milanzi_check.R</code>,
-1000 replications per cell) gives a mean absolute error against the exact
+\(\sigma^2 = 0.25\). Replicating their design (1000 replications per
+cell) gives a mean absolute error against the exact
 expected-sum-score reliability of \(0.22\) for the subtractive form and
 \(0.018\) for the ratio form, with the subtractive form negative in 99.7%
 of replications of their lowest-variance cell. For polytomous Rasch data at
@@ -254,11 +265,11 @@ the pair (mean absolute error 0.015 against 0.018 for binary data, 0.010
 against 0.015 for polytomous).</p>
 <p><code><a href="RMreliability.html">RMreliability()</a></code> reports the same ratio-form coefficient in its
 "Marginal (curve mean)" row, so the scalar and the curve agree. The
-superseded subtractive value is still returned as <code>marginal_green</code> for
-comparison with easyRasch2 1.2.0 and earlier, and with <code><a href="https://philchalmers.github.io/mirt/reference/marginal_rxx.html" class="external-link">mirt::marginal_rxx()</a></code>
-and similar software.</p>
-<p><strong>Limits.</strong> The information-based standard error is asymptotic, and is only
-an approximation for short scales; Milanzi et al. (2015) find the worst
+superseded subtractive value (Green et al., 1984) is still returned as
+<code>marginal_green</code> for comparison with easyRasch2 1.2.0 and earlier, and
+with <code><a href="https://philchalmers.github.io/mirt/reference/marginal_rxx.html" class="external-link">mirt::marginal_rxx()</a></code> and similar software.</p>
+<p><strong>Limits.</strong> The information-based standard error is asymptotic, and only
+an approximation for short scales. Milanzi et al. (2015) find the worst
 behaviour with six items. The curve describes the precision of the person
 location estimate on the logit scale, which is not the same quantity as the
 reliability of a raw sum score, and reliability computed on a latent scale
@@ -287,7 +298,8 @@ Psychology, 68</em>(1), 43-64. <a href="https://doi.org/10.1111/bmsp.12033" clas
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="RMreliability.html">RMreliability()</a></code>, <code><a href="RMscoreSE.html">RMscoreSE()</a></code>, <code><a href="RMtargeting.html">RMtargeting()</a></code></p></div>
+    <div class="dont-index"><p><code><a href="RMreliability.html">RMreliability()</a></code> for the coefficients, <code><a href="RMscoreSE.html">RMscoreSE()</a></code>,
+<code><a href="RMtargeting.html">RMtargeting()</a></code>, <code><a href="RMpersonParameters.html">RMpersonParameters()</a></code></p></div>
     </div>
 
     <div class="section level2">

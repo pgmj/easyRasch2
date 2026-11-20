@@ -1,13 +1,13 @@
-# Martin-Löf Test of Unidimensionality
+# Martin-Löf test of unidimensionality
 
-Likelihood-ratio test of unidimensionality against an *a priori*
-specified multidimensional alternative, generalised to polytomous Rasch
-/ partial credit models (Christensen, Bjorner, Kreiner, & Petersen,
-2002). The p-value is obtained by parametric-bootstrap (Monte Carlo)
-sampling under the unidimensional null, following Christensen & Kreiner
-(2007), because the asymptotic chi-square approximation is biased toward
-conservatism for realistic sample sizes – especially with polytomous
-items, where the degrees of freedom can be very large.
+Likelihood-ratio test of unidimensionality against a multidimensional
+alternative specified in advance, for Rasch and partial credit models
+(Christensen, Bjorner, Kreiner, & Petersen, 2002). The p-value comes
+from a parametric bootstrap under the unidimensional model, following
+Christensen and Kreiner (2007), since the asymptotic chi-square
+distribution makes the test conservative at realistic sample sizes,
+especially with polytomous items, where the degrees of freedom can be
+very large.
 
 ## Usage
 
@@ -30,67 +30,66 @@ RMdimMartinLof(
 
 - data:
 
-  A data.frame or matrix of item responses (0-based, non-negative
-  integers). Complete cases only: rows with any `NA` on the items named
-  in `partition` are dropped. Missingness on items outside `partition`
-  is ignored.
+  A data.frame or matrix of item responses, items scored from 0. Only
+  complete cases on the items in `partition` are used. Missing values on
+  other items are ignored.
 
 - partition:
 
-  The hypothesised partition of items into subscales. One of:
+  The hypothesised partition of the items into subscales. Either:
 
-  - a **list** of column-name or column-index vectors, e.g.
-    `list(c("I1","I2","I3"), c("I4","I5","I6"))`;
+  - a list of column-name or column-index vectors, for example
+    `list(c("I1","I2","I3"), c("I4","I5","I6"))`, or
 
-  - a **vector** of length `ncol(data)` indicating each item's subscale
-    (factor, character, or integer), e.g. `c(1,1,1,2,2,2)`. Each
-    subscale must contain at least two items. Subscales must not
-    overlap; items not assigned to any subscale are dropped with a
-    warning.
+  - a vector of length `ncol(data)` giving each item's subscale (factor,
+    character or integer), for example `c(1,1,1,2,2,2)`.
+
+  Each subscale must have at least two items, and subscales must not
+  overlap. Items not in any subscale are dropped with a warning.
 
 - iterations:
 
-  Integer. Maximum number of Monte Carlo iterations (default `1000`).
+  Integer. Largest number of simulated datasets. Default `1000`.
 
 - stopping:
 
   Character. `"none"` (default) runs all iterations. `"sequential"` uses
-  Besag & Clifford's (1991) sequential rule: stop as soon as `h`
-  simulated statistics have exceeded the observed value. The sequential
-  strategy substantially reduces compute time when H0 holds but cannot
-  be parallelised.
+  the sequential rule of Besag and Clifford (1991), stopping as soon as
+  `h` simulated statistics have exceeded the observed one. This saves
+  much time when the unidimensional model holds, but it cannot run in
+  parallel.
 
 - h:
 
-  Integer. Sequential-stopping count threshold (default `50`). Ignored
-  when `stopping = "none"`.
+  Integer. The count for sequential stopping. Default `50`. Ignored with
+  `stopping = "none"`.
 
 - alpha:
 
-  Numeric in (0, 1). Nominal significance level used only for the
-  `rejected` flag in the result; default `0.05`.
+  Numeric in (0, 1). Used only for the `rejected` element of the result.
+  Default `0.05`.
 
 - parallel:
 
-  Logical. Use parallel processing via `mirai` (default `TRUE`). Ignored
-  when `stopping = "sequential"`.
+  Logical. Run the simulations in parallel via mirai when it is
+  installed. Default `TRUE`. Ignored with `stopping = "sequential"`.
 
 - n_cores:
 
   Integer or `NULL`. Number of parallel workers. When `NULL`,
-  `getOption("mc.cores")` is checked first; if neither is set, falls
-  back to sequential with a warning.
+  `getOption("mc.cores")` is used. If that is unset too, a warning is
+  given and the simulations run sequentially.
 
 - verbose:
 
-  Logical. Show a progress bar (default `FALSE`).
+  Logical. Show a progress bar. Default `FALSE`.
 
 - seed:
 
   Integer or `NULL`. Random seed for reproducibility. Items are
-  processed internally in a fixed (alphabetical) order, so the same seed
-  reproduces the same p-value regardless of how the data's columns are
-  arranged and regardless of the `parallel` setting. See
+  processed in a fixed (alphabetical) order, so the same seed gives the
+  same p-value whatever the order of the columns and the `parallel`
+  setting. See
   [easyRasch2-reproducibility](https://pgmj.github.io/easyRasch2/dev/reference/easyRasch2-reproducibility.md)
   for what this guarantees and how it interacts with `parallel`.
 
@@ -104,13 +103,13 @@ A list with components:
 
 - `p_value`:
 
-  Monte Carlo p-value with `(n_exceed + 1) / (n + 1)` correction. The
-  attainable p-values are `k / (n + 1)` for `k = 1, ..., n + 1`, so the
-  p-value's resolution is limited by the number of iterations: with 100
-  iterations the smallest attainable value is `1/101 = 0.0099`. A
-  reported p-value *equal to the floor* (see `p_value_floor`) means no
-  simulated statistic reached the observed one and should be read as "p
-  \< floor" – the true p-value may be much smaller; increase
+  Monte Carlo p-value, `(n_exceed + 1) / (n + 1)` for n simulated
+  datasets. The possible values are `k / (n + 1)` for
+  `k = 1, ..., n + 1`, so the number of iterations limits the
+  resolution. With 100 iterations the smallest possible value is
+  `1/101 = 0.0099`. A p-value equal to the floor (`p_value_floor`) means
+  no simulated statistic reached the observed one. Read it as "p \<
+  floor", since the true p-value may be much smaller, and increase
   `iterations` for finer resolution.
 
 - `p_value_floor`:
@@ -119,7 +118,7 @@ A list with components:
 
 - `actual_iterations`:
 
-  Number of successful MC iterations completed.
+  Number of simulated datasets used.
 
 - `rejected`:
 
@@ -165,15 +164,15 @@ A list with components:
 
 - `T_rep`:
 
-  Numeric vector of successful MC test statistics.
+  The simulated test statistics.
 
 - `wle_scores`:
 
   data.frame with one row per person and one column per subscale
-  (`subscale_1_wle`, ..., `subscale_D_wle`), giving Warm's Weighted
-  Likelihood Estimate of theta from a CML fit on each subscale alone.
-  Persons whose subscore equals the minimum or maximum on a subscale
-  produce non-finite WLEs (`Inf` / `-Inf`) and are excluded from
+  (`subscale_1_wle`, ..., `subscale_D_wle`), giving Warm's weighted
+  likelihood estimate of theta from a CML fit on each subscale alone.
+  Persons with the lowest or highest possible subscore on a subscale get
+  non-finite WLEs (`Inf` or `-Inf`) and are left out of
   `wle_correlation` pairwise.
 
 - `wle_correlation`:
@@ -183,19 +182,18 @@ A list with components:
   (95% CI from
   [`stats::cor.test`](https://rdrr.io/r/stats/cor.test.html)),
   `p_value`, and `n` (number of persons with finite WLEs on both
-  subscales). One row per pair; for D = 2, a single row. Useful as an
-  effect-size companion to `p_value` – a rejected test with `r` near 1
-  indicates a small effect; `r` clearly below 1 indicates substantive
+  subscales). One row per pair, so a single row for D = 2. Useful as an
+  effect size next to `p_value`. A rejected test with `r` near 1
+  indicates a small departure, and `r` clearly below 1 substantial
   multidimensionality.
 
 ## Details
 
-This is **not** a routine screening tool. The test requires an *a
-priori* partition of items into subscales; using it post-hoc on, e.g.,
-the partition suggested by
-[`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md)'s
-PC1 sign would inflate the Type-I error rate. Both source papers state
-this explicitly.
+This is not a screening tool. The partition of items into subscales must
+be decided in advance. Testing a partition suggested by the data, such
+as the signs of the first-component loadings in
+[`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md),
+would inflate the type I error rate. Both source papers say so.
 
 **Test statistic.** With items partitioned into D subscales, total score
 \\t\\ and subscores \\(t_1, \ldots, t_D)\\ (Christensen et al. 2002, eq.
@@ -212,15 +210,16 @@ CML fits use
 
 **Monte Carlo sampling under H0.** Following Christensen & Kreiner
 (2007): (a) sample N total scores from the empirical score distribution
-\\n_t/N\\; (b) for each sampled score, sample an item-response vector
-from the conditional distribution \\p(x \mid t, \hat{\epsilon})\\ given
-by eq. 4 of the paper. Step (b) uses the recursive \\\gamma\\-function
-algorithm (Andersen, 1995, eq. 15.22 and 15.27) for dichotomous and
-polytomous items alike: items are filled in from the last backwards,
-each conditional on the score still to be distributed over the items
-before it. The nested \\\gamma^{(1)}, \ldots, \gamma^{(n)}\\ depend only
-on the item parameters, which are fixed across the run, so the recursion
-is evaluated once rather than per person.
+\\n_t/N\\, and (b) for each sampled score, sample an item-response
+vector from the conditional distribution \\p(x \mid t, \hat{\epsilon})\\
+given by eq. 4 of the paper. Step (b) uses the recursive
+\\\gamma\\-function algorithm (Andersen, 1995, eq. 15.22 and 15.27) for
+dichotomous and polytomous items alike: items are filled in from the
+last backwards, each conditional on the score still to be distributed
+over the items before it. The nested \\\gamma^{(1)}, \ldots,
+\gamma^{(n)}\\ depend only on the item parameters, which are fixed
+across the run, so the recursion is evaluated once rather than per
+person.
 
 The faster dichotomous shortcut described by Christensen & Kreiner
 (2007, p. 23), choosing \\s\\ items one at a time with probabilities
@@ -230,8 +229,9 @@ distribution, whereas the Rasch conditional distribution weights a set
 of items by the *product* of their easinesses. See the note on
 validation below.
 
-Iterations that fail (e.g., simulated dataset has an empty category for
-an item) are silently dropped.
+A simulated dataset that cannot be refitted, for example because a
+category of an item is empty, is left out without a message.
+`actual_iterations` gives the number used.
 
 Item parameters are estimated once on the observed data and held fixed
 across MC iterations. Christensen & Kreiner (2007) use the extended
@@ -240,13 +240,12 @@ as a non-parametric estimate of the latent distribution, so no
 distributional assumption about \\\theta\\ is needed.
 
 **Missing data.** Complete cases only. The statistic is built from the
-joint table of subscores, so a respondent needs a defined subscore on
-every subscale; there is no partial-missingness path, and the SAS macro
-this implementation was validated against has the same requirement. Rows
-with `NA` are dropped *after* items outside `partition` have been
-removed, so missingness on items the test does not use costs no
-respondents. `sample_n` reports the respondents analysed and
-`sample_n_total` the raw input rows.
+joint table of subscores, so a respondent needs a subscore on every
+subscale. The SAS macro this implementation was validated against has
+the same requirement. Rows with `NA` are dropped *after* items outside
+`partition` have been removed, so missingness on items the test does not
+use costs no respondents. `sample_n` reports the respondents analysed
+and `sample_n_total` the raw input rows.
 
 **Validation.** The statistic, the conditional log-likelihoods, the
 conditional sampler and the expected counts and residuals of
@@ -282,39 +281,51 @@ unidimensionality testing in polytomous Rasch models. *Applied
 Psychological Measurement, 31*(1), 20-30.
 [doi:10.1177/0146621605286204](https://doi.org/10.1177/0146621605286204)
 
+Tjur, T. (1982). A connection between Rasch's item analysis model and a
+multiplicative Poisson model. *Scandinavian Journal of Statistics,
+9*(1), 23-30.
+
 ## See also
 
-[`RMdimResidualPCA`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md),
-[`RMdimResidualPCACutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md)
+[`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLofResiduals.md)
+for where the partition departs,
+[`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md)
+and
+[`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
+for other checks of unidimensionality.
 
 ## Examples
 
 ``` r
 # \donttest{
 set.seed(1)
-# Build 2-dimensional polytomous data: 4 items per subscale, 5 categories
-n     <- 400
+# Two-dimensional partial credit data: 4 items per subscale, 5 categories,
+# latent correlation 0.6
+n <- 400
 theta1 <- rnorm(n)
 theta2 <- 0.6 * theta1 + sqrt(1 - 0.6^2) * rnorm(n)
-make_pcm <- function(theta, n_items, taus) {
+sim_pcm <- function(theta, n_items) {
   sapply(seq_len(n_items), function(j) {
-    # ... toy simulation here
-    sample(0:4, n, replace = TRUE)
+    thr <- c(-1.5, -0.5, 0.5, 1.5) + (j - 2.5) * 0.3
+    lp <- outer(theta, 0:4) - matrix(c(0, cumsum(thr)), length(theta), 5,
+                                     byrow = TRUE)
+    p <- exp(lp) / rowSums(exp(lp))
+    apply(p, 1, function(pr) sample(0:4, 1, prob = pr))
   })
 }
-dat <- cbind(make_pcm(theta1, 4, NULL), make_pcm(theta2, 4, NULL))
+dat <- cbind(sim_pcm(theta1, 4), sim_pcm(theta2, 4))
 colnames(dat) <- paste0("I", 1:8)
 
-# Few iterations for a fast example; use 1000+ in real analyses
+# Few iterations for a fast example. Use 1000 or more in real analyses.
 RMdimMartinLof(dat,
             partition = list(c("I1","I2","I3","I4"),
                              c("I5","I6","I7","I8")),
             iterations = 100, parallel = FALSE, seed = 1)
 #> $T_obs
-#> [1] 192.632
+#> [1] 365.8459
 #> 
 #> $p_value
-#> [1] 0.5544554
+#> [1] 0.00990099
 #> 
 #> $p_value_floor
 #> [1] 0.00990099
@@ -323,7 +334,7 @@ RMdimMartinLof(dat,
 #> [1] 100
 #> 
 #> $rejected
-#> [1] FALSE
+#> [1] TRUE
 #> 
 #> $partition
 #> $partition[[1]]
@@ -358,426 +369,426 @@ RMdimMartinLof(dat,
 #> [1] NA
 #> 
 #> $T_rep
-#>   [1] 203.1150 191.4289 205.5340 200.9726 186.1371 211.4777 208.6398 246.5549
-#>   [9] 235.7000 209.6456 242.6280 174.6350 181.3583 190.5831 212.3751 201.5643
-#>  [17] 166.3843 199.5976 211.6393 180.1643 186.0512 173.5937 187.3779 205.7209
-#>  [25] 187.0434 217.6454 178.8351 198.6360 210.9413 186.0347 182.6325 190.8734
-#>  [33] 191.0037 172.3550 205.6651 183.5835 172.5252 199.6062 213.2993 214.1189
-#>  [41] 200.0631 197.1147 206.1826 186.1101 193.9344 169.4966 177.8228 215.9291
-#>  [49] 194.2733 196.1078 183.3993 195.3645 172.1005 187.8224 162.7854 201.0410
-#>  [57] 214.2024 206.7241 196.1481 188.2455 184.4610 203.6818 161.3601 181.7351
-#>  [65] 175.0302 198.2537 210.1757 195.7541 206.0021 214.4578 195.7307 199.5314
-#>  [73] 192.2892 175.0420 184.2887 186.3762 177.6986 234.1348 184.9654 201.5393
-#>  [81] 164.3802 204.3653 196.8265 207.3065 162.1215 210.6383 225.2370 227.8416
-#>  [89] 192.4692 172.7222 200.3062 205.6332 214.2759 236.0662 186.4794 200.7419
-#>  [97] 177.7558 210.2142 185.6626 183.6979
+#>   [1] 168.9862 143.4910 191.3300 192.7129 149.8375 171.1189 170.2637 157.8862
+#>   [9] 143.6526 151.2436 176.3186 164.5774 177.7126 169.2867 168.7486 179.3085
+#>  [17] 153.0849 163.3919 187.0635 193.9743 150.1382 172.0477 171.1421 184.9956
+#>  [25] 169.3793 181.1276 171.6324 170.5952 189.6549 194.2210 187.0121 168.6690
+#>  [33] 168.9231 177.2665 190.9812 184.1547 175.0532 167.0365 186.0819 180.5112
+#>  [41] 187.2765 164.4274 146.0363 188.9182 188.7761 136.5182 173.3369 221.9728
+#>  [49] 202.4305 173.5276 208.6776 143.6195 160.6977 184.1886 189.3649 172.5538
+#>  [57] 153.6781 167.6785 221.4292 158.8601 186.5226 167.3514 188.3526 180.6127
+#>  [65] 156.6204 177.8911 186.9232 147.0028 162.0691 137.1025 162.6412 171.5024
+#>  [73] 172.3256 162.5723 179.6740 152.5323 195.7423 140.7911 164.4062 184.7740
+#>  [81] 175.6183 203.7518 189.9967 170.4699 175.1578 209.3955 194.0093 173.4672
+#>  [89] 164.8804 175.3273 172.4749 179.0197 183.6100 182.5913 151.3204 154.6409
+#>  [97] 188.7343 175.8683 165.5590 180.3769
 #> 
 #> $wle_scores
 #>     subscale_1_wle subscale_2_wle
-#> 1       0.01719779   -0.008686632
-#> 2       0.84330449   -0.233715303
-#> 3       0.01719779   -0.233715303
-#> 4      -0.46132203   -1.979433785
-#> 5       0.48625873    0.217552164
-#> 6       0.12496572   -0.008686632
-#> 7      -0.20344194   -0.008686632
-#> 8       0.12496572    0.341482037
-#> 9       0.84330449   -0.355949378
-#> 10      0.48625873    0.341482037
-#> 11     -0.46132203   -0.233715303
-#> 12     -0.46132203    0.341482037
-#> 13     -0.46132203   -0.008686632
-#> 14     -0.09103387   -0.119463378
-#> 15      0.01719779    0.102381758
-#> 16      0.01719779    2.059504266
-#> 17      0.01719779   -0.355949378
-#> 18      0.35429558   -0.492620587
-#> 19      0.01719779    0.341482037
-#> 20      0.01719779   -0.355949378
-#> 21     -0.20344194   -0.233715303
-#> 22      0.35429558    0.217552164
-#> 23      0.48625873   -0.119463378
-#> 24     -0.20344194    0.341482037
-#> 25     -0.20344194    0.217552164
-#> 26     -0.46132203    0.341482037
-#> 27      0.23589905    0.102381758
-#> 28      0.35429558   -0.355949378
-#> 29      0.12496572    0.217552164
-#> 30     -0.46132203   -0.119463378
-#> 31      0.64212441   -1.188316539
-#> 32      0.01719779    0.341482037
-#> 33     -0.20344194    0.217552164
-#> 34      0.12496572    0.217552164
-#> 35      0.12496572   -0.008686632
-#> 36     -0.09103387    0.341482037
-#> 37      0.48625873   -0.355949378
-#> 38      0.01719779    0.480962199
-#> 39     -0.20344194   -0.008686632
-#> 40     -0.32461579    0.480962199
-#> 41      0.12496572   -0.008686632
-#> 42     -0.09103387   -0.119463378
-#> 43      0.35429558   -0.233715303
-#> 44     -0.09103387   -0.355949378
-#> 45     -0.09103387   -0.008686632
-#> 46     -0.20344194    0.102381758
-#> 47      0.48625873    0.480962199
-#> 48     -0.20344194   -0.654732979
-#> 49      0.48625873    0.341482037
-#> 50      0.64212441    0.217552164
-#> 51      0.23589905   -0.233715303
-#> 52      0.84330449    0.647745574
-#> 53      0.23589905   -0.119463378
-#> 54      0.23589905   -0.119463378
-#> 55     -0.32461579    0.341482037
-#> 56      0.35429558    0.341482037
-#> 57      0.01719779    0.647745574
-#> 58      0.48625873    0.102381758
-#> 59     -0.09103387   -0.008686632
-#> 60      0.35429558   -0.233715303
-#> 61     -0.32461579   -0.008686632
-#> 62     -0.32461579   -0.233715303
-#> 63      0.23589905   -0.119463378
-#> 64      0.35429558   -0.008686632
-#> 65     -0.32461579    0.341482037
-#> 66     -0.20344194    0.217552164
-#> 67     -0.46132203    0.217552164
-#> 68     -0.20344194   -0.492620587
-#> 69     -0.20344194   -0.233715303
-#> 70     -0.20344194    0.102381758
-#> 71     -0.84239770    0.341482037
-#> 72     -0.46132203   -0.008686632
-#> 73      0.23589905    0.102381758
-#> 74      0.12496572    0.341482037
-#> 75     -0.09103387   -0.008686632
-#> 76      0.23589905   -0.008686632
-#> 77     -0.32461579   -0.492620587
-#> 78     -0.46132203   -0.355949378
-#> 79      0.23589905   -0.355949378
-#> 80      0.12496572    0.102381758
-#> 81     -0.09103387   -0.233715303
-#> 82      0.64212441   -0.355949378
-#> 83     -0.20344194   -0.008686632
-#> 84     -0.32461579   -0.355949378
-#> 85      0.01719779   -0.233715303
-#> 86      0.48625873   -0.119463378
-#> 87      0.12496572   -0.355949378
-#> 88      0.01719779    0.217552164
-#> 89      0.01719779    0.102381758
-#> 90      0.23589905   -0.119463378
-#> 91      0.48625873    0.480962199
-#> 92     -0.09103387    0.102381758
-#> 93      0.01719779   -0.233715303
-#> 94     -0.32461579   -0.119463378
-#> 95      0.01719779    0.102381758
-#> 96      0.48625873   -0.008686632
-#> 97     -0.32461579    0.102381758
-#> 98     -0.09103387   -0.119463378
-#> 99      0.01719779   -0.233715303
-#> 100    -0.09103387    0.480962199
-#> 101    -0.46132203   -0.492620587
-#> 102    -0.20344194   -0.119463378
-#> 103     0.23589905   -0.008686632
-#> 104    -0.20344194    0.480962199
-#> 105    -0.20344194    0.102381758
-#> 106     0.23589905   -0.355949378
-#> 107     0.23589905   -0.492620587
-#> 108    -0.20344194   -0.492620587
-#> 109     0.48625873   -0.008686632
-#> 110     0.01719779   -0.492620587
-#> 111     0.64212441   -0.233715303
-#> 112     0.35429558    0.217552164
-#> 113    -0.09103387   -0.233715303
-#> 114     0.23589905    0.102381758
-#> 115    -0.09103387    0.647745574
-#> 116     0.01719779    0.480962199
-#> 117     0.64212441   -0.008686632
-#> 118     0.23589905    0.102381758
-#> 119     0.64212441   -0.355949378
-#> 120     0.48625873    0.217552164
-#> 121    -0.09103387   -0.492620587
-#> 122     0.23589905   -0.233715303
-#> 123     0.48625873    0.341482037
-#> 124     0.35429558   -0.233715303
-#> 125     0.01719779    0.647745574
-#> 126     0.35429558    0.480962199
-#> 127     0.01719779   -0.355949378
-#> 128    -0.84239770   -0.492620587
-#> 129     0.23589905   -0.008686632
-#> 130     0.23589905   -0.119463378
-#> 131    -0.46132203   -0.492620587
-#> 132     0.12496572    0.341482037
-#> 133     0.23589905   -0.233715303
-#> 134    -0.09103387   -0.492620587
-#> 135     0.23589905   -0.492620587
-#> 136    -0.32461579   -0.654732979
-#> 137    -0.09103387   -0.233715303
-#> 138     0.12496572   -0.233715303
-#> 139     0.12496572    0.217552164
-#> 140     0.12496572   -0.492620587
-#> 141    -0.46132203   -0.008686632
-#> 142    -0.32461579    0.217552164
-#> 143     0.01719779    0.217552164
-#> 144     0.12496572    0.480962199
-#> 145    -0.20344194    0.341482037
-#> 146     0.12496572   -1.188316539
-#> 147    -0.46132203   -0.355949378
-#> 148    -0.09103387    0.341482037
-#> 149     0.23589905    0.217552164
-#> 150    -0.09103387    0.480962199
-#> 151    -0.32461579   -0.865189748
-#> 152     0.35429558   -0.008686632
-#> 153     0.23589905   -0.008686632
-#> 154     0.23589905    0.217552164
-#> 155     0.12496572   -0.233715303
-#> 156    -0.09103387    0.217552164
-#> 157     0.48625873   -0.008686632
-#> 158     0.23589905   -0.492620587
-#> 159     0.01719779   -0.119463378
-#> 160    -0.84239770   -0.233715303
-#> 161    -0.20344194   -0.492620587
-#> 162     0.35429558    0.102381758
-#> 163     0.12496572   -1.188316539
-#> 164    -0.09103387    0.341482037
-#> 165    -0.46132203   -0.355949378
-#> 166    -0.09103387    0.341482037
-#> 167    -0.20344194    2.059504266
-#> 168    -0.46132203    0.217552164
-#> 169     0.12496572    0.217552164
-#> 170     0.12496572    0.217552164
-#> 171     0.01719779    0.217552164
-#> 172     0.23589905    0.102381758
-#> 173     0.35429558   -1.188316539
-#> 174     0.35429558    0.217552164
-#> 175     0.01719779   -0.355949378
-#> 176    -0.09103387    0.102381758
-#> 177    -0.62542083    0.102381758
-#> 178     0.12496572   -0.008686632
-#> 179     0.23589905    0.341482037
-#> 180    -0.09103387    0.341482037
-#> 181    -0.62542083   -0.008686632
-#> 182     0.64212441    0.866646436
-#> 183     0.84330449    0.480962199
-#> 184     0.12496572   -0.008686632
-#> 185    -0.32461579    0.217552164
-#> 186    -0.09103387   -0.355949378
-#> 187     0.12496572    2.059504266
-#> 188     0.35429558   -0.865189748
-#> 189     0.01719779   -0.355949378
-#> 190     0.12496572   -0.355949378
-#> 191     0.01719779   -0.119463378
-#> 192    -0.09103387    0.341482037
-#> 193     0.01719779   -0.865189748
-#> 194    -1.18699295    0.341482037
-#> 195     0.12496572    0.480962199
-#> 196     0.84330449   -0.355949378
-#> 197     0.48625873    0.102381758
-#> 198     0.48625873   -0.233715303
-#> 199    -0.32461579   -0.355949378
-#> 200     0.35429558    0.102381758
-#> 201     0.01719779   -0.008686632
-#> 202     1.14993888    0.341482037
-#> 203     0.12496572   -0.119463378
-#> 204    -0.20344194    0.102381758
-#> 205    -0.09103387   -0.119463378
-#> 206     0.01719779    0.341482037
-#> 207     0.35429558   -0.008686632
-#> 208     0.35429558    0.102381758
-#> 209    -0.62542083    0.647745574
-#> 210    -0.09103387   -0.119463378
-#> 211    -0.32461579    0.480962199
-#> 212     0.12496572   -0.355949378
-#> 213    -0.09103387    0.102381758
-#> 214     0.48625873   -0.355949378
-#> 215     0.35429558    0.217552164
-#> 216     0.64212441    0.102381758
-#> 217     0.01719779   -0.008686632
-#> 218     0.12496572   -0.233715303
-#> 219    -0.32461579   -0.119463378
-#> 220    -0.32461579   -0.492620587
-#> 221    -0.20344194   -0.355949378
-#> 222    -0.84239770    0.217552164
-#> 223     0.12496572    0.480962199
-#> 224     0.12496572    1.208333678
-#> 225    -0.09103387    0.217552164
-#> 226     0.01719779    0.102381758
-#> 227     0.64212441    0.217552164
-#> 228    -0.62542083   -0.233715303
-#> 229    -0.20344194   -0.008686632
-#> 230    -0.20344194   -0.119463378
-#> 231    -1.18699295    0.647745574
-#> 232    -0.46132203   -0.233715303
-#> 233     0.01719779   -0.119463378
-#> 234     0.01719779   -0.008686632
-#> 235     0.48625873   -0.008686632
-#> 236     0.64212441    0.102381758
-#> 237    -0.09103387    0.341482037
-#> 238     0.64212441   -0.355949378
-#> 239     0.64212441   -0.233715303
-#> 240    -0.32461579   -0.233715303
-#> 241     0.35429558   -0.008686632
-#> 242     0.64212441    0.217552164
-#> 243     0.01719779   -0.008686632
-#> 244    -0.32461579    0.480962199
-#> 245    -0.09103387   -0.233715303
-#> 246     0.23589905    0.341482037
-#> 247     0.12496572   -0.355949378
-#> 248     0.12496572    0.102381758
-#> 249    -0.46132203   -0.654732979
-#> 250     0.01719779    0.102381758
-#> 251     0.48625873   -0.119463378
-#> 252     0.23589905   -0.355949378
-#> 253    -0.62542083    0.102381758
-#> 254     0.35429558    0.217552164
-#> 255    -0.09103387    0.341482037
-#> 256    -0.20344194   -0.355949378
-#> 257     0.23589905   -0.355949378
-#> 258    -0.09103387   -0.355949378
-#> 259     0.23589905   -0.233715303
-#> 260     0.12496572   -0.355949378
-#> 261    -0.09103387   -0.008686632
-#> 262    -0.32461579    0.102381758
-#> 263    -0.84239770   -0.355949378
-#> 264     0.01719779   -0.008686632
-#> 265     0.23589905   -0.119463378
-#> 266     0.35429558   -0.119463378
-#> 267     0.12496572   -0.355949378
-#> 268    -0.09103387    0.102381758
-#> 269     0.23589905   -0.008686632
-#> 270    -0.20344194    0.102381758
-#> 271    -0.46132203   -0.119463378
-#> 272     0.84330449    0.102381758
-#> 273     0.35429558    0.480962199
-#> 274     0.01719779    0.217552164
-#> 275    -0.09103387    0.341482037
-#> 276    -0.09103387    0.647745574
-#> 277     0.35429558   -0.355949378
-#> 278     0.12496572    0.102381758
-#> 279    -1.18699295   -0.008686632
-#> 280     0.23589905   -0.119463378
-#> 281     0.12496572    0.217552164
-#> 282     0.12496572    0.102381758
-#> 283    -0.20344194    0.102381758
-#> 284     0.12496572   -0.654732979
-#> 285    -0.09103387    0.102381758
-#> 286     0.35429558    0.102381758
-#> 287     0.12496572   -0.233715303
-#> 288     0.35429558   -0.008686632
-#> 289     0.12496572   -0.119463378
-#> 290    -0.46132203   -0.492620587
-#> 291    -0.32461579   -0.233715303
-#> 292    -0.09103387   -0.008686632
-#> 293     0.23589905   -0.355949378
-#> 294     0.35429558   -0.654732979
-#> 295     0.35429558    0.102381758
-#> 296     0.12496572    0.102381758
-#> 297    -0.09103387    0.102381758
-#> 298     0.23589905    0.341482037
-#> 299    -0.09103387   -0.233715303
-#> 300    -0.62542083    0.341482037
-#> 301     0.12496572   -0.119463378
-#> 302     0.12496572   -0.355949378
-#> 303     0.35429558   -0.119463378
-#> 304     0.12496572   -0.492620587
-#> 305    -0.09103387   -0.119463378
-#> 306     0.01719779    0.341482037
-#> 307     0.01719779    0.102381758
-#> 308     0.01719779   -0.119463378
-#> 309     0.12496572    0.217552164
-#> 310    -0.32461579   -0.233715303
-#> 311    -0.32461579    0.102381758
-#> 312    -0.84239770    0.341482037
-#> 313    -0.20344194   -0.008686632
-#> 314     0.01719779    0.217552164
-#> 315     0.01719779   -0.119463378
-#> 316    -0.32461579   -0.008686632
-#> 317     0.01719779   -0.008686632
-#> 318    -0.20344194    0.102381758
-#> 319    -0.20344194    0.102381758
-#> 320     0.35429558    0.102381758
-#> 321     0.35429558    0.217552164
-#> 322     0.01719779    0.217552164
-#> 323     0.48625873   -0.654732979
-#> 324     0.12496572   -0.008686632
-#> 325     0.35429558   -0.233715303
-#> 326    -0.09103387   -0.119463378
-#> 327    -0.32461579    0.217552164
-#> 328     0.23589905    0.102381758
-#> 329     0.23589905   -0.355949378
-#> 330     0.01719779   -0.492620587
-#> 331    -0.09103387    0.217552164
-#> 332     0.64212441   -0.233715303
-#> 333     0.48625873    0.102381758
-#> 334    -0.84239770    0.341482037
-#> 335     0.01719779    0.102381758
-#> 336     0.48625873    2.059504266
-#> 337    -0.09103387    0.647745574
-#> 338     0.35429558   -0.119463378
-#> 339    -0.62542083    0.217552164
-#> 340    -0.20344194   -0.654732979
-#> 341    -0.62542083    0.102381758
-#> 342     0.12496572    0.341482037
-#> 343    -0.20344194   -0.492620587
-#> 344    -0.09103387    0.341482037
-#> 345     0.48625873   -0.008686632
-#> 346    -0.32461579    0.866646436
-#> 347     0.01719779    0.217552164
-#> 348     0.01719779   -0.008686632
-#> 349    -0.09103387   -0.119463378
-#> 350     0.64212441   -0.119463378
-#> 351     0.01719779   -0.008686632
-#> 352    -0.20344194    0.480962199
-#> 353    -0.09103387   -0.355949378
-#> 354     0.12496572    0.480962199
-#> 355    -0.09103387   -0.008686632
-#> 356     0.48625873    0.341482037
-#> 357    -0.32461579   -0.119463378
-#> 358    -0.20344194   -0.008686632
-#> 359    -0.84239770    0.102381758
-#> 360    -0.32461579   -0.008686632
-#> 361    -0.46132203    0.102381758
-#> 362    -0.32461579    0.341482037
-#> 363     0.01719779   -0.119463378
-#> 364     0.48625873    0.647745574
-#> 365     0.12496572   -0.008686632
-#> 366    -0.46132203   -0.233715303
-#> 367     0.12496572   -0.008686632
-#> 368     0.48625873   -0.119463378
-#> 369     0.48625873   -0.008686632
-#> 370     0.64212441   -0.355949378
-#> 371     0.01719779    0.102381758
-#> 372     0.12496572   -0.119463378
-#> 373    -1.18699295    0.217552164
-#> 374     0.23589905   -0.865189748
-#> 375     0.84330449    0.217552164
-#> 376     0.64212441    0.480962199
-#> 377    -0.20344194    0.102381758
-#> 378     1.90433036   -0.008686632
-#> 379     0.12496572    0.102381758
-#> 380    -0.84239770    0.341482037
-#> 381     0.48625873   -0.233715303
-#> 382    -0.46132203    0.102381758
-#> 383     0.23589905    0.217552164
-#> 384    -0.20344194   -0.233715303
-#> 385     1.14993888    0.480962199
-#> 386    -0.84239770   -0.119463378
-#> 387    -0.09103387    0.102381758
-#> 388    -0.62542083    0.102381758
-#> 389    -0.09103387   -0.233715303
-#> 390    -0.09103387    0.102381758
-#> 391     0.01719779   -0.119463378
-#> 392     0.35429558   -0.008686632
-#> 393     0.01719779    0.341482037
-#> 394    -0.32461579   -0.008686632
-#> 395    -0.32461579   -0.008686632
-#> 396    -0.20344194    0.217552164
-#> 397    -0.20344194    0.217552164
-#> 398    -0.09103387    0.102381758
-#> 399     0.12496572   -0.119463378
-#> 400     0.35429558   -0.355949378
+#> 1       -0.8396775    0.261394158
+#> 2        0.5554996    0.815812232
+#> 3       -0.8396775   -1.445707246
+#> 4        2.0060384    1.119204075
+#> 5        0.5554996   -0.534478002
+#> 6        0.0101434   -1.859081712
+#> 7        0.0101434    1.119204075
+#> 8        1.1694911    0.261394158
+#> 9        0.0101434    2.441061168
+#> 10      -0.5406286   -1.108871389
+#> 11       1.5418835   -0.003970259
+#> 12      -0.2605156    1.459401032
+#> 13      -0.2605156    0.815812232
+#> 14      -1.5534143   -1.108871389
+#> 15       1.1694911    1.119204075
+#> 16       0.5554996   -0.003970259
+#> 17       0.0101434    1.119204075
+#> 18       0.8478003    0.532833213
+#> 19       0.5554996   -0.534478002
+#> 20       0.5554996    1.870464703
+#> 21       2.0060384    1.870464703
+#> 22       2.0060384   -0.003970259
+#> 23       0.0101434    0.261394158
+#> 24      -2.6823128   -3.623458477
+#> 25       0.5554996    0.815812232
+#> 26       0.0101434    0.261394158
+#> 27      -0.5406286   -1.445707246
+#> 28      -0.5406286   -0.811326758
+#> 29      -0.5406286   -0.811326758
+#> 30       0.5554996    0.532833213
+#> 31       0.2794507   -1.108871389
+#> 32      -0.2605156   -0.534478002
+#> 33       1.1694911   -0.811326758
+#> 34      -0.5406286    1.119204075
+#> 35      -1.5534143   -0.811326758
+#> 36       0.5554996   -0.811326758
+#> 37      -1.1705234    0.532833213
+#> 38       0.2794507    0.261394158
+#> 39      -0.2605156   -0.267631722
+#> 40       0.5554996    0.815812232
+#> 41      -0.2605156   -0.811326758
+#> 42      -0.2605156    1.459401032
+#> 43       0.5554996    0.532833213
+#> 44       1.1694911    0.261394158
+#> 45      -0.5406286   -0.003970259
+#> 46      -1.1705234   -1.445707246
+#> 47       1.5418835   -1.108871389
+#> 48       1.5418835    0.261394158
+#> 49       1.1694911    0.815812232
+#> 50       0.5554996   -1.859081712
+#> 51       0.2794507    1.459401032
+#> 52      -0.8396775   -0.811326758
+#> 53       0.2794507   -0.003970259
+#> 54      -1.1705234   -2.443561734
+#> 55       0.8478003   -1.108871389
+#> 56       2.0060384    0.815812232
+#> 57       0.2794507    0.261394158
+#> 58      -0.5406286   -1.859081712
+#> 59       1.1694911   -0.811326758
+#> 60       0.0101434    0.532833213
+#> 61       3.9362788    1.870464703
+#> 62       0.2794507    1.870464703
+#> 63       0.2794507    1.870464703
+#> 64      -0.5406286    0.261394158
+#> 65       0.2794507   -1.108871389
+#> 66      -0.2605156   -0.003970259
+#> 67      -2.0263589   -1.445707246
+#> 68       1.1694911    0.815812232
+#> 69       0.0101434    1.459401032
+#> 70       3.9362788    1.870464703
+#> 71       0.5554996    0.261394158
+#> 72      -0.5406286   -1.108871389
+#> 73      -0.5406286   -0.267631722
+#> 74      -1.1705234    0.815812232
+#> 75      -1.1705234   -0.003970259
+#> 76       0.0101434   -1.445707246
+#> 77      -1.1705234    0.532833213
+#> 78       0.5554996   -0.003970259
+#> 79       0.0101434    1.119204075
+#> 80      -0.5406286   -0.003970259
+#> 81      -0.2605156    0.261394158
+#> 82       0.0101434   -0.534478002
+#> 83       1.1694911    0.532833213
+#> 84      -1.1705234   -0.811326758
+#> 85      -0.2605156    1.870464703
+#> 86       0.5554996    1.459401032
+#> 87       1.1694911    1.119204075
+#> 88       0.0101434   -0.267631722
+#> 89       0.0101434   -1.445707246
+#> 90       0.0101434    0.532833213
+#> 91      -0.5406286   -0.267631722
+#> 92       2.0060384    1.119204075
+#> 93       1.5418835   -0.534478002
+#> 94       1.1694911    0.815812232
+#> 95       1.5418835    2.441061168
+#> 96       1.5418835    0.261394158
+#> 97      -1.5534143   -0.267631722
+#> 98       0.0101434   -1.859081712
+#> 99      -1.5534143   -0.811326758
+#> 100     -0.2605156   -2.443561734
+#> 101     -0.8396775   -0.811326758
+#> 102      0.5554996    0.261394158
+#> 103     -0.2605156   -1.108871389
+#> 104      0.2794507   -0.003970259
+#> 105     -0.5406286    0.532833213
+#> 106      1.1694911    1.119204075
+#> 107      0.0101434   -1.108871389
+#> 108      1.5418835    0.532833213
+#> 109      0.5554996    1.119204075
+#> 110      2.6619536   -0.811326758
+#> 111     -0.8396775   -2.443561734
+#> 112     -0.5406286   -0.003970259
+#> 113      1.1694911    0.261394158
+#> 114     -0.5406286    0.532833213
+#> 115      0.0101434   -0.267631722
+#> 116      0.5554996   -0.811326758
+#> 117     -1.5534143   -1.108871389
+#> 118      0.8478003    0.532833213
+#> 119      1.1694911   -0.811326758
+#> 120      0.0101434    0.815812232
+#> 121     -0.2605156   -0.267631722
+#> 122      2.0060384    1.870464703
+#> 123     -1.5534143   -1.108871389
+#> 124     -0.2605156   -0.534478002
+#> 125     -0.2605156   -0.003970259
+#> 126      1.1694911   -0.811326758
+#> 127      0.0101434   -0.267631722
+#> 128     -0.2605156    0.532833213
+#> 129     -1.1705234    0.261394158
+#> 130     -0.5406286   -0.811326758
+#> 131     -1.1705234   -1.108871389
+#> 132      0.2794507    0.815812232
+#> 133     -0.2605156    0.261394158
+#> 134     -3.9375704   -1.108871389
+#> 135      0.5554996    3.583574107
+#> 136     -1.1705234   -1.108871389
+#> 137      0.0101434    0.261394158
+#> 138     -2.0263589    1.119204075
+#> 139     -0.2605156    1.459401032
+#> 140      0.2794507   -0.267631722
+#> 141     -1.1705234   -1.108871389
+#> 142     -0.2605156    0.815812232
+#> 143     -2.6823128   -1.445707246
+#> 144     -0.2605156    0.532833213
+#> 145     -0.8396775    0.532833213
+#> 146     -0.5406286   -1.445707246
+#> 147      3.9362788    0.261394158
+#> 148      0.5554996    0.261394158
+#> 149      0.0101434   -3.623458477
+#> 150     -2.0263589   -0.534478002
+#> 151      0.8478003    0.815812232
+#> 152      0.2794507   -1.108871389
+#> 153      0.2794507   -1.859081712
+#> 154     -0.8396775   -0.534478002
+#> 155     -1.1705234    0.261394158
+#> 156     -1.5534143   -1.445707246
+#> 157      1.5418835   -1.859081712
+#> 158     -0.8396775    0.815812232
+#> 159     -2.0263589   -0.534478002
+#> 160      2.0060384    0.261394158
+#> 161      0.8478003   -1.108871389
+#> 162      0.5554996   -0.534478002
+#> 163      2.0060384    1.119204075
+#> 164      1.5418835   -0.267631722
+#> 165     -0.8396775   -0.267631722
+#> 166      1.5418835    1.459401032
+#> 167      0.5554996   -0.534478002
+#> 168     -1.5534143   -1.108871389
+#> 169     -0.8396775   -1.108871389
+#> 170      0.0101434    1.459401032
+#> 171      2.0060384    1.119204075
+#> 172     -0.2605156    0.815812232
+#> 173      0.0101434    0.815812232
+#> 174     -0.2605156   -0.267631722
+#> 175      0.0101434   -0.267631722
+#> 176      0.0101434    0.532833213
+#> 177      0.5554996   -0.267631722
+#> 178      2.0060384    2.441061168
+#> 179      1.1694911   -0.534478002
+#> 180      1.5418835    0.261394158
+#> 181      0.0101434   -2.443561734
+#> 182      0.5554996    1.119204075
+#> 183      0.0101434    1.870464703
+#> 184     -1.1705234    0.261394158
+#> 185      1.1694911    0.815812232
+#> 186     -1.1705234    0.261394158
+#> 187      0.8478003    0.532833213
+#> 188     -0.8396775    0.261394158
+#> 189     -0.5406286    0.261394158
+#> 190     -2.0263589   -0.267631722
+#> 191      0.0101434   -0.267631722
+#> 192     -0.5406286    1.119204075
+#> 193     -0.2605156   -0.267631722
+#> 194      2.0060384   -0.003970259
+#> 195     -1.1705234   -2.443561734
+#> 196     -0.5406286    0.261394158
+#> 197      2.0060384   -0.267631722
+#> 198     -0.8396775   -0.003970259
+#> 199      0.0101434    0.532833213
+#> 200      0.0101434   -0.534478002
+#> 201      0.8478003    0.261394158
+#> 202      2.0060384    1.870464703
+#> 203      1.5418835    1.459401032
+#> 204     -0.5406286   -0.267631722
+#> 205     -1.5534143   -0.534478002
+#> 206      1.5418835   -0.003970259
+#> 207      0.8478003   -0.267631722
+#> 208      0.2794507    0.261394158
+#> 209     -0.8396775    2.441061168
+#> 210      0.0101434    0.532833213
+#> 211      0.0101434   -0.534478002
+#> 212      0.5554996    0.261394158
+#> 213     -1.1705234   -0.003970259
+#> 214     -1.5534143   -1.445707246
+#> 215      0.8478003    3.583574107
+#> 216      2.0060384    0.532833213
+#> 217     -0.5406286   -0.534478002
+#> 218     -0.5406286   -2.443561734
+#> 219      0.2794507   -0.003970259
+#> 220     -0.5406286    0.261394158
+#> 221     -2.6823128   -0.811326758
+#> 222      0.0101434   -1.108871389
+#> 223      0.2794507   -0.003970259
+#> 224      0.0101434    1.870464703
+#> 225     -2.6823128   -0.534478002
+#> 226      2.6619536    0.815812232
+#> 227      0.2794507   -0.534478002
+#> 228     -2.6823128   -1.108871389
+#> 229     -0.2605156    0.261394158
+#> 230      0.5554996   -0.003970259
+#> 231     -1.5534143   -1.445707246
+#> 232     -2.0263589   -1.108871389
+#> 233     -0.5406286   -0.811326758
+#> 234      0.5554996   -0.003970259
+#> 235     -0.5406286   -0.534478002
+#> 236     -0.2605156   -0.267631722
+#> 237      0.8478003    0.815812232
+#> 238     -1.1705234   -0.003970259
+#> 239      0.5554996   -0.534478002
+#> 240      0.0101434   -0.267631722
+#> 241      0.2794507   -1.445707246
+#> 242      0.8478003   -0.534478002
+#> 243     -1.1705234    0.261394158
+#> 244     -2.0263589   -0.811326758
+#> 245      0.8478003   -0.534478002
+#> 246     -2.0263589   -3.623458477
+#> 247     -0.5406286   -0.534478002
+#> 248      0.0101434   -0.267631722
+#> 249     -0.8396775   -0.003970259
+#> 250      0.2794507   -0.003970259
+#> 251      0.2794507    0.261394158
+#> 252      0.5554996   -0.811326758
+#> 253      0.5554996    0.815812232
+#> 254     -0.5406286   -0.267631722
+#> 255      1.1694911   -0.811326758
+#> 256      0.2794507   -0.811326758
+#> 257     -2.6823128   -1.108871389
+#> 258      0.0101434    0.532833213
+#> 259      0.8478003   -0.534478002
+#> 260     -1.5534143    0.532833213
+#> 261      0.8478003    0.815812232
+#> 262     -1.1705234   -0.267631722
+#> 263     -0.8396775   -0.811326758
+#> 264      1.5418835    0.261394158
+#> 265      2.6619536    0.261394158
+#> 266      0.2794507   -0.003970259
+#> 267     -0.8396775   -1.445707246
+#> 268     -0.8396775   -0.267631722
+#> 269     -1.1705234    0.261394158
+#> 270      0.5554996    0.261394158
+#> 271     -0.8396775   -1.445707246
+#> 272     -0.2605156    0.815812232
+#> 273     -1.1705234   -0.811326758
+#> 274      2.6619536    0.261394158
+#> 275     -0.5406286   -0.267631722
+#> 276      1.1694911   -0.267631722
+#> 277     -2.6823128   -2.443561734
+#> 278      0.0101434   -0.534478002
+#> 279     -1.5534143   -0.811326758
+#> 280      0.2794507    0.815812232
+#> 281      0.8478003    1.119204075
+#> 282     -0.8396775   -1.108871389
+#> 283      1.1694911    1.459401032
+#> 284     -0.5406286   -0.267631722
+#> 285     -0.2605156   -0.534478002
+#> 286     -0.5406286   -0.267631722
+#> 287     -0.8396775   -0.534478002
+#> 288      0.8478003    1.119204075
+#> 289      1.5418835    1.870464703
+#> 290      1.1694911    0.815812232
+#> 291      0.0101434   -0.003970259
+#> 292      0.8478003   -0.003970259
+#> 293     -0.5406286   -1.108871389
+#> 294     -2.0263589   -1.445707246
+#> 295      1.5418835    1.119204075
+#> 296      0.8478003    0.261394158
+#> 297      0.5554996   -1.445707246
+#> 298      1.5418835    1.119204075
+#> 299      0.2794507    0.261394158
+#> 300     -1.5534143   -0.267631722
+#> 301      0.5554996   -0.267631722
+#> 302     -2.0263589    0.815812232
+#> 303      2.0060384    0.815812232
+#> 304     -0.8396775   -0.534478002
+#> 305      0.8478003   -0.003970259
+#> 306      2.0060384   -0.811326758
+#> 307      0.0101434   -0.811326758
+#> 308      1.1694911    1.119204075
+#> 309     -1.1705234    0.815812232
+#> 310     -0.5406286    1.459401032
+#> 311      1.1694911    2.441061168
+#> 312      0.0101434    0.815812232
+#> 313      0.0101434   -0.811326758
+#> 314     -0.8396775   -2.443561734
+#> 315      0.2794507    0.261394158
+#> 316      1.1694911   -1.445707246
+#> 317     -0.5406286   -1.108871389
+#> 318      0.8478003   -0.003970259
+#> 319     -1.5534143   -0.267631722
+#> 320      0.5554996    0.815812232
+#> 321      1.1694911    1.119204075
+#> 322      0.2794507    0.532833213
+#> 323      2.0060384    1.459401032
+#> 324     -2.6823128   -1.445707246
+#> 325      0.5554996   -0.534478002
+#> 326      1.1694911   -0.003970259
+#> 327     -2.0263589   -0.267631722
+#> 328      0.0101434   -0.534478002
+#> 329     -0.2605156   -0.811326758
+#> 330      0.8478003    0.261394158
+#> 331     -0.2605156   -0.267631722
+#> 332     -0.8396775   -0.003970259
+#> 333      0.8478003   -1.445707246
+#> 334      2.0060384   -0.267631722
+#> 335      0.0101434   -0.003970259
+#> 336      0.5554996    0.532833213
+#> 337      1.5418835    0.815812232
+#> 338      0.5554996    0.815812232
+#> 339     -0.5406286    0.532833213
+#> 340     -1.5534143    1.119204075
+#> 341      1.1694911   -1.445707246
+#> 342     -1.1705234   -1.445707246
+#> 343      0.5554996    1.870464703
+#> 344      0.8478003    0.815812232
+#> 345     -2.0263589   -1.445707246
+#> 346     -1.1705234   -1.445707246
+#> 347      1.1694911    0.261394158
+#> 348      1.1694911   -1.445707246
+#> 349      1.5418835    3.583574107
+#> 350      2.0060384    1.459401032
+#> 351      1.5418835   -0.267631722
+#> 352      0.8478003   -0.534478002
+#> 353     -0.8396775   -0.267631722
+#> 354      0.0101434    0.261394158
+#> 355      2.0060384   -0.534478002
+#> 356      0.8478003   -1.859081712
+#> 357     -0.5406286   -0.003970259
+#> 358     -1.1705234    1.119204075
+#> 359     -3.9375704   -0.534478002
+#> 360     -0.2605156   -0.267631722
+#> 361     -1.5534143   -1.859081712
+#> 362      1.5418835    1.459401032
+#> 363     -0.8396775   -1.445707246
+#> 364     -0.5406286    0.261394158
+#> 365     -0.2605156   -0.003970259
+#> 366      0.8478003    1.459401032
+#> 367      0.5554996    1.459401032
+#> 368      0.2794507    0.532833213
+#> 369      0.0101434   -0.534478002
+#> 370     -1.1705234   -1.108871389
+#> 371      0.2794507   -0.534478002
+#> 372      0.0101434   -0.811326758
+#> 373     -0.5406286   -0.003970259
+#> 374     -0.2605156    1.459401032
+#> 375     -0.8396775   -0.003970259
+#> 376      0.8478003   -0.534478002
+#> 377     -0.8396775    0.815812232
+#> 378     -0.8396775   -0.811326758
+#> 379     -0.5406286   -0.811326758
+#> 380      2.0060384    1.870464703
+#> 381      1.1694911   -0.267631722
+#> 382      2.0060384    2.441061168
+#> 383     -0.8396775   -0.534478002
+#> 384      0.2794507    0.815812232
+#> 385      1.1694911    1.119204075
+#> 386      1.1694911   -1.108871389
+#> 387     -1.1705234   -0.534478002
+#> 388     -0.2605156    0.261394158
+#> 389     -3.9375704   -0.003970259
+#> 390     -0.5406286   -1.108871389
+#> 391      2.0060384   -0.811326758
+#> 392      0.5554996    0.532833213
+#> 393      1.1694911    1.119204075
+#> 394      0.0101434    1.119204075
+#> 395      0.0101434    0.532833213
+#> 396     -0.8396775   -1.859081712
+#> 397      2.6619536   -0.003970259
+#> 398      0.2794507   -1.108871389
+#> 399     -1.5534143   -2.443561734
+#> 400      0.5554996    1.119204075
 #> 
 #> $wle_correlation
-#>   subscale_a subscale_b            r   ci_lower   ci_upper   p_value   n
-#> 1          1          2 -0.005350613 -0.1033481 0.09274977 0.9150443 400
+#>   subscale_a subscale_b         r  ci_lower  ci_upper      p_value   n
+#> 1          1          2 0.4050472 0.3196922 0.4838813 3.172259e-17 400
 #> 
 
 # Sequential stopping: stop as soon as h = 25 simulated statistics exceed
@@ -787,19 +798,19 @@ RMdimMartinLof(dat,
             iterations = 200, stopping = "sequential", h = 25,
             seed = 1)
 #> $T_obs
-#> [1] 192.632
+#> [1] 365.8459
 #> 
 #> $p_value
-#> [1] 0.5652174
+#> [1] 0.004975124
 #> 
 #> $p_value_floor
-#> [1] 0.02173913
+#> [1] 0.004975124
 #> 
 #> $actual_iterations
-#> [1] 45
+#> [1] 200
 #> 
 #> $rejected
-#> [1] FALSE
+#> [1] TRUE
 #> 
 #> $partition
 #> $partition[[1]]
@@ -834,419 +845,438 @@ RMdimMartinLof(dat,
 #> [1] 25
 #> 
 #> $T_rep
-#>  [1] 203.1150 191.4289 205.5340 200.9726 186.1371 211.4777 208.6398 246.5549
-#>  [9] 235.7000 209.6456 242.6280 174.6350 181.3583 190.5831 212.3751 201.5643
-#> [17] 166.3843 199.5976 211.6393 180.1643 186.0512 173.5937 187.3779 205.7209
-#> [25] 187.0434 217.6454 178.8351 198.6360 210.9413 186.0347 182.6325 190.8734
-#> [33] 191.0037 172.3550 205.6651 183.5835 172.5252 199.6062 213.2993 214.1189
-#> [41] 200.0631 197.1147 206.1826 186.1101 193.9344
+#>   [1] 168.9862 143.4910 191.3300 192.7129 149.8375 171.1189 170.2637 157.8862
+#>   [9] 143.6526 151.2436 176.3186 164.5774 177.7126 169.2867 168.7486 179.3085
+#>  [17] 153.0849 163.3919 187.0635 193.9743 150.1382 172.0477 171.1421 184.9956
+#>  [25] 169.3793 181.1276 171.6324 170.5952 189.6549 194.2210 187.0121 168.6690
+#>  [33] 168.9231 177.2665 190.9812 184.1547 175.0532 167.0365 186.0819 180.5112
+#>  [41] 187.2765 164.4274 146.0363 188.9182 188.7761 136.5182 173.3369 221.9728
+#>  [49] 202.4305 173.5276 208.6776 143.6195 160.6977 184.1886 189.3649 172.5538
+#>  [57] 153.6781 167.6785 221.4292 158.8601 186.5226 167.3514 188.3526 180.6127
+#>  [65] 156.6204 177.8911 186.9232 147.0028 162.0691 137.1025 162.6412 171.5024
+#>  [73] 172.3256 162.5723 179.6740 152.5323 195.7423 140.7911 164.4062 184.7740
+#>  [81] 175.6183 203.7518 189.9967 170.4699 175.1578 209.3955 194.0093 173.4672
+#>  [89] 164.8804 175.3273 172.4749 179.0197 183.6100 182.5913 151.3204 154.6409
+#>  [97] 188.7343 175.8683 165.5590 180.3769 172.4667 175.7337 184.8293 184.1139
+#> [105] 153.3392 180.4499 162.7489 139.7156 138.2929 188.2964 188.5610 189.1613
+#> [113] 166.3838 200.7244 183.0496 175.9813 157.6731 149.5833 154.4380 167.5813
+#> [121] 171.4821 152.7252 171.5926 169.5934 166.9021 186.2211 153.5987 168.6216
+#> [129] 150.3774 150.9988 169.6899 167.3442 155.4570 189.4229 163.7442 159.5095
+#> [137] 168.7723 182.9441 188.5712 179.1508 186.1946 193.9230 209.1547 164.4454
+#> [145] 189.4302 159.6251 200.0907 181.7039 197.6787 146.0523 170.7498 128.9754
+#> [153] 166.0411 205.4831 165.6758 177.7807 190.6480 137.9235 157.1809 194.1728
+#> [161] 150.3600 160.7539 170.8301 177.9311 196.9448 169.0897 187.7256 187.5782
+#> [169] 160.1643 191.1768 159.0765 168.7289 187.8860 163.8593 203.7478 154.4584
+#> [177] 140.8769 156.6554 163.3910 167.7517 158.1204 171.8004 168.1358 203.3695
+#> [185] 205.4159 174.7853 183.1922 139.6937 158.2548 151.4843 172.2040 166.9883
+#> [193] 177.7077 180.7517 188.1529 171.4745 199.5229 169.3060 210.6902 163.3354
 #> 
 #> $wle_scores
 #>     subscale_1_wle subscale_2_wle
-#> 1       0.01719779   -0.008686632
-#> 2       0.84330449   -0.233715303
-#> 3       0.01719779   -0.233715303
-#> 4      -0.46132203   -1.979433785
-#> 5       0.48625873    0.217552164
-#> 6       0.12496572   -0.008686632
-#> 7      -0.20344194   -0.008686632
-#> 8       0.12496572    0.341482037
-#> 9       0.84330449   -0.355949378
-#> 10      0.48625873    0.341482037
-#> 11     -0.46132203   -0.233715303
-#> 12     -0.46132203    0.341482037
-#> 13     -0.46132203   -0.008686632
-#> 14     -0.09103387   -0.119463378
-#> 15      0.01719779    0.102381758
-#> 16      0.01719779    2.059504266
-#> 17      0.01719779   -0.355949378
-#> 18      0.35429558   -0.492620587
-#> 19      0.01719779    0.341482037
-#> 20      0.01719779   -0.355949378
-#> 21     -0.20344194   -0.233715303
-#> 22      0.35429558    0.217552164
-#> 23      0.48625873   -0.119463378
-#> 24     -0.20344194    0.341482037
-#> 25     -0.20344194    0.217552164
-#> 26     -0.46132203    0.341482037
-#> 27      0.23589905    0.102381758
-#> 28      0.35429558   -0.355949378
-#> 29      0.12496572    0.217552164
-#> 30     -0.46132203   -0.119463378
-#> 31      0.64212441   -1.188316539
-#> 32      0.01719779    0.341482037
-#> 33     -0.20344194    0.217552164
-#> 34      0.12496572    0.217552164
-#> 35      0.12496572   -0.008686632
-#> 36     -0.09103387    0.341482037
-#> 37      0.48625873   -0.355949378
-#> 38      0.01719779    0.480962199
-#> 39     -0.20344194   -0.008686632
-#> 40     -0.32461579    0.480962199
-#> 41      0.12496572   -0.008686632
-#> 42     -0.09103387   -0.119463378
-#> 43      0.35429558   -0.233715303
-#> 44     -0.09103387   -0.355949378
-#> 45     -0.09103387   -0.008686632
-#> 46     -0.20344194    0.102381758
-#> 47      0.48625873    0.480962199
-#> 48     -0.20344194   -0.654732979
-#> 49      0.48625873    0.341482037
-#> 50      0.64212441    0.217552164
-#> 51      0.23589905   -0.233715303
-#> 52      0.84330449    0.647745574
-#> 53      0.23589905   -0.119463378
-#> 54      0.23589905   -0.119463378
-#> 55     -0.32461579    0.341482037
-#> 56      0.35429558    0.341482037
-#> 57      0.01719779    0.647745574
-#> 58      0.48625873    0.102381758
-#> 59     -0.09103387   -0.008686632
-#> 60      0.35429558   -0.233715303
-#> 61     -0.32461579   -0.008686632
-#> 62     -0.32461579   -0.233715303
-#> 63      0.23589905   -0.119463378
-#> 64      0.35429558   -0.008686632
-#> 65     -0.32461579    0.341482037
-#> 66     -0.20344194    0.217552164
-#> 67     -0.46132203    0.217552164
-#> 68     -0.20344194   -0.492620587
-#> 69     -0.20344194   -0.233715303
-#> 70     -0.20344194    0.102381758
-#> 71     -0.84239770    0.341482037
-#> 72     -0.46132203   -0.008686632
-#> 73      0.23589905    0.102381758
-#> 74      0.12496572    0.341482037
-#> 75     -0.09103387   -0.008686632
-#> 76      0.23589905   -0.008686632
-#> 77     -0.32461579   -0.492620587
-#> 78     -0.46132203   -0.355949378
-#> 79      0.23589905   -0.355949378
-#> 80      0.12496572    0.102381758
-#> 81     -0.09103387   -0.233715303
-#> 82      0.64212441   -0.355949378
-#> 83     -0.20344194   -0.008686632
-#> 84     -0.32461579   -0.355949378
-#> 85      0.01719779   -0.233715303
-#> 86      0.48625873   -0.119463378
-#> 87      0.12496572   -0.355949378
-#> 88      0.01719779    0.217552164
-#> 89      0.01719779    0.102381758
-#> 90      0.23589905   -0.119463378
-#> 91      0.48625873    0.480962199
-#> 92     -0.09103387    0.102381758
-#> 93      0.01719779   -0.233715303
-#> 94     -0.32461579   -0.119463378
-#> 95      0.01719779    0.102381758
-#> 96      0.48625873   -0.008686632
-#> 97     -0.32461579    0.102381758
-#> 98     -0.09103387   -0.119463378
-#> 99      0.01719779   -0.233715303
-#> 100    -0.09103387    0.480962199
-#> 101    -0.46132203   -0.492620587
-#> 102    -0.20344194   -0.119463378
-#> 103     0.23589905   -0.008686632
-#> 104    -0.20344194    0.480962199
-#> 105    -0.20344194    0.102381758
-#> 106     0.23589905   -0.355949378
-#> 107     0.23589905   -0.492620587
-#> 108    -0.20344194   -0.492620587
-#> 109     0.48625873   -0.008686632
-#> 110     0.01719779   -0.492620587
-#> 111     0.64212441   -0.233715303
-#> 112     0.35429558    0.217552164
-#> 113    -0.09103387   -0.233715303
-#> 114     0.23589905    0.102381758
-#> 115    -0.09103387    0.647745574
-#> 116     0.01719779    0.480962199
-#> 117     0.64212441   -0.008686632
-#> 118     0.23589905    0.102381758
-#> 119     0.64212441   -0.355949378
-#> 120     0.48625873    0.217552164
-#> 121    -0.09103387   -0.492620587
-#> 122     0.23589905   -0.233715303
-#> 123     0.48625873    0.341482037
-#> 124     0.35429558   -0.233715303
-#> 125     0.01719779    0.647745574
-#> 126     0.35429558    0.480962199
-#> 127     0.01719779   -0.355949378
-#> 128    -0.84239770   -0.492620587
-#> 129     0.23589905   -0.008686632
-#> 130     0.23589905   -0.119463378
-#> 131    -0.46132203   -0.492620587
-#> 132     0.12496572    0.341482037
-#> 133     0.23589905   -0.233715303
-#> 134    -0.09103387   -0.492620587
-#> 135     0.23589905   -0.492620587
-#> 136    -0.32461579   -0.654732979
-#> 137    -0.09103387   -0.233715303
-#> 138     0.12496572   -0.233715303
-#> 139     0.12496572    0.217552164
-#> 140     0.12496572   -0.492620587
-#> 141    -0.46132203   -0.008686632
-#> 142    -0.32461579    0.217552164
-#> 143     0.01719779    0.217552164
-#> 144     0.12496572    0.480962199
-#> 145    -0.20344194    0.341482037
-#> 146     0.12496572   -1.188316539
-#> 147    -0.46132203   -0.355949378
-#> 148    -0.09103387    0.341482037
-#> 149     0.23589905    0.217552164
-#> 150    -0.09103387    0.480962199
-#> 151    -0.32461579   -0.865189748
-#> 152     0.35429558   -0.008686632
-#> 153     0.23589905   -0.008686632
-#> 154     0.23589905    0.217552164
-#> 155     0.12496572   -0.233715303
-#> 156    -0.09103387    0.217552164
-#> 157     0.48625873   -0.008686632
-#> 158     0.23589905   -0.492620587
-#> 159     0.01719779   -0.119463378
-#> 160    -0.84239770   -0.233715303
-#> 161    -0.20344194   -0.492620587
-#> 162     0.35429558    0.102381758
-#> 163     0.12496572   -1.188316539
-#> 164    -0.09103387    0.341482037
-#> 165    -0.46132203   -0.355949378
-#> 166    -0.09103387    0.341482037
-#> 167    -0.20344194    2.059504266
-#> 168    -0.46132203    0.217552164
-#> 169     0.12496572    0.217552164
-#> 170     0.12496572    0.217552164
-#> 171     0.01719779    0.217552164
-#> 172     0.23589905    0.102381758
-#> 173     0.35429558   -1.188316539
-#> 174     0.35429558    0.217552164
-#> 175     0.01719779   -0.355949378
-#> 176    -0.09103387    0.102381758
-#> 177    -0.62542083    0.102381758
-#> 178     0.12496572   -0.008686632
-#> 179     0.23589905    0.341482037
-#> 180    -0.09103387    0.341482037
-#> 181    -0.62542083   -0.008686632
-#> 182     0.64212441    0.866646436
-#> 183     0.84330449    0.480962199
-#> 184     0.12496572   -0.008686632
-#> 185    -0.32461579    0.217552164
-#> 186    -0.09103387   -0.355949378
-#> 187     0.12496572    2.059504266
-#> 188     0.35429558   -0.865189748
-#> 189     0.01719779   -0.355949378
-#> 190     0.12496572   -0.355949378
-#> 191     0.01719779   -0.119463378
-#> 192    -0.09103387    0.341482037
-#> 193     0.01719779   -0.865189748
-#> 194    -1.18699295    0.341482037
-#> 195     0.12496572    0.480962199
-#> 196     0.84330449   -0.355949378
-#> 197     0.48625873    0.102381758
-#> 198     0.48625873   -0.233715303
-#> 199    -0.32461579   -0.355949378
-#> 200     0.35429558    0.102381758
-#> 201     0.01719779   -0.008686632
-#> 202     1.14993888    0.341482037
-#> 203     0.12496572   -0.119463378
-#> 204    -0.20344194    0.102381758
-#> 205    -0.09103387   -0.119463378
-#> 206     0.01719779    0.341482037
-#> 207     0.35429558   -0.008686632
-#> 208     0.35429558    0.102381758
-#> 209    -0.62542083    0.647745574
-#> 210    -0.09103387   -0.119463378
-#> 211    -0.32461579    0.480962199
-#> 212     0.12496572   -0.355949378
-#> 213    -0.09103387    0.102381758
-#> 214     0.48625873   -0.355949378
-#> 215     0.35429558    0.217552164
-#> 216     0.64212441    0.102381758
-#> 217     0.01719779   -0.008686632
-#> 218     0.12496572   -0.233715303
-#> 219    -0.32461579   -0.119463378
-#> 220    -0.32461579   -0.492620587
-#> 221    -0.20344194   -0.355949378
-#> 222    -0.84239770    0.217552164
-#> 223     0.12496572    0.480962199
-#> 224     0.12496572    1.208333678
-#> 225    -0.09103387    0.217552164
-#> 226     0.01719779    0.102381758
-#> 227     0.64212441    0.217552164
-#> 228    -0.62542083   -0.233715303
-#> 229    -0.20344194   -0.008686632
-#> 230    -0.20344194   -0.119463378
-#> 231    -1.18699295    0.647745574
-#> 232    -0.46132203   -0.233715303
-#> 233     0.01719779   -0.119463378
-#> 234     0.01719779   -0.008686632
-#> 235     0.48625873   -0.008686632
-#> 236     0.64212441    0.102381758
-#> 237    -0.09103387    0.341482037
-#> 238     0.64212441   -0.355949378
-#> 239     0.64212441   -0.233715303
-#> 240    -0.32461579   -0.233715303
-#> 241     0.35429558   -0.008686632
-#> 242     0.64212441    0.217552164
-#> 243     0.01719779   -0.008686632
-#> 244    -0.32461579    0.480962199
-#> 245    -0.09103387   -0.233715303
-#> 246     0.23589905    0.341482037
-#> 247     0.12496572   -0.355949378
-#> 248     0.12496572    0.102381758
-#> 249    -0.46132203   -0.654732979
-#> 250     0.01719779    0.102381758
-#> 251     0.48625873   -0.119463378
-#> 252     0.23589905   -0.355949378
-#> 253    -0.62542083    0.102381758
-#> 254     0.35429558    0.217552164
-#> 255    -0.09103387    0.341482037
-#> 256    -0.20344194   -0.355949378
-#> 257     0.23589905   -0.355949378
-#> 258    -0.09103387   -0.355949378
-#> 259     0.23589905   -0.233715303
-#> 260     0.12496572   -0.355949378
-#> 261    -0.09103387   -0.008686632
-#> 262    -0.32461579    0.102381758
-#> 263    -0.84239770   -0.355949378
-#> 264     0.01719779   -0.008686632
-#> 265     0.23589905   -0.119463378
-#> 266     0.35429558   -0.119463378
-#> 267     0.12496572   -0.355949378
-#> 268    -0.09103387    0.102381758
-#> 269     0.23589905   -0.008686632
-#> 270    -0.20344194    0.102381758
-#> 271    -0.46132203   -0.119463378
-#> 272     0.84330449    0.102381758
-#> 273     0.35429558    0.480962199
-#> 274     0.01719779    0.217552164
-#> 275    -0.09103387    0.341482037
-#> 276    -0.09103387    0.647745574
-#> 277     0.35429558   -0.355949378
-#> 278     0.12496572    0.102381758
-#> 279    -1.18699295   -0.008686632
-#> 280     0.23589905   -0.119463378
-#> 281     0.12496572    0.217552164
-#> 282     0.12496572    0.102381758
-#> 283    -0.20344194    0.102381758
-#> 284     0.12496572   -0.654732979
-#> 285    -0.09103387    0.102381758
-#> 286     0.35429558    0.102381758
-#> 287     0.12496572   -0.233715303
-#> 288     0.35429558   -0.008686632
-#> 289     0.12496572   -0.119463378
-#> 290    -0.46132203   -0.492620587
-#> 291    -0.32461579   -0.233715303
-#> 292    -0.09103387   -0.008686632
-#> 293     0.23589905   -0.355949378
-#> 294     0.35429558   -0.654732979
-#> 295     0.35429558    0.102381758
-#> 296     0.12496572    0.102381758
-#> 297    -0.09103387    0.102381758
-#> 298     0.23589905    0.341482037
-#> 299    -0.09103387   -0.233715303
-#> 300    -0.62542083    0.341482037
-#> 301     0.12496572   -0.119463378
-#> 302     0.12496572   -0.355949378
-#> 303     0.35429558   -0.119463378
-#> 304     0.12496572   -0.492620587
-#> 305    -0.09103387   -0.119463378
-#> 306     0.01719779    0.341482037
-#> 307     0.01719779    0.102381758
-#> 308     0.01719779   -0.119463378
-#> 309     0.12496572    0.217552164
-#> 310    -0.32461579   -0.233715303
-#> 311    -0.32461579    0.102381758
-#> 312    -0.84239770    0.341482037
-#> 313    -0.20344194   -0.008686632
-#> 314     0.01719779    0.217552164
-#> 315     0.01719779   -0.119463378
-#> 316    -0.32461579   -0.008686632
-#> 317     0.01719779   -0.008686632
-#> 318    -0.20344194    0.102381758
-#> 319    -0.20344194    0.102381758
-#> 320     0.35429558    0.102381758
-#> 321     0.35429558    0.217552164
-#> 322     0.01719779    0.217552164
-#> 323     0.48625873   -0.654732979
-#> 324     0.12496572   -0.008686632
-#> 325     0.35429558   -0.233715303
-#> 326    -0.09103387   -0.119463378
-#> 327    -0.32461579    0.217552164
-#> 328     0.23589905    0.102381758
-#> 329     0.23589905   -0.355949378
-#> 330     0.01719779   -0.492620587
-#> 331    -0.09103387    0.217552164
-#> 332     0.64212441   -0.233715303
-#> 333     0.48625873    0.102381758
-#> 334    -0.84239770    0.341482037
-#> 335     0.01719779    0.102381758
-#> 336     0.48625873    2.059504266
-#> 337    -0.09103387    0.647745574
-#> 338     0.35429558   -0.119463378
-#> 339    -0.62542083    0.217552164
-#> 340    -0.20344194   -0.654732979
-#> 341    -0.62542083    0.102381758
-#> 342     0.12496572    0.341482037
-#> 343    -0.20344194   -0.492620587
-#> 344    -0.09103387    0.341482037
-#> 345     0.48625873   -0.008686632
-#> 346    -0.32461579    0.866646436
-#> 347     0.01719779    0.217552164
-#> 348     0.01719779   -0.008686632
-#> 349    -0.09103387   -0.119463378
-#> 350     0.64212441   -0.119463378
-#> 351     0.01719779   -0.008686632
-#> 352    -0.20344194    0.480962199
-#> 353    -0.09103387   -0.355949378
-#> 354     0.12496572    0.480962199
-#> 355    -0.09103387   -0.008686632
-#> 356     0.48625873    0.341482037
-#> 357    -0.32461579   -0.119463378
-#> 358    -0.20344194   -0.008686632
-#> 359    -0.84239770    0.102381758
-#> 360    -0.32461579   -0.008686632
-#> 361    -0.46132203    0.102381758
-#> 362    -0.32461579    0.341482037
-#> 363     0.01719779   -0.119463378
-#> 364     0.48625873    0.647745574
-#> 365     0.12496572   -0.008686632
-#> 366    -0.46132203   -0.233715303
-#> 367     0.12496572   -0.008686632
-#> 368     0.48625873   -0.119463378
-#> 369     0.48625873   -0.008686632
-#> 370     0.64212441   -0.355949378
-#> 371     0.01719779    0.102381758
-#> 372     0.12496572   -0.119463378
-#> 373    -1.18699295    0.217552164
-#> 374     0.23589905   -0.865189748
-#> 375     0.84330449    0.217552164
-#> 376     0.64212441    0.480962199
-#> 377    -0.20344194    0.102381758
-#> 378     1.90433036   -0.008686632
-#> 379     0.12496572    0.102381758
-#> 380    -0.84239770    0.341482037
-#> 381     0.48625873   -0.233715303
-#> 382    -0.46132203    0.102381758
-#> 383     0.23589905    0.217552164
-#> 384    -0.20344194   -0.233715303
-#> 385     1.14993888    0.480962199
-#> 386    -0.84239770   -0.119463378
-#> 387    -0.09103387    0.102381758
-#> 388    -0.62542083    0.102381758
-#> 389    -0.09103387   -0.233715303
-#> 390    -0.09103387    0.102381758
-#> 391     0.01719779   -0.119463378
-#> 392     0.35429558   -0.008686632
-#> 393     0.01719779    0.341482037
-#> 394    -0.32461579   -0.008686632
-#> 395    -0.32461579   -0.008686632
-#> 396    -0.20344194    0.217552164
-#> 397    -0.20344194    0.217552164
-#> 398    -0.09103387    0.102381758
-#> 399     0.12496572   -0.119463378
-#> 400     0.35429558   -0.355949378
+#> 1       -0.8396775    0.261394158
+#> 2        0.5554996    0.815812232
+#> 3       -0.8396775   -1.445707246
+#> 4        2.0060384    1.119204075
+#> 5        0.5554996   -0.534478002
+#> 6        0.0101434   -1.859081712
+#> 7        0.0101434    1.119204075
+#> 8        1.1694911    0.261394158
+#> 9        0.0101434    2.441061168
+#> 10      -0.5406286   -1.108871389
+#> 11       1.5418835   -0.003970259
+#> 12      -0.2605156    1.459401032
+#> 13      -0.2605156    0.815812232
+#> 14      -1.5534143   -1.108871389
+#> 15       1.1694911    1.119204075
+#> 16       0.5554996   -0.003970259
+#> 17       0.0101434    1.119204075
+#> 18       0.8478003    0.532833213
+#> 19       0.5554996   -0.534478002
+#> 20       0.5554996    1.870464703
+#> 21       2.0060384    1.870464703
+#> 22       2.0060384   -0.003970259
+#> 23       0.0101434    0.261394158
+#> 24      -2.6823128   -3.623458477
+#> 25       0.5554996    0.815812232
+#> 26       0.0101434    0.261394158
+#> 27      -0.5406286   -1.445707246
+#> 28      -0.5406286   -0.811326758
+#> 29      -0.5406286   -0.811326758
+#> 30       0.5554996    0.532833213
+#> 31       0.2794507   -1.108871389
+#> 32      -0.2605156   -0.534478002
+#> 33       1.1694911   -0.811326758
+#> 34      -0.5406286    1.119204075
+#> 35      -1.5534143   -0.811326758
+#> 36       0.5554996   -0.811326758
+#> 37      -1.1705234    0.532833213
+#> 38       0.2794507    0.261394158
+#> 39      -0.2605156   -0.267631722
+#> 40       0.5554996    0.815812232
+#> 41      -0.2605156   -0.811326758
+#> 42      -0.2605156    1.459401032
+#> 43       0.5554996    0.532833213
+#> 44       1.1694911    0.261394158
+#> 45      -0.5406286   -0.003970259
+#> 46      -1.1705234   -1.445707246
+#> 47       1.5418835   -1.108871389
+#> 48       1.5418835    0.261394158
+#> 49       1.1694911    0.815812232
+#> 50       0.5554996   -1.859081712
+#> 51       0.2794507    1.459401032
+#> 52      -0.8396775   -0.811326758
+#> 53       0.2794507   -0.003970259
+#> 54      -1.1705234   -2.443561734
+#> 55       0.8478003   -1.108871389
+#> 56       2.0060384    0.815812232
+#> 57       0.2794507    0.261394158
+#> 58      -0.5406286   -1.859081712
+#> 59       1.1694911   -0.811326758
+#> 60       0.0101434    0.532833213
+#> 61       3.9362788    1.870464703
+#> 62       0.2794507    1.870464703
+#> 63       0.2794507    1.870464703
+#> 64      -0.5406286    0.261394158
+#> 65       0.2794507   -1.108871389
+#> 66      -0.2605156   -0.003970259
+#> 67      -2.0263589   -1.445707246
+#> 68       1.1694911    0.815812232
+#> 69       0.0101434    1.459401032
+#> 70       3.9362788    1.870464703
+#> 71       0.5554996    0.261394158
+#> 72      -0.5406286   -1.108871389
+#> 73      -0.5406286   -0.267631722
+#> 74      -1.1705234    0.815812232
+#> 75      -1.1705234   -0.003970259
+#> 76       0.0101434   -1.445707246
+#> 77      -1.1705234    0.532833213
+#> 78       0.5554996   -0.003970259
+#> 79       0.0101434    1.119204075
+#> 80      -0.5406286   -0.003970259
+#> 81      -0.2605156    0.261394158
+#> 82       0.0101434   -0.534478002
+#> 83       1.1694911    0.532833213
+#> 84      -1.1705234   -0.811326758
+#> 85      -0.2605156    1.870464703
+#> 86       0.5554996    1.459401032
+#> 87       1.1694911    1.119204075
+#> 88       0.0101434   -0.267631722
+#> 89       0.0101434   -1.445707246
+#> 90       0.0101434    0.532833213
+#> 91      -0.5406286   -0.267631722
+#> 92       2.0060384    1.119204075
+#> 93       1.5418835   -0.534478002
+#> 94       1.1694911    0.815812232
+#> 95       1.5418835    2.441061168
+#> 96       1.5418835    0.261394158
+#> 97      -1.5534143   -0.267631722
+#> 98       0.0101434   -1.859081712
+#> 99      -1.5534143   -0.811326758
+#> 100     -0.2605156   -2.443561734
+#> 101     -0.8396775   -0.811326758
+#> 102      0.5554996    0.261394158
+#> 103     -0.2605156   -1.108871389
+#> 104      0.2794507   -0.003970259
+#> 105     -0.5406286    0.532833213
+#> 106      1.1694911    1.119204075
+#> 107      0.0101434   -1.108871389
+#> 108      1.5418835    0.532833213
+#> 109      0.5554996    1.119204075
+#> 110      2.6619536   -0.811326758
+#> 111     -0.8396775   -2.443561734
+#> 112     -0.5406286   -0.003970259
+#> 113      1.1694911    0.261394158
+#> 114     -0.5406286    0.532833213
+#> 115      0.0101434   -0.267631722
+#> 116      0.5554996   -0.811326758
+#> 117     -1.5534143   -1.108871389
+#> 118      0.8478003    0.532833213
+#> 119      1.1694911   -0.811326758
+#> 120      0.0101434    0.815812232
+#> 121     -0.2605156   -0.267631722
+#> 122      2.0060384    1.870464703
+#> 123     -1.5534143   -1.108871389
+#> 124     -0.2605156   -0.534478002
+#> 125     -0.2605156   -0.003970259
+#> 126      1.1694911   -0.811326758
+#> 127      0.0101434   -0.267631722
+#> 128     -0.2605156    0.532833213
+#> 129     -1.1705234    0.261394158
+#> 130     -0.5406286   -0.811326758
+#> 131     -1.1705234   -1.108871389
+#> 132      0.2794507    0.815812232
+#> 133     -0.2605156    0.261394158
+#> 134     -3.9375704   -1.108871389
+#> 135      0.5554996    3.583574107
+#> 136     -1.1705234   -1.108871389
+#> 137      0.0101434    0.261394158
+#> 138     -2.0263589    1.119204075
+#> 139     -0.2605156    1.459401032
+#> 140      0.2794507   -0.267631722
+#> 141     -1.1705234   -1.108871389
+#> 142     -0.2605156    0.815812232
+#> 143     -2.6823128   -1.445707246
+#> 144     -0.2605156    0.532833213
+#> 145     -0.8396775    0.532833213
+#> 146     -0.5406286   -1.445707246
+#> 147      3.9362788    0.261394158
+#> 148      0.5554996    0.261394158
+#> 149      0.0101434   -3.623458477
+#> 150     -2.0263589   -0.534478002
+#> 151      0.8478003    0.815812232
+#> 152      0.2794507   -1.108871389
+#> 153      0.2794507   -1.859081712
+#> 154     -0.8396775   -0.534478002
+#> 155     -1.1705234    0.261394158
+#> 156     -1.5534143   -1.445707246
+#> 157      1.5418835   -1.859081712
+#> 158     -0.8396775    0.815812232
+#> 159     -2.0263589   -0.534478002
+#> 160      2.0060384    0.261394158
+#> 161      0.8478003   -1.108871389
+#> 162      0.5554996   -0.534478002
+#> 163      2.0060384    1.119204075
+#> 164      1.5418835   -0.267631722
+#> 165     -0.8396775   -0.267631722
+#> 166      1.5418835    1.459401032
+#> 167      0.5554996   -0.534478002
+#> 168     -1.5534143   -1.108871389
+#> 169     -0.8396775   -1.108871389
+#> 170      0.0101434    1.459401032
+#> 171      2.0060384    1.119204075
+#> 172     -0.2605156    0.815812232
+#> 173      0.0101434    0.815812232
+#> 174     -0.2605156   -0.267631722
+#> 175      0.0101434   -0.267631722
+#> 176      0.0101434    0.532833213
+#> 177      0.5554996   -0.267631722
+#> 178      2.0060384    2.441061168
+#> 179      1.1694911   -0.534478002
+#> 180      1.5418835    0.261394158
+#> 181      0.0101434   -2.443561734
+#> 182      0.5554996    1.119204075
+#> 183      0.0101434    1.870464703
+#> 184     -1.1705234    0.261394158
+#> 185      1.1694911    0.815812232
+#> 186     -1.1705234    0.261394158
+#> 187      0.8478003    0.532833213
+#> 188     -0.8396775    0.261394158
+#> 189     -0.5406286    0.261394158
+#> 190     -2.0263589   -0.267631722
+#> 191      0.0101434   -0.267631722
+#> 192     -0.5406286    1.119204075
+#> 193     -0.2605156   -0.267631722
+#> 194      2.0060384   -0.003970259
+#> 195     -1.1705234   -2.443561734
+#> 196     -0.5406286    0.261394158
+#> 197      2.0060384   -0.267631722
+#> 198     -0.8396775   -0.003970259
+#> 199      0.0101434    0.532833213
+#> 200      0.0101434   -0.534478002
+#> 201      0.8478003    0.261394158
+#> 202      2.0060384    1.870464703
+#> 203      1.5418835    1.459401032
+#> 204     -0.5406286   -0.267631722
+#> 205     -1.5534143   -0.534478002
+#> 206      1.5418835   -0.003970259
+#> 207      0.8478003   -0.267631722
+#> 208      0.2794507    0.261394158
+#> 209     -0.8396775    2.441061168
+#> 210      0.0101434    0.532833213
+#> 211      0.0101434   -0.534478002
+#> 212      0.5554996    0.261394158
+#> 213     -1.1705234   -0.003970259
+#> 214     -1.5534143   -1.445707246
+#> 215      0.8478003    3.583574107
+#> 216      2.0060384    0.532833213
+#> 217     -0.5406286   -0.534478002
+#> 218     -0.5406286   -2.443561734
+#> 219      0.2794507   -0.003970259
+#> 220     -0.5406286    0.261394158
+#> 221     -2.6823128   -0.811326758
+#> 222      0.0101434   -1.108871389
+#> 223      0.2794507   -0.003970259
+#> 224      0.0101434    1.870464703
+#> 225     -2.6823128   -0.534478002
+#> 226      2.6619536    0.815812232
+#> 227      0.2794507   -0.534478002
+#> 228     -2.6823128   -1.108871389
+#> 229     -0.2605156    0.261394158
+#> 230      0.5554996   -0.003970259
+#> 231     -1.5534143   -1.445707246
+#> 232     -2.0263589   -1.108871389
+#> 233     -0.5406286   -0.811326758
+#> 234      0.5554996   -0.003970259
+#> 235     -0.5406286   -0.534478002
+#> 236     -0.2605156   -0.267631722
+#> 237      0.8478003    0.815812232
+#> 238     -1.1705234   -0.003970259
+#> 239      0.5554996   -0.534478002
+#> 240      0.0101434   -0.267631722
+#> 241      0.2794507   -1.445707246
+#> 242      0.8478003   -0.534478002
+#> 243     -1.1705234    0.261394158
+#> 244     -2.0263589   -0.811326758
+#> 245      0.8478003   -0.534478002
+#> 246     -2.0263589   -3.623458477
+#> 247     -0.5406286   -0.534478002
+#> 248      0.0101434   -0.267631722
+#> 249     -0.8396775   -0.003970259
+#> 250      0.2794507   -0.003970259
+#> 251      0.2794507    0.261394158
+#> 252      0.5554996   -0.811326758
+#> 253      0.5554996    0.815812232
+#> 254     -0.5406286   -0.267631722
+#> 255      1.1694911   -0.811326758
+#> 256      0.2794507   -0.811326758
+#> 257     -2.6823128   -1.108871389
+#> 258      0.0101434    0.532833213
+#> 259      0.8478003   -0.534478002
+#> 260     -1.5534143    0.532833213
+#> 261      0.8478003    0.815812232
+#> 262     -1.1705234   -0.267631722
+#> 263     -0.8396775   -0.811326758
+#> 264      1.5418835    0.261394158
+#> 265      2.6619536    0.261394158
+#> 266      0.2794507   -0.003970259
+#> 267     -0.8396775   -1.445707246
+#> 268     -0.8396775   -0.267631722
+#> 269     -1.1705234    0.261394158
+#> 270      0.5554996    0.261394158
+#> 271     -0.8396775   -1.445707246
+#> 272     -0.2605156    0.815812232
+#> 273     -1.1705234   -0.811326758
+#> 274      2.6619536    0.261394158
+#> 275     -0.5406286   -0.267631722
+#> 276      1.1694911   -0.267631722
+#> 277     -2.6823128   -2.443561734
+#> 278      0.0101434   -0.534478002
+#> 279     -1.5534143   -0.811326758
+#> 280      0.2794507    0.815812232
+#> 281      0.8478003    1.119204075
+#> 282     -0.8396775   -1.108871389
+#> 283      1.1694911    1.459401032
+#> 284     -0.5406286   -0.267631722
+#> 285     -0.2605156   -0.534478002
+#> 286     -0.5406286   -0.267631722
+#> 287     -0.8396775   -0.534478002
+#> 288      0.8478003    1.119204075
+#> 289      1.5418835    1.870464703
+#> 290      1.1694911    0.815812232
+#> 291      0.0101434   -0.003970259
+#> 292      0.8478003   -0.003970259
+#> 293     -0.5406286   -1.108871389
+#> 294     -2.0263589   -1.445707246
+#> 295      1.5418835    1.119204075
+#> 296      0.8478003    0.261394158
+#> 297      0.5554996   -1.445707246
+#> 298      1.5418835    1.119204075
+#> 299      0.2794507    0.261394158
+#> 300     -1.5534143   -0.267631722
+#> 301      0.5554996   -0.267631722
+#> 302     -2.0263589    0.815812232
+#> 303      2.0060384    0.815812232
+#> 304     -0.8396775   -0.534478002
+#> 305      0.8478003   -0.003970259
+#> 306      2.0060384   -0.811326758
+#> 307      0.0101434   -0.811326758
+#> 308      1.1694911    1.119204075
+#> 309     -1.1705234    0.815812232
+#> 310     -0.5406286    1.459401032
+#> 311      1.1694911    2.441061168
+#> 312      0.0101434    0.815812232
+#> 313      0.0101434   -0.811326758
+#> 314     -0.8396775   -2.443561734
+#> 315      0.2794507    0.261394158
+#> 316      1.1694911   -1.445707246
+#> 317     -0.5406286   -1.108871389
+#> 318      0.8478003   -0.003970259
+#> 319     -1.5534143   -0.267631722
+#> 320      0.5554996    0.815812232
+#> 321      1.1694911    1.119204075
+#> 322      0.2794507    0.532833213
+#> 323      2.0060384    1.459401032
+#> 324     -2.6823128   -1.445707246
+#> 325      0.5554996   -0.534478002
+#> 326      1.1694911   -0.003970259
+#> 327     -2.0263589   -0.267631722
+#> 328      0.0101434   -0.534478002
+#> 329     -0.2605156   -0.811326758
+#> 330      0.8478003    0.261394158
+#> 331     -0.2605156   -0.267631722
+#> 332     -0.8396775   -0.003970259
+#> 333      0.8478003   -1.445707246
+#> 334      2.0060384   -0.267631722
+#> 335      0.0101434   -0.003970259
+#> 336      0.5554996    0.532833213
+#> 337      1.5418835    0.815812232
+#> 338      0.5554996    0.815812232
+#> 339     -0.5406286    0.532833213
+#> 340     -1.5534143    1.119204075
+#> 341      1.1694911   -1.445707246
+#> 342     -1.1705234   -1.445707246
+#> 343      0.5554996    1.870464703
+#> 344      0.8478003    0.815812232
+#> 345     -2.0263589   -1.445707246
+#> 346     -1.1705234   -1.445707246
+#> 347      1.1694911    0.261394158
+#> 348      1.1694911   -1.445707246
+#> 349      1.5418835    3.583574107
+#> 350      2.0060384    1.459401032
+#> 351      1.5418835   -0.267631722
+#> 352      0.8478003   -0.534478002
+#> 353     -0.8396775   -0.267631722
+#> 354      0.0101434    0.261394158
+#> 355      2.0060384   -0.534478002
+#> 356      0.8478003   -1.859081712
+#> 357     -0.5406286   -0.003970259
+#> 358     -1.1705234    1.119204075
+#> 359     -3.9375704   -0.534478002
+#> 360     -0.2605156   -0.267631722
+#> 361     -1.5534143   -1.859081712
+#> 362      1.5418835    1.459401032
+#> 363     -0.8396775   -1.445707246
+#> 364     -0.5406286    0.261394158
+#> 365     -0.2605156   -0.003970259
+#> 366      0.8478003    1.459401032
+#> 367      0.5554996    1.459401032
+#> 368      0.2794507    0.532833213
+#> 369      0.0101434   -0.534478002
+#> 370     -1.1705234   -1.108871389
+#> 371      0.2794507   -0.534478002
+#> 372      0.0101434   -0.811326758
+#> 373     -0.5406286   -0.003970259
+#> 374     -0.2605156    1.459401032
+#> 375     -0.8396775   -0.003970259
+#> 376      0.8478003   -0.534478002
+#> 377     -0.8396775    0.815812232
+#> 378     -0.8396775   -0.811326758
+#> 379     -0.5406286   -0.811326758
+#> 380      2.0060384    1.870464703
+#> 381      1.1694911   -0.267631722
+#> 382      2.0060384    2.441061168
+#> 383     -0.8396775   -0.534478002
+#> 384      0.2794507    0.815812232
+#> 385      1.1694911    1.119204075
+#> 386      1.1694911   -1.108871389
+#> 387     -1.1705234   -0.534478002
+#> 388     -0.2605156    0.261394158
+#> 389     -3.9375704   -0.003970259
+#> 390     -0.5406286   -1.108871389
+#> 391      2.0060384   -0.811326758
+#> 392      0.5554996    0.532833213
+#> 393      1.1694911    1.119204075
+#> 394      0.0101434    1.119204075
+#> 395      0.0101434    0.532833213
+#> 396     -0.8396775   -1.859081712
+#> 397      2.6619536   -0.003970259
+#> 398      0.2794507   -1.108871389
+#> 399     -1.5534143   -2.443561734
+#> 400      0.5554996    1.119204075
 #> 
 #> $wle_correlation
-#>   subscale_a subscale_b            r   ci_lower   ci_upper   p_value   n
-#> 1          1          2 -0.005350613 -0.1033481 0.09274977 0.9150443 400
+#>   subscale_a subscale_b         r  ci_lower  ci_upper      p_value   n
+#> 1          1          2 0.4050472 0.3196922 0.4838813 3.172259e-17 400
 #> 
 # }
 ```

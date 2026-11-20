@@ -90,17 +90,21 @@ if that matters.
 [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md),
 [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md),
 [`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md),
-[`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md),
 [`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md),
 [`RMitemCatFitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFitPlot.md),
+[`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md),
 [`RMitemInfitCutoffMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoffMI.md),
 [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md),
 [`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md),
 [`RMlocdepGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGammaCutoff.md),
 [`RMlocdepQ3Cutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3cutoff.md),
-[`RMpersonFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonFit.md)
+[`RMpersonChange()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonChange.md)
+(with `critical = "simulate"`),
+[`RMpersonFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonFit.md),
+[`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md),
+[`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md)
 and
-[`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md).
+[`RMretestSD()`](https://pgmj.github.io/easyRasch2/dev/reference/RMretestSD.md).
 
 Functions that involve no simulation take no `seed` and are unaffected.
 
@@ -127,9 +131,9 @@ A reproducible `seed` does not make every downstream number identical
 across machines. Model fitting can converge to marginally different
 optima under different BLAS implementations, and `mirt`-based routines
 advance their own internal state. Where a function needs to defend
-against that it re-seeds explicitly; see for example the plausible-value
-block in
-[`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md).
+against that it re-seeds explicitly, as the plausible-value block in
+[`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
+does.
 
 ## See also
 

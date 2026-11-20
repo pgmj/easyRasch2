@@ -1,10 +1,14 @@
-# Item Restscore Analysis
+# Item-restscore association
 
-Computes observed and model-expected item-restscore correlations using
-[`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html),
-and enriches the output with the absolute difference between observed
-and expected values, item average locations, and item locations relative
-to the sample mean person location.
+Computes, for each item, the observed and model-expected association
+between the item and the rest score (the total score on the other
+items), measured by Goodman-Kruskal's gamma with
+[`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html).
+Reports their signed difference, the item's location relative to the
+mean person location, and a misfit flag. With the result of
+[`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md),
+items are flagged on a bootstrap p-value corrected across items, which
+is recommended over the default asymptotic test (see Details).
 
 ## Usage
 
@@ -25,210 +29,189 @@ RMitemRestscore(
 
 - data:
 
-  A data.frame or matrix of item responses. Items must be scored
-  starting at 0 (non-negative integers). Missing values (`NA`) are
-  allowed, but at least one complete case (row with no `NA`) must be
-  present.
+  A data.frame or matrix of item responses, items scored from 0. Missing
+  values (`NA`) are allowed, but the statistic uses complete cases only,
+  so at least one is needed.
 
 - cutoff:
 
-  Optional. Default `NULL`, which tests each item against the asymptotic
-  normal reference distribution from
+  Optional. Default `NULL`, which tests each item with the asymptotic
+  normal test of
   [`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html),
-  adjusted by `p_adj`. Can be:
+  adjusted by `p_adj`. Either of:
 
-  - The return value of
-    [`RMitemRestscoreCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md):
-    the parametric bootstrap null distribution of the observed minus
-    expected gamma. Adds the columns `Diff_low` and `Diff_high` (the
-    descriptive interval), and, with `p_value` resolving to `TRUE`,
-    `p_restscore` and `padj_restscore`.
+  - The full result of
+    [`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md).
+    This enables the bootstrap p-values (see `p_value`) and adds the
+    columns `Diff_low` and `Diff_high`, the interval of the simulated
+    differences.
 
-  - The `$item_cutoffs` data.frame from
-    [`RMitemRestscoreCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)
-    directly (columns `Item`, `diff_low`, `diff_high`). Items are then
-    flagged against the interval.
+  - Its `$item_cutoffs` data.frame alone (columns `Item`, `diff_low`,
+    `diff_high`). Items are then flagged against the interval.
 
   With a `cutoff`, the asymptotic `p_adjusted` column is dropped and
   `p_adj` is ignored.
 
 - p_value:
 
-  Logical or `NULL`. Whether to compute bootstrap p-values from the
-  simulated null distribution and flag on them.
-
-  `NULL` (the default) means **use them when they are available**:
-  `TRUE` when `cutoff` is the full
-  [`RMitemRestscoreCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)
-  object, which carries the per-item simulated values in its `$results`
-  element, and `FALSE` otherwise. Explicit `TRUE` without the full
-  object is an error rather than a silent downgrade. With `FALSE` and a
-  `cutoff`, items are flagged against the interval instead, and a
-  one-time message reports the family-wise error rate that implies.
+  Logical or `NULL`. Whether to flag on bootstrap p-values from the
+  simulated values in `cutoff`. `NULL` (default) uses them whenever
+  `cutoff` is the full
+  [`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)
+  result. `TRUE` without it is an error. With `FALSE` and a `cutoff`,
+  items are flagged against the interval, and a one-time message gives
+  the family-wise error rate that implies.
 
 - correction:
 
-  Character. Multiple-comparison correction applied across items when
-  `p_value = TRUE`: `"fwer"` (default) for the Westfall-Young
-  studentised-max step-down (family-wise error rate), `"fdr_bh"` /
-  `"fdr_by"` for Benjamini-Hochberg / Benjamini-Yekutieli false
-  discovery rate control, or `"none"` for uncorrected per-item p-values.
+  Character. Correction of the bootstrap p-values across items: `"fwer"`
+  (default, Westfall-Young step-down, controls the family-wise error
+  rate), `"fdr_bh"` or `"fdr_by"` (Benjamini-Hochberg or
+  Benjamini-Yekutieli, control the false discovery rate), or `"none"`.
 
 - alpha:
 
-  Numeric in (0, 1). Significance level for the `Flagged` column when
-  `p_value = TRUE`. Default `0.05`.
+  Numeric in (0, 1). An item is flagged when its corrected bootstrap
+  p-value is below `alpha`. Default `0.05`. The asymptotic test without
+  a `cutoff` always flags at .05.
 
 - output:
 
-  Character string controlling the return value. Either `"kable"`
-  (default) for a formatted
+  Character. `"kable"` (default) for a
   [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html) table, or
-  `"dataframe"` for the underlying data.frame.
+  `"dataframe"`.
 
 - sort:
 
-  Optional character string. When `sort = "diff"`, rows are sorted by
-  the absolute magnitude of `Difference` in descending order, so that
-  both over- and underfitting items appear near the top.
+  Optional. `sort = "diff"` sorts the rows by the absolute `Difference`,
+  largest first, so that over- and underfitting items both come first.
+  Other values leave the order unchanged.
 
 - p_adj:
 
-  Character string specifying the p-value adjustment method passed to
+  Character. Adjustment of the asymptotic p-values across items, passed
+  to
   [`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html).
-  Default `"BH"` (Benjamini-Hochberg); use `"none"` for unadjusted
-  p-values. Run
-  [`?stats::p.adjust`](https://rdrr.io/r/stats/p.adjust.html) for the
-  list of available methods. Only used when `cutoff = NULL`.
+  Default `"BH"` (Benjamini-Hochberg). `"none"` gives unadjusted
+  p-values, and any method of
+  [`stats::p.adjust()`](https://rdrr.io/r/stats/p.adjust.html) can be
+  used. Only used when `cutoff = NULL`.
 
 ## Value
 
-- If `output = "kable"`: a `knitr_kable` object (plain text table via
-  `format = "pipe"`) with columns for item name, observed and expected
-  restscore correlations, the signed difference (observed minus
-  expected), adjusted p-value, the `Flagged` misfit label, and item
-  location relative to the sample mean person location.
+- `output = "kable"`: a `knitr_kable` table with the item name, the
+  observed and expected gamma, their difference, the adjusted p-value,
+  the `Flagged` label and the relative item location.
 
-- If `output = "dataframe"`: a data.frame with columns `Item`,
-  `Observed`, `Expected`, `Difference`, `p_adjusted`, `Flagged`, and
+- `output = "dataframe"`: a data.frame with the columns `Item`,
+  `Observed`, `Expected`, `Difference`, `p_adjusted`, `Flagged` and
   `Relative_location`. `Flagged` is `"overfit"` (observed above
-  expected, adj. p \< .05), `"underfit"` (below, adj. p \< .05), or `""`
-  (not flagged).
+  expected, adjusted p \< .05), `"underfit"` (below, adjusted p \< .05)
+  or `""`.
 
 With a `cutoff`, `p_adjusted` is replaced by `Diff_low` and `Diff_high`,
-followed by `p_restscore` (marginal equal-tailed bootstrap p-value) and
-`padj_restscore` (corrected p-value) when `p_value` resolves to `TRUE`.
-`Flagged` then reflects `padj_restscore < alpha`, or the interval when
-`p_value = FALSE`.
+followed by `p_restscore` (uncorrected equal-tailed bootstrap p) and
+`padj_restscore` (corrected p) when bootstrap p-values are used.
+`Flagged` then marks `padj_restscore < alpha`, or values outside the
+interval with `p_value = FALSE`.
 
-The `Difference` column is signed (observed minus expected): *positive*
-values indicate that the item correlates more strongly with the
-rest-score than the Rasch model predicts (over-discrimination /
-*overfit*, often associated with local dependence), and *negative*
-values indicate weaker-than-expected association (under-discrimination /
-*underfit*, often associated with multidimensionality or noise).
+`Difference` is observed minus expected gamma. Positive values mean the
+item is more strongly associated with the rest score than the model
+predicts (overfit, often from local dependence). Negative values mean a
+weaker association (underfit, often from multidimensionality or noise).
 
 ## Details
 
-Item-restscore correlations using Goodman-Kruskal's gamma (Kreiner,
-2011) measure the association between a person's score on a single item
-and their total score on the remaining items (the "restscore"). Under a
-correctly fitting Rasch model, observed and model-expected correlations
-should agree closely.
+**Statistic.** The item-restscore gamma (Kreiner, 2011) measures the
+association between the responses to one item and the rest score. Under
+the Rasch model the observed and expected gamma agree, apart from
+sampling error. The statistic is conditional on the total score.
 
-Item parameters are estimated by conditional maximum likelihood via
+**Data and model.** The item parameters are estimated by conditional
+maximum likelihood with
 [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
-(a dichotomous item is a 2-category PCM); the item-restscore statistic
-itself comes from
-[`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html)
-and is conditional on the total score, so it is invariant to the
-estimation engine. Per-item average locations are the means of the CML
-thresholds, and the person-location reference is the mean of the Warm
-WLE estimates.
-
-Relative item location is defined as the item's average location minus
-the sample mean person location, providing a measure of item targeting.
-
-The `iarm` package must be installed (it is in Suggests, not Imports).
+(a dichotomous item is a 2-category partial credit model). The statistic
+uses complete cases, and every response category must be used in them,
+or the function stops and names the item. The relative item location is
+the mean of the item's CML thresholds minus the mean WLE person
+location, a description of targeting. The iarm package must be installed
+(it is in Suggests).
 
 **The asymptotic p-value is miscalibrated.** Without a `cutoff`, each
 item is tested with `(observed - expected) / SE` against the standard
 normal, where the SE is that of the observed gamma alone. The expected
 gamma is estimated from the same data and correlates with the observed
 one, so the SE is too large for the difference. The difference is also
-biased upwards in small samples. Under a true Rasch model the test
+biased upwards in small samples. When the Rasch model holds, the test
 therefore flags too many items as overfit in small samples and too few
-as underfit at every sample size, and the adjustment chosen in `p_adj`
-does not correct either. In simulation, 20 dichotomous items at n = 150
-gave at least one BH-flagged item in 13 percent of datasets (30 percent
-when 1.5 logits off target), almost all of them overfit, while 9
-polytomous items at n = 1000 gave about 1 percent. Pass the object from
+as underfit at every sample size, and the adjustment in `p_adj` corrects
+neither. In simulation, 20 dichotomous items at n = 150 gave at least
+one BH-flagged item in 13% of datasets (30% when 1.5 logits off target),
+almost all of them overfit, while 9 polytomous items at n = 1000 gave
+about 1%. Pass the result of
 [`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)
-as `cutoff` for p-values from a parametric bootstrap null instead. The
+as `cutoff` for p-values from a parametric bootstrap instead. The
 simulation study is reported at
 <https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html>.
 
-**Bootstrap p-values.** When `p_value = TRUE`, each item's observed
-`Difference` is compared against its simulated null distribution (from
-`cutoff$results`), studentised by the mean and SD of the observed and
-simulated values together. Because that mean is subtracted, the
-small-sample upward bias of the difference is removed, and because that
-SD is used, the correlation between observed and expected gamma is
-accounted for.
+**Bootstrap p-values.** Each item's observed `Difference` is compared
+with its simulated values from `cutoff$results`, studentised by the mean
+and SD of the observed and simulated values together. Subtracting that
+mean removes the small-sample bias of the difference, and dividing by
+that SD accounts for the correlation between the observed and expected
+gamma.
 
-The test is equal-tailed: overfit and underfit each get alpha/2. Gamma
-is bounded at 1, so the null of `Difference` is left-skewed, and a
-two-sided test on `|t|` would reject more often in the long (underfit)
-tail. The marginal p-value is twice the smaller of the one-sided
-Monte-Carlo p-values, `(1 + #{t* >= t}) / (B + 1)` and
-`(1 + #{t* <= t}) / (B + 1)`, so it cannot be smaller than
-`2 / (B + 1)`. With `correction = "fwer"`, the Westfall-Young
-studentised-max step-down (Ferreira, 2024) is run once for each
-direction, and `padj_restscore` is twice the smaller of the two adjusted
-p-values. `"fdr_bh"` and `"fdr_by"` adjust the equal-tailed marginal
-p-values.
+The test is equal-tailed: overfit and underfit each get `alpha / 2`.
+Gamma is bounded at 1, so the simulated `Difference` is skewed to the
+left, and a two-sided test on `|t|` would reject more often in the long
+(underfit) tail. The uncorrected p is twice the smaller of the one-sided
+Monte Carlo p-values, `(1 + #{t* >= t}) / (B + 1)` and
+`(1 + #{t* <= t}) / (B + 1)` for B simulated datasets, so it cannot be
+smaller than `2 / (B + 1)`. With `correction = "fwer"`, the
+Westfall-Young step-down on the studentised maximum (Ferreira, 2024) is
+run once in each direction, and `padj_restscore` is twice the smaller of
+the two corrected p-values. `"fdr_bh"` and `"fdr_by"` adjust the
+equal-tailed uncorrected p-values.
 
-In simulation under a true Rasch model, over four conditions (20
+In simulation with the Rasch model true, over four conditions (20
 dichotomous or 9 polytomous items, n = 150 to 1000, on or off target),
-`correction = "fwer"` flagged at least one item in 5.0 percent of
-datasets: 2.4 percent underfit and 2.75 percent overfit. A test on `|t|`
-also held 5.0 percent, but split it 3.7 and 1.6. The equal-tailed test
-also gave fewer false underfit flags when other items overfit (4.7
-against 6.2 percent with two overfitting items), at a cost of 2 to 3
-percentage points of power to detect underfitting items. Before
-easyRasch2 1.4.0.9004 the test was on `|t|`.
+`correction = "fwer"` flagged at least one item in 5.0% of datasets,
+2.4% underfit and 2.75% overfit. A test on `|t|` also held 5.0%, but
+split it 3.7% and 1.6%. The equal-tailed test also gave fewer false
+underfit flags when other items overfit (4.7% against 6.2% with two
+overfitting items), at a cost of 2 to 3 percentage points of power to
+detect underfitting items. Before easyRasch2 1.4.0.9004 the test was on
+`|t|`.
 
-**Reproducibility.** The bootstrap p-values depend on the simulated
-null, so two analyses of the same data with different seeds can disagree
-about items near the decision boundary. In simulation, in conditions
-chosen to include such items, two seeds disagreed about the flag of at
-least one item in about 10 percent of analyses at 400 iterations and
-about 6 percent at 1000 with `correction = "fwer"`, and in 13 and 11
-percent with `correction = "fdr_bh"`. Set `seed` in
+**Reproducibility.** The bootstrap p-values depend on the simulations,
+so two analyses of the same data with different seeds can disagree about
+items near the decision boundary. In simulation, in conditions chosen to
+include such items, two seeds disagreed about the flag of at least one
+item in about 10% of analyses at 400 iterations and 6% at 1000 with
+`correction = "fwer"`, and in 13% and 11% with `"fdr_bh"`. Set `seed` in
 [`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)
 for a reproducible analysis, and use 1000 or more iterations for a final
 one.
 
 The direction in `Flagged` follows the studentised value, not the sign
-of `Difference`. At small sample sizes the null mean of `Difference` is
-slightly positive, so an item can be flagged `"underfit"` while its
-`Difference` is still just above zero. This is rare.
+of `Difference`. At small sample sizes the simulated `Difference` has a
+slightly positive mean, so an item can, rarely, be flagged `"underfit"`
+while its `Difference` is just above zero.
 
 ## Multiple comparisons
 
-The marginal p-value controls the error rate of a *single* comparison:
-for one item (or item pair) decided on in advance it is the relevant
-value. But scanning all *k* comparisons and flagging whichever fall
-below `alpha` tests *k* hypotheses at once, so the chance of at least
-one false flag inflates to roughly \\1 - (1 - \alpha)^k\\ (e.g. about
-34% for *k* = 8 at `alpha = 0.05`) – even when every marginal p-value is
-correctly calibrated. The corrected (adjusted) p-value controls this:
-`correction = "fwer"` bounds the probability of *any* false flag
-(strict, lower power), while `"fdr_bh"` / `"fdr_by"` bound the expected
-*proportion* of false flags among those raised (a more lenient middle
-ground). Rule of thumb: use the marginal p-value for a single
-pre-specified comparison, and a corrected p-value when screening the
-whole table – the usual workflow.
+The uncorrected p-value controls the error rate of a single comparison.
+For one item (or item pair) chosen in advance it is the relevant value.
+Flagging whichever of k comparisons fall below `alpha` tests k
+hypotheses at once, and the chance of at least one false flag rises to
+about \\1 - (1 - \alpha)^k\\, for example 34% for k = 8 at
+`alpha = 0.05`, even when every uncorrected p-value is calibrated. The
+corrected p-value controls this. `correction = "fwer"` bounds the
+probability of any false flag (strict, less power), and `"fdr_bh"` and
+`"fdr_by"` bound the expected share of false flags among those raised.
+Use the uncorrected p-value for a single comparison chosen in advance,
+and a corrected one when screening the whole table, which is the usual
+case.
 
 ## Flags depend on the other items
 
@@ -240,26 +223,32 @@ underfit range, and underfitting items, for example from a second
 dimension, can make fitting items look overfit. How large the effect is
 depends on how strong the misfit is and how many items share it. In
 simulation with seven polytomous items, two overfitting items led to
-about 6 percent of the fitting items being flagged as underfit, and one
-or two mildly multidimensional items to 1 to 2 percent being flagged as
-overfit. When items are flagged in both directions, consider removing
-the clearest misfit and testing again before interpreting the rest.
+about 6% of the fitting items being flagged as underfit, and one or two
+mildly multidimensional items to 1% to 2% being flagged as overfit. When
+items are flagged in both directions, consider removing the clearest
+misfit and testing again before interpreting the rest.
 
 ## References
-
-Kreiner, S. (2011). A Note on Item–Restscore Association in Rasch
-Models. *Applied Psychological Measurement, 35*(7), 557–561.
-[doi:10.1177/0146621611410227](https://doi.org/10.1177/0146621611410227)
 
 Ferreira, J. A. (2024). Methods of testing a 'small' or 'moderate'
 number of hypotheses simultaneously. *Journal of Statistical Theory and
 Practice, 19*(1), 6.
 [doi:10.1007/s42519-024-00412-4](https://doi.org/10.1007/s42519-024-00412-4)
 
+Kreiner, S. (2011). A Note on Item–Restscore Association in Rasch
+Models. *Applied Psychological Measurement, 35*(7), 557–561.
+[doi:10.1177/0146621611410227](https://doi.org/10.1177/0146621611410227)
+
 ## See also
 
-[`RMitemRestscoreCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md),
-[`RMitemRestscorePlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscorePlot.md)
+[`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)
+for the simulations,
+[`RMitemRestscorePlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscorePlot.md)
+to plot them,
+[`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md)
+for large samples, and
+[`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
+for a second item fit test.
 
 ## Examples
 

@@ -1,14 +1,14 @@
-# PCA of Standardized Rasch Residuals
+# PCA of standardized Rasch residuals
 
-Fits a Rasch model by CML via `psychotools` (a dichotomous item is a
-2-category PCM), extracts the standardized residuals \\(x -
-E)/\sqrt{Var}\\ at WLE person locations, and runs an unrotated
-principal-component analysis on those residuals via
-[`stats::prcomp()`](https://rdrr.io/r/stats/prcomp.html). The function
-reports the top `n_components` eigenvalues and their proportions of
-unexplained variance, and optionally compares the first-contrast
-eigenvalue against a simulation-based bound from
-[`RMdimResidualPCACutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md).
+Fits a Rasch or partial credit model by CML (`psychotools`), computes
+the standardized residuals \\(x - E)/\sqrt{Var}\\ at the WLE person
+locations, and runs an unrotated principal component analysis on them
+with [`stats::prcomp()`](https://rdrr.io/r/stats/prcomp.html). Reports
+the largest eigenvalues and their shares of the unexplained variance.
+With the result of
+[`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md),
+it compares the largest eigenvalue (the first contrast) with a simulated
+bound.
 
 ## Usage
 
@@ -26,107 +26,96 @@ RMdimResidualPCA(
 
 - data:
 
-  A data.frame or matrix of item responses. Items must be scored
-  starting at 0 (non-negative integers). Rows with any `NA` are dropped
-  before PCA, since [`prcomp()`](https://rdrr.io/r/stats/prcomp.html)
-  does not accept missing values.
+  A data.frame or matrix of item responses, items scored from 0. Rows
+  with any `NA` are dropped before the PCA, since
+  [`prcomp()`](https://rdrr.io/r/stats/prcomp.html) does not accept
+  missing values.
 
 - cutoff:
 
-  Optional. The list returned by
-  [`RMdimResidualPCACutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md)
-  (its `suggested_cutoff` is used), or a single numeric value to use as
-  the cutoff directly. When provided, the result includes a `Flagged`
-  column (logical: is the eigenvalue above the simulated bound?) and the
-  kable caption notes the cutoff.
+  Optional. The result of
+  [`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md)
+  (its `suggested_cutoff`, the 99th percentile, is used), or a single
+  number to use as the bound. Adds a logical `Flagged` column (is the
+  eigenvalue above the bound?), and the caption reports the bound.
 
 - p_value:
 
-  Logical. When `TRUE`, adds a one-sided bootstrap p-value for the
-  first-contrast eigenvalue: the proportion of simulated first-contrast
-  eigenvalues at least as large as the observed one,
-  `(1 + #\{lambda* >= lambda\}) / (B + 1)`. Requires the **full**
-  [`RMdimResidualPCACutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md)
-  object as `cutoff` (it carries the simulated eigenvalues in
-  `$results`); a bare numeric cutoff is not sufficient. The simulated
-  null is the distribution of the *largest* eigenvalue, so the p-value
-  applies to PC1 only (`NA` for the other components). This is a single
-  test — no multiplicity correction is involved. Default `FALSE`.
+  Logical. Add a one-sided bootstrap p-value for the first-contrast
+  eigenvalue, the share of simulated largest eigenvalues at least as
+  large as the observed one, `(1 + #\{lambda* >= lambda\}) / (B + 1)`
+  for B simulated datasets. Needs the full
+  [`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md)
+  result as `cutoff`. The simulations are of the largest eigenvalue, so
+  the p-value is given for the first component only (`NA` for the
+  others). It is a single test, so no correction for multiple testing is
+  needed. Default `FALSE`.
 
 - n_components:
 
-  Integer. Number of eigenvalues to report. Capped at the number of
-  items. Default `5`.
+  Integer. Number of eigenvalues to report, at most the number of items.
+  Default `5`.
 
 - output:
 
-  Character. `"kable"` (default) for a formatted
+  Character. `"kable"` (default) for a
   [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html) table,
-  `"dataframe"` for the underlying data.frame, or `"ggplot"` for a
-  ggplot of PC1 loadings against item locations. `"loadings"` is
-  accepted as a backward-compatible alias for `"ggplot"`.
+  `"dataframe"`, `"list"` for the table and the variance partition, or
+  `"ggplot"` for a plot of the first-component loadings against the item
+  locations. `"loadings"` is an old name for `"ggplot"`, still accepted.
 
 ## Value
 
-- If `output = "kable"`: a `knitr_kable` object with columns Component,
-  Eigenvalue, Proportion of variance (and `Flagged` when `cutoff` is
-  provided; `p` when `p_value = TRUE`). The caption gives the variance
-  partition (% of total observed variance explained by measures vs.
-  unexplained), the model fitted, sample size, and cutoff/p-value
-  metadata if applicable.
+- `output = "kable"`: a `knitr_kable` table with the columns Component,
+  Eigenvalue and Proportion of variance, plus `Flagged` with a `cutoff`
+  and `p` with `p_value = TRUE`. The caption gives the variance
+  partition (the percentages of the observed variance explained by the
+  model and unexplained), the model, the sample size, and the bound or
+  p-value.
 
-- If `output = "dataframe"`: a data.frame with columns `Component`,
-  `Eigenvalue`, `Proportion_of_variance` (and `Flagged` when `cutoff` is
-  provided; `p` when `p_value = TRUE`, non-`NA` for PC1 only). The
-  variance partition is attached as the `"variance_partition"` attribute
-  — a list with elements `total`, `explained`, `unexplained`,
-  `pct_explained`, `pct_unexplained`, `n_persons`. Access via
-  `attr(result, "variance_partition")`.
+- `output = "dataframe"`: a data.frame with the columns `Component`,
+  `Eigenvalue` and `Proportion_of_variance`, plus `Flagged` and `p` as
+  above. The variance partition is also attached as
+  `attr(result, "variance_partition")`, kept for compatibility. Use
+  `output = "list"` to get it as a table.
 
-- If `output = "ggplot"`: a ggplot showing each item's PC1 loading on
-  the x-axis and Rasch item location on the y-axis, with dashed
-  reference lines at zero, and the variance partition in the figure
-  caption. Item names are labelled via
+- `output = "list"`: a list with `components`, the data.frame above, and
+  `variance`, a one-row data.frame with `total`, `explained`,
+  `unexplained`, `pct_explained`, `pct_unexplained` and `n_persons`.
+
+- `output = "ggplot"`: each item's first-component loading (x-axis)
+  against its location (y-axis), with dashed lines at zero and the
+  variance partition in the caption. Item names are placed with
   [`ggrepel::geom_text_repel()`](https://ggrepel.slowkow.com/reference/geom_text_repel.html)
-  when `ggrepel` is installed; otherwise plain `geom_text()`.
+  when ggrepel is installed.
 
 ## Details
 
-Rule-of-thumb thresholds for the first-contrast eigenvalue (e.g., the
-"\> 2" heuristic occasionally cited from Winsteps documentation) are not
-reliable indicators of multidimensionality; the first-contrast
-eigenvalue under a correctly fitting unidimensional model varies
-systematically with sample size, test length, and item-parameter spread.
-Empirical (simulated) bounds tailored to the data structure should be
-used instead — see
-[`RMdimResidualPCACutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md),
-and Chou & Wang (2010) for the underlying simulation argument.
+Fixed thresholds for the first-contrast eigenvalue, such as "above 2",
+do not indicate multidimensionality reliably. Under a unidimensional
+model that fits, the eigenvalue varies with the sample size, the number
+of items and the spread of the item parameters, so the bound should be
+simulated for the data at hand (Chou & Wang, 2010).
 
-The PCA is performed on the standardized residuals \\(x -
-E)/\sqrt{Var}\\ from the shared CML/WLE engine (CML item parameters via
-`psychotools`, WLE person locations). The reported eigenvalues are
-unrotated; rotation is appropriate for *interpreting* a multidimensional
-solution but obscures the dominant first contrast that dimensionality
-assessment is concerned with.
+The residuals come from the package's CML and WLE engine. The
+eigenvalues are unrotated. Rotation helps interpret a multidimensional
+solution, but it hides the dominant first contrast that the assessment
+of dimensionality is about. The item locations in the plot are the means
+of each item's CML thresholds.
 
-Item locations on the loadings plot are the per-item mean of the CML
-Andrich thresholds.
+The variance partition follows Linacre's convention: each item's
+observed variance is compared with its expected variance under the
+model, summed over items. The expected scores use the CML item
+parameters and the WLE person locations. WLE estimates are finite at
+extreme scores, so all respondents are kept.
 
-The variance partition follows Linacre's convention: per-item observed
-variance is compared to per-item *expected* variance under the fitted
-model, summed across items. Expected scores are computed from the CML
-item parameters and WLE person locations. WLE is finite at extreme
-scores, so all persons are retained (the previous MLE partition dropped
-extreme-score cases).
-
-**Bootstrap p-value.** When `p_value = TRUE`, the observed
-first-contrast eigenvalue is compared against the simulated null
-distribution of largest eigenvalues (from `cutoff$results`), giving the
-one-sided Monte-Carlo p-value `(1 + #\{lambda* >= lambda\}) / (B + 1)`.
-Because the maximum eigenvalue is a single family-wise statistic, no
-multiplicity correction applies. The p-value is model-conditional and
-sample-size-sensitive; it is reported alongside the simulated cutoff,
-not in place of it, and can be no smaller than `1 / (B + 1)`.
+**Bootstrap p-value.** With `p_value = TRUE`, the observed
+first-contrast eigenvalue is compared with the simulated largest
+eigenvalues in `cutoff$results`. The largest eigenvalue is already a
+single statistic over all components, so no correction for multiple
+testing applies. The p-value depends on the model and the sample size,
+is reported with the simulated bound, not instead of it, and can be no
+smaller than `1 / (B + 1)`.
 
 ## References
 
@@ -137,7 +126,12 @@ residuals. *Educational and Psychological Measurement, 70*(5), 717-731.
 
 ## See also
 
-[`RMdimResidualPCACutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md)
+[`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md)
+for the simulated bound,
+[`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
+and
+[`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
+for other checks of unidimensionality.
 
 ## Examples
 

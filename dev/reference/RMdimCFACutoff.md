@@ -1,16 +1,16 @@
-# Simulated null distribution for one-factor CFA fit and loadings under PCM unidimensionality
+# Simulated reference for one-factor CFA fit and loadings
 
-Generates a parametric-bootstrap null distribution against which
-observed one-factor categorical-CFA results can be compared. The
-simulation draws `iterations` datasets from the fitted PCM (or RM, for
-dichotomous data) using the observed item parameters and a resampled
-person distribution; each simulated dataset is fitted with
-`lavaan::cfa(..., ordered = TRUE, estimator = "WLSMV")` and both the
-three fit indices (CFI, RMSEA, SRMR) and the per-item standardized
-factor loadings are recorded. Because the simulated data satisfy the PCM
-unidimensional assumption by construction, the resulting distributions
-are the "expected" reference for what a correctly fitting unidimensional
-model produces at this sample size and item structure.
+Simulates datasets from the Rasch or partial credit model fitted to your
+data, fits a one-factor CFA for ordinal items to each with
+[`lavaan::cfa()`](https://rdrr.io/pkg/lavaan/man/cfa.html) (Rosseel,
+2012), and records the fit indices (CFI, RMSEA, SRMR) and the
+standardized loading of each item. The simulated data are unidimensional
+by construction, so the result shows what a unidimensional scale gives
+at this sample size and with these items. Pass it to
+[`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
+for the tables and to
+[`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFAPlot.md)
+for the figures.
 
 ## Usage
 
@@ -32,94 +32,93 @@ RMdimCFACutoff(
 
 - data:
 
-  A data.frame or matrix of item responses (non-negative integers,
-  0-based). One column per item, one row per person. At least 4 items:
-  with 3 the one-factor model has no degrees of freedom and the fit
-  indices are perfect by construction.
+  A data.frame or matrix of item responses, items scored from 0. One
+  column per item, one row per person. Only complete cases are used. At
+  least 4 items: with 3, the one-factor model has no degrees of freedom
+  and the fit indices are perfect by construction.
 
 - iterations:
 
-  Integer. Number of parametric-bootstrap iterations. Default `250`.
+  Integer. Number of simulated datasets. Default `250`. For p-values in
+  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md),
+  use at least 1000.
 
 - percentile:
 
-  Numeric in (50, 100). The strictness of the cutoffs. Default `99`. Fit
-  indices use a one-sided cutoff in the unfavourable direction (CFI from
-  below; RMSEA and SRMR from above); standardized loadings use a
-  two-sided central interval covering `percentile`% of the simulated
-  distribution (an item is flagged when its observed loading falls in
-  the outer `100 - percentile`%, split across the two tails).
+  Numeric in (50, 100). How strict the cutoffs are. Default `99`. The
+  fit indices get a one-sided cutoff in the unfavourable direction (CFI
+  from below, RMSEA and SRMR from above). The loadings get a two-sided
+  central interval covering `percentile`% of the simulated values, so an
+  item is flagged when its observed loading falls in the outer
+  `100 - percentile`%, split between the two tails.
 
 - output:
 
-  Character. Only `"list"` (the default) is supported and the function
-  always returns the simulation object. `"kable"` is retained only to
-  raise an informative error: tables now come from
-  [`RMdimCFA`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md).
+  Character. Only `"list"` (default) is supported, and the function
+  always returns the simulations. `"kable"` gives an error that points
+  to
+  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md),
+  where the tables now come from.
 
 - parallel:
 
-  Logical. If `TRUE` (default), uses parallel processing via `mirai`.
-  Falls back to sequential if `mirai` is not installed or `n_cores`
-  cannot be resolved.
+  Logical. Run the simulations in parallel via mirai when it is
+  installed. Default `TRUE`.
 
 - n_cores:
 
   Integer or `NULL`. Number of parallel workers. When `NULL`,
-  `getOption("mc.cores")` is consulted; if neither is set, sequential is
-  used.
+  `getOption("mc.cores")` is used. If that is unset too, a warning is
+  given and the simulations run sequentially.
 
 - verbose:
 
-  Logical. Show a progress bar (default `FALSE`).
+  Logical. Show a progress bar. Default `FALSE`.
 
 - seed:
 
-  Integer or `NULL`. Master seed for reproducibility. See
+  Integer or `NULL`. Random seed for reproducibility. See
   [easyRasch2-reproducibility](https://pgmj.github.io/easyRasch2/dev/reference/easyRasch2-reproducibility.md)
   for what this guarantees and how it interacts with `parallel`.
 
 - estimator:
 
-  Character. The lavaan estimator passed to
-  [`lavaan::cfa()`](https://rdrr.io/pkg/lavaan/man/cfa.html). One of
-  `"WLSMV"` (default), `"ULSMV"`, `"WLSM"`, `"ULSM"`, `"WLSMVS"` or
-  `"ULSMVS"`. The CFI and RMSEA are always the scaled versions, so only
-  estimators with a scaled test statistic are accepted. Any other
-  estimator stops with an error.
+  Character. The lavaan estimator: `"WLSMV"` (default), `"ULSMV"`,
+  `"WLSM"`, `"ULSM"`, `"WLSMVS"` or `"ULSMVS"`. CFI and RMSEA are always
+  the scaled versions, so only estimators with a scaled test statistic
+  are accepted.
 
 ## Value
 
-A list (the simulation object), with components:
+A list with:
 
 - `simulated`:
 
-  data.frame with one row per successful iteration and columns
-  `iteration`, `cfi`, `rmsea`, `srmr`.
+  data.frame with one row per simulated dataset and the columns
+  `iteration`, `cfi`, `rmsea` and `srmr`.
 
 - `simulated_loadings`:
 
-  data.frame with one row per successful iteration: an `iteration`
-  column followed by one column per item holding the simulated
-  standardized loading.
+  data.frame with one row per simulated dataset, an `iteration` column
+  and one column per item with its standardized loading.
 
 - `percentile`:
 
-  Numeric: the strictness setting used.
+  The strictness setting.
 
 - `cutoffs`:
 
-  Named numeric vector (`cfi`, `rmsea`, `srmr`) of one-sided fit-index
-  cutoffs at the chosen percentile.
+  Named numeric vector (`cfi`, `rmsea`, `srmr`) of the one-sided
+  cutoffs.
 
 - `loading_cutoffs`:
 
-  data.frame `Item`, `low`, `high` — the two-sided expected loading
-  interval per item.
+  data.frame with `Item`, `low` and `high`, the two-sided interval of
+  the loadings per item.
 
 - `actual_iterations`:
 
-  Number of successful MC iterations.
+  Number of simulated datasets that could be used.
 
 - `sample_n`:
 
@@ -127,12 +126,11 @@ A list (the simulation object), with components:
 
 - `sample_n_total`:
 
-  Number of respondents in the raw input data, before the complete-case
-  filter.
+  Number of respondents in `data`, before the complete-case filter.
 
 - `sample_has_na`:
 
-  Logical. Whether the raw input data contained any missing values.
+  Logical. Whether `data` contained missing values.
 
 - `n_items`:
 
@@ -140,60 +138,50 @@ A list (the simulation object), with components:
 
 - `item_names`:
 
-  Character vector of item names.
+  Item names.
 
 - `is_polytomous`:
 
-  Logical: was a PCM (vs RM) fitted?
+  Logical. Whether a PCM (rather than the Rasch model) generated the
+  data.
 
 - `estimator`:
 
-  The lavaan estimator used.
+  The lavaan estimator.
 
 ## Details
 
-This function only generates the simulated reference. To obtain the
-observed-vs-expected tables, pass its result to
-[`RMdimCFA`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md);
-for the figures, pass it to
-[`RMdimCFAPlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFAPlot.md).
+**Generating model.** Each dataset is simulated from the partial credit
+model (or Rasch model, for dichotomous items) fitted to the observed
+data, with person locations drawn with replacement from the estimated
+ones. The simulated data therefore satisfy unidimensionality.
 
-**Generative model.** The data-generating process for each simulated
-dataset is the PCM (or RM) fitted to the observed data, with persons
-drawn from the empirical theta distribution (resampled with
-replacement). This means the simulated data perfectly satisfy the PCM
-unidimensional assumption.
-
-**Estimation model.** The CFA on each simulated dataset uses a
-single-factor model with all items as ordinal indicators
-(`F1 =~ I1 + I2 + ...`), fitted with `WLSMV` by default. Reported CFI /
-RMSEA are the scaled variants (`cfi.scaled`, `rmsea.scaled`) for the
-observed data and every simulated dataset alike; SRMR is reported
-unchanged. A simulated dataset for which lavaan cannot compute a scaled
-index gets `NA` for it and is left out of that index's cutoff and
-p-value, with a message giving the count. Standardized loadings are the
-`est.std` of the `=~` paths from
+**Estimation model.** Each simulated dataset is fitted with a one-factor
+model with all items as ordinal indicators (`F1 =~ I1 + I2 + ...`), by
+`WLSMV` unless `estimator` says otherwise. CFI and RMSEA are the scaled
+versions (`cfi.scaled`, `rmsea.scaled`) for the observed and the
+simulated data alike. SRMR is used as it is. A simulated dataset for
+which lavaan cannot compute a scaled index gets `NA` for it and is left
+out of that index's cutoff and p-value, with a message giving the count.
+The standardized loadings are `est.std` of the `=~` paths from
 [`lavaan::standardizedSolution()`](https://rdrr.io/pkg/lavaan/man/standardizedSolution.html).
 
-**Why a null distribution.** A perfectly PCM-unidimensional dataset will
-typically not yield CFA fit indices at their ideal values (CFI = 1,
-RMSEA = 0), nor identical loadings across items: PCM uses a logistic
-threshold structure while WLSMV uses a probit link via the polychoric
-correlation matrix, and finite samples add sampling variability. The
-simulated distributions capture both, giving a more honest reference
-than rule-of-thumb cutoffs derived under continuous-data ML.
+**Why simulate.** Data that are unidimensional under the partial credit
+model will usually not give CFA fit indices at their ideal values (CFI =
+1, RMSEA = 0), nor equal loadings for all items. The PCM is a logistic
+model, while WLSMV fits a probit model to the polychoric correlations,
+and finite samples add sampling variability. The simulations capture
+both, which gives a better reference than fixed cutoffs derived for
+continuous data and ML estimation.
 
-**Iteration failures.** Some simulated datasets cause WLSMV to fail
-(non-positive-definite polychoric matrix, boundary thresholds, empty
-categories). Failed iterations are dropped; `actual_iterations` reflects
-the number that succeeded.
+**Datasets that fail.** Some simulated datasets make the estimation fail
+(a polychoric matrix that is not positive definite, thresholds on the
+boundary, empty categories). They are left out, and `actual_iterations`
+gives the number that remained. If all fail, the function stops, naming
+any category used only by respondents with a zero or perfect total
+score.
 
 ## References
-
-Yuan, K.-H., & Bentler, P. M. (2000). Three likelihood-based methods for
-mean and covariance structure analysis with nonnormal missing data.
-*Sociological Methodology, 30*(1), 165-200.
-[doi:10.1111/0081-1750.00078](https://doi.org/10.1111/0081-1750.00078)
 
 Rosseel, Y. (2012). lavaan: An R Package for Structural Equation
 Modeling. *Journal of Statistical Software, 48*(2), 1-36.
@@ -201,10 +189,14 @@ Modeling. *Journal of Statistical Software, 48*(2), 1-36.
 
 ## See also
 
-[`RMdimCFA`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md),
-[`RMdimCFAPlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFAPlot.md),
-[`RMdimResidualPCA`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md),
-[`RMdimMartinLof`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
+[`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
+for the tables,
+[`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFAPlot.md)
+for the figures,
+[`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md)
+and
+[`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
+for other checks of unidimensionality.
 
 ## Examples
 
@@ -214,7 +206,7 @@ if (requireNamespace("lavaan", quietly = TRUE) &&
     requireNamespace("eRm", quietly = TRUE)) {
   data("raschdat1", package = "eRm")
 
-  # Few iterations for a fast example; use 250+ in real analyses
+  # Few iterations for a fast example. Use 250 or more in real analyses.
   sim <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 50,
                         parallel = FALSE, seed = 1)
 

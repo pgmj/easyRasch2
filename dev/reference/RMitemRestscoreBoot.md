@@ -1,13 +1,15 @@
-# Bootstrap Item-Restscore Misfit Detection
+# Bootstrap flag rates of the asymptotic item-restscore test
 
-Non-parametric bootstrap of item-restscore fit using
-[`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html).
-For each iteration, a sample of size `samplesize` is drawn from `data`
-with replacement, the appropriate Rasch model is refitted, and
-item-restscore results are classified as `"overfit"`, `"underfit"`, or
-`"no misfit"` based on the BH-adjusted p-value (\< .05) and the sign of
-`expected - observed`. The function returns the percentage of iterations
-in which each item is flagged.
+Draws bootstrap samples of size `samplesize` from `data`, runs the
+asymptotic item-restscore test of
+[`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html)
+in each, and reports how often each item is flagged as overfit or
+underfit. This describes how stable the asymptotic flags are across
+samples of a given size. It is not a calibrated test of item fit. For
+that, use
+[`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)
+with
+[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md).
 
 ## Usage
 
@@ -29,39 +31,36 @@ RMitemRestscoreBoot(
 
 - data:
 
-  A data.frame or matrix of item responses. Items must be scored
-  starting at 0 (non-negative integers).
+  A data.frame or matrix of item responses, items scored from 0.
 
 - iterations:
 
-  Integer. Number of bootstrap samples (default 200).
+  Integer. Number of bootstrap samples. Default `200`.
 
 - samplesize:
 
-  Integer. Size of each bootstrap sample (default 600). Must not exceed
+  Integer. Size of each bootstrap sample. Default `600`. Must not exceed
   `nrow(data)`.
 
 - parallel:
 
-  Logical. Use parallel processing via `mirai` if available (default
-  `TRUE`).
+  Logical. Run the bootstrap in parallel via mirai when it is installed.
+  Default `TRUE`.
 
 - n_cores:
 
   Integer or `NULL`. Number of parallel workers. When `NULL`,
-  `getOption("mc.cores")` is checked first. If neither is set and
-  `parallel = TRUE`, a warning is issued and execution falls back to
-  sequential processing.
+  `getOption("mc.cores")` is used. If that is unset too, a warning is
+  given and the bootstrap runs sequentially.
 
 - cutoff:
 
-  Numeric. Items flagged in fewer than this percentage of iterations are
-  excluded from the kable output (default 5). Has no effect when
-  `output = "dataframe"` or `output = "raw"`.
+  Numeric. The kable shows only items flagged in more than `cutoff`
+  percent of the samples. Default `5`. Not used by the other outputs.
 
 - verbose:
 
-  Logical. Show a progress bar (default `FALSE`).
+  Logical. Show a progress bar. Default `FALSE`.
 
 - seed:
 
@@ -71,92 +70,77 @@ RMitemRestscoreBoot(
 
 - output:
 
-  Either `"kable"` (default) for a formatted
+  Character. `"kable"` (default) for a
   [`knitr::kable()`](https://rdrr.io/pkg/knitr/man/kable.html) table,
-  `"dataframe"` for the per-item summary data.frame, or `"raw"` for the
-  per-iteration long data.frame (useful for custom plotting).
+  `"dataframe"` for the summary per item, or `"raw"` for one row per
+  item and bootstrap sample (for custom plots).
 
 ## Value
 
-- If `output = "kable"`: a `knitr_kable` object listing items flagged in
-  more than `cutoff`% of iterations, with columns Item, Item-restscore
-  result, % of iterations, Conditional MSQ infit, and Relative item
-  location, and a caption noting iteration count, bootstrap size, and
-  number of complete cases.
+- `output = "kable"`: a `knitr_kable` table of the items flagged in more
+  than `cutoff` percent of the samples, with the columns Item,
+  Item-restscore result, % of iterations, Conditional MSQ infit and
+  Relative item location. The caption gives the number of samples, the
+  sample size and the number of complete cases.
 
-- If `output = "dataframe"`: a data.frame with one row per item ×
-  classification combination (`Item`, `item_restscore`, `n`, `n_tested`,
-  `percent`, `Infit_MSQ`, `Relative_location`), including `"no misfit"`
-  rows. `percent` is `n` out of `n_tested`, the resamples in which the
-  item could be tested, and `NA` when it never could.
+- `output = "dataframe"`: a data.frame with one row per item and result
+  (`"overfit"`, `"underfit"`, `"no misfit"`), with the columns `Item`,
+  `item_restscore`, `n`, `n_tested`, `percent`, `Infit_MSQ` and
+  `Relative_location`. `percent` is `n` out of `n_tested`, the samples
+  in which the item could be tested, and `NA` when it never could.
 
-- If `output = "raw"`: a long data.frame with one row per item ×
-  successful iteration (`iteration`, `Item`, `item_restscore`, `diff`,
-  `diff_abs`), where `diff = expected - observed`. Rows for an item that
-  could not be tested in that resample have `NA` in `item_restscore`,
-  `diff` and `diff_abs`.
+- `output = "raw"`: a data.frame with one row per item and bootstrap
+  sample, with the columns `iteration`, `Item`, `item_restscore`, `diff`
+  and `diff_abs`. Note that `diff` is expected minus observed gamma, the
+  opposite sign of `Difference` in
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md).
+  Rows for an item that could not be tested in that sample have `NA` in
+  `item_restscore`, `diff` and `diff_abs`.
 
 ## Details
 
-Each iteration uses the asymptotic test from
+**What the percentage means.** Each sample is tested with the asymptotic
+test of
 [`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html)
-with Benjamini-Hochberg adjustment, so the result inherits that test's
-calibration at the subsample size. Under a true Rasch model it flags too
-many items as overfit in small or mistargeted samples of dichotomous
-items, too few items of any kind in large polytomous samples, and too
-few underfitting items at every sample size (see
+with Benjamini-Hochberg adjustment, and an item is flagged when its
+adjusted p is below .05, as overfit or underfit by the sign of the
+difference. The result inherits that test's calibration at `samplesize`.
+With the Rasch model true, it flags too many items as overfit in small
+or mistargeted samples of dichotomous items, too few items of any kind
+in large polytomous samples, and too few underfitting items at every
+sample size (see
 [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
 and
 <https://pgmj.github.io/rasch_book/chapters/restscore-asymptotic-null.html>).
 The percentage is therefore how often that test flags an item in samples
 of size `samplesize`, not the probability that the item misfits, and it
 changes with `samplesize`. A low underfit percentage is weak evidence of
-fit. For a test of item fit, use
-[`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)
-with
-[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md),
-whose bootstrap p-values are calibrated at the observed sample size.
-This function is best read as a description of how stable the asymptotic
-flags are across resamples.
+fit.
 
-The full-sample model is fitted by CML via
+**Model.** The full sample is fitted by CML with
 [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
-(a dichotomous item is a 2-category partial credit model), and item
-locations (mean of the grand-mean-centred CML Andrich thresholds) and
-the mean WLE person location are computed from it — consistent with
-[`RMitemRestscore`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
-and the rest of the package. Each bootstrap iteration draws a sample of
-size `samplesize` with replacement and refits via
-`psychotools::pcmodel(..., hessian = FALSE)` for speed;
-[`iarm::item_restscore()`](https://rdrr.io/pkg/iarm/man/item_restscore.html)
-accepts the fitted model.
+(a dichotomous item is a 2-category partial credit model). The
+conditional infit MSQ
+([`iarm::out_infit()`](https://rdrr.io/pkg/iarm/man/out_infit.html), on
+complete cases) and the relative item location (the mean of the item's
+CML thresholds minus the mean WLE person location) are computed once on
+the full sample and shown for context. Each bootstrap sample is refitted
+by CML.
 
-Conditional infit MSQ (computed once on the full sample via
-[`iarm::out_infit()`](https://rdrr.io/pkg/iarm/man/out_infit.html)) and
-relative item locations are reported alongside the bootstrap percentages
-for context. The item-restscore classification and the infit statistic
-are conditional and engine-invariant; only the relative-item location
-shifts slightly relative to the previous `eRm` implementation, because
-it now uses the WLE person mean (finite at extreme scores) rather than
-the `eRm` MLE mean.
+**Samples that fail.** A sample in which the model cannot be fitted is
+left out, and the caption and the counts include only the samples that
+could be used. A polytomous item that is constant in a sample makes that
+sample fail. A dichotomous item that is constant, or a polytomous item
+with an empty middle category, cannot be tested in that sample. It is
+then left out of that item's percentages, the other items keep the
+sample, and the caption lists the items with fewer samples. When a
+constant dichotomous item is left out, the Benjamini-Hochberg adjustment
+in that sample covers only the items tested there, since iarm drops the
+item before testing. An item with an empty lowest category is shifted to
+start at 0 by psychotools and is still tested.
 
-Iterations that fail (e.g., due to convergence issues on a degenerate
-bootstrap sample) are discarded, and the caption and `actual_iterations`
-count only successful runs. A polytomous item that is constant in a
-resample makes that resample fail. A dichotomous item that is constant,
-or a polytomous item with an empty middle category, cannot be tested in
-that resample: it is left out of that item's percentages, and the other
-items keep the resample. Its percentages are then based on fewer
-resamples, which the caption lists. When the left-out item is a constant
-dichotomous item, the Benjamini-Hochberg adjustment in that resample
-covers only the items tested there, since iarm drops the item before
-testing. An item with an empty lowest category is shifted to start at 0
-by psychotools and is still tested.
-
-Parallel processing is provided by the `mirai` package (optional).
-Install it with `install.packages("mirai")` to enable parallelisation.
-
-The `iarm` package must be installed (it is in Suggests, not Imports).
+Parallel processing needs the optional mirai package. The iarm package
+must be installed (it is in Suggests).
 
 ## References
 
@@ -166,8 +150,11 @@ Models. *Applied Psychological Measurement, 35*(7), 557-561.
 
 ## See also
 
-[`RMitemRestscore`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md),
-[`RMitemInfit`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
+[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+and
+[`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)
+for a calibrated test,
+[`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md).
 
 ## Examples
 
@@ -180,7 +167,7 @@ sim_data <- as.data.frame(
 )
 colnames(sim_data) <- paste0("Item", 1:8)
 
-# Few iterations for a fast example; use 100+ in real analyses
+# Few iterations for a fast example. Use 100 or more in real analyses.
 # Default kable output (only items flagged > cutoff%)
 RMitemRestscoreBoot(sim_data, iterations = 50, samplesize = 300,
                 parallel = FALSE, seed = 1)
@@ -200,14 +187,14 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
   ggplot(raw_df, aes(x = Item, y = diff)) +
     geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
     geom_violin(fill = "grey90", colour = NA) +
-    geom_jitter(aes(colour = item_restscore),
+    geom_jitter(aes(colour = item_restscore, shape = item_restscore),
                 width = 0.15, alpha = 0.5, size = 0.8) +
-    scale_colour_manual(values = c("overfit"   = "#377eb8",
-                                   "underfit"  = "#e41a1c",
+    scale_colour_manual(values = c("overfit"   = "#0072B2",
+                                   "underfit"  = "#D55E00",
                                    "no misfit" = "grey60")) +
-    labs(y = "Expected - observed restscore correlation",
-         colour = NULL) +
-    theme_minimal() +
+    labs(y = "Expected minus observed item-restscore gamma",
+         colour = NULL, shape = NULL) +
+    theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }
 }

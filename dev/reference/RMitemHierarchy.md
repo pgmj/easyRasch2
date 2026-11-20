@@ -1,9 +1,9 @@
-# Item-Threshold Hierarchy Plot
+# Item and threshold hierarchy plot
 
-Visualises item and threshold locations on the logit scale for a Partial
-Credit Model. Items are sorted by their (mean-threshold) location; each
-item shows its location as a black diamond and its individual thresholds
-as coloured dots with confidence-interval error bars.
+Plots the item and threshold locations of a partial credit model on the
+logit scale. Items are sorted by location (the mean of their
+thresholds). Each item's location is a black diamond and its thresholds
+are coloured dots with confidence intervals.
 
 ## Usage
 
@@ -21,9 +21,9 @@ RMitemHierarchy(
 
 - data:
 
-  A data.frame or matrix of polytomous item responses (non-negative
-  integers, 0-based, max value \> 1). One column per item, one row per
-  person.
+  A data.frame or matrix of polytomous item responses, items scored from
+  0, with at least one item above 1. One column per item, one row per
+  person. Dichotomous data give an error.
 
 - show_numbers:
 
@@ -47,9 +47,8 @@ RMitemHierarchy(
 
 - output:
 
-  One of `"ggplot"` (default) – a faceted hierarchy figure – or
-  `"dataframe"` – the long-format underlying data with one row per (item
-  × threshold).
+  `"ggplot"` (default) for the figure, or `"dataframe"` for its data,
+  one row per item and threshold.
 
 ## Value
 
@@ -59,30 +58,24 @@ Either a `ggplot` (default) or a data.frame with columns `Item`,
 
 ## Details
 
-Threshold locations are centred at the grand mean of all thresholds
-across items, so the dashed reference line at 0 represents the mean
-threshold location across the scale.
+The thresholds are centred on the mean of all thresholds, so the dashed
+line at 0 marks the average threshold of the scale.
 
-Confidence intervals around thresholds are 84% by default
-(`sem_multiplier = 1.405`), following Payton, Greenstone, & Schenker
-(2003) – non-overlap of 84% intervals approximately corresponds to a
-two-sample significance test at \\\alpha = 0.05\\. Use
-`sem_multiplier = 1.96` for 95% intervals.
+The intervals are 84% by default (`sem_multiplier = 1.405`), following
+Payton, Greenstone and Schenker (2003). Two 84% intervals that do not
+overlap correspond roughly to a two-sample test at \\\alpha = 0.05\\.
+Use `sem_multiplier = 1.96` for 95% intervals.
 
-**Polytomous only.** Dichotomous items have a single threshold that
-coincides with the item location; the hierarchy plot is visually
-degenerate in that case. For dichotomous data use
+**Polytomous only.** A dichotomous item has a single threshold, its
+location, so the plot would show nothing more. For dichotomous data use
 [`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md)
 or
-[`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md)
-instead.
+[`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md).
 
-**Centring convention.** The CML PCM thresholds (estimated via
-[`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html))
-are shifted so that their grand mean is zero; each item's location is
-then the mean of its centred thresholds. The dashed horizontal reference
-line on the plot marks this zero – i.e., the average threshold across
-all items.
+**Centring.** The CML thresholds
+([`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html))
+are shifted so that their mean is zero, and each item's location is the
+mean of its centred thresholds. The dashed line marks this zero.
 
 ## References
 
@@ -93,9 +86,12 @@ terms of statistical significance? *Journal of Insect Science, 3*(34),
 
 ## See also
 
-[`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md),
-[`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md),
-[`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md)
+[`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md)
+for the thresholds together with the person locations,
+[`RMitemParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemParameters.md)
+for the estimates as a table,
+[`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatProb.md),
+[`RMscoreSE()`](https://pgmj.github.io/easyRasch2/dev/reference/RMscoreSE.md).
 
 ## Examples
 

@@ -1,13 +1,12 @@
-# Plot observed CFA fit and loadings against the simulated null
+# Plot one-factor CFA fit and loadings against the simulations
 
-Returns two figures (in a list) comparing the observed one-factor CFA to
-the simulated null distribution from
-[`RMdimCFACutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md):
-a per-item standardized-loadings plot (observed marker against each
-item's simulated distribution and expected range, in the style of
-[`RMitemInfitPlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)),
-and a faceted plot of the CFI / RMSEA / SRMR distributions with the
-observed value overlaid.
+Returns two figures comparing the observed one-factor CFA with the
+simulations from
+[`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md):
+the standardized loadings per item, with each item's simulated values
+and the observed loading, in the style of
+[`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md),
+and the simulated CFI, RMSEA and SRMR with the observed values.
 
 ## Usage
 
@@ -19,22 +18,21 @@ RMdimCFAPlot(simfit, data, percentile = NULL)
 
 - simfit:
 
-  The list returned by
-  [`RMdimCFACutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md).
+  The result of
+  [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md).
 
 - data:
 
-  The item-response data the CFA was run on (the same items used for the
-  cutoff). Required: the observed values are computed from it.
+  The item responses the simulations were made from. Required, since the
+  observed values are computed from it.
 
 - percentile:
 
-  Numeric in (50, 100) or `NULL`. When supplied, the cutoffs and flags
-  are recomputed at this percentile from the stored simulated
-  distributions (no re-simulation). When `NULL` (default), the
-  percentile from the original
+  Numeric in (50, 100) or `NULL`. When given, the cutoffs and flags are
+  recomputed at this percentile from the stored simulations, without
+  simulating again. Default `NULL`, the percentile of the
   [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md)
-  call is reused.
+  call.
 
 ## Value
 
@@ -42,19 +40,28 @@ A named list of two `ggplot` objects:
 
 - `loadings`:
 
-  Per-item standardized loadings: simulated distribution (dots),
-  expected interval, and the observed loading as a diamond (red when
-  flagged).
+  Standardized loadings per item: the simulated values (dots), black
+  segments for their central 66% and the expected range at `percentile`,
+  the median (black dot), and the observed loading as a diamond, red
+  when it is outside the expected range.
 
 - `fit`:
 
-  Faceted CFI / RMSEA / SRMR simulated distributions with the observed
-  value and cutoff overlaid.
+  The simulated CFI, RMSEA and SRMR in panels, with the observed value
+  and the cutoff.
+
+## Details
+
+The outer segment in the loadings plot is the expected range that
+[`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
+flags against: the central interval of the simulated loadings covering
+`percentile`%. The inner segment is the central 66%. The ranges are per
+item and not corrected for testing several items.
 
 ## See also
 
-[`RMdimCFACutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md),
-[`RMdimCFA`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
+[`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md),
+[`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
 
 ## Examples
 

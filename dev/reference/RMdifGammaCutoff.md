@@ -1,12 +1,13 @@
-# Simulation-Based Partial Gamma DIF Cutoff Determination
+# Simulation-based partial gamma DIF cutoffs
 
-Simulates the distribution of the partial gamma DIF coefficient for each
-item when there is no DIF, to give empirical critical values and the
-simulated null behind the bootstrap p-values in
-[`RMdifGamma`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md).
-Every simulated dataset keeps each respondent's observed group
-membership and total score, so the null reflects the observed group
-sizes and any difference between the groups' latent distributions.
+Simulates the partial gamma DIF coefficient (Bjorner et al., 1998,
+Henninger et al., 2025) of each item when there is no DIF. Passed to
+[`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md),
+the result gives bootstrap p-values corrected across items, and an
+interval per item. Every simulated dataset keeps each respondent's
+observed group membership and total score, so the null reflects the
+observed group sizes and any difference between the groups' latent
+distributions.
 
 ## Usage
 
@@ -29,37 +30,35 @@ RMdifGammaCutoff(
 
 - data:
 
-  A data.frame or matrix of item responses. Items must be scored
-  starting at 0 (non-negative integers). Only complete cases (rows
-  without any `NA`) are used.
+  A data.frame or matrix of item responses, items scored from 0. Only
+  complete cases (in `data` and `dif_var`) are used.
 
 - dif_var:
 
-  A vector (factor, character, or integer) defining group membership for
-  DIF analysis. Must have the same length as `nrow(data)`. Group
-  membership is held fixed in every simulated dataset, so the group
-  sizes and each group's distribution of total scores are those
-  observed.
+  A vector (factor, character or integer) of length `nrow(data)` with
+  the groups. Group membership is held fixed in every simulated dataset,
+  so the group sizes and each group's distribution of total scores are
+  those observed.
 
 - iterations:
 
-  Integer. Number of simulation iterations (default 400).
+  Integer. Number of simulated datasets. Default `400`. Use 1000 to 2000
+  for a final analysis.
 
 - parallel:
 
-  Logical. Use parallel processing via `mirai` if available (default
-  `TRUE`).
+  Logical. Run the simulations in parallel via mirai when it is
+  installed. Default `TRUE`.
 
 - n_cores:
 
   Integer or `NULL`. Number of parallel workers. When `NULL`,
-  `getOption("mc.cores")` is checked first. If neither is set and
-  `parallel = TRUE`, a warning is issued and execution falls back to
-  sequential (single core) processing.
+  `getOption("mc.cores")` is used. If that is unset too, a warning is
+  given and the simulations run sequentially.
 
 - verbose:
 
-  Logical. Show a progress bar (default `FALSE`).
+  Logical. Show a progress bar. Default `FALSE`.
 
 - seed:
 
@@ -69,24 +68,25 @@ RMdifGammaCutoff(
 
 - cutoff_method:
 
-  Character string specifying how cutoff intervals are computed. Either
-  `"hdci"` (default) for the Highest Density Interval via
-  [`ggdist::hdci()`](https://mjskay.github.io/ggdist/reference/point_interval.html),
-  or `"quantile"` for the 2.5th/97.5th percentiles via
-  [`stats::quantile()`](https://rdrr.io/r/stats/quantile.html).
+  Character. How the interval per item is computed: `"hdci"` (default),
+  the highest-density continuous interval from
+  [`ggdist::hdci()`](https://mjskay.github.io/ggdist/reference/point_interval.html)
+  (needs ggdist), or `"quantile"`, the 2.5th to 97.5th percentiles.
 
 - hdci_width:
 
-  Numeric. Width of the HDCI when `cutoff_method = "hdci"`. Default is
-  `0.95` (95\\ Ignored when `cutoff_method = "quantile"`.
+  Numeric. Width of the interval with `cutoff_method = "hdci"`. Default
+  `0.95`, as in
+  [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md).
+  Ignored with `"quantile"`.
 
 - dgp:
 
-  Character. How the null datasets are generated. `"conditional"`
-  (default) draws each respondent's response pattern from the Rasch
-  conditional distribution given their observed total score, with the
-  CML item thresholds fixed, as the conditional option of
-  [`RMitemRestscoreCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)
+  Character. How the datasets without DIF are simulated. `"conditional"`
+  (default) draws each respondent's response pattern from the model
+  given their observed total score, with the CML item thresholds fixed,
+  as the conditional option of
+  [`RMitemRestscoreCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreCutoff.md)
   does. `"permutation"` keeps the observed responses and permutes group
   membership among respondents with the same total score, the Monte
   Carlo form of an exact conditional test of item-group independence
@@ -97,22 +97,21 @@ RMdifGammaCutoff(
 
 ## Value
 
-A list with components:
+A list with:
 
 - `results`:
 
-  data.frame with columns `iteration`, `Item`, and `gamma` (one row per
-  item per successful iteration).
+  data.frame with `iteration`, `Item` and `gamma`, one row per item and
+  simulated dataset.
 
 - `item_cutoffs`:
 
-  data.frame with per-item cutoff summaries: `Item`, `gamma_low`,
-  `gamma_high`. Bounds are computed using the method specified by
-  `cutoff_method`.
+  data.frame with the interval per item: `Item`, `gamma_low`,
+  `gamma_high`, computed by `cutoff_method`.
 
 - `actual_iterations`:
 
-  Number of successful iterations.
+  Number of simulated datasets that could be used.
 
 - `requested_iterations`:
 
@@ -160,20 +159,20 @@ A list with components:
 
 Partial gamma conditions on the total score, and under the Rasch model
 the response to an item is independent of group membership given the
-total score. Both data-generating processes preserve each respondent's
-group and total score, so the simulated null has the observed
-distribution of groups across score strata. An earlier version assigned
-simulated respondents to groups at random, which gave both groups the
-same latent distribution. When a minority group differed from the
-majority by 1 SD, that null was too narrow and flagged at least one item
-in about 14 percent of datasets with no DIF, against a nominal 5
-percent.
+total score. Both ways of simulating keep each respondent's group and
+total score, so the simulations have the observed distribution of groups
+over the total scores. Assigning simulated respondents to groups at
+random, as an earlier version did, gives both groups the same latent
+distribution. When a minority group differed from the majority by 1 SD,
+that was too narrow and flagged at least one item in about 14% of
+datasets without DIF, against a nominal 5%.
 
-For each iteration the function draws one null dataset (see `dgp`) and
-computes partial gamma for every item. The computation reproduces
+In each iteration one dataset is simulated (see `dgp`) and the partial
+gamma of every item computed. The computation reproduces
 [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html)
-exactly but is vectorised, so `iarm` is not needed here. Iterations that
-fail are discarded and reported through `actual_iterations`.
+exactly but is vectorised, so iarm is not needed here. Datasets that
+cannot be used are left out, and `actual_iterations` gives the number
+used.
 
 The conditional data-generating process uses CML item thresholds from
 [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html)
@@ -182,13 +181,12 @@ levels of `dif_var` (alphabetical for character vectors), which sets the
 sign of gamma as in
 [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html).
 
-The null has no DIF in any item, so the cutoffs do not guard against
-artificial DIF, which real DIF in one item induces in the others
+The simulations have no DIF in any item, so the cutoffs do not guard
+against artificial DIF, which real DIF in one item induces in the others
 (Hagquist & Andrich, 2017). See "Real and artificial DIF" in
 [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md).
 
-Parallel processing is provided by the `mirai` package (optional).
-Install it with `install.packages("mirai")` to enable parallelisation.
+Parallel processing needs the optional mirai package.
 
 ## References
 
@@ -213,9 +211,11 @@ Journal of Statistics, 14*(2), 97–112.
 
 ## See also
 
-[`partgam_DIF`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html),
-[`RMdifGamma`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md),
-[`RMdifGammaPlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaPlot.md)
+[`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
+for the test,
+[`RMdifGammaPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaPlot.md)
+for the plot,
+[`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html).
 
 ## Examples
 
@@ -229,7 +229,7 @@ if (requireNamespace("ggdist", quietly = TRUE)) {
   colnames(sim_data) <- paste0("Item", 1:10)
   dif_sex <- sample(c("male", "female"), 200, replace = TRUE)
 
-  # Run 100 iterations sequentially for a quick demo
+  # 100 iterations, sequentially, for a quick example
   cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_sex,
                                  iterations = 100, parallel = FALSE,
                                  seed = 42)

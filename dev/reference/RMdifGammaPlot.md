@@ -1,11 +1,10 @@
-# Plot Distribution of Simulated Partial Gamma DIF Values
+# Plot the simulated partial gamma DIF values
 
-Visualises the distribution of simulation-based partial gamma DIF values
-from
-[`RMdifGammaCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md),
-optionally overlaying observed partial gamma values computed from real
-data with the same routine the simulation uses, which reproduces
-[`partgam_DIF`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html) exactly.
+Plots the simulated partial gamma of each item from
+[`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md),
+and optionally the observed values in your data, computed with the same
+routine as the simulations, which reproduces
+[`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html).
 
 ## Usage
 
@@ -17,25 +16,20 @@ RMdifGammaPlot(simfit, data, dif_var)
 
 - simfit:
 
-  The return value of
-  [`RMdifGammaCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
-  (a list with components `results`, `item_cutoffs`,
-  `actual_iterations`, `sample_n`, and `item_names`).
+  The result of
+  [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md).
 
 - data:
 
-  Optional. A data.frame or matrix of item responses for computing and
-  overlaying observed partial gamma values. Items must be scored
-  starting at 0 (non-negative integers). When provided, the plot
-  includes orange diamond markers for the observed partial gamma
-  alongside the simulated distribution, plus segment summaries from the
-  cutoff intervals.
+  Optional. The item responses the simulations were made from, items
+  scored from 0. The observed partial gamma is then drawn as orange
+  diamonds.
 
 - dif_var:
 
-  Required when `data` is supplied. A vector (factor, character, or
-  integer) defining group membership for the DIF analysis. Must have the
-  same length as `nrow(data)`.
+  Needed with `data`. The vector of groups used in
+  [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md),
+  of length `nrow(data)`.
 
 ## Value
 
@@ -43,37 +37,30 @@ A `ggplot` object.
 
 ## Details
 
-Uses
-[`ggdist::stat_dotsinterval()`](https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html)
-(when `data` is not supplied) or
-[`ggdist::stat_dots()`](https://mjskay.github.io/ggdist/reference/stat_dots.html)
-(when `data` is supplied) with `point_interval = "median_hdci"` and
-`.width = c(0.66, 0.95, 0.99)`.
+Each item's simulated values are drawn as dots, with the median, an
+inner 66% interval and an outer interval. The outer interval is the one
+in `simfit$item_cutoffs`, which
+[`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
+tabulates: the HDCI of width `hdci_width`, or the 2.5th to 97.5th
+percentiles with `cutoff_method = "quantile"`. The inner interval uses
+the same method. Without `data` the intervals are drawn with
+[`ggdist::stat_dotsinterval()`](https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html).
+With `data` they are black segments with a black dot for the median, and
+the observed value is an orange diamond.
 
-When `data` is **not** supplied, the function plots the simulated
-partial gamma distributions as dot-interval plots using
-[`ggdist::stat_dotsinterval()`](https://mjskay.github.io/ggdist/reference/stat_dotsinterval.html)
-with median and Highest Density Continuous Interval (HDCI) summaries.
+The intervals are per item and not corrected for testing several items.
+With the full cutoff object,
+[`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
+flags items by adjusted p-values instead, so an item just outside its
+interval need not be flagged there. The plot shows no p-values.
 
-When `data` **is** supplied (along with `dif_var`), the function:
-
-1.  Computes observed partial gamma values (identical to
-    [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html)).
-
-2.  Overlays observed gamma values as orange diamond markers on the
-    simulated distributions.
-
-3.  Shows per-item cutoff intervals (from `simfit$item_cutoffs`) as
-    black line segments, with thicker segments for the 66\\ black dots
-    for the median.
-
-The `ggplot2` and `ggdist` packages must be installed (they are in
-Suggests, not Imports).
+The ggplot2 and ggdist packages must be installed (they are in
+Suggests).
 
 ## See also
 
-[`RMdifGammaCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md),
-[`RMdifGamma`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
+[`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md),
+[`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
 
 ## Examples
 
@@ -88,7 +75,7 @@ if (requireNamespace("ggdist", quietly = TRUE) &&
   colnames(sim_data) <- paste0("Item", 1:10)
   dif_group <- factor(sample(c("A", "B"), 200, replace = TRUE))
 
-  # Run simulation
+  # Run the simulation
   cutoff_res <- RMdifGammaCutoff(sim_data, dif_var = dif_group,
                                  iterations = 100, parallel = FALSE,
                                  seed = 42)

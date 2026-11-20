@@ -37,7 +37,8 @@ RMdifAnchor(
 - dif_var:
 
   Vector of length `nrow(data)` (factor, character or numeric) with
-  exactly two groups. Rows where it is `NA` are dropped with a message.
+  exactly two groups. Rows where it is `NA`, and rows with no responses,
+  are dropped with a message.
 
 - anchor:
 
@@ -59,8 +60,9 @@ RMdifAnchor(
 
   With `output = "ggplot"`: `"differences"` (default) plots the
   differences at the chosen `level` with confidence intervals.
-  `"criterion"` plots the Gini criterion of Strobl et al. (2021), which
-  is available with either anchor.
+  `"criterion"` plots each item's location difference and the Gini
+  criterion of Strobl et al. (2021) when the groups are aligned at that
+  item. It is available with either anchor and at any level.
 
 - correction:
 
@@ -70,8 +72,8 @@ RMdifAnchor(
 
 - alpha:
 
-  A unit is flagged when its corrected p-value is below `alpha`. Default
-  `0.05`.
+  An item, threshold or spacing is flagged when its corrected p-value is
+  below `alpha`. Default `0.05`.
 
 - conf:
 
@@ -85,8 +87,9 @@ RMdifAnchor(
 
 - sort:
 
-  Logical. Sort the table rows by the size of the difference (spacing:
-  by the test statistic). Default `FALSE`.
+  Logical. Sort the table rows with the largest absolute difference
+  first (at spacing level, the largest test statistic first). Default
+  `FALSE`.
 
 - n_seeds:
 
@@ -213,18 +216,27 @@ group, equal and unequal sizes, uniform DIF and DSF of 0.6 logits), the
 forward anchor with the single-step correction kept the family-wise
 error rate close to .05 in most conditions and had the highest power
 among the anchors that held it. Its family-wise error rate rose above
-.05 (up to about .10) when several items had small location shifts that
-the selection missed, and with three of 10 items with DIF at 150 per
-group. The consensus over orderings kept the error rate and power. The
-share of datasets where two runs with different seeds flag different
-thresholds fell from about .037 with a single ordering to about .012
-with 100 orderings. More than two groups, other DIF sizes and anchors of
-fixed length were not studied. The studies are reported in full at
+.05, up to about .10, in two kinds of condition: when several items had
+small location shifts that the selection missed, and when three of 10
+items had DIF with 150 respondents per group. Taking the consensus over
+orderings left the error rate and power as they were with a single
+ordering. The share of datasets where two runs with different seeds flag
+different thresholds fell from about .037 with a single ordering to
+about .012 with 100 orderings. More than two groups, other DIF sizes and
+anchors of fixed length were not studied. The studies are reported in
+full at
 <https://pgmj.github.io/rasch_book/chapters/dif-anchor-tests.html>.
 
-Every response category must be used in both groups, as in
-[`RMdifLR`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md).
-Respondents with missing responses are kept.
+**Data.** As in
+[`RMdifLR`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md),
+every response category of an item must be used in both groups, and not
+only by respondents with a zero or perfect score there. Otherwise the
+function stops and names the items, categories and groups. Respondents
+with missing responses are kept, since CML uses the items they answered.
+
+A flagged item shows that DIF is there, not that it matters.
+[`RMdifImpact`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifImpact.md)
+estimates its impact on group comparisons and person scores.
 
 ## References
 
@@ -266,6 +278,8 @@ differential item functioning within the family of Rasch models.
 
 [`RMdifLR`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
 for Andersen's likelihood-ratio test of any DIF (any number of groups),
+[`RMdifImpact`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifImpact.md)
+for the impact of flagged items,
 [`RMdifGamma`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
 and
 [`RMdifTree`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md).

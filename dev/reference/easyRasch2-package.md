@@ -1,8 +1,8 @@
 # easyRasch2: Psychometric Analysis with Rasch Measurement Theory
 
 Streamlines reproducible Rasch measurement theory analyses for ordinal
-item-response data, combining estimation routines from 'eRm',
-'psychotools', 'mirt', 'iarm', and 'lavaan' with consistent diagnostic,
+item-response data, combining estimation routines from 'psychotools',
+'mirt', 'iarm', 'lavaan', and 'psychotree' with consistent diagnostic,
 plotting, and reporting layers. Covers the four basic psychometric
 criteria summarised by Christensen et al. (2021)
 [doi:10.1111/sms.13908](https://doi.org/10.1111/sms.13908) –
@@ -16,7 +16,7 @@ local-dependence statistic, the largest residual-PCA eigenvalue, ordinal
 CFA fit indices, and partial-gamma DIF and local-dependence
 coefficients, optionally augmented with multiplicity-corrected bootstrap
 p-values. Outputs are knitr::kable() tables and 'ggplot2' figures
-suitable for direct inclusion in 'Quarto' and 'R Markdown' reports.
+suitable for direct inclusion in 'Quarto' reports.
 
 ## See also
 

@@ -1,11 +1,12 @@
-# Simulation-Based Infit MSQ Cutoff Determination for Multiply Imputed Data
+# Simulation-based infit MSQ cutoffs for multiply imputed data
 
-Extends
-[`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
-to work with multiply imputed datasets produced by the `mice` package.
-Runs the parametric bootstrap simulation on each imputed dataset and
-stacks the resulting distributions, so that the final cutoff intervals
-reflect both sampling variability and imputation uncertainty.
+The counterpart of
+[`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
+for data imputed with the mice package. Runs the simulations in each
+imputed dataset and stacks them, so that the interval per item reflects
+both sampling variability and the uncertainty from imputation. The
+result is used by
+[`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md).
 
 ## Usage
 
@@ -26,23 +27,24 @@ RMitemInfitCutoffMI(
 
 - mids_object:
 
-  A `mids` object (multiply imputed dataset) as returned by
+  A `mids` object from
   [`mice::mice()`](https://amices.org/mice/reference/mice.html). Each
-  completed dataset must contain only the item response columns to be
-  analysed (i.e., no ID or grouping variables). Items must be scored
-  starting at 0 (non-negative integers).
+  completed dataset must contain only the item response columns, with no
+  ID or grouping variables. Items are scored from 0. Items imputed as
+  factors, as the `polr` method needs, are converted back to numbers.
+  Their levels must be the response codes (`"0"`, `"1"`, ...).
 
 - iterations:
 
-  Integer. Total number of simulation iterations to run across all
-  imputations. These are distributed approximately evenly across the `m`
-  imputed datasets (default 500).
+  Integer. Total number of simulated datasets across all imputations,
+  split about evenly between the `m` imputed datasets. Default `500`.
+  See the section on interval width.
 
 - parallel:
 
-  Logical. Use parallel processing via `mirai` within each imputed
-  dataset (default `TRUE`). Passed to
-  [`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md).
+  Logical. Run the simulations within each imputed dataset in parallel
+  via mirai. Default `TRUE`. Passed to
+  [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md).
 
 - n_cores:
 
@@ -55,39 +57,38 @@ RMitemInfitCutoffMI(
 
 - seed:
 
-  Integer or `NULL`. Master random seed for reproducibility. A unique
-  per-imputation seed is derived from this value. See
+  Integer or `NULL`. Random seed for reproducibility, from which a seed
+  for each imputation is derived. See
   [easyRasch2-reproducibility](https://pgmj.github.io/easyRasch2/dev/reference/easyRasch2-reproducibility.md)
   for what this guarantees and how it interacts with `parallel`.
 
 - cutoff_method:
 
-  Character string specifying how cutoff intervals are computed from the
-  stacked distribution. Either `"hdci"` (default) for the Highest
-  Density Interval via
-  [`ggdist::hdci()`](https://mjskay.github.io/ggdist/reference/point_interval.html),
-  or `"quantile"` for the 2.5th/97.5th percentiles via
-  [`stats::quantile()`](https://rdrr.io/r/stats/quantile.html).
+  Character. How the interval per item is computed from the stacked
+  simulations: `"hdci"` (default), the highest-density continuous
+  interval from
+  [`ggdist::hdci()`](https://mjskay.github.io/ggdist/reference/point_interval.html)
+  (needs ggdist), or `"quantile"`, the 2.5th to 97.5th percentiles.
 
 - hdci_width:
 
-  Numeric. Width of the HDCI when `cutoff_method = "hdci"`. Default is
-  `0.999` (99.9% HDCI). Ignored when `cutoff_method = "quantile"`.
+  Numeric. Width of the interval with `cutoff_method = "hdci"`. Default
+  `0.999`, see the section on interval width. Ignored with `"quantile"`.
 
 ## Value
 
-A list with the same structure as
-[`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md),
-so that the result can be passed directly to
-[`RMitemInfit`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
-[`RMitemInfitMI`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md),
+A list like that of
+[`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md),
+which
+[`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
 and
-[`RMitemInfitPlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md):
+[`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
+accept, with:
 
 - `results`:
 
-  data.frame with columns `iteration`, `imputation`, `Item`, `InfitMSQ`,
-  `OutfitMSQ` — the stacked simulation results from all imputed
+  data.frame with the columns `iteration`, `imputation`, `Item`,
+  `InfitMSQ` and `OutfitMSQ`, the stacked simulations from all imputed
   datasets.
 
 - `item_cutoffs`:
@@ -135,37 +136,47 @@ and
 
 ## Details
 
-The function completes each of the `m` imputed datasets via
-[`mice::complete()`](https://tidyr.tidyverse.org/reference/complete.html),
-then calls
-[`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
-on each one. The total number of iterations is split approximately
-evenly across imputations (i.e., each imputed dataset receives
-`ceiling(iterations / m)` or `floor(iterations / m)` iterations). The
-per-imputation simulation results are stacked into a single distribution
-from which cutoff intervals are computed, naturally incorporating
-imputation uncertainty.
+Each of the `m` imputed datasets is completed with
+[`mice::complete()`](https://tidyr.tidyverse.org/reference/complete.html)
+and passed to
+[`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md),
+with `ceiling(iterations / m)` or `floor(iterations / m)` iterations
+each. The simulations from all imputations are stacked, and the interval
+per item is computed from the stack.
 
-Imputed datasets that cause model convergence failures are dropped with
-a warning. If all imputations fail, the function stops with an error.
+Imputed datasets in which the model cannot be fitted are dropped with a
+warning. If all imputations fail, the function stops with an error.
 
-The `mice` package must be installed (it is in Suggests, not Imports).
+The mice package must be installed (it is in Suggests).
 
 ## Interval width under multiple imputation
 
-`hdci_width` defaults to `0.999` here, not to the `0.95` used by
-[`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md).
-[`RMitemInfitMI`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
-has no corrected-p-value path yet, so under imputation the interval is
-still the decision rule and keeps a width chosen for that job. Combining
-bootstrap p-values across imputations is planned but needs its own
-calibration, since Johansson (2026) covers complete data only.
+`hdci_width` defaults to `0.999` here, not to the `0.95` of
+[`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md).
+[`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
+has no corrected p-value yet, so under imputation the interval is still
+the decision rule, and it keeps a width chosen for that. Its family-wise
+error rate is `1 - 0.999^k` over `k` items. An interval this wide needs
+roughly 5000 iterations in all before it reaches its stated width
+(Johansson, 2026). Combining bootstrap p-values across imputations is
+planned but needs its own calibration, since Johansson (2026) covers
+complete data only.
+
+## References
+
+Johansson, M. (2026). Simulation-based cutoffs for conditional item fit
+in Rasch models: Iterations, multiplicity correction, and decision
+stability. *PsyArXiv*.
+[doi:10.31234/osf.io/7pqz4_v2](https://doi.org/10.31234/osf.io/7pqz4_v2)
 
 ## See also
 
-[`RMitemInfitCutoff`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md),
-[`RMitemInfitMI`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md),
-[`RMitemInfitPlot`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
+[`RMitemInfitMI()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitMI.md)
+for the pooled test,
+[`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
+to plot the simulated values,
+[`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md)
+for complete data.
 
 ## Examples
 
@@ -190,8 +201,8 @@ if (requireNamespace("mice", quietly = TRUE) &&
   imp <- mice::mice(sim_data, m = 2, method = "polr", seed = 123,
                     printFlag = FALSE)
 
-  # Compute simulation-based cutoffs across imputations
-  # (use more iterations, e.g. 250+, in real analyses)
+  # Simulation-based cutoffs across imputations (use far more
+  # iterations in real analyses, see the section on interval width)
   cutoff_mi <- RMitemInfitCutoffMI(imp, iterations = 50, parallel = FALSE,
                                 seed = 42)
   cutoff_mi$item_cutoffs

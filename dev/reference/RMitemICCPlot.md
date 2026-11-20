@@ -1,13 +1,10 @@
-# Conditional Item Characteristic Curves
+# Conditional item characteristic curves
 
-Faceted panel of Conditional Item Characteristic Curves (cICCs), one per
-item. Each panel shows the model-expected conditional item score
-\\E\[X_i \mid R = r\]\\ against the total score \\r\\, together with the
-average observed item score within class intervals of the total score
-and their confidence intervals. When a `dif_var` is supplied, observed
-averages are computed separately per group, turning each panel into a
-visual DIF check, and the partial-gamma DIF magnitude is reported per
-item.
+Plots one panel per item with the model-expected item score given the
+total score, \\E\[X_i \mid R = r\]\\, and the observed mean item score
+in groups of total scores, with confidence intervals. With a `dif_var`,
+the observed means are shown per group, which makes each panel a visual
+DIF check, and the partial gamma DIF coefficient is shown per item.
 
 ## Usage
 
@@ -31,177 +28,182 @@ RMitemICCPlot(
 
 - data:
 
-  A data.frame or matrix of item responses (non-negative integers,
-  0-based). One column per item, one row per person.
+  A data.frame or matrix of item responses, items scored from 0. One
+  column per item, one row per person.
 
 - dif_var:
 
-  Optional vector of length `nrow(data)` (factor or coercible to factor)
-  defining a DIF grouping variable. When supplied, observed averages are
-  shown separately per group and the partial-gamma DIF coefficient
-  ([`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html),
+  Optional vector of length `nrow(data)` (a factor, or coercible to one)
+  defining groups for DIF. The observed means are then shown per group,
+  and each panel shows the item's partial gamma from
+  [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html),
   as in
-  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md))
-  is annotated per panel. Default `NULL` (no DIF).
+  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md).
+  Default `NULL`.
 
 - method:
 
-  How the observed means are grouped along the total score (see *Class
-  intervals* in Details). One of `"quantile"` (default):
-  `class_intervals` groups of approximately equal numbers of
-  respondents; `"width"`: `class_intervals` equal-width intervals over
-  the observed total-score range; `"score"`: every observed total score
-  is its own group; or `"manual"`: groups defined by `score_breaks`.
-  `"cut"` is accepted as a legacy alias for `"quantile"`.
+  How the observed means are grouped along the total score (see Class
+  intervals in Details): `"quantile"` (default), `class_intervals`
+  groups with about equal numbers of respondents, `"width"`,
+  `class_intervals` intervals of equal width over the observed total
+  scores, `"score"`, every observed total score its own group, or
+  `"manual"`, groups set by `score_breaks`. `"cut"` is an old name for
+  `"quantile"`, still accepted.
 
 - class_intervals:
 
-  Integer \>= 2. Number of class intervals for `method = "quantile"` and
-  `method = "width"`. Default `4`. Ignored (without an error) by
-  `method = "score"` and `method = "manual"`.
+  Integer, at least 2. Number of groups for `method = "quantile"` and
+  `"width"`. Default `4`. Ignored by `"score"` and `"manual"`.
 
 - score_breaks:
 
   Integer vector for `method = "manual"`: the total scores at which a
-  new group *starts*, in increasing order. For example,
-  `score_breaks = c(3, 6, 8)` on a 0-9 scale defines the groups 0-2,
-  3-5, 6-7, and 8-9 (the endpoints are added automatically). Serves the
-  same purpose as `lower.groups` in RASCHplot's `CICCplot()`, without
-  the leading zero. Default `NULL`.
+  new group starts, in increasing order. For example,
+  `score_breaks = c(3, 6, 8)` on a 0 to 9 scale gives the groups 0-2,
+  3-5, 6-7 and 8-9. It corresponds to `lower.groups` in RASCHplot's
+  `CICCplot()`, without the leading zero. Default `NULL`.
 
 - ci:
 
-  Logical. Draw confidence intervals (error bars) on the observed
-  class-interval means. Default `TRUE`.
+  Logical. Draw confidence intervals on the observed group means.
+  Default `TRUE`.
 
 - error_band:
 
-  Logical. Add a shaded band around the model-expected curve: the
-  model's interval for the *observed mean* at each total score, \\E \pm
-  z \sqrt{\mathrm{Var}/n_r}\\ (`n_r` = number of respondents at that
-  total score), as in RASCHplot's `CICCplot`. Complementary to `ci`, not
-  a replacement – see Details. Default `FALSE`.
+  Logical. Draw a band around the expected curve showing where the
+  observed mean at each total score should fall under the model (see
+  Details). It complements `ci` and does not replace it. Default
+  `FALSE`.
 
 - conf_level:
 
-  Numeric in (0, 1). Confidence level for the observed error bars and
-  the model band. Default `0.95`.
+  Numeric in (0, 1). Confidence level of the error bars and the band.
+  Default `0.95`.
 
 - min_n:
 
-  Integer. A group-by-interval cell needs at least this many respondents
-  to contribute an observed point + CI; sparser cells are skipped.
-  Default `8` (the package's per-cell stability floor).
+  Integer. A cell (group by score interval) needs at least this many
+  respondents to be shown with its interval. Default `8`.
 
 - items:
 
-  Optional character or integer vector selecting which items to plot.
-  The model is always fitted on all items; only the rendering is
-  filtered. Default `NULL` (all items).
+  Optional character or integer vector of the items to plot. The model
+  is always fitted on all items. Default `NULL`, all items.
 
 - output:
 
-  One of `"patchwork"` (default) – composite patchwork figure – or
-  `"list"` – a named list of per-item `ggplot` objects.
+  `"patchwork"` (default) for one combined figure, or `"list"` for a
+  named list of one `ggplot` per item.
 
 ## Value
 
-Either a `patchwork`/`ggplot` composite (default) or a named list of
-per-item `ggplot` objects (`output = "list"`). In DIF mode the per-item
-partial-gamma table is attached as `attr(., "dif_gamma")`.
+A `patchwork` figure, or with `output = "list"` a named list of `ggplot`
+objects. With `dif_var`, the partial gamma table is also attached as
+`attr(., "dif_gamma")`, for convenience. It is the result of
+`RMdifGamma(data, dif_var, output = "dataframe")` on the same
+respondents, so call
+[`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
+to get it as a table, with p-values corrected across items and, with a
+cutoff, a calibrated test.
 
 ## Details
 
-The model curve and its conditional variance come from the shared CML
-engine (CML item thresholds via `psychotools` and the exact conditional
-distribution of each item score given the total score, via elementary
-symmetric functions). The conditional-ICC approach follows Buchardt,
-Christensen & Jensen (2023) and their `RASCHplot` package; the
-implementation here is native to easyRasch2's CML/WLE engine.
+The approach follows Buchardt, Christensen and Jensen (2023) and their
+`RASCHplot` package, implemented on easyRasch2's CML engine: CML item
+thresholds from `psychotools`, and the exact distribution of each item
+score given the total score from elementary symmetric functions.
 
-**Conditioning.** The expected curve is the exact conditional
-expectation of the item score given the total score (it accounts for the
-item being part of the total), not a marginal ICC.
+**Data.** Only complete cases are used, and with `dif_var` also only
+rows where it is not missing. An unused response category stops the
+function and names the item. A category used only by respondents with a
+zero or perfect total score gives a warning, since its threshold cannot
+be estimated well.
 
-**Class intervals.** Following Buchardt et al. (2023), the empirical
-item means can be shown for each value of the total score or for each
-value of the *grouped* total score; all grouping happens on the
-total-score scale (never on an estimated latent score). Four grouping
-rules are available. `method = "quantile"` (the default) splits the
-observed total scores into `class_intervals` bins of approximately equal
-numbers of respondents, using common boundaries so DIF groups share the
-x-axis – the same approach as
-[`iarm::ICCplot()`](https://rdrr.io/pkg/iarm/man/ICCplot.html)'s class
-intervals (`Hmisc::cut2(g = ...)`). `method = "width"` instead splits
-the observed score range into `class_intervals` intervals of equal
-width, which reads naturally on the score axis but can leave sparse
-intervals (pruned by `min_n`). `method = "score"` uses every observed
-total score as its own group – the maximal-resolution display, sensible
-for short scales, with `min_n` pruning thinly-populated scores.
-`method = "manual"` places the group boundaries exactly where you say
-via `score_breaks` (RASCHplot's `lower.groups` concept). Each bin
-contributes one observed point at its mean total score. If the score
-distribution is too sparse to form `class_intervals` distinct bins, the
-quantile and width methods fall back to score-level points.
+**Conditioning.** The expected curve is the conditional expectation of
+the item score given the total score (Andersen, 1995), which accounts
+for the item being part of the total. It is not a marginal ICC.
 
-The figure caption names the grouping that was actually used, which is
-not always the one requested. Quantile grouping forms fewer bins than
-asked for when total scores tie at the boundaries, equal-width and
-manual grouping can define intervals no respondent falls into, and both
-binned methods fall back to score level on a degenerate score
-distribution. The caption reports the realised number of groups, how
-many of them contain respondents when that is fewer, and any fall back.
+**Class intervals.** Following Buchardt et al. (2023), the observed item
+means can be shown for each total score or for groups of total scores.
+All grouping is on the total score, never on an estimated person
+location. `method = "quantile"` splits the observed total scores into
+`class_intervals` groups of about equal numbers of respondents, with
+common boundaries so that DIF groups share the x-axis. This is the
+approach of
+[`iarm::ICCplot()`](https://rdrr.io/pkg/iarm/man/ICCplot.html)
+(`Hmisc::cut2(g = ...)`). `method = "width"` splits the observed score
+range into intervals of equal width, which reads naturally on the score
+axis but can leave sparse intervals, which `min_n` removes.
+`method = "score"` shows every observed total score, the finest
+resolution, sensible for short scales. `method = "manual"` places the
+boundaries where `score_breaks` says. Each group gives one observed
+point at its mean total score. If the scores are too sparse to form
+`class_intervals` distinct groups, `"quantile"` and `"width"` fall back
+to one point per score.
 
-**Confidence intervals.** Observed error bars use the normal
-approximation \\\bar{x}\_l \pm z \sqrt{\mathrm{var}(x_l) / n_l}\\ within
-each (group, interval) cell, clamped to the item's score range; cells
-with fewer than `min_n` respondents are dropped. In DIF mode this makes
-sparse group differences visibly uncertain rather than over-interpreted.
+The caption names the grouping that was used, which is not always the
+one requested. Quantile grouping forms fewer groups than asked for when
+total scores tie at the boundaries, equal-width and manual grouping can
+define intervals that no respondent falls into, and both binned methods
+fall back to score level when the scores are too sparse. The caption
+reports the number of groups formed, how many contain respondents when
+that is fewer, and any fall back.
 
-**The model band (`error_band`).** The shaded band is drawn around the
-model-expected curve at \\E\_{ri} \pm z \sqrt{V\_{ri}/n_r}\\, where
-\\E\_{ri}\\ and \\V\_{ri}\\ are the exact conditional mean and variance
-of the item score given total score \\r\\ (model quantities), and
-\\n_r\\ is the *observed* number of respondents at that total score. If
-the Rasch model is true, this is where the empirical mean item score at
-total score \\r\\ should fall, given how many people actually sit at
-that score; an observed diamond outside the band is localized graphical
-misfit. The band is deliberately the standard error of the *mean*
-(\\\sqrt{V/n_r}\\), not the far wider individual-response SD band, which
-would flag nothing. Its width therefore tracks the data: narrow where
-many respondents sit (a strict test), wide in sparse score regions (a
-lenient one), with gaps where \\n_r = 0\\ and collapsing to the curve at
-the deterministic extremes (total score 0 and the maximum). It is
-complementary to, not a replacement for, the `ci` error bars: the band
-is the model-implied uncertainty of the observed mean per raw score; the
-error bars are the sample-based uncertainty of the observed group means.
+**Confidence intervals.** The error bars use the normal approximation
+\\\bar{x}\_l \pm z \sqrt{\mathrm{var}(x_l) / n_l}\\ within each cell,
+limited to the item's score range. Cells with fewer than `min_n`
+respondents are dropped. With `dif_var`, this shows sparse group
+differences as uncertain.
 
-**DIF magnitude.** The annotated partial gamma (Bjorner et al., 1998) is
-the association between the item score and the group conditional on the
-rest score – a non-parametric effect size, complementary to the
-total-score-conditional visual. It is the same statistic as
+**The model band (`error_band`).** The band is \\E\_{ri} \pm z
+\sqrt{V\_{ri}/n_r}\\, where \\E\_{ri}\\ and \\V\_{ri}\\ are the model's
+conditional mean and variance of the item score at total score \\r\\,
+and \\n_r\\ is the observed number of respondents with that total score.
+If the model holds, this is where the observed mean item score at that
+total score should fall, given how many respondents have it. An observed
+point outside the band shows local misfit. The band uses the standard
+error of the mean, not the much wider SD of single responses, which
+would flag nothing. Its width therefore follows the data. It is narrow
+where many respondents are (a strict check) and wide where few are (a
+lenient one), with gaps where \\n_r = 0\\, and it closes on the curve at
+total score 0 and at the maximum, where the item score is fixed. The
+band shows the model's uncertainty of the observed mean per total score,
+and the error bars the sampling uncertainty of the observed group means.
+
+**DIF magnitude.** The partial gamma (Bjorner et al., 1998) is the
+association between the item score and the group given the rest score, a
+non-parametric effect size, the same statistic as in
 [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md).
 
 ## References
 
-Buchardt, A.-S., Christensen, K. B., & Jensen, S. N. (2023). Visualizing
-Rasch item fit using conditional item characteristic curves in R.
-*Psychological Test and Assessment Modeling, 65*(2), 206-219.
-
 Andersen, E. B. (1995). Polytomous Rasch models and their estimation. In
 G. H. Fischer & I. W. Molenaar (Eds.), *Rasch Models: Foundations,
 Recent Developments, and Applications* (pp. 271-291). Springer.
-(Conditional expectation of item scores given the total score; formula
+(Conditional expectation of item scores given the total score, formula
 15.22.)
 
 Bjorner, J. B., Kreiner, S., Ware, J. E., Damsgaard, M. T., & Bech, P.
 (1998). Differential item functioning in the Danish translation of the
 SF-36. *Journal of Clinical Epidemiology, 51*(11), 1189-1202.
 
+Buchardt, A.-S., Christensen, K. B., & Jensen, S. N. (2023). Visualizing
+Rasch item fit using conditional item characteristic curves in R.
+*Psychological Test and Assessment Modeling, 65*(2), 206-219.
+
 ## See also
 
-[`RMdifGamma`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md),
-[`RMitemRestscore`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+[`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
+and
+[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+for item fit tests,
+[`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
+and
+[`RMdifAnchor()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md)
+for DIF tests,
+[`RMitemCatFitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFitPlot.md)
+for category-level plots given the total score.
 
 ## Examples
 

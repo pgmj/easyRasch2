@@ -1,10 +1,12 @@
-# Raw-Score to Logit Score Transformation Table
+# Raw score to logit score table
 
-For a given set of items, returns the score-to-theta lookup that maps
-each possible raw sum score to a person-location estimate (in logits)
-and its standard error. Useful when reporting a scale's measurement
-properties or converting raw totals to interval-scaled scores for
-downstream analysis.
+Returns the table that maps each possible raw sum score to a person
+location (in logits) and its standard error. Useful when reporting a
+scale's measurement properties, or converting sum scores to logit scores
+for further analysis. The table applies to respondents who answered all
+items. For incomplete responses, use
+[`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md),
+which estimates each person from the items they answered.
 
 ## Usage
 
@@ -25,15 +27,14 @@ RMscoreSE(
 - data:
 
   A data.frame or matrix of item responses. Items must be scored
-  starting at 0 (non-negative integers). Missing values (`NA`) are
-  allowed; the underlying model fit handles them.
+  starting at 0. Missing values (`NA`) are allowed in the model fit.
 
 - method:
 
-  Character string. Either `"WLE"` (default) for Warm's Weighted
-  Likelihood Estimator computed from a CML-fitted Rasch / Partial Credit
-  Model via `psychotools`, or `"EAP"` for Expected A Posteriori
-  sum-score estimates from an MML-fitted model via `mirt`.
+  Character. `"WLE"` (default) for Warm's weighted likelihood estimate
+  (Warm, 1989) from a model fitted by CML with psychotools, or `"EAP"`
+  for expected a posteriori estimates per sum score (Bock &
+  Mislevy, 1982) from a model fitted by MML with mirt.
 
 - output:
 
@@ -47,8 +48,8 @@ RMscoreSE(
 - ci_multiplier:
 
   Numeric. Multiplier applied to the standard error to draw error bars
-  on the figure. Default `1.96` (\\\approx\\95% CI under a Gaussian
-  approximation). Ignored when `output != "ggplot"`.
+  on the figure. Default `1.96`, about a 95% interval under a normal
+  approximation. Used only with `output = "ggplot"`.
 
 - point_size:
 
@@ -74,8 +75,8 @@ RMscoreSE(
   `logit_score`, and `logit_se` (one row per possible raw sum score from
   0 to the theoretical maximum).
 
-- If `output = "ggplot"`: a `ggplot` object — points at each
-  (`logit_score`, `raw_score`) with horizontal error bars at ±
+- If `output = "ggplot"`: a `ggplot` with a point at each
+  (`logit_score`, `raw_score`) and horizontal error bars at ±
   `ci_multiplier × logit_se`.
 
 ## Details
@@ -87,13 +88,12 @@ Rasch / Partial Credit model.
 **`method = "WLE"`** fits the model by CML with
 [`psychotools::pcmodel()`](https://rdrr.io/pkg/psychotools/man/pcmodel.html),
 centres the item thresholds to grand-mean-zero, and solves Warm's
-weighted-likelihood equation for each raw score with the same engine
-used by
-[`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md);
-the two functions therefore report identical locations and standard
-errors. Warm's bias correction yields finite locations even at the
-minimum and maximum scores (only a root outside `theta_range` is clamped
-to the boundary with `NA` SE). The reported `logit_se` is the
+weighted-likelihood equation for each raw score with the same engine as
+[`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md),
+so the two report identical locations and standard errors for complete
+responses. Warm's bias correction gives finite locations even at the
+lowest and highest scores. Only a root outside `theta_range` is set to
+the boundary, with an `NA` SE. The reported `logit_se` is the
 information-based standard error `1 / sqrt(I(theta))`, matching `catR`,
 `TAM` and most Rasch software.
 
@@ -101,21 +101,28 @@ information-based standard error `1 / sqrt(I(theta))`, matching `catR`,
 `mirt::mirt(..., itemtype = "Rasch")` (MML) and obtains sum-score-based
 EAP estimates and posterior SDs via
 `mirt::fscores(method = "EAPsum", full.scores = FALSE, full.scores.SE = TRUE)`.
-EAP estimates are finite at all score boundaries (the prior shrinks them
-inward), but they depend on the assumed normal prior on theta. Item
-parameters from MML differ slightly from the CML values used by the WLE
-path; for well-behaved data the difference is small.
+EAP estimates are finite at all scores, since the prior shrinks them
+inward, but they depend on the normal prior on theta. The MML item
+parameters differ slightly from the CML values of the WLE path, usually
+by little.
 
 ## References
-
-Warm, T. A. (1989). Weighted likelihood estimation of ability in item
-response theory. *Psychometrika, 54*(3), 427-450.
-[doi:10.1007/BF02294627](https://doi.org/10.1007/BF02294627)
 
 Bock, R. D., & Mislevy, R. J. (1982). Adaptive EAP estimation of ability
 in a microcomputer environment. *Applied Psychological Measurement,
 6*(4), 431-444.
 [doi:10.1177/014662168200600405](https://doi.org/10.1177/014662168200600405)
+
+Warm, T. A. (1989). Weighted likelihood estimation of ability in item
+response theory. *Psychometrika, 54*(3), 427-450.
+[doi:10.1007/BF02294627](https://doi.org/10.1007/BF02294627)
+
+## See also
+
+[`RMpersonParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonParameters.md)
+for estimates per respondent (also with missing responses),
+[`RMitemParameters()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemParameters.md),
+[`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md)
 
 ## Examples
 

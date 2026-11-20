@@ -25,22 +25,23 @@ RMdifLR(
 
   A data.frame or matrix of item responses (non-negative integers,
   0-based). One column per item, one row per person. Person IDs and
-  grouping variables must not be included – pass the grouping variable
+  grouping variables must not be included. Pass the grouping variable
   separately via `dif_var`.
 
 - dif_var:
 
   Vector of length `nrow(data)` (factor, character, or numeric) defining
-  the DIF grouping variable. Coerced to factor; unused levels are
-  dropped. Rows where `dif_var` is `NA` are dropped with a message. Must
-  result in at least 2 groups after cleaning.
+  the groups, two or more. It is coerced to a factor and unused levels
+  are dropped. Rows where `dif_var` is `NA`, and rows with no responses,
+  are dropped with a message.
 
 - model:
 
-  One of `"auto"` (default), `"PCM"`, or `"RM"`. `"auto"` reports the
-  Rasch model when the data are dichotomous (max response = 1) and the
-  partial credit model otherwise (the two coincide for dichotomous
-  data). `"RM"` errors on polytomous data.
+  One of `"auto"` (default), `"PCM"`, or `"RM"`. The fit is the same for
+  dichotomous data, where the two models coincide, so the choice only
+  sets the label in `Model`. `"auto"` labels the result `"RM"` when
+  every item is dichotomous and `"PCM"` otherwise. `"RM"` gives an error
+  for polytomous data.
 
 - output:
 
@@ -86,6 +87,9 @@ simulation study behind this change is reported at
 
 Like other global tests, the LR test becomes significant for small
 amounts of DIF in large samples, and has little power in small ones.
+[`RMdifImpact`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifImpact.md)
+estimates whether the DIF matters for group comparisons and person
+scores.
 
 **Response categories.** Every category an item uses must be used in
 every group, or the group fits have different thresholds and the test is
@@ -112,6 +116,8 @@ item functioning. *Journal of Educational and Behavioral Statistics,
 
 [`RMdifAnchor`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md)
 for anchored tests of single items, thresholds and threshold spacing,
+[`RMdifImpact`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifImpact.md)
+for the size of the DIF's impact,
 [`RMdifGamma`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
 and
 [`RMdifTree`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md).
