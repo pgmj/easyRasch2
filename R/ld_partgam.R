@@ -821,6 +821,7 @@ RMlocdepGammaCutoff <- function(
   cutoff_method = "hdci",
   hdci_width = 0.95
 ) {
+  .check_iterations(iterations)
   cutoff_method <- match.arg(cutoff_method, c("hdci", "quantile"))
 
   if (cutoff_method == "hdci" && !requireNamespace("ggdist", quietly = TRUE)) {

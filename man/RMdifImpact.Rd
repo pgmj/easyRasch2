@@ -59,8 +59,8 @@ each item, with two or more items), \code{"local"} (the local bias),
 \code{target}).}
 
 \item{output}{\code{"kable"} (default), \code{"dataframe"},
-\code{"ggplot"} (the local bias curve) or \code{"list"} (all tables,
-see Value).}
+\code{"ggplot"} (the local bias curve) or \code{"list"} (all tables
+and the kable of the one chosen by \code{table}, see Value).}
 }
 \value{
 A data.frame, a \code{knitr_kable}, a \code{ggplot} or a list,
@@ -137,6 +137,8 @@ the latent means and SDs (\code{Mean_ref}, \code{SD_ref},
 missing \code{dif_var}, no responses or incomplete responses),
 \code{N_incomplete} (of these, rows dropped for incomplete
 responses) and one \code{n_<group>} column per group.}
+\item{\code{kable}}{the table chosen by \code{table}, as
+\code{output = "kable"} gives it.}
 }
 }
 \description{

@@ -218,7 +218,9 @@ test_that("corrections order as expected", {
 # ---------------------------------------------------------------------
 test_that("list output holds the table, settings, distances and criterion", {
   out <- rda(dd$data, dd$group, output = "list", n_seeds = 10)
-  expect_named(out, c("table", "settings", "distances", "criterion"))
+  expect_named(out, c("table", "settings", "distances", "criterion",
+                      "kable"))
+  expect_identical(out$kable, rda(dd$data, dd$group, n_seeds = 10))
   expect_identical(out$table,
                    rda(dd$data, dd$group, output = "dataframe", n_seeds = 10))
   st <- out$settings

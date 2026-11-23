@@ -89,6 +89,7 @@
 #'       linking) and \code{Gini} (the Gini criterion when the groups are
 #'       aligned at that item; Strobl et al., 2021). \code{NULL} at
 #'       spacing level, where no anchor is selected.}
+#'     \item{\code{kable}}{the table as \code{output = "kable"} gives it.}
 #'   }
 #'
 #' @details
@@ -450,6 +451,12 @@ RMdifAnchor <- function(
   if (output == "dataframe") {
     return(table_df)
   }
+  n_clause <- .n_caption(
+    nrow(data), n_total,
+    c(if (has_na) "incomplete responses retained",
+      paste0(groups[1L], ": ", info$n_per_group[[1L]], ", ", groups[2L], ": ",
+             info$n_per_group[[2L]]))
+  )
   if (output == "list") {
     settings <- data.frame(
       Anchor = if (!use_anchor) {
@@ -497,15 +504,11 @@ RMdifAnchor <- function(
         stringsAsFactors = FALSE
       )
     }
+    # table_df is already sorted above when sort = TRUE.
+    kbl <- render_dif_anchor_kable(table_df, info, n_clause, is_polytomous)
     return(list(table = table_df, settings = settings, distances = distances,
-                criterion = criterion))
+                criterion = criterion, kable = kbl))
   }
-  n_clause <- .n_caption(
-    nrow(data), n_total,
-    c(if (has_na) "incomplete responses retained",
-      paste0(groups[1L], ": ", info$n_per_group[[1L]], ", ", groups[2L], ": ",
-             info$n_per_group[[2L]]))
-  )
   if (output == "kable") {
     if (sort) table_df <- .dif_anchor_sort(table_df, level)
     return(render_dif_anchor_kable(table_df, info, n_clause, is_polytomous))

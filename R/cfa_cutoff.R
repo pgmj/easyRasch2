@@ -92,9 +92,10 @@
 #' \strong{Datasets that fail.} Some simulated datasets make the estimation
 #' fail (a polychoric matrix that is not positive definite, thresholds on
 #' the boundary, empty categories). They are left out, and
-#' `actual_iterations` gives the number that remained. If all fail, the
-#' function stops, naming any category used only by respondents with a
-#' zero or perfect total score.
+#' `actual_iterations` gives the number that remained, and [RMdimCFA()]
+#' reports how many were left out in its caption. A category used only by
+#' respondents with a zero or perfect total score stops the function before
+#' it simulates, since CML cannot estimate its threshold.
 #'
 #' @references
 #' Rosseel, Y. (2012). lavaan: An R Package for Structural Equation
@@ -138,6 +139,7 @@ RMdimCFACutoff <- function(
   seed = NULL,
   estimator = "WLSMV"
 ) {
+  .check_iterations(iterations)
   output <- match.arg(output)
   if (output == "kable") {
     stop(
@@ -366,6 +368,7 @@ RMdimCFACutoff <- function(
     cutoffs = cutoffs,
     loading_cutoffs = loading_cutoffs,
     actual_iterations = actual_iterations,
+    requested_iterations = iterations,
     sample_n = sample_n,
     sample_n_total = n_total,
     sample_has_na = has_na,
@@ -952,7 +955,8 @@ render_cfa_fit_kable <- function(
         100 - pct_label,
         "% of the null in the unfavourable direction."
       )
-    }
+    },
+    .attrition_clause(cutoff$actual_iterations, cutoff$requested_iterations)
   )
   knitr::kable(
     fit_df,
@@ -1006,7 +1010,8 @@ render_cfa_loadings_kable <- function(
         pct_label,
         "% interval of the simulated loadings; Flagged = below / above that range."
       )
-    }
+    },
+    .attrition_clause(cutoff$actual_iterations, cutoff$requested_iterations)
   )
   knitr::kable(
     load_df,
@@ -1060,7 +1065,8 @@ render_cfa_loadings_kable <- function(
 #'   \item{`loadings`}{Standardized loadings per item: the simulated values
 #'     (dots), black segments for their central 66% and the expected range
 #'     at `percentile`, the median (black dot), and the observed loading as
-#'     a diamond, red when it is outside the expected range.}
+#'     a diamond, filled when it is outside the expected range and open
+#'     when it is inside.}
 #'   \item{`fit`}{The simulated CFI, RMSEA and SRMR in panels, with the
 #'     observed value and the cutoff.}
 #' }
@@ -1265,7 +1271,9 @@ cfa_loadings_plot <- function(
     stringsAsFactors = FALSE
   )
   obs_df$Item <- factor(obs_df$Item, levels = item_levels)
-  obs_df$Color <- ifelse(obs_df$Flagged, "red", "sienna2")
+  # Flagged vs unflagged by shape, not colour: filled diamond outside the
+  # expected range, open diamond inside it.
+  obs_df$Shape <- ifelse(obs_df$Flagged, 18, 5)
 
   caption_text <- er2_caption(paste0(
     "Standardized factor loadings from ",
@@ -1277,7 +1285,8 @@ cfa_loadings_plot <- function(
     " per dataset, refitted with lavaan::cfa(ordered = TRUE, estimator = \"",
     simfit$estimator,
     "\").\n",
-    "Diamonds: observed loading (red = outside the two-sided ",
+    "Diamonds: observed loading (filled = outside, open = inside the ",
+    "two-sided ",
     percentile,
     "% expected range). Black dots: simulated median.\n",
     .sim_interval_caption(spec, "item")
@@ -1321,12 +1330,13 @@ cfa_loadings_plot <- function(
     ) +
     ggplot2::geom_point(
       data = obs_df,
-      ggplot2::aes(x = .data$observed, y = .data$Item, colour = .data$Color),
-      shape = 18,
+      ggplot2::aes(x = .data$observed, y = .data$Item, shape = .data$Shape),
+      colour = "sienna2",
       size = 4,
+      stroke = 1.2,
       position = ggplot2::position_nudge(y = -0.1)
     ) +
-    ggplot2::scale_colour_identity() +
+    ggplot2::scale_shape_identity() +
     ggplot2::scale_color_manual(
       values = scales::brewer_pal()(3)[-1],
       aesthetics = "slab_fill",
@@ -1337,7 +1347,7 @@ cfa_loadings_plot <- function(
       y = "Item",
       caption = caption_text
     ) +
-    ggplot2::theme_minimal() +
+    ggplot2::theme_bw() +
     ggplot2::theme(panel.spacing = ggplot2::unit(0.7, "cm")) +
     er2_axis_margins() +
     er2_plot_caption()
@@ -1377,7 +1387,8 @@ cfa_fit_plot <- function(simfit, observed_fit, cutoffs, percentile) {
     Flagged = c(flagged[["cfi"]], flagged[["rmsea"]], flagged[["srmr"]]),
     stringsAsFactors = FALSE
   )
-  obs_df$Color <- ifelse(obs_df$Flagged, "red", "grey30")
+  # Same marks as the loadings plot: filled diamond flagged, open not.
+  obs_df$Shape <- ifelse(obs_df$Flagged, 18, 5)
 
   cfi_pct_lbl <- 100 - percentile
   caption <- er2_caption(paste0(
@@ -1390,7 +1401,7 @@ cfa_fit_plot <- function(simfit, observed_fit, cutoffs, percentile) {
     " per dataset,\nrefitted with lavaan::cfa(ordered = TRUE, estimator = \"",
     simfit$estimator,
     "\").\n",
-    "Diamond: observed value (red = flagged at the ",
+    "Diamond: observed value (filled = flagged, open = not flagged, at the ",
     percentile,
     "th percentile in the unfavourable direction).\n",
     "Dashed line: cutoff (CFI: ",
@@ -1410,12 +1421,13 @@ cfa_fit_plot <- function(simfit, observed_fit, cutoffs, percentile) {
     ) +
     ggplot2::geom_point(
       data = obs_df,
-      ggplot2::aes(x = .data$Observed, colour = .data$Color),
+      ggplot2::aes(x = .data$Observed, shape = .data$Shape),
       y = 0,
+      colour = "sienna2",
       size = 4.5,
-      shape = 18
+      stroke = 1.2
     ) +
-    ggplot2::scale_colour_identity() +
+    ggplot2::scale_shape_identity() +
     ggplot2::facet_wrap(~Index, scales = "free", nrow = 1) +
     ggplot2::labs(
       title = "Observed CFA fit vs simulated null distribution",

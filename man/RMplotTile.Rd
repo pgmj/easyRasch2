@@ -38,7 +38,8 @@ excluded, with a \code{message()} reporting how many rows were dropped.}
 highlighted (when \code{highlight = TRUE}). Default \code{10}.}
 
 \item{highlight}{Logical. If \code{TRUE} (default), cell labels with counts
-below \code{cutoff} are displayed in red. This includes empty cells
+below \code{cutoff} are displayed in red and bold, so they stand out
+without colour too. This includes empty cells
 (\code{n = 0}), useful for identifying gaps in the response distribution.}
 
 \item{percent}{Logical. If \code{TRUE}, cell labels show percentages

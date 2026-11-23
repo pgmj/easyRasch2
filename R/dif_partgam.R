@@ -745,6 +745,7 @@ RMdifGammaCutoff <- function(
   hdci_width = 0.95,
   dgp = c("conditional", "permutation")
 ) {
+  .check_iterations(iterations)
   cutoff_method <- match.arg(cutoff_method, c("hdci", "quantile"))
   dgp <- match.arg(dgp)
 

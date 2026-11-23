@@ -1,0 +1,7 @@
+cell 1/6 a=0.5 n=300 skipped=0  4.8 min
+cell 2/6 a=1 n=300 skipped=0  9.6 min
+cell 3/6 a=2 n=300 skipped=0  14.7 min
+cell 4/6 a=0.5 n=1000 skipped=0  22.5 min
+cell 5/6 a=1 n=1000 skipped=0  30.3 min
+cell 6/6 a=2 n=1000 skipped=0  38.2 min
+done, 38.2 min

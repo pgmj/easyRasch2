@@ -370,11 +370,35 @@ test_that("RMdimCFAPlot returns a list of two ggplots", {
   sim <- RMdimCFACutoff(raschdat1[, 1:8], iterations = 20,
                         parallel = FALSE, seed = 1)
   p <- RMdimCFAPlot(sim, data = raschdat1[, 1:8])
+  expect_equal(sim$requested_iterations, 20)
+  fake <- sim
+  fake$requested_iterations <- sim$actual_iterations + 2L
+  tabs <- RMdimCFA(raschdat1[, 1:8], cutoff = fake)
+  for (tb in tabs) {
+    expect_match(paste(as.character(tb), collapse = "\n"),
+                 "2 of the .* could not be refitted")
+  }
 
   expect_type(p, "list")
   expect_named(p, c("loadings", "fit"))
   expect_s3_class(p$loadings, "ggplot")
   expect_s3_class(p$fit, "ggplot")
+
+  # Observed loadings: one colour, flag carried by shape (filled 18 = flagged,
+  # open 5 = inside the expected range)
+  obs_layer <- which(vapply(p$loadings$layers, function(l)
+    is.data.frame(l$data) && "Shape" %in% names(l$data), logical(1)))
+  expect_length(obs_layer, 1L)
+  od <- p$loadings$layers[[obs_layer]]$data
+  expect_equal(od$Shape, ifelse(od$Flagged, 18, 5))
+  expect_equal(p$loadings$layers[[obs_layer]]$aes_params$colour, "sienna2")
+
+  fit_layer <- which(vapply(p$fit$layers, function(l)
+    inherits(l$geom, "GeomPoint") && is.data.frame(l$data) &&
+      "Shape" %in% names(l$data), logical(1)))
+  expect_length(fit_layer, 1L)
+  fd <- p$fit$layers[[fit_layer]]$data
+  expect_equal(fd$Shape, ifelse(fd$Flagged, 18, 5))
 })
 
 test_that("RMdimCFAPlot requires data", {

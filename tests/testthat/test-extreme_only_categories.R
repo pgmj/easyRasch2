@@ -50,11 +50,49 @@ test_that("RMitemParameters warns about a category used only by extreme scorers"
   )
 })
 
-test_that("a resample cutoff that cannot simulate the category names the cause", {
-  skip_on_cran()
+test_that("simulation cutoffs stop before simulating on an extreme-only category", {
+  # Before, RMitemInfitCutoff() simulated first; when a few refits survived it
+  # returned cutoffs from those few without a word.
+  d <- make_extreme_top()
+  pat <- "zero or perfect total score: I6 \\(category 2\\).*Nothing was simulated"
+  expect_error(RMitemInfitCutoff(d, iterations = 5, parallel = FALSE, seed = 1),
+               pat, class = "easyRasch2_category_error")
+  expect_error(RMitemRestscoreCutoff(d, iterations = 5, parallel = FALSE, seed = 1),
+               pat)
+  expect_error(RMdimResidualPCACutoff(d, iterations = 5, parallel = FALSE, seed = 1),
+               pat)
+  expect_error(RMlocdepQ3Cutoff(d, iterations = 5, parallel = FALSE, seed = 1),
+               pat)
+  expect_error(RMlocdepGammaCutoff(d, iterations = 5, parallel = FALSE, seed = 1),
+               pat)
+  grp <- rep(c("a", "b"), length.out = nrow(d))
+  expect_error(RMdifGammaCutoff(d, dif_var = grp, iterations = 5,
+                                parallel = FALSE, seed = 1, dgp = "conditional"),
+               pat)
+})
+
+test_that("the DIF gamma permutation DGP needs no model and still runs", {
+  d <- make_extreme_top()
+  grp <- rep(c("a", "b"), length.out = nrow(d))
+  res <- RMdifGammaCutoff(d, dif_var = grp, iterations = 5, parallel = FALSE,
+                          seed = 1, dgp = "permutation")
+  expect_equal(res$actual_iterations, 5L)
+})
+
+test_that("RMitemRestscoreBoot stops before resampling on an extreme-only category", {
   expect_error(
-    suppressWarnings(RMitemInfitCutoff(make_extreme_top(), iterations = 5,
-                                       parallel = FALSE, seed = 1)),
-    "All simulation iterations failed. Response categories used only"
+    RMitemRestscoreBoot(make_extreme_top(), iterations = 5, samplesize = 100,
+                        parallel = FALSE, seed = 1),
+    "zero or perfect total score: I6 \\(category 2\\).*Nothing was resampled",
+    class = "easyRasch2_category_error"
   )
+})
+
+test_that(".all_sims_failed_message names what failed", {
+  d <- make_extreme_top()
+  expect_match(easyRasch2:::.all_sims_failed_message(d, what = "bootstrap"),
+               "^All bootstrap iterations failed\\. Response categories")
+  data("pcmdat2", package = "eRm")
+  expect_equal(easyRasch2:::.all_sims_failed_message(pcmdat2),
+               "All simulation iterations failed. Check your data.")
 })

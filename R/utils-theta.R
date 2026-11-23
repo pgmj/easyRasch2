@@ -855,6 +855,14 @@
 #' resampling pool. Centralises the block repeated across the `*Cutoff()`
 #' functions (Q3, infit, CFA, gamma DIF/LD).
 #'
+#' A category used only by respondents with a zero or perfect total score
+#' stops here, before anything is simulated: CML leaves those respondents
+#' out, so the category's threshold diverges and a DGP built on it is not
+#' the fitted model. Simulating anyway made most or all refits fail, and a
+#' run where a few succeeded returned cutoffs from those few without a word.
+#' The error has class `easyRasch2_category_error`; a caller whose DGP does
+#' not need the model (the DIF gamma permutation) catches it.
+#'
 #' @param data Numeric response matrix or data.frame (items from 0).
 #' @return A list with `thr_list` (centred CML thresholds) and `thetas` (the
 #'   finite WLE person locations).
@@ -862,6 +870,13 @@
 #' @noRd
 .wle_theta_pool <- function(data) {
   data     <- as.matrix(data)
+  ec <- .extreme_only_categories(data)
+  if (nrow(ec) > 0L) {
+    stop(.category_error(
+      paste0(.extreme_only_message(ec), " Nothing was simulated."),
+      unique(ec$Item)
+    ))
+  }
   thr_list <- .fit_cml_thresholds(data)
   thetas   <- .estimate_thetas(data, thr_list, method = "WLE")$theta
   list(thr_list = thr_list, thetas = thetas[is.finite(thetas)])

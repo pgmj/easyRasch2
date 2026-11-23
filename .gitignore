@@ -31,6 +31,8 @@ dev/dif_impact_ext_sim/*_cells/
 dev/category_conditional_null/results/cells/
 dev/category_conditional_null/results/cells_rngbug/
 dev/category_conditional_null/results/smoke_cells/
+dev/category_conditional_null/results/residual_null_cells/
+dev/category_conditional_null/results/restscore_discr_cells/
 dev/results/**/*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].rds
 dev/results/**/*_[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].rds	
 dev/**/results/**/*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].rds
@@ -45,3 +47,4 @@ dev/**/*_[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].rds
 dev/**/*cells*/
 dev/**/*smoke*.rds
 dev/**/render*.log
+tests/testthat/_problems/

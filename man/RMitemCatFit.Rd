@@ -61,7 +61,8 @@ corrected across items).
 data.frame above), \code{correction}, \code{iterations} (requested),
 \code{iterations_used} (refitted), \code{n_used}, \code{n_total}, \code{qualifiers},
 \code{item_labels}, and \code{prep} and \code{sims}, the data and simulations that
-\code{\link[=RMitemCatFitPlot]{RMitemCatFitPlot()}} uses.
+\code{\link[=RMitemCatFitPlot]{RMitemCatFitPlot()}} uses, and \code{kable} (the table from
+\code{output = "kable"}).
 }
 }
 \description{
@@ -132,6 +133,21 @@ twice as strongly as the others, also when the thresholds were ordered.
 It rarely detected "don't know" use in up to 10\% of responses or an
 extreme response style shared by all items. The study is described at
 \url{https://pgmj.github.io/rasch_book/chapters/category-fit.html}.
+
+\strong{What a flag means.} The test compares an item's whole table of
+category probabilities given the total score with the model, so it is
+not specific to the categories. An item whose categories work as scored
+but which discriminates less or more than the other items (underfit or
+overfit, for example from a second dimension or local dependence)
+departs as well. In a check with 10 items, one of which had ordered,
+distinct categories but a slope of 0.5 or 2, that item was flagged in
+36\% and 8\% of datasets at n = 300, and in 96\% and 83\% at n = 1000.
+Check item fit first, for example with \code{\link[=RMitemInfit]{RMitemInfit()}} or
+\code{\link[=RMitemRestscore]{RMitemRestscore()}}. Read a flag as a problem with the categories when
+the item otherwise fits, or when the departure is in one event and not
+in all. In \code{\link[=RMitemCatFitPlot]{RMitemCatFitPlot()}}, a misfitting item shows in every
+category, while a category problem is local to one category or one pair
+of adjacent categories.
 }
 \examples{
 \donttest{

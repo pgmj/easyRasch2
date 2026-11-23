@@ -102,9 +102,9 @@ by \code{dgp}, the model is refitted by CML (\code{psychotools::pcmodel()}), and
 conditional infit and outfit MSQ are computed with \code{iarm::out_infit()}.
 A simulated dataset that cannot be refitted, for example because a
 response category is empty, is left out. \code{\link[=RMitemInfit]{RMitemInfit()}} reports how
-many were left out in its caption. If none can be refitted, the function
-stops, naming any category used only by respondents with a zero or
-perfect total score.
+many were left out in its caption. A category used only by respondents
+with a zero or perfect total score stops the function before it
+simulates, since CML cannot estimate its threshold.
 
 The method and the default settings come from simulation studies of
 detection (Johansson, 2025) and of iterations and multiplicity

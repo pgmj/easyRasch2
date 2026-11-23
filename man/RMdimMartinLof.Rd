@@ -81,6 +81,11 @@ means no simulated statistic reached the observed one. Read it as
 \item{\code{p_value_floor}}{The smallest attainable p-value,
 \code{1 / (actual_iterations + 1)}.}
 \item{\code{actual_iterations}}{Number of simulated datasets used.}
+\item{\code{requested_iterations}}{The \code{iterations} requested.}
+\item{\code{failed_iterations}}{Number of simulated datasets that could not
+be refitted and were left out. With \code{stopping = "sequential"},
+\code{actual_iterations} can also be below \code{requested_iterations} because
+the rule stopped early.}
 \item{\code{rejected}}{Logical: is \code{p_value < alpha}?}
 \item{\code{partition}}{Normalised partition (list of integer indices).}
 \item{\code{n_subscales}}{Number of subscales.}
@@ -158,8 +163,9 @@ whereas the Rasch conditional distribution weights a set of items by the
 \emph{product} of their easinesses. See the note on validation below.
 
 A simulated dataset that cannot be refitted, for example because a
-category of an item is empty, is left out without a message.
-\code{actual_iterations} gives the number used.
+category of an item is empty, is left out, with a message saying how
+many. \code{actual_iterations} gives the number used and \code{failed_iterations}
+the number left out.
 
 Item parameters are estimated once on the observed data and held fixed
 across MC iterations. Christensen & Kreiner (2007) use the extended

@@ -222,6 +222,24 @@ validate_response_data <- function(data) {
   )
 }
 
+#' Check the `iterations` argument of a simulation function
+#'
+#' @param iterations The user's value.
+#' @param min Smallest allowed value. Default 1; functions that compute
+#'   Monte Carlo p-values set their own minimum.
+#' @return Invisibly `TRUE`; stops on anything but a single whole number
+#'   `>= min`.
+#' @keywords internal
+#' @noRd
+.check_iterations <- function(iterations, min = 1L) {
+  if (!is.numeric(iterations) || length(iterations) != 1L ||
+        !is.finite(iterations) || iterations != round(iterations) ||
+        iterations < min) {
+    stop("`iterations` must be a single integer >= ", min, ".", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 #' Error message when every simulation iteration failed
 #'
 #' Names the most common cause, a category used only by extreme scorers,
@@ -229,15 +247,18 @@ validate_response_data <- function(data) {
 #'
 #' @param data The response matrix the simulation was built from.
 #' @param detail Optional extra text appended to the generic message.
+#' @param what What the iterations were, for the message.
 #' @return A single string.
 #' @keywords internal
 #' @noRd
-.all_sims_failed_message <- function(data, detail = "Check your data.") {
+.all_sims_failed_message <- function(data, detail = "Check your data.",
+                                     what = "simulation") {
+  head <- paste0("All ", what, " iterations failed. ")
   ec <- .extreme_only_categories(data)
   if (nrow(ec) > 0L) {
-    return(paste0("All simulation iterations failed. ", .extreme_only_message(ec)))
+    return(paste0(head, .extreme_only_message(ec)))
   }
-  paste0("All simulation iterations failed. ", detail)
+  paste0(head, detail)
 }
 
 #' Tell the user how many bootstrap resamples were dropped, and why

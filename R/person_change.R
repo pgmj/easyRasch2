@@ -62,7 +62,8 @@
 #' @param verbose Logical. Print a progress bar for the simulation. Default
 #'   `FALSE`. Only used when `critical = "simulate"`.
 #' @param output Character. `"dataframe"` (default), `"kable"`, `"ggplot"`,
-#'   or `"list"` for the per-respondent table and the analysis settings.
+#'   or `"list"` for the per-respondent table, the analysis settings and the
+#'   kable.
 #'
 #' @return
 #' * If `output = "dataframe"`: one row per respondent, with columns `id`,
@@ -76,11 +77,12 @@
 #' * If `output = "kable"`: the same content as a `knitr_kable`.
 #' * If `output = "ggplot"`: occasion 1 against occasion 2, with the
 #'   no-change band and points coloured by `change_class`.
-#' * If `output = "list"`: a list with `persons` (the data.frame above) and
+#' * If `output = "list"`: a list with `persons` (the data.frame above),
 #'   `settings`, a one-row data.frame with `null`, `retest_sd` (0 with
 #'   `null = "measurement"`), `anchor`, `method`, `estimator`, `alpha`,
 #'   `direction`, `critical` (the method used), `conditional_crit`,
-#'   `sim_iter` (`NA` unless simulated) and `n_persons`.
+#'   `sim_iter` (`NA` unless simulated) and `n_persons`, and `kable`, the
+#'   table from `output = "kable"`.
 #'
 #' @details
 #' **Which null is tested.** Following Zumbo (2026), the estimand is fixed by
@@ -571,6 +573,17 @@ RMpersonChange <- function(
   if (output == "dataframe") {
     return(result)
   }
+  n_clause <- .n_caption(
+    n_persons,
+    n_persons,
+    if (anyNA(mat_t1) || anyNA(mat_t2)) {
+      "incomplete responses retained"
+    } else {
+      character()
+    }
+  )
+  caption <- .pc_caption(result, length(thr_list), n_clause)
+
   if (output == "list") {
     # The analysis settings as a table (the attributes stay on the dataframe
     # output for compatibility).
@@ -594,20 +607,10 @@ RMpersonChange <- function(
         sim_iter = actual_iter,
         n_persons = n_persons,
         stringsAsFactors = FALSE
-      )
+      ),
+      kable = .pc_kable(result, caption)
     ))
   }
-
-  n_clause <- .n_caption(
-    n_persons,
-    n_persons,
-    if (anyNA(mat_t1) || anyNA(mat_t2)) {
-      "incomplete responses retained"
-    } else {
-      character()
-    }
-  )
-  caption <- .pc_caption(result, length(thr_list), n_clause)
 
   if (output == "kable") {
     return(.pc_kable(result, caption))

@@ -64,6 +64,13 @@ test_that("RMitemInfitCutoffMI returns the expected list structure", {
   imp <- make_mids()
   res <- RMitemInfitCutoffMI(imp, iterations = 5L, parallel = FALSE, seed = 1L)
   expect_type(res, "list")
+  # Same reporting fields as RMitemInfitCutoff() (F6)
+  expect_equal(res$requested_iterations, 5L)
+  expect_equal(res$sample_n_total, res$sample_n)
+  expect_false(res$sample_has_na)
+  expect_equal(res$dgp, "resample")
+  expect_error(RMitemInfitCutoffMI(imp, iterations = 2L, parallel = FALSE),
+               "at least the number of imputed datasets \\(m = 3\\)")
   expect_true(all(
     c(
       "results",

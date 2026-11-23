@@ -1,0 +1,13 @@
+cell 1/12 n=200 k=5 m=2 skipped=0  0.0 min
+cell 2/12 n=500 k=5 m=2 skipped=0  0.0 min
+cell 3/12 n=1000 k=5 m=2 skipped=0  0.1 min
+cell 4/12 n=200 k=10 m=2 skipped=0  0.1 min
+cell 5/12 n=500 k=10 m=2 skipped=0  0.2 min
+cell 6/12 n=1000 k=10 m=2 skipped=0  0.2 min
+cell 7/12 n=200 k=5 m=4 skipped=5  0.3 min
+cell 8/12 n=500 k=5 m=4 skipped=0  0.3 min
+cell 9/12 n=1000 k=5 m=4 skipped=0  0.3 min
+cell 10/12 n=200 k=10 m=4 skipped=2  0.4 min
+cell 11/12 n=500 k=10 m=4 skipped=0  0.5 min
+cell 12/12 n=1000 k=10 m=4 skipped=0  0.6 min
+done, 0.7 min

@@ -31,6 +31,10 @@
 #' @param viridis_end Numeric in (0, 1]. Upper end of the viridis
 #'   palette range. Lower values keep the palette in its mid-tones and
 #'   avoid the very bright yellow at `1.0`. Default `0.95`.
+#' @param vary_linetype Logical. If `TRUE`, each category also gets its
+#'   own line type (solid for category 0, then increasingly broken dash
+#'   patterns), so neighbouring curves stay apart in greyscale and for
+#'   readers with colour vision deficiency. Default `FALSE`, colour only.
 #' @param facet_ncol Optional integer. Number of columns in the facet
 #'   layout. Default `NULL` (`ggplot2::facet_wrap()` auto-layout).
 #' @param label_wrap Integer. Characters per line for facet-strip
@@ -81,6 +85,9 @@
 #'
 #' The colours follow the category number, so low categories are at one
 #' end of the palette and high categories at the other. With
+#' `vary_linetype = TRUE`, the line types do too, and the legend shows
+#' colour and line type together. Thirteen line types are available,
+#' and they repeat beyond 13 categories. With
 #' `category_labels`, the legend shows those labels (for example "Never",
 #' "Sometimes", "Often").
 #'
@@ -136,6 +143,7 @@ RMitemCatProb <- function(
   n_points = 200L,
   viridis_option = "D",
   viridis_end = 0.95,
+  vary_linetype = FALSE,
   facet_ncol = NULL,
   label_wrap = 25L,
   line_width = 0.9,
@@ -214,6 +222,14 @@ RMitemCatProb <- function(
       viridis_end > 1
   ) {
     stop("`viridis_end` must be a single number in (0, 1].", call. = FALSE)
+  }
+
+  if (
+    !is.logical(vary_linetype) ||
+      length(vary_linetype) != 1L ||
+      is.na(vary_linetype)
+  ) {
+    stop("`vary_linetype` must be TRUE or FALSE.", call. = FALSE)
   }
 
   item_names <- colnames(data)
@@ -409,6 +425,11 @@ RMitemCatProb <- function(
   # Attach a human-readable label per row for use in path mode.
   plot_df$CategoryLabel <- cat_labels[plot_df$Category + 1L]
 
+  # Line type per category (only used with vary_linetype = TRUE).
+  # scales::linetype_pal() has 13 patterns; recycle beyond that.
+  lt_pal <- scales::linetype_pal()(13L)
+  lt_values <- rep_len(lt_pal, n_categories)
+
   # Common scale + axis components for both modes
   base_scales <- list(
     ggplot2::scale_y_continuous(
@@ -453,7 +474,14 @@ RMitemCatProb <- function(
         color = .data$Category
       )
     ) +
-      ggplot2::geom_line(linewidth = line_width) +
+      (if (vary_linetype) {
+        ggplot2::geom_line(
+          ggplot2::aes(linetype = factor(.data$Category, levels = cat_breaks)),
+          linewidth = line_width
+        )
+      } else {
+        ggplot2::geom_line(linewidth = line_width)
+      }) +
       ggplot2::scale_color_viridis_c(
         name = "Response\ncategory",
         breaks = cat_breaks,
@@ -467,9 +495,22 @@ RMitemCatProb <- function(
         # natural reading order for ordinal "least -> most" categories
         # (e.g. PHQ-9: "Not at all" -> "Nearly every day").
         guide = ggplot2::guide_legend(
-          override.aes = list(linewidth = 2)
+          override.aes = list(linewidth = if (vary_linetype) 1 else 2)
         )
       ) +
+      (if (vary_linetype) {
+        # Same name, breaks and labels as the colour scale, so ggplot2
+        # merges the two into one legend.
+        list(
+          ggplot2::scale_linetype_manual(
+            name = "Response\ncategory",
+            values = stats::setNames(lt_values, cat_breaks),
+            breaks = as.character(cat_breaks),
+            labels = cat_labels,
+            drop = FALSE
+          )
+        )
+      }) +
       ggplot2::facet_wrap(
         ~Item,
         ncol = facet_ncol,
@@ -478,6 +519,11 @@ RMitemCatProb <- function(
         )
       ) +
       base_scales
+    if (vary_linetype) {
+      # After base_scales, whose complete theme_bw() would reset it. Wider
+      # keys so the dash patterns are visible in the legend.
+      p <- p + ggplot2::theme(legend.key.width = ggplot2::unit(2.5, "lines"))
+    }
   } else {
     # -----------------------------------------------------------------
     # Mode 2: single-item plot with labels along each curve.
@@ -537,6 +583,7 @@ RMitemCatProb <- function(
           hjust = hjust_val,
           vjust = -0.08,
           linewidth = line_width,
+          linetype = if (vary_linetype) lt_values[cat + 1L] else "solid",
           size = text_size
         )
     }

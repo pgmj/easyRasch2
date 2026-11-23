@@ -23,7 +23,8 @@
 #' @param cutoff Integer. Cells with counts below this value are
 #'   highlighted (when `highlight = TRUE`). Default `10`.
 #' @param highlight Logical. If `TRUE` (default), cell labels with counts
-#'   below `cutoff` are displayed in red. This includes empty cells
+#'   below `cutoff` are displayed in red and bold, so they stand out
+#'   without colour too. This includes empty cells
 #'   (`n = 0`), useful for identifying gaps in the response distribution.
 #' @param percent Logical. If `TRUE`, cell labels show percentages
 #'   instead of raw counts. Percentages are computed within item (and
@@ -432,7 +433,8 @@ RMplotTile <- function(
         ggplot2::geom_text(
           ggplot2::aes(
             label = paste0(.data$percentage, "%"),
-            color = ifelse(.data$n < cutoff, "red", text_color)
+            color = ifelse(.data$n < cutoff, "red", text_color),
+            fontface = ifelse(.data$n < cutoff, "bold", "plain")
           ),
           size = text_size
         ) +
@@ -452,7 +454,8 @@ RMplotTile <- function(
         ggplot2::geom_text(
           ggplot2::aes(
             label = .data$n,
-            color = ifelse(.data$n < cutoff, "red", text_color)
+            color = ifelse(.data$n < cutoff, "red", text_color),
+            fontface = ifelse(.data$n < cutoff, "bold", "plain")
           ),
           size = text_size
         ) +

@@ -62,7 +62,7 @@
 #'   `FALSE`.
 #' @param output Character. `"ggplot"` (default), `"dataframe"` for the curve,
 #'   `"kable"` for a summary table, or `"list"` for the curve and the summary
-#'   as data.frames.
+#'   as data.frames plus the kable.
 #'
 #' @return
 #' * If `output = "ggplot"`: a `ggplot` object.
@@ -95,7 +95,8 @@
 #'   where not computed) and
 #'   `benchmark_range` (the theta ranges where the curve reaches
 #'   `benchmark`, with columns `xmin` and `xmax`, `NULL` without a
-#'   benchmark or when it is never reached).
+#'   benchmark or when it is never reached) and `kable`, the summary table
+#'   from `output = "kable"`.
 #'
 #' @details
 #' **What the curve is.** Test information \eqn{I(\theta) = \sum_i
@@ -428,6 +429,10 @@ RMreliabilityCurve <- function(
   if (output == "dataframe") {
     return(curve_df)
   }
+  # --- Caption pieces --------------------------------------------------------
+  qualifiers <- if (has_na) "incomplete responses retained" else character()
+  n_clause <- .n_caption(n_used, n_total, qualifiers)
+
   if (output == "list") {
     # Everything the attributes carry, as tables (the attributes stay on the
     # dataframe output for compatibility).
@@ -454,13 +459,16 @@ RMreliabilityCurve <- function(
         boot_iter = actual_boot,
         stringsAsFactors = FALSE
       ),
-      benchmark_range = benchmark_range
+      benchmark_range = benchmark_range,
+      kable = .curve_kable(
+        curve_df,
+        n_items = n_items,
+        n_clause = n_clause,
+        method = method,
+        fixed_params = fixed_params
+      )
     ))
   }
-
-  # --- Caption pieces --------------------------------------------------------
-  qualifiers <- if (has_na) "incomplete responses retained" else character()
-  n_clause <- .n_caption(n_used, n_total, qualifiers)
 
   if (output == "kable") {
     return(.curve_kable(

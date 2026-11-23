@@ -146,6 +146,7 @@ RMitemRestscoreBoot <- function(
   seed = NULL,
   output = "kable"
 ) {
+  .check_iterations(iterations)
   if (!requireNamespace("iarm", quietly = TRUE)) {
     stop(
       "Package 'iarm' is required for RMitemRestscoreBoot() but is not installed.\n",
@@ -195,6 +196,15 @@ RMitemRestscoreBoot <- function(
   # shifts slightly (WLE vs eRm MLE person mean).
   # iarm's statistics refit on complete cases, so check them too.
   .check_complete_case_categories(data)
+  # A category used only by zero or perfect scorers has no CML threshold:
+  # stop before resampling rather than after every refit fails.
+  ec <- .extreme_only_categories(data_mat)
+  if (nrow(ec) > 0L) {
+    stop(.category_error(
+      paste0(.extreme_only_message(ec), " Nothing was resampled."),
+      unique(ec$Item)
+    ))
+  }
   fit_full <- .cml_fit(data) # shared category check, then pcmodel()
 
   thr_list <- .center_thresholds(lapply(
@@ -272,7 +282,7 @@ RMitemRestscoreBoot <- function(
   successful <- results_raw[ok]
 
   if (length(successful) == 0L) {
-    stop("All bootstrap iterations failed. Check your data.", call. = FALSE)
+    stop(.all_sims_failed_message(data_mat, what = "bootstrap"), call. = FALSE)
   }
   actual_iterations <- length(successful)
 

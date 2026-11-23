@@ -50,7 +50,8 @@
 #'   `output = "list"` to get it as a table.
 #' * `output = "list"`: a list with `components`, the data.frame above, and
 #'   `variance`, a one-row data.frame with `total`, `explained`,
-#'   `unexplained`, `pct_explained`, `pct_unexplained` and `n_persons`.
+#'   `unexplained`, `pct_explained`, `pct_unexplained` and `n_persons`,
+#'   and `kable`, the table from `output = "kable"`.
 #' * `output = "ggplot"`: each item's first-component loading (x-axis)
 #'   against its location (y-axis), with dashed lines at zero and the
 #'   variance partition in the caption. Item names are placed with
@@ -144,6 +145,7 @@ RMdimResidualPCA <- function(
   # --- Normalise the cutoff argument -----------------------------------------
   cutoff_value <- NULL
   cutoff_n_iter <- NULL
+  cutoff_req_iter <- NULL
   cutoff_percentile_pct <- NULL
   cutoff_full <- NULL # full object (carries simulated $results for the p-value)
   if (!is.null(cutoff)) {
@@ -155,6 +157,7 @@ RMdimResidualPCA <- function(
       cutoff_full <- cutoff
       cutoff_value <- cutoff$suggested_cutoff
       cutoff_n_iter <- cutoff$actual_iterations
+      cutoff_req_iter <- cutoff$requested_iterations
       cutoff_percentile_pct <- cutoff$suggested_cutoff_percentile
     } else if (is.numeric(cutoff) && length(cutoff) == 1L) {
       cutoff_value <- as.numeric(cutoff)
@@ -385,21 +388,11 @@ RMdimResidualPCA <- function(
   if (output == "dataframe") {
     return(result_df)
   }
-  if (output == "list") {
-    components <- result_df
-    attr(components, "variance_partition") <- NULL
-    return(list(
-      components = components,
-      variance = as.data.frame(
-        attr(result_df, "variance_partition"),
-        stringsAsFactors = FALSE
-      )
-    ))
-  }
 
   # --- kable -----------------------------------------------------------------
-  # Display rounding (the dataframe output above stays unrounded)
-  result_df <- .round_display(result_df, c(
+  # Display rounding on a copy (the dataframe and list outputs stay
+  # unrounded)
+  display_df <- .round_display(result_df, c(
     Eigenvalue = 3, Proportion_of_variance = 3, p = 4
   ))
   n_clause <- .n_caption(
@@ -436,7 +429,8 @@ RMdimResidualPCA <- function(
         round(cutoff_value, 3),
         iter_part,
         pct_part,
-        "."
+        ".",
+        .attrition_clause(cutoff_n_iter, cutoff_req_iter)
       )
     )
   }
@@ -454,8 +448,8 @@ RMdimResidualPCA <- function(
     )
   }
 
-  knitr::kable(
-    result_df,
+  kbl <- knitr::kable(
+    display_df,
     format = "pipe",
     col.names = c(
       "Component",
@@ -465,6 +459,21 @@ RMdimResidualPCA <- function(
       if (p_value) "p"
     ),
     caption = paste(caption_parts, collapse = " ")
+  )
+  if (output == "kable") {
+    return(kbl)
+  }
+
+  # output == "list": the unrounded tables plus the kable.
+  components <- result_df
+  attr(components, "variance_partition") <- NULL
+  list(
+    components = components,
+    variance = as.data.frame(
+      attr(result_df, "variance_partition"),
+      stringsAsFactors = FALSE
+    ),
+    kable = kbl
   )
 }
 
@@ -506,6 +515,7 @@ RMdimResidualPCA <- function(
 #'     `suggested_cutoff`, always `99`.}
 #'   \item{`actual_iterations`}{Number of simulated datasets that could be
 #'     used.}
+#'   \item{`requested_iterations`}{The `iterations` requested.}
 #'   \item{`sample_n`}{Number of complete cases used.}
 #'   \item{`item_names`}{Item names.}
 #' }
@@ -519,8 +529,9 @@ RMdimResidualPCA <- function(
 #' their PCA is recorded.
 #'
 #' A simulated dataset that cannot be refitted, for example because a
-#' response category is empty, is left out without a message.
-#' `actual_iterations` gives the number that remained. The \pkg{iarm}
+#' response category is empty, is left out, and [RMdimResidualPCA()]
+#' reports how many in its caption. `actual_iterations` gives the number
+#' that remained. The \pkg{iarm}
 #' package is not needed.
 #'
 #' @references
@@ -555,6 +566,7 @@ RMdimResidualPCACutoff <- function(
   verbose = FALSE,
   seed = NULL
 ) {
+  .check_iterations(iterations)
   validate_response_data(data)
 
   old_rgl <- getOption("rgl.useNULL")
@@ -677,6 +689,7 @@ RMdimResidualPCACutoff <- function(
     suggested_cutoff = p99,
     suggested_cutoff_percentile = 99,
     actual_iterations = actual_iterations,
+    requested_iterations = iterations,
     sample_n = sample_n,
     item_names = item_names_vec
   )

@@ -71,8 +71,8 @@
 #'
 #' For `output = "kable"`, the same content as a `knitr_kable`. For
 #' `output = "ggplot"`, the named list of maps described under `output`.
-#' For `output = "list"`, both from one computation: `fit` (the data.frame)
-#' and `plots` (the maps).
+#' For `output = "list"`, all from one computation: `fit` (the data.frame),
+#' `plots` (the maps) and `kable` (the table from `output = "kable"`).
 #'
 #' @details
 #' \strong{Conditional MSQ.} For person \eqn{v} with answered items
@@ -198,6 +198,7 @@ RMpersonFit <- function(
   seed = NULL,
   output = c("kable", "dataframe", "ggplot", "list")
 ) {
+  .check_iterations(iterations, min = 0L)
   statistics <- match.arg(
     statistics,
     c("infit", "outfit", "lz"),
@@ -839,6 +840,38 @@ RMpersonFit <- function(
     return(out)
   }
 
+  display <- out
+  num <- vapply(display, is.numeric, logical(1))
+  display[num] <- lapply(display[num], function(x) round(x, 3))
+  caption <- paste0(
+    "Person fit (conditional MSQ + lz). ",
+    if (iterations > 0L) {
+      msq_desc <- if (flag == "underfit") {
+        "one-sided (underfit) MSQ p-values"
+      } else {
+        "two-sided MSQ p-values"
+      }
+      paste0(
+        msq_desc,
+        " from ",
+        iterations,
+        " Monte-Carlo replications (MSQ conditional on the total score, ",
+        "lz simulated at the estimated location); ",
+        "flagged at alpha = ",
+        flag_alpha,
+        "."
+      )
+    } else {
+      "No resampling (iterations = 0)."
+    },
+    n_clause
+  )
+  kbl <- knitr::kable(display, format = "pipe", caption = caption,
+                      row.names = FALSE)
+  if (output == "kable") {
+    return(kbl)
+  }
+
   if (output %in% c("ggplot", "list")) {
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
       stop(
@@ -885,38 +918,11 @@ RMpersonFit <- function(
     names(plots) <- statistics
     if (output == "list") {
       # One computation, both views: the per-person results and the maps.
-      return(list(fit = out, plots = plots))
+      return(list(fit = out, plots = plots, kable = kbl))
     }
     return(plots)
   }
 
-  display <- out
-  num <- vapply(display, is.numeric, logical(1))
-  display[num] <- lapply(display[num], function(x) round(x, 3))
-  caption <- paste0(
-    "Person fit (conditional MSQ + lz). ",
-    if (iterations > 0L) {
-      msq_desc <- if (flag == "underfit") {
-        "one-sided (underfit) MSQ p-values"
-      } else {
-        "two-sided MSQ p-values"
-      }
-      paste0(
-        msq_desc,
-        " from ",
-        iterations,
-        " Monte-Carlo replications (MSQ conditional on the total score, ",
-        "lz simulated at the estimated location); ",
-        "flagged at alpha = ",
-        flag_alpha,
-        "."
-      )
-    } else {
-      "No resampling (iterations = 0)."
-    },
-    n_clause
-  )
-  knitr::kable(display, format = "pipe", caption = caption, row.names = FALSE)
 }
 
 #' Build one person-fit map (statistic vs person location)

@@ -46,6 +46,7 @@ directly.}
 \code{suggested_cutoff}, always \code{99}.}
 \item{\code{actual_iterations}}{Number of simulated datasets that could be
 used.}
+\item{\code{requested_iterations}}{The \code{iterations} requested.}
 \item{\code{sample_n}}{Number of complete cases used.}
 \item{\code{item_names}}{Item names.}
 }
@@ -68,8 +69,9 @@ the same engine as for the observed data, and the largest eigenvalue of
 their PCA is recorded.
 
 A simulated dataset that cannot be refitted, for example because a
-response category is empty, is left out without a message.
-\code{actual_iterations} gives the number that remained. The \pkg{iarm}
+response category is empty, is left out, and \code{\link[=RMdimResidualPCA]{RMdimResidualPCA()}}
+reports how many in its caption. \code{actual_iterations} gives the number
+that remained. The \pkg{iarm}
 package is not needed.
 }
 \examples{

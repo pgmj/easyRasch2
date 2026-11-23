@@ -17,6 +17,30 @@
 
 ## Changes
 
+- `RMitemICCPlot()`: the grouping argument is now `grouping`. `method`
+  still works as its old name. `class_intervals` must be a whole number.
+  Results do not change.
+
+- `RMitemCatProb()` gains `vary_linetype`. Flags in `RMdimCFAPlot()` and
+  `RMplotTile()` no longer rely on colour alone.
+
+- The simulation cutoff functions and `RMitemRestscoreBoot()` stop before
+  simulating when a category is used only by respondents with a zero or
+  perfect total score. **Before, they could return cutoffs from the few
+  simulations that worked.**
+
+- `RMitemRestscore()` without a `cutoff` flags at `alpha`, not a fixed .05.
+  Results change only when `alpha` is not .05.
+
+- Clearer input checks and messages: `iterations` is validated everywhere,
+  and `RMdimResidualPCA()`, `RMdimCFA()`, `RMdimMartinLof()` and
+  `RMitemICCPlot()` report left-out simulations or dropped rows.
+
+- `output = "list"` now includes `kable`, the table from
+  `output = "kable"`, in `RMdifAnchor()`, `RMdifImpact()`,
+  `RMdimResidualPCA()`, `RMpersonChange()`, `RMpersonFit()` and
+  `RMreliabilityCurve()`. Results do not change.
+
 - **`RMdifLR()` reports Andersen's LR test only**, by CML with
   psychotools. The location table, Wald tests and plots are removed, and
   their arguments point to `RMdifAnchor()`. The LR test does not change.

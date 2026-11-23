@@ -694,7 +694,9 @@ test_that("output = 'list' returns the summary quantities as a table", {
   d <- phq9[, grep("^q", names(phq9))]
   df <- RMreliabilityCurve(d, benchmark = 0.7, output = "dataframe")
   res <- RMreliabilityCurve(d, benchmark = 0.7, output = "list")
-  expect_named(res, c("curve", "summary", "benchmark_range"))
+  expect_named(res, c("curve", "summary", "benchmark_range", "kable"))
+  expect_identical(res$kable,
+                   RMreliabilityCurve(d, benchmark = 0.7, output = "kable"))
   expect_equal(nrow(res$summary), 1L)
   for (a in c("latent_mean", "sigma", "marginal_ratio", "marginal_green",
               "sem_median", "sem_average", "benchmark", "benchmark_percent",

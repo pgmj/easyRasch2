@@ -156,3 +156,18 @@ test_that("zero cells are taken off the fill scale and text_size applies", {
   p0 <- RMplotTile(df, zero_fill = NULL)
   expect_false(anyNA(p0$data$fill_n))
 })
+
+test_that("RMplotTile highlights low counts in bold as well as red", {
+  skip_if_not_installed("ggplot2")
+  df <- make_polytomous(n = 40)
+  for (pct in c(FALSE, TRUE)) {
+    p <- RMplotTile(df, cutoff = 10, percent = pct)
+    b <- ggplot2::ggplot_build(p)
+    txt <- b$data[[which(vapply(p$layers, function(l)
+      inherits(l$geom, "GeomText"), logical(1)))]]
+    low <- txt$colour == "red"
+    expect_true(any(low))
+    expect_true(all(txt$fontface[low] == "bold"))
+    expect_true(all(txt$fontface[!low] == "plain"))
+  }
+})

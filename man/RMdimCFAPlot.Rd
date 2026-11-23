@@ -23,7 +23,8 @@ A named list of two \code{ggplot} objects:
 \item{\code{loadings}}{Standardized loadings per item: the simulated values
 (dots), black segments for their central 66\% and the expected range
 at \code{percentile}, the median (black dot), and the observed loading as
-a diamond, red when it is outside the expected range.}
+a diamond, filled when it is outside the expected range and open
+when it is inside.}
 \item{\code{fit}}{The simulated CFI, RMSEA and SRMR in panels, with the
 observed value and the cutoff.}
 }

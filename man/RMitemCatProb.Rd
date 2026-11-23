@@ -12,6 +12,7 @@ RMitemCatProb(
   n_points = 200L,
   viridis_option = "D",
   viridis_end = 0.95,
+  vary_linetype = FALSE,
   facet_ncol = NULL,
   label_wrap = 25L,
   line_width = 0.9,
@@ -52,6 +53,11 @@ at which the curves are evaluated. Default \code{200L}.}
 \item{viridis_end}{Numeric in (0, 1]. Upper end of the viridis
 palette range. Lower values keep the palette in its mid-tones and
 avoid the very bright yellow at \code{1.0}. Default \code{0.95}.}
+
+\item{vary_linetype}{Logical. If \code{TRUE}, each category also gets its
+own line type (solid for category 0, then increasingly broken dash
+patterns), so neighbouring curves stay apart in greyscale and for
+readers with colour vision deficiency. Default \code{FALSE}, colour only.}
 
 \item{facet_ncol}{Optional integer. Number of columns in the facet
 layout. Default \code{NULL} (\code{ggplot2::facet_wrap()} auto-layout).}
@@ -121,6 +127,9 @@ logistic item characteristic curve.
 
 The colours follow the category number, so low categories are at one
 end of the palette and high categories at the other. With
+\code{vary_linetype = TRUE}, the line types do too, and the legend shows
+colour and line type together. Thirteen line types are available,
+and they repeat beyond 13 categories. With
 \code{category_labels}, the legend shows those labels (for example "Never",
 "Sometimes", "Often").
 

@@ -15,7 +15,8 @@
 #'   `"calibration"` when `fit` is given, since that plot shows the test in
 #'   [RMitemCatFit()].
 #'   * `"residuals"`: standardised residuals of the number of
-#'     respondents in each category, within groups of total scores.
+#'     respondents in each category, within groups of total scores,
+#'     against simulated ranges when `fit` is given.
 #'   * `"adjacent"`: for each pair of adjacent categories, the share of
 #'     respondents in the upper one, against the total score.
 #'   * `"restscore"`: the mean and SD of the rest score among respondents
@@ -25,17 +26,29 @@
 #'     \eqn{X_i \ge k} against the model's predicted probability.
 #' @param fit Optional result of [RMitemCatFit()] with `output = "list"`,
 #'   made from the same `data` (checked). Its simulations are used for the
-#'   rest-score and calibration plots, so `iterations`, `parallel`,
-#'   `n_cores` and `seed` are ignored. Each item's corrected p from
+#'   rest-score and calibration plots, so `iterations` and `seed` are
+#'   ignored, and give the ranges in the residual plot. Each item's corrected p from
 #'   [RMitemCatFit()] is shown under its label, in bold when below .05
 #'   (marked with an asterisk when \pkg{ggtext} is not installed), and the
 #'   fit's item labels are used unless `item_labels` is given.
-#' @param score_groups Integer. Number of total-score groups for
-#'   `type = "residuals"`, formed with roughly equal numbers of
-#'   respondents. Default `5L`.
+#' @param grouping How respondents are grouped by total score for
+#'   `type = "residuals"`, as in [RMitemICCPlot()]: `"quantile"` (default),
+#'   `class_intervals` groups with about equal numbers of respondents,
+#'   `"width"`, `class_intervals` intervals of equal width over the
+#'   observed total scores, `"score"`, every observed total score its own
+#'   group, or `"manual"`, groups set by `score_breaks`. Groups without
+#'   respondents are left out. The caption names the grouping used.
+#' @param class_intervals Integer, at least 2. Number of groups for
+#'   `grouping = "quantile"` and `"width"`. Default `5L`.
+#' @param score_breaks Integer vector for `grouping = "manual"`: the total
+#'   scores at which a new group starts, in increasing order. Default
+#'   `NULL`.
 #' @param iterations Integer, at least 20. Number of simulated datasets
 #'   for `type = "restscore"` and `type = "calibration"` when `fit` is not
-#'   given. Default `200L`.
+#'   given. Default `200L`. The ends of each pointwise range are extreme
+#'   quantiles of the simulated values, so below about 1000 datasets they,
+#'   and which points fall outside them, change with the seed (the caption
+#'   says so).
 #' @param conf_level Numeric in (0, 1). Coverage of the pointwise bands and
 #'   intervals. Default `0.95`.
 #' @param item_labels Optional character vector of unique item labels for
@@ -67,12 +80,18 @@
 #'
 #' **Residuals.** For each item, category and score group, the observed
 #' number of respondents minus the expected number, divided by its
-#' standard deviation under the model. Dotted lines at \eqn{\pm 1.96} mark
-#' values that would be unusual for a single cell. The plot has many
-#' cells, so some values beyond them are expected even when the model
-#' holds. The expected counts treat the item parameters as known. This
-#' comparison of observed and expected counts within score groups is the
-#' one behind Glas's (1988) R1c test.
+#' standard deviation under the model. This comparison of observed and
+#' expected counts within score groups is the one behind Glas's (1988)
+#' R1c test. The standard deviation treats the item parameters as known,
+#' but they are estimated from the same counts, so the residuals vary less
+#' than a standard normal: with 5 score groups about 2.5% of cells fall
+#' beyond \eqn{\pm 1.96} when the model holds, fewer with fewer groups.
+#' In cells with few expected respondents the residual can only be large
+#' in the positive direction. Fixed lines at \eqn{\pm 1.96} would
+#' therefore mislead, and none are drawn. With `fit`, each cell gets the
+#' pointwise range of the residual in the datasets [RMitemCatFit()]
+#' simulated (regenerated for the chosen grouping, without refitting), which accounts for both. The plot has many cells, so some
+#' fall outside their range even when the model holds.
 #'
 #' **Adjacent categories.** Among respondents in category \eqn{j - 1} or
 #' \eqn{j} at total score \eqn{r}, the share in \eqn{j}. Under the model
@@ -88,6 +107,16 @@
 #' from datasets simulated from the model given each respondent's total
 #' score, with the item parameters re-estimated in each, so the
 #' uncertainty in the estimates is included.
+#' An item that discriminates less than the model expects (underfit) gives
+#' a rest-score SD above its expectation in every category, and compressed
+#' means: low categories above and high categories below their expectation.
+#' An item that discriminates more (overfit, often from local dependence)
+#' gives the reverse. The SD panel shows this as clearly as the mean panel,
+#' and in the middle category only the SD changes. This is a property of the
+#' item, not of its categories (see "What a flag means" in
+#' [RMitemCatFit()]). A raised SD in a single category points to that
+#' category instead, for example a middle category chosen by respondents at
+#' all levels.
 #'
 #' **Calibration.** For each cumulative event \eqn{X_i \ge k}, the model
 #' predicts \eqn{p = P(X_i \ge k \mid r)}. The observed events are
@@ -114,7 +143,8 @@
 #' * `output = "dataframe"`: the data behind the plot, with columns
 #'   `item` and, by `type`:
 #'   * `"residuals"`: `score_group`, `category`, `observed`, `expected`,
-#'     `z`.
+#'     `z`, `lower`, `upper`, `iterations_used` (the last three `NA`
+#'     without `fit`).
 #'   * `"adjacent"`: `pair`, `score`, `n_pair`, `observed`, `expected`,
 #'     `lower`, `upper`.
 #'   * `"restscore"`: `statistic`, `category`, `observed`, `lower`, `upper`,
@@ -157,7 +187,9 @@ RMitemCatFitPlot <- function(
   data,
   type = c("residuals", "adjacent", "restscore", "calibration"),
   fit = NULL,
-  score_groups = 5L,
+  grouping = c("quantile", "width", "score", "manual"),
+  class_intervals = 5L,
+  score_breaks = NULL,
   iterations = 200L,
   conf_level = 0.95,
   item_labels = NULL,
@@ -174,15 +206,11 @@ RMitemCatFitPlot <- function(
     stop("Package 'ggplot2' is required for output = \"ggplot\".",
          call. = FALSE)
   }
-  if (!is.numeric(score_groups) || length(score_groups) != 1L ||
-        !is.finite(score_groups) || score_groups != round(score_groups) ||
-        score_groups < 2) {
-    stop("`score_groups` must be a single integer >= 2.", call. = FALSE)
-  }
-  if (!is.numeric(iterations) || length(iterations) != 1L ||
-        !is.finite(iterations) || iterations < 20) {
-    stop("`iterations` must be a single integer >= 20.", call. = FALSE)
-  }
+  g <- .resolve_grouping(grouping, class_intervals, score_breaks)
+  grouping <- g$grouping
+  class_intervals <- g$class_intervals
+  score_breaks <- g$score_breaks
+  .check_iterations(iterations, min = 20L)
   if (!is.numeric(conf_level) || length(conf_level) != 1L ||
         conf_level <= 0 || conf_level >= 1) {
     stop("`conf_level` must be a single number in (0, 1).", call. = FALSE)
@@ -200,6 +228,15 @@ RMitemCatFitPlot <- function(
   X <- prep$X
   r <- prep$r
   P <- prep$P
+  if (type == "residuals") {
+    K <- nrow(P[[1L]]) - 1L
+    if (grouping == "manual" && any(score_breaks > K)) {
+      stop("`score_breaks` contains values above the maximum possible total ",
+           "score (", K, ").", call. = FALSE)
+    }
+    bin <- .cicc_class_bins(r, grouping, class_intervals, score_breaks)
+    sg <- .score_group_labels(r, bin)
+  }
   n_clause <- paste0(.n_caption(prep$n_used, prep$n_total, prep$quals), ".")
   alpha <- 1 - conf_level
 
@@ -225,11 +262,27 @@ RMitemCatFitPlot <- function(
 
   tab <- switch(
     type,
-    residuals = .catplot_residuals(X, r, P, score_groups),
+    residuals = .catplot_residuals(X, r, P, sg),
     adjacent = .catplot_adjacent(X, r, P, alpha),
     restscore = .catplot_restscore(X, r, P, S, alpha),
     calibration = .catplot_calibration(X, r, P, S, alpha)
   )
+  # Residual ranges only from the simulations in `fit`: without them the
+  # plot draws no reference lines, since +-1.96 does not hold (the
+  # residuals are under-dispersed at the estimated item parameters).
+  if (type == "residuals") {
+    tab$lower <- NA_real_
+    tab$upper <- NA_real_
+    tab$iterations_used <- NA_integer_
+    if (!is.null(fit)) {
+      band <- .catplot_residual_band(fit, sg, alpha, parallel, n_cores)
+      tab$lower <- band$lower
+      tab$upper <- band$upper
+      tab$iterations_used <- band$n
+      n_sims <- band$n
+      iterations <- fit$iterations
+    }
+  }
   # Row strips: the item label, and the corrected item p when `fit` is given.
   # Labels are wrapped here, so the p stays on a line of its own.
   strip_lab <- vapply(item_labels, function(l) {
@@ -280,14 +333,34 @@ RMitemCatFitPlot <- function(
     " Under each item: its p from RMitemCatFit(), corrected across items ",
     "with the ", .correction_label(fit$correction), ", ",
     if (md_strip) "in bold" else "marked *", " when below .05.")
+  # Range ends are extreme order statistics: with 2.5% in each tail, 1000
+  # datasets leave 25 values per tail (the convergence point for 95%
+  # intervals in Johansson, 2026, for infit).
+  range_note <- if (!is.na(n_sims) && n_sims < 1000L) {
+    paste0(" With fewer than 1000 simulated datasets, the ends of the ",
+           "ranges, and so which points fall outside them, depend on the ",
+           "seed.")
+  } else {
+    ""
+  }
   caption <- switch(
     type,
-    residuals = paste(
-      "Observed minus expected number of respondents in each category,",
-      "divided by its standard deviation, within groups of total scores.",
-      "Expected counts are from the probability of each category given the",
-      "total score. Dotted lines at \u00b11.96. With many cells, some values",
-      "beyond them are expected even when the model holds.", n_clause),
+    residuals = paste0(
+      "Observed minus expected number of respondents in each category, ",
+      "divided by its standard deviation, within groups of total scores. ",
+      "Expected counts are from the probability of each category given the ",
+      "total score. ",
+      if (is.null(fit)) {
+        "Give the RMitemCatFit() result as fit for simulated ranges. "
+      } else {
+        paste0("Grey boxes: pointwise ", pct, " range in ", n_sims,
+               " datasets simulated given each respondent's total score, ",
+               "with item parameters re-estimated in each. ")
+      },
+      .cicc_interval_caption(grouping, class_intervals, score_breaks, bin),
+      " ", n_clause,
+      if (!is.null(fit)) .attrition_clause(n_sims, iterations),
+      range_note),
     adjacent = paste(
       "Points: among respondents in either of two adjacent categories at a",
       "total score, the share in the upper one, sized by the number of",
@@ -298,13 +371,13 @@ RMitemCatFitPlot <- function(
       "observed minus expected. Bars: pointwise ", pct, " range in ",
       n_sims, " datasets simulated given each respondent's total ",
       "score, with item parameters re-estimated in each. ", n_clause,
-      .attrition_clause(n_sims, iterations)),
+      .attrition_clause(n_sims, iterations), range_note),
     calibration = paste0(
       "PAV-adjusted conditional event probability against the predicted ",
       "probability of the event given the total score, sized by the number ",
       "of respondents. Band: pointwise ", pct, " range in ", n_sims,
       " datasets simulated given the total scores. Dotted line: perfect ",
-      "calibration. ", n_clause)
+      "calibration. ", n_clause, range_note)
   )
   caption <- paste0(caption, fit_clause)
 
@@ -422,40 +495,126 @@ RMitemCatFitPlot <- function(
   }))
 }
 
-#' Total-score groups with roughly equal numbers of respondents
+#' Score-group factor labelled by the total scores it holds
+#'
+#' Groups from `.cicc_class_bins()` (shared with RMitemICCPlot()), relabelled
+#' "Score s" or "Scores a-b" by the scores observed in each, with empty
+#' groups dropped.
 #' @return Factor of group labels, one per element of `r`.
 #' @keywords internal
 #' @noRd
-.score_group_factor <- function(r, groups) {
-  sc <- sort(unique(r))
-  n_s <- tabulate(match(r, sc), length(sc))
-  cum <- cumsum(n_s) / sum(n_s)
-  g <- pmin(groups, findInterval(cum - 1e-9,
-                                 seq(0, 1, length.out = groups + 1L)[-1L]) + 1L)
-  g <- match(g, unique(g))
+.score_group_labels <- function(r, bin) {
+  bin <- droplevels(bin)
   # Labels built without names: tapply() names would be re-encoded, which
   # warns for the en dash in a non-UTF-8 locale.
-  lab <- vapply(seq_len(max(g)), function(j) {
-    s <- sc[g == j]
+  lab <- vapply(seq_len(nlevels(bin)), function(j) {
+    s <- r[as.integer(bin) == j]
     if (min(s) == max(s)) paste("Score", s[1L])
     else paste0("Scores ", min(s), "\u2013", max(s))
   }, character(1L))
-  factor(lab[g[match(r, sc)]], levels = lab)
+  factor(lab[as.integer(bin)], levels = lab)
 }
 
 #' @keywords internal
 #' @noRd
-.catplot_residuals <- function(X, r, P, groups) {
-  tab <- .cat_score_table(X, r, P)
-  sg <- .score_group_factor(r, groups)
-  tab$score_group <- sg[match(tab$score, r)]
-  tab$v <- tab$n_r * tab$p * (1 - tab$p)
-  agg <- stats::aggregate(cbind(observed, expected, v) ~ item + score_group +
-                            category, data = tab, FUN = sum)
-  agg$z <- ifelse(agg$v > 0, (agg$observed - agg$expected) / sqrt(agg$v),
-                  NA_real_)
-  agg$v <- NULL
-  agg[order(agg$item, agg$score_group, agg$category), ]
+.catplot_residuals <- function(X, r, P, sg) {
+  s <- .residual_sums(X, r, P, as.integer(sg))
+  G <- nlevels(sg)
+  do.call(rbind, lapply(seq_along(s), function(i) {
+    m1 <- ncol(s[[i]]$O)
+    data.frame(
+      item = i,
+      score_group = factor(rep(levels(sg), each = m1), levels = levels(sg)),
+      category = rep(seq_len(m1) - 1L, times = G),
+      observed = as.vector(t(s[[i]]$O)),
+      expected = as.vector(t(s[[i]]$E)),
+      z = .residual_z(s[[i]])
+    )
+  }))
+}
+
+#' Observed, expected and variance sums per item, score group and category
+#'
+#' Counts within each total score, summed over the scores in each group.
+#' The variance is binomial within each score, treating the item
+#' parameters as known.
+#' @param g Integer score group (1..G) of each respondent.
+#' @return List over items of list(O, E, V), each a G x (m_i + 1) matrix.
+#' @keywords internal
+#' @noRd
+.residual_sums <- function(X, r, P, g) {
+  K <- nrow(P[[1L]]) - 1L
+  n_r <- tabulate(r + 1L, nbins = K + 1L)
+  ok <- n_r > 0L
+  g_score <- integer(K + 1L)
+  g_score[r + 1L] <- g
+  lapply(seq_along(P), function(i) {
+    m1 <- ncol(P[[i]])
+    O <- matrix(tabulate(r * m1 + X[, i] + 1L, nbins = (K + 1L) * m1),
+                K + 1L, m1, byrow = TRUE)
+    E <- n_r * P[[i]]
+    V <- E * (1 - P[[i]])
+    gs <- g_score[ok]
+    list(O = rowsum(O[ok, , drop = FALSE], gs, reorder = TRUE),
+         E = rowsum(E[ok, , drop = FALSE], gs, reorder = TRUE),
+         V = rowsum(V[ok, , drop = FALSE], gs, reorder = TRUE))
+  })
+}
+
+#' Standardised residuals from one item's sums, row-major (group, category)
+#' @keywords internal
+#' @noRd
+.residual_z <- function(s) {
+  z <- ifelse(s$V > 0, (s$O - s$E) / sqrt(s$V), NA_real_)
+  as.vector(t(z))
+}
+
+#' Pointwise range of the residuals in the datasets RMitemCatFit() simulated
+#'
+#' Each refitted dataset is regenerated from its stored seed (sampled given
+#' the observed total scores, so the score groups are the same as in the
+#' data) and its residuals computed at its re-estimated thresholds. The
+#' caller's random number state is restored.
+#' @return list(lower, upper, n), in the row order of .catplot_residuals().
+#' @keywords internal
+#' @noRd
+.catplot_residual_band <- function(fit, sg, alpha, parallel, n_cores) {
+  sims <- fit$sims
+  prep <- fit$prep
+  if (is.null(sims$seeds) || is.null(sims$thr)) {
+    stop("`fit` holds no simulations for type = \"residuals\". Rerun ",
+         "RMitemCatFit() with this version of easyRasch2.", call. = FALSE)
+  }
+  old_seed <- if (exists(".Random.seed", envir = globalenv())) {
+    get(".Random.seed", envir = globalenv())
+  }
+  on.exit({
+    if (is.null(old_seed)) {
+      if (exists(".Random.seed", envir = globalenv())) {
+        rm(".Random.seed", envir = globalenv())
+      }
+    } else {
+      assign(".Random.seed", old_seed, envir = globalenv())
+    }
+  }, add = TRUE)
+  g <- as.integer(sg)
+  thr <- prep$thr
+  r <- prep$r
+  one <- function(b) {
+    # The same generator and seed as in .catfit_simulate().
+    set.seed(sims$seeds[b], kind = "Mersenne-Twister",
+             normal.kind = "Inversion", sample.kind = "Rejection")
+    Xb <- .sim_given_totals(thr, r)
+    s <- .residual_sums(Xb, r, .cond_cat_probs(sims$thr[[b]]), g)
+    unlist(lapply(s, .residual_z))
+  }
+  Z <- do.call(cbind, .maybe_parallel_lapply(seq_along(sims$seeds), one,
+                                             parallel, n_cores))
+  q <- function(p) apply(Z, 1L, function(z) {
+    if (all(is.na(z))) NA_real_ else stats::quantile(z, p, na.rm = TRUE,
+                                                      names = FALSE)
+  })
+  list(lower = q(alpha / 2), upper = q(1 - alpha / 2), n = ncol(Z))
 }
 
 #' @keywords internal
@@ -611,13 +770,21 @@ RMitemCatFitPlot <- function(
   tab$sign <- factor(ifelse(tab$z >= 0, "More than expected",
                             "Fewer than expected"),
                      levels = c("More than expected", "Fewer than expected"))
-  ggplot2::ggplot(tab, ggplot2::aes(factor(.data$category), .data$z,
-                                    fill = .data$sign)) +
+  has_band <- any(!is.na(tab$lower))
+  p <-ggplot2::ggplot(tab, ggplot2::aes(factor(.data$category), .data$z,
+                                         fill = .data$sign))
+  if (has_band) {
+    p <- p + ggplot2::geom_tile(
+      ggplot2::aes(x = factor(.data$category),
+                   y = (.data$lower + .data$upper) / 2,
+                   height = .data$upper - .data$lower),
+      inherit.aes = FALSE, fill = "grey85", width = 0.85, na.rm = TRUE
+    )
+  }
+  p +
     ggplot2::geom_hline(yintercept = 0, colour = "grey40") +
-    ggplot2::geom_hline(yintercept = c(-1.96, 1.96), colour = "grey40",
-                        linetype = "dotted") +
-    ggplot2::geom_col(width = 0.7, colour = "grey30", linewidth = 0.2,
-                      na.rm = TRUE) +
+    ggplot2::geom_col(width = if (has_band) 0.5 else 0.7, colour = "grey30",
+                      linewidth = 0.2, na.rm = TRUE) +
     ggplot2::scale_fill_manual(NULL, values = c(
       "More than expected" = "#e34948", "Fewer than expected" = "#0d366b"
     ), drop = FALSE) +

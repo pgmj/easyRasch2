@@ -17,7 +17,7 @@
 #'   coercible to one) defining groups for DIF. The observed means are then
 #'   shown per group, and each panel shows the item's partial gamma from
 #'   `iarm::partgam_DIF()`, as in [RMdifGamma()]. Default `NULL`.
-#' @param method How the observed means are grouped along the total score
+#' @param grouping How the observed means are grouped along the total score
 #'   (see Class intervals in Details): `"quantile"` (default),
 #'   `class_intervals` groups with about equal numbers of respondents,
 #'   `"width"`, `class_intervals` intervals of equal width over the
@@ -25,9 +25,9 @@
 #'   group, or `"manual"`, groups set by `score_breaks`. `"cut"` is an old
 #'   name for `"quantile"`, still accepted.
 #' @param class_intervals Integer, at least 2. Number of groups for
-#'   `method = "quantile"` and `"width"`. Default `4`. Ignored by
+#'   `grouping = "quantile"` and `"width"`. Default `4`. Ignored by
 #'   `"score"` and `"manual"`.
-#' @param score_breaks Integer vector for `method = "manual"`: the total
+#' @param score_breaks Integer vector for `grouping = "manual"`: the total
 #'   scores at which a new group starts, in increasing order. For example,
 #'   `score_breaks = c(3, 6, 8)` on a 0 to 9 scale gives the groups 0-2,
 #'   3-5, 6-7 and 8-9. It corresponds to `lower.groups` in RASCHplot's
@@ -46,6 +46,7 @@
 #'   The model is always fitted on all items. Default `NULL`, all items.
 #' @param output `"patchwork"` (default) for one combined figure, or
 #'   `"list"` for a named list of one `ggplot` per item.
+#' @param method Old name for `grouping`, still accepted. Default `NULL`.
 #'
 #' @return A `patchwork` figure, or with `output = "list"` a named list of
 #'   `ggplot` objects. With `dif_var`, the partial gamma table is also
@@ -56,7 +57,8 @@
 #'
 #' @details
 #' \strong{Data.} Only complete cases are used, and with `dif_var` also only
-#' rows where it is not missing. An unused response category stops the
+#' rows where it is not missing. A message says how many rows were dropped.
+#' An unused response category stops the
 #' function and names the item. A category used only by respondents with
 #' a zero or perfect total score gives a warning, since its threshold
 #' cannot be estimated well.
@@ -68,14 +70,14 @@
 #' \strong{Class intervals.} Following Buchardt et al. (2023), the observed
 #' item means can be shown for each total score or for groups of total
 #' scores. All grouping is on the total score, never on an estimated person
-#' location. `method = "quantile"` splits the observed total scores into
+#' location. `grouping = "quantile"` splits the observed total scores into
 #' `class_intervals` groups of about equal numbers of respondents, with
 #' common boundaries so that DIF groups share the x-axis. This is the
-#' approach of `iarm::ICCplot()` (`Hmisc::cut2(g = ...)`). `method =
+#' approach of `iarm::ICCplot()` (`Hmisc::cut2(g = ...)`). `grouping =
 #' "width"` splits the observed score range into intervals of equal width,
 #' which reads naturally on the score axis but can leave sparse intervals,
-#' which `min_n` removes. `method = "score"` shows every observed total
-#' score, the finest resolution, sensible for short scales. `method =
+#' which `min_n` removes. `grouping = "score"` shows every observed total
+#' score, the finest resolution, sensible for short scales. `grouping =
 #' "manual"` places the boundaries where `score_breaks` says. Each group
 #' gives one observed point at its mean total score. If the scores are too
 #' sparse to form `class_intervals` distinct groups, `"quantile"` and
@@ -148,13 +150,13 @@
 #'   RMitemICCPlot(sim_data)
 #'
 #'   # Equal-width intervals on the total-score scale, with the model band
-#'   RMitemICCPlot(sim_data, method = "width", error_band = TRUE)
+#'   RMitemICCPlot(sim_data, grouping = "width", error_band = TRUE)
 #'
 #'   # Every total score as its own group (short scales)
-#'   RMitemICCPlot(sim_data, method = "score")
+#'   RMitemICCPlot(sim_data, grouping = "score")
 #'
 #'   # Manual grouping: new groups start at total scores 3, 5, and 7
-#'   RMitemICCPlot(sim_data, method = "manual", score_breaks = c(3, 5, 7))
+#'   RMitemICCPlot(sim_data, grouping = "manual", score_breaks = c(3, 5, 7))
 #' }
 #' }
 #'
@@ -162,8 +164,8 @@
 #' @export
 RMitemICCPlot <- function(data,
                           dif_var         = NULL,
-                          method          = c("quantile", "width", "score",
-                                              "manual", "cut"),
+                          grouping        = c("quantile", "width", "score",
+                                              "manual"),
                           class_intervals = 4,
                           score_breaks    = NULL,
                           ci              = TRUE,
@@ -171,50 +173,25 @@ RMitemICCPlot <- function(data,
                           conf_level      = 0.95,
                           min_n           = 8L,
                           items           = NULL,
-                          output          = c("patchwork", "list")) {
+                          output          = c("patchwork", "list"),
+                          method          = NULL) {
 
-  method <- match.arg(method)
-  # "cut" is the pre-1.1.0 name of the quantile grouping, kept as a silent
-  # legacy alias so existing code keeps working.
-  if (method == "cut") {
-    method <- "quantile"
+  # `method` is the pre-1.5.0 name of `grouping`, kept as a silent alias so
+  # existing code (including the jamovi module) keeps working.
+  if (!is.null(method)) {
+    if (!missing(grouping)) {
+      stop("Give `grouping` only. `method` is its old name.", call. = FALSE)
+    }
+    grouping <- method
   }
+  g <- .resolve_grouping(grouping, class_intervals, score_breaks)
+  method <- g$grouping
+  class_intervals <- g$class_intervals
+  score_breaks <- g$score_breaks
   output <- match.arg(output)
-
-  if (!is.null(score_breaks)) {
-    if (method != "manual") {
-      stop(
-        "`score_breaks` is only used with method = 'manual'.",
-        call. = FALSE
-      )
-    }
-    if (!is.numeric(score_breaks) || length(score_breaks) < 1L ||
-        anyNA(score_breaks) || any(score_breaks != as.integer(score_breaks)) ||
-        is.unsorted(score_breaks, strictly = TRUE) || any(score_breaks < 1)) {
-      stop(
-        "`score_breaks` must be a strictly increasing vector of positive ",
-        "integers (each value starts a new total-score group).",
-        call. = FALSE
-      )
-    }
-    score_breaks <- as.integer(score_breaks)
-  } else if (method == "manual") {
-    stop(
-      "method = 'manual' requires `score_breaks` (the total scores at ",
-      "which a new group starts, e.g. c(3, 6, 8)).",
-      call. = FALSE
-    )
-  }
 
   validate_response_data(data) # also checks for 2+ items
   data <- as.data.frame(data)
-  if (method %in% c("quantile", "width")) {
-    if (!is.numeric(class_intervals) || length(class_intervals) != 1L ||
-        !is.finite(class_intervals) || class_intervals < 2L) {
-      stop("`class_intervals` must be a single integer >= 2.", call. = FALSE)
-    }
-    class_intervals <- as.integer(class_intervals)
-  }
   if (!is.numeric(conf_level) || length(conf_level) != 1L ||
       conf_level <= 0 || conf_level >= 1) {
     stop("`conf_level` must be a single number in (0, 1).", call. = FALSE)
@@ -236,6 +213,13 @@ RMitemICCPlot <- function(data,
   }
   keep <- stats::complete.cases(data)
   if (dif_mode) keep <- keep & !is.na(dif_factor)
+  if (!all(keep)) {
+    message(
+      sum(!keep), " respondent(s) with missing responses",
+      if (dif_mode) " or missing `dif_var`",
+      " dropped (RMitemICCPlot() uses complete cases)."
+    )
+  }
   data <- data[keep, , drop = FALSE]
   if (dif_mode) dif_factor <- droplevels(dif_factor[keep])
   if (nrow(data) == 0L) stop("No complete cases in `data`.", call. = FALSE)
@@ -343,6 +327,51 @@ RMitemICCPlot <- function(data,
 # ===========================================================================
 # Internal helpers
 # ===========================================================================
+
+#' Validate the class-interval arguments shared by RMitemICCPlot() and
+#' RMitemCatFitPlot()
+#' @return list(grouping, class_intervals, score_breaks), normalised.
+#' @keywords internal
+#' @noRd
+.resolve_grouping <- function(grouping, class_intervals, score_breaks) {
+  grouping <- match.arg(grouping[1L],
+                        c("quantile", "width", "score", "manual", "cut"))
+  # "cut" is the pre-1.1.0 name of the quantile grouping, kept as a silent
+  # legacy alias.
+  if (grouping == "cut") grouping <- "quantile"
+  if (!is.null(score_breaks)) {
+    if (grouping != "manual") {
+      stop("`score_breaks` is only used with grouping = 'manual'.",
+           call. = FALSE)
+    }
+    if (!is.numeric(score_breaks) || length(score_breaks) < 1L ||
+        anyNA(score_breaks) || any(score_breaks != as.integer(score_breaks)) ||
+        is.unsorted(score_breaks, strictly = TRUE) || any(score_breaks < 1)) {
+      stop(
+        "`score_breaks` must be a strictly increasing vector of positive ",
+        "integers (each value starts a new total-score group).",
+        call. = FALSE
+      )
+    }
+    score_breaks <- as.integer(score_breaks)
+  } else if (grouping == "manual") {
+    stop(
+      "grouping = 'manual' requires `score_breaks` (the total scores at ",
+      "which a new group starts, e.g. c(3, 6, 8)).",
+      call. = FALSE
+    )
+  }
+  if (grouping %in% c("quantile", "width")) {
+    if (!is.numeric(class_intervals) || length(class_intervals) != 1L ||
+        !is.finite(class_intervals) ||
+        class_intervals != round(class_intervals) || class_intervals < 2L) {
+      stop("`class_intervals` must be a single integer >= 2.", call. = FALSE)
+    }
+    class_intervals <- as.integer(class_intervals)
+  }
+  list(grouping = grouping, class_intervals = class_intervals,
+       score_breaks = score_breaks)
+}
 
 #' Assign respondents to total-score class intervals
 #' @keywords internal

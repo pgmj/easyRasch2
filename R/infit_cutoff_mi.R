@@ -12,7 +12,8 @@
 #'   factors, as the `polr` method needs, are converted back to numbers.
 #'   Their levels must be the response codes (`"0"`, `"1"`, ...).
 #' @param iterations Integer. Total number of simulated datasets across all
-#'   imputations, split about evenly between the `m` imputed datasets.
+#'   imputations, split about evenly between the `m` imputed datasets, so
+#'   at least `m`.
 #'   Default `500`. See the section on interval width.
 #' @param parallel Logical. Run the simulations within each imputed
 #'   dataset in parallel via \pkg{mirai}. Default `TRUE`. Passed to
@@ -43,7 +44,10 @@
 #'     the stacked distribution.}
 #'   \item{`actual_iterations`}{Total number of successful iterations across
 #'     all imputations.}
+#'   \item{`requested_iterations`}{The `iterations` requested.}
 #'   \item{`sample_n`}{Number of rows (respondents) per imputed dataset.}
+#'   \item{`sample_n_total`, `sample_has_na`}{As in [RMitemInfitCutoff()]:
+#'     `sample_n` and `FALSE`, since imputed datasets drop no one.}
 #'   \item{`sample_summary`}{Summary statistics of estimated person parameters
 #'     from the first imputed dataset.}
 #'   \item{`item_names`}{Character vector of item names.}
@@ -54,6 +58,8 @@
 #'     per imputed dataset.}
 #'   \item{`actual_iterations_per_imputation`}{Integer vector of successful
 #'     iterations per imputed dataset.}
+#'   \item{`dgp`}{`"resample"`, the data-generating process used in each
+#'     imputed dataset.}
 #' }
 #'
 #' @details
@@ -129,6 +135,7 @@ RMitemInfitCutoffMI <- function(
   cutoff_method = "hdci",
   hdci_width = 0.999
 ) {
+  .check_iterations(iterations)
   # --- Check mice -----------------------------------------------------------
 
   if (!requireNamespace("mice", quietly = TRUE)) {
@@ -158,6 +165,13 @@ RMitemInfitCutoffMI <- function(
   }
 
   m <- mids_object$m
+  if (iterations < m) {
+    stop(
+      "`iterations` (", iterations, ") must be at least the number of ",
+      "imputed datasets (m = ", m, "), since it is split between them.",
+      call. = FALSE
+    )
+  }
 
   # --- Distribute iterations across imputations -------------------------------
   base_iter <- iterations %/% m
@@ -318,13 +332,18 @@ RMitemInfitCutoffMI <- function(
     results = stacked_df,
     item_cutoffs = item_cutoffs,
     actual_iterations = total_actual,
+    requested_iterations = iterations,
     sample_n = sample_n,
+    # Imputed datasets are complete, so no respondent is dropped.
+    sample_n_total = sample_n,
+    sample_has_na = FALSE,
     sample_summary = sample_summary_first,
     item_names = item_names,
     cutoff_method = cutoff_method,
     hdci_width = hdci_width,
     n_imputations = m - n_failed,
     iterations_per_imputation = iters_per_imp,
-    actual_iterations_per_imputation = actual_per_imp
+    actual_iterations_per_imputation = actual_per_imp,
+    dgp = "resample"
   )
 }

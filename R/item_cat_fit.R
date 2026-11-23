@@ -94,6 +94,21 @@
 #' extreme response style shared by all items. The study is described at
 #' \url{https://pgmj.github.io/rasch_book/chapters/category-fit.html}.
 #'
+#' **What a flag means.** The test compares an item's whole table of
+#' category probabilities given the total score with the model, so it is
+#' not specific to the categories. An item whose categories work as scored
+#' but which discriminates less or more than the other items (underfit or
+#' overfit, for example from a second dimension or local dependence)
+#' departs as well. In a check with 10 items, one of which had ordered,
+#' distinct categories but a slope of 0.5 or 2, that item was flagged in
+#' 36% and 8% of datasets at n = 300, and in 96% and 83% at n = 1000.
+#' Check item fit first, for example with [RMitemInfit()] or
+#' [RMitemRestscore()]. Read a flag as a problem with the categories when
+#' the item otherwise fits, or when the departure is in one event and not
+#' in all. In [RMitemCatFitPlot()], a misfitting item shows in every
+#' category, while a category problem is local to one category or one pair
+#' of adjacent categories.
+#'
 #' @return
 #' * `output = "kable"`: a `knitr::kable()` table, one row per item, with
 #'   the event p-values, the item p and the corrected item p.
@@ -106,7 +121,8 @@
 #'   data.frame above), `correction`, `iterations` (requested),
 #'   `iterations_used` (refitted), `n_used`, `n_total`, `qualifiers`,
 #'   `item_labels`, and `prep` and `sims`, the data and simulations that
-#'   [RMitemCatFitPlot()] uses.
+#'   [RMitemCatFitPlot()] uses, and `kable` (the table from
+#'   `output = "kable"`).
 #'
 #' @references
 #' Dimitriadis, T., Gneiting, T., & Jordan, A. I. (2021). Stable reliability
@@ -148,10 +164,7 @@ RMitemCatFit <- function(
 ) {
   correction <- match.arg(correction)
   output <- match.arg(output)
-  if (!is.numeric(iterations) || length(iterations) != 1L ||
-        !is.finite(iterations) || iterations < 20) {
-    stop("`iterations` must be a single integer >= 20.", call. = FALSE)
-  }
+  .check_iterations(iterations, min = 20L)
   iterations <- as.integer(iterations)
   prep <- .catfit_prepare(data, who = "RMitemCatFit()")
   item_labels <- .catfit_item_labels(item_labels, prep$item_names)
@@ -190,14 +203,6 @@ RMitemCatFit <- function(
                   unit = "items", fn = "RMitemCatFit()")
 
   if (output == "dataframe") return(tab)
-  if (output == "list") {
-    return(structure(list(
-      table = tab, correction = correction, iterations = iterations,
-      iterations_used = sims$refit_used, n_used = prep$n_used,
-      n_total = prep$n_total, qualifiers = prep$quals,
-      item_labels = item_labels, prep = prep, sims = sims
-    ), class = c("RMitemCatFit", "list")))
-  }
 
   disp <- data.frame(Item = tab$item, stringsAsFactors = FALSE)
   for (k in seq_len(m_max)) {
@@ -216,7 +221,15 @@ RMitemCatFit <- function(
     .attrition_clause(sims$refit_used, iterations),
     .iteration_note(sims$refit_used, correction)
   )
-  knitr::kable(disp, format = "pipe", caption = caption)
+  kbl <- knitr::kable(disp, format = "pipe", caption = caption)
+  if (output == "kable") return(kbl)
+
+  structure(list(
+    table = tab, correction = correction, iterations = iterations,
+    iterations_used = sims$refit_used, n_used = prep$n_used,
+    n_total = prep$n_total, qualifiers = prep$quals,
+    item_labels = item_labels, prep = prep, sims = sims, kable = kbl
+  ), class = c("RMitemCatFit", "list"))
 }
 
 # ---------------------------------------------------------------------
@@ -341,6 +354,7 @@ RMitemCatFit <- function(
       if (!is.null(tb)) {
         Pb <- .cond_cat_probs(tb)
         out$refit <- TRUE
+        out$thr <- tb
         if ("mcb" %in% what) out$mcb <- .mcb_vector(Xb, r, Pb)
         if ("rest" %in% what) out$rest <- .restscore_stats(Xb, r, Pb)$diff
       }
@@ -359,6 +373,11 @@ RMitemCatFit <- function(
     cep = grab("cep", rep(TRUE, length(res))),
     mcb = grab("mcb", ok),
     rest = grab("rest", ok),
+    # Seed and re-estimated thresholds of each refitted dataset, so
+    # RMitemCatFitPlot(type = "residuals") can regenerate the datasets for
+    # any score grouping without refitting.
+    seeds = if (refit) it_seeds[ok],
+    thr = if (refit) lapply(res[ok], `[[`, "thr"),
     requested = iterations,
     refit_used = if (refit) sum(ok) else NA_integer_
   )

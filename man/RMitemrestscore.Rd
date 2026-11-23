@@ -48,8 +48,8 @@ or Benjamini-Yekutieli, control the false discovery rate), or
 \code{"none"}.}
 
 \item{alpha}{Numeric in (0, 1). An item is flagged when its corrected
-bootstrap p-value is below \code{alpha}. Default \code{0.05}. The asymptotic
-test without a \code{cutoff} always flags at .05.}
+p-value is below \code{alpha}: the bootstrap p-value with a \code{cutoff}, the
+asymptotic one without. Default \code{0.05}.}
 
 \item{output}{Character. \code{"kable"} (default) for a \code{knitr::kable()}
 table, or \code{"dataframe"}.}
@@ -72,8 +72,8 @@ the \code{Flagged} label and the relative item location.
 \item \code{output = "dataframe"}: a data.frame with the columns \code{Item},
 \code{Observed}, \code{Expected}, \code{Difference}, \code{p_adjusted}, \code{Flagged} and
 \code{Relative_location}. \code{Flagged} is \code{"overfit"} (observed above
-expected, adjusted p < .05), \code{"underfit"} (below, adjusted p < .05) or
-\code{""}.
+expected, adjusted p < \code{alpha}), \code{"underfit"} (below, adjusted p <
+\code{alpha}) or \code{""}.
 }
 
 With a \code{cutoff}, \code{p_adjusted} is replaced by \code{Diff_low} and \code{Diff_high},

@@ -454,3 +454,11 @@ test_that("residual expected counts match brute-force enumeration", {
     gT[row_pick$t1 + row_pick$t2 + 1]
   expect_equal(row_pick$expected, as.numeric(E_bf), tolerance = 1e-6)
 })
+
+test_that("RMdimMartinLof stores requested and failed iterations (F16)", {
+  df <- make_polytomous()
+  res <- RMdimMartinLof(df, partition = list(1:4, 5:8), iterations = 20L,
+                        parallel = FALSE, seed = 1L)
+  expect_equal(res$requested_iterations, 20L)
+  expect_equal(res$failed_iterations, 20L - res$actual_iterations)
+})

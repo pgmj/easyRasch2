@@ -102,7 +102,8 @@ bounds for the EAP grid. Default \code{c(-10, 10)}.}
 \code{FALSE}. Only used when \code{critical = "simulate"}.}
 
 \item{output}{Character. \code{"dataframe"} (default), \code{"kable"}, \code{"ggplot"},
-or \code{"list"} for the per-respondent table and the analysis settings.}
+or \code{"list"} for the per-respondent table, the analysis settings and the
+kable.}
 }
 \value{
 \itemize{
@@ -117,11 +118,12 @@ compatibility. \code{output = "list"} gives them as a table.
 \item If \code{output = "kable"}: the same content as a \code{knitr_kable}.
 \item If \code{output = "ggplot"}: occasion 1 against occasion 2, with the
 no-change band and points coloured by \code{change_class}.
-\item If \code{output = "list"}: a list with \code{persons} (the data.frame above) and
+\item If \code{output = "list"}: a list with \code{persons} (the data.frame above),
 \code{settings}, a one-row data.frame with \code{null}, \code{retest_sd} (0 with
 \code{null = "measurement"}), \code{anchor}, \code{method}, \code{estimator}, \code{alpha},
 \code{direction}, \code{critical} (the method used), \code{conditional_crit},
-\code{sim_iter} (\code{NA} unless simulated) and \code{n_persons}.
+\code{sim_iter} (\code{NA} unless simulated) and \code{n_persons}, and \code{kable}, the
+table from \code{output = "kable"}.
 }
 }
 \description{

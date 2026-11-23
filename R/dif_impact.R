@@ -40,8 +40,8 @@
 #'   \code{"rates"} (needs \code{cut}) or \code{"projection"} (needs
 #'   \code{target}).
 #' @param output \code{"kable"} (default), \code{"dataframe"},
-#'   \code{"ggplot"} (the local bias curve) or \code{"list"} (all tables,
-#'   see Value).
+#'   \code{"ggplot"} (the local bias curve) or \code{"list"} (all tables
+#'   and the kable of the one chosen by \code{table}, see Value).
 #'
 #' @return A data.frame, a \code{knitr_kable}, a \code{ggplot} or a list,
 #'   depending on \code{output}. Nothing is attached as attributes. With
@@ -117,6 +117,8 @@
 #'       missing \code{dif_var}, no responses or incomplete responses),
 #'       \code{N_incomplete} (of these, rows dropped for incomplete
 #'       responses) and one \code{n_<group>} column per group.}
+#'     \item{\code{kable}}{the table chosen by \code{table}, as
+#'       \code{output = "kable"} gives it.}
 #'   }
 #'
 #' @details
@@ -374,7 +376,7 @@ RMdifImpact <- function(
     }
   }
   target <- .dimp_check_target(target, reference, focal_lab)
-  shows_table <- output %in% c("kable", "dataframe")
+  shows_table <- output %in% c("kable", "dataframe", "list")
   if (shows_table && table == "rates" && is.null(cut)) {
     stop("table = \"rates\" needs a `cut`.", call. = FALSE)
   }
@@ -421,7 +423,9 @@ RMdifImpact <- function(
   settings[[paste0("n_", focal_lab)]] <- n[2L]
 
   if (output == "list") {
-    return(c(res, list(settings = settings)))
+    kbl <- render_dif_impact_kable(res[[table]], table, settings, conf, cut,
+                                   cut_scale, n_total)
+    return(c(res, list(settings = settings, kable = kbl)))
   }
   if (output == "ggplot") {
     return(render_dif_impact_ggplot(res$curve, est, settings, conf,

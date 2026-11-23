@@ -125,10 +125,11 @@ test_that(".catfit_pvalues step-down equals an independent implementation", {
   expect_equal(pv$padj, pmax(ref, p_item))
 })
 
-test_that(".score_group_factor forms at most the requested groups", {
+test_that(".score_group_labels gives at most the requested groups", {
   set.seed(5)
   r <- sample(1:15, 300, replace = TRUE)
-  g <- easyRasch2:::.score_group_factor(r, 4L)
+  g <- easyRasch2:::.score_group_labels(
+    r, easyRasch2:::.cicc_class_bins(r, "quantile", 4L))
   expect_s3_class(g, "factor")
   expect_lte(nlevels(g), 4L)
   expect_length(g, 300L)
@@ -216,13 +217,16 @@ test_that("RMitemCatFit list output carries what RMitemCatFitPlot needs", {
   expect_s3_class(fit, "RMitemCatFit")
   expect_named(fit, c("table", "correction", "iterations", "iterations_used",
                       "n_used", "n_total", "qualifiers", "item_labels",
-                      "prep", "sims"))
+                      "prep", "sims", "kable"))
   expect_identical(fit$correction, "fdr_bh")
   expect_identical(fit$iterations, 30L)
   expect_lte(fit$iterations_used, 30L)
   expect_equal(ncol(fit$sims$mcb), fit$iterations_used)
   expect_equal(ncol(fit$sims$cep), 30L)
   expect_equal(ncol(fit$sims$rest), fit$iterations_used)
+  expect_s3_class(fit$kable, "knitr_kable")
+  expect_match(paste(fit$kable, collapse = "\n"),
+               .correction_label("fdr_bh"), fixed = TRUE)
 })
 
 test_that("RMitemCatFit kable output has a caption naming the correction", {
@@ -270,9 +274,13 @@ test_that("RMitemCatFit gives the same result in parallel", {
 test_that("RMitemCatFitPlot validates its arguments", {
   df <- make_pcm(n = 150, k = 4)
   expect_error(RMitemCatFitPlot(df, type = "bars"))
-  expect_error(RMitemCatFitPlot(df, score_groups = 1), "integer >= 2")
-  expect_error(RMitemCatFitPlot(df, score_groups = 2.5), "integer >= 2")
-  expect_error(RMitemCatFitPlot(df, score_groups = Inf), "integer >= 2")
+  expect_error(RMitemCatFitPlot(df, class_intervals = 1), "integer >= 2")
+  expect_error(RMitemCatFitPlot(df, class_intervals = 2.5), "integer >= 2")
+  expect_error(RMitemCatFitPlot(df, class_intervals = Inf), "integer >= 2")
+  expect_error(RMitemCatFitPlot(df, grouping = "manual"), "requires `score_breaks`")
+  expect_error(RMitemCatFitPlot(df, score_breaks = 3), "only used with grouping")
+  expect_error(RMitemCatFitPlot(df, grouping = "manual", score_breaks = 99),
+               "above the maximum")
   expect_error(RMitemCatFitPlot(df, type = "restscore", iterations = 5),
                "integer >= 20")
   expect_error(RMitemCatFitPlot(df, conf_level = 1.2), "in \\(0, 1\\)")
@@ -292,7 +300,8 @@ test_that("RMitemCatFitPlot returns a ggplot for every type", {
 test_that("RMitemCatFitPlot dataframe output has the documented columns", {
   df <- make_pcm(n = 200, k = 4)
   cols <- list(
-    residuals = c("item", "score_group", "category", "observed", "expected", "z"),
+    residuals = c("item", "score_group", "category", "observed", "expected", "z",
+                  "lower", "upper", "iterations_used"),
     adjacent = c("item", "pair", "score", "n_pair", "observed", "expected",
                  "lower", "upper"),
     restscore = c("item", "statistic", "category", "observed", "lower", "upper",
@@ -314,6 +323,82 @@ test_that("residuals: observed and expected counts agree per item and category",
   d <- RMitemCatFitPlot(df, type = "residuals", output = "dataframe")
   tot <- stats::aggregate(cbind(observed, expected) ~ item + category, d, sum)
   expect_equal(tot$observed, tot$expected, tolerance = 1e-4)
+})
+
+test_that("residuals: every grouping gives labelled, non-empty score groups", {
+  df <- make_pcm(n = 300, k = 4)
+  r <- .catfit_prepare(df)$r
+  sc <- RMitemCatFitPlot(df, type = "residuals", grouping = "score",
+                         output = "dataframe")
+  expect_identical(nlevels(sc$score_group), length(unique(r)))
+  expect_identical(levels(sc$score_group)[1L], paste("Score", min(r)))
+  w <- RMitemCatFitPlot(df, type = "residuals", grouping = "width",
+                        class_intervals = 3, output = "dataframe")
+  expect_lte(nlevels(w$score_group), 3L)
+  m <- RMitemCatFitPlot(df, type = "residuals", grouping = "manual",
+                        score_breaks = c(4, 8), output = "dataframe")
+  expect_identical(nlevels(m$score_group), 3L)
+  expect_match(levels(m$score_group)[2L], "^Scores 4.7$")
+  # Default: 5 equal-count groups, and the caption names the grouping.
+  d <- RMitemCatFitPlot(df, type = "residuals", output = "dataframe")
+  expect_identical(nlevels(d$score_group), 5L)
+  p <- RMitemCatFitPlot(df, type = "residuals")
+  expect_match(p$labels$caption, "Class intervals")
+})
+
+test_that("residuals: no reference range or lines without a fit", {
+  skip_if_not_installed("ggplot2")
+  df <- make_pcm(n = 200, k = 4)
+  d <- RMitemCatFitPlot(df, type = "residuals", output = "dataframe")
+  expect_true(all(is.na(d$lower) & is.na(d$upper) & is.na(d$iterations_used)))
+  p <- RMitemCatFitPlot(df, type = "residuals")
+  hl <- Filter(function(l) inherits(l$geom, "GeomHline"), p$layers)
+  expect_length(hl, 1L)  # the zero line only
+  expect_equal(hl[[1L]]$data$yintercept, 0)
+  expect_false(any(vapply(p$layers, function(l) inherits(l$geom, "GeomTile"),
+                          logical(1L))))
+})
+
+test_that("residuals: simulated ranges from a fit, for any score grouping", {
+  skip_if_not_installed("ggplot2")
+  df <- make_pcm(n = 250, k = 4)
+  fit <- suppressMessages(RMitemCatFit(df, iterations = 40, seed = 4,
+                                       output = "list"))
+  expect_length(fit$sims$seeds, fit$iterations_used)
+  expect_length(fit$sims$thr, fit$iterations_used)
+  s0 <- .Random.seed
+  for (g in list(list(grouping = "quantile", class_intervals = 3L),
+                 list(grouping = "score"),
+                 list(grouping = "manual", score_breaks = c(4L, 8L)))) {
+    a <- do.call(RMitemCatFitPlot, c(list(df, type = "residuals", fit = fit,
+                                          output = "dataframe"), g))
+    b <- do.call(RMitemCatFitPlot, c(list(df, type = "residuals",
+                                          output = "dataframe"), g))
+    expect_identical(a$z, b$z)
+    # NA only in cells no respondent can reach (zero variance), as for z.
+    ok <- !is.na(a$lower)
+    expect_identical(ok, !is.na(a$z))
+    expect_true(all(a$lower[ok] <= a$upper[ok]))
+    expect_true(all(a$iterations_used == fit$iterations_used))
+  }
+  # Regenerating the simulated datasets leaves the caller's RNG alone.
+  expect_identical(.Random.seed, s0)
+  # Regenerated datasets are the ones RMitemCatFit() refitted: their
+  # thresholds re-estimate to the stored ones.
+  b1 <- 1L
+  set.seed(fit$sims$seeds[b1], kind = "Mersenne-Twister",
+           normal.kind = "Inversion", sample.kind = "Rejection")
+  Xb <- .sim_given_totals(fit$prep$thr, fit$prep$r)
+  expect_equal(unname(.fit_cml_thresholds(Xb)), unname(fit$sims$thr[[b1]]))
+  p <- RMitemCatFitPlot(df, type = "residuals", fit = fit)
+  expect_true(any(vapply(p$layers, function(l) inherits(l$geom, "GeomTile"),
+                         logical(1L))))
+  expect_no_error(ggplot2::ggplot_build(p))
+  # A fit without the stored seeds (older version) gives a clear error.
+  old <- fit
+  old$sims$seeds <- NULL
+  expect_error(RMitemCatFitPlot(df, type = "residuals", fit = old),
+               "Rerun RMitemCatFit")
 })
 
 test_that("adjacent: binomial bands are ordered and within [0, 1]", {

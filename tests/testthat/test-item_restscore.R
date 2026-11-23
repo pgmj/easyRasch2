@@ -119,3 +119,15 @@ test_that("RMitemRestscore drops all-NA respondents instead of erroring", {
   expect_message(k <- RMitemRestscore(df), "no responses dropped")
   expect_match(paste(as.character(k), collapse = "\n"), "of 60 respondents")
 })
+
+test_that("RMitemRestscore without a cutoff flags at alpha (F8)", {
+  skip_if_not_installed("iarm")
+  data("pcmdat2", package = "eRm")
+  r05 <- RMitemRestscore(pcmdat2, output = "dataframe")
+  r50 <- RMitemRestscore(pcmdat2, alpha = 0.5, output = "dataframe")
+  expect_equal(r05$Flagged != "", !is.na(r05$p_adjusted) & r05$p_adjusted < 0.05)
+  expect_equal(r50$Flagged != "", !is.na(r50$p_adjusted) & r50$p_adjusted < 0.5)
+  expect_match(paste(as.character(RMitemRestscore(pcmdat2, alpha = 0.5)),
+                     collapse = "\n"),
+               "p < 0.5)", fixed = TRUE)
+})

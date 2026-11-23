@@ -41,6 +41,15 @@ attributes stay for compatibility (the jamovi module reads `prior` and
 
 ## C. Colour as the only cue
 
+DONE 2026-11-21. F14: observed loadings all `sienna2`, filled diamond
+(shape 18) when flagged, open diamond (shape 5) otherwise; caption and
+@return updated. F28: new `vary_linetype = FALSE` argument, line type per
+category from `scales::linetype_pal()` (13, recycled), merged legend, also
+in path mode. F36: low counts bold as well as red. Tests added in all three
+test files; NEWS entry added. Also, at the user's request: the CFA fit
+plot uses the same filled/open diamonds in `sienna2` (was red vs grey30),
+and the loadings plot uses `theme_bw()` (was `theme_minimal()`).
+
 | # | Function | Problem |
 |---|---|---|
 | F14 | RMdimCFAPlot | flagged loading red vs orange (B3) |
@@ -48,6 +57,26 @@ attributes stay for compatibility (the jamovi module reads `prior` and
 | F36 | RMplotTile | low counts red vs orange text (B9) |
 
 ## D. Error handling and input checks
+
+DONE 2026-11-21 (all, user chose the wide scope for F1, F2, F16).
+- F1: `.check_iterations()` (utils-validation.R) in all 13 functions with
+  `iterations`; `min = 20` in RMitemCatFit(+Plot), `min = 0` in RMpersonFit
+  (0 = statistics only). RMitemInfitCutoffMI also needs `iterations >= m`.
+- F2: the extreme-only check sits in `.wle_theta_pool()`, the CML-DGP entry
+  point of every `*Cutoff()`; the DIF gamma permutation DGP catches it and
+  runs. RMitemRestscoreBoot checks before resampling. Found while checking:
+  an extreme-only top category let 1 of 20 RMitemInfitCutoff iterations
+  succeed and the function returned cutoffs from that one, silently.
+  RMlocdepGammaCutoff (no refit) used to run on such data and now stops.
+  RMdimMartinLof not included (CML on subscales, different failure mode).
+- F6: requested_iterations, sample_n_total, sample_has_na, dgp added.
+- F8: asymptotic path flags at `alpha`; caption shows it.
+- F10: `.all_sims_failed_message(what = "bootstrap")`.
+- F12: message with the number of dropped rows.
+- F16: requested_iterations stored by PCA and CFA cutoffs, attrition
+  clause in RMdimResidualPCA and both RMdimCFA tables. Q3 already did it.
+  RMdimMartinLof: `requested_iterations`, `failed_iterations` and a message
+  (sequential stopping makes actual < requested by design).
 
 | # | Function | Problem |
 |---|---|---|

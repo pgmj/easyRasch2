@@ -98,7 +98,7 @@ background band. Default \code{TRUE}.}
 
 \item{output}{Character. \code{"ggplot"} (default), \code{"dataframe"} for the curve,
 \code{"kable"} for a summary table, or \code{"list"} for the curve and the summary
-as data.frames.}
+as data.frames plus the kable.}
 }
 \value{
 \itemize{
@@ -132,7 +132,8 @@ marginal reliability from 0.81 up to 0.90 when it should have fallen to
 where not computed) and
 \code{benchmark_range} (the theta ranges where the curve reaches
 \code{benchmark}, with columns \code{xmin} and \code{xmax}, \code{NULL} without a
-benchmark or when it is never reached).
+benchmark or when it is never reached) and \code{kable}, the summary table
+from \code{output = "kable"}.
 }
 }
 \description{

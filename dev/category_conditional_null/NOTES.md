@@ -555,3 +555,33 @@ New subsection "Category fit given the total score" in section 3 of vignettes/ea
 Calibration plot uses coord_cartesian instead of coord_equal, so panels fill the width. With `fit`, strips show the corrected p in bold when < .05 (ggtext, labels escaped as HTML entities), or with " *" without ggtext. The caption says which. Test added. Vignette calibration fig.height 13 -> 11.
 - Rest-score plot: outside points now filled vermillion #D55E00 (as RMdifAnchor flags), inside open black; bars grey60 -> grey85 for contrast. Shape still carries the distinction (CVD-safe, checked with a deutan simulation).
 - 2026-11-20: help pages of both functions reread and revised for clarity (terms defined, Data paragraph, p formula, FDR note, book link, Glas 1988 now cited, refs alphabetical).
+
+## 2026-11-20: null check of the residual plot's ±1.96 lines
+
+Question (user): are the standardised residuals in `RMitemCatFitPlot(type = "residuals")` N(0, 1) under the PCM? Not checked in any earlier study: the main study and the calibration study judged their statistics against the conditional bootstrap only.
+
+Script `R/residual_null_check.R` (300 reps per cell, container, 0.9 min). PCM data, theta ~ N(0, 1), n = 200/500/1000, k = 5/10, m = 2/4 thresholds, score groups 3/5/10. z computed as the plot does (CML estimates, binomial variance) and with the true thresholds. Datasets with an empty category skipped (7 of 3600). Summary `results/residual_null_summary.rds`; cells in `results/residual_null_cells/` (gitignored).
+
+- With the true thresholds, z is fine: SD 0.98-1.01, 4.6-5.2% beyond ±1.96. So the binomial variance is right and discreteness does not distort the overall rate.
+- With the estimates (what the plot shows), z is under-dispersed. Default 5 groups: SD 0.86-0.90, 2.4-2.9% beyond. 3 groups: SD 0.77-0.80, 1.4-2.0%. 10 groups: SD 0.91-0.95, 3.2-3.8%. Close to sqrt((G-1)/G) (0.82, 0.89, 0.95), the loss from each category's residuals summing to zero over the G groups at the CML estimates. n and k barely matter.
+- By expected count (5 groups): E > 20 SD ~0.82, 1.7-1.9% beyond; E < 5 4.1% beyond but nearly all positive (upper ~4.0%, lower ~0.1%). Sparse cells can only exceed upward.
+- So the ±1.96 lines are conservative, by an amount that depends on score_groups and cell size, and asymmetric for sparse cells. Options put to the user: bootstrap bands from the simulations RMitemCatFit already stores, or keep the lines and say this in the help text. Not decided.
+- Implemented same day (user's choice): `type = "residuals"` draws no ±1.96 lines. With `fit`, grey boxes give each cell's pointwise range from RMitemCatFit's simulations. `.catfit_simulate()` now also returns `seeds` and `thr` (the re-estimated thresholds) of each refitted dataset, and `.catplot_residual_band()` regenerates the datasets for any `score_groups` (sampling is given the observed totals, so the groups are fixed) without refitting. It restores the caller's .Random.seed. `.catplot_residuals()` rewritten on `.residual_sums()` (tabulate + rowsum), output checked identical to the old aggregate() version on pcmdat2, phq9 and random 3-category data at 2, 5, 10 groups. Dataframe output gains lower, upper, iterations_used (NA without fit). Cost: 0.18 s for 200 iterations on pcmdat2.
+- Band null check `R/residual_band_check.R` (100 datasets, n = 400, k = 8, 4 categories, 200 iterations): 5.25% outside (2.50% below, 2.75% above) vs 2.61% beyond ±1.96. E < 5 cells: 1.3% below / 2.5% above vs 0.04% / 4.2%. Results `results/residual_band_check.rds`.
+- Dev qmd section "Null distribution of the residuals in the residual plot" (before the calibration test) with fig-resid-null, tables tbl-resid-null and tbl-resid-band in the appendix. Rendered.
+
+## 2026-11-20: rest-score plot and whole-item discrimination
+
+User question: can the SD panel be read like discrimination (higher SD than expected = lower discrimination, underfit)? Checked with `R/restscore_discrimination_check.R` (container, 38 min): 10 items, 5 categories, focus item GPCM slope a = 0.5/1/2 (thresholds centred), n = 300/1000, 100 datasets per cell, RMitemCatFit 200 iterations, none skipped. Summary `results/restscore_discr_summary.rds`, cells gitignored.
+
+- Direction confirmed in every category. a = 0.5: SD +0.80 to +0.99 in all categories, means compressed (cat 0/1 above, 3/4 below, middle ~0). a = 2: SD -0.9 to -1.4, means spread. a = 1: all ~0, per-category outside rates 1-9%.
+- Correction of what I told the user beforehand: the SD is NOT the weaker signal. Mean shifts are largest in the extreme categories and zero in the middle one, SD shifts in every category. n = 1000, a = 2, middle category: SD below range 100%, mean outside 9%. n = 300, a = 2, inner categories: SD 56-94%, mean 1-48%.
+- RMitemCatFit (calibration test) flags the focus item 36% (a = 0.5) / 8% (a = 2) at n = 300, 96% / 83% at n = 1000. Rest-score plot ranges are pointwise and uncorrected: under a = 1, 18-28% of datasets have some category of the focus item outside on a panel, so the two rates are not comparable (dev qmd wording fixed 2026-11-20 after the user asked which plot was meant).
+- Dev qmd section "Rest-score plot and item discrimination" with fig-discr, tbl-discr and tbl-discr-test in the appendix. Rendered. Help page and book text proposed to the user, not yet written.
+
+## 2026-11-20: docs, vignette and book
+
+- Both residual checks rerun after the grouping change (`.catplot_residuals()` now takes a group factor, equal-count groups from the shared `.cicc_class_bins()`): 5 groups 2.5-2.8% beyond ±1.96 (SD 0.86-0.89), ranges 5.2% outside (2.4% below, 2.9% above). Dev qmd re-rendered.
+- Help: "What a flag means" in RMitemCatFit (flag not specific to categories, check item fit first, slope numbers); rest-score SD reading in RMitemCatFitPlot.
+- Vignette (.orig and knitted .Rmd, prose only): flag paragraph using items 3 (first step only, category) and 9 (all steps, item), rest-score reading sentence.
+- rasch_book chapters/category-fit.qmd: summary + purpose sentences, residual example now counts residuals outside the simulated range (Q1 9 of 25, PCM items 0-2), rest-score reading, new sections "Reference ranges for the residual plot" and "Item-level misfit", discussion paragraph on what a flag means, two limits bullets, reproduction bullet, four appendix tables. Scripts copied to scripts/category-fit/ (installed easyRasch2), summaries to results/category-fit/. Rendered in the container with the dev package installed.

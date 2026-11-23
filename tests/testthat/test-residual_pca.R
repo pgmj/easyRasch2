@@ -177,9 +177,26 @@ test_that("output = 'list' returns the variance partition as a table", {
   d <- phq9[, grep("^q", names(phq9))]
   df <- RMdimResidualPCA(d, output = "dataframe")
   res <- RMdimResidualPCA(d, output = "list")
-  expect_named(res, c("components", "variance"))
+  expect_named(res, c("components", "variance", "kable"))
+  expect_identical(res$kable, RMdimResidualPCA(d))
   expect_null(attr(res$components, "variance_partition"))
   expect_equal(res$components, `attr<-`(df, "variance_partition", NULL))
   expect_equal(nrow(res$variance), 1L)
   expect_equal(as.list(res$variance), attr(df, "variance_partition"))
+})
+
+test_that("RMdimResidualPCA reports simulations left out of the cutoff (F16)", {
+  df <- make_polytomous()
+  bound <- RMdimResidualPCACutoff(df, iterations = 5L, parallel = FALSE,
+                                  seed = 1L)
+  expect_equal(bound$requested_iterations, 5L)
+  fake <- bound
+  fake$requested_iterations <- 8L
+  cap <- paste(as.character(RMdimResidualPCA(df, cutoff = fake)),
+               collapse = "\n")
+  expect_match(cap, "3 of the 8 simulated datasets could not be refitted",
+               fixed = TRUE)
+  expect_false(grepl("could not be refitted",
+                     paste(as.character(RMdimResidualPCA(df, cutoff = bound)),
+                           collapse = "\n")))
 })

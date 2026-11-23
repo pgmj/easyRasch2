@@ -8,7 +8,9 @@ RMitemCatFitPlot(
   data,
   type = c("residuals", "adjacent", "restscore", "calibration"),
   fit = NULL,
-  score_groups = 5L,
+  grouping = c("quantile", "width", "score", "manual"),
+  class_intervals = 5L,
+  score_breaks = NULL,
   iterations = 200L,
   conf_level = 0.95,
   item_labels = NULL,
@@ -29,7 +31,8 @@ since the total score must cover the same items for everyone.}
 \code{\link[=RMitemCatFit]{RMitemCatFit()}}.
 \itemize{
 \item \code{"residuals"}: standardised residuals of the number of
-respondents in each category, within groups of total scores.
+respondents in each category, within groups of total scores,
+against simulated ranges when \code{fit} is given.
 \item \code{"adjacent"}: for each pair of adjacent categories, the share of
 respondents in the upper one, against the total score.
 \item \code{"restscore"}: the mean and SD of the rest score among respondents
@@ -41,19 +44,33 @@ intervals.
 
 \item{fit}{Optional result of \code{\link[=RMitemCatFit]{RMitemCatFit()}} with \code{output = "list"},
 made from the same \code{data} (checked). Its simulations are used for the
-rest-score and calibration plots, so \code{iterations}, \code{parallel},
-\code{n_cores} and \code{seed} are ignored. Each item's corrected p from
+rest-score and calibration plots, so \code{iterations} and \code{seed} are
+ignored, and give the ranges in the residual plot. Each item's corrected p from
 \code{\link[=RMitemCatFit]{RMitemCatFit()}} is shown under its label, in bold when below .05
 (marked with an asterisk when \pkg{ggtext} is not installed), and the
 fit's item labels are used unless \code{item_labels} is given.}
 
-\item{score_groups}{Integer. Number of total-score groups for
-\code{type = "residuals"}, formed with roughly equal numbers of
-respondents. Default \code{5L}.}
+\item{grouping}{How respondents are grouped by total score for
+\code{type = "residuals"}, as in \code{\link[=RMitemICCPlot]{RMitemICCPlot()}}: \code{"quantile"} (default),
+\code{class_intervals} groups with about equal numbers of respondents,
+\code{"width"}, \code{class_intervals} intervals of equal width over the
+observed total scores, \code{"score"}, every observed total score its own
+group, or \code{"manual"}, groups set by \code{score_breaks}. Groups without
+respondents are left out. The caption names the grouping used.}
+
+\item{class_intervals}{Integer, at least 2. Number of groups for
+\code{grouping = "quantile"} and \code{"width"}. Default \code{5L}.}
+
+\item{score_breaks}{Integer vector for \code{grouping = "manual"}: the total
+scores at which a new group starts, in increasing order. Default
+\code{NULL}.}
 
 \item{iterations}{Integer, at least 20. Number of simulated datasets
 for \code{type = "restscore"} and \code{type = "calibration"} when \code{fit} is not
-given. Default \code{200L}.}
+given. Default \code{200L}. The ends of each pointwise range are extreme
+quantiles of the simulated values, so below about 1000 datasets they,
+and which points fall outside them, change with the seed (the caption
+says so).}
 
 \item{conf_level}{Numeric in (0, 1). Coverage of the pointwise bands and
 intervals. Default \code{0.95}.}
@@ -83,7 +100,8 @@ per item.
 \code{item} and, by \code{type}:
 \itemize{
 \item \code{"residuals"}: \code{score_group}, \code{category}, \code{observed}, \code{expected},
-\code{z}.
+\code{z}, \code{lower}, \code{upper}, \code{iterations_used} (the last three \code{NA}
+without \code{fit}).
 \item \code{"adjacent"}: \code{pair}, \code{score}, \code{n_pair}, \code{observed}, \code{expected},
 \code{lower}, \code{upper}.
 \item \code{"restscore"}: \code{statistic}, \code{category}, \code{observed}, \code{lower}, \code{upper},
@@ -118,12 +136,18 @@ total score, which every plot here does.
 
 \strong{Residuals.} For each item, category and score group, the observed
 number of respondents minus the expected number, divided by its
-standard deviation under the model. Dotted lines at \eqn{\pm 1.96} mark
-values that would be unusual for a single cell. The plot has many
-cells, so some values beyond them are expected even when the model
-holds. The expected counts treat the item parameters as known. This
-comparison of observed and expected counts within score groups is the
-one behind Glas's (1988) R1c test.
+standard deviation under the model. This comparison of observed and
+expected counts within score groups is the one behind Glas's (1988)
+R1c test. The standard deviation treats the item parameters as known,
+but they are estimated from the same counts, so the residuals vary less
+than a standard normal: with 5 score groups about 2.5\% of cells fall
+beyond \eqn{\pm 1.96} when the model holds, fewer with fewer groups.
+In cells with few expected respondents the residual can only be large
+in the positive direction. Fixed lines at \eqn{\pm 1.96} would
+therefore mislead, and none are drawn. With \code{fit}, each cell gets the
+pointwise range of the residual in the datasets \code{\link[=RMitemCatFit]{RMitemCatFit()}}
+simulated (regenerated for the chosen grouping, without refitting), which accounts for both. The plot has many cells, so some
+fall outside their range even when the model holds.
 
 \strong{Adjacent categories.} Among respondents in category \eqn{j - 1} or
 \eqn{j} at total score \eqn{r}, the share in \eqn{j}. Under the model
@@ -139,6 +163,16 @@ high rest scores, or with too wide a spread, stands out. Intervals come
 from datasets simulated from the model given each respondent's total
 score, with the item parameters re-estimated in each, so the
 uncertainty in the estimates is included.
+An item that discriminates less than the model expects (underfit) gives
+a rest-score SD above its expectation in every category, and compressed
+means: low categories above and high categories below their expectation.
+An item that discriminates more (overfit, often from local dependence)
+gives the reverse. The SD panel shows this as clearly as the mean panel,
+and in the middle category only the SD changes. This is a property of the
+item, not of its categories (see "What a flag means" in
+\code{\link[=RMitemCatFit]{RMitemCatFit()}}). A raised SD in a single category points to that
+category instead, for example a middle category chosen by respondents at
+all levels.
 
 \strong{Calibration.} For each cumulative event \eqn{X_i \ge k}, the model
 predicts \eqn{p = P(X_i \ge k \mid r)}. The observed events are

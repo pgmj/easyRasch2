@@ -368,7 +368,9 @@ test_that("the caption says complete cases only when incomplete rows went", {
 # ---------------------------------------------------------------------
 test_that("output types", {
   expect_named(res1, c("impact", "dif", "items", "local", "rates", "rule",
-                       "projection", "curve", "settings"))
+                       "projection", "curve", "settings", "kable"))
+  expect_identical(res1$kable, RMdifImpact(dd$data, dd$group, items = "I3",
+                   cut = 1, target = list(n = c(2000, 2000))))
   expect_s3_class(RMdifImpact(dd$data, dd$group, items = "I3"),
                   "knitr_kable")
   k <- RMdifImpact(dd$data, dd$group, items = "I3", cut = 1,

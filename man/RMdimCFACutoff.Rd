@@ -119,9 +119,10 @@ cutoffs derived for continuous data and ML estimation.
 \strong{Datasets that fail.} Some simulated datasets make the estimation
 fail (a polychoric matrix that is not positive definite, thresholds on
 the boundary, empty categories). They are left out, and
-\code{actual_iterations} gives the number that remained. If all fail, the
-function stops, naming any category used only by respondents with a
-zero or perfect total score.
+\code{actual_iterations} gives the number that remained, and \code{\link[=RMdimCFA]{RMdimCFA()}}
+reports how many were left out in its caption. A category used only by
+respondents with a zero or perfect total score stops the function before
+it simulates, since CML cannot estimate its threshold.
 }
 \examples{
 \donttest{

@@ -7,7 +7,7 @@
 RMitemICCPlot(
   data,
   dif_var = NULL,
-  method = c("quantile", "width", "score", "manual", "cut"),
+  grouping = c("quantile", "width", "score", "manual"),
   class_intervals = 4,
   score_breaks = NULL,
   ci = TRUE,
@@ -15,7 +15,8 @@ RMitemICCPlot(
   conf_level = 0.95,
   min_n = 8L,
   items = NULL,
-  output = c("patchwork", "list")
+  output = c("patchwork", "list"),
+  method = NULL
 )
 }
 \arguments{
@@ -27,7 +28,7 @@ coercible to one) defining groups for DIF. The observed means are then
 shown per group, and each panel shows the item's partial gamma from
 \code{iarm::partgam_DIF()}, as in \code{\link[=RMdifGamma]{RMdifGamma()}}. Default \code{NULL}.}
 
-\item{method}{How the observed means are grouped along the total score
+\item{grouping}{How the observed means are grouped along the total score
 (see Class intervals in Details): \code{"quantile"} (default),
 \code{class_intervals} groups with about equal numbers of respondents,
 \code{"width"}, \code{class_intervals} intervals of equal width over the
@@ -36,10 +37,10 @@ group, or \code{"manual"}, groups set by \code{score_breaks}. \code{"cut"} is an
 name for \code{"quantile"}, still accepted.}
 
 \item{class_intervals}{Integer, at least 2. Number of groups for
-\code{method = "quantile"} and \code{"width"}. Default \code{4}. Ignored by
+\code{grouping = "quantile"} and \code{"width"}. Default \code{4}. Ignored by
 \code{"score"} and \code{"manual"}.}
 
-\item{score_breaks}{Integer vector for \code{method = "manual"}: the total
+\item{score_breaks}{Integer vector for \code{grouping = "manual"}: the total
 scores at which a new group starts, in increasing order. For example,
 \code{score_breaks = c(3, 6, 8)} on a 0 to 9 scale gives the groups 0-2,
 3-5, 6-7 and 8-9. It corresponds to \code{lower.groups} in RASCHplot's
@@ -64,6 +65,8 @@ The model is always fitted on all items. Default \code{NULL}, all items.}
 
 \item{output}{\code{"patchwork"} (default) for one combined figure, or
 \code{"list"} for a named list of one \code{ggplot} per item.}
+
+\item{method}{Old name for \code{grouping}, still accepted. Default \code{NULL}.}
 }
 \value{
 A \code{patchwork} figure, or with \code{output = "list"} a named list of
@@ -87,7 +90,8 @@ thresholds from \code{psychotools}, and the exact distribution of each item
 score given the total score from elementary symmetric functions.
 
 \strong{Data.} Only complete cases are used, and with \code{dif_var} also only
-rows where it is not missing. An unused response category stops the
+rows where it is not missing. A message says how many rows were dropped.
+An unused response category stops the
 function and names the item. A category used only by respondents with
 a zero or perfect total score gives a warning, since its threshold
 cannot be estimated well.
@@ -99,13 +103,13 @@ for the item being part of the total. It is not a marginal ICC.
 \strong{Class intervals.} Following Buchardt et al. (2023), the observed
 item means can be shown for each total score or for groups of total
 scores. All grouping is on the total score, never on an estimated person
-location. \code{method = "quantile"} splits the observed total scores into
+location. \code{grouping = "quantile"} splits the observed total scores into
 \code{class_intervals} groups of about equal numbers of respondents, with
 common boundaries so that DIF groups share the x-axis. This is the
-approach of \code{iarm::ICCplot()} (\code{Hmisc::cut2(g = ...)}). \code{method = "width"} splits the observed score range into intervals of equal width,
+approach of \code{iarm::ICCplot()} (\code{Hmisc::cut2(g = ...)}). \code{grouping = "width"} splits the observed score range into intervals of equal width,
 which reads naturally on the score axis but can leave sparse intervals,
-which \code{min_n} removes. \code{method = "score"} shows every observed total
-score, the finest resolution, sensible for short scales. \code{method = "manual"} places the boundaries where \code{score_breaks} says. Each group
+which \code{min_n} removes. \code{grouping = "score"} shows every observed total
+score, the finest resolution, sensible for short scales. \code{grouping = "manual"} places the boundaries where \code{score_breaks} says. Each group
 gives one observed point at its mean total score. If the scores are too
 sparse to form \code{class_intervals} distinct groups, \code{"quantile"} and
 \code{"width"} fall back to one point per score.
@@ -159,13 +163,13 @@ if (requireNamespace("ggplot2", quietly = TRUE) &&
   RMitemICCPlot(sim_data)
 
   # Equal-width intervals on the total-score scale, with the model band
-  RMitemICCPlot(sim_data, method = "width", error_band = TRUE)
+  RMitemICCPlot(sim_data, grouping = "width", error_band = TRUE)
 
   # Every total score as its own group (short scales)
-  RMitemICCPlot(sim_data, method = "score")
+  RMitemICCPlot(sim_data, grouping = "score")
 
   # Manual grouping: new groups start at total scores 3, 5, and 7
-  RMitemICCPlot(sim_data, method = "manual", score_breaks = c(3, 5, 7))
+  RMitemICCPlot(sim_data, grouping = "manual", score_breaks = c(3, 5, 7))
 }
 }
 

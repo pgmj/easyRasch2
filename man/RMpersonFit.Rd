@@ -86,8 +86,8 @@ items they answered get \code{NA} statistics and are not assessed.
 
 For \code{output = "kable"}, the same content as a \code{knitr_kable}. For
 \code{output = "ggplot"}, the named list of maps described under \code{output}.
-For \code{output = "list"}, both from one computation: \code{fit} (the data.frame)
-and \code{plots} (the maps).
+For \code{output = "list"}, all from one computation: \code{fit} (the data.frame),
+\code{plots} (the maps) and \code{kable} (the table from \code{output = "kable"}).
 }
 \description{
 Computes person-fit statistics for each respondent, with p-values from

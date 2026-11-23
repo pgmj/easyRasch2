@@ -232,3 +232,35 @@ test_that("RMitemCatProb boundary probabilities behave correctly", {
                  info = paste("Item:", it))
   }
 })
+
+test_that("RMitemCatProb vary_linetype maps line type and merges the legend", {
+  skip_if_not_installed("ggplot2")
+  df <- make_polytomous(max_score = 3L)
+  expect_error(RMitemCatProb(df, vary_linetype = NA), regexp = "TRUE or FALSE")
+  expect_error(RMitemCatProb(df, vary_linetype = "yes"), regexp = "TRUE or FALSE")
+
+  p0 <- RMitemCatProb(df)
+  expect_length(unique(ggplot2::ggplot_build(p0)$data[[1]]$linetype), 1L)
+
+  p1 <- RMitemCatProb(df, vary_linetype = TRUE,
+                      category_labels = c("a", "b", "c", "d"))
+  lt <- ggplot2::ggplot_build(p1)$data[[1]]
+  expect_equal(length(unique(lt$linetype)), 4L)
+  # One legend, not two: colour and linetype share title and labels
+  gt <- ggplot2::ggplotGrob(p1)
+  guide_box <- gt$grobs[grepl("guide-box", gt$layout$name)]
+  n_legends <- sum(vapply(guide_box, function(g) {
+    if (inherits(g, "zeroGrob")) 0L else sum(grepl("guides", g$layout$name))
+  }, integer(1)))
+  expect_equal(n_legends, 1L)
+})
+
+test_that("RMitemCatProb vary_linetype works in path mode", {
+  skip_if_not_installed("ggplot2")
+  skip_if_not_installed("geomtextpath")
+  df <- make_polytomous(max_score = 3L)
+  p <- RMitemCatProb(df, label_curves = "path", item = 1L, vary_linetype = TRUE)
+  lts <- vapply(p$layers, function(l) as.character(l$aes_params$linetype),
+                character(1))
+  expect_equal(length(unique(lts)), 4L)
+})

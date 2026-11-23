@@ -142,6 +142,7 @@ RMitemRestscoreCutoff <- function(
   hdci_width = 0.95,
   dgp = c("conditional", "resample")
 ) {
+  .check_iterations(iterations)
   dgp <- match.arg(dgp)
   cutoff_method <- match.arg(cutoff_method, c("hdci", "quantile"))
 

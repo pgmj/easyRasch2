@@ -439,6 +439,204 @@ in an earlier check of a nine-item PCM (2 to 3% of points outside under the
 null, easyRaschBayes `dev/pav-calibration-plan.md`). The next section turns
 the PAV curves into a test.
 
+### Null distribution of the residuals in the residual plot
+
+The residual plot above, and `RMitemCatFitPlot(type = "residuals")`, divide
+observed minus expected counts by the binomial standard deviation
+$\sqrt{\sum_r n_r p_{rj}(1 - p_{rj})}$ over the scores in a group, which
+treats the item parameters as known. They are CML estimates from the same
+data, and the category counts are their sufficient statistics, so at the
+estimates each category's residuals sum to zero over the score groups. That
+removes about one of the $G$ degrees of freedom, and the residuals should
+vary less than a standard normal, with an SD near $\sqrt{(G - 1)/G}$.
+
+```{r resid-null-load}
+rn <- readRDS(file.path(RES, "residual_null_summary.rds"))
+rb <- readRDS(file.path(RES, "residual_band_check.rds"))
+rpct <- function(x, d = 1) paste0(formatC(100 * x, format = "f", digits = d), "%")
+rrng <- function(x, d = 1) paste0(rpct(min(x), d), " to ", rpct(max(x), d))
+f2 <- function(x) formatC(x, format = "f", digits = 2)
+c5 <- subset(rn$by_cell, groups == 5)
+c3 <- subset(rn$by_cell, groups == 3)
+c10 <- subset(rn$by_cell, groups == 10)
+b5 <- subset(rn$by_bin, groups == 5)
+```
+
+**Design.** PCM data with $\theta \sim N(0, 1)$, $n$ = 200, 500, 1000,
+$k$ = 5 or 10 items with 3 or 5 categories (item locations evenly over
+$[-1, 1]$, steps evenly over $[-1.5, 1.5]$ with jitter, SD 0.2), and
+`r rn$reps` datasets per cell. Residuals were computed as the plot does, from
+the CML estimates, and with the generating thresholds, for 3, 5 and 10 score
+groups. Datasets with an empty category were skipped (`r sum(rn$skipped)` of
+`r 12 * rn$reps`). Script `category_conditional_null/R/residual_null_check.R`.
+
+With the generating thresholds the residuals are close to standard normal
+(SD `r f2(min(rn$by_cell$sd_true))` to `r f2(max(rn$by_cell$sd_true))`,
+`r rrng(rn$by_cell$beyond_true)` beyond ±1.96), so the binomial variance is
+right when the parameters are known. With the estimates, at the default 5
+score groups, the SD is `r f2(min(c5$sd_est))` to `r f2(max(c5$sd_est))` and
+`r rrng(c5$beyond_est)` of cells fall beyond ±1.96. With 3 groups the share is
+`r rrng(c3$beyond_est)` and with 10 groups `r rrng(c10$beyond_est)`. The SDs
+are close to what $\sqrt{(G - 1)/G}$ predicts (`r f2(sqrt(2/3))`,
+`r f2(sqrt(4/5))` and `r f2(sqrt(9/10))`). Sample size and number of items
+make little difference (@tbl-resid-null in the appendix).
+
+The share depends on the expected count in the cell (@fig-resid-null). Cells
+with many expected respondents vary least. In sparse cells the residual is
+skewed: with 5 groups and fewer than 5 expected respondents,
+`r rpct(mean(subset(b5, e_bin == "E < 5")$upper_est))` of cells lie above
++1.96 and `r rpct(mean(subset(b5, e_bin == "E < 5")$lower_est), 2)` below
+−1.96. A sparse cell can show more respondents than expected, but almost
+never markedly fewer.
+
+```{r fig-resid-null}
+#| fig-height: 3.8
+#| fig-cap: "Share of standardised residuals beyond ±1.96 when the PCM holds, by number of score groups and expected count in the cell, with the residual computed from the CML estimates (as plotted) and from the generating thresholds. Points: 5 and 10 items. Dotted line at 5%."
+fd <- rn$by_bin |>
+  select(groups, k, e_bin, beyond_est, beyond_true) |>
+  pivot_longer(c(beyond_est, beyond_true), names_to = "par", values_to = "share") |>
+  mutate(par = factor(c(beyond_est = "CML estimates",
+                        beyond_true = "Generating thresholds")[par],
+                      levels = c("CML estimates", "Generating thresholds")),
+         e_bin = factor(paste("Expected", sub("E ", "", e_bin)),
+                        levels = paste("Expected", c("< 5", "5-20", "> 20"))))
+ggplot(fd, aes(groups, share, colour = par, shape = par, linetype = par)) +
+  geom_hline(yintercept = 0.05, colour = "grey40", linetype = "dotted") +
+  stat_summary(fun = mean, geom = "line") +
+  geom_point(size = 2) +
+  facet_wrap(~ e_bin) +
+  scale_x_continuous(breaks = c(3, 5, 10)) +
+  scale_y_continuous(labels = function(x) paste0(100 * x, "%"),
+                     limits = c(0, NA)) +
+  scale_colour_manual(NULL, values = c("#0072B2", "#D55E00")) +
+  scale_shape_manual(NULL, values = c(16, 17)) +
+  scale_linetype_manual(NULL, values = c("solid", "42")) +
+  labs(x = "Score groups", y = "Beyond ±1.96") +
+  theme_bw() + theme(legend.position = "bottom")
+```
+
+Fixed lines at ±1.96 therefore flag fewer cells than their nominal 5%, by an
+amount that depends on the number of score groups and the cell size, and
+they almost never flag a sparse cell for having too few respondents. The
+residual plot in the package draws no such lines. When the result of
+`RMitemCatFit()` is given as `fit`, each cell instead gets the pointwise 95%
+range of its residual in the datasets that function simulated given the
+total scores, with the item parameters re-estimated in each. The simulated
+datasets share the observed total scores, so the score groups are the same
+in all of them. The plot regenerates each dataset from its stored seed and
+re-estimated thresholds for the chosen grouping, without refitting.
+
+In `r rb$settings$datasets` PCM datasets ($n$ = `r rb$settings$n`,
+$k$ = `r rb$settings$k`, `r rb$settings$m + 1` categories,
+`r rb$settings$iterations` simulated datasets each, 5 score groups),
+`r rpct(rb$overall$below_range + rb$overall$above_range, 2)` of cells fell
+outside their range (`r rpct(rb$overall$below_range, 2)` below,
+`r rpct(rb$overall$above_range, 2)` above), against
+`r rpct(rb$overall$below_196 + rb$overall$above_196, 2)` beyond ±1.96 in the
+same cells. In cells with fewer than 5 expected respondents the range left
+`r rpct(rb$by_bin$below_range[1])` below and `r rpct(rb$by_bin$above_range[1])`
+above, where ±1.96 left `r rpct(rb$by_bin$below_196[1], 2)` and
+`r rpct(rb$by_bin$above_196[1])` (@tbl-resid-band in the appendix). Script
+`category_conditional_null/R/residual_band_check.R`.
+
+### Rest-score plot and item discrimination
+
+The rest-score plot shows, per category, the mean and SD of the rest score
+of the respondents in that category, observed minus expected given the total
+scores. The expected reading for discrimination: if an item discriminates
+less than the PCM assumes, its category curves against the total score are
+flatter, so each category is chosen over a wider range of total scores. The
+rest-score SD within each category is then larger than expected, and the
+category means are compressed, low categories above and high categories
+below their expectation. An item that discriminates more than assumed should
+give the reverse. No condition in the main study varies the discrimination of
+a whole item, so this was checked separately.
+
+```{r discr-load}
+dr <- readRDS(file.path(RES, "restscore_discr_summary.rds"))
+dc <- dr$by_cat
+dcell <- dr$by_cell
+out_rate <- function(a, n, st, cats) {
+  x <- dc[dc$a == a & dc$n == n & dc$statistic == st & dc$category %in% cats, ]
+  x$above + x$below
+}
+```
+
+**Design.** Ten items with five categories, $\theta \sim N(0, 1)$, $n$ = 300
+or 1000, `r dr$settings$reps` datasets per cell. The focus item follows a
+generalised PCM with slope $a$ = 0.5, 1 or 2,
+$P(X = j \mid \theta) \propto \exp\{a(j\theta - \sum_{l \le j} \delta_l)\}$,
+with thresholds centred at 0. The other nine items follow the PCM
+($a$ = 1). Each dataset was analysed with `RMitemCatFit()` (`r dr$settings$iterations`
+simulated datasets) and `RMitemCatFitPlot(type = "restscore", fit = ...)`.
+Recorded per category of the focus item: the observed minus expected mean
+and SD of the rest score, and whether it fell outside its pointwise 95%
+range. Script `category_conditional_null/R/restscore_discrimination_check.R`.
+
+The direction is as expected in every category (@fig-discr). With $a$ = 0.5
+the SD is above its expectation in all five categories (by
+`r f2(min(dc$mean_diff[dc$a == 0.5 & dc$statistic == "sd"]))` to
+`r f2(max(dc$mean_diff[dc$a == 0.5 & dc$statistic == "sd"]))` rest-score
+points on average), and the means are compressed: categories 0 and 1 above
+expectation, 3 and 4 below, the middle category unchanged. With $a$ = 2 the
+SD is below expectation in all categories and the means spread out. With
+$a$ = 1 all differences are near zero and each category falls outside its
+range in `r rrng(dc$above[dc$a == 1] + dc$below[dc$a == 1])` of datasets.
+
+The SD carries at least as much of the signal as the mean. The mean shifts
+most in the extreme categories and not at all in the middle one, while the
+SD shifts by a similar amount in every category. At $n$ = 1000 and $a$ = 2,
+the middle category's SD fell below its range in
+`r rpct(out_rate(2, 1000, "sd", 2), 0)` of datasets, and its mean outside the
+range in `r rpct(out_rate(2, 1000, "mean", 2), 0)`. At $n$ = 300 and $a$ = 2,
+the SD of the inner categories fell outside in
+`r rrng(out_rate(2, 300, "sd", 1:3), 0)` of datasets, the means in
+`r rrng(out_rate(2, 300, "mean", 1:3), 0)`.
+
+The two sources of evidence differ in kind, so their rates are not
+comparable. The ranges in the rest-score plot are pointwise and uncorrected:
+with $a$ = 1, some category of the focus item fell outside its range on the
+mean or SD panel in about a fifth to a quarter of datasets. The calibration
+test in `RMitemCatFit()` combines the events of an item and corrects across
+items, so its rate under the model is controlled. It flagged the focus item
+(adjusted $p$ < .05) at $n$ = 300 in
+`r rpct(dcell$focus_flagged[dcell$a == 0.5 & dcell$n == 300], 0)` of
+datasets with $a$ = 0.5 and `r rpct(dcell$focus_flagged[dcell$a == 2 & dcell$n == 300], 0)`
+with $a$ = 2, and at $n$ = 1000 in
+`r rpct(dcell$focus_flagged[dcell$a == 0.5 & dcell$n == 1000], 0)` and
+`r rpct(dcell$focus_flagged[dcell$a == 2 & dcell$n == 1000], 0)`. So the
+calibration test has limited power against a whole-item slope at $n$ = 300,
+while the rest-score SD shows the direction clearly. Whether a corrected test
+of the rest-score statistics would detect a slope more often than the
+calibration test was not examined here. The residual and calibration plots
+were not examined in this check.
+
+```{r fig-discr}
+#| fig-height: 5
+#| fig-cap: "Rest score per category of the focus item, observed minus expected (top) and share of datasets outside the pointwise 95% range (bottom), for the mean and SD panels of the rest-score plot. Focus item slope a = 0.5, 1 (PCM) or 2, n = 1000, 10 items. Results for n = 300 are in the appendix."
+fdd <- dc |>
+  filter(n == 1000) |>
+  mutate(outside = above + below) |>
+  select(a, statistic, category, mean_diff, outside) |>
+  pivot_longer(c(mean_diff, outside), names_to = "measure", values_to = "value") |>
+  mutate(measure = factor(c(mean_diff = "Observed minus expected",
+                            outside = "Share outside range")[measure],
+                          levels = c("Observed minus expected", "Share outside range")),
+         statistic = factor(c(mean = "Rest-score mean", sd = "Rest-score SD")[statistic],
+                            levels = c("Rest-score mean", "Rest-score SD")),
+         a = factor(paste("a =", a), levels = paste("a =", c(0.5, 1, 2))))
+ggplot(fdd, aes(category, value, colour = a, shape = a, linetype = a)) +
+  geom_hline(yintercept = 0, colour = "grey40", linetype = "dotted") +
+  geom_line() +
+  geom_point(size = 2) +
+  facet_grid(measure ~ statistic, scales = "free_y") +
+  scale_colour_manual(NULL, values = c("#0072B2", "#000000", "#D55E00")) +
+  scale_shape_manual(NULL, values = c(16, 1, 17)) +
+  scale_linetype_manual(NULL, values = c("solid", "dotted", "42")) +
+  labs(x = "Category of the focus item", y = NULL) +
+  theme_bw() + theme(legend.position = "bottom")
+```
+
 ### A calibration test from the PAV curves
 
 ```{r cal-setup}
@@ -880,4 +1078,44 @@ pow_adj |>
   arrange(Condition, k, n) |>
   select(Condition, Cell, `Max-T` = maxT, `Min-p` = minp) |>
   kable(digits = 2, caption = "Calibration test: rejection rate at .05 of the focus item after the Westfall-Young step-down across items (B = 99), max-T and min-p combinations of the events.")
+```
+
+```{r tbl-resid-null}
+#| tbl-cap: "Standardised residuals under the PCM: share beyond ±1.96 and SD, from the CML estimates (as plotted) and from the generating thresholds, by number of score groups (G), sample size, number of items (k) and categories. Cells: residuals pooled over datasets."
+rn$by_cell |>
+  arrange(groups, k, m, n) |>
+  transmute(G = groups, n, k, Categories = m + 1, Cells = cells,
+            `Beyond, est.` = rpct(beyond_est), `Beyond, true` = rpct(beyond_true),
+            `Above +1.96, est.` = rpct(upper_est),
+            `Below −1.96, est.` = rpct(lower_est, 2),
+            `SD, est.` = f2(sd_est), `SD, true` = f2(sd_true)) |>
+  kable(align = "r", row.names = FALSE)
+```
+
+```{r tbl-resid-band}
+#| tbl-cap: "Simulated pointwise 95% ranges against ±1.96 under the PCM, by expected count in the cell: share of residuals below and above each. 5 score groups."
+rbind(cbind(e_bin = "All", rb$overall), rb$by_bin) |>
+  transmute(`Expected count` = sub("E ", "", e_bin), Cells = cells,
+            `Below range` = rpct(below_range, 2), `Above range` = rpct(above_range, 2),
+            `Below −1.96` = rpct(below_196, 2), `Above +1.96` = rpct(above_196, 2)) |>
+  kable(align = "r", row.names = FALSE)
+```
+
+```{r tbl-discr}
+#| tbl-cap: "Rest-score plot under a focus item with slope a: observed minus expected mean and SD of the rest score per category (average over datasets) and the share of datasets above and below the pointwise 95% range. 10 items, 5 categories, 100 datasets per cell."
+dc |>
+  arrange(a, n, statistic, category) |>
+  transmute(a, n, Statistic = c(mean = "Mean", sd = "SD")[statistic],
+            Category = category, `Obs. minus exp.` = f2(mean_diff),
+            Above = rpct(above, 0), Below = rpct(below, 0)) |>
+  kable(align = "r", row.names = FALSE)
+```
+
+```{r tbl-discr-test}
+#| tbl-cap: "RMitemCatFit() under a focus item with slope a: share of datasets with the focus item flagged (adjusted p < .05) and with any other item flagged."
+dcell |>
+  arrange(a, n) |>
+  transmute(a, n, Datasets = reps, `Focus item flagged` = rpct(focus_flagged, 0),
+            `Any other item flagged` = rpct(other_flagged, 0)) |>
+  kable(align = "r", row.names = FALSE)
 ```

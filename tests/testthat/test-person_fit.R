@@ -377,7 +377,8 @@ test_that("output = 'list' returns fit + plots from one computation, matching th
   names(dat) <- paste0("q", 1:5)
 
   res <- RMpersonFit(dat, iterations = 50, seed = 42, output = "list")
-  expect_named(res, c("fit", "plots"))
+  expect_named(res, c("fit", "plots", "kable"))
+  expect_identical(res$kable, RMpersonFit(dat, iterations = 50, seed = 42))
   expect_s3_class(res$fit, "data.frame")
   expect_named(res$plots, c("infit", "outfit", "lz"))
   for (p in res$plots) expect_s3_class(p, "ggplot")

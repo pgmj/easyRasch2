@@ -65,6 +65,11 @@
 #'   \item{`p_value_floor`}{The smallest attainable p-value,
 #'     `1 / (actual_iterations + 1)`.}
 #'   \item{`actual_iterations`}{Number of simulated datasets used.}
+#'   \item{`requested_iterations`}{The `iterations` requested.}
+#'   \item{`failed_iterations`}{Number of simulated datasets that could not
+#'     be refitted and were left out. With `stopping = "sequential"`,
+#'     `actual_iterations` can also be below `requested_iterations` because
+#'     the rule stopped early.}
 #'   \item{`rejected`}{Logical: is `p_value < alpha`?}
 #'   \item{`partition`}{Normalised partition (list of integer indices).}
 #'   \item{`n_subscales`}{Number of subscales.}
@@ -127,8 +132,9 @@
 #' *product* of their easinesses. See the note on validation below.
 #'
 #' A simulated dataset that cannot be refitted, for example because a
-#' category of an item is empty, is left out without a message.
-#' `actual_iterations` gives the number used.
+#' category of an item is empty, is left out, with a message saying how
+#' many. `actual_iterations` gives the number used and `failed_iterations`
+#' the number left out.
 #'
 #' Item parameters are estimated once on the observed data and held fixed
 #' across MC iterations. Christensen & Kreiner (2007) use the extended
@@ -230,6 +236,7 @@ RMdimMartinLof <- function(
   verbose = FALSE,
   seed = NULL
 ) {
+  .check_iterations(iterations)
   stopping <- match.arg(stopping)
 
   validate_response_data(data)
@@ -384,6 +391,7 @@ RMdimMartinLof <- function(
     )
     T_rep <- T_rep[is.finite(T_rep)]
     actual_iterations <- length(T_rep)
+    n_failed <- iterations - actual_iterations
     if (actual_iterations < 2L) {
       stop(
         "Fewer than 2 successful Monte Carlo iterations; cannot estimate p-value.",
@@ -399,6 +407,7 @@ RMdimMartinLof <- function(
     }
     n_exceed <- 0L
     actual_iterations <- 0L
+    n_failed <- 0L
     T_rep <- numeric(0)
     for (i in seq_len(iterations)) {
       result <- run_single_ml_iteration(sim_seeds[i], sim_data_list)
@@ -409,6 +418,8 @@ RMdimMartinLof <- function(
           n_exceed <- n_exceed + 1L
           if (n_exceed >= h) break
         }
+      } else {
+        n_failed <- n_failed + 1L
       }
       if (verbose) utils::setTxtProgressBar(pb, i)
     }
@@ -426,11 +437,21 @@ RMdimMartinLof <- function(
     p_value <- (n_exceed + 1) / (actual_iterations + 1)
   }
 
+  if (n_failed > 0L) {
+    message(
+      n_failed, " of ", n_failed + actual_iterations, " simulated datasets ",
+      "could not be refitted and were left out, so the p-value rests on ",
+      actual_iterations, ". Raise `iterations` to recover the intended number."
+    )
+  }
+
   list(
     T_obs = T_obs,
     p_value = p_value,
     p_value_floor = 1 / (actual_iterations + 1),
     actual_iterations = actual_iterations,
+    requested_iterations = iterations,
+    failed_iterations = n_failed,
     rejected = p_value < alpha,
     partition = partition_list,
     n_subscales = D,

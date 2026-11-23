@@ -606,7 +606,8 @@ test_that("output = 'list' returns the settings as a table", {
   d <- make_pair(n = 60)
   df <- RMpersonChange(d$t1, d$t2)
   res <- RMpersonChange(d$t1, d$t2, output = "list")
-  expect_named(res, c("persons", "settings"))
+  expect_named(res, c("persons", "settings", "kable"))
+  expect_identical(res$kable, RMpersonChange(d$t1, d$t2, output = "kable"))
   expect_equal(nrow(res$settings), 1L)
   for (a in c("null", "retest_sd", "anchor", "alpha", "direction",
               "critical", "sim_iter", "method", "conditional_crit")) {

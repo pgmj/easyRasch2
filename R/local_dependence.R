@@ -920,6 +920,7 @@ RMlocdepQ3Cutoff <- function(
   estimator = c("CML", "MML"),
   dgp = c("resample", "conditional")
 ) {
+  .check_iterations(iterations)
   validate_response_data(data)
 
   estimator <- match.arg(estimator)

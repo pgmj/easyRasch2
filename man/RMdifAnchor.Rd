@@ -117,6 +117,7 @@ adjacent thresholds with \code{Item}, \code{Distance},
 linking) and \code{Gini} (the Gini criterion when the groups are
 aligned at that item; Strobl et al., 2021). \code{NULL} at
 spacing level, where no anchor is selected.}
+\item{\code{kable}}{the table as \code{output = "kable"} gives it.}
 }
 }
 \description{

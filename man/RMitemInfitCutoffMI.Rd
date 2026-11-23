@@ -23,7 +23,8 @@ factors, as the \code{polr} method needs, are converted back to numbers.
 Their levels must be the response codes (\code{"0"}, \code{"1"}, ...).}
 
 \item{iterations}{Integer. Total number of simulated datasets across all
-imputations, split about evenly between the \code{m} imputed datasets.
+imputations, split about evenly between the \code{m} imputed datasets, so
+at least \code{m}.
 Default \code{500}. See the section on interval width.}
 
 \item{parallel}{Logical. Run the simulations within each imputed
@@ -61,7 +62,10 @@ simulations from all imputed datasets.}
 the stacked distribution.}
 \item{\code{actual_iterations}}{Total number of successful iterations across
 all imputations.}
+\item{\code{requested_iterations}}{The \code{iterations} requested.}
 \item{\code{sample_n}}{Number of rows (respondents) per imputed dataset.}
+\item{\code{sample_n_total}, \code{sample_has_na}}{As in \code{\link[=RMitemInfitCutoff]{RMitemInfitCutoff()}}:
+\code{sample_n} and \code{FALSE}, since imputed datasets drop no one.}
 \item{\code{sample_summary}}{Summary statistics of estimated person parameters
 from the first imputed dataset.}
 \item{\code{item_names}}{Character vector of item names.}
@@ -72,6 +76,8 @@ from the first imputed dataset.}
 per imputed dataset.}
 \item{\code{actual_iterations_per_imputation}}{Integer vector of successful
 iterations per imputed dataset.}
+\item{\code{dgp}}{\code{"resample"}, the data-generating process used in each
+imputed dataset.}
 }
 }
 \description{

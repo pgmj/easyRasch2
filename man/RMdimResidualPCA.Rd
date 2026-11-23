@@ -54,7 +54,8 @@ above. The variance partition is also attached as
 \code{output = "list"} to get it as a table.
 \item \code{output = "list"}: a list with \code{components}, the data.frame above, and
 \code{variance}, a one-row data.frame with \code{total}, \code{explained},
-\code{unexplained}, \code{pct_explained}, \code{pct_unexplained} and \code{n_persons}.
+\code{unexplained}, \code{pct_explained}, \code{pct_unexplained} and \code{n_persons},
+and \code{kable}, the table from \code{output = "kable"}.
 \item \code{output = "ggplot"}: each item's first-component loading (x-axis)
 against its location (y-axis), with dashed lines at zero and the
 variance partition in the caption. Item names are placed with

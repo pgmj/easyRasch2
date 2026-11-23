@@ -35,8 +35,8 @@
 #'   or Benjamini-Yekutieli, control the false discovery rate), or
 #'   `"none"`.
 #' @param alpha Numeric in (0, 1). An item is flagged when its corrected
-#'   bootstrap p-value is below `alpha`. Default `0.05`. The asymptotic
-#'   test without a `cutoff` always flags at .05.
+#'   p-value is below `alpha`: the bootstrap p-value with a `cutoff`, the
+#'   asymptotic one without. Default `0.05`.
 #' @param output Character. `"kable"` (default) for a `knitr::kable()`
 #'   table, or `"dataframe"`.
 #' @param sort Optional. `sort = "diff"` sorts the rows by the absolute
@@ -55,8 +55,8 @@
 #' * `output = "dataframe"`: a data.frame with the columns `Item`,
 #'   `Observed`, `Expected`, `Difference`, `p_adjusted`, `Flagged` and
 #'   `Relative_location`. `Flagged` is `"overfit"` (observed above
-#'   expected, adjusted p < .05), `"underfit"` (below, adjusted p < .05) or
-#'   `""`.
+#'   expected, adjusted p < `alpha`), `"underfit"` (below, adjusted p <
+#'   `alpha`) or `""`.
 #'
 #' With a `cutoff`, `p_adjusted` is replaced by `Diff_low` and `Diff_high`,
 #' followed by `p_restscore` (uncorrected equal-tailed bootstrap p) and
@@ -382,17 +382,17 @@ RMitemRestscore <- function(
   expected <- as.numeric(res_mat[seq_len(n_items), 2L])
   p_adjusted <- as.numeric(res_mat[seq_len(n_items), p_col])
 
-  # Flagged labels the misfit direction (only when adj. p < .05): observed
+  # Flagged labels the misfit direction (only when adj. p < alpha): observed
   # above expected = over-discrimination ("overfit", often local dependence);
   # below = under-discrimination ("underfit", often multidimensionality/noise);
   # "" otherwise. Note the value direction is opposite to infit (where a high
   # statistic is underfit).
   difference <- observed - expected
   flagged <- ifelse(
-    !is.na(p_adjusted) & p_adjusted < 0.05 & difference > 0,
+    !is.na(p_adjusted) & p_adjusted < alpha & difference > 0,
     "overfit",
     ifelse(
-      !is.na(p_adjusted) & p_adjusted < 0.05 & difference < 0,
+      !is.na(p_adjusted) & p_adjusted < alpha & difference < 0,
       "underfit",
       ""
     )
@@ -641,7 +641,9 @@ RMitemRestscore <- function(
       n_clause,
       ". Flagged (",
       if (identical(p_adj, "none")) "p" else "adj. p",
-      " < .05): ",
+      " < ",
+      alpha,
+      "): ",
       direction_clause,
       " The asymptotic p-values are miscalibrated under the Rasch model,",
       " flagging too many items as overfit in small samples and too few as",

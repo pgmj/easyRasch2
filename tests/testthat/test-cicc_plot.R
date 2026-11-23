@@ -74,7 +74,7 @@ test_that("RMitemICCPlot method = 'score' and error_band return a composite", {
   skip_if_not_installed("patchwork")
   skip_if_not_installed("ggplot2")
   df <- make_polytomous()
-  expect_s3_class(RMitemICCPlot(df, method = "score"), "patchwork")
+  expect_s3_class(RMitemICCPlot(df, grouping = "score"), "patchwork")
   expect_s3_class(RMitemICCPlot(df, error_band = TRUE, ci = FALSE), "patchwork")
 })
 
@@ -131,12 +131,12 @@ test_that("all grouping methods run and 'cut' aliases 'quantile'", {
   colnames(df) <- paste0("i", 1:4)
 
   for (m in c("quantile", "width", "score")) {
-    p <- suppressWarnings(RMitemICCPlot(df, method = m))
+    p <- suppressWarnings(RMitemICCPlot(df, grouping = m))
     expect_s3_class(p, "patchwork")
   }
   # legacy alias gives the same grouping as "quantile"
-  p_cut <- suppressWarnings(RMitemICCPlot(df, method = "cut", output = "list"))
-  p_q   <- suppressWarnings(RMitemICCPlot(df, method = "quantile", output = "list"))
+  p_cut <- suppressWarnings(RMitemICCPlot(df, grouping = "cut", output = "list"))
+  p_q   <- suppressWarnings(RMitemICCPlot(df, grouping = "quantile", output = "list"))
   expect_identical(p_cut[[1]]$data, p_q[[1]]$data)
 })
 
@@ -148,23 +148,35 @@ test_that("manual grouping via score_breaks works and validates", {
   colnames(df) <- paste0("i", 1:4)
 
   p <- suppressWarnings(
-    RMitemICCPlot(df, method = "manual", score_breaks = c(3, 5, 7)))
+    RMitemICCPlot(df, grouping = "manual", score_breaks = c(3, 5, 7)))
   expect_s3_class(p, "patchwork")
 
   # validation
-  expect_error(RMitemICCPlot(df, method = "manual"),
+  expect_error(RMitemICCPlot(df, grouping = "manual"),
                "requires `score_breaks`")
-  expect_error(RMitemICCPlot(df, method = "quantile", score_breaks = c(3)),
-               "only used with method")
-  expect_error(RMitemICCPlot(df, method = "manual", score_breaks = c(5, 3)),
+  expect_error(RMitemICCPlot(df, grouping = "quantile", score_breaks = c(3)),
+               "only used with grouping")
+  expect_error(RMitemICCPlot(df, grouping = "manual", score_breaks = c(5, 3)),
                "strictly increasing")
-  expect_error(RMitemICCPlot(df, method = "manual", score_breaks = c(3, 99)),
+  expect_error(RMitemICCPlot(df, grouping = "manual", score_breaks = c(3, 99)),
                "maximum possible total")
 })
 
 # ---------------------------------------------------------------------
 # Class-interval caption (reports the grouping actually used)
 # ---------------------------------------------------------------------
+test_that("`grouping` is the argument and `method` its old name", {
+  set.seed(1)
+  df <- as.data.frame(matrix(rbinom(200 * 6, 1, 0.5), 200))
+  a <- suppressWarnings(RMitemICCPlot(df, grouping = "width", output = "list"))
+  b <- suppressWarnings(RMitemICCPlot(df, method = "width", output = "list"))
+  expect_equal(a[[1]]$data, b[[1]]$data)
+  expect_error(RMitemICCPlot(df, grouping = "score", method = "width"),
+               "Give `grouping` only")
+  expect_error(RMitemICCPlot(df, grouping = "manual"), "requires `score_breaks`")
+  expect_error(RMitemICCPlot(df, class_intervals = 2.5), "integer >= 2")
+})
+
 test_that(".cicc_interval_caption names each method and its group count", {
   rs <- c(rep(0:8, each = 10))
   q <- .cicc_class_bins(rs, "quantile", 4L)
@@ -237,8 +249,21 @@ test_that("the plot caption carries the class-interval clause", {
   d <- as.data.frame(sapply(1:8, function(j)
     stats::rbinom(n, 1, stats::plogis(th - (j - 4.5) / 3))))
   names(d) <- paste0("I", 1:8)
-  p <- RMitemICCPlot(d, method = "width", class_intervals = 5, items = 1:2)
+  p <- RMitemICCPlot(d, grouping = "width", class_intervals = 5, items = 1:2)
   # er2_caption() hard-wraps the note, so allow a line break inside it
   expect_match(p$patches$annotation$caption,
                "Class\\s+intervals:\\s+5\\s+equal-width")
+})
+
+test_that("RMitemICCPlot says how many incomplete rows it drops (F12)", {
+  skip_if_not_installed("ggplot2")
+  skip_if_not_installed("patchwork")
+  df <- make_polytomous()
+  df[1:3, 1] <- NA
+  expect_message(RMitemICCPlot(df), "^3 respondent\\(s\\) with missing responses dropped")
+  grp <- rep(c("a", "b"), length.out = nrow(df))
+  grp[10] <- NA
+  expect_message(RMitemICCPlot(df, dif_var = grp),
+                 "^4 respondent\\(s\\) with missing responses or missing `dif_var` dropped")
+  expect_no_message(RMitemICCPlot(make_polytomous()))
 })
