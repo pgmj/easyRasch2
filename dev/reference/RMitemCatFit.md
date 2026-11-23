@@ -61,8 +61,8 @@ RMitemCatFit(
 
   Logical / integer. Run the simulations in parallel via mirai when
   available. Default sequential. When `n_cores` is `NULL`,
-  `getOption("mc.cores")` is used, and two workers when that is unset
-  too.
+  `getOption("mc.cores")` is used. If that is unset too, a warning is
+  given and the simulations run sequentially.
 
 - seed:
 

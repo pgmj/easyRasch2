@@ -21,7 +21,7 @@ person's observed responses, so missing responses are handled directly."><meta n
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9008</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9009</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -109,7 +109,7 @@ Default <code>500</code>.</p></dd>
 
 <dt id="arg-flag-alpha">flag_alpha<a class="anchor" aria-label="anchor" href="#arg-flag-alpha"></a></dt>
 <dd><p>Numeric in (0, 1). Significance level for the
-<code>flagged</code> column and the plots. Default <code>0.05</code>.</p></dd>
+<code>Flagged</code> column and the plots. Default <code>0.05</code>.</p></dd>
 
 
 <dt id="arg-flag">flag<a class="anchor" aria-label="anchor" href="#arg-flag"></a></dt>
@@ -132,8 +132,9 @@ They are not used for inference (Müller, 2020). Default <code>FALSE</code>.</p>
 <dt id="arg-parallel-n-cores">parallel, n_cores<a class="anchor" aria-label="anchor" href="#arg-parallel-n-cores"></a></dt>
 <dd><p>Logical / integer. Run the simulations in
 parallel over persons via <span class="pkg">mirai</span> when available. Default
-sequential. When <code>n_cores</code> is <code>NULL</code>, <code>getOption("mc.cores")</code> is used,
-and two workers when that is unset too.</p></dd>
+sequential. When <code>n_cores</code> is <code>NULL</code>, <code>getOption("mc.cores")</code> is used.
+If that is unset too, a warning is given and the simulations run
+sequentially.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
@@ -158,8 +159,8 @@ overly predictable responding).</p></dd>
     <p>For <code>output = "dataframe"</code>, a data.frame with one row per respondent, in
 input order: <code>id</code>, <code>n_answered</code>, <code>sum_score</code>, the requested statistics
 (<code>infit_msq</code>, <code>outfit_msq</code>, <code>lz</code>), their p-values (<code>p_infit</code>,
-<code>p_outfit</code>, <code>p_lz</code>) when <code>iterations &gt; 0</code>, <code>flagged</code>, and with
-<code>zstd = TRUE</code> also <code>infit_zstd</code> and <code>outfit_zstd</code>. <code>flagged</code> is <code>TRUE</code>
+<code>p_outfit</code>, <code>p_lz</code>) when <code>iterations &gt; 0</code>, <code>Flagged</code>, and with
+<code>zstd = TRUE</code> also <code>infit_zstd</code> and <code>outfit_zstd</code>. <code>Flagged</code> is <code>TRUE</code>
 when the uncorrected p-value of any requested statistic is below
 <code>flag_alpha</code>. It is a screening flag per person, not corrected for the
 number of respondents, so when the model holds about <code>flag_alpha</code> of the
@@ -276,7 +277,7 @@ statistics with estimated person parameter. <em>Psychometrika, 66</em>(3),
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4  4          8        10 0.7119447  0.6871710  0.42107989 0.2587065 0.1791045</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5  5          8         4 1.5137117  1.4541483  0.33920680 0.2288557 0.2288557</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6  6          8         4 1.5321777  1.4836487  0.29890695 0.2189055 0.2189055</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>        p_lz flagged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        p_lz Flagged</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.3930348   FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.2835821   FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 0.4228856   FALSE</span>
@@ -301,7 +302,7 @@ statistics with estimated person parameter. <em>Psychometrika, 66</em>(3),
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4  4          8        10 0.7119447  0.6871710  0.42107989 0.86069652</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 5  5          8         4 1.5137117  1.4541483  0.33920680 0.10945274</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 6  6          8         4 1.5321777  1.4836487  0.29890695 0.08457711</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     p_outfit      p_lz flagged</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     p_outfit      p_lz Flagged</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 1 0.13432836 0.3482587   FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2 0.73631841 0.2537313   FALSE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3 0.49253731 0.4626866   FALSE</span>

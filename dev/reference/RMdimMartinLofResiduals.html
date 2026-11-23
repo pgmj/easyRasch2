@@ -15,7 +15,7 @@ where."><meta name="robots" content="noindex"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9008</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9009</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,7 +56,7 @@ where.</p>
 <span>  <span class="va">data</span>,</span>
 <span>  <span class="va">partition</span>,</span>
 <span>  output <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"kable"</span>, <span class="st">"dataframe"</span>, <span class="st">"ggplot"</span><span class="op">)</span>,</span>
-<span>  flag_threshold <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  flag_threshold <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  color_by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"residual"</span>, <span class="st">"n"</span><span class="op">)</span>,</span>
 <span>  color_limits <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  min_expected <span class="op">=</span> <span class="cn">NULL</span></span>
@@ -87,10 +87,12 @@ panel per value of <code>t3</code>, an error for D &gt; 3).</p></dd>
 
 
 <dt id="arg-flag-threshold">flag_threshold<a class="anchor" aria-label="anchor" href="#arg-flag-threshold"></a></dt>
-<dd><p>Numeric. Cells with <code>|residual| &gt; flag_threshold</code>
-are flagged, in bold in the kable and in the <code>flagged</code> column of the
-data.frame. Default <code>2</code>. These are single-cell flags, and with many
-cells some are expected even under unidimensionality.</p></dd>
+<dd><p>Numeric or <code>NULL</code>. If set, cells with
+<code>|residual| &gt; flag_threshold</code> are marked, in bold in the kable and in a
+<code>Flagged</code> column of the data.frame. Default <code>NULL</code>, no marks: a fixed
+value is not a calibrated test, and with many cells some large
+residuals are expected under unidimensionality. <code><a href="RMdimMartinLof.html">RMdimMartinLof()</a></code> is
+the test.</p></dd>
 
 
 <dt id="arg-color-by">color_by<a class="anchor" aria-label="anchor" href="#arg-color-by"></a></dt>
@@ -123,11 +125,11 @@ residuals whose normal approximation is unreliable.</p></dd>
 
 <ul><li><p><code>output = "kable"</code>: a <code>knitr_kable</code> object. For D = 2, a wide table
 with <code>t1</code> in rows, <code>t2</code> in columns and the standardised residual in
-the cells (bold if flagged, a dash if <code>NA</code>). For D &gt; 2, one row per
-cell.</p></li>
+the cells (bold if beyond <code>flag_threshold</code>, a dash if <code>NA</code>). For
+D &gt; 2, one row per cell.</p></li>
 <li><p><code>output = "dataframe"</code>: a data.frame with one row per cell and the
-columns <code>t1</code>, ..., <code>tD</code>, <code>total</code>, <code>observed</code>, <code>expected</code>, <code>residual</code>
-and <code>flagged</code>.</p></li>
+columns <code>t1</code>, ..., <code>tD</code>, <code>total</code>, <code>observed</code>, <code>expected</code> and
+<code>residual</code>, plus <code>Flagged</code> when <code>flag_threshold</code> is set.</p></li>
 <li><p><code>output = "ggplot"</code>: a <code>geom_tile()</code> heatmap (D = 2 or 3 only).</p></li>
 </ul></div>
     <div class="section level2">
@@ -190,15 +192,15 @@ Testing unidimensionality in polytomous Rasch models. <em>Psychometrika,
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>NaNs produced</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Standardised residuals (Christensen et al. 2002, eq. 13). Rows = subscale 1 score, columns = subscale 2 score. **Bold** = |residual| &gt; 2. -- = uncomputable. n = 400 respondents.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Table: Standardised residuals (Christensen et al. 2002, eq. 13). Rows = subscale 1 score, columns = subscale 2 score. -- = uncomputable. n = 400 respondents.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |t1\t2 |0     |1         |2        |3     |4     |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |:-----|:-----|:---------|:--------|:-----|:-----|</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |0     |      |0.95      |**2.38** |-0.32 |-1.31 |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |1     |-0.95 |**-2.17** |-0.12    |0.32  |0.22  |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |2     |0.22  |0.11      |-0.41    |0.10  |0.84  |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |3     |0.35  |0.22      |-0.46    |-0.66 |-1.67 |</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> |4     |1.22  |0.47      |-0.06    |1.67  |--    |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |t1\t2 |0     |1     |2     |3     |4     |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |:-----|:-----|:-----|:-----|:-----|:-----|</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |0     |      |0.95  |2.38  |-0.32 |-1.31 |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |1     |-0.95 |-2.17 |-0.12 |0.32  |0.22  |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |2     |0.22  |0.11  |-0.41 |0.10  |0.84  |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |3     |0.35  |0.22  |-0.46 |-0.66 |-1.67 |</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> |4     |1.22  |0.47  |-0.06 |1.67  |--    |</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Heatmap</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"ggplot2"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
@@ -212,10 +214,11 @@ Testing unidimensionality in polytomous Rasch models. <em>Psychometrika,
 <span class="r-in"><span><span class="co"># Underlying data.frame for custom analysis</span></span></span>
 <span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">RMdimMartinLofResiduals</span><span class="op">(</span><span class="va">dat</span>,</span></span>
 <span class="r-in"><span>                           partition <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">1</span>,<span class="fl">2</span>,<span class="fl">2</span>,<span class="fl">2</span>,<span class="fl">2</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                           flag_threshold <span class="op">=</span> <span class="fl">2</span>,</span></span>
 <span class="r-in"><span>                           output <span class="op">=</span> <span class="st">"dataframe"</span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>NaNs produced</span>
-<span class="r-in"><span><span class="va">df</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">flagged</span>, <span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   t1 t2 total observed expected  residual flagged</span>
+<span class="r-in"><span><span class="va">df</span><span class="op">[</span><span class="va">df</span><span class="op">$</span><span class="va">Flagged</span>, <span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   t1 t2 total observed expected  residual Flagged</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3  0  2     2       18 11.02774  2.378139    TRUE</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 4  1  1     2       21 28.59561 -2.170933    TRUE</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

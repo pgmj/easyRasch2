@@ -39,7 +39,17 @@ RMdimCFA(
   instead of on the percentile cutoffs. The p-values are one-sided in
   the unfavourable direction for the fit indices (CFI low, RMSEA and
   SRMR high) and two-sided for the loadings. The fit indices and the
-  loadings are corrected as two separate families. Default `FALSE`.
+  loadings are corrected as two separate families. Default `FALSE`,
+  which flags at the `percentile` cutoffs of
+  [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md)
+  (99 by default). This differs from
+  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
+  [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+  and
+  [`RMlocdepQ3()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepQ3.md),
+  which use p-values whenever they get the full cutoff object. Here the
+  percentile is chosen when the simulations are run, and the default
+  keeps it as the decision rule.
 
 - correction:
 
@@ -68,8 +78,9 @@ data.frame by `output`:
   CFI, RMSEA and SRMR with the columns `Index`, `Observed`, `Cutoff`,
   `Direction` and `Flagged` (one-sided, in the unfavourable direction).
   With `p_value = TRUE`, also `p` and `padj`, and `Flagged` marks
-  `padj < alpha`. An index lavaan could not compute for `data` has
-  `Observed = NA` and `Flagged = "not tested"`.
+  `padj < alpha`. `Flagged` is logical. An index lavaan could not
+  compute for `data` has `Observed = NA` and `Flagged = NA` (shown as
+  "not tested" in the kable).
 
 - `loadings`:
 

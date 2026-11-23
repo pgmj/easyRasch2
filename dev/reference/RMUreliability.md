@@ -60,3 +60,18 @@ estimating reliability using Bayesian Measurement Uncertainty.
 ## See also
 
 [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
+
+## Examples
+
+``` r
+if (requireNamespace("ggdist", quietly = TRUE)) {
+  # 300 persons, 100 draws each: true location plus error with SD 0.5,
+  # so the reliability is 1 / (1 + 0.5^2) = 0.8
+  set.seed(1)
+  theta <- rnorm(300)
+  draws <- theta + matrix(rnorm(300 * 100, sd = 0.5), 300, 100)
+  RMUreliability(draws)
+}
+#>   rmu_estimate hdci_lowerbound hdci_upperbound .width .point .interval
+#> 1    0.7842125       0.7577253       0.8201325   0.95   mean      hdci
+```

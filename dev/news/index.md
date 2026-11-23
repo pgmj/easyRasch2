@@ -23,47 +23,17 @@
 
 ### Changes
 
-- [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md):
-  the grouping argument is now `grouping`. `method` still works as its
-  old name. `class_intervals` must be a whole number. Results do not
-  change.
-
-- [`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatProb.md)
-  gains `vary_linetype`. Flags in
-  [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFAPlot.md)
+- **The flag column is `Flagged` everywhere.**
+  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md),
+  [`RMlocdepGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMlocdepGamma.md),
+  [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLofResiduals.md)
   and
-  [`RMplotTile()`](https://pgmj.github.io/easyRasch2/dev/reference/RMplotTile.md)
-  no longer rely on colour alone.
-
-- The simulation cutoff functions and
-  [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md)
-  stop before simulating when a category is used only by respondents
-  with a zero or perfect total score. **Before, they could return
-  cutoffs from the few simulations that worked.**
-
-- [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
-  without a `cutoff` flags at `alpha`, not a fixed .05. Results change
-  only when `alpha` is not .05.
-
-- Clearer input checks and messages: `iterations` is validated
-  everywhere, and
-  [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md),
-  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md),
-  [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
-  and
-  [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md)
-  report left-out simulations or dropped rows.
-
-- `output = "list"` now includes `kable`, the table from
-  `output = "kable"`, in
-  [`RMdifAnchor()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md),
-  [`RMdifImpact()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifImpact.md),
-  [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md),
-  [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonChange.md),
   [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonFit.md)
-  and
-  [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md).
-  Results do not change.
+  called it `flagged`.
+  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)’s
+  fit table gives it as logical (`NA` when not tested), and
+  [`RMdimMartinLofResiduals()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLofResiduals.md)
+  marks cells only when `flag_threshold` is set.
 
 - **[`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
   reports Andersen’s LR test only**, by CML with psychotools. The
@@ -91,7 +61,14 @@
 - **[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
   bootstrap p-values are equal-tailed**, giving fewer false underfit
   flags when other items overfit. `p_restscore`, `padj_restscore` and
-  `Flagged` change.
+  `Flagged` change. Without a `cutoff` it flags at `alpha`, not a fixed
+  .05.
+
+- The simulation cutoff functions and
+  [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md)
+  stop before simulating when a category is used only by respondents
+  with a zero or perfect total score. **Before, they could return
+  cutoffs from the few simulations that worked.**
 
 - [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
   refuses a cutoff from
@@ -111,15 +88,6 @@
   [`RMitemInfitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitPlot.md)
   without `data` follows an explicit `statistic`. Tables do not change.
 
-- `output = "list"` in
-  [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md),
-  [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md)
-  and
-  [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonChange.md),
-  and more elements in the
-  [`RMdifTree()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md)
-  list, give results that were only attributes. The attributes are kept.
-
 - [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md)
   uses the scaled CFI and RMSEA, refuses `"DWLS"`, `"ULS"` and `"WLS"`,
   and needs at least 4 items. Results with `"WLSMV"` do not change in
@@ -130,13 +98,49 @@
 
 - [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md)
   warns that its flags come from the miscalibrated asymptotic test.
+
+- `output = "list"` ends with `kable`, the table from `output = "kable"`
+  ([`RMdifAnchor()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md),
+  [`RMdifImpact()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifImpact.md),
+  [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md),
+  [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonChange.md),
+  [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonFit.md),
+  [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md)),
+  and gives results that were only attributes
+  ([`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md),
+  [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md),
+  [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonChange.md),
+  [`RMdifTree()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifTree.md)).
+  The attributes are kept.
+
+- Clearer input checks and messages. `iterations` is validated
+  everywhere.
+  [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md),
+  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md),
+  [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md),
+  [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md),
+  and
   [`RMreliability()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliability.md)
   and
   [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md)
-  with `boot = TRUE` report dropped resamples.
+  with `boot = TRUE`, report left-out simulations, dropped resamples or
+  dropped rows.
+  [`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md)
+  and
+  [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonFit.md)
+  warn and run sequentially when `parallel = TRUE` has no core count.
 
-- [`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatProb.md)
-  no longer needs `eRm`. The
+- [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md):
+  the grouping argument is now `grouping` (`method` still works), and
+  `class_intervals` must be a whole number.
+
+- Plots and dependencies:
+  [`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatProb.md)
+  gains `vary_linetype` and no longer needs `eRm`, flags in
+  [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFAPlot.md)
+  and
+  [`RMplotTile()`](https://pgmj.github.io/easyRasch2/dev/reference/RMplotTile.md)
+  no longer rely on colour alone, and the
   [`RMtargeting()`](https://pgmj.github.io/easyRasch2/dev/reference/RMtargeting.md)
   caption says “threshold disorder”.
 

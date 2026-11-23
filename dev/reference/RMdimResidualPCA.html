@@ -19,7 +19,7 @@ first contrast) with a simulated bound."><meta name="robots" content="noindex"><
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9008</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9009</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,7 +92,11 @@ at least as large as the observed one,
 Needs the full <code><a href="RMdimResidualPCACutoff.html">RMdimResidualPCACutoff()</a></code> result as <code>cutoff</code>. The
 simulations are of the largest eigenvalue, so the p-value is given for
 the first component only (<code>NA</code> for the others). It is a single test,
-so no correction for multiple testing is needed. Default <code>FALSE</code>.</p></dd>
+so no correction for multiple testing is needed. Default <code>FALSE</code>,
+which flags against the cutoff (the 99th percentile when the full
+<code><a href="RMdimResidualPCACutoff.html">RMdimResidualPCACutoff()</a></code> result is given). Flagging at
+p &lt; .05 instead would be a less strict test, so unlike
+<code><a href="RMiteminfit.html">RMitemInfit()</a></code>, the full cutoff object does not switch to p-values.</p></dd>
 
 
 <dt id="arg-n-components">n_components<a class="anchor" aria-label="anchor" href="#arg-n-components"></a></dt>

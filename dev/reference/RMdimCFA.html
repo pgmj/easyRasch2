@@ -13,7 +13,7 @@ each with the observed value, the simulated reference and a flag."><meta name="r
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9008</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9009</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -79,7 +79,11 @@ flag on them instead of on the percentile cutoffs. The p-values are
 one-sided in the unfavourable direction for the fit indices (CFI low,
 RMSEA and SRMR high) and two-sided for the loadings. The fit indices
 and the loadings are corrected as two separate families. Default
-<code>FALSE</code>.</p></dd>
+<code>FALSE</code>, which flags at the <code>percentile</code> cutoffs of <code><a href="RMdimCFACutoff.html">RMdimCFACutoff()</a></code>
+(99 by default). This differs from <code><a href="RMiteminfit.html">RMitemInfit()</a></code>, <code><a href="RMitemrestscore.html">RMitemRestscore()</a></code>
+and <code><a href="RMlocdepQ3.html">RMlocdepQ3()</a></code>, which use p-values whenever they get the full cutoff
+object. Here the percentile is chosen when the simulations are run,
+and the default keeps it as the decision rule.</p></dd>
 
 
 <dt id="arg-correction">correction<a class="anchor" aria-label="anchor" href="#arg-correction"></a></dt>
@@ -107,8 +111,9 @@ a data.frame by <code>output</code>:</p><dl><dt><code>fit</code></dt>
 <dd><p>CFI, RMSEA and SRMR with the columns <code>Index</code>, <code>Observed</code>,
 <code>Cutoff</code>, <code>Direction</code> and <code>Flagged</code> (one-sided, in the unfavourable
 direction). With <code>p_value = TRUE</code>, also <code>p</code> and <code>padj</code>, and
-<code>Flagged</code> marks <code>padj &lt; alpha</code>. An index lavaan could not compute
-for <code>data</code> has <code>Observed = NA</code> and <code>Flagged = "not tested"</code>.</p></dd>
+<code>Flagged</code> marks <code>padj &lt; alpha</code>. <code>Flagged</code> is logical. An index lavaan
+could not compute for <code>data</code> has <code>Observed = NA</code> and <code>Flagged = NA</code>
+(shown as "not tested" in the kable).</p></dd>
 
 <dt><code>loadings</code></dt>
 <dd><p>One row per item with the columns <code>Item</code>,

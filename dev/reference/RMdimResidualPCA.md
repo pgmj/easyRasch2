@@ -49,7 +49,13 @@ RMdimResidualPCA(
   result as `cutoff`. The simulations are of the largest eigenvalue, so
   the p-value is given for the first component only (`NA` for the
   others). It is a single test, so no correction for multiple testing is
-  needed. Default `FALSE`.
+  needed. Default `FALSE`, which flags against the cutoff (the 99th
+  percentile when the full
+  [`RMdimResidualPCACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCACutoff.md)
+  result is given). Flagging at p \< .05 instead would be a less strict
+  test, so unlike
+  [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md),
+  the full cutoff object does not switch to p-values.
 
 - n_components:
 

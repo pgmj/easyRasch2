@@ -137,4 +137,5 @@ does.
 
 ## See also
 
-[easyRasch2-renaming](https://pgmj.github.io/easyRasch2/dev/reference/easyRasch2-renaming.md)
+[`set.seed()`](https://rdrr.io/r/base/Random.html),
+[`withr::with_preserve_seed()`](https://withr.r-lib.org/reference/with_seed.html)

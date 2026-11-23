@@ -94,7 +94,7 @@ RMdifGamma(
 
 - `output = "dataframe"`: a data.frame with the columns `Item`, `gamma`,
   `se`, `lower`, `upper`, `padj_bh` and `Significance`, plus
-  `gamma_low`, `gamma_high` and `flagged` with a `cutoff`. With
+  `gamma_low`, `gamma_high` and `Flagged` with a `cutoff`. With
   p-values, `padj_bh` and `Significance` are replaced by `p_gamma` and
   `padj_gamma`.
 
@@ -254,7 +254,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 #> 8   Item8  0.01897019 0.1618599 -0.2982693 0.3362097 -0.2474490  0.3723958
 #> 9   Item9 -0.14088398 0.1614016 -0.4572253 0.1754573 -0.3283396  0.2865475
 #> 10 Item10  0.17777778 0.1556159 -0.1272237 0.4827792 -0.2857143  0.3036849
-#>      p_gamma padj_gamma flagged
+#>      p_gamma padj_gamma Flagged
 #> 1  1.0000000   1.000000   FALSE
 #> 2  0.2871287   0.950495   FALSE
 #> 3  0.5247525   1.000000   FALSE

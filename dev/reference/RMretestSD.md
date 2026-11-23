@@ -223,12 +223,19 @@ measures. *Disability and Rehabilitation, 48*(7), 2169-2186.
 
 ``` r
 # \donttest{
+# Simulate partial credit responses: thr holds each item's thresholds
+sim_pcm <- function(thr, theta) {
+  sapply(thr, function(d) vapply(theta, function(t) {
+    p <- exp(cumsum(c(0, t - d)))
+    sample(seq_along(p) - 1L, 1L, prob = p)
+  }, integer(1)))
+}
 set.seed(1)
 thr <- lapply(seq(-1.2, 1.2, length.out = 6), function(b) b + c(-0.8, 0, 0.8))
 theta <- rnorm(200, 0, 1.4)
 # a true occasion SD of 0.3 logits
-r1 <- as.data.frame(easyRasch2:::sim_partial_score(thr, theta + rnorm(200, 0, 0.3)))
-r2 <- as.data.frame(easyRasch2:::sim_partial_score(thr, theta + rnorm(200, 0, 0.3)))
+r1 <- as.data.frame(sim_pcm(thr, theta + rnorm(200, 0, 0.3)))
+r2 <- as.data.frame(sim_pcm(thr, theta + rnorm(200, 0, 0.3)))
 colnames(r1) <- colnames(r2) <- paste0("I", 1:6)
 RMretestSD(r1, r2, sim_iter = 100, parallel = FALSE, boot = FALSE)
 #> 

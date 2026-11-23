@@ -57,7 +57,7 @@ RMpersonFit(
 
 - flag_alpha:
 
-  Numeric in (0, 1). Significance level for the `flagged` column and the
+  Numeric in (0, 1). Significance level for the `Flagged` column and the
   plots. Default `0.05`.
 
 - flag:
@@ -80,8 +80,8 @@ RMpersonFit(
 
   Logical / integer. Run the simulations in parallel over persons via
   mirai when available. Default sequential. When `n_cores` is `NULL`,
-  `getOption("mc.cores")` is used, and two workers when that is unset
-  too.
+  `getOption("mc.cores")` is used. If that is unset too, a warning is
+  given and the simulations run sequentially.
 
 - seed:
 
@@ -105,8 +105,8 @@ RMpersonFit(
 For `output = "dataframe"`, a data.frame with one row per respondent, in
 input order: `id`, `n_answered`, `sum_score`, the requested statistics
 (`infit_msq`, `outfit_msq`, `lz`), their p-values (`p_infit`,
-`p_outfit`, `p_lz`) when `iterations > 0`, `flagged`, and with
-`zstd = TRUE` also `infit_zstd` and `outfit_zstd`. `flagged` is `TRUE`
+`p_outfit`, `p_lz`) when `iterations > 0`, `Flagged`, and with
+`zstd = TRUE` also `infit_zstd` and `outfit_zstd`. `Flagged` is `TRUE`
 when the uncorrected p-value of any requested statistic is below
 `flag_alpha`. It is a screening flag per person, not corrected for the
 number of respondents, so when the model holds about `flag_alpha` of the
@@ -238,7 +238,7 @@ RMpersonFit(dat, iterations = 200, output = "dataframe") |> head()
 #> 4  4          8        10 0.7119447  0.6871710  0.42107989 0.2587065 0.1791045
 #> 5  5          8         4 1.5137117  1.4541483  0.33920680 0.2288557 0.2288557
 #> 6  6          8         4 1.5321777  1.4836487  0.29890695 0.2189055 0.2189055
-#>        p_lz flagged
+#>        p_lz Flagged
 #> 1 0.3930348   FALSE
 #> 2 0.2835821   FALSE
 #> 3 0.4228856   FALSE
@@ -263,7 +263,7 @@ RMpersonFit(dat, iterations = 200, flag = "underfit",
 #> 4  4          8        10 0.7119447  0.6871710  0.42107989 0.86069652
 #> 5  5          8         4 1.5137117  1.4541483  0.33920680 0.10945274
 #> 6  6          8         4 1.5321777  1.4836487  0.29890695 0.08457711
-#>     p_outfit      p_lz flagged
+#>     p_outfit      p_lz Flagged
 #> 1 0.13432836 0.3482587   FALSE
 #> 2 0.73631841 0.2537313   FALSE
 #> 3 0.49253731 0.4626866   FALSE

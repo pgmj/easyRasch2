@@ -122,7 +122,7 @@ knit_print(x, ...)
   and `direction2`, with the columns `Item1`, `Item2`, `gamma`, `se`,
   `lower` and `upper` (95% Wald interval), `padj_bh`, `Significance` and
   `gamma_pair` (the larger of the pair's two directions). With a
-  `cutoff`, also `gamma_low`, `gamma_high` and `flagged`. With p-values,
+  `cutoff`, also `gamma_low`, `gamma_high` and `Flagged`. With p-values,
   `padj_bh` and `Significance` are replaced by `p_gamma` and
   `padj_gamma`, the same for a pair in both tables.
 
@@ -289,7 +289,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 #> 43 Item8  Item9  0.301478953  0.357058126 0.1460257  0.01527382  0.58768409
 #> 44 Item8 Item10  0.044973545  0.044973545 0.1601356 -0.26888653  0.35883362
 #> 45 Item9 Item10  0.035761589  0.035761589 0.1655990 -0.28880658  0.36032976
-#>     gamma_low gamma_high    p_gamma padj_gamma flagged
+#>     gamma_low gamma_high    p_gamma padj_gamma Flagged
 #> 1  -0.2777321  0.3198758 0.01980198  0.6930693   FALSE
 #> 2  -0.2571429  0.3843537 0.88118812  1.0000000   FALSE
 #> 3  -0.2265372  0.3262195 0.72277228  1.0000000   FALSE
@@ -383,7 +383,7 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 #> 43 Item10 Item7 -0.040000000  0.021276596 0.1595171 -0.35264769  0.27264769
 #> 44 Item10 Item8 -0.047044632  0.044973545 0.1605876 -0.36179047  0.26770120
 #> 45 Item10 Item9 -0.069047619  0.035761589 0.1606941 -0.38400232  0.24590708
-#>     gamma_low gamma_high    p_gamma padj_gamma flagged
+#>     gamma_low gamma_high    p_gamma padj_gamma Flagged
 #> 1  -0.2777321  0.3198758 0.01980198  0.6930693   FALSE
 #> 2  -0.2571429  0.3843537 0.88118812  1.0000000   FALSE
 #> 3  -0.2605364  0.3693694 0.91089109  1.0000000   FALSE

@@ -14,7 +14,7 @@ RMdimMartinLofResiduals(
   data,
   partition,
   output = c("kable", "dataframe", "ggplot"),
-  flag_threshold = 2,
+  flag_threshold = NULL,
   color_by = c("residual", "n"),
   color_limits = NULL,
   min_expected = NULL
@@ -46,10 +46,13 @@ RMdimMartinLofResiduals(
 
 - flag_threshold:
 
-  Numeric. Cells with `|residual| > flag_threshold` are flagged, in bold
-  in the kable and in the `flagged` column of the data.frame. Default
-  `2`. These are single-cell flags, and with many cells some are
-  expected even under unidimensionality.
+  Numeric or `NULL`. If set, cells with `|residual| > flag_threshold`
+  are marked, in bold in the kable and in a `Flagged` column of the
+  data.frame. Default `NULL`, no marks: a fixed value is not a
+  calibrated test, and with many cells some large residuals are expected
+  under unidimensionality.
+  [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
+  is the test.
 
 - color_by:
 
@@ -80,12 +83,12 @@ RMdimMartinLofResiduals(
 
 - `output = "kable"`: a `knitr_kable` object. For D = 2, a wide table
   with `t1` in rows, `t2` in columns and the standardised residual in
-  the cells (bold if flagged, a dash if `NA`). For D \> 2, one row per
-  cell.
+  the cells (bold if beyond `flag_threshold`, a dash if `NA`). For D \>
+  2, one row per cell.
 
 - `output = "dataframe"`: a data.frame with one row per cell and the
-  columns `t1`, ..., `tD`, `total`, `observed`, `expected`, `residual`
-  and `flagged`.
+  columns `t1`, ..., `tD`, `total`, `observed`, `expected` and
+  `residual`, plus `Flagged` when `flag_threshold` is set.
 
 - `output = "ggplot"`: a `geom_tile()` heatmap (D = 2 or 3 only).
 
@@ -156,15 +159,15 @@ RMdimMartinLofResiduals(dat,
 #> Warning: NaNs produced
 #> 
 #> 
-#> Table: Standardised residuals (Christensen et al. 2002, eq. 13). Rows = subscale 1 score, columns = subscale 2 score. **Bold** = |residual| > 2. -- = uncomputable. n = 400 respondents.
+#> Table: Standardised residuals (Christensen et al. 2002, eq. 13). Rows = subscale 1 score, columns = subscale 2 score. -- = uncomputable. n = 400 respondents.
 #> 
-#> |t1\t2 |0     |1         |2        |3     |4     |
-#> |:-----|:-----|:---------|:--------|:-----|:-----|
-#> |0     |      |0.95      |**2.38** |-0.32 |-1.31 |
-#> |1     |-0.95 |**-2.17** |-0.12    |0.32  |0.22  |
-#> |2     |0.22  |0.11      |-0.41    |0.10  |0.84  |
-#> |3     |0.35  |0.22      |-0.46    |-0.66 |-1.67 |
-#> |4     |1.22  |0.47      |-0.06    |1.67  |--    |
+#> |t1\t2 |0     |1     |2     |3     |4     |
+#> |:-----|:-----|:-----|:-----|:-----|:-----|
+#> |0     |      |0.95  |2.38  |-0.32 |-1.31 |
+#> |1     |-0.95 |-2.17 |-0.12 |0.32  |0.22  |
+#> |2     |0.22  |0.11  |-0.41 |0.10  |0.84  |
+#> |3     |0.35  |0.22  |-0.46 |-0.66 |-1.67 |
+#> |4     |1.22  |0.47  |-0.06 |1.67  |--    |
 
 # Heatmap
 if (requireNamespace("ggplot2", quietly = TRUE)) {
@@ -178,10 +181,11 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
 # Underlying data.frame for custom analysis
 df <- RMdimMartinLofResiduals(dat,
                            partition = c(1,1,1,1,2,2,2,2),
+                           flag_threshold = 2,
                            output = "dataframe")
 #> Warning: NaNs produced
-df[df$flagged, ]
-#>   t1 t2 total observed expected  residual flagged
+df[df$Flagged, ]
+#>   t1 t2 total observed expected  residual Flagged
 #> 3  0  2     2       18 11.02774  2.378139    TRUE
 #> 4  1  1     2       21 28.59561 -2.170933    TRUE
 # }
