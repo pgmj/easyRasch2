@@ -90,7 +90,7 @@ a Quarto or R Markdown chunk it renders as two tables.
 \code{gamma}, \code{se}, \code{lower} and \code{upper} (95\% Wald interval), \code{padj_bh},
 \code{Significance} and \code{gamma_pair} (the larger of the pair's two
 directions). With a \code{cutoff}, also \code{gamma_low}, \code{gamma_high} and
-\code{flagged}. With p-values, \code{padj_bh} and \code{Significance} are replaced by
+\code{Flagged}. With p-values, \code{padj_bh} and \code{Significance} are replaced by
 \code{p_gamma} and \code{padj_gamma}, the same for a pair in both tables.
 }
 }

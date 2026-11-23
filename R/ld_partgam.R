@@ -64,7 +64,7 @@
 #'   `gamma`, `se`, `lower` and `upper` (95% Wald interval), `padj_bh`,
 #'   `Significance` and `gamma_pair` (the larger of the pair's two
 #'   directions). With a `cutoff`, also `gamma_low`, `gamma_high` and
-#'   `flagged`. With p-values, `padj_bh` and `Significance` are replaced by
+#'   `Flagged`. With p-values, `padj_bh` and `Significance` are replaced by
 #'   `p_gamma` and `padj_gamma`, the same for a pair in both tables.
 #'
 #' @details
@@ -406,7 +406,7 @@ RMlocdepGamma <- function(
       merged <- merged[match(result_df$canonical_key, merged$canonical_key), ]
       rownames(merged) <- NULL
       # Flagged on the pair statistic, which is what the cutoff band describes.
-      merged$flagged <- !is.na(merged$gamma_low) &
+      merged$Flagged <- !is.na(merged$gamma_low) &
         (merged$gamma_pair < merged$gamma_low |
            merged$gamma_pair > merged$gamma_high)
 
@@ -425,7 +425,7 @@ RMlocdepGamma <- function(
         "Significance",
         "gamma_low",
         "gamma_high",
-        "flagged"
+        "Flagged"
       )]
       result_list[[idx]] <- merged
     }
@@ -479,7 +479,7 @@ RMlocdepGamma <- function(
       key <- canon_key(df$Item1, df$Item2)
       df$p_gamma <- as.numeric(p_lookup[key])
       df$padj_gamma <- as.numeric(padj_lookup[key])
-      df$flagged <- !is.na(df$padj_gamma) & df$padj_gamma < alpha
+      df$Flagged <- !is.na(df$padj_gamma) & df$padj_gamma < alpha
       # Drop the asymptotic p-value pair; the bootstrap p-values replace it.
       df <- df[, c(
         "Item1",
@@ -493,7 +493,7 @@ RMlocdepGamma <- function(
         "gamma_high",
         "p_gamma",
         "padj_gamma",
-        "flagged"
+        "Flagged"
       )]
       result_list[[idx]] <- df
     }

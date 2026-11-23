@@ -539,7 +539,11 @@ compute_cfa_loading_flagged <- function(observed_loadings, loading_cutoffs) {
 #'   one-sided in the unfavourable direction for the fit indices (CFI low,
 #'   RMSEA and SRMR high) and two-sided for the loadings. The fit indices
 #'   and the loadings are corrected as two separate families. Default
-#'   `FALSE`.
+#'   `FALSE`, which flags at the `percentile` cutoffs of [RMdimCFACutoff()]
+#'   (99 by default). This differs from [RMitemInfit()], [RMitemRestscore()]
+#'   and [RMlocdepQ3()], which use p-values whenever they get the full cutoff
+#'   object. Here the percentile is chosen when the simulations are run,
+#'   and the default keeps it as the decision rule.
 #' @param correction Character. Correction of the p-values: `"fwer"`
 #'   (default, Westfall-Young step-down), `"fdr_bh"` (Benjamini-Hochberg),
 #'   `"fdr_by"` (Benjamini-Yekutieli) or `"none"`. Used only with
@@ -556,8 +560,9 @@ compute_cfa_loading_flagged <- function(observed_loadings, loading_cutoffs) {
 #'   \item{`fit`}{CFI, RMSEA and SRMR with the columns `Index`, `Observed`,
 #'     `Cutoff`, `Direction` and `Flagged` (one-sided, in the unfavourable
 #'     direction). With `p_value = TRUE`, also `p` and `padj`, and
-#'     `Flagged` marks `padj < alpha`. An index lavaan could not compute
-#'     for `data` has `Observed = NA` and `Flagged = "not tested"`.}
+#'     `Flagged` marks `padj < alpha`. `Flagged` is logical. An index lavaan
+#'     could not compute for `data` has `Observed = NA` and `Flagged = NA`
+#'     (shown as "not tested" in the kable).}
 #'   \item{`loadings`}{One row per item with the columns `Item`,
 #'     `Observed`, `Expected_low`, `Expected_high` and `Flagged`
 #'     (`"below"`, `"above"` or `""`). With `p_value = TRUE`, also
@@ -768,11 +773,7 @@ RMdimCFA <- function(
     )
     fit_df$p <- pv_fit$p
     fit_df$padj <- pv_fit$padj
-    fit_df$Flagged <- ifelse(
-      !is.na(fit_df$padj) & fit_df$padj < alpha,
-      "TRUE",
-      ""
-    )
+    fit_df$Flagged <- !is.na(fit_df$padj) & fit_df$padj < alpha
     fit_df <- fit_df[, c(
       "Index",
       "Observed",
@@ -819,11 +820,11 @@ RMdimCFA <- function(
   }
 
   # An observed scaled index lavaan could not compute (NA) has nothing to
-  # compare against the null, so it is shown as not tested rather than as
-  # not flagged (UM13).
+  # compare against the null, so its flag is NA (not tested) rather than
+  # FALSE (UM13). The kable prints "not tested".
   not_tested <- is.na(fit_df$Observed)
   if (any(not_tested)) {
-    fit_df$Flagged[not_tested] <- "not tested"
+    fit_df$Flagged[not_tested] <- NA
     message(
       "lavaan could not compute the observed ",
       paste(fit_df$Index[not_tested], collapse = " and "),
@@ -839,6 +840,8 @@ RMdimCFA <- function(
 
   # Kable display rounding (the dataframe output above stays unrounded)
   fit_df <- .round_display(fit_df, c(Observed = 4, Cutoff = 4, p = 4, padj = 4))
+  fit_df$Flagged <- ifelse(is.na(fit_df$Flagged), "not tested",
+                           ifelse(fit_df$Flagged, "TRUE", ""))
   load_df <- .round_display(load_df, c(
     Observed = 3, Expected_low = 3, Expected_high = 3,
     p_loading = 4, padj_loading = 4
@@ -881,7 +884,7 @@ build_cfa_fit_df <- function(observed, cutoffs, flagged, percentile) {
       paste0("> ", percentile, pct_suffix, " pct"),
       paste0("> ", percentile, pct_suffix, " pct")
     ),
-    Flagged = ifelse(flagged[c("cfi", "rmsea", "srmr")], "TRUE", ""),
+    Flagged = unname(flagged[c("cfi", "rmsea", "srmr")]),
     stringsAsFactors = FALSE,
     row.names = NULL
   )

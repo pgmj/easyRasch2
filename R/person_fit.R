@@ -27,7 +27,7 @@
 #'   person. `0` skips the simulations and returns the statistics only.
 #'   Default `500`.
 #' @param flag_alpha Numeric in (0, 1). Significance level for the
-#'   `flagged` column and the plots. Default `0.05`.
+#'   `Flagged` column and the plots. Default `0.05`.
 #' @param flag Character. Which direction of misfit is flagged for the MSQ
 #'   statistics. `"both"` (default) flags either direction with a
 #'   two-sided p-value. `"underfit"` flags only underfit (MSQ above 1,
@@ -41,8 +41,9 @@
 #'   They are not used for inference (Müller, 2020). Default `FALSE`.
 #' @param parallel,n_cores Logical / integer. Run the simulations in
 #'   parallel over persons via \pkg{mirai} when available. Default
-#'   sequential. When `n_cores` is `NULL`, `getOption("mc.cores")` is used,
-#'   and two workers when that is unset too.
+#'   sequential. When `n_cores` is `NULL`, `getOption("mc.cores")` is used.
+#'   If that is unset too, a warning is given and the simulations run
+#'   sequentially.
 #' @param seed Optional integer for reproducible simulations. See
 #'   [easyRasch2-reproducibility] for what this guarantees and how it
 #'   interacts with `parallel`.
@@ -59,8 +60,8 @@
 #' For `output = "dataframe"`, a data.frame with one row per respondent, in
 #' input order: `id`, `n_answered`, `sum_score`, the requested statistics
 #' (`infit_msq`, `outfit_msq`, `lz`), their p-values (`p_infit`,
-#' `p_outfit`, `p_lz`) when `iterations > 0`, `flagged`, and with
-#' `zstd = TRUE` also `infit_zstd` and `outfit_zstd`. `flagged` is `TRUE`
+#' `p_outfit`, `p_lz`) when `iterations > 0`, `Flagged`, and with
+#' `zstd = TRUE` also `infit_zstd` and `outfit_zstd`. `Flagged` is `TRUE`
 #' when the uncorrected p-value of any requested statistic is below
 #' `flag_alpha`. It is a screening flag per person, not corrected for the
 #' number of respondents, so when the model holds about `flag_alpha` of the
@@ -318,7 +319,7 @@ RMpersonFit <- function(
     }
 
     p_cols <- intersect(c("p_infit", "p_outfit", "p_lz"), names(out))
-    out$flagged <- apply(out[p_cols], 1L, function(p) {
+    out$Flagged <- apply(out[p_cols], 1L, function(p) {
       any(p < flag_alpha, na.rm = TRUE)
     })
   }
@@ -348,8 +349,8 @@ RMpersonFit <- function(
     names(out)
   )
   out[extreme, stat_cols] <- NA
-  if ("flagged" %in% names(out)) {
-    out$flagged[extreme] <- NA
+  if ("Flagged" %in% names(out)) {
+    out$Flagged[extreme] <- NA
   }
 
   .person_fit_output(
@@ -784,16 +785,28 @@ RMpersonFit <- function(
 #' @keywords internal
 #' @noRd
 .maybe_parallel_lapply <- function(x, fun, parallel, n_cores) {
-  if (parallel && requireNamespace("mirai", quietly = TRUE)) {
-    # Same resolution order as the cutoff functions: the argument first, then
-    # `options(mc.cores)`. Unlike them this one has a working default rather
-    # than a warning, since the per-respondent seeds make the result
-    # independent of how many workers run it.
+  if (parallel && !requireNamespace("mirai", quietly = TRUE)) {
+    message(
+      "Install 'mirai' package for parallel processing: install.packages(\"mirai\")"
+    )
+    message("Running sequentially...")
+    parallel <- FALSE
+  }
+  if (parallel) {
+    # Same rule as the cutoff functions: the argument first, then
+    # `options(mc.cores)`, else a warning and sequential.
     if (is.null(n_cores)) {
       n_cores <- getOption("mc.cores")
     }
-    workers <- if (is.null(n_cores)) 2L else n_cores
-    workers <- min(workers, length(x))
+    if (is.null(n_cores)) {
+      warning(
+        "For parallel processing, specify n_cores or set options(mc.cores = N).\n",
+        "Falling back to sequential.",
+        call. = FALSE
+      )
+      return(lapply(x, fun))
+    }
+    workers <- min(n_cores, length(x))
     mirai::daemons(workers)
     on.exit(mirai::daemons(0L), add = TRUE)
     res <- mirai::mirai_map(x, fun)[]

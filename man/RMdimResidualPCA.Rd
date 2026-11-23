@@ -29,7 +29,11 @@ at least as large as the observed one,
 Needs the full \code{\link[=RMdimResidualPCACutoff]{RMdimResidualPCACutoff()}} result as \code{cutoff}. The
 simulations are of the largest eigenvalue, so the p-value is given for
 the first component only (\code{NA} for the others). It is a single test,
-so no correction for multiple testing is needed. Default \code{FALSE}.}
+so no correction for multiple testing is needed. Default \code{FALSE},
+which flags against the cutoff (the 99th percentile when the full
+\code{\link[=RMdimResidualPCACutoff]{RMdimResidualPCACutoff()}} result is given). Flagging at
+p < .05 instead would be a less strict test, so unlike
+\code{\link[=RMitemInfit]{RMitemInfit()}}, the full cutoff object does not switch to p-values.}
 
 \item{n_components}{Integer. Number of eigenvalues to report, at most
 the number of items. Default \code{5}.}

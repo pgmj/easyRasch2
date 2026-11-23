@@ -66,7 +66,7 @@ plus "Gamma low", "Gamma high" and "Flagged" with a \code{cutoff}. With
 p-values, the asymptotic columns are replaced by "p" and "p (adj)".
 \item \code{output = "dataframe"}: a data.frame with the columns \code{Item}, \code{gamma},
 \code{se}, \code{lower}, \code{upper}, \code{padj_bh} and \code{Significance}, plus
-\code{gamma_low}, \code{gamma_high} and \code{flagged} with a \code{cutoff}. With p-values,
+\code{gamma_low}, \code{gamma_high} and \code{Flagged} with a \code{cutoff}. With p-values,
 \code{padj_bh} and \code{Significance} are replaced by \code{p_gamma} and
 \code{padj_gamma}.
 }

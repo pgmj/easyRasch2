@@ -109,7 +109,7 @@
 #' against that it re-seeds explicitly, as the plausible-value block in
 #' `RMreliability()` does.
 #'
-#' @seealso [easyRasch2-renaming]
+#' @seealso [set.seed()], [withr::with_preserve_seed()]
 #'
 #' @name easyRasch2-reproducibility
 #' @aliases easyRasch2-reproducibility

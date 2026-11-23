@@ -28,7 +28,11 @@
 #'   Needs the full [RMdimResidualPCACutoff()] result as `cutoff`. The
 #'   simulations are of the largest eigenvalue, so the p-value is given for
 #'   the first component only (`NA` for the others). It is a single test,
-#'   so no correction for multiple testing is needed. Default `FALSE`.
+#'   so no correction for multiple testing is needed. Default `FALSE`,
+#'   which flags against the cutoff (the 99th percentile when the full
+#'   [RMdimResidualPCACutoff()] result is given). Flagging at
+#'   p < .05 instead would be a less strict test, so unlike
+#'   [RMitemInfit()], the full cutoff object does not switch to p-values.
 #' @param n_components Integer. Number of eigenvalues to report, at most
 #'   the number of items. Default `5`.
 #' @param output Character. `"kable"` (default) for a `knitr::kable()`

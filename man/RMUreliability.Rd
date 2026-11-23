@@ -41,6 +41,17 @@ follows the session's random number stream (see
 \link{easyRasch2-reproducibility}). Needs the \pkg{ggdist} package (in
 Suggests).
 }
+\examples{
+if (requireNamespace("ggdist", quietly = TRUE)) {
+  # 300 persons, 100 draws each: true location plus error with SD 0.5,
+  # so the reliability is 1 / (1 + 0.5^2) = 0.8
+  set.seed(1)
+  theta <- rnorm(300)
+  draws <- theta + matrix(rnorm(300 * 100, sd = 0.5), 300, 100)
+  RMUreliability(draws)
+}
+
+}
 \references{
 Bignardi, G., Kievit, R., & Bürkner, P. C. (2026). A general method for
 estimating reliability using Bayesian Measurement Uncertainty. \emph{PsyArXiv}.

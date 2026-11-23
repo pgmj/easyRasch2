@@ -131,7 +131,7 @@ test_that("p_value = NULL falls back to the interval without simulations", {
     RMdifGamma(d$df, d$grp, cutoff = cu$item_cutoffs, output = "dataframe")
   )
   expect_false(any(c("p_gamma", "padj_gamma") %in% names(res)))
-  expect_true("flagged" %in% names(res))
+  expect_true("Flagged" %in% names(res))
 })
 
 test_that("p_value = NULL with no cutoff leaves the asymptotic table alone", {

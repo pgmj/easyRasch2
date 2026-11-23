@@ -37,7 +37,7 @@ person. \code{0} skips the simulations and returns the statistics only.
 Default \code{500}.}
 
 \item{flag_alpha}{Numeric in (0, 1). Significance level for the
-\code{flagged} column and the plots. Default \code{0.05}.}
+\code{Flagged} column and the plots. Default \code{0.05}.}
 
 \item{flag}{Character. Which direction of misfit is flagged for the MSQ
 statistics. \code{"both"} (default) flags either direction with a
@@ -54,8 +54,9 @@ They are not used for inference (Müller, 2020). Default \code{FALSE}.}
 
 \item{parallel, n_cores}{Logical / integer. Run the simulations in
 parallel over persons via \pkg{mirai} when available. Default
-sequential. When \code{n_cores} is \code{NULL}, \code{getOption("mc.cores")} is used,
-and two workers when that is unset too.}
+sequential. When \code{n_cores} is \code{NULL}, \code{getOption("mc.cores")} is used.
+If that is unset too, a warning is given and the simulations run
+sequentially.}
 
 \item{seed}{Optional integer for reproducible simulations. See
 \link{easyRasch2-reproducibility} for what this guarantees and how it
@@ -74,8 +75,8 @@ overly predictable responding).}
 For \code{output = "dataframe"}, a data.frame with one row per respondent, in
 input order: \code{id}, \code{n_answered}, \code{sum_score}, the requested statistics
 (\code{infit_msq}, \code{outfit_msq}, \code{lz}), their p-values (\code{p_infit},
-\code{p_outfit}, \code{p_lz}) when \code{iterations > 0}, \code{flagged}, and with
-\code{zstd = TRUE} also \code{infit_zstd} and \code{outfit_zstd}. \code{flagged} is \code{TRUE}
+\code{p_outfit}, \code{p_lz}) when \code{iterations > 0}, \code{Flagged}, and with
+\code{zstd = TRUE} also \code{infit_zstd} and \code{outfit_zstd}. \code{Flagged} is \code{TRUE}
 when the uncorrected p-value of any requested statistic is below
 \code{flag_alpha}. It is a screening flag per person, not corrected for the
 number of respondents, so when the model holds about \code{flag_alpha} of the

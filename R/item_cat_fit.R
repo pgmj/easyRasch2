@@ -29,8 +29,8 @@
 #'   per column of `data`. Default: column names.
 #' @param parallel,n_cores Logical / integer. Run the simulations in
 #'   parallel via \pkg{mirai} when available. Default sequential. When
-#'   `n_cores` is `NULL`, `getOption("mc.cores")` is used, and two workers
-#'   when that is unset too.
+#'   `n_cores` is `NULL`, `getOption("mc.cores")` is used. If that is unset
+#'   too, a warning is given and the simulations run sequentially.
 #' @param seed Optional integer for reproducible simulations. See
 #'   [easyRasch2-reproducibility].
 #' @param output Character. `"kable"` (default), `"dataframe"`, or

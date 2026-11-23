@@ -1026,10 +1026,12 @@ run_ml_sim_sequential <- function(
 #'   table when D = 2 (a long table when D > 2), `"dataframe"` for the
 #'   long data.frame, or `"ggplot"` for a heatmap (D = 2, or D = 3 with a
 #'   panel per value of `t3`, an error for D > 3).
-#' @param flag_threshold Numeric. Cells with `|residual| > flag_threshold`
-#'   are flagged, in bold in the kable and in the `flagged` column of the
-#'   data.frame. Default `2`. These are single-cell flags, and with many
-#'   cells some are expected even under unidimensionality.
+#' @param flag_threshold Numeric or `NULL`. If set, cells with
+#'   `|residual| > flag_threshold` are marked, in bold in the kable and in a
+#'   `Flagged` column of the data.frame. Default `NULL`, no marks: a fixed
+#'   value is not a calibrated test, and with many cells some large
+#'   residuals are expected under unidimensionality. [RMdimMartinLof()] is
+#'   the test.
 #' @param color_by Character. What the tile colour shows with
 #'   `output = "ggplot"`. `"residual"` (default), a diverging red-white-blue
 #'   scale centred at 0. `"n"`, a sequential blue scale of the observed
@@ -1050,11 +1052,11 @@ run_ml_sim_sequential <- function(
 #' @return
 #' * `output = "kable"`: a `knitr_kable` object. For D = 2, a wide table
 #'   with `t1` in rows, `t2` in columns and the standardised residual in
-#'   the cells (bold if flagged, a dash if `NA`). For D > 2, one row per
-#'   cell.
+#'   the cells (bold if beyond `flag_threshold`, a dash if `NA`). For
+#'   D > 2, one row per cell.
 #' * `output = "dataframe"`: a data.frame with one row per cell and the
-#'   columns `t1`, ..., `tD`, `total`, `observed`, `expected`, `residual`
-#'   and `flagged`.
+#'   columns `t1`, ..., `tD`, `total`, `observed`, `expected` and
+#'   `residual`, plus `Flagged` when `flag_threshold` is set.
 #' * `output = "ggplot"`: a `geom_tile()` heatmap (D = 2 or 3 only).
 #'
 #' @references
@@ -1093,14 +1095,15 @@ run_ml_sim_sequential <- function(
 #' # Underlying data.frame for custom analysis
 #' df <- RMdimMartinLofResiduals(dat,
 #'                            partition = c(1,1,1,1,2,2,2,2),
+#'                            flag_threshold = 2,
 #'                            output = "dataframe")
-#' df[df$flagged, ]
+#' df[df$Flagged, ]
 #' }
 RMdimMartinLofResiduals <- function(
   data,
   partition,
   output = c("kable", "dataframe", "ggplot"),
-  flag_threshold = 2,
+  flag_threshold = NULL,
   color_by = c("residual", "n"),
   color_limits = NULL,
   min_expected = NULL
@@ -1108,6 +1111,14 @@ RMdimMartinLofResiduals <- function(
   output <- match.arg(output)
   color_by <- match.arg(color_by)
 
+  if (
+    !is.null(flag_threshold) &&
+      (!is.numeric(flag_threshold) || length(flag_threshold) != 1L ||
+        !is.finite(flag_threshold) || flag_threshold <= 0)
+  ) {
+    stop("`flag_threshold` must be NULL or a single positive number.",
+         call. = FALSE)
+  }
   if (
     !is.null(min_expected) &&
       (!is.numeric(min_expected) ||
@@ -1263,10 +1274,12 @@ RMdimMartinLofResiduals <- function(
     observed = as.integer(observed),
     expected = expected,
     residual = residual,
-    flagged = !is.na(residual) & abs(residual) > flag_threshold,
     stringsAsFactors = FALSE,
     row.names = NULL
   )
+  if (!is.null(flag_threshold)) {
+    result_df$Flagged <- !is.na(residual) & abs(residual) > flag_threshold
+  }
 
   # Sort by total then by t1, t2, ...
   ord_cols <- c("total", paste0("t", seq_len(D)))
@@ -1295,7 +1308,7 @@ RMdimMartinLofResiduals <- function(
           mat[r1, r2] <- "--"
         } else {
           formatted <- sprintf("%.2f", v)
-          if (isTRUE(result_df$flagged[k])) {
+          if (isTRUE(result_df$Flagged[k])) {
             formatted <- paste0("**", formatted, "**")
           }
           mat[r1, r2] <- formatted
@@ -1306,9 +1319,10 @@ RMdimMartinLofResiduals <- function(
       caption <- paste0(
         "Standardised residuals (Christensen et al. 2002, eq. 13). ",
         "Rows = subscale 1 score, columns = subscale 2 score. ",
-        "**Bold** = |residual| > ",
-        flag_threshold,
-        ". -- = uncomputable. ",
+        if (!is.null(flag_threshold)) {
+          paste0("**Bold** = |residual| > ", flag_threshold, ". ")
+        },
+        "-- = uncomputable. ",
         .n_caption(
           N,
           n_total_ml,
@@ -1332,19 +1346,19 @@ RMdimMartinLofResiduals <- function(
           n_total_ml,
           if (has_na_ml) "complete cases" else character()
         ),
-        ". |residual| > ",
-        flag_threshold,
-        " indicates potential ",
-        "dimensionality issue."
+        ".",
+        if (!is.null(flag_threshold)) {
+          paste0(" Flagged = |residual| > ", flag_threshold, ".")
+        }
       )
-      cols <- c(
+      cols <- intersect(c(
         paste0("t", seq_len(D)),
         "total",
         "observed",
         "expected",
         "residual",
-        "flagged"
-      )
+        "Flagged"
+      ), names(result_df))
       # Display rounding (the dataframe output above stays unrounded)
       result_df <- .round_display(result_df, c(expected = 3, residual = 3))
       return(knitr::kable(
@@ -1471,9 +1485,8 @@ RMdimMartinLofResiduals <- function(
               n_total_ml,
               if (has_na_ml) "complete cases" else character()
             ),
-            ". Cells with |residual| > ",
-            flag_threshold,
-            " indicate potential dimensionality issues."
+            ". Under unidimensionality the residuals are roughly N(0, 1) ",
+            "with no pattern."
           ))
         )
     )
@@ -1494,9 +1507,8 @@ RMdimMartinLofResiduals <- function(
         ),
         ". Faceted by subscale 3 score (",
         expression(t[3]),
-        "). |residual| > ",
-        flag_threshold,
-        " flagged."
+        "). Under unidimensionality the residuals are roughly N(0, 1) ",
+        "with no pattern."
       ))
     )
 }

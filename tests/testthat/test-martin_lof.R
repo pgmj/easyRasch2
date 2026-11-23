@@ -102,8 +102,19 @@ test_that("RMdimMartinLofResiduals output = 'dataframe' returns expected columns
   )
   expect_s3_class(res, "data.frame")
   expect_true(all(c("t1", "t2", "total", "observed", "expected",
-                    "residual", "flagged") %in% names(res)))
-  expect_type(res$flagged, "logical")
+                    "residual") %in% names(res)))
+  # No fixed-cutoff verdict by default (F18)
+  expect_false("Flagged" %in% names(res))
+  part <- list(c("I1","I2","I3","I4"), c("I5","I6","I7","I8"))
+  res2 <- RMdimMartinLofResiduals(df, partition = part, output = "dataframe",
+                                  flag_threshold = 2)
+  expect_type(res2$Flagged, "logical")
+  expect_equal(res2$Flagged, !is.na(res2$residual) & abs(res2$residual) > 2)
+  k0 <- paste(as.character(RMdimMartinLofResiduals(df, partition = part)),
+              collapse = "\n")
+  expect_false(grepl("**", k0, fixed = TRUE))
+  expect_error(RMdimMartinLofResiduals(df, partition = part, flag_threshold = -1),
+               "single positive number")
 })
 
 test_that("RMdimMartinLofResiduals output = 'kable' returns a kable-like object", {

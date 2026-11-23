@@ -58,7 +58,7 @@ test_that("dataframe has expected columns with all statistics", {
       "p_infit",
       "p_outfit",
       "p_lz",
-      "flagged"
+      "Flagged"
     ) %in%
       names(res)
   ))
@@ -72,7 +72,7 @@ test_that("iterations = 0 returns statistics without p-values", {
     output = "dataframe"
   )
   expect_false(any(grepl("^p_", names(res))))
-  expect_false("flagged" %in% names(res))
+  expect_false("Flagged" %in% names(res))
   expect_true(all(c("infit_msq", "outfit_msq", "lz") %in% names(res)))
 })
 
@@ -126,7 +126,7 @@ test_that("Type I error is near nominal under the null", {
     seed = 4,
     output = "dataframe"
   )
-  expect_lt(mean(res$flagged, na.rm = TRUE), 0.12)
+  expect_lt(mean(res$Flagged, na.rm = TRUE), 0.12)
 })
 
 test_that("lz p-values are calibrated (not conservative) under the null", {
@@ -166,8 +166,8 @@ test_that("aberrant responders are detected (power)", {
   ab <- 1:15
   dat[ab, ] <- dat[ab, rev(seq_len(ncol(dat)))] # reverse -> aberrant
   res <- RMpersonFit(dat, iterations = 300, seed = 2, output = "dataframe")
-  expect_gt(mean(res$flagged[ab], na.rm = TRUE), 0.6)
-  expect_lt(mean(res$flagged[-ab], na.rm = TRUE), 0.12)
+  expect_gt(mean(res$Flagged[ab], na.rm = TRUE), 0.6)
+  expect_lt(mean(res$Flagged[-ab], na.rm = TRUE), 0.12)
 })
 
 # ---------------------------------------------------------------------
@@ -319,7 +319,7 @@ test_that("flag = 'underfit' flags only the upper (MSQ > 1) direction", {
     flag = "underfit",
     output = "dataframe"
   )
-  flagged <- res[!is.na(res$flagged) & res$flagged, ]
+  flagged <- res[!is.na(res$Flagged) & res$Flagged, ]
   expect_true(all(flagged$infit_msq > 1)) # never flags overfit
 })
 
@@ -397,7 +397,8 @@ test_that("parallel workers come from n_cores, then mc.cores", {
   skip_on_cran()
   skip_if_not_installed("mirai")
   # Regression: options(mc.cores) was ignored here, so a NULL n_cores always
-  # ran two workers however the option was set.
+  # ran two workers however the option was set. Since F5 (2026-11-23) an
+  # unset option warns and runs sequentially, as in the cutoff functions.
   workers_used <- function(x, n_cores) {
     seen <- NULL
     testthat::with_mocked_bindings(
@@ -424,5 +425,9 @@ test_that("parallel workers come from n_cores, then mc.cores", {
   expect_identical(workers_used(1:3, NULL), 3L)
 
   withr::local_options(mc.cores = NULL)
-  expect_identical(workers_used(1:6, NULL), 2L)
+  expect_warning(res <- workers_used(1:6, NULL), "Falling back to sequential")
+  expect_null(res)
+  expect_equal(.maybe_parallel_lapply(1:3, function(i) i * 2, parallel = TRUE,
+                                      n_cores = NULL) |> suppressWarnings(),
+               list(2, 4, 6))
 })

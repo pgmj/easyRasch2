@@ -103,8 +103,8 @@ test_that("RMdifGamma accepts an RMdifGammaCutoff result and adds Flagged column
   res <- suppressMessages(
     RMdifGamma(df, grp, cutoff = cuts, output = "dataframe")
   )
-  expect_true("flagged" %in% names(res))
-  expect_type(res$flagged, "logical")
+  expect_true("Flagged" %in% names(res))
+  expect_type(res$Flagged, "logical")
 })
 
 test_that("RMdifGammaCutoff is reproducible with the same seed", {
@@ -207,7 +207,7 @@ test_that("RMdifGamma band flag matches gamma vs bounds", {
     RMdifGamma(df, grp, cutoff = cuts, p_value = FALSE, output = "dataframe")
   )
   expect_equal(
-    res$flagged,
+    res$Flagged,
     res$gamma < res$gamma_low | res$gamma > res$gamma_high
   )
 })
@@ -285,7 +285,7 @@ test_that("RMdifGamma p_value replaces asymptotic p columns and flags at alpha",
       "gamma_high",
       "p_gamma",
       "padj_gamma",
-      "flagged"
+      "Flagged"
     )
   )
   expect_false(any(c("padj_bh", "Significance") %in% names(res)))
@@ -294,7 +294,7 @@ test_that("RMdifGamma p_value replaces asymptotic p columns and flags at alpha",
   p_floor <- round(1 / (B + 1), 4)
   expect_true(all(res$p_gamma >= p_floor & res$p_gamma <= 1, na.rm = TRUE))
   expect_true(all(res$padj_gamma >= res$p_gamma, na.rm = TRUE))
-  expect_equal(res$flagged, !is.na(res$padj_gamma) & res$padj_gamma < 0.05)
+  expect_equal(res$Flagged, !is.na(res$padj_gamma) & res$padj_gamma < 0.05)
 
   # kable renders with the correction label
   suppressMessages(

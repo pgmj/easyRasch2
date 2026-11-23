@@ -157,7 +157,7 @@ test_that("RMlocdepGamma validates n_pairs", {
   )
 })
 
-test_that("RMlocdepGamma accepts an RMlocdepGammaCutoff result and adds flagged column", {
+test_that("RMlocdepGamma accepts an RMlocdepGammaCutoff result and adds Flagged column", {
   skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
@@ -165,8 +165,8 @@ test_that("RMlocdepGamma accepts an RMlocdepGammaCutoff result and adds flagged 
   cuts <- RMlocdepGammaCutoff(df, iterations = 5L, parallel = FALSE, seed = 1L)
   res <- RMlocdepGamma(df, cutoff = cuts, output = "dataframe")
   expect_type(res, "list")
-  expect_true("flagged" %in% names(res[[1L]]))
-  expect_type(res[[1L]]$flagged, "logical")
+  expect_true("Flagged" %in% names(res[[1L]]))
+  expect_type(res[[1L]]$Flagged, "logical")
 })
 
 test_that("RMlocdepGammaCutoff is reproducible with the same seed", {
@@ -233,7 +233,7 @@ test_that("RMlocdepGamma band flag is taken on the pair statistic", {
     # describes the null of the pair maximum, so comparing a single direction
     # against it would test a statistic the bounds were not computed for.
     expect_equal(
-      dir$flagged,
+      dir$Flagged,
       !is.na(dir$gamma_low) &
         (dir$gamma_pair < dir$gamma_low | dir$gamma_pair > dir$gamma_high)
     )
@@ -317,7 +317,7 @@ test_that("RMlocdepGamma p_value adds one-sided p per pair, mirrored across dire
     "gamma_high",
     "p_gamma",
     "padj_gamma",
-    "flagged"
+    "Flagged"
   )
   expect_named(res$direction1, expected_cols)
   expect_named(res$direction2, expected_cols)
@@ -341,7 +341,7 @@ test_that("RMlocdepGamma p_value adds one-sided p per pair, mirrored across dire
   m <- match(key(res$direction2), key(res$direction1))
   expect_equal(res$direction2$p_gamma, res$direction1$p_gamma[m])
   expect_equal(res$direction2$padj_gamma, res$direction1$padj_gamma[m])
-  expect_equal(res$direction2$flagged, res$direction1$flagged[m])
+  expect_equal(res$direction2$Flagged, res$direction1$Flagged[m])
 
   # kable renders with the correction label and names the tested statistic
   # by the header the reader sees, not by the internal column name.

@@ -17,29 +17,11 @@
 
 ## Changes
 
-- `RMitemICCPlot()`: the grouping argument is now `grouping`. `method`
-  still works as its old name. `class_intervals` must be a whole number.
-  Results do not change.
-
-- `RMitemCatProb()` gains `vary_linetype`. Flags in `RMdimCFAPlot()` and
-  `RMplotTile()` no longer rely on colour alone.
-
-- The simulation cutoff functions and `RMitemRestscoreBoot()` stop before
-  simulating when a category is used only by respondents with a zero or
-  perfect total score. **Before, they could return cutoffs from the few
-  simulations that worked.**
-
-- `RMitemRestscore()` without a `cutoff` flags at `alpha`, not a fixed .05.
-  Results change only when `alpha` is not .05.
-
-- Clearer input checks and messages: `iterations` is validated everywhere,
-  and `RMdimResidualPCA()`, `RMdimCFA()`, `RMdimMartinLof()` and
-  `RMitemICCPlot()` report left-out simulations or dropped rows.
-
-- `output = "list"` now includes `kable`, the table from
-  `output = "kable"`, in `RMdifAnchor()`, `RMdifImpact()`,
-  `RMdimResidualPCA()`, `RMpersonChange()`, `RMpersonFit()` and
-  `RMreliabilityCurve()`. Results do not change.
+- **The flag column is `Flagged` everywhere.** `RMdifGamma()`,
+  `RMlocdepGamma()`, `RMdimMartinLofResiduals()` and `RMpersonFit()`
+  called it `flagged`. `RMdimCFA()`'s fit table gives it as logical (`NA`
+  when not tested), and `RMdimMartinLofResiduals()` marks cells only when
+  `flag_threshold` is set.
 
 - **`RMdifLR()` reports Andersen's LR test only**, by CML with
   psychotools. The location table, Wald tests and plots are removed, and
@@ -57,7 +39,13 @@
 
 - **`RMitemRestscore()` bootstrap p-values are equal-tailed**, giving fewer
   false underfit flags when other items overfit. `p_restscore`,
-  `padj_restscore` and `Flagged` change.
+  `padj_restscore` and `Flagged` change. Without a `cutoff` it flags at
+  `alpha`, not a fixed .05.
+
+- The simulation cutoff functions and `RMitemRestscoreBoot()` stop before
+  simulating when a category is used only by respondents with a zero or
+  perfect total score. **Before, they could return cutoffs from the few
+  simulations that worked.**
 
 - `RMitemInfit()` refuses a cutoff from `RMitemInfitCutoffMI()`, whose
   p-values would not be calibrated. Use it with `RMitemInfitMI()`.
@@ -68,10 +56,6 @@
   fixed quantile intervals. `RMitemInfitPlot()` without `data` follows an
   explicit `statistic`. Tables do not change.
 
-- `output = "list"` in `RMdimResidualPCA()`, `RMreliabilityCurve()` and
-  `RMpersonChange()`, and more elements in the `RMdifTree()` list, give
-  results that were only attributes. The attributes are kept.
-
 - `RMdimCFACutoff()` uses the scaled CFI and RMSEA, refuses `"DWLS"`,
   `"ULS"` and `"WLS"`, and needs at least 4 items. Results with `"WLSMV"`
   do not change in practice.
@@ -79,11 +63,29 @@
 - `RMreliabilityCurve()` reports the median SEM instead of the average.
 
 - `RMitemRestscoreBoot()` warns that its flags come from the miscalibrated
-  asymptotic test. `RMreliability()` and `RMreliabilityCurve()` with
-  `boot = TRUE` report dropped resamples.
+  asymptotic test.
 
-- `RMitemCatProb()` no longer needs `eRm`. The `RMtargeting()` caption
-  says "threshold disorder".
+- `output = "list"` ends with `kable`, the table from `output = "kable"`
+  (`RMdifAnchor()`, `RMdifImpact()`, `RMdimResidualPCA()`,
+  `RMpersonChange()`, `RMpersonFit()`, `RMreliabilityCurve()`), and gives
+  results that were only attributes (`RMdimResidualPCA()`,
+  `RMreliabilityCurve()`, `RMpersonChange()`, `RMdifTree()`). The
+  attributes are kept.
+
+- Clearer input checks and messages. `iterations` is validated everywhere.
+  `RMdimResidualPCA()`, `RMdimCFA()`, `RMdimMartinLof()`, `RMitemICCPlot()`,
+  and `RMreliability()` and `RMreliabilityCurve()` with `boot = TRUE`,
+  report left-out simulations, dropped resamples or dropped rows.
+  `RMitemCatFit()` and `RMpersonFit()` warn and run sequentially when
+  `parallel = TRUE` has no core count.
+
+- `RMitemICCPlot()`: the grouping argument is now `grouping` (`method`
+  still works), and `class_intervals` must be a whole number.
+
+- Plots and dependencies: `RMitemCatProb()` gains `vary_linetype` and no
+  longer needs `eRm`, flags in `RMdimCFAPlot()` and `RMplotTile()` no
+  longer rely on colour alone, and the `RMtargeting()` caption says
+  "threshold disorder".
 
 - Help pages reviewed throughout. References are cited or removed,
   artificial DIF is explained, pages link to the simulation studies in the

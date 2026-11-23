@@ -91,6 +91,35 @@ DONE 2026-11-21 (all, user chose the wide scope for F1, F2, F16).
 
 ## E. Consistency across functions
 
+F18 DONE 2026-11-23: flag_threshold default NULL (validated when set): no
+bold, no `Flagged` column, no verdict in the kable or heatmap captions
+(heatmap now says residuals are roughly N(0, 1) with no pattern under
+unidimensionality). jamovi martinlof uses output = "ggplot" without
+flag_threshold, so it gets the new caption at its pin bump. Not touched: the
+heatmap uses theme_minimal(); `min_expected` doc cites the Cochran 1/5 rule.
+
+GROUP E COMPLETE 2026-11-23. Help-page review finished.
+
+F21 DONE 2026-11-23: rule = direction string where the test is two-sided at
+item/pair level and the direction is interpreted, logical otherwise.
+RMdimCFA fit table "TRUE"/"" -> logical, NA = not tested (kable still prints
+TRUE / "" / "not tested"). Lowercase `flagged` renamed `Flagged` in
+RMdifGamma, RMlocdepGamma, RMdimMartinLofResiduals, RMpersonFit (internal
+person-fit plot data frame left as is). jamovi at next pin bump:
+personfit.b.R:155,200, locdepgamma.b.R:305 and partgamdif.b.R:191 read
+`$flagged` and would silently count 0 / flag nothing (partgamdif added
+2026-11-23 from the medium code review). cfacutoff.b.R:202 works with logical.
+
+F19 DECIDED 2026-11-23: defaults kept (RMdimCFA, RMdimResidualPCA FALSE); each p_value doc now says why it differs. jamovi CFA uses the default.
+
+F9 DECIDED 2026-11-23: left as is (documented; jamovi negates it; RMitemRestscoreBoot likely soft-deprecated by the large-sample-fit thread).
+
+F5 DONE 2026-11-23: finding was partly stale (reliability/change functions
+already warned). `.maybe_parallel_lapply()` (RMitemCatFit, RMitemCatFitPlot,
+RMpersonFit) now warns and runs sequentially instead of using 2 workers, and
+messages when mirai is missing. jamovi calls RMpersonFit with parallel =
+FALSE, unaffected.
+
 | # | Topic | Detail |
 |---|---|---|
 | F5 | `n_cores = NULL` without `mc.cores` | cutoff functions warn and run sequentially, RMitemCatFit and RMpersonFit use two workers, the reliability and change functions run sequentially without a warning |
@@ -114,6 +143,11 @@ DONE 2026-11-21 (all, user chose the wide scope for F1, F2, F16).
 | -- | RMdimMartinLof, RMdifTree | CONFIRMED by the user 2026-11-20: Tjur (1982) Scand J Stat 9(1):23-30; Strobl et al. (2015) doi 10.1007/s11336-013-9388-3; Komboz et al. (2018) doi 10.1177/0013164416664394 |
 
 ## G. Examples and small items
+
+DONE 2026-11-23. F32: synthetic-draws example (true reliability 0.8,
+gives 0.78). F35: both examples define a short base-R `sim_pcm()` instead
+of `easyRasch2:::sim_partial_score()`. F37: See also is now set.seed() and
+withr::with_preserve_seed(). All three examples run; no NEWS (docs only).
 
 | # | Item |
 |---|---|

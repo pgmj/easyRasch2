@@ -65,6 +65,16 @@ cronbach_alpha <- function(data) {
 #'
 #' @seealso [RMreliability()]
 #'
+#' @examples
+#' if (requireNamespace("ggdist", quietly = TRUE)) {
+#'   # 300 persons, 100 draws each: true location plus error with SD 0.5,
+#'   # so the reliability is 1 / (1 + 0.5^2) = 0.8
+#'   set.seed(1)
+#'   theta <- rnorm(300)
+#'   draws <- theta + matrix(rnorm(300 * 100, sd = 0.5), 300, 100)
+#'   RMUreliability(draws)
+#' }
+#'
 #' @export
 RMUreliability <- function(input_draws, level = 0.95, verbose = FALSE) {
   if (!requireNamespace("ggdist", quietly = TRUE)) {

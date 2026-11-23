@@ -125,6 +125,6 @@ against that it re-seeds explicitly, as the plausible-value block in
 }
 
 \seealso{
-\link{easyRasch2-renaming}
+\code{\link[=set.seed]{set.seed()}}, \code{\link[withr:with_preserve_seed]{withr::with_preserve_seed()}}
 }
 \keyword{internal}

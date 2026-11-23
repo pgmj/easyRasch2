@@ -514,7 +514,8 @@ test_that("RMdimCFA shows an observed index lavaan cannot compute as not tested 
     ),
     "only 20 simulation iterations"
   )
-  expect_identical(tabs$fit$Flagged[tabs$fit$Index == "RMSEA"], "not tested")
+  expect_true(is.na(tabs$fit$Flagged[tabs$fit$Index == "RMSEA"]))
+  expect_type(tabs$fit$Flagged, "logical")
   expect_true(is.na(tabs$fit$p[tabs$fit$Index == "RMSEA"]))
   expect_false(anyNA(tabs$fit$p[tabs$fit$Index != "RMSEA"]))
 })

@@ -48,7 +48,7 @@
 #'   p-values, the asymptotic columns are replaced by "p" and "p (adj)".
 #' * `output = "dataframe"`: a data.frame with the columns `Item`, `gamma`,
 #'   `se`, `lower`, `upper`, `padj_bh` and `Significance`, plus
-#'   `gamma_low`, `gamma_high` and `flagged` with a `cutoff`. With p-values,
+#'   `gamma_low`, `gamma_high` and `Flagged` with a `cutoff`. With p-values,
 #'   `padj_bh` and `Significance` are replaced by `p_gamma` and
 #'   `padj_gamma`.
 #'
@@ -370,7 +370,7 @@ RMdifGamma <- function(
     # Restore original row order
     result_df <- result_df[match(data_items, result_df$Item), ]
     rownames(result_df) <- NULL
-    result_df$flagged <- result_df$gamma < result_df$gamma_low |
+    result_df$Flagged <- result_df$gamma < result_df$gamma_low |
       result_df$gamma > result_df$gamma_high
 
     if (p_value) {
@@ -403,7 +403,7 @@ RMdifGamma <- function(
       idx <- match(result_df$Item, pv$name)
       result_df$p_gamma <- pv$p[idx]
       result_df$padj_gamma <- pv$padj[idx]
-      result_df$flagged <- !is.na(result_df$padj_gamma) &
+      result_df$Flagged <- !is.na(result_df$padj_gamma) &
         result_df$padj_gamma < alpha
       # Drop the asymptotic p-value pair; the bootstrap p-values replace it.
       result_df <- result_df[, c(
@@ -416,7 +416,7 @@ RMdifGamma <- function(
         "gamma_high",
         "p_gamma",
         "padj_gamma",
-        "flagged"
+        "Flagged"
       )]
     } else {
       # Reorder columns
@@ -430,7 +430,7 @@ RMdifGamma <- function(
         "Significance",
         "gamma_low",
         "gamma_high",
-        "flagged"
+        "Flagged"
       )]
     }
   }

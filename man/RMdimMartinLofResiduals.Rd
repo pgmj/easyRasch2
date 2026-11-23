@@ -8,7 +8,7 @@ RMdimMartinLofResiduals(
   data,
   partition,
   output = c("kable", "dataframe", "ggplot"),
-  flag_threshold = 2,
+  flag_threshold = NULL,
   color_by = c("residual", "n"),
   color_limits = NULL,
   min_expected = NULL
@@ -28,10 +28,12 @@ table when D = 2 (a long table when D > 2), \code{"dataframe"} for the
 long data.frame, or \code{"ggplot"} for a heatmap (D = 2, or D = 3 with a
 panel per value of \code{t3}, an error for D > 3).}
 
-\item{flag_threshold}{Numeric. Cells with \verb{|residual| > flag_threshold}
-are flagged, in bold in the kable and in the \code{flagged} column of the
-data.frame. Default \code{2}. These are single-cell flags, and with many
-cells some are expected even under unidimensionality.}
+\item{flag_threshold}{Numeric or \code{NULL}. If set, cells with
+\verb{|residual| > flag_threshold} are marked, in bold in the kable and in a
+\code{Flagged} column of the data.frame. Default \code{NULL}, no marks: a fixed
+value is not a calibrated test, and with many cells some large
+residuals are expected under unidimensionality. \code{\link[=RMdimMartinLof]{RMdimMartinLof()}} is
+the test.}
 
 \item{color_by}{Character. What the tile colour shows with
 \code{output = "ggplot"}. \code{"residual"} (default), a diverging red-white-blue
@@ -56,11 +58,11 @@ residuals whose normal approximation is unreliable.}
 \itemize{
 \item \code{output = "kable"}: a \code{knitr_kable} object. For D = 2, a wide table
 with \code{t1} in rows, \code{t2} in columns and the standardised residual in
-the cells (bold if flagged, a dash if \code{NA}). For D > 2, one row per
-cell.
+the cells (bold if beyond \code{flag_threshold}, a dash if \code{NA}). For
+D > 2, one row per cell.
 \item \code{output = "dataframe"}: a data.frame with one row per cell and the
-columns \code{t1}, ..., \code{tD}, \code{total}, \code{observed}, \code{expected}, \code{residual}
-and \code{flagged}.
+columns \code{t1}, ..., \code{tD}, \code{total}, \code{observed}, \code{expected} and
+\code{residual}, plus \code{Flagged} when \code{flag_threshold} is set.
 \item \code{output = "ggplot"}: a \code{geom_tile()} heatmap (D = 2 or 3 only).
 }
 }
@@ -126,8 +128,9 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
 # Underlying data.frame for custom analysis
 df <- RMdimMartinLofResiduals(dat,
                            partition = c(1,1,1,1,2,2,2,2),
+                           flag_threshold = 2,
                            output = "dataframe")
-df[df$flagged, ]
+df[df$Flagged, ]
 }
 }
 \references{

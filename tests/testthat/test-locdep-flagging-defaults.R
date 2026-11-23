@@ -77,7 +77,7 @@ test_that("p_value = NULL falls back to the interval without simulations", {
     RMlocdepGamma(df, cutoff = cg$pair_cutoffs, output = "dataframe")$direction1
   )
   expect_false(any(c("p_gamma", "padj_gamma") %in% names(rg)))
-  expect_true("flagged" %in% names(rg))
+  expect_true("Flagged" %in% names(rg))
 })
 
 test_that("p_value = NULL with no cutoff leaves the asymptotic table alone", {

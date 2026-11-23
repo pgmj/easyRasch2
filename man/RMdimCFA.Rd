@@ -25,7 +25,11 @@ flag on them instead of on the percentile cutoffs. The p-values are
 one-sided in the unfavourable direction for the fit indices (CFI low,
 RMSEA and SRMR high) and two-sided for the loadings. The fit indices
 and the loadings are corrected as two separate families. Default
-\code{FALSE}.}
+\code{FALSE}, which flags at the \code{percentile} cutoffs of \code{\link[=RMdimCFACutoff]{RMdimCFACutoff()}}
+(99 by default). This differs from \code{\link[=RMitemInfit]{RMitemInfit()}}, \code{\link[=RMitemRestscore]{RMitemRestscore()}}
+and \code{\link[=RMlocdepQ3]{RMlocdepQ3()}}, which use p-values whenever they get the full cutoff
+object. Here the percentile is chosen when the simulations are run,
+and the default keeps it as the decision rule.}
 
 \item{correction}{Character. Correction of the p-values: \code{"fwer"}
 (default, Westfall-Young step-down), \code{"fdr_bh"} (Benjamini-Hochberg),
@@ -46,8 +50,9 @@ a data.frame by \code{output}:
 \item{\code{fit}}{CFI, RMSEA and SRMR with the columns \code{Index}, \code{Observed},
 \code{Cutoff}, \code{Direction} and \code{Flagged} (one-sided, in the unfavourable
 direction). With \code{p_value = TRUE}, also \code{p} and \code{padj}, and
-\code{Flagged} marks \code{padj < alpha}. An index lavaan could not compute
-for \code{data} has \code{Observed = NA} and \code{Flagged = "not tested"}.}
+\code{Flagged} marks \code{padj < alpha}. \code{Flagged} is logical. An index lavaan
+could not compute for \code{data} has \code{Observed = NA} and \code{Flagged = NA}
+(shown as "not tested" in the kable).}
 \item{\code{loadings}}{One row per item with the columns \code{Item},
 \code{Observed}, \code{Expected_low}, \code{Expected_high} and \code{Flagged}
 (\code{"below"}, \code{"above"} or \code{""}). With \code{p_value = TRUE}, also
