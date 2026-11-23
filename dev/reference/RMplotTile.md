@@ -53,8 +53,9 @@ RMplotTile(
 - highlight:
 
   Logical. If `TRUE` (default), cell labels with counts below `cutoff`
-  are displayed in red. This includes empty cells (`n = 0`), useful for
-  identifying gaps in the response distribution.
+  are displayed in red and bold, so they stand out without colour too.
+  This includes empty cells (`n = 0`), useful for identifying gaps in
+  the response distribution.
 
 - percent:
 

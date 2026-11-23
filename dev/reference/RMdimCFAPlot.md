@@ -42,8 +42,8 @@ A named list of two `ggplot` objects:
 
   Standardized loadings per item: the simulated values (dots), black
   segments for their central 66% and the expected range at `percentile`,
-  the median (black dot), and the observed loading as a diamond, red
-  when it is outside the expected range.
+  the median (black dot), and the observed loading as a diamond, filled
+  when it is outside the expected range and open when it is inside.
 
 - `fit`:
 

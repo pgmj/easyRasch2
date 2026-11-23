@@ -21,7 +21,7 @@ figures."><meta name="robots" content="noindex"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -211,9 +211,10 @@ cutoffs derived for continuous data and ML estimation.</p>
 <p><strong>Datasets that fail.</strong> Some simulated datasets make the estimation
 fail (a polychoric matrix that is not positive definite, thresholds on
 the boundary, empty categories). They are left out, and
-<code>actual_iterations</code> gives the number that remained. If all fail, the
-function stops, naming any category used only by respondents with a
-zero or perfect total score.</p>
+<code>actual_iterations</code> gives the number that remained, and <code><a href="RMdimCFA.html">RMdimCFA()</a></code>
+reports how many were left out in its caption. A category used only by
+respondents with a zero or perfect total score stops the function before
+it simulates, since CML cannot estimate its threshold.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

@@ -71,9 +71,9 @@ RMitemRestscore(
 
 - alpha:
 
-  Numeric in (0, 1). An item is flagged when its corrected bootstrap
-  p-value is below `alpha`. Default `0.05`. The asymptotic test without
-  a `cutoff` always flags at .05.
+  Numeric in (0, 1). An item is flagged when its corrected p-value is
+  below `alpha`: the bootstrap p-value with a `cutoff`, the asymptotic
+  one without. Default `0.05`.
 
 - output:
 
@@ -106,8 +106,8 @@ RMitemRestscore(
 - `output = "dataframe"`: a data.frame with the columns `Item`,
   `Observed`, `Expected`, `Difference`, `p_adjusted`, `Flagged` and
   `Relative_location`. `Flagged` is `"overfit"` (observed above
-  expected, adjusted p \< .05), `"underfit"` (below, adjusted p \< .05)
-  or `""`.
+  expected, adjusted p \< `alpha`), `"underfit"` (below, adjusted p \<
+  `alpha`) or `""`.
 
 With a `cutoff`, `p_adjusted` is replaced by `Diff_low` and `Diff_high`,
 followed by `p_restscore` (uncorrected equal-tailed bootstrap p) and

@@ -37,8 +37,8 @@ RMitemInfitCutoffMI(
 - iterations:
 
   Integer. Total number of simulated datasets across all imputations,
-  split about evenly between the `m` imputed datasets. Default `500`.
-  See the section on interval width.
+  split about evenly between the `m` imputed datasets, so at least `m`.
+  Default `500`. See the section on interval width.
 
 - parallel:
 
@@ -101,9 +101,19 @@ accept, with:
 
   Total number of successful iterations across all imputations.
 
+- `requested_iterations`:
+
+  The `iterations` requested.
+
 - `sample_n`:
 
   Number of rows (respondents) per imputed dataset.
+
+- `sample_n_total`, `sample_has_na`:
+
+  As in
+  [`RMitemInfitCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemInfitCutoff.md):
+  `sample_n` and `FALSE`, since imputed datasets drop no one.
 
 - `sample_summary`:
 
@@ -133,6 +143,11 @@ accept, with:
 - `actual_iterations_per_imputation`:
 
   Integer vector of successful iterations per imputed dataset.
+
+- `dgp`:
+
+  `"resample"`, the data-generating process used in each imputed
+  dataset.
 
 ## Details
 

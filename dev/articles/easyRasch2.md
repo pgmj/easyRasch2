@@ -670,7 +670,7 @@ In the bottom panel, the band for category 2 (“More than half the days”)
 is narrow in most items. A category that is never the most likely
 response at any location collapses to a red tick labelled with its
 category number, and red arrows below the bar give the size of each
-threshold reversal in logits, so ordered thresholds leave no red marks
+threshold disorder in logits, so ordered thresholds leave no red marks
 at all. Item 9 has such a tick. For the dot-and-whisker display of item
 thresholds used before version 1.3.0, pass `panel = "thresholds"`.
 [`RMitemHierarchy()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemHierarchy.md)
@@ -732,6 +732,16 @@ ordered thresholds. Both were also flagged as underfitting by
 conditional infit. The event columns show where an item departs: for
 item 3 at the first step, X \ge 1, and for item 9 at all three steps.
 
+A flag is not specific to the categories. Given the total score, the
+model fixes the probability of every category of an item, so an item
+that discriminates less or more than the others departs from it in all
+its steps, even when its categories work as scored. Read a flag as a
+problem with the categories when the item otherwise fits, or when the
+departure is in one step and not all. Here both items underfit by infit.
+For item 9 all three steps depart, which points to the item as a whole.
+For item 3 only the first step departs, which points to the lowest
+category.
+
 To plot the events, keep the simulations with `output = "list"` and pass
 them to
 [`RMitemCatFitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFitPlot.md)
@@ -783,7 +793,10 @@ points lie outside, in line with the test’s first step. Item 1 has as
 many there, with an item *p* of .015 that is no longer small after
 correction across items. Two more plot types, `type = "residuals"` and
 `type = "restscore"`, show the category counts within score groups and
-the rest-score mean and SD within each category.
+the rest-score mean and SD within each category. In the rest-score plot,
+an SD above its expectation in every category, with the category means
+pulled together, shows an item that discriminates less than the model
+expects. A raised SD in one category points to that category.
 
 ## 4. Invariance / no DIF
 

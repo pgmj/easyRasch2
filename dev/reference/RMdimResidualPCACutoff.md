@@ -87,6 +87,10 @@ A list with:
 
   Number of simulated datasets that could be used.
 
+- `requested_iterations`:
+
+  The `iterations` requested.
+
 - `sample_n`:
 
   Number of complete cases used.
@@ -105,9 +109,10 @@ engine as for the observed data, and the largest eigenvalue of their PCA
 is recorded.
 
 A simulated dataset that cannot be refitted, for example because a
-response category is empty, is left out without a message.
-`actual_iterations` gives the number that remained. The iarm package is
-not needed.
+response category is empty, is left out, and
+[`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md)
+reports how many in its caption. `actual_iterations` gives the number
+that remained. The iarm package is not needed.
 
 ## References
 

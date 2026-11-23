@@ -177,9 +177,11 @@ continuous data and ML estimation.
 **Datasets that fail.** Some simulated datasets make the estimation fail
 (a polychoric matrix that is not positive definite, thresholds on the
 boundary, empty categories). They are left out, and `actual_iterations`
-gives the number that remained. If all fail, the function stops, naming
-any category used only by respondents with a zero or perfect total
-score.
+gives the number that remained, and
+[`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md)
+reports how many were left out in its caption. A category used only by
+respondents with a zero or perfect total score stops the function before
+it simulates, since CML cannot estimate its threshold.
 
 ## References
 

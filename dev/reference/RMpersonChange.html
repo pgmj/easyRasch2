@@ -15,7 +15,7 @@ to its exact null distribution rather than a normal one."><meta name="robots" co
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -191,7 +191,8 @@ bounds for the EAP grid. Default <code>c(-10, 10)</code>.</p></dd>
 
 <dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
 <dd><p>Character. <code>"dataframe"</code> (default), <code>"kable"</code>, <code>"ggplot"</code>,
-or <code>"list"</code> for the per-respondent table and the analysis settings.</p></dd>
+or <code>"list"</code> for the per-respondent table, the analysis settings and the
+kable.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -208,11 +209,12 @@ compatibility. <code>output = "list"</code> gives them as a table.</p></li>
 <li><p>If <code>output = "kable"</code>: the same content as a <code>knitr_kable</code>.</p></li>
 <li><p>If <code>output = "ggplot"</code>: occasion 1 against occasion 2, with the
 no-change band and points coloured by <code>change_class</code>.</p></li>
-<li><p>If <code>output = "list"</code>: a list with <code>persons</code> (the data.frame above) and
+<li><p>If <code>output = "list"</code>: a list with <code>persons</code> (the data.frame above),
 <code>settings</code>, a one-row data.frame with <code>null</code>, <code>retest_sd</code> (0 with
 <code>null = "measurement"</code>), <code>anchor</code>, <code>method</code>, <code>estimator</code>, <code>alpha</code>,
 <code>direction</code>, <code>critical</code> (the method used), <code>conditional_crit</code>,
-<code>sim_iter</code> (<code>NA</code> unless simulated) and <code>n_persons</code>.</p></li>
+<code>sim_iter</code> (<code>NA</code> unless simulated) and <code>n_persons</code>, and <code>kable</code>, the
+table from <code>output = "kable"</code>.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

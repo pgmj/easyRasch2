@@ -19,7 +19,7 @@ of items and the spread of the item parameters (Chou &amp;amp; Wang, 2010)."><me
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -127,6 +127,9 @@ directly.</p></dd>
 <dd><p>Number of simulated datasets that could be
 used.</p></dd>
 
+<dt><code>requested_iterations</code></dt>
+<dd><p>The <code>iterations</code> requested.</p></dd>
+
 <dt><code>sample_n</code></dt>
 <dd><p>Number of complete cases used.</p></dd>
 
@@ -144,8 +147,9 @@ simulated from the model, the standardized residuals are computed with
 the same engine as for the observed data, and the largest eigenvalue of
 their PCA is recorded.</p>
 <p>A simulated dataset that cannot be refitted, for example because a
-response category is empty, is left out without a message.
-<code>actual_iterations</code> gives the number that remained. The <span class="pkg">iarm</span>
+response category is empty, is left out, and <code><a href="RMdimResidualPCA.html">RMdimResidualPCA()</a></code>
+reports how many in its caption. <code>actual_iterations</code> gives the number
+that remained. The <span class="pkg">iarm</span>
 package is not needed.</p>
     </div>
     <div class="section level2">

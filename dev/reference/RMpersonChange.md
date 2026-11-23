@@ -146,7 +146,7 @@ RMpersonChange(
 - output:
 
   Character. `"dataframe"` (default), `"kable"`, `"ggplot"`, or `"list"`
-  for the per-respondent table and the analysis settings.
+  for the per-respondent table, the analysis settings and the kable.
 
 ## Value
 
@@ -164,11 +164,12 @@ RMpersonChange(
 - If `output = "ggplot"`: occasion 1 against occasion 2, with the
   no-change band and points coloured by `change_class`.
 
-- If `output = "list"`: a list with `persons` (the data.frame above) and
+- If `output = "list"`: a list with `persons` (the data.frame above),
   `settings`, a one-row data.frame with `null`, `retest_sd` (0 with
   `null = "measurement"`), `anchor`, `method`, `estimator`, `alpha`,
   `direction`, `critical` (the method used), `conditional_crit`,
-  `sim_iter` (`NA` unless simulated) and `n_persons`.
+  `sim_iter` (`NA` unless simulated) and `n_persons`, and `kable`, the
+  table from `output = "kable"`.
 
 ## Details
 

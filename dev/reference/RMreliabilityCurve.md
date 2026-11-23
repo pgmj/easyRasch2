@@ -144,7 +144,7 @@ RMreliabilityCurve(
 
   Character. `"ggplot"` (default), `"dataframe"` for the curve,
   `"kable"` for a summary table, or `"list"` for the curve and the
-  summary as data.frames.
+  summary as data.frames plus the kable.
 
 ## Value
 
@@ -183,7 +183,8 @@ RMreliabilityCurve(
   `n_not_estimable` and `boot_iter` (bootstrap samples used), `NA` where
   not computed) and `benchmark_range` (the theta ranges where the curve
   reaches `benchmark`, with columns `xmin` and `xmax`, `NULL` without a
-  benchmark or when it is never reached).
+  benchmark or when it is never reached) and `kable`, the summary table
+  from `output = "kable"`.
 
 ## Details
 

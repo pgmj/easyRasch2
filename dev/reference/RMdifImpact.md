@@ -88,7 +88,8 @@ RMdifImpact(
 - output:
 
   `"kable"` (default), `"dataframe"`, `"ggplot"` (the local bias curve)
-  or `"list"` (all tables, see Value).
+  or `"list"` (all tables and the kable of the one chosen by `table`,
+  see Value).
 
 ## Value
 
@@ -174,6 +175,10 @@ With `output = "list"`: a list with
   `dif_var`, no responses or incomplete responses), `N_incomplete` (of
   these, rows dropped for incomplete responses) and one `n_<group>`
   column per group.
+
+- `kable`:
+
+  the table chosen by `table`, as `output = "kable"` gives it.
 
 ## Details
 

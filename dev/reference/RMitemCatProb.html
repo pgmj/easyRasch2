@@ -19,7 +19,7 @@ mirt, with optional labels for items and categories."><meta name="robots" conten
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,6 +66,7 @@ a viridis palette. Comparable to <code><a href="https://rdrr.io/pkg/eRm/man/plot
 <span>  n_points <span class="op">=</span> <span class="fl">200L</span>,</span>
 <span>  viridis_option <span class="op">=</span> <span class="st">"D"</span>,</span>
 <span>  viridis_end <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>  vary_linetype <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  facet_ncol <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  label_wrap <span class="op">=</span> <span class="fl">25L</span>,</span>
 <span>  line_width <span class="op">=</span> <span class="fl">0.9</span>,</span>
@@ -123,6 +124,13 @@ at which the curves are evaluated. Default <code>200L</code>.</p></dd>
 <dd><p>Numeric in (0, 1]. Upper end of the viridis
 palette range. Lower values keep the palette in its mid-tones and
 avoid the very bright yellow at <code>1.0</code>. Default <code>0.95</code>.</p></dd>
+
+
+<dt id="arg-vary-linetype">vary_linetype<a class="anchor" aria-label="anchor" href="#arg-vary-linetype"></a></dt>
+<dd><p>Logical. If <code>TRUE</code>, each category also gets its
+own line type (solid for category 0, then increasingly broken dash
+patterns), so neighbouring curves stay apart in greyscale and for
+readers with colour vision deficiency. Default <code>FALSE</code>, colour only.</p></dd>
 
 
 <dt id="arg-facet-ncol">facet_ncol<a class="anchor" aria-label="anchor" href="#arg-facet-ncol"></a></dt>
@@ -198,6 +206,9 @@ item has a single threshold, its difficulty, which gives the usual
 logistic item characteristic curve.</p>
 <p>The colours follow the category number, so low categories are at one
 end of the palette and high categories at the other. With
+<code>vary_linetype = TRUE</code>, the line types do too, and the legend shows
+colour and line type together. Thirteen line types are available,
+and they repeat beyond 13 categories. With
 <code>category_labels</code>, the legend shows those labels (for example "Never",
 "Sometimes", "Often").</p>
 <p>An item with fewer categories than the others (for example one

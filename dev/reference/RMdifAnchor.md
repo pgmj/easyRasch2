@@ -154,6 +154,10 @@ With `output = "list"`: a list with
   groups are aligned at that item; Strobl et al., 2021). `NULL` at
   spacing level, where no anchor is selected.
 
+- `kable`:
+
+  the table as `output = "kable"` gives it.
+
 ## Details
 
 **Why an anchor.** The scale of a Rasch model has no natural origin, so

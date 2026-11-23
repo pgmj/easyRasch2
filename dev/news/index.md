@@ -23,6 +23,48 @@
 
 ### Changes
 
+- [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md):
+  the grouping argument is now `grouping`. `method` still works as its
+  old name. `class_intervals` must be a whole number. Results do not
+  change.
+
+- [`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatProb.md)
+  gains `vary_linetype`. Flags in
+  [`RMdimCFAPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFAPlot.md)
+  and
+  [`RMplotTile()`](https://pgmj.github.io/easyRasch2/dev/reference/RMplotTile.md)
+  no longer rely on colour alone.
+
+- The simulation cutoff functions and
+  [`RMitemRestscoreBoot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemRestscoreBoot.md)
+  stop before simulating when a category is used only by respondents
+  with a zero or perfect total score. **Before, they could return
+  cutoffs from the few simulations that worked.**
+
+- [`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md)
+  without a `cutoff` flags at `alpha`, not a fixed .05. Results change
+  only when `alpha` is not .05.
+
+- Clearer input checks and messages: `iterations` is validated
+  everywhere, and
+  [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md),
+  [`RMdimCFA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFA.md),
+  [`RMdimMartinLof()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimMartinLof.md)
+  and
+  [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md)
+  report left-out simulations or dropped rows.
+
+- `output = "list"` now includes `kable`, the table from
+  `output = "kable"`, in
+  [`RMdifAnchor()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md),
+  [`RMdifImpact()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifImpact.md),
+  [`RMdimResidualPCA()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimResidualPCA.md),
+  [`RMpersonChange()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonChange.md),
+  [`RMpersonFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMpersonFit.md)
+  and
+  [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md).
+  Results do not change.
+
 - **[`RMdifLR()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifLR.md)
   reports Andersen’s LR test only**, by CML with psychotools. The
   location table, Wald tests and plots are removed, and their arguments

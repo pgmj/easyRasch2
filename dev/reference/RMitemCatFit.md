@@ -94,7 +94,7 @@ RMitemCatFit(
   `iterations_used` (refitted), `n_used`, `n_total`, `qualifiers`,
   `item_labels`, and `prep` and `sims`, the data and simulations that
   [`RMitemCatFitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFitPlot.md)
-  uses.
+  uses, and `kable` (the table from `output = "kable"`).
 
 ## Details
 
@@ -153,6 +153,24 @@ twice as strongly as the others, also when the thresholds were ordered.
 It rarely detected "don't know" use in up to 10% of responses or an
 extreme response style shared by all items. The study is described at
 <https://pgmj.github.io/rasch_book/chapters/category-fit.html>.
+
+**What a flag means.** The test compares an item's whole table of
+category probabilities given the total score with the model, so it is
+not specific to the categories. An item whose categories work as scored
+but which discriminates less or more than the other items (underfit or
+overfit, for example from a second dimension or local dependence)
+departs as well. In a check with 10 items, one of which had ordered,
+distinct categories but a slope of 0.5 or 2, that item was flagged in
+36% and 8% of datasets at n = 300, and in 96% and 83% at n = 1000. Check
+item fit first, for example with
+[`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
+or
+[`RMitemRestscore()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemrestscore.md).
+Read a flag as a problem with the categories when the item otherwise
+fits, or when the departure is in one event and not in all. In
+[`RMitemCatFitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFitPlot.md),
+a misfitting item shows in every category, while a category problem is
+local to one category or one pair of adjacent categories.
 
 ## References
 

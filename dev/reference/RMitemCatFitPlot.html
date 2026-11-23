@@ -19,7 +19,7 @@ test that the calibration plot shows."><meta name="robots" content="noindex"></h
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,9 @@ test that the calibration plot shows.</p>
 <span>  <span class="va">data</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"residuals"</span>, <span class="st">"adjacent"</span>, <span class="st">"restscore"</span>, <span class="st">"calibration"</span><span class="op">)</span>,</span>
 <span>  fit <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  score_groups <span class="op">=</span> <span class="fl">5L</span>,</span>
+<span>  grouping <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"quantile"</span>, <span class="st">"width"</span>, <span class="st">"score"</span>, <span class="st">"manual"</span><span class="op">)</span>,</span>
+<span>  class_intervals <span class="op">=</span> <span class="fl">5L</span>,</span>
+<span>  score_breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  iterations <span class="op">=</span> <span class="fl">200L</span>,</span>
 <span>  conf_level <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  item_labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -88,7 +90,8 @@ since the total score must cover the same items for everyone.</p></dd>
 <dd><p>Character. Which plot to draw. Default <code>"residuals"</code>, or
 <code>"calibration"</code> when <code>fit</code> is given, since that plot shows the test in
 <code><a href="RMitemCatFit.html">RMitemCatFit()</a></code>.</p><ul><li><p><code>"residuals"</code>: standardised residuals of the number of
-respondents in each category, within groups of total scores.</p></li>
+respondents in each category, within groups of total scores,
+against simulated ranges when <code>fit</code> is given.</p></li>
 <li><p><code>"adjacent"</code>: for each pair of adjacent categories, the share of
 respondents in the upper one, against the total score.</p></li>
 <li><p><code>"restscore"</code>: the mean and SD of the rest score among respondents
@@ -102,23 +105,41 @@ intervals.</p></li>
 <dt id="arg-fit">fit<a class="anchor" aria-label="anchor" href="#arg-fit"></a></dt>
 <dd><p>Optional result of <code><a href="RMitemCatFit.html">RMitemCatFit()</a></code> with <code>output = "list"</code>,
 made from the same <code>data</code> (checked). Its simulations are used for the
-rest-score and calibration plots, so <code>iterations</code>, <code>parallel</code>,
-<code>n_cores</code> and <code>seed</code> are ignored. Each item's corrected p from
+rest-score and calibration plots, so <code>iterations</code> and <code>seed</code> are
+ignored, and give the ranges in the residual plot. Each item's corrected p from
 <code><a href="RMitemCatFit.html">RMitemCatFit()</a></code> is shown under its label, in bold when below .05
 (marked with an asterisk when <span class="pkg">ggtext</span> is not installed), and the
 fit's item labels are used unless <code>item_labels</code> is given.</p></dd>
 
 
-<dt id="arg-score-groups">score_groups<a class="anchor" aria-label="anchor" href="#arg-score-groups"></a></dt>
-<dd><p>Integer. Number of total-score groups for
-<code>type = "residuals"</code>, formed with roughly equal numbers of
-respondents. Default <code>5L</code>.</p></dd>
+<dt id="arg-grouping">grouping<a class="anchor" aria-label="anchor" href="#arg-grouping"></a></dt>
+<dd><p>How respondents are grouped by total score for
+<code>type = "residuals"</code>, as in <code><a href="RMitemICCPlot.html">RMitemICCPlot()</a></code>: <code>"quantile"</code> (default),
+<code>class_intervals</code> groups with about equal numbers of respondents,
+<code>"width"</code>, <code>class_intervals</code> intervals of equal width over the
+observed total scores, <code>"score"</code>, every observed total score its own
+group, or <code>"manual"</code>, groups set by <code>score_breaks</code>. Groups without
+respondents are left out. The caption names the grouping used.</p></dd>
+
+
+<dt id="arg-class-intervals">class_intervals<a class="anchor" aria-label="anchor" href="#arg-class-intervals"></a></dt>
+<dd><p>Integer, at least 2. Number of groups for
+<code>grouping = "quantile"</code> and <code>"width"</code>. Default <code>5L</code>.</p></dd>
+
+
+<dt id="arg-score-breaks">score_breaks<a class="anchor" aria-label="anchor" href="#arg-score-breaks"></a></dt>
+<dd><p>Integer vector for <code>grouping = "manual"</code>: the total
+scores at which a new group starts, in increasing order. Default
+<code>NULL</code>.</p></dd>
 
 
 <dt id="arg-iterations">iterations<a class="anchor" aria-label="anchor" href="#arg-iterations"></a></dt>
 <dd><p>Integer, at least 20. Number of simulated datasets
 for <code>type = "restscore"</code> and <code>type = "calibration"</code> when <code>fit</code> is not
-given. Default <code>200L</code>.</p></dd>
+given. Default <code>200L</code>. The ends of each pointwise range are extreme
+quantiles of the simulated values, so below about 1000 datasets they,
+and which points fall outside them, change with the seed (the caption
+says so).</p></dd>
 
 
 <dt id="arg-conf-level">conf_level<a class="anchor" aria-label="anchor" href="#arg-conf-level"></a></dt>
@@ -160,7 +181,8 @@ data behind the plot.</p></dd>
 per item.</p></li>
 <li><p><code>output = "dataframe"</code>: the data behind the plot, with columns
 <code>item</code> and, by <code>type</code>:</p><ul><li><p><code>"residuals"</code>: <code>score_group</code>, <code>category</code>, <code>observed</code>, <code>expected</code>,
-<code>z</code>.</p></li>
+<code>z</code>, <code>lower</code>, <code>upper</code>, <code>iterations_used</code> (the last three <code>NA</code>
+without <code>fit</code>).</p></li>
 <li><p><code>"adjacent"</code>: <code>pair</code>, <code>score</code>, <code>n_pair</code>, <code>observed</code>, <code>expected</code>,
 <code>lower</code>, <code>upper</code>.</p></li>
 <li><p><code>"restscore"</code>: <code>statistic</code>, <code>category</code>, <code>observed</code>, <code>lower</code>, <code>upper</code>,
@@ -184,12 +206,18 @@ observed ones. Differences show only once respondents are split by
 total score, which every plot here does.</p>
 <p><strong>Residuals.</strong> For each item, category and score group, the observed
 number of respondents minus the expected number, divided by its
-standard deviation under the model. Dotted lines at \(\pm 1.96\) mark
-values that would be unusual for a single cell. The plot has many
-cells, so some values beyond them are expected even when the model
-holds. The expected counts treat the item parameters as known. This
-comparison of observed and expected counts within score groups is the
-one behind Glas's (1988) R1c test.</p>
+standard deviation under the model. This comparison of observed and
+expected counts within score groups is the one behind Glas's (1988)
+R1c test. The standard deviation treats the item parameters as known,
+but they are estimated from the same counts, so the residuals vary less
+than a standard normal: with 5 score groups about 2.5% of cells fall
+beyond \(\pm 1.96\) when the model holds, fewer with fewer groups.
+In cells with few expected respondents the residual can only be large
+in the positive direction. Fixed lines at \(\pm 1.96\) would
+therefore mislead, and none are drawn. With <code>fit</code>, each cell gets the
+pointwise range of the residual in the datasets <code><a href="RMitemCatFit.html">RMitemCatFit()</a></code>
+simulated (regenerated for the chosen grouping, without refitting), which accounts for both. The plot has many cells, so some
+fall outside their range even when the model holds.</p>
 <p><strong>Adjacent categories.</strong> Among respondents in category \(j - 1\) or
 \(j\) at total score \(r\), the share in \(j\). Under the model
 this share rises with \(r\). Observed shares that do not rise
@@ -202,7 +230,17 @@ minus expected. A category used by respondents with too low or too
 high rest scores, or with too wide a spread, stands out. Intervals come
 from datasets simulated from the model given each respondent's total
 score, with the item parameters re-estimated in each, so the
-uncertainty in the estimates is included.</p>
+uncertainty in the estimates is included.
+An item that discriminates less than the model expects (underfit) gives
+a rest-score SD above its expectation in every category, and compressed
+means: low categories above and high categories below their expectation.
+An item that discriminates more (overfit, often from local dependence)
+gives the reverse. The SD panel shows this as clearly as the mean panel,
+and in the middle category only the SD changes. This is a property of the
+item, not of its categories (see "What a flag means" in
+<code><a href="RMitemCatFit.html">RMitemCatFit()</a></code>). A raised SD in a single category points to that
+category instead, for example a middle category chosen by respondents at
+all levels.</p>
 <p><strong>Calibration.</strong> For each cumulative event \(X_i \ge k\), the model
 predicts \(p = P(X_i \ge k \mid r)\). The observed events are
 regressed on \(p\) by pool-adjacent-violators (PAV), which gives the

@@ -19,7 +19,7 @@ scales, without a threshold or a verdict."><meta name="robots" content="noindex"
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -136,8 +136,8 @@ each item, with two or more items), <code>"local"</code> (the local bias),
 
 <dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
 <dd><p><code>"kable"</code> (default), <code>"dataframe"</code>,
-<code>"ggplot"</code> (the local bias curve) or <code>"list"</code> (all tables,
-see Value).</p></dd>
+<code>"ggplot"</code> (the local bias curve) or <code>"list"</code> (all tables
+and the kable of the one chosen by <code>table</code>, see Value).</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -230,6 +230,10 @@ the latent means and SDs (<code>Mean_ref</code>, <code>SD_ref</code>,
 missing <code>dif_var</code>, no responses or incomplete responses),
 <code>N_incomplete</code> (of these, rows dropped for incomplete
 responses) and one <code>n_&lt;group&gt;</code> column per group.</p></dd>
+
+<dt><code>kable</code></dt>
+<dd><p>the table chosen by <code>table</code>, as
+<code>output = "kable"</code> gives it.</p></dd>
 
 
 </dl></div>

@@ -12,7 +12,7 @@ DIF check, and the partial gamma DIF coefficient is shown per item.
 RMitemICCPlot(
   data,
   dif_var = NULL,
-  method = c("quantile", "width", "score", "manual", "cut"),
+  grouping = c("quantile", "width", "score", "manual"),
   class_intervals = 4,
   score_breaks = NULL,
   ci = TRUE,
@@ -20,7 +20,8 @@ RMitemICCPlot(
   conf_level = 0.95,
   min_n = 8L,
   items = NULL,
-  output = c("patchwork", "list")
+  output = c("patchwork", "list"),
+  method = NULL
 )
 ```
 
@@ -41,7 +42,7 @@ RMitemICCPlot(
   [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md).
   Default `NULL`.
 
-- method:
+- grouping:
 
   How the observed means are grouped along the total score (see Class
   intervals in Details): `"quantile"` (default), `class_intervals`
@@ -53,12 +54,12 @@ RMitemICCPlot(
 
 - class_intervals:
 
-  Integer, at least 2. Number of groups for `method = "quantile"` and
+  Integer, at least 2. Number of groups for `grouping = "quantile"` and
   `"width"`. Default `4`. Ignored by `"score"` and `"manual"`.
 
 - score_breaks:
 
-  Integer vector for `method = "manual"`: the total scores at which a
+  Integer vector for `grouping = "manual"`: the total scores at which a
   new group starts, in increasing order. For example,
   `score_breaks = c(3, 6, 8)` on a 0 to 9 scale gives the groups 0-2,
   3-5, 6-7 and 8-9. It corresponds to `lower.groups` in RASCHplot's
@@ -96,6 +97,10 @@ RMitemICCPlot(
   `"patchwork"` (default) for one combined figure, or `"list"` for a
   named list of one `ggplot` per item.
 
+- method:
+
+  Old name for `grouping`, still accepted. Default `NULL`.
+
 ## Value
 
 A `patchwork` figure, or with `output = "list"` a named list of `ggplot`
@@ -115,10 +120,10 @@ thresholds from `psychotools`, and the exact distribution of each item
 score given the total score from elementary symmetric functions.
 
 **Data.** Only complete cases are used, and with `dif_var` also only
-rows where it is not missing. An unused response category stops the
-function and names the item. A category used only by respondents with a
-zero or perfect total score gives a warning, since its threshold cannot
-be estimated well.
+rows where it is not missing. A message says how many rows were dropped.
+An unused response category stops the function and names the item. A
+category used only by respondents with a zero or perfect total score
+gives a warning, since its threshold cannot be estimated well.
 
 **Conditioning.** The expected curve is the conditional expectation of
 the item score given the total score (Andersen, 1995), which accounts
@@ -127,16 +132,16 @@ for the item being part of the total. It is not a marginal ICC.
 **Class intervals.** Following Buchardt et al. (2023), the observed item
 means can be shown for each total score or for groups of total scores.
 All grouping is on the total score, never on an estimated person
-location. `method = "quantile"` splits the observed total scores into
+location. `grouping = "quantile"` splits the observed total scores into
 `class_intervals` groups of about equal numbers of respondents, with
 common boundaries so that DIF groups share the x-axis. This is the
 approach of
 [`iarm::ICCplot()`](https://rdrr.io/pkg/iarm/man/ICCplot.html)
-(`Hmisc::cut2(g = ...)`). `method = "width"` splits the observed score
+(`Hmisc::cut2(g = ...)`). `grouping = "width"` splits the observed score
 range into intervals of equal width, which reads naturally on the score
 axis but can leave sparse intervals, which `min_n` removes.
-`method = "score"` shows every observed total score, the finest
-resolution, sensible for short scales. `method = "manual"` places the
+`grouping = "score"` shows every observed total score, the finest
+resolution, sensible for short scales. `grouping = "manual"` places the
 boundaries where `score_breaks` says. Each group gives one observed
 point at its mean total score. If the scores are too sparse to form
 `class_intervals` distinct groups, `"quantile"` and `"width"` fall back
@@ -222,13 +227,13 @@ if (requireNamespace("ggplot2", quietly = TRUE) &&
   RMitemICCPlot(sim_data)
 
   # Equal-width intervals on the total-score scale, with the model band
-  RMitemICCPlot(sim_data, method = "width", error_band = TRUE)
+  RMitemICCPlot(sim_data, grouping = "width", error_band = TRUE)
 
   # Every total score as its own group (short scales)
-  RMitemICCPlot(sim_data, method = "score")
+  RMitemICCPlot(sim_data, grouping = "score")
 
   # Manual grouping: new groups start at total scores 3, 5, and 7
-  RMitemICCPlot(sim_data, method = "manual", score_breaks = c(3, 5, 7))
+  RMitemICCPlot(sim_data, grouping = "manual", score_breaks = c(3, 5, 7))
 }
 
 # }

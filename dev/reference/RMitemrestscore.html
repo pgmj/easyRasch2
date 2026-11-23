@@ -21,7 +21,7 @@ asymptotic test (see Details)."><meta name="robots" content="noindex"></head><bo
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -114,8 +114,8 @@ or Benjamini-Yekutieli, control the false discovery rate), or
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
 <dd><p>Numeric in (0, 1). An item is flagged when its corrected
-bootstrap p-value is below <code>alpha</code>. Default <code>0.05</code>. The asymptotic
-test without a <code>cutoff</code> always flags at .05.</p></dd>
+p-value is below <code>alpha</code>: the bootstrap p-value with a <code>cutoff</code>, the
+asymptotic one without. Default <code>0.05</code>.</p></dd>
 
 
 <dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
@@ -146,8 +146,8 @@ the <code>Flagged</code> label and the relative item location.</p></li>
 <li><p><code>output = "dataframe"</code>: a data.frame with the columns <code>Item</code>,
 <code>Observed</code>, <code>Expected</code>, <code>Difference</code>, <code>p_adjusted</code>, <code>Flagged</code> and
 <code>Relative_location</code>. <code>Flagged</code> is <code>"overfit"</code> (observed above
-expected, adjusted p &lt; .05), <code>"underfit"</code> (below, adjusted p &lt; .05) or
-<code>""</code>.</p></li>
+expected, adjusted p &lt; <code>alpha</code>), <code>"underfit"</code> (below, adjusted p &lt;
+<code>alpha</code>) or <code>""</code>.</p></li>
 </ul><p>With a <code>cutoff</code>, <code>p_adjusted</code> is replaced by <code>Diff_low</code> and <code>Diff_high</code>,
 followed by <code>p_restscore</code> (uncorrected equal-tailed bootstrap p) and
 <code>padj_restscore</code> (corrected p) when bootstrap p-values are used.

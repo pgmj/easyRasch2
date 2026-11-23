@@ -15,7 +15,7 @@ RMitemInfitMI()."><meta name="robots" content="noindex"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,7 +78,8 @@ Their levels must be the response codes (<code>"0"</code>, <code>"1"</code>, ...
 
 <dt id="arg-iterations">iterations<a class="anchor" aria-label="anchor" href="#arg-iterations"></a></dt>
 <dd><p>Integer. Total number of simulated datasets across all
-imputations, split about evenly between the <code>m</code> imputed datasets.
+imputations, split about evenly between the <code>m</code> imputed datasets, so
+at least <code>m</code>.
 Default <code>500</code>. See the section on interval width.</p></dd>
 
 
@@ -134,8 +135,15 @@ the stacked distribution.</p></dd>
 <dd><p>Total number of successful iterations across
 all imputations.</p></dd>
 
+<dt><code>requested_iterations</code></dt>
+<dd><p>The <code>iterations</code> requested.</p></dd>
+
 <dt><code>sample_n</code></dt>
 <dd><p>Number of rows (respondents) per imputed dataset.</p></dd>
+
+<dt><code>sample_n_total</code>, <code>sample_has_na</code></dt>
+<dd><p>As in <code><a href="RMitemInfitCutoff.html">RMitemInfitCutoff()</a></code>:
+<code>sample_n</code> and <code>FALSE</code>, since imputed datasets drop no one.</p></dd>
 
 <dt><code>sample_summary</code></dt>
 <dd><p>Summary statistics of estimated person parameters
@@ -160,6 +168,10 @@ per imputed dataset.</p></dd>
 <dt><code>actual_iterations_per_imputation</code></dt>
 <dd><p>Integer vector of successful
 iterations per imputed dataset.</p></dd>
+
+<dt><code>dgp</code></dt>
+<dd><p><code>"resample"</code>, the data-generating process used in each
+imputed dataset.</p></dd>
 
 
 </dl></div>

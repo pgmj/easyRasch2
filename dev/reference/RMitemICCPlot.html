@@ -15,7 +15,7 @@ check, and the partial gamma DIF coefficient is shown per item."><meta name="rob
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,7 @@ check, and the partial gamma DIF coefficient is shown per item.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">RMitemICCPlot</span><span class="op">(</span></span>
 <span>  <span class="va">data</span>,</span>
 <span>  dif_var <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"quantile"</span>, <span class="st">"width"</span>, <span class="st">"score"</span>, <span class="st">"manual"</span>, <span class="st">"cut"</span><span class="op">)</span>,</span>
+<span>  grouping <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"quantile"</span>, <span class="st">"width"</span>, <span class="st">"score"</span>, <span class="st">"manual"</span><span class="op">)</span>,</span>
 <span>  class_intervals <span class="op">=</span> <span class="fl">4</span>,</span>
 <span>  score_breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  ci <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -63,7 +63,8 @@ check, and the partial gamma DIF coefficient is shown per item.</p>
 <span>  conf_level <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  min_n <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  items <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  output <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"patchwork"</span>, <span class="st">"list"</span><span class="op">)</span></span>
+<span>  output <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"patchwork"</span>, <span class="st">"list"</span><span class="op">)</span>,</span>
+<span>  method <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -83,7 +84,7 @@ shown per group, and each panel shows the item's partial gamma from
 <code><a href="https://rdrr.io/pkg/iarm/man/partgam_DIF.html" class="external-link">iarm::partgam_DIF()</a></code>, as in <code><a href="RMdifGamma.html">RMdifGamma()</a></code>. Default <code>NULL</code>.</p></dd>
 
 
-<dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
+<dt id="arg-grouping">grouping<a class="anchor" aria-label="anchor" href="#arg-grouping"></a></dt>
 <dd><p>How the observed means are grouped along the total score
 (see Class intervals in Details): <code>"quantile"</code> (default),
 <code>class_intervals</code> groups with about equal numbers of respondents,
@@ -95,12 +96,12 @@ name for <code>"quantile"</code>, still accepted.</p></dd>
 
 <dt id="arg-class-intervals">class_intervals<a class="anchor" aria-label="anchor" href="#arg-class-intervals"></a></dt>
 <dd><p>Integer, at least 2. Number of groups for
-<code>method = "quantile"</code> and <code>"width"</code>. Default <code>4</code>. Ignored by
+<code>grouping = "quantile"</code> and <code>"width"</code>. Default <code>4</code>. Ignored by
 <code>"score"</code> and <code>"manual"</code>.</p></dd>
 
 
 <dt id="arg-score-breaks">score_breaks<a class="anchor" aria-label="anchor" href="#arg-score-breaks"></a></dt>
-<dd><p>Integer vector for <code>method = "manual"</code>: the total
+<dd><p>Integer vector for <code>grouping = "manual"</code>: the total
 scores at which a new group starts, in increasing order. For example,
 <code>score_breaks = c(3, 6, 8)</code> on a 0 to 9 scale gives the groups 0-2,
 3-5, 6-7 and 8-9. It corresponds to <code>lower.groups</code> in RASCHplot's
@@ -138,6 +139,10 @@ The model is always fitted on all items. Default <code>NULL</code>, all items.</
 <dd><p><code>"patchwork"</code> (default) for one combined figure, or
 <code>"list"</code> for a named list of one <code>ggplot</code> per item.</p></dd>
 
+
+<dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
+<dd><p>Old name for <code>grouping</code>, still accepted. Default <code>NULL</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -155,7 +160,8 @@ corrected across items and, with a cutoff, a calibrated test.</p>
 thresholds from <code>psychotools</code>, and the exact distribution of each item
 score given the total score from elementary symmetric functions.</p>
 <p><strong>Data.</strong> Only complete cases are used, and with <code>dif_var</code> also only
-rows where it is not missing. An unused response category stops the
+rows where it is not missing. A message says how many rows were dropped.
+An unused response category stops the
 function and names the item. A category used only by respondents with
 a zero or perfect total score gives a warning, since its threshold
 cannot be estimated well.</p>
@@ -165,13 +171,13 @@ for the item being part of the total. It is not a marginal ICC.</p>
 <p><strong>Class intervals.</strong> Following Buchardt et al. (2023), the observed
 item means can be shown for each total score or for groups of total
 scores. All grouping is on the total score, never on an estimated person
-location. <code>method = "quantile"</code> splits the observed total scores into
+location. <code>grouping = "quantile"</code> splits the observed total scores into
 <code>class_intervals</code> groups of about equal numbers of respondents, with
 common boundaries so that DIF groups share the x-axis. This is the
-approach of <code><a href="https://rdrr.io/pkg/iarm/man/ICCplot.html" class="external-link">iarm::ICCplot()</a></code> (<code>Hmisc::cut2(g = ...)</code>). <code>method = "width"</code> splits the observed score range into intervals of equal width,
+approach of <code><a href="https://rdrr.io/pkg/iarm/man/ICCplot.html" class="external-link">iarm::ICCplot()</a></code> (<code>Hmisc::cut2(g = ...)</code>). <code>grouping = "width"</code> splits the observed score range into intervals of equal width,
 which reads naturally on the score axis but can leave sparse intervals,
-which <code>min_n</code> removes. <code>method = "score"</code> shows every observed total
-score, the finest resolution, sensible for short scales. <code>method = "manual"</code> places the boundaries where <code>score_breaks</code> says. Each group
+which <code>min_n</code> removes. <code>grouping = "score"</code> shows every observed total
+score, the finest resolution, sensible for short scales. <code>grouping = "manual"</code> places the boundaries where <code>score_breaks</code> says. Each group
 gives one observed point at its mean total score. If the scores are too
 sparse to form <code>class_intervals</code> distinct groups, <code>"quantile"</code> and
 <code>"width"</code> fall back to one point per score.</p>
@@ -242,13 +248,13 @@ Rasch item fit using conditional item characteristic curves in R.
 <span class="r-in"><span>  <span class="fu">RMitemICCPlot</span><span class="op">(</span><span class="va">sim_data</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># Equal-width intervals on the total-score scale, with the model band</span></span></span>
-<span class="r-in"><span>  <span class="fu">RMitemICCPlot</span><span class="op">(</span><span class="va">sim_data</span>, method <span class="op">=</span> <span class="st">"width"</span>, error_band <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMitemICCPlot</span><span class="op">(</span><span class="va">sim_data</span>, grouping <span class="op">=</span> <span class="st">"width"</span>, error_band <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># Every total score as its own group (short scales)</span></span></span>
-<span class="r-in"><span>  <span class="fu">RMitemICCPlot</span><span class="op">(</span><span class="va">sim_data</span>, method <span class="op">=</span> <span class="st">"score"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMitemICCPlot</span><span class="op">(</span><span class="va">sim_data</span>, grouping <span class="op">=</span> <span class="st">"score"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span>  <span class="co"># Manual grouping: new groups start at total scores 3, 5, and 7</span></span></span>
-<span class="r-in"><span>  <span class="fu">RMitemICCPlot</span><span class="op">(</span><span class="va">sim_data</span>, method <span class="op">=</span> <span class="st">"manual"</span>, score_breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">5</span>, <span class="fl">7</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMitemICCPlot</span><span class="op">(</span><span class="va">sim_data</span>, grouping <span class="op">=</span> <span class="st">"manual"</span>, score_breaks <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3</span>, <span class="fl">5</span>, <span class="fl">7</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-plt img"><img src="RMitemICCPlot-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

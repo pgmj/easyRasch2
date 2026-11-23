@@ -159,9 +159,9 @@ and the conditional infit and outfit MSQ are computed with
 simulated dataset that cannot be refitted, for example because a
 response category is empty, is left out.
 [`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)
-reports how many were left out in its caption. If none can be refitted,
-the function stops, naming any category used only by respondents with a
-zero or perfect total score.
+reports how many were left out in its caption. A category used only by
+respondents with a zero or perfect total score stops the function before
+it simulates, since CML cannot estimate its threshold.
 
 The method and the default settings come from simulation studies of
 detection (Johansson, 2025) and of iterations and multiplicity

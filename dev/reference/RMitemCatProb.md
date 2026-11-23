@@ -21,6 +21,7 @@ RMitemCatProb(
   n_points = 200L,
   viridis_option = "D",
   viridis_end = 0.95,
+  vary_linetype = FALSE,
   facet_ncol = NULL,
   label_wrap = 25L,
   line_width = 0.9,
@@ -76,6 +77,13 @@ RMitemCatProb(
   Numeric in (0, 1\]. Upper end of the viridis palette range. Lower
   values keep the palette in its mid-tones and avoid the very bright
   yellow at `1.0`. Default `0.95`.
+
+- vary_linetype:
+
+  Logical. If `TRUE`, each category also gets its own line type (solid
+  for category 0, then increasingly broken dash patterns), so
+  neighbouring curves stay apart in greyscale and for readers with
+  colour vision deficiency. Default `FALSE`, colour only.
 
 - facet_ncol:
 
@@ -151,9 +159,11 @@ has a single threshold, its difficulty, which gives the usual logistic
 item characteristic curve.
 
 The colours follow the category number, so low categories are at one end
-of the palette and high categories at the other. With `category_labels`,
-the legend shows those labels (for example "Never", "Sometimes",
-"Often").
+of the palette and high categories at the other. With
+`vary_linetype = TRUE`, the line types do too, and the legend shows
+colour and line type together. Thirteen line types are available, and
+they repeat beyond 13 categories. With `category_labels`, the legend
+shows those labels (for example "Never", "Sometimes", "Often").
 
 An item with fewer categories than the others (for example one
 three-category item in a four-category scale) shows only its own

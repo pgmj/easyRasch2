@@ -16,7 +16,9 @@ RMitemCatFitPlot(
   data,
   type = c("residuals", "adjacent", "restscore", "calibration"),
   fit = NULL,
-  score_groups = 5L,
+  grouping = c("quantile", "width", "score", "manual"),
+  class_intervals = 5L,
+  score_breaks = NULL,
   iterations = 200L,
   conf_level = 0.95,
   item_labels = NULL,
@@ -43,7 +45,8 @@ RMitemCatFitPlot(
   [`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md).
 
   - `"residuals"`: standardised residuals of the number of respondents
-    in each category, within groups of total scores.
+    in each category, within groups of total scores, against simulated
+    ranges when `fit` is given.
 
   - `"adjacent"`: for each pair of adjacent categories, the share of
     respondents in the upper one, against the total score.
@@ -61,23 +64,43 @@ RMitemCatFitPlot(
   [`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md)
   with `output = "list"`, made from the same `data` (checked). Its
   simulations are used for the rest-score and calibration plots, so
-  `iterations`, `parallel`, `n_cores` and `seed` are ignored. Each
-  item's corrected p from
+  `iterations` and `seed` are ignored, and give the ranges in the
+  residual plot. Each item's corrected p from
   [`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md)
   is shown under its label, in bold when below .05 (marked with an
   asterisk when ggtext is not installed), and the fit's item labels are
   used unless `item_labels` is given.
 
-- score_groups:
+- grouping:
 
-  Integer. Number of total-score groups for `type = "residuals"`, formed
-  with roughly equal numbers of respondents. Default `5L`.
+  How respondents are grouped by total score for `type = "residuals"`,
+  as in
+  [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md):
+  `"quantile"` (default), `class_intervals` groups with about equal
+  numbers of respondents, `"width"`, `class_intervals` intervals of
+  equal width over the observed total scores, `"score"`, every observed
+  total score its own group, or `"manual"`, groups set by
+  `score_breaks`. Groups without respondents are left out. The caption
+  names the grouping used.
+
+- class_intervals:
+
+  Integer, at least 2. Number of groups for `grouping = "quantile"` and
+  `"width"`. Default `5L`.
+
+- score_breaks:
+
+  Integer vector for `grouping = "manual"`: the total scores at which a
+  new group starts, in increasing order. Default `NULL`.
 
 - iterations:
 
   Integer, at least 20. Number of simulated datasets for
   `type = "restscore"` and `type = "calibration"` when `fit` is not
-  given. Default `200L`.
+  given. Default `200L`. The ends of each pointwise range are extreme
+  quantiles of the simulated values, so below about 1000 datasets they,
+  and which points fall outside them, change with the seed (the caption
+  says so).
 
 - conf_level:
 
@@ -120,7 +143,8 @@ RMitemCatFitPlot(
   and, by `type`:
 
   - `"residuals"`: `score_group`, `category`, `observed`, `expected`,
-    `z`.
+    `z`, `lower`, `upper`, `iterations_used` (the last three `NA`
+    without `fit`).
 
   - `"adjacent"`: `pair`, `score`, `n_pair`, `observed`, `expected`,
     `lower`, `upper`.
@@ -147,12 +171,20 @@ score, which every plot here does.
 
 **Residuals.** For each item, category and score group, the observed
 number of respondents minus the expected number, divided by its standard
-deviation under the model. Dotted lines at \\\pm 1.96\\ mark values that
-would be unusual for a single cell. The plot has many cells, so some
-values beyond them are expected even when the model holds. The expected
-counts treat the item parameters as known. This comparison of observed
-and expected counts within score groups is the one behind Glas's (1988)
-R1c test.
+deviation under the model. This comparison of observed and expected
+counts within score groups is the one behind Glas's (1988) R1c test. The
+standard deviation treats the item parameters as known, but they are
+estimated from the same counts, so the residuals vary less than a
+standard normal: with 5 score groups about 2.5% of cells fall beyond
+\\\pm 1.96\\ when the model holds, fewer with fewer groups. In cells
+with few expected respondents the residual can only be large in the
+positive direction. Fixed lines at \\\pm 1.96\\ would therefore mislead,
+and none are drawn. With `fit`, each cell gets the pointwise range of
+the residual in the datasets
+[`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md)
+simulated (regenerated for the chosen grouping, without refitting),
+which accounts for both. The plot has many cells, so some fall outside
+their range even when the model holds.
 
 **Adjacent categories.** Among respondents in category \\j - 1\\ or
 \\j\\ at total score \\r\\, the share in \\j\\. Under the model this
@@ -167,7 +199,17 @@ expected. A category used by respondents with too low or too high rest
 scores, or with too wide a spread, stands out. Intervals come from
 datasets simulated from the model given each respondent's total score,
 with the item parameters re-estimated in each, so the uncertainty in the
-estimates is included.
+estimates is included. An item that discriminates less than the model
+expects (underfit) gives a rest-score SD above its expectation in every
+category, and compressed means: low categories above and high categories
+below their expectation. An item that discriminates more (overfit, often
+from local dependence) gives the reverse. The SD panel shows this as
+clearly as the mean panel, and in the middle category only the SD
+changes. This is a property of the item, not of its categories (see
+"What a flag means" in
+[`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md)).
+A raised SD in a single category points to that category instead, for
+example a middle category chosen by respondents at all levels.
 
 **Calibration.** For each cumulative event \\X_i \ge k\\, the model
 predicts \\p = P(X_i \ge k \mid r)\\. The observed events are regressed

@@ -81,7 +81,8 @@ RMdimResidualPCA(
 
 - `output = "list"`: a list with `components`, the data.frame above, and
   `variance`, a one-row data.frame with `total`, `explained`,
-  `unexplained`, `pct_explained`, `pct_unexplained` and `n_persons`.
+  `unexplained`, `pct_explained`, `pct_unexplained` and `n_persons`, and
+  `kable`, the table from `output = "kable"`.
 
 - `output = "ggplot"`: each item's first-component loading (x-axis)
   against its location (y-axis), with dashed lines at zero and the

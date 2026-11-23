@@ -15,7 +15,7 @@ describes where a fitting item's statistic is expected to fall."><meta name="rob
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -188,9 +188,9 @@ by <code>dgp</code>, the model is refitted by CML (<code><a href="https://rdrr.i
 conditional infit and outfit MSQ are computed with <code><a href="https://rdrr.io/pkg/iarm/man/out_infit.html" class="external-link">iarm::out_infit()</a></code>.
 A simulated dataset that cannot be refitted, for example because a
 response category is empty, is left out. <code><a href="RMiteminfit.html">RMitemInfit()</a></code> reports how
-many were left out in its caption. If none can be refitted, the function
-stops, naming any category used only by respondents with a zero or
-perfect total score.</p>
+many were left out in its caption. A category used only by respondents
+with a zero or perfect total score stops the function before it
+simulates, since CML cannot estimate its threshold.</p>
 <p>The method and the default settings come from simulation studies of
 detection (Johansson, 2025) and of iterations and multiplicity
 correction (Johansson, 2026).</p>

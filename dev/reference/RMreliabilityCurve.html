@@ -17,7 +17,7 @@ either."><meta name="robots" content="noindex"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -188,7 +188,7 @@ background band. Default <code>TRUE</code>.</p></dd>
 <dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
 <dd><p>Character. <code>"ggplot"</code> (default), <code>"dataframe"</code> for the curve,
 <code>"kable"</code> for a summary table, or <code>"list"</code> for the curve and the summary
-as data.frames.</p></dd>
+as data.frames plus the kable.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -223,7 +223,8 @@ marginal reliability from 0.81 up to 0.90 when it should have fallen to
 where not computed) and
 <code>benchmark_range</code> (the theta ranges where the curve reaches
 <code>benchmark</code>, with columns <code>xmin</code> and <code>xmax</code>, <code>NULL</code> without a
-benchmark or when it is never reached).</p></li>
+benchmark or when it is never reached) and <code>kable</code>, the summary table
+from <code>output = "kable"</code>.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>

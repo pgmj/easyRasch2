@@ -120,6 +120,16 @@ A list with components:
 
   Number of simulated datasets used.
 
+- `requested_iterations`:
+
+  The `iterations` requested.
+
+- `failed_iterations`:
+
+  Number of simulated datasets that could not be refitted and were left
+  out. With `stopping = "sequential"`, `actual_iterations` can also be
+  below `requested_iterations` because the rule stopped early.
+
 - `rejected`:
 
   Logical: is `p_value < alpha`?
@@ -230,8 +240,9 @@ of items by the *product* of their easinesses. See the note on
 validation below.
 
 A simulated dataset that cannot be refitted, for example because a
-category of an item is empty, is left out without a message.
-`actual_iterations` gives the number used.
+category of an item is empty, is left out, with a message saying how
+many. `actual_iterations` gives the number used and `failed_iterations`
+the number left out.
 
 Item parameters are estimated once on the observed data and held fixed
 across MC iterations. Christensen & Kreiner (2007) use the extended
@@ -332,6 +343,12 @@ RMdimMartinLof(dat,
 #> 
 #> $actual_iterations
 #> [1] 100
+#> 
+#> $requested_iterations
+#> [1] 100
+#> 
+#> $failed_iterations
+#> [1] 0
 #> 
 #> $rejected
 #> [1] TRUE
@@ -808,6 +825,12 @@ RMdimMartinLof(dat,
 #> 
 #> $actual_iterations
 #> [1] 200
+#> 
+#> $requested_iterations
+#> [1] 200
+#> 
+#> $failed_iterations
+#> [1] 0
 #> 
 #> $rejected
 #> [1] TRUE

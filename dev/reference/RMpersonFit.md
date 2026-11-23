@@ -117,8 +117,8 @@ items they answered get `NA` statistics and are not assessed.
 
 For `output = "kable"`, the same content as a `knitr_kable`. For
 `output = "ggplot"`, the named list of maps described under `output`.
-For `output = "list"`, both from one computation: `fit` (the data.frame)
-and `plots` (the maps).
+For `output = "list"`, all from one computation: `fit` (the data.frame),
+`plots` (the maps) and `kable` (the table from `output = "kable"`).
 
 ## Details
 

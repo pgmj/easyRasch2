@@ -27,7 +27,7 @@ shows where an item departs."><meta name="robots" content="noindex"></head><body
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9007</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9008</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -146,7 +146,8 @@ corrected across items).</p></li>
 data.frame above), <code>correction</code>, <code>iterations</code> (requested),
 <code>iterations_used</code> (refitted), <code>n_used</code>, <code>n_total</code>, <code>qualifiers</code>,
 <code>item_labels</code>, and <code>prep</code> and <code>sims</code>, the data and simulations that
-<code><a href="RMitemCatFitPlot.html">RMitemCatFitPlot()</a></code> uses.</p></li>
+<code><a href="RMitemCatFitPlot.html">RMitemCatFitPlot()</a></code> uses, and <code>kable</code> (the table from
+<code>output = "kable"</code>).</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -200,6 +201,20 @@ twice as strongly as the others, also when the thresholds were ordered.
 It rarely detected "don't know" use in up to 10% of responses or an
 extreme response style shared by all items. The study is described at
 <a href="https://pgmj.github.io/rasch_book/chapters/category-fit.html" class="external-link">https://pgmj.github.io/rasch_book/chapters/category-fit.html</a>.</p>
+<p><strong>What a flag means.</strong> The test compares an item's whole table of
+category probabilities given the total score with the model, so it is
+not specific to the categories. An item whose categories work as scored
+but which discriminates less or more than the other items (underfit or
+overfit, for example from a second dimension or local dependence)
+departs as well. In a check with 10 items, one of which had ordered,
+distinct categories but a slope of 0.5 or 2, that item was flagged in
+36% and 8% of datasets at n = 300, and in 96% and 83% at n = 1000.
+Check item fit first, for example with <code><a href="RMiteminfit.html">RMitemInfit()</a></code> or
+<code><a href="RMitemrestscore.html">RMitemRestscore()</a></code>. Read a flag as a problem with the categories when
+the item otherwise fits, or when the departure is in one event and not
+in all. In <code><a href="RMitemCatFitPlot.html">RMitemCatFitPlot()</a></code>, a misfitting item shows in every
+category, while a category problem is local to one category or one pair
+of adjacent categories.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
