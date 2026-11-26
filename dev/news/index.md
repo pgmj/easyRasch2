@@ -9,7 +9,8 @@
   predicts given the total score, also with ordered thresholds, with
   p-values corrected across items.
   [`RMitemCatFitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFitPlot.md)
-  shows category functioning in four plots.
+  shows category functioning in four plots, and with `dif_var` by group,
+  with bands from permutations of group labels within total scores.
 
 - [`RMdifAnchor()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md):
   anchored Wald tests of DIF and DSF between two groups, with corrected
@@ -89,9 +90,9 @@
   without `data` follows an explicit `statistic`. Tables do not change.
 
 - [`RMdimCFACutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdimCFACutoff.md)
-  uses the scaled CFI and RMSEA, refuses `"DWLS"`, `"ULS"` and `"WLS"`,
-  and needs at least 4 items. Results with `"WLSMV"` do not change in
-  practice.
+  uses only the scaled CFI and RMSEA, refuses `"DWLS"`, `"ULS"` and
+  `"WLS"`, and needs at least 4 items. Results with `"WLSMV"` do not
+  change in practice.
 
 - [`RMreliabilityCurve()`](https://pgmj.github.io/easyRasch2/dev/reference/RMreliabilityCurve.md)
   reports the median SEM instead of the average.
@@ -133,6 +134,28 @@
 - [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md):
   the grouping argument is now `grouping` (`method` still works), and
   `class_intervals` must be a whole number.
+
+- [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
+  no longer reports iarm’s asymptotic p-values and interval (`padj_bh`,
+  `Significance`, `lower`, `upper`), which rejected too often without
+  DIF for dichotomous items. Without a cutoff it gives the partial gamma
+  and SE, and the caption recommends
+  [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md).
+
+- [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md)
+  with `dif_var` shows the partial gamma estimate only. The asymptotic
+  interval and p-value are dropped, since the asymptotic test rejected
+  too often without DIF. Test DIF with
+  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
+  and a
+  [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+  result.
+
+- [`RMitemICCPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemICCPlot.md)
+  with `dif_var` gives each group its own point shape and an Okabe-Ito
+  colour, as in
+  [`RMitemCatFitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFitPlot.md),
+  so groups stay apart in greyscale.
 
 - Plots and dependencies:
   [`RMitemCatProb()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatProb.md)

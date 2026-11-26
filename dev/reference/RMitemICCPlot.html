@@ -15,7 +15,7 @@ check, and the partial gamma DIF coefficient is shown per item."><meta name="rob
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9009</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9010</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -81,7 +81,8 @@ check, and the partial gamma DIF coefficient is shown per item.</p>
 <dd><p>Optional vector of length <code>nrow(data)</code> (a factor, or
 coercible to one) defining groups for DIF. The observed means are then
 shown per group, and each panel shows the item's partial gamma from
-<code><a href="https://rdrr.io/pkg/iarm/man/partgam_DIF.html" class="external-link">iarm::partgam_DIF()</a></code>, as in <code><a href="RMdifGamma.html">RMdifGamma()</a></code>. Default <code>NULL</code>.</p></dd>
+<code><a href="https://rdrr.io/pkg/iarm/man/partgam_DIF.html" class="external-link">iarm::partgam_DIF()</a></code>, as in <code><a href="RMdifGamma.html">RMdifGamma()</a></code>, as an effect size without
+an interval or p-value. Default <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-grouping">grouping<a class="anchor" aria-label="anchor" href="#arg-grouping"></a></dt>
@@ -150,8 +151,9 @@ The model is always fitted on all items. Default <code>NULL</code>, all items.</
 <code>ggplot</code> objects. With <code>dif_var</code>, the partial gamma table is also
 attached as <code>attr(., "dif_gamma")</code>, for convenience. It is the result
 of <code>RMdifGamma(data, dif_var, output = "dataframe")</code> on the same
-respondents, so call <code><a href="RMdifGamma.html">RMdifGamma()</a></code> to get it as a table, with p-values
-corrected across items and, with a cutoff, a calibrated test.</p>
+respondents. For a test, call <code><a href="RMdifGamma.html">RMdifGamma()</a></code> with the result of
+<code><a href="RMdifGammaCutoff.html">RMdifGammaCutoff()</a></code> as <code>cutoff</code>, which gives bootstrap p-values
+corrected across items.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -209,8 +211,12 @@ maximum, where the item score is fixed. The band shows the model's
 uncertainty of the observed mean per total score, and the error bars
 the sampling uncertainty of the observed group means.</p>
 <p><strong>DIF magnitude.</strong> The partial gamma (Bjorner et al., 1998) is the
-association between the item score and the group given the rest score,
-a non-parametric effect size, the same statistic as in <code><a href="RMdifGamma.html">RMdifGamma()</a></code>.</p>
+association between the item score and the group given the total score,
+a non-parametric effect size, the same statistic as in <code><a href="RMdifGamma.html">RMdifGamma()</a></code>.
+The plot shows the estimate only. Its asymptotic interval and p-value
+come from a normal approximation that rejected too often when there was
+no DIF (dichotomous items). To test DIF, use <code><a href="RMdifGamma.html">RMdifGamma()</a></code> with the
+result of <code><a href="RMdifGammaCutoff.html">RMdifGammaCutoff()</a></code> as <code>cutoff</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

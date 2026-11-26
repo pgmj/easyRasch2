@@ -16,6 +16,7 @@ RMitemCatFitPlot(
   data,
   type = c("residuals", "adjacent", "restscore", "calibration"),
   fit = NULL,
+  dif_var = NULL,
   grouping = c("quantile", "width", "score", "manual"),
   class_intervals = 5L,
   score_breaks = NULL,
@@ -69,7 +70,17 @@ RMitemCatFitPlot(
   [`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md)
   is shown under its label, in bold when below .05 (marked with an
   asterisk when ggtext is not installed), and the fit's item labels are
-  used unless `item_labels` is given.
+  used unless `item_labels` is given. Not available with `dif_var`.
+
+- dif_var:
+
+  Optional vector with one value per row of `data` (factor, character or
+  numeric, treated as groups), at most four groups. Each group's curves
+  are then drawn against predictions from one fit to all respondents,
+  with a band showing the range expected without differential item
+  functioning (DIF). Available for `type = "calibration"`, `"adjacent"`
+  and `"residuals"`. Rows with a missing group are left out with a
+  message. See "Groups" in Details.
 
 - grouping:
 
@@ -100,12 +111,13 @@ RMitemCatFitPlot(
   given. Default `200L`. The ends of each pointwise range are extreme
   quantiles of the simulated values, so below about 1000 datasets they,
   and which points fall outside them, change with the seed (the caption
-  says so).
+  says so). With `dif_var`, the number of permutations of the group
+  labels behind the bands, default `1000L`.
 
 - conf_level:
 
-  Numeric in (0, 1). Coverage of the pointwise bands and intervals.
-  Default `0.95`.
+  Numeric in (0, 1). Coverage of the pointwise bands and intervals, and
+  with `dif_var` of the band for each curve. Default `0.95`.
 
 - item_labels:
 
@@ -121,7 +133,8 @@ RMitemCatFitPlot(
   Logical / integer. Run the simulations in parallel via mirai when
   available. Default sequential. When `n_cores` is `NULL`,
   `getOption("mc.cores")` is used. If that is unset too, a warning is
-  given and the simulations run sequentially.
+  given and the simulations run sequentially. Not used with `dif_var`,
+  where the permutations run sequentially.
 
 - seed:
 
@@ -153,6 +166,14 @@ RMitemCatFitPlot(
     `upper`, `iterations_used`.
 
   - `"calibration"`: `event`, `predicted`, `cep`, `n`, `lower`, `upper`.
+
+  With `dif_var`, each type also has `group` (the group with its n),
+  `perm_mean` (the mean over the permutations), `lower` and `upper` (the
+  band), `outside` (the point is outside its band) and `iterations_used`
+  (the number of permutations). The non-DIF reference columns are
+  replaced: `adjacent` keeps `expected` (the model's share),
+  `calibration` and `adjacent` have no binomial or simulated range, and
+  `residuals` has no cells with zero expected variance.
 
 ## Details
 
@@ -225,9 +246,48 @@ event separates respondents less well than the model predicts, and too
 steep means better. Because CML reproduces each category's count, the
 curve cannot lie above or below the diagonal overall, only cross it.
 
-All bands and intervals are pointwise. They show where to look, not
-whether an item fits, and with many points some fall outside even when
-the model holds.
+Without `dif_var`, all bands and intervals are pointwise. They show
+where to look, not whether an item fits, and with many points some fall
+outside even when the model holds.
+
+**Groups (`dif_var`).** The item parameters are estimated once, from all
+respondents used, and every group's curves are drawn against the same
+predictions. Under the Rasch model without DIF, an item's response is
+independent of the group given the total score (Kreiner & Christensen,
+2011), whatever the groups' ability distributions. Curves that separate
+between groups therefore point to DIF, while curves that depart from the
+model together point to misfit of the item for everyone.
+
+The band is a simultaneous consistency band (Dimitriadis et al., 2021)
+for each curve with coverage `conf_level` (default 95%): the range the
+whole curve keeps in that share of permutations of the group labels
+within total scores, a permutation that keeps the number of respondents
+of each group at every score (an exact conditional test, Kreiner, 1987).
+For the residual plot, a "curve" is all cells of one item and group. The
+band is centred on the pooled data, not on the model, so an item that
+misfits for everyone moves all groups' bands together. Each band is cut
+to the values the permutations reached, which matters for cells the
+model expects to be almost empty. In the residual plot, the y-axis
+covers the bars and at least -4 to 4, and a band that reaches further is
+cut at the panel edge. Points (bars for residuals) outside their band
+are marked. The bands are not corrected across curves, so with many
+curves some cross their band by chance. In simulations without DIF, at
+most about 5% of curves crossed their band (dev study in the package
+repository, `dev/catfit_dif/`).
+
+Two conditions limit the reading. First, the independence given the
+total score holds under the Rasch model, not when items differ in
+discrimination (Kreiner & Christensen, 2011). Then, if the groups differ
+in ability, curves can separate without DIF, so check item fit first
+([`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md),
+[`RMitemInfit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMiteminfit.md)).
+Second, the total score includes the other items: DIF in several items
+in the same direction shifts the matching, and DIF-free items can then
+look different between groups.
+[`RMdifAnchor()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifAnchor.md)
+(item and threshold locations) and
+[`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
+test DIF.
 
 ## References
 
@@ -239,6 +299,14 @@ National Academy of Sciences, 118*(8), e2016191118.
 Glas, C. A. W. (1988). The derivation of some tests for the Rasch model
 from the multinomial distribution. *Psychometrika, 53*(4), 525–546.
 [doi:10.1007/BF02294405](https://doi.org/10.1007/BF02294405)
+
+Kreiner, S. (1987). Analysis of multidimensional contingency tables by
+exact conditional tests: Techniques and strategies. *Scandinavian
+Journal of Statistics, 14*(2), 97–112.
+
+Kreiner, S., & Christensen, K. B. (2011). Item screening in graphical
+loglinear Rasch models. *Psychometrika, 76*(2), 228–256.
+[doi:10.1007/s11336-011-9203-y](https://doi.org/10.1007/s11336-011-9203-y)
 
 Säilynoja, T., Johnson, A. R., Martin, O. A., & Vehtari, A. (2025).
 Recommendations for visual predictive checks in Bayesian workflow.
@@ -264,6 +332,10 @@ if (requireNamespace("eRm", quietly = TRUE)) {
   RMitemCatFitPlot(pcmdat2, type = "adjacent")
   RMitemCatFitPlot(pcmdat2, type = "calibration", iterations = 100,
                      seed = 1)
+  # By group (here a random split, so no DIF is expected)
+  set.seed(1)
+  group <- sample(c("A", "B"), nrow(pcmdat2), replace = TRUE)
+  RMitemCatFitPlot(pcmdat2, type = "adjacent", dif_var = group, seed = 1)
 }
 
 # }

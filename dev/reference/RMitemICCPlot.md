@@ -39,8 +39,8 @@ RMitemICCPlot(
   and each panel shows the item's partial gamma from
   [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html),
   as in
-  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md).
-  Default `NULL`.
+  [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md),
+  as an effect size without an interval or p-value. Default `NULL`.
 
 - grouping:
 
@@ -107,10 +107,11 @@ A `patchwork` figure, or with `output = "list"` a named list of `ggplot`
 objects. With `dif_var`, the partial gamma table is also attached as
 `attr(., "dif_gamma")`, for convenience. It is the result of
 `RMdifGamma(data, dif_var, output = "dataframe")` on the same
-respondents, so call
+respondents. For a test, call
 [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
-to get it as a table, with p-values corrected across items and, with a
-cutoff, a calibrated test.
+with the result of
+[`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+as `cutoff`, which gives bootstrap p-values corrected across items.
 
 ## Details
 
@@ -177,9 +178,16 @@ band shows the model's uncertainty of the observed mean per total score,
 and the error bars the sampling uncertainty of the observed group means.
 
 **DIF magnitude.** The partial gamma (Bjorner et al., 1998) is the
-association between the item score and the group given the rest score, a
-non-parametric effect size, the same statistic as in
+association between the item score and the group given the total score,
+a non-parametric effect size, the same statistic as in
 [`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md).
+The plot shows the estimate only. Its asymptotic interval and p-value
+come from a normal approximation that rejected too often when there was
+no DIF (dichotomous items). To test DIF, use
+[`RMdifGamma()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGamma.md)
+with the result of
+[`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+as `cutoff`.
 
 ## References
 

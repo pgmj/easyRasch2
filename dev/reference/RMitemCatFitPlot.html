@@ -19,7 +19,7 @@ test that the calibration plot shows."><meta name="robots" content="noindex"></h
 
     <a class="navbar-brand me-2" href="../index.html">easyRasch2</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9009</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.9010</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,6 +62,7 @@ test that the calibration plot shows.</p>
 <span>  <span class="va">data</span>,</span>
 <span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"residuals"</span>, <span class="st">"adjacent"</span>, <span class="st">"restscore"</span>, <span class="st">"calibration"</span><span class="op">)</span>,</span>
 <span>  fit <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dif_var <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  grouping <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"quantile"</span>, <span class="st">"width"</span>, <span class="st">"score"</span>, <span class="st">"manual"</span><span class="op">)</span>,</span>
 <span>  class_intervals <span class="op">=</span> <span class="fl">5L</span>,</span>
 <span>  score_breaks <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -109,7 +110,17 @@ rest-score and calibration plots, so <code>iterations</code> and <code>seed</cod
 ignored, and give the ranges in the residual plot. Each item's corrected p from
 <code><a href="RMitemCatFit.html">RMitemCatFit()</a></code> is shown under its label, in bold when below .05
 (marked with an asterisk when <span class="pkg">ggtext</span> is not installed), and the
-fit's item labels are used unless <code>item_labels</code> is given.</p></dd>
+fit's item labels are used unless <code>item_labels</code> is given. Not
+available with <code>dif_var</code>.</p></dd>
+
+
+<dt id="arg-dif-var">dif_var<a class="anchor" aria-label="anchor" href="#arg-dif-var"></a></dt>
+<dd><p>Optional vector with one value per row of <code>data</code> (factor,
+character or numeric, treated as groups), at most four groups. Each
+group's curves are then drawn against predictions from one fit to all
+respondents, with a band showing the range expected without
+differential item functioning (DIF). Available for <code>type = "calibration"</code>, <code>"adjacent"</code> and <code>"residuals"</code>. Rows with a missing
+group are left out with a message. See "Groups" in Details.</p></dd>
 
 
 <dt id="arg-grouping">grouping<a class="anchor" aria-label="anchor" href="#arg-grouping"></a></dt>
@@ -139,12 +150,14 @@ for <code>type = "restscore"</code> and <code>type = "calibration"</code> when <
 given. Default <code>200L</code>. The ends of each pointwise range are extreme
 quantiles of the simulated values, so below about 1000 datasets they,
 and which points fall outside them, change with the seed (the caption
-says so).</p></dd>
+says so). With <code>dif_var</code>, the number of permutations of the group
+labels behind the bands, default <code>1000L</code>.</p></dd>
 
 
 <dt id="arg-conf-level">conf_level<a class="anchor" aria-label="anchor" href="#arg-conf-level"></a></dt>
 <dd><p>Numeric in (0, 1). Coverage of the pointwise bands and
-intervals. Default <code>0.95</code>.</p></dd>
+intervals, and with <code>dif_var</code> of the band for each curve. Default
+<code>0.95</code>.</p></dd>
 
 
 <dt id="arg-item-labels">item_labels<a class="anchor" aria-label="anchor" href="#arg-item-labels"></a></dt>
@@ -161,7 +174,8 @@ Default <code>15L</code>.</p></dd>
 <dd><p>Logical / integer. Run the simulations in
 parallel via <span class="pkg">mirai</span> when available. Default sequential. When
 <code>n_cores</code> is <code>NULL</code>, <code>getOption("mc.cores")</code> is used. If that is unset
-too, a warning is given and the simulations run sequentially.</p></dd>
+too, a warning is given and the simulations run sequentially. Not used
+with <code>dif_var</code>, where the permutations run sequentially.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
@@ -189,7 +203,14 @@ without <code>fit</code>).</p></li>
 <code>iterations_used</code>.</p></li>
 <li><p><code>"calibration"</code>: <code>event</code>, <code>predicted</code>, <code>cep</code>, <code>n</code>, <code>lower</code>,
 <code>upper</code>.</p></li>
-</ul></li>
+</ul><p>With <code>dif_var</code>, each type also has <code>group</code> (the group with its n),
+<code>perm_mean</code> (the mean over the permutations), <code>lower</code> and <code>upper</code>
+(the band),
+<code>outside</code> (the point is outside its band) and <code>iterations_used</code> (the
+number of permutations). The non-DIF reference columns are replaced:
+<code>adjacent</code> keeps <code>expected</code> (the model's share), <code>calibration</code> and
+<code>adjacent</code> have no binomial or simulated range, and <code>residuals</code> has no
+cells with zero expected variance.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -255,9 +276,40 @@ flat means the event separates respondents less well than the model
 predicts, and too steep means better. Because CML reproduces each
 category's count, the curve cannot lie above or below the diagonal
 overall, only cross it.</p>
-<p>All bands and intervals are pointwise. They show where to look, not
-whether an item fits, and with many points some fall outside even when
-the model holds.</p>
+<p>Without <code>dif_var</code>, all bands and intervals are pointwise. They show where
+to look, not whether an item fits, and with many points some fall outside
+even when the model holds.</p>
+<p><strong>Groups (<code>dif_var</code>).</strong> The item parameters are estimated once, from all
+respondents used, and every group's curves are drawn against the same
+predictions. Under the Rasch model without DIF, an item's response is
+independent of the group given the total score (Kreiner &amp; Christensen,
+2011), whatever the groups' ability distributions. Curves that separate
+between groups therefore point to DIF, while curves that depart from the
+model together point to misfit of the item for everyone.</p>
+<p>The band is a simultaneous consistency band (Dimitriadis et al., 2021)
+for each curve with coverage <code>conf_level</code> (default 95%): the range the
+whole curve keeps in that share of permutations of the group labels within total scores, a permutation that
+keeps the number of respondents of each group at every score (an exact
+conditional test, Kreiner, 1987). For the residual plot, a "curve" is all
+cells of one item and group. The band is centred on the pooled data, not
+on the model, so an item that misfits for everyone moves all groups'
+bands together. Each band is cut to the values the permutations reached,
+which matters for cells the model expects to be almost empty. In the
+residual plot, the y-axis covers the bars and at least -4 to 4, and a
+band that reaches further is cut at the panel edge. Points (bars for
+residuals) outside their band are marked. The bands are not corrected across curves, so with many curves
+some cross their band by chance. In simulations without DIF, at most
+about 5% of curves crossed their band (dev study in the package
+repository, <code>dev/catfit_dif/</code>).</p>
+<p>Two conditions limit the reading. First, the independence given the
+total score holds under the Rasch model, not when items differ in
+discrimination (Kreiner &amp; Christensen, 2011). Then, if the groups differ
+in ability, curves can separate without DIF, so check item fit first
+(<code><a href="RMitemCatFit.html">RMitemCatFit()</a></code>, <code><a href="RMiteminfit.html">RMitemInfit()</a></code>). Second, the total score includes the
+other items: DIF in several items in the same direction shifts the
+matching, and DIF-free items can then look different between groups.
+<code><a href="RMdifAnchor.html">RMdifAnchor()</a></code> (item and threshold locations) and <code><a href="RMdifGamma.html">RMdifGamma()</a></code> test
+DIF.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -268,6 +320,12 @@ Academy of Sciences, 118</em>(8), e2016191118.
 <p>Glas, C. A. W. (1988). The derivation of some tests for the Rasch model
 from the multinomial distribution. <em>Psychometrika, 53</em>(4), 525–546.
 <a href="https://doi.org/10.1007/BF02294405" class="external-link">doi:10.1007/BF02294405</a></p>
+<p>Kreiner, S. (1987). Analysis of multidimensional contingency tables by
+exact conditional tests: Techniques and strategies. <em>Scandinavian Journal
+of Statistics, 14</em>(2), 97–112.</p>
+<p>Kreiner, S., &amp; Christensen, K. B. (2011). Item screening in graphical
+loglinear Rasch models. <em>Psychometrika, 76</em>(2), 228–256.
+<a href="https://doi.org/10.1007/s11336-011-9203-y" class="external-link">doi:10.1007/s11336-011-9203-y</a></p>
 <p>Säilynoja, T., Johnson, A. R., Martin, O. A., &amp; Vehtari, A. (2025).
 Recommendations for visual predictive checks in Bayesian workflow.
 <em>arXiv</em>. <a href="https://doi.org/10.48550/arXiv.2503.01509" class="external-link">doi:10.48550/arXiv.2503.01509</a></p>
@@ -288,6 +346,10 @@ characteristic curves.</p></div>
 <span class="r-in"><span>  <span class="fu">RMitemCatFitPlot</span><span class="op">(</span><span class="va">pcmdat2</span>, type <span class="op">=</span> <span class="st">"adjacent"</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="fu">RMitemCatFitPlot</span><span class="op">(</span><span class="va">pcmdat2</span>, type <span class="op">=</span> <span class="st">"calibration"</span>, iterations <span class="op">=</span> <span class="fl">100</span>,</span></span>
 <span class="r-in"><span>                     seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># By group (here a random split, so no DIF is expected)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">group</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">pcmdat2</span><span class="op">)</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">RMitemCatFitPlot</span><span class="op">(</span><span class="va">pcmdat2</span>, type <span class="op">=</span> <span class="st">"adjacent"</span>, dif_var <span class="op">=</span> <span class="va">group</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-plt img"><img src="RMitemCatFitPlot-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

@@ -36,8 +36,7 @@ RMdifGamma(
 
 - cutoff:
 
-  Optional. Default `NULL`, the asymptotic test of
-  [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html).
+  Optional. Default `NULL`, the partial gamma and its SE, with no test.
   Either of:
 
   - The full result of
@@ -56,16 +55,13 @@ RMdifGamma(
 - p_value:
 
   Logical or `NULL`. Whether to flag on two-sided bootstrap p-values
-  (`p_gamma`, `padj_gamma`) from the simulations. The asymptotic p-value
-  and star columns are then dropped, so that the table has one family of
-  p-values, and the simulated interval is kept as a reference. `TRUE`
-  needs the full
+  (`p_gamma`, `padj_gamma`) from the simulations. The simulated interval
+  is kept as a reference. `TRUE` needs the full
   [`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
   result. `NULL` (default) uses the p-values whenever `cutoff` is that
-  result, so a call without a cutoff keeps the asymptotic table. `FALSE`
-  flags against the interval, a poor decision rule, since over k items a
-  width `w` gives a family-wise error rate of `1 - w^k` (Johansson,
-  2026).
+  result, so a call without a cutoff gives no p-values. `FALSE` flags
+  against the interval, a poor decision rule, since over k items a width
+  `w` gives a family-wise error rate of `1 - w^k` (Johansson, 2026).
 
 - correction:
 
@@ -87,16 +83,12 @@ RMdifGamma(
 ## Value
 
 - `output = "kable"`: a `knitr_kable` table with the columns "Item",
-  "Partial gamma", "SE", "Lower CI", "Upper CI", "Adj. p-value (BH)" and
-  "p-value sign." (stars for the adjusted p-value, as iarm shows them),
-  plus "Gamma low", "Gamma high" and "Flagged" with a `cutoff`. With
-  p-values, the asymptotic columns are replaced by "p" and "p (adj)".
+  "Partial gamma" and "SE", plus "Gamma low", "Gamma high" and "Flagged"
+  with a `cutoff`, and "p" and "p (adj)" with bootstrap p-values.
 
-- `output = "dataframe"`: a data.frame with the columns `Item`, `gamma`,
-  `se`, `lower`, `upper`, `padj_bh` and `Significance`, plus
-  `gamma_low`, `gamma_high` and `Flagged` with a `cutoff`. With
-  p-values, `padj_bh` and `Significance` are replaced by `p_gamma` and
-  `padj_gamma`.
+- `output = "dataframe"`: a data.frame with the columns `Item`, `gamma`
+  and `se`, plus `gamma_low`, `gamma_high` and `Flagged` with a
+  `cutoff`, and `p_gamma` and `padj_gamma` with bootstrap p-values.
 
 ## Details
 
@@ -109,12 +101,17 @@ uses. They are conventions, not values calibrated to the sample and
 items at hand, and this function does not use them. The iarm package
 must be installed (it is in Suggests).
 
-**Asymptotic p-values.** The adjusted p-value is a Benjamini-Hochberg
-adjustment, made by easyRasch2, of the p-values from
+**No asymptotic test.**
 [`iarm::partgam_DIF()`](https://rdrr.io/pkg/iarm/man/partgam_DIF.html)
-over the items. iarm's own adjusted column is a Bonferroni correction
-whatever method is named, since iarm adjusts one p-value at a time, so
-it is not used.
+also gives a p-value and a 95% interval from a normal approximation. In
+simulations without DIF (300 and 600 respondents), 15 dichotomous items
+had at least one item flagged after a Benjamini-Hochberg adjustment in
+9% to 15% of datasets, because the test statistic has heavier tails than
+the normal. For 9 polytomous items the rate was 5% to 6.5%. Neither is
+returned. The SE matched the sampling SD of the partial gamma in these
+simulations. Test DIF with the result of
+[`RMdifGammaCutoff()`](https://pgmj.github.io/easyRasch2/dev/reference/RMdifGammaCutoff.md)
+as `cutoff`.
 
 **Bootstrap p-values.** Each item's observed partial gamma is compared
 with its simulated values (`cutoff$results`, simulated without DIF). The
@@ -243,27 +240,27 @@ if (requireNamespace("iarm", quietly = TRUE)) {
 #> ℹ See Johansson (2026), doi:10.31234/osf.io/7pqz4_v2.
 #> ℹ Raise `iterations` in RMdifGammaCutoff().
 #> This message is displayed once per session.
-#>      Item       gamma        se      lower     upper  gamma_low gamma_high
-#> 1   Item1  0.02929936 0.1612158 -0.2866779 0.3452766 -0.2791519  0.3475936
-#> 2   Item2 -0.16753927 0.1561349 -0.4735580 0.1384794 -0.2672522  0.3369713
-#> 3   Item3  0.11111111 0.1681747 -0.2185053 0.4407275 -0.4172185  0.2781790
-#> 4   Item4 -0.03045685 0.1545831 -0.3334342 0.2725205 -0.3276904  0.2719986
-#> 5   Item5  0.07616708 0.1587018 -0.2348828 0.3872169 -0.3374844  0.1909814
-#> 6   Item6  0.04239401 0.1562001 -0.2637526 0.3485406 -0.2731989  0.3440197
-#> 7   Item7 -0.14560440 0.1603616 -0.4599073 0.1686985 -0.3110048  0.3402597
-#> 8   Item8  0.01897019 0.1618599 -0.2982693 0.3362097 -0.2474490  0.3723958
-#> 9   Item9 -0.14088398 0.1614016 -0.4572253 0.1754573 -0.3283396  0.2865475
-#> 10 Item10  0.17777778 0.1556159 -0.1272237 0.4827792 -0.2857143  0.3036849
-#>      p_gamma padj_gamma Flagged
-#> 1  1.0000000   1.000000   FALSE
-#> 2  0.2871287   0.950495   FALSE
-#> 3  0.5247525   1.000000   FALSE
-#> 4  0.9009901   1.000000   FALSE
-#> 5  0.5247525   1.000000   FALSE
-#> 6  0.8415842   1.000000   FALSE
-#> 7  0.2970297   0.970297   FALSE
-#> 8  0.9207921   1.000000   FALSE
-#> 9  0.3960396   0.970297   FALSE
-#> 10 0.2970297   0.950495   FALSE
+#>      Item       gamma        se  gamma_low gamma_high   p_gamma padj_gamma
+#> 1   Item1  0.02929936 0.1612158 -0.2791519  0.3475936 1.0000000   1.000000
+#> 2   Item2 -0.16753927 0.1561349 -0.2672522  0.3369713 0.2871287   0.950495
+#> 3   Item3  0.11111111 0.1681747 -0.4172185  0.2781790 0.5247525   1.000000
+#> 4   Item4 -0.03045685 0.1545831 -0.3276904  0.2719986 0.9009901   1.000000
+#> 5   Item5  0.07616708 0.1587018 -0.3374844  0.1909814 0.5247525   1.000000
+#> 6   Item6  0.04239401 0.1562001 -0.2731989  0.3440197 0.8415842   1.000000
+#> 7   Item7 -0.14560440 0.1603616 -0.3110048  0.3402597 0.2970297   0.970297
+#> 8   Item8  0.01897019 0.1618599 -0.2474490  0.3723958 0.9207921   1.000000
+#> 9   Item9 -0.14088398 0.1614016 -0.3283396  0.2865475 0.3960396   0.970297
+#> 10 Item10  0.17777778 0.1556159 -0.2857143  0.3036849 0.2970297   0.950495
+#>    Flagged
+#> 1    FALSE
+#> 2    FALSE
+#> 3    FALSE
+#> 4    FALSE
+#> 5    FALSE
+#> 6    FALSE
+#> 7    FALSE
+#> 8    FALSE
+#> 9    FALSE
+#> 10   FALSE
 # }
 ```

@@ -686,67 +686,22 @@ and what disordered thresholds mean is debated ([Andrich
 [`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md)
 tests the responses. Under the partial credit model, the probability of
 each response category given the total score depends on the item
-parameters alone, so the use of each category at each total score can be
-compared with the model without estimating person locations. For each
-item and step X \ge k (a response in category k or higher), the
-statistic measures how far the observed share departs from the predicted
-probability. The reference distribution comes from datasets simulated
-from the model given each respondent’s total score, and the item
-*p*-values are corrected across items (family-wise by default). The test
-detects categories that respondents do not distinguish, categories used
-in the wrong order, and steps that separate respondents more or less
-than the scoring assumes, also when the thresholds are ordered. The
-method and its calibration come from a [simulation
+parameters alone. For each item and step X \ge k (a response in category
+k or higher), the test compares the observed share with this prediction,
+using datasets simulated from the model given each respondent’s total
+score, and corrects the item *p*-values across items. It detects
+categories that respondents do not distinguish, categories used in the
+wrong order, and steps that separate respondents more or less than the
+scoring assumes, also when the thresholds are ordered. The method builds
+on the calibration plot recommended for ordinal outcomes by Säilynoja et
+al. ([2025](#ref-sailynoja2025)), with the miscalibration statistic of
+Dimitriadis et al. ([2021](#ref-dimitriadis2021)) as the test. Its error
+rates and power come from a [simulation
 study](https://pgmj.github.io/rasch_book/chapters/category-fit.html).
 
-``` r
-
-RMitemCatFit(items, iterations = 200, seed = 9)
-```
-
-| Item | X ≥ 1  | X ≥ 2  | X ≥ 3  | Item p | Adjusted p |
-|:-----|:-------|:-------|:-------|:-------|:-----------|
-| q1   | 0.0149 | 0.5473 | 0.0050 | 0.0149 | 0.1144     |
-| q2   | 0.0995 | 0.3433 | 0.1940 | 0.2338 | 0.5373     |
-| q3   | 0.0050 | 0.5174 | 0.4677 | 0.0050 | 0.0050     |
-| q4   | 0.7015 | 0.4677 | 0.0100 | 0.0149 | 0.0796     |
-| q5   | 0.4279 | 0.3930 | 0.1095 | 0.2935 | 0.5373     |
-| q6   | 0.8308 | 0.3284 | 0.0597 | 0.1841 | 0.5224     |
-| q7   | 0.8706 | 0.7512 | 0.2488 | 0.5721 | 0.5721     |
-| q8   | 0.0547 | 0.0149 | 0.0697 | 0.0299 | 0.1194     |
-| q9   | 0.0050 | 0.0050 | 0.0100 | 0.0050 | 0.0050     |
-
-Calibration of the cumulative events X ≥ k given the total score.
-Columns X ≥ k: uncorrected p for each event. Item p: the events combined
-(largest studentised value). Adjusted p: item p corrected across items
-with the Westfall-Young step-down (FWER). Reference: 200 datasets
-simulated given each respondent’s total score, with item parameters
-re-estimated in each. n = 572 of 600 respondents (extreme scores
-excluded). This is below the recommended 400. The family-wise error rate
-is controlled at any number of iterations. Decisions depend on the seed,
-so use 1000 to 2000 for a final analysis (Johansson, 2026). {.table}
-
-Items 3 and 9 have adjusted *p*-values below .01. Item 9 is the item
-with disordered thresholds in the plots above. Item 3, on sleep, has
-ordered thresholds. Both were also flagged as underfitting by
-conditional infit. The event columns show where an item departs: for
-item 3 at the first step, X \ge 1, and for item 9 at all three steps.
-
-A flag is not specific to the categories. Given the total score, the
-model fixes the probability of every category of an item, so an item
-that discriminates less or more than the others departs from it in all
-its steps, even when its categories work as scored. Read a flag as a
-problem with the categories when the item otherwise fits, or when the
-departure is in one step and not all. Here both items underfit by infit.
-For item 9 all three steps depart, which points to the item as a whole.
-For item 3 only the first step departs, which points to the lowest
-category.
-
-To plot the events, keep the simulations with `output = "list"` and pass
-them to
+With `output = "list"`, the simulations can be passed to
 [`RMitemCatFitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFitPlot.md)
-as `fit`. The plot then uses the same simulations as the test and shows
-each item’s adjusted *p*.
+as `fit`, and the plot shows each item’s adjusted *p*.
 
 ``` r
 
@@ -763,40 +718,54 @@ score*
 Each panel plots the observed probability of an event, adjusted to be
 non-decreasing, against the probability the model predicts given the
 total score. A fitting item follows the dotted diagonal within the grey
-band. For item 3, the first step rises less steeply than the diagonal.
-Respondents with low total scores report some sleep trouble more often
-than predicted, and respondents with high total scores less often.
-Reporting any sleep trouble is thus less related to the total score than
-the scoring assumes. Item 9 shows the same pattern at its second step,
-and at its top step the observed probability stays below the prediction
-where the predicted values are highest.
+band. Items 3 and 9 have adjusted *p*-values below .01. For item 3, on
+sleep, the first step rises less steeply than the diagonal, so reporting
+any sleep trouble is less related to the total score than the scoring
+assumes. Item 9, the item with disordered thresholds, departs at all
+three steps.
 
-The adjacent-category plot shows the data with less processing: for each
-pair of adjacent categories, the share of respondents in the upper one
-at each total score, with the model’s expectation and a pointwise 95%
-band.
+A flag is not specific to the categories. An item that discriminates
+less than the others can be flagged even when its categories work as
+scored, and a category problem often makes the item underfit as well.
+Read a flag together with item fit. On an item that fits, a flag points
+to the categories. On an underfitting item it can come from either. In
+simulations, an item that discriminated too little usually departed in
+two or more steps, mostly the middle ones, and a category problem
+usually in one. Both items here underfit by conditional infit. Item 9
+departs in all three steps, which points to the item as a whole. Item 3
+departs in its first step only, which points to the lowest category.
 
-``` r
+The two functions give more views of the same test:
 
-RMitemCatFitPlot(items, type = "adjacent", fit = catfit)
-```
+- [`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md)
+  with the default output is a table with each item’s adjusted *p*, and
+  an uncorrected *p* for each step that shows where the item departs.
+- `RMitemCatFitPlot(type = "adjacent")` shows, for each pair of adjacent
+  categories, the share of respondents in the upper one at each total
+  score, with the model’s expectation and a pointwise band. It shows the
+  data with the least processing.
+- `type = "residuals"` shows observed minus expected category counts,
+  standardized, within groups of total scores. With `fit`, each residual
+  gets the range it took in the datasets
+  [`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md)
+  simulated. Fixed lines at ±1.96 would mislead, since the residuals
+  vary less than a standard normal. When the model held, 5.2% of
+  residuals fell outside their 95% range.
+- `type = "restscore"` shows the rest-score mean and SD within each
+  category, observed minus expected. An SD above its expectation in
+  every category shows an item that discriminates less than the model
+  expects, and a raised SD in one category points to that category. The
+  ranges come from datasets simulated from the model, with the item
+  parameters re-estimated in each. When the model held, each statistic
+  fell outside its 95% range in 5.0% of datasets on average (2% to 9%
+  per statistic, 100 datasets each).
 
-![\*\*Figure 9.\*\* \*Adjacent categories given the total
-score\*](figures/rasch-catfit-adjacent-1.png)
-
-**Figure 9.** *Adjacent categories given the total score*
-
-The bands are pointwise. Of the 604 points, 32 fall outside their band,
-close to the 30 that 95% coverage allows by chance, so a single point
-says little. Clusters say more. For categories 1 vs 0 of item 3, 5 of 24
-points lie outside, in line with the test’s first step. Item 1 has as
-many there, with an item *p* of .015 that is no longer small after
-correction across items. Two more plot types, `type = "residuals"` and
-`type = "restscore"`, show the category counts within score groups and
-the rest-score mean and SD within each category. In the rest-score plot,
-an SD above its expectation in every category, with the category means
-pulled together, shows an item that discriminates less than the model
-expects. A raised SD in one category points to that category.
+The ranges in these plots are pointwise and give no *p*-values, so with
+many cells some fall outside even when the model holds. They show where
+an item departs, and
+[`RMitemCatFit()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFit.md)
+is the test. The checks of the ranges are in the [simulation
+study](https://pgmj.github.io/rasch_book/chapters/category-fit.html).
 
 ## 4. Invariance / no DIF
 
@@ -823,10 +792,10 @@ category, there may be issues with estimating the model parameters.
 RMplotTile(items, category_labels = item_resp, group = phq9$gender)
 ```
 
-![\*\*Figure 10.\*\* \*DIF grouped response distribution tile
+![\*\*Figure 9.\*\* \*DIF grouped response distribution tile
 plot\*](figures/rasch-tile-plot-1.png)
 
-**Figure 10.** *DIF grouped response distribution tile plot*
+**Figure 9.** *DIF grouped response distribution tile plot*
 
 ### Andersen LR-test
 
@@ -865,10 +834,10 @@ of anchors and corrections.
 RMdifAnchor(items, dif_var = phq9$gender, output = "ggplot")
 ```
 
-![\*\*Figure 11.\*\* \*Anchored item location differences by
+![\*\*Figure 10.\*\* \*Anchored item location differences by
 gender\*](figures/rasch-dif-anchor-1.png)
 
-**Figure 11.** *Anchored item location differences by gender*
+**Figure 10.** *Anchored item location differences by gender*
 
 The spacing between an item’s thresholds can be compared without an
 anchor. A difference in spacing is differential step functioning (DSF).
@@ -989,10 +958,10 @@ by their total/latent score).
 RMitemICCPlot(items, dif_var = phq9$gender, error_band = TRUE)
 ```
 
-![\*\*Figure 12.\*\* \*Partial Gamma DIF Conditional Item Characteristic
+![\*\*Figure 11.\*\* \*Partial Gamma DIF Conditional Item Characteristic
 Curves\*](figures/rasch-dif-cicc-1.png)
 
-**Figure 12.** *Partial Gamma DIF Conditional Item Characteristic
+**Figure 11.** *Partial Gamma DIF Conditional Item Characteristic
 Curves*
 
 To demonstrate the FWER-adjusted *p*-values, we’ll run the
@@ -1006,28 +975,42 @@ difpg <- RMdifGammaCutoff(items, dif_var = phq9$gender, iterations = 100,
 RMdifGamma(items, cutoff = difpg, dif_var = phq9$gender, p_value = TRUE)
 ```
 
-| Item | Partial gamma | SE | Lower CI | Upper CI | Gamma low | Gamma high | p | p (adj) | Flagged |
-|:---|---:|---:|---:|---:|---:|---:|---:|---:|:---|
-| q1 | 0.251 | 0.104 | 0.046 | 0.456 | -0.126 | 0.173 | 0.0099 | 0.0495 | TRUE |
-| q2 | 0.411 | 0.094 | 0.227 | 0.595 | -0.175 | 0.165 | 0.0099 | 0.0099 | TRUE |
-| q3 | 0.064 | 0.103 | -0.138 | 0.266 | -0.167 | 0.187 | 0.5446 | 0.8713 | FALSE |
-| q4 | -0.092 | 0.114 | -0.315 | 0.131 | -0.185 | 0.217 | 0.4059 | 0.8713 | FALSE |
-| q5 | -0.286 | 0.092 | -0.467 | -0.104 | -0.148 | 0.171 | 0.0198 | 0.0495 | TRUE |
-| q6 | -0.155 | 0.105 | -0.361 | 0.050 | -0.164 | 0.167 | 0.0891 | 0.3762 | FALSE |
-| q7 | -0.075 | 0.102 | -0.275 | 0.126 | -0.164 | 0.164 | 0.4554 | 0.8713 | FALSE |
-| q8 | -0.112 | 0.102 | -0.311 | 0.088 | -0.198 | 0.171 | 0.2772 | 0.6733 | FALSE |
-| q9 | 0.180 | 0.100 | -0.015 | 0.376 | -0.237 | 0.181 | 0.1188 | 0.4455 | FALSE |
+| Item | Partial gamma |    SE | Gamma low | Gamma high |      p | p (adj) | Flagged |
+|:-----|--------------:|------:|----------:|-----------:|-------:|--------:|:--------|
+| q1   |         0.251 | 0.104 |    -0.126 |      0.173 | 0.0099 |  0.0495 | TRUE    |
+| q2   |         0.411 | 0.094 |    -0.175 |      0.165 | 0.0099 |  0.0099 | TRUE    |
+| q3   |         0.064 | 0.103 |    -0.167 |      0.187 | 0.5446 |  0.8713 | FALSE   |
+| q4   |        -0.092 | 0.114 |    -0.185 |      0.217 | 0.4059 |  0.8713 | FALSE   |
+| q5   |        -0.286 | 0.092 |    -0.148 |      0.171 | 0.0198 |  0.0495 | TRUE    |
+| q6   |        -0.155 | 0.105 |    -0.164 |      0.167 | 0.0891 |  0.3762 | FALSE   |
+| q7   |        -0.075 | 0.102 |    -0.164 |      0.164 | 0.4554 |  0.8713 | FALSE   |
+| q8   |        -0.112 | 0.102 |    -0.198 |      0.171 | 0.2772 |  0.6733 | FALSE   |
+| q9   |         0.180 | 0.100 |    -0.237 |      0.181 | 0.1188 |  0.4455 | FALSE   |
 
 Partial gamma DIF analysis. n = 569 of 600 respondents (complete cases).
-Two-sided bootstrap p-values from 100 iterations (replacing the
-asymptotic BH p-values); multiplicity correction: Westfall-Young
-step-down (FWER); flagged at padj \< 0.05. p-values cannot be smaller
-than 1/(100+1) = 0.0099. The interval is shown as description and is not
-the decision rule. Positive gamma indicates higher scores in higher DIF
-group levels. This is below the recommended 400. The family-wise error
-rate is controlled at any number of iterations. Decisions depend on the
-seed, so use 1000 to 2000 for a final analysis (Johansson, 2026).
-{.table}
+Two-sided bootstrap p-values from 100 iterations; multiplicity
+correction: Westfall-Young step-down (FWER); flagged at padj \< 0.05.
+p-values cannot be smaller than 1/(100+1) = 0.0099. The interval is
+shown as description and is not the decision rule. Positive gamma
+indicates higher scores in higher DIF group levels. This is below the
+recommended 400. The family-wise error rate is controlled at any number
+of iterations. Decisions depend on the seed, so use 1000 to 2000 for a
+final analysis (Johansson, 2026). {.table}
+
+### Category functioning by group
+
+[`RMitemCatFitPlot()`](https://pgmj.github.io/easyRasch2/dev/reference/RMitemCatFitPlot.md)
+also takes `dif_var`. Each group’s curves are then drawn against the
+same pooled model predictions, so groups that follow the model stay
+together and DIF shows as groups moving apart, at the categories and
+total scores where it occurs. Each curve gets a simultaneous 95%
+consistency band from permuting group labels within total scores, and
+points or bars outside their band are marked. Under the Rasch model an
+item is independent of group given the total score ([Kreiner and
+Christensen 2011](#ref-kreiner_item_2011)), which is what the
+permutations keep. The plot is a diagnostic and gives no *p*-values. Use
+the tests above to decide which items show DIF, and the plot to see how
+their categories differ between groups.
 
 ### Rasch tree (model-based recursive partitioning)
 
@@ -1232,10 +1215,10 @@ shows that directly.
 RMreliabilityCurve(items, statistic = "reliability", benchmark = 0.8)
 ```
 
-![\*\*Figure 13.\*\* \*Conditional reliability across the latent
+![\*\*Figure 12.\*\* \*Conditional reliability across the latent
 continuum\*](figures/rasch-relcurve-1.png)
 
-**Figure 13.** *Conditional reliability across the latent continuum*
+**Figure 12.** *Conditional reliability across the latent continuum*
 
 The `benchmark` argument shades the region where the scale reaches a
 stated level and reports the share of respondents inside it, which is
@@ -1309,10 +1292,10 @@ estimates with associated standard errors, use
 RMscoreSE(items, output = "ggplot")
 ```
 
-![\*\*Figure 14.\*\* \*Sum-score to WLE conversion with 95%
+![\*\*Figure 13.\*\* \*Sum-score to WLE conversion with 95%
 CIs\*](figures/rasch-scoreSE-1.png)
 
-**Figure 14.** *Sum-score to WLE conversion with 95% CIs*
+**Figure 13.** *Sum-score to WLE conversion with 95% CIs*
 
 ``` r
 
@@ -1367,10 +1350,10 @@ pfit <- RMpersonFit(items, iterations = 100, output = "ggplot", seed = 7)
 pfit$lz
 ```
 
-![\*\*Figure 15.\*\* \*Person fit with the lz
+![\*\*Figure 14.\*\* \*Person fit with the lz
 statistic\*](figures/rasch-personfit-1.png)
 
-**Figure 15.** *Person fit with the lz statistic*
+**Figure 14.** *Person fit with the lz statistic*
 
 ## Where to next
 
@@ -1418,6 +1401,11 @@ Christensen, Karl Bang, Guido Makransky, and Mike Horton. 2017.
 Rasch Model Using Residual Correlations.” *Applied Psychological
 Measurement* 41 (3): 178–94. <https://doi.org/10.1177/0146621616677520>.
 
+Dimitriadis, Timo, Tilmann Gneiting, and Alexander I. Jordan. 2021.
+“Stable Reliability Diagrams for Probabilistic Classifiers.”
+*Proceedings of the National Academy of Sciences* 118 (8): e2016191118.
+<https://doi.org/10.1073/pnas.2016191118>.
+
 Henninger, Mirka, Jan Radek, Rudolf Debelak, and Carolin Strobl. 2025.
 “Partial Credit Trees Meet the Partial Gamma Coefficient for Quantifying
 DIF and DSF in Polytomous Items.” *Behaviormetrika* 52: 221–57.
@@ -1450,6 +1438,10 @@ Dependence and Multidimensionality in Graphical Loglinear Rasch Models.”
 *Communications in Statistics - Theory and Methods* 33 (6): 1239–76.
 <https://doi.org/10.1081/STA-120030148>.
 
+Kreiner, Svend, and Karl Bang Christensen. 2011. “Item Screening in
+Graphical Loglinear Rasch Models.” *Psychometrika* 76 (2): 228–56.
+<https://doi.org/10.1007/s11336-011-9203-y>.
+
 Kroenke, Kurt, Robert L. Spitzer, and Janet B. W. Williams. 2001. “The
 PHQ-9: Validity of a Brief Depression Severity Measure.” *Journal of
 General Internal Medicine* 16 (9): 606–13.
@@ -1458,6 +1450,10 @@ General Internal Medicine* 16 (9): 606–13.
 Müller, Marianne. 2020. “Item Fit Statistics for Rasch Analysis: Can We
 Trust Them?” *Journal of Statistical Distributions and Applications* 7
 (1): 5. <https://doi.org/10.1186/s40488-020-00108-7>.
+
+Säilynoja, Teemu, Andrew R. Johnson, Osvaldo A. Martin, and Aki Vehtari.
+2025. *Recommendations for Visual Predictive Checks in Bayesian
+Workflow*. arXiv preprint. <https://doi.org/10.48550/arXiv.2503.01509>.
 
 Strobl, Carolin, Julia Kopf, and Achim Zeileis. 2015. “Rasch Trees: A
 New Method for Detecting Differential Item Functioning in the Rasch
