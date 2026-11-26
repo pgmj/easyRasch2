@@ -19,3 +19,4 @@
 ^vignettes/easyRasch2\.Rmd\.orig$
 ^dev$
 ^paper$
+^tests/testthat/testthat-problems\.rds$

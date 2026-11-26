@@ -97,9 +97,13 @@ test_that("RMreliability with boot = TRUE (sequential) returns finite CIs", {
   skip_if_not_installed("mirt")
   skip_if_not_installed("ggdist")
   df <- make_dichotomous(n = 150, k = 8)
-  res <- RMreliability(df, draws = 30, rmu_iter = 5,
-                       boot = TRUE, boot_iter = 10, parallel = FALSE,
-                       seed = 42, output = "dataframe")
+  # mirt may warn that the log-likelihood is still increasing on this small
+  # simulated set; the test checks the CIs, not convergence.
+  res <- suppressWarnings(
+    RMreliability(df, draws = 30, rmu_iter = 5,
+                  boot = TRUE, boot_iter = 10, parallel = FALSE,
+                  seed = 42, output = "dataframe")
+  )
   expect_s3_class(res, "data.frame")
   psi_row  <- res[res$metric == "PSI", ]
   marg_row <- res[res$metric == "Marginal (curve mean)", ]

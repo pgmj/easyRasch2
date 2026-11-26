@@ -50,8 +50,8 @@ where DIF items make up more of the matching score. \code{\link[=RMdifGamma]{RMd
 tree's on the same data.}
 
 \item{p_adj}{Adjustment for multiple testing in the partial gamma
-classification: \code{"fdr"} (default, Benjamini-Hochberg, as for the
-asymptotic p-values of \code{\link[=RMdifGamma]{RMdifGamma()}}), \code{"bonferroni"} or \code{"none"}.
+classification: \code{"fdr"} (default, Benjamini-Hochberg), \code{"bonferroni"}
+or \code{"none"}.
 Without an adjustment, the chance of flagging at least one item
 without DIF grows with the number of items (Henninger et al., 2025).
 Not used for MH, which uses the ETS test directly.}

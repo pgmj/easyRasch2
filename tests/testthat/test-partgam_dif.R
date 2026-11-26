@@ -45,10 +45,10 @@ test_that("RMdifGamma output = 'dataframe' returns one row per item", {
   expect_s3_class(res, "data.frame")
   expect_equal(nrow(res), ncol(df))
   expect_true(all(
-    c("Item", "gamma", "se", "lower", "upper", "padj_bh", "Significance") %in%
-      names(res)
+    c("Item", "gamma", "se") %in% names(res)
   ))
-  expect_true(all(res$Significance %in% c("", ".", "*", "**", "***")))
+  expect_false(any(c("lower", "upper", "padj_bh", "Significance") %in%
+                     names(res)))
 })
 
 test_that("RMdifGamma output = 'kable' returns a knitr_kable", {
@@ -58,6 +58,21 @@ test_that("RMdifGamma output = 'kable' returns a knitr_kable", {
   grp <- factor(sample(c("A", "B"), nrow(df), replace = TRUE))
   out <- RMdifGamma(df, grp, output = "kable")
   expect_s3_class(out, "knitr_kable")
+})
+
+test_that("RMdifGamma shows no asymptotic interval or p-values", {
+  skip_if_not_installed("iarm")
+  skip_if_not_installed("knitr")
+  df <- make_dichotomous()
+  grp <- factor(sample(c("A", "B"), nrow(df), replace = TRUE))
+  txt <- paste(RMdifGamma(df, grp, output = "kable"), collapse = "\n")
+  expect_false(grepl("Adj. p-value|p-value sign|Lower CI|Upper CI", txt))
+  expect_match(txt, "RMdifGammaCutoff()", fixed = TRUE)
+  # Interval cutoff: still no asymptotic columns.
+  cut <- data.frame(Item = names(df), gamma_low = -0.3, gamma_high = 0.3)
+  txt2 <- paste(RMdifGamma(df, grp, cutoff = cut, output = "kable"),
+                collapse = "\n")
+  expect_false(grepl("Adj. p-value|p-value sign|Lower CI|Upper CI", txt2))
 })
 
 # ---------------------------------------------------------------------
@@ -249,7 +264,7 @@ test_that("RMdifGamma p_value requires the full cutoff object", {
   )
 })
 
-test_that("RMdifGamma p_value replaces asymptotic p columns and flags at alpha", {
+test_that("RMdifGamma p_value adds bootstrap p columns and flags at alpha", {
   skip_on_cran()
   skip_if_not_installed("iarm")
   skip_if_not_installed("ggdist")
@@ -279,8 +294,6 @@ test_that("RMdifGamma p_value replaces asymptotic p columns and flags at alpha",
       "Item",
       "gamma",
       "se",
-      "lower",
-      "upper",
       "gamma_low",
       "gamma_high",
       "p_gamma",

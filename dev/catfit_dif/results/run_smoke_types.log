@@ -1,0 +1,28 @@
+c06_imp1.0_two_80_20_n250_k5 done in 0.9 min (failed: 0)
+c44_imp0.5_three_equal_n500_k10 done in 5.2 min (failed: 0)
+                            cell reps_ok distinct        type alpha pointwise
+    c06_imp1.0_two_80_20_n250_k5     200      200    adjacent  0.05   0.00912
+    c06_imp1.0_two_80_20_n250_k5     200      200    adjacent  0.10   0.02501
+    c06_imp1.0_two_80_20_n250_k5     200      200 calibration  0.05   0.01667
+    c06_imp1.0_two_80_20_n250_k5     200      200 calibration  0.10   0.03615
+    c06_imp1.0_two_80_20_n250_k5     200      200   residuals  0.05   0.01307
+    c06_imp1.0_two_80_20_n250_k5     200      200   residuals  0.10   0.02983
+ c44_imp0.5_three_equal_n500_k10     200      200    adjacent  0.05   0.01323
+ c44_imp0.5_three_equal_n500_k10     200      200    adjacent  0.10   0.03295
+ c44_imp0.5_three_equal_n500_k10     200      200 calibration  0.05   0.02764
+ c44_imp0.5_three_equal_n500_k10     200      200 calibration  0.10   0.05955
+ c44_imp0.5_three_equal_n500_k10     200      200   residuals  0.05   0.02194
+ c44_imp0.5_three_equal_n500_k10     200      200   residuals  0.10   0.04757
+ any_point simultaneous curves points_per_curve
+    0.0584       0.0325   5997             6.60
+    0.1496       0.0779   5997             6.60
+    0.0880       0.0355   6000             7.53
+    0.1833       0.0787   6000             7.53
+    0.1660       0.0390   2000            15.99
+    0.3260       0.0960   2000            15.99
+    0.1826       0.0440  18000            15.42
+    0.3884       0.0901  18000            15.42
+    0.2754       0.0448  18000            18.01
+    0.4956       0.0931  18000            18.01
+    0.2845       0.0502   6000            17.92
+    0.5083       0.0972   6000            17.92

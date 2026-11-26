@@ -1,0 +1,5 @@
+Registered S3 methods overwritten by 'vcdExtra':
+  method      from
+  pairs.table vcd 
+  print.Kappa vcd 
+done, 0.5 min

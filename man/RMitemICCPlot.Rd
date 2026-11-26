@@ -26,7 +26,8 @@ RMitemICCPlot(
 \item{dif_var}{Optional vector of length \code{nrow(data)} (a factor, or
 coercible to one) defining groups for DIF. The observed means are then
 shown per group, and each panel shows the item's partial gamma from
-\code{iarm::partgam_DIF()}, as in \code{\link[=RMdifGamma]{RMdifGamma()}}. Default \code{NULL}.}
+\code{iarm::partgam_DIF()}, as in \code{\link[=RMdifGamma]{RMdifGamma()}}, as an effect size without
+an interval or p-value. Default \code{NULL}.}
 
 \item{grouping}{How the observed means are grouped along the total score
 (see Class intervals in Details): \code{"quantile"} (default),
@@ -73,8 +74,9 @@ A \code{patchwork} figure, or with \code{output = "list"} a named list of
 \code{ggplot} objects. With \code{dif_var}, the partial gamma table is also
 attached as \code{attr(., "dif_gamma")}, for convenience. It is the result
 of \code{RMdifGamma(data, dif_var, output = "dataframe")} on the same
-respondents, so call \code{\link[=RMdifGamma]{RMdifGamma()}} to get it as a table, with p-values
-corrected across items and, with a cutoff, a calibrated test.
+respondents. For a test, call \code{\link[=RMdifGamma]{RMdifGamma()}} with the result of
+\code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}} as \code{cutoff}, which gives bootstrap p-values
+corrected across items.
 }
 \description{
 Plots one panel per item with the model-expected item score given the
@@ -145,8 +147,12 @@ uncertainty of the observed mean per total score, and the error bars
 the sampling uncertainty of the observed group means.
 
 \strong{DIF magnitude.} The partial gamma (Bjorner et al., 1998) is the
-association between the item score and the group given the rest score,
+association between the item score and the group given the total score,
 a non-parametric effect size, the same statistic as in \code{\link[=RMdifGamma]{RMdifGamma()}}.
+The plot shows the estimate only. Its asymptotic interval and p-value
+come from a normal approximation that rejected too often when there was
+no DIF (dichotomous items). To test DIF, use \code{\link[=RMdifGamma]{RMdifGamma()}} with the
+result of \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}} as \code{cutoff}.
 }
 \examples{
 \donttest{

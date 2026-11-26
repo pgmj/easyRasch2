@@ -1,0 +1,87 @@
+Registered S3 methods overwritten by 'vcdExtra':
+  method      from
+  pairs.table vcd 
+  print.Kappa vcd 
+easyRasch2 1.4.0.9009
+Running on 4 cores.
+[13:53] infit reference WIDE n250 k5: 1000 datasets in 0.1 min
+[13:53] infit reference WIDE n500 k5: 1000 datasets in 0.1 min
+[13:53] infit reference WIDE n250 k10: 999 datasets in 0.2 min
+[13:53] infit reference WIDE n500 k10: 1000 datasets in 0.3 min
+[13:53] infit reference NARROW n250 k5: 1000 datasets in 0.1 min
+[13:53] infit reference NARROW n500 k5: 1000 datasets in 0.1 min
+[13:54] infit reference NARROW n250 k10: 999 datasets in 0.2 min
+[13:54] infit reference NARROW n500 k10: 1000 datasets in 0.3 min
+[13:59] A0_pcm_ordered_n250_k5 done: 500 reps in 5.4 min
+[14:05] A1_pcm_disordered_n250_k5 done: 500 reps in 5.4 min
+[14:21] A0_pcm_ordered_n250_k10 done: 500 reps in 15.9 min
+[14:37] A1_pcm_disordered_n250_k10 done: 500 reps in 15.9 min
+[14:44] A0_pcm_ordered_n500_k5 done: 500 reps in 7.5 min
+[14:52] A1_pcm_disordered_n500_k5 done: 500 reps in 7.5 min
+[15:14] A0_pcm_ordered_n500_k10 done: 500 reps in 22.9 min
+[15:37] A1_pcm_disordered_n500_k10 done: 500 reps in 22.6 min
+[15:38] DK_narrow_05_n250_k5 done: 200 reps in 1.1 min
+[15:39] DK_narrow_10_n250_k5 done: 200 reps in 1.1 min
+[15:40] DK_narrow_25_n250_k5 done: 200 reps in 1.1 min
+[15:41] DK_wide_05_n250_k5 done: 200 reps in 1.1 min
+[15:42] DK_wide_10_n250_k5 done: 200 reps in 1.1 min
+[15:44] DK_wide_25_n250_k5 done: 200 reps in 1.1 min
+[15:45] ERS_30_n250_k5 done: 200 reps in 1.1 min
+[15:46] O_ld_d1_n250_k5 done: 200 reps in 1.1 min
+[15:47] O_slope_16_n250_k5 done: 200 reps in 1.1 min
+[15:48] S_inner_a0_n250_k5 done: 200 reps in 1.1 min
+[15:49] S_inner_a05_n250_k5 done: 200 reps in 1.1 min
+[15:50] S_inner_a2_n250_k5 done: 200 reps in 1.1 min
+[15:51] S_outer_a0_n250_k5 done: 200 reps in 1.1 min
+[15:52] SWAP_1_2_n250_k5 done: 200 reps in 1.1 min
+[15:53] U_multi_r75_n250_k5 done: 200 reps in 1.1 min
+[15:54] U_slope_055_n250_k5 done: 200 reps in 1.1 min
+[15:58] DK_narrow_05_n250_k10 done: 200 reps in 3.2 min
+[16:01] DK_narrow_10_n250_k10 done: 200 reps in 3.2 min
+[16:04] DK_narrow_25_n250_k10 done: 200 reps in 3.2 min
+[16:07] DK_wide_05_n250_k10 done: 200 reps in 3.2 min
+[16:10] DK_wide_10_n250_k10 done: 200 reps in 3.2 min
+[16:13] DK_wide_25_n250_k10 done: 200 reps in 3.2 min
+[16:17] ERS_30_n250_k10 done: 200 reps in 3.2 min
+[16:20] O_ld_d1_n250_k10 done: 200 reps in 3.2 min
+[16:23] O_slope_16_n250_k10 done: 200 reps in 3.2 min
+[16:26] S_inner_a0_n250_k10 done: 200 reps in 3.2 min
+[16:29] S_inner_a05_n250_k10 done: 200 reps in 3.2 min
+[16:33] S_inner_a2_n250_k10 done: 200 reps in 3.2 min
+[16:36] S_outer_a0_n250_k10 done: 200 reps in 3.2 min
+[16:39] SWAP_1_2_n250_k10 done: 200 reps in 3.2 min
+[16:42] U_multi_r75_n250_k10 done: 200 reps in 3.2 min
+[16:45] U_slope_055_n250_k10 done: 200 reps in 3.2 min
+[16:47] DK_narrow_05_n500_k5 done: 200 reps in 1.5 min
+[16:48] DK_narrow_10_n500_k5 done: 200 reps in 1.5 min
+[16:50] DK_narrow_25_n500_k5 done: 200 reps in 1.5 min
+[16:51] DK_wide_05_n500_k5 done: 200 reps in 1.5 min
+[16:53] DK_wide_10_n500_k5 done: 200 reps in 1.5 min
+[16:54] DK_wide_25_n500_k5 done: 200 reps in 1.5 min
+[16:56] ERS_30_n500_k5 done: 200 reps in 1.5 min
+[16:57] O_ld_d1_n500_k5 done: 200 reps in 1.5 min
+[16:59] O_slope_16_n500_k5 done: 200 reps in 1.5 min
+[17:00] S_inner_a0_n500_k5 done: 200 reps in 1.5 min
+[17:02] S_inner_a05_n500_k5 done: 200 reps in 1.5 min
+[17:03] S_inner_a2_n500_k5 done: 200 reps in 1.5 min
+[17:05] S_outer_a0_n500_k5 done: 200 reps in 1.5 min
+[17:06] SWAP_1_2_n500_k5 done: 200 reps in 1.5 min
+[17:08] U_multi_r75_n500_k5 done: 200 reps in 1.5 min
+[17:09] U_slope_055_n500_k5 done: 200 reps in 1.5 min
+[17:14] DK_narrow_05_n500_k10 done: 200 reps in 4.5 min
+[17:18] DK_narrow_10_n500_k10 done: 200 reps in 4.5 min
+[17:23] DK_narrow_25_n500_k10 done: 200 reps in 4.5 min
+[17:27] DK_wide_05_n500_k10 done: 200 reps in 4.5 min
+[17:32] DK_wide_10_n500_k10 done: 200 reps in 4.5 min
+[17:36] DK_wide_25_n500_k10 done: 200 reps in 4.5 min
+[17:41] ERS_30_n500_k10 done: 200 reps in 4.5 min
+[17:45] O_ld_d1_n500_k10 done: 200 reps in 4.5 min
+[17:50] O_slope_16_n500_k10 done: 200 reps in 4.5 min
+[17:54] S_inner_a0_n500_k10 done: 200 reps in 4.5 min
+[17:59] S_inner_a05_n500_k10 done: 200 reps in 4.5 min
+[18:03] S_inner_a2_n500_k10 done: 200 reps in 4.5 min
+[18:08] S_outer_a0_n500_k10 done: 200 reps in 4.5 min
+[18:12] SWAP_1_2_n500_k10 done: 200 reps in 4.5 min
+[18:17] U_multi_r75_n500_k10 done: 200 reps in 4.5 min
+[18:21] U_slope_055_n500_k10 done: 200 reps in 4.5 min
+all cells done

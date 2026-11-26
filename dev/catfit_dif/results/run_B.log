@@ -1,0 +1,55 @@
+skip c01_imp0.0_two_equal_n250_k5 
+skip c02_imp0.5_two_equal_n250_k5 
+skip c03_imp1.0_two_equal_n250_k5 
+skip c04_imp0.0_two_80_20_n250_k5 
+skip c05_imp0.5_two_80_20_n250_k5 
+skip c06_imp1.0_two_80_20_n250_k5 
+skip c07_imp0.0_three_equal_n250_k5 
+skip c08_imp0.5_three_equal_n250_k5 
+skip c09_imp1.0_three_equal_n250_k5 
+skip c10_imp0.0_two_equal_n500_k5 
+skip c11_imp0.5_two_equal_n500_k5 
+skip c12_imp1.0_two_equal_n500_k5 
+skip c13_imp0.0_two_80_20_n500_k5 
+skip c14_imp0.5_two_80_20_n500_k5 
+skip c15_imp1.0_two_80_20_n500_k5 
+skip c16_imp0.0_three_equal_n500_k5 
+skip c17_imp0.5_three_equal_n500_k5 
+skip c18_imp1.0_three_equal_n500_k5 
+skip c19_imp0.0_two_equal_n1000_k5 
+skip c20_imp0.5_two_equal_n1000_k5 
+skip c21_imp1.0_two_equal_n1000_k5 
+skip c22_imp0.0_two_80_20_n1000_k5 
+skip c23_imp0.5_two_80_20_n1000_k5 
+skip c24_imp1.0_two_80_20_n1000_k5 
+skip c25_imp0.0_three_equal_n1000_k5 
+skip c26_imp0.5_three_equal_n1000_k5 
+skip c27_imp1.0_three_equal_n1000_k5 
+skip c28_imp0.0_two_equal_n250_k10 
+skip c29_imp0.5_two_equal_n250_k10 
+skip c30_imp1.0_two_equal_n250_k10 
+skip c31_imp0.0_two_80_20_n250_k10 
+skip c32_imp0.5_two_80_20_n250_k10 
+skip c33_imp1.0_two_80_20_n250_k10 
+skip c34_imp0.0_three_equal_n250_k10 
+skip c35_imp0.5_three_equal_n250_k10 
+skip c36_imp1.0_three_equal_n250_k10 
+skip c37_imp0.0_two_equal_n500_k10 
+skip c38_imp0.5_two_equal_n500_k10 
+skip c39_imp1.0_two_equal_n500_k10 
+skip c40_imp0.0_two_80_20_n500_k10 
+skip c41_imp0.5_two_80_20_n500_k10 
+skip c42_imp1.0_two_80_20_n500_k10 
+skip c43_imp0.0_three_equal_n500_k10 
+skip c44_imp0.5_three_equal_n500_k10 
+skip c45_imp1.0_three_equal_n500_k10 
+skip c46_imp0.0_two_equal_n1000_k10 
+skip c47_imp0.5_two_equal_n1000_k10 
+skip c48_imp1.0_two_equal_n1000_k10 
+skip c49_imp0.0_two_80_20_n1000_k10 
+c50_imp0.5_two_80_20_n1000_k10 done in 5.2 min (failed: 0)
+c51_imp1.0_two_80_20_n1000_k10 done in 5.1 min (failed: 0)
+c52_imp0.0_three_equal_n1000_k10 done in 8.0 min (failed: 0)
+c53_imp0.5_three_equal_n1000_k10 done in 7.8 min (failed: 0)
+c54_imp1.0_three_equal_n1000_k10 done in 7.7 min (failed: 0)
+All cells done in 33.8 min

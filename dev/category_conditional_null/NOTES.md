@@ -585,3 +585,22 @@ User question: can the SD panel be read like discrimination (higher SD than expe
 - Help: "What a flag means" in RMitemCatFit (flag not specific to categories, check item fit first, slope numbers); rest-score SD reading in RMitemCatFitPlot.
 - Vignette (.orig and knitted .Rmd, prose only): flag paragraph using items 3 (first step only, category) and 9 (all steps, item), rest-score reading sentence.
 - rasch_book chapters/category-fit.qmd: summary + purpose sentences, residual example now counts residuals outside the simulated range (Q1 9 of 25, PCM items 0-2), rest-score reading, new sections "Reference ranges for the residual plot" and "Item-level misfit", discussion paragraph on what a flag means, two limits bullets, reproduction bullet, four appendix tables. Scripts copied to scripts/category-fit/ (installed easyRasch2), summaries to results/category-fit/. Rendered in the container with the dev package installed.
+
+## 2026-11-23: specificity study set up (host run pending)
+
+- Calibration of nuisance conditions: `R/infit_calibration.R` (phq9 parameters, n = 600; real phq9 infit 0.78-1.31) and `R/infit_calibration_stylised.R` (stylised design, n 300/600, k 5/10). User chose one level each, linked to mechanisms: underfit = second dimension rho .75 with slope 0.55 (infit 1.22-1.33), overfit = response dependence d = 1 on the item nearest 0 with slope 1.6 (infit 0.80-0.84). LD saturates near 0.81, the partner overfits less (0.91-0.94), and at k = 5 the other items drift to 1.10.
+- User: stylised design, n = 250 and 500 (same as the main study, n = 1000 dropped), option B (both tests on every dataset, all conditions), CORES as an environment variable.
+- Infit p-values from oracle reference sets (1000 PCM datasets per n, k, base thresholds) instead of a per-dataset bootstrap, user's request for the briefest simulation-based cutoffs.
+- Files: `R/specificity_functions.R`, `R/run_specificity_study.R`, `R/summarise_specificity.R`, `HANDOFF-specificity.md`. Smoke test passed in the container. Full run handed to the host (about 2 h on 10 cores).
+
+## 2026-11-23: specificity study results
+
+- Host run done (CORES=10, about 2 h 20 min). 16,767 of 16,800 datasets used (33 with an empty category). Summary run in the container: `results/specificity_summary.rds` (+ dated copy). `summarise_specificity.R` now also stores `events`, the number of an item's events with uncorrected p < .05.
+- Check: `RMitemCatFit()` rates for the 14 main conditions agree with the main run (other datasets), largest difference 10 points (S_outer n500 k10, about 2 SE, over 56 cells).
+- PCM: focus flagged 0-1.4% by either test, some other item 3-8% (infit 7.9% in A1 n250 k10).
+- Other misfit: catfit flags overfit 0.5-5% (LD 0.5-1.5%), underfit 7-35% (rising with n, k), and infit flags 6 of 316 such datasets not. Category conditions make the item underfit too (SWAP infit 40-96%), with many catfit-only flags (28% of SWAP flags, 40% S_outer, 8% S_inner_a0).
+- Events among flagged datasets: slope 0.55 / second dimension two or more events in 82% / 72% (mostly X>=2 and X>=3), category problems a single event in 73-83%. An earlier help/vignette claim that a misfitting item departs in all steps was wrong and is removed.
+- ERS_30 applies to every item (main-study generator), hence the higher other-item infit rate (up to 13.5%).
+- Dev qmd: new section "Misfit that is not about the categories" (fig-spec, appendix tables appendix-spec and appendix-spec-other), discussion paragraph, two limits bullets. Rendered.
+- Help (RMitemCatFit "What a flag means") and vignette (.orig + .Rmd) reworded: read a flag with item fit. On a fitting item it points to the categories, on an underfitting item use the number of events.
+- rasch_book category-fit.qmd (user approved): new section #sec-cfit-specificity (fig + tbl-cfit-specificity, tbl-cfit-specificity-other), summary, purpose, discussion (removed the claim that LD/second dimension would be flagged and that misfit shows in every step), limits, reproduction, dates. Scripts copied to scripts/category-fit/ (book-root paths, installed easyRasch2), summaries to results/category-fit/, spec_infit_ref/ gitignored. The 25 render warnings are all "Duplicated chunk option(s) label" from the chapter convention (label in header and in #| label), harmless.

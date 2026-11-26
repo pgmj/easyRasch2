@@ -265,6 +265,8 @@ test_that("no model fit bypasses .cml_fit() or .mml_fit() (G8)", {
   skip_if_not(dir.exists(r_dir), "R sources not available")
   files <- setdiff(list.files(r_dir, "\\.R$", full.names = TRUE),
                    file.path(r_dir, "utils-theta.R"))
+  # covr runs from the installed package, whose R/ holds only the .rdb/.rdx
+  skip_if(length(files) == 0, "R sources not available (installed package)")
   hits <- unlist(lapply(files, function(f) {
     code <- readLines(f, warn = FALSE)
     code <- gsub('"[^"]*"', '""', code) # drop strings (a "#" inside one)

@@ -1,0 +1,20 @@
+                            cell impact      groups   n  k alpha reps_ok
+    c06_imp1.0_two_80_20_n250_k5    1.0   two_80_20 250  5  0.05     200
+    c06_imp1.0_two_80_20_n250_k5    1.0   two_80_20 250  5  0.10     200
+ c44_imp0.5_three_equal_n500_k10    0.5 three_equal 500 10  0.05     200
+ c44_imp0.5_three_equal_n500_k10    0.5 three_equal 500 10  0.10     200
+ reps_failed distinct   B point_rate point_rate_1_4 point_rate_5_9
+           0      200 999     0.0110         0.0109         0.0143
+           0      200 999     0.0239         0.0230         0.0290
+           0      200 999     0.0195         0.0112         0.0223
+           0      200 999     0.0419         0.0247         0.0480
+ point_rate_10_19 point_rate_20_49 point_rate_50p curve_any_point curve_simult
+          0.00823          0.00965             NA           0.088       0.0355
+          0.02091          0.02144             NA           0.183       0.0787
+          0.02707          0.02083             NA           0.275       0.0448
+          0.05758          0.05833             NA           0.496       0.0931
+ curve_simult_se curves points_per_curve
+         0.00239   6000             11.4
+         0.00348   6000             11.4
+         0.00154  18000             25.6
+         0.00217  18000             25.6

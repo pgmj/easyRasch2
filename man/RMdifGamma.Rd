@@ -22,8 +22,8 @@ one is needed.}
 \item{dif_var}{A vector (factor or character) of length \code{nrow(data)}
 with the groups, two or more.}
 
-\item{cutoff}{Optional. Default \code{NULL}, the asymptotic test of
-\code{iarm::partgam_DIF()}. Either of:
+\item{cutoff}{Optional. Default \code{NULL}, the partial gamma and its SE,
+with no test. Either of:
 \itemize{
 \item The full result of \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}}. This enables the bootstrap
 p-values (see \code{p_value}), and the caption reports the simulation
@@ -38,12 +38,10 @@ Either adds the columns \code{Gamma_low}, \code{Gamma_high} and a logical
 interval, or with p-values when the item is flagged).}
 
 \item{p_value}{Logical or \code{NULL}. Whether to flag on two-sided bootstrap
-p-values (\code{p_gamma}, \code{padj_gamma}) from the simulations. The
-asymptotic p-value and star columns are then dropped, so that the
-table has one family of p-values, and the simulated interval is kept
-as a reference. \code{TRUE} needs the full \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}} result.
+p-values (\code{p_gamma}, \code{padj_gamma}) from the simulations. The simulated
+interval is kept as a reference. \code{TRUE} needs the full \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}} result.
 \code{NULL} (default) uses the p-values whenever \code{cutoff} is that result,
-so a call without a cutoff keeps the asymptotic table. \code{FALSE} flags
+so a call without a cutoff gives no p-values. \code{FALSE} flags
 against the interval, a poor decision rule, since over k items a width
 \code{w} gives a family-wise error rate of \code{1 - w^k} (Johansson, 2026).}
 
@@ -60,15 +58,11 @@ table, or \code{"dataframe"}.}
 \value{
 \itemize{
 \item \code{output = "kable"}: a \code{knitr_kable} table with the columns "Item",
-"Partial gamma", "SE", "Lower CI", "Upper CI", "Adj. p-value (BH)" and
-"p-value sign." (stars for the adjusted p-value, as iarm shows them),
-plus "Gamma low", "Gamma high" and "Flagged" with a \code{cutoff}. With
-p-values, the asymptotic columns are replaced by "p" and "p (adj)".
-\item \code{output = "dataframe"}: a data.frame with the columns \code{Item}, \code{gamma},
-\code{se}, \code{lower}, \code{upper}, \code{padj_bh} and \code{Significance}, plus
-\code{gamma_low}, \code{gamma_high} and \code{Flagged} with a \code{cutoff}. With p-values,
-\code{padj_bh} and \code{Significance} are replaced by \code{p_gamma} and
-\code{padj_gamma}.
+"Partial gamma" and "SE", plus "Gamma low", "Gamma high" and "Flagged"
+with a \code{cutoff}, and "p" and "p (adj)" with bootstrap p-values.
+\item \code{output = "dataframe"}: a data.frame with the columns \code{Item}, \code{gamma}
+and \code{se}, plus \code{gamma_low}, \code{gamma_high} and \code{Flagged} with a
+\code{cutoff}, and \code{p_gamma} and \code{padj_gamma} with bootstrap p-values.
 }
 }
 \description{
@@ -87,11 +81,14 @@ They are conventions, not values calibrated to the sample and items at
 hand, and this function does not use them. The \pkg{iarm} package must
 be installed (it is in Suggests).
 
-\strong{Asymptotic p-values.} The adjusted p-value is a
-Benjamini-Hochberg adjustment, made by easyRasch2, of the p-values from
-\code{iarm::partgam_DIF()} over the items. iarm's own adjusted column is a
-Bonferroni correction whatever method is named, since iarm adjusts one
-p-value at a time, so it is not used.
+\strong{No asymptotic test.} \code{iarm::partgam_DIF()} also gives a p-value
+and a 95\% interval from a normal approximation. In simulations without
+DIF (300 and 600 respondents), 15 dichotomous items had at least one item
+flagged after a Benjamini-Hochberg adjustment in 9\% to 15\% of datasets,
+because the test statistic has heavier tails than the normal. For 9
+polytomous items the rate was 5\% to 6.5\%. Neither is returned. The SE
+matched the sampling SD of the partial gamma in these simulations. Test
+DIF with the result of \code{\link[=RMdifGammaCutoff]{RMdifGammaCutoff()}} as \code{cutoff}.
 
 \strong{Bootstrap p-values.} Each item's observed partial gamma is
 compared with its simulated values (\code{cutoff$results}, simulated without

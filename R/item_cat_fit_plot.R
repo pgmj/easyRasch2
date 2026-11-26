@@ -30,7 +30,15 @@
 #'   ignored, and give the ranges in the residual plot. Each item's corrected p from
 #'   [RMitemCatFit()] is shown under its label, in bold when below .05
 #'   (marked with an asterisk when \pkg{ggtext} is not installed), and the
-#'   fit's item labels are used unless `item_labels` is given.
+#'   fit's item labels are used unless `item_labels` is given. Not
+#'   available with `dif_var`.
+#' @param dif_var Optional vector with one value per row of `data` (factor,
+#'   character or numeric, treated as groups), at most four groups. Each
+#'   group's curves are then drawn against predictions from one fit to all
+#'   respondents, with a band showing the range expected without
+#'   differential item functioning (DIF). Available for `type =
+#'   "calibration"`, `"adjacent"` and `"residuals"`. Rows with a missing
+#'   group are left out with a message. See "Groups" in Details.
 #' @param grouping How respondents are grouped by total score for
 #'   `type = "residuals"`, as in [RMitemICCPlot()]: `"quantile"` (default),
 #'   `class_intervals` groups with about equal numbers of respondents,
@@ -48,9 +56,11 @@
 #'   given. Default `200L`. The ends of each pointwise range are extreme
 #'   quantiles of the simulated values, so below about 1000 datasets they,
 #'   and which points fall outside them, change with the seed (the caption
-#'   says so).
+#'   says so). With `dif_var`, the number of permutations of the group
+#'   labels behind the bands, default `1000L`.
 #' @param conf_level Numeric in (0, 1). Coverage of the pointwise bands and
-#'   intervals. Default `0.95`.
+#'   intervals, and with `dif_var` of the band for each curve. Default
+#'   `0.95`.
 #' @param item_labels Optional character vector of unique item labels for
 #'   the row strips, one per column of `data`. Default: column names.
 #' @param label_wrap Integer. Characters per line in the row strips.
@@ -58,7 +68,8 @@
 #' @param parallel,n_cores Logical / integer. Run the simulations in
 #'   parallel via \pkg{mirai} when available. Default sequential. When
 #'   `n_cores` is `NULL`, `getOption("mc.cores")` is used. If that is unset
-#'   too, a warning is given and the simulations run sequentially.
+#'   too, a warning is given and the simulations run sequentially. Not used
+#'   with `dif_var`, where the permutations run sequentially.
 #' @param seed Optional integer for reproducible simulations. See
 #'   [easyRasch2-reproducibility].
 #' @param output Character. `"ggplot"` (default) or `"dataframe"` for the
@@ -133,9 +144,43 @@
 #' category's count, the curve cannot lie above or below the diagonal
 #' overall, only cross it.
 #'
-#' All bands and intervals are pointwise. They show where to look, not
-#' whether an item fits, and with many points some fall outside even when
-#' the model holds.
+#' Without `dif_var`, all bands and intervals are pointwise. They show where
+#' to look, not whether an item fits, and with many points some fall outside
+#' even when the model holds.
+#'
+#' **Groups (`dif_var`).** The item parameters are estimated once, from all
+#' respondents used, and every group's curves are drawn against the same
+#' predictions. Under the Rasch model without DIF, an item's response is
+#' independent of the group given the total score (Kreiner & Christensen,
+#' 2011), whatever the groups' ability distributions. Curves that separate
+#' between groups therefore point to DIF, while curves that depart from the
+#' model together point to misfit of the item for everyone.
+#'
+#' The band is a simultaneous consistency band (Dimitriadis et al., 2021)
+#' for each curve with coverage `conf_level` (default 95%): the range the
+#' whole curve keeps in that share of permutations of the group labels within total scores, a permutation that
+#' keeps the number of respondents of each group at every score (an exact
+#' conditional test, Kreiner, 1987). For the residual plot, a "curve" is all
+#' cells of one item and group. The band is centred on the pooled data, not
+#' on the model, so an item that misfits for everyone moves all groups'
+#' bands together. Each band is cut to the values the permutations reached,
+#' which matters for cells the model expects to be almost empty. In the
+#' residual plot, the y-axis covers the bars and at least -4 to 4, and a
+#' band that reaches further is cut at the panel edge. Points (bars for
+#' residuals) outside their band are marked. The bands are not corrected across curves, so with many curves
+#' some cross their band by chance. In simulations without DIF, at most
+#' about 5% of curves crossed their band (dev study in the package
+#' repository, `dev/catfit_dif/`).
+#'
+#' Two conditions limit the reading. First, the independence given the
+#' total score holds under the Rasch model, not when items differ in
+#' discrimination (Kreiner & Christensen, 2011). Then, if the groups differ
+#' in ability, curves can separate without DIF, so check item fit first
+#' ([RMitemCatFit()], [RMitemInfit()]). Second, the total score includes the
+#' other items: DIF in several items in the same direction shifts the
+#' matching, and DIF-free items can then look different between groups.
+#' [RMdifAnchor()] (item and threshold locations) and [RMdifGamma()] test
+#' DIF.
 #'
 #' @return
 #' * `output = "ggplot"`: a [ggplot2::ggplot] object, one row of panels
@@ -152,6 +197,15 @@
 #'   * `"calibration"`: `event`, `predicted`, `cep`, `n`, `lower`,
 #'     `upper`.
 #'
+#'   With `dif_var`, each type also has `group` (the group with its n),
+#'   `perm_mean` (the mean over the permutations), `lower` and `upper`
+#'   (the band),
+#'   `outside` (the point is outside its band) and `iterations_used` (the
+#'   number of permutations). The non-DIF reference columns are replaced:
+#'   `adjacent` keeps `expected` (the model's share), `calibration` and
+#'   `adjacent` have no binomial or simulated range, and `residuals` has no
+#'   cells with zero expected variance.
+#'
 #' @references
 #' Dimitriadis, T., Gneiting, T., & Jordan, A. I. (2021). Stable reliability
 #' diagrams for probabilistic classifiers. *Proceedings of the National
@@ -161,6 +215,14 @@
 #' Glas, C. A. W. (1988). The derivation of some tests for the Rasch model
 #' from the multinomial distribution. *Psychometrika, 53*(4), 525--546.
 #' \doi{10.1007/BF02294405}
+#'
+#' Kreiner, S. (1987). Analysis of multidimensional contingency tables by
+#' exact conditional tests: Techniques and strategies. *Scandinavian Journal
+#' of Statistics, 14*(2), 97--112.
+#'
+#' Kreiner, S., & Christensen, K. B. (2011). Item screening in graphical
+#' loglinear Rasch models. *Psychometrika, 76*(2), 228--256.
+#' \doi{10.1007/s11336-011-9203-y}
 #'
 #' Säilynoja, T., Johnson, A. R., Martin, O. A., & Vehtari, A. (2025).
 #' Recommendations for visual predictive checks in Bayesian workflow.
@@ -178,6 +240,10 @@
 #'   RMitemCatFitPlot(pcmdat2, type = "adjacent")
 #'   RMitemCatFitPlot(pcmdat2, type = "calibration", iterations = 100,
 #'                      seed = 1)
+#'   # By group (here a random split, so no DIF is expected)
+#'   set.seed(1)
+#'   group <- sample(c("A", "B"), nrow(pcmdat2), replace = TRUE)
+#'   RMitemCatFitPlot(pcmdat2, type = "adjacent", dif_var = group, seed = 1)
 #' }
 #' }
 #'
@@ -187,6 +253,7 @@ RMitemCatFitPlot <- function(
   data,
   type = c("residuals", "adjacent", "restscore", "calibration"),
   fit = NULL,
+  dif_var = NULL,
   grouping = c("quantile", "width", "score", "manual"),
   class_intervals = 5L,
   score_breaks = NULL,
@@ -202,6 +269,23 @@ RMitemCatFitPlot <- function(
   # With `fit`, the default is the plot of the test that `fit` holds.
   type <- if (missing(type) && !is.null(fit)) "calibration" else match.arg(type)
   output <- match.arg(output)
+  dif_mode <- !is.null(dif_var)
+  if (dif_mode) {
+    if (!is.null(fit)) {
+      stop("`fit` cannot be combined with `dif_var`: its simulations are for ",
+           "item fit in the whole sample.", call. = FALSE)
+    }
+    if (type == "restscore") {
+      stop("type = \"restscore\" is not available with `dif_var`: the rest ",
+           "score given a category depends on the group's ability ",
+           "distribution, so a group difference there is not DIF.",
+           call. = FALSE)
+    }
+    # Permutations are fast (about 10 s at 1000 for 20 items and 4 groups),
+    # and the simultaneous band uses an extreme quantile of each curve's
+    # maximum.
+    if (missing(iterations)) iterations <- 1000L
+  }
   if (output == "ggplot" && !requireNamespace("ggplot2", quietly = TRUE)) {
     stop("Package 'ggplot2' is required for output = \"ggplot\".",
          call. = FALSE)
@@ -218,6 +302,26 @@ RMitemCatFitPlot <- function(
   if (!is.null(fit) && !inherits(fit, "RMitemCatFit")) {
     stop("`fit` must be the result of RMitemCatFit(..., output = \"list\").",
          call. = FALSE)
+  }
+  if (dif_mode) {
+    validate_response_data(data)
+    n_dif_missing <- sum(is.na(dif_var))
+    dd <- .prepare_dif_data(data, dif_var)
+    prep <- .catfit_prepare(dd$data, who = "RMitemCatFitPlot()")
+    # .prepare_dif_data() drops respondents with no responses. Without DIF
+    # they fall under "complete cases", so the caption says the same here.
+    if (nrow(dd$data) < NROW(data) - n_dif_missing &&
+          !"complete cases" %in% prep$quals) {
+      prep$quals <- c("complete cases", prep$quals)
+    }
+    item_labels <- .catfit_item_labels(item_labels, prep$item_names)
+    if (!is.null(seed)) set.seed(seed)
+    return(.catdif_run(
+      prep, droplevels(dd$dif_factor[prep$rows]), type, grouping,
+      class_intervals, score_breaks, as.integer(iterations), conf_level,
+      item_labels, label_wrap, output, n_total = nrow(data),
+      n_dif_missing = n_dif_missing
+    ))
   }
   prep <- .catfit_prepare(data, who = "RMitemCatFitPlot()")
   if (!is.null(fit) && !identical(prep$X, fit$prep$X)) {

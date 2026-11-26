@@ -100,7 +100,20 @@ test_that("RMitemICCPlot DIF mode returns a composite with a gamma table attr", 
   expect_s3_class(p, "patchwork")
   g <- attr(p, "dif_gamma")
   expect_s3_class(g, "data.frame")
-  expect_true(all(c("Item", "gamma", "lower", "upper", "padj_bh") %in% names(g)))
+  expect_true(all(c("Item", "gamma", "se") %in% names(g)))
+})
+
+test_that("DIF annotation shows the partial gamma estimate only", {
+  tab <- data.frame(Item = c("I1", "I2"), gamma = c(0.123, -0.4),
+                    lower = c(0, -0.6), upper = c(0.25, -0.2),
+                    padj_bh = c(0.04, 0.001))
+  lab <- .cicc_gamma_label(tab, "I2")
+  expect_identical(lab, "\u03b3 = -0.40")
+  expect_null(.cicc_gamma_label(tab, "I3"))
+  expect_null(.cicc_gamma_label(NULL, "I1"))
+  cap <- .cicc_caption(TRUE, 0.9)
+  expect_false(grepl("p-value|interval and p", cap))
+  expect_match(cap, "RMdifGamma()", fixed = TRUE)
 })
 
 # ---------------------------------------------------------------------

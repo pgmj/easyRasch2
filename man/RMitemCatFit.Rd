@@ -135,19 +135,26 @@ extreme response style shared by all items. The study is described at
 \url{https://pgmj.github.io/rasch_book/chapters/category-fit.html}.
 
 \strong{What a flag means.} The test compares an item's whole table of
-category probabilities given the total score with the model, so it is
-not specific to the categories. An item whose categories work as scored
-but which discriminates less or more than the other items (underfit or
-overfit, for example from a second dimension or local dependence)
-departs as well. In a check with 10 items, one of which had ordered,
-distinct categories but a slope of 0.5 or 2, that item was flagged in
-36\% and 8\% of datasets at n = 300, and in 96\% and 83\% at n = 1000.
-Check item fit first, for example with \code{\link[=RMitemInfit]{RMitemInfit()}} or
-\code{\link[=RMitemRestscore]{RMitemRestscore()}}. Read a flag as a problem with the categories when
-the item otherwise fits, or when the departure is in one event and not
-in all. In \code{\link[=RMitemCatFitPlot]{RMitemCatFitPlot()}}, a misfitting item shows in every
-category, while a category problem is local to one category or one pair
-of adjacent categories.
+category probabilities given the total score with the model, so a flag
+is not specific to the categories. In simulations with 5 or 10 items and
+n = 250 or 500, an item whose categories worked as scored but which
+underfit (a slope of 0.55 or a second dimension, conditional infit about
+1.2 to 1.3) was flagged in 7\% to 35\% of datasets. Conditional infit
+flagged the same item in nearly all of these datasets. An overfitting
+item (a slope of 1.6 or local dependence, infit about 0.8) was flagged in
+0.5\% to 5\%. Category problems often make an item underfit as well:
+swapped categories were flagged by both tests in 38\% to 96\% of datasets.
+Read a flag together with item fit, for example from \code{\link[=RMitemInfit]{RMitemInfit()}}:
+\itemize{
+\item On an item that fits, a flag points to the categories.
+\item On an underfitting item, a flag can come from the item as a whole or
+from its categories, and the event p-values help. In the simulations,
+a flagged underfitting item whose categories worked as scored departed
+(uncorrected p < .05) in two or more events in 72\% to 82\% of datasets,
+mostly the middle ones. A flagged category problem departed in a
+single event in 73\% to 83\%. In \code{\link[=RMitemCatFitPlot]{RMitemCatFitPlot()}}, low discrimination
+also shows as a rest-score SD above its expectation in every category.
+}
 }
 \examples{
 \donttest{

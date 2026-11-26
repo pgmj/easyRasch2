@@ -134,12 +134,11 @@ test_that("p_value = NULL falls back to the interval without simulations", {
   expect_true("Flagged" %in% names(res))
 })
 
-test_that("p_value = NULL with no cutoff leaves the asymptotic table alone", {
+test_that("p_value = NULL with no cutoff gives no p-values", {
   skip_if_not_installed("iarm")
   d <- make_dif_data()
   res <- RMdifGamma(d$df, d$grp, output = "dataframe")
-  expect_false(any(c("p_gamma", "padj_gamma") %in% names(res)))
-  expect_true("padj_bh" %in% names(res))
+  expect_false(any(c("p_gamma", "padj_gamma", "padj_bh") %in% names(res)))
 })
 
 test_that("p_value rejects non-logical input", {
@@ -269,21 +268,8 @@ test_that("an unused factor level does not trigger a sample mismatch", {
 })
 
 # ---------------------------------------------------------------------
-# Asymptotic BH column
+# Asymptotic BH column (RMlocdepGamma)
 # ---------------------------------------------------------------------
-test_that("RMdifGamma applies a real Benjamini-Hochberg adjustment", {
-  skip_if_not_installed("iarm")
-  d <- make_dif_data()
-  raw <- NULL
-  utils::capture.output(raw <- iarm::partgam_DIF(d$df, d$grp))
-  res <- RMdifGamma(d$df, d$grp, output = "dataframe")
-  expect_equal(
-    res$padj_bh,
-    stats::p.adjust(as.numeric(raw$pvalue), method = "BH")
-  )
-  expect_identical(res$Significance, .p_stars(res$padj_bh))
-})
-
 test_that("RMlocdepGamma adjusts over all tests in both directions", {
   skip_if_not_installed("iarm")
   d <- make_dif_data()

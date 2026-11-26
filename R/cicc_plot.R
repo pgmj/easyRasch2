@@ -16,7 +16,8 @@
 #' @param dif_var Optional vector of length `nrow(data)` (a factor, or
 #'   coercible to one) defining groups for DIF. The observed means are then
 #'   shown per group, and each panel shows the item's partial gamma from
-#'   `iarm::partgam_DIF()`, as in [RMdifGamma()]. Default `NULL`.
+#'   `iarm::partgam_DIF()`, as in [RMdifGamma()], as an effect size without
+#'   an interval or p-value. Default `NULL`.
 #' @param grouping How the observed means are grouped along the total score
 #'   (see Class intervals in Details): `"quantile"` (default),
 #'   `class_intervals` groups with about equal numbers of respondents,
@@ -52,8 +53,9 @@
 #'   `ggplot` objects. With `dif_var`, the partial gamma table is also
 #'   attached as `attr(., "dif_gamma")`, for convenience. It is the result
 #'   of `RMdifGamma(data, dif_var, output = "dataframe")` on the same
-#'   respondents, so call [RMdifGamma()] to get it as a table, with p-values
-#'   corrected across items and, with a cutoff, a calibrated test.
+#'   respondents. For a test, call [RMdifGamma()] with the result of
+#'   [RMdifGammaCutoff()] as `cutoff`, which gives bootstrap p-values
+#'   corrected across items.
 #'
 #' @details
 #' \strong{Data.} Only complete cases are used, and with `dif_var` also only
@@ -114,8 +116,12 @@
 #' the sampling uncertainty of the observed group means.
 #'
 #' \strong{DIF magnitude.} The partial gamma (Bjorner et al., 1998) is the
-#' association between the item score and the group given the rest score,
+#' association between the item score and the group given the total score,
 #' a non-parametric effect size, the same statistic as in [RMdifGamma()].
+#' The plot shows the estimate only. Its asymptotic interval and p-value
+#' come from a normal approximation that rejected too often when there was
+#' no DIF (dichotomous items). To test DIF, use [RMdifGamma()] with the
+#' result of [RMdifGammaCutoff()] as `cutoff`.
 #'
 #' @references
 #' Andersen, E. B. (1995). Polytomous Rasch models and their estimation. In
@@ -553,10 +559,10 @@ RMitemICCPlot <- function(data,
   row <- gamma_tab[gamma_tab$Item == nm, , drop = FALSE]
   if (nrow(row) == 0L) return(NULL)
   row <- row[1L, ]
-  # Short label for the in-plot annotation; `p` is the BH-adjusted DIF p-value.
+  # The estimate only: the asymptotic interval and p-value are not shown
+  # (see "DIF magnitude" in the help page).
   # \u03b3 is the Greek small letter gamma (escaped to keep R source ASCII).
-  sprintf("\u03b3 = %.2f [%.2f, %.2f]\np = %.3f",
-          row$gamma, row$lower, row$upper, row$padj_bh)
+  sprintf("\u03b3 = %.2f", row$gamma)
 }
 
 #' Composite caption explaining the markers and the DIF annotation
@@ -566,17 +572,17 @@ RMitemICCPlot <- function(data,
   pct <- round(conf_level * 100)
   g   <- intToUtf8(947L)   # Greek small letter gamma (keeps R source ASCII)
   cap <- sprintf(paste0(
-    "Black line: model-expected conditional item score. Diamonds: observed mean ",
+    "Black line: model-expected conditional item score. %s: observed mean ",
     "item score per total-score group with %d%% confidence-interval error ",
-    "bars."), pct)
+    "bars."), if (dif_mode) "Points (one shape per group)" else "Diamonds",
+    pct)
   if (!is.null(interval_clause)) {
     cap <- paste(cap, interval_clause)
   }
   if (dif_mode) {
     cap <- paste0(cap, sprintf(paste0(
-      " %s is Goodman-Kruskal's gamma (partial gamma DIF coefficient). The ",
-      "bracketed values are its %d%% confidence interval and p is the ",
-      "Benjamini-Hochberg adjusted p-value."), g, pct))
+      " %s is the partial gamma DIF coefficient, an effect size. Test DIF ",
+      "with RMdifGamma() and a RMdifGammaCutoff() result."), g))
   }
   cap
 }
@@ -609,14 +615,26 @@ RMitemICCPlot <- function(data,
           data = obs,
           ggplot2::aes(x = .data$x, ymin = .data$lo, ymax = .data$hi,
                        colour = .data$grp),
-          width = 0, linewidth = 0.75, position = dodge
+          width = 0, linewidth = 0.75, position = dodge,
+          # Vertical legend key, as the bars are drawn in the panels.
+          key_glyph = "linerange"
         )
       }
       p <- p + ggplot2::geom_point(
         data = obs,
-        ggplot2::aes(x = .data$x, y = .data$mean, colour = .data$grp),
-        shape = 18, size = 2.9, position = dodge
-      )
+        ggplot2::aes(x = .data$x, y = .data$mean, colour = .data$grp,
+                     shape = .data$grp),
+        size = 2.4, position = dodge
+      ) +
+        # Shape as well as colour, so groups stay apart in greyscale. The
+        # triangle comes last, since on a vertical bar it reads as an arrow.
+        ggplot2::scale_shape_manual(
+          values = rep_len(c(16, 15, 18, 17, 3, 4, 8, 7), nlevels(obs$grp))) +
+        # Okabe-Ito, in the order RMitemCatFitPlot() uses for groups. Black
+        # is left out since the model curve is black.
+        ggplot2::scale_colour_manual(
+          values = rep_len(c(.catdif_styles()$colour, "#56B4E9", "#D55E00",
+                             "#F0E442", "#999999"), nlevels(obs$grp)))
     } else {
       if (ci) {
         p <- p + ggplot2::geom_errorbar(
@@ -642,7 +660,8 @@ RMitemICCPlot <- function(data,
   p +
     ggplot2::facet_wrap(~ item) +
     ggplot2::scale_x_continuous(breaks = seq(0L, xmax, by = xstep)) +
-    ggplot2::labs(x = "Total score", y = "Item score", colour = NULL) +
+    ggplot2::labs(x = "Total score", y = "Item score", colour = NULL,
+                  shape = NULL) +
     ggplot2::theme_bw(base_size = 11) +
     ggplot2::theme(
       strip.background = ggplot2::element_rect(fill = "grey95", colour = "grey70"),

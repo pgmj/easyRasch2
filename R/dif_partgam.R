@@ -11,8 +11,8 @@
 #'   one is needed.
 #' @param dif_var A vector (factor or character) of length `nrow(data)`
 #'   with the groups, two or more.
-#' @param cutoff Optional. Default `NULL`, the asymptotic test of
-#'   `iarm::partgam_DIF()`. Either of:
+#' @param cutoff Optional. Default `NULL`, the partial gamma and its SE,
+#'   with no test. Either of:
 #'   * The full result of [RMdifGammaCutoff()]. This enables the bootstrap
 #'     p-values (see `p_value`), and the caption reports the simulation
 #'     settings.
@@ -24,12 +24,10 @@
 #'   `Flagged` (`TRUE` when the partial gamma is outside the simulated
 #'   interval, or with p-values when the item is flagged).
 #' @param p_value Logical or `NULL`. Whether to flag on two-sided bootstrap
-#'   p-values (`p_gamma`, `padj_gamma`) from the simulations. The
-#'   asymptotic p-value and star columns are then dropped, so that the
-#'   table has one family of p-values, and the simulated interval is kept
-#'   as a reference. `TRUE` needs the full [RMdifGammaCutoff()] result.
+#'   p-values (`p_gamma`, `padj_gamma`) from the simulations. The simulated
+#'   interval is kept as a reference. `TRUE` needs the full [RMdifGammaCutoff()] result.
 #'   `NULL` (default) uses the p-values whenever `cutoff` is that result,
-#'   so a call without a cutoff keeps the asymptotic table. `FALSE` flags
+#'   so a call without a cutoff gives no p-values. `FALSE` flags
 #'   against the interval, a poor decision rule, since over k items a width
 #'   `w` gives a family-wise error rate of `1 - w^k` (Johansson, 2026).
 #' @param correction Character. Correction of the bootstrap p-values across
@@ -42,15 +40,11 @@
 #'
 #' @return
 #' * `output = "kable"`: a `knitr_kable` table with the columns "Item",
-#'   "Partial gamma", "SE", "Lower CI", "Upper CI", "Adj. p-value (BH)" and
-#'   "p-value sign." (stars for the adjusted p-value, as iarm shows them),
-#'   plus "Gamma low", "Gamma high" and "Flagged" with a `cutoff`. With
-#'   p-values, the asymptotic columns are replaced by "p" and "p (adj)".
-#' * `output = "dataframe"`: a data.frame with the columns `Item`, `gamma`,
-#'   `se`, `lower`, `upper`, `padj_bh` and `Significance`, plus
-#'   `gamma_low`, `gamma_high` and `Flagged` with a `cutoff`. With p-values,
-#'   `padj_bh` and `Significance` are replaced by `p_gamma` and
-#'   `padj_gamma`.
+#'   "Partial gamma" and "SE", plus "Gamma low", "Gamma high" and "Flagged"
+#'   with a `cutoff`, and "p" and "p (adj)" with bootstrap p-values.
+#' * `output = "dataframe"`: a data.frame with the columns `Item`, `gamma`
+#'   and `se`, plus `gamma_low`, `gamma_high` and `Flagged` with a
+#'   `cutoff`, and `p_gamma` and `padj_gamma` with bootstrap p-values.
 #'
 #' @details
 #' \strong{Statistic.} The partial gamma (Bjorner et al., 1998) measures the
@@ -61,11 +55,14 @@
 #' hand, and this function does not use them. The \pkg{iarm} package must
 #' be installed (it is in Suggests).
 #'
-#' \strong{Asymptotic p-values.} The adjusted p-value is a
-#' Benjamini-Hochberg adjustment, made by easyRasch2, of the p-values from
-#' `iarm::partgam_DIF()` over the items. iarm's own adjusted column is a
-#' Bonferroni correction whatever method is named, since iarm adjusts one
-#' p-value at a time, so it is not used.
+#' \strong{No asymptotic test.} `iarm::partgam_DIF()` also gives a p-value
+#' and a 95% interval from a normal approximation. In simulations without
+#' DIF (300 and 600 respondents), 15 dichotomous items had at least one item
+#' flagged after a Benjamini-Hochberg adjustment in 9% to 15% of datasets,
+#' because the test statistic has heavier tails than the normal. For 9
+#' polytomous items the rate was 5% to 6.5%. Neither is returned. The SE
+#' matched the sampling SD of the partial gamma in these simulations. Test
+#' DIF with the result of [RMdifGammaCutoff()] as `cutoff`.
 #'
 #' \strong{Bootstrap p-values.} Each item's observed partial gamma is
 #' compared with its simulated values (`cutoff$results`, simulated without
@@ -246,7 +243,7 @@ RMdifGamma <- function(
   # NULL means "use the corrected p-value when the simulations are available",
   # as in RMlocdepGamma() and RMitemInfit(). The bare $item_cutoffs, or no
   # cutoff at all, leaves nothing to compute a p-value from and resolves to
-  # FALSE, which keeps the asymptotic table as it was.
+  # FALSE, which gives the table without a test.
   if (!is.null(p_value) && (!is.logical(p_value) || length(p_value) != 1L ||
     is.na(p_value))) {
     stop("`p_value` must be TRUE, FALSE, or NULL.", call. = FALSE)
@@ -321,34 +318,17 @@ RMdifGamma <- function(
   pgam_raw <- iarm::partgam_DIF(as.data.frame(data), dif_var)
   sink()
 
-  # pgam_raw is a data.frame with character columns that need numeric conversion
-  pgam_df <- data.frame(
+  # pgam_raw is a data.frame with character columns that need numeric
+  # conversion. Only the estimate and its SE are kept: iarm's asymptotic
+  # p-values and interval rest on a normal approximation that rejected too
+  # often without DIF for dichotomous items (dev/dif_gamma_null_groups.qmd).
+  # Unrounded; the kable path rounds a display copy.
+  result_df <- data.frame(
     Item = as.character(pgam_raw$Item),
     gamma = as.numeric(pgam_raw$gamma),
     se = as.numeric(pgam_raw$se),
-    pvalue = as.numeric(pgam_raw$pvalue),
-    # iarm adjusts one p-value at a time (p.adjust() with n = k on a single
-    # value), which makes its "BH" column a Bonferroni correction whatever
-    # method is named. The Benjamini-Hochberg adjustment is applied here
-    # across all items instead, and the stars are recomputed from it.
-    padj_bh = stats::p.adjust(as.numeric(pgam_raw$pvalue), method = "BH"),
-    Significance = "",
-    lower = as.numeric(pgam_raw$lower),
-    upper = as.numeric(pgam_raw$upper),
     stringsAsFactors = FALSE
   )
-  pgam_df$Significance <- .p_stars(pgam_df$padj_bh)
-
-  # Keep output columns (unrounded; the kable path rounds a display copy)
-  result_df <- pgam_df[, c(
-    "Item",
-    "gamma",
-    "se",
-    "lower",
-    "upper",
-    "padj_bh",
-    "Significance"
-  )]
 
   # --- Apply cutoff if provided -----------------------------------------------
   if (!is.null(cutoff)) {
@@ -405,13 +385,10 @@ RMdifGamma <- function(
       result_df$padj_gamma <- pv$padj[idx]
       result_df$Flagged <- !is.na(result_df$padj_gamma) &
         result_df$padj_gamma < alpha
-      # Drop the asymptotic p-value pair; the bootstrap p-values replace it.
       result_df <- result_df[, c(
         "Item",
         "gamma",
         "se",
-        "lower",
-        "upper",
         "gamma_low",
         "gamma_high",
         "p_gamma",
@@ -424,10 +401,6 @@ RMdifGamma <- function(
         "Item",
         "gamma",
         "se",
-        "lower",
-        "upper",
-        "padj_bh",
-        "Significance",
         "gamma_low",
         "gamma_high",
         "Flagged"
@@ -442,7 +415,7 @@ RMdifGamma <- function(
 
   # Kable display rounding (the dataframe output above stays unrounded)
   result_df <- .round_display(result_df, c(
-    gamma = 3, se = 3, lower = 3, upper = 3, padj_bh = 3,
+    gamma = 3, se = 3,
     gamma_low = 3, gamma_high = 3, p_gamma = 4, padj_gamma = 4
   ))
 
@@ -463,7 +436,7 @@ RMdifGamma <- function(
       n_clause,
       ". Two-sided bootstrap p-values from ",
       cutoff_n_iter,
-      " iterations (replacing the asymptotic BH p-values); multiplicity ",
+      " iterations; multiplicity ",
       "correction: ",
       .correction_label(correction),
       "; flagged at padj < ",
@@ -481,7 +454,10 @@ RMdifGamma <- function(
     caption_text <- paste0(
       "Partial gamma DIF analysis. ",
       n_clause,
-      ". Positive gamma indicates higher scores in higher DIF group levels."
+      ". Positive gamma indicates higher scores in higher DIF group levels.",
+      " No interval or p-value is shown, since the asymptotic test rejects",
+      " too often without DIF. To test DIF, simulate with RMdifGammaCutoff()",
+      " and pass the result as cutoff."
     )
   } else if (!is.null(cutoff_n_iter)) {
     method_label <- .format_gamma_cutoff_method_label(
@@ -521,8 +497,6 @@ RMdifGamma <- function(
         "Item",
         "Partial gamma",
         "SE",
-        "Lower CI",
-        "Upper CI",
         "Gamma low",
         "Gamma high",
         "p",
@@ -533,21 +507,13 @@ RMdifGamma <- function(
       c(
         "Item",
         "Partial gamma",
-        "SE",
-        "Lower CI",
-        "Upper CI",
-        "Adj. p-value (BH)",
-        "p-value sign."
+        "SE"
       )
     } else {
       c(
         "Item",
         "Partial gamma",
         "SE",
-        "Lower CI",
-        "Upper CI",
-        "Adj. p-value (BH)",
-        "p-value sign.",
         "Gamma low",
         "Gamma high",
         "Flagged"
@@ -985,8 +951,8 @@ RMdifGammaCutoff <- function(
 #' coefficient and nothing else, which is all the bootstrap needs, and is used
 #' for both the simulated null in [RMdifGammaCutoff()] and the observed
 #' statistic that [RMdifGamma()] tests against it, so the two cannot diverge.
-#' The `gamma`, `se`, `lower` and `upper` columns shown to users still come
-#' from `iarm::partgam_DIF()`.
+#' The `gamma` and `se` columns shown to users still come from
+#' `iarm::partgam_DIF()`.
 #'
 #' The coding follows `iarm::partgam_DIF()`, and agreement is exact
 #' (`dev/dif_partgam_fast_validation.qmd`, asserted in

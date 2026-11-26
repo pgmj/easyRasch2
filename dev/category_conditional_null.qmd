@@ -965,6 +965,200 @@ or too little through $X \ge 2$, and "don't know" use in the middle category
 through $X \ge 2$ and $X \ge 3$. Rates per cell for the item p and each event
 are in the appendix.
 
+### Misfit that is not about the categories
+
+A flag from `RMitemCatFit()` is meant to say that the categories of an item
+do not work as scored. An item can also misfit the PCM while its categories
+work as scored, and the rest-score check above showed that a whole-item
+slope moves the category statistics. This run asks how often
+`RMitemCatFit()` flags such items, and whether conditional infit separates
+the two kinds of misfit.
+
+```{r spec-load}
+sp <- readRDS(file.path(RES, "specificity_summary.rds"))
+sr <- sp$rates
+sf <- sp$focus_items
+spec_labels <- c(cond_labels,
+  U_multi_r75 = "Second dimension, r = .75",
+  U_slope_055 = "Slope 0.55",
+  O_ld_d1     = "Response dependence, d = 1",
+  O_slope_16  = "Slope 1.6")
+slab <- function(x) factor(spec_labels[as.character(x)], levels = spec_labels)
+nuis <- c("U_multi_r75", "U_slope_055", "O_ld_d1", "O_slope_16")
+sv <- function(col, cnd) sr[[col]][sr$cond %in% cnd]
+# Focus-item flags by RMitemCatFit() without an infit flag, as a share of all
+# its flags, pooled over cells.
+cat_alone <- function(cnd) {
+  d <- sf[sf$cond %in% cnd, ]
+  sum(d$cat_flag & !d$inf_flag) / sum(d$cat_flag)
+}
+cat_alone_n <- function(cnd) {
+  d <- sf[sf$cond %in% cnd, ]
+  c(alone = sum(d$cat_flag & !d$inf_flag), flags = sum(d$cat_flag),
+    datasets = nrow(d))
+}
+# Agreement with the main run, which used other datasets: focus item after
+# the step-down, the 14 shared conditions at n = 250 and 500.
+spec_vs_main <- cal_items |>
+  filter(!null, item == 1, n %in% c(250, 500)) |>
+  group_by(cond, n, k) |>
+  summarise(main = mean(padj < alpha), .groups = "drop") |>
+  inner_join(select(sr, cond, n, k, catfit), by = c("cond", "n", "k")) |>
+  mutate(diff = catfit - main)
+# Among datasets with the focus item flagged by RMitemCatFit(): share with
+# one event, and with two or more, at uncorrected p < .05.
+ev_share <- function(cnd, one = TRUE) {
+  d <- sf[sf$cond %in% cnd & sf$cat_flag, ]
+  if (one) mean(d$events == 1) else mean(d$events >= 2)
+}
+cat_conds <- c("SWAP_1_2", "S_outer_a0", "S_inner_a0", "S_inner_a2")
+spec_used <- sum(sp$skipped$used)
+spec_reps <- sum(sp$skipped$reps)
+```
+
+**Design.** The design of the main study at $n$ = 250 and 500 and $k$ = 5
+and 10, with all its conditions and four more. In the four, the categories
+of the focus item work as scored and the item misfits in another way:
+
+- **Second dimension.** The focus item follows the PCM in $\theta_2$, which
+  correlates .75 with $\theta$.
+- **Low slope.** Generalised PCM with slope 0.55.
+- **Response dependence.** The location of the focus item is shifted by
+  $d\,z$ with $d$ = 1 and $z = (2x_p - m)/m$, where $x_p$ is the response to
+  the other item nearest location 0, as in the Q3 study.
+- **High slope.** Generalised PCM with slope 1.6.
+
+The levels were set so that the focus item's conditional infit matches the
+misfit of real items in the phq9 data, about 1.28 for underfit and 0.83 for
+overfit (script `category_conditional_null/R/infit_calibration_stylised.R`).
+Each direction has one mechanism and one slope with similar infit. Mean
+infit of the focus item in this run was
+`r f2(min(sv("mean_infit", nuis[1:2])))` to
+`r f2(max(sv("mean_infit", nuis[1:2])))` in the underfit conditions and
+`r f2(min(sv("mean_infit", nuis[3:4])))` to
+`r f2(max(sv("mean_infit", nuis[3:4])))` in the overfit conditions.
+
+Every dataset got both tests:
+
+- **`RMitemCatFit()`.** The calibration test of the previous section, with
+  max-T over the events and the Westfall-Young step-down across items.
+- **Conditional infit** from `RMitemInfit()`. The p-values come from one
+  reference set per $n$, $k$ and focus-item thresholds: 1000 datasets
+  simulated from the PCM at the generating parameters. Each item's infit is
+  studentised by the mean and SD of the observed and reference values
+  together and tested two-sided, with the Westfall-Young step-down across
+  items. `RMitemInfit()` itself simulates at the estimated parameters, so
+  its rates can differ from those here.
+
+PCM cells have 500 datasets ($B$ = 199) and the others 200 ($B$ = 99).
+`r format(spec_used, big.mark = ",")` of `r format(spec_reps, big.mark = ",")`
+datasets were used. The others had an empty category. An item counts as
+flagged when its adjusted $p$ is below .05. Scripts
+`category_conditional_null/R/specificity_functions.R`,
+`run_specificity_study.R` and `summarise_specificity.R`.
+
+The rates of `RMitemCatFit()` for the conditions shared with the main run
+agree with it within simulation error. The largest difference in the focus
+item's rate was `r round(100 * max(abs(spec_vs_main$diff)))` percentage
+points, over `r nrow(spec_vs_main)` cells with 200 datasets each.
+
+**When the PCM holds.** Both tests keep their rates. The focus item was
+flagged by infit in `r rrng(sv("infit", c("A0_pcm_ordered", "A1_pcm_disordered")))`
+of datasets and by `RMitemCatFit()` in
+`r rrng(sv("catfit", c("A0_pcm_ordered", "A1_pcm_disordered")))`. Some other
+item was flagged in `r rrng(sv("infit_any_other", c("A0_pcm_ordered", "A1_pcm_disordered")))`
+(infit) and `r rrng(sv("catfit_any_other", c("A0_pcm_ordered", "A1_pcm_disordered")))`
+(`RMitemCatFit()`) of datasets.
+
+**Misfit that is not about the categories** (@fig-spec).
+`RMitemCatFit()` rarely flagged an overfitting item:
+`r rrng(sv("catfit", "O_ld_d1"))` of datasets under response dependence and
+`r rrng(sv("catfit", "O_slope_16"))` under slope 1.6, against
+`r rrng(sv("infit", "O_ld_d1"))` and `r rrng(sv("infit", "O_slope_16"))` for
+infit. It flagged an underfitting item more often, in
+`r rrng(sv("catfit", "U_multi_r75"))` of datasets with a second dimension and
+`r rrng(sv("catfit", "U_slope_055"))` with slope 0.55, rising with $n$ and
+$k$. Infit flagged the same items in `r rrng(sv("infit", "U_multi_r75"))`
+and `r rrng(sv("infit", "U_slope_055"))`. In the four conditions together,
+`RMitemCatFit()` flagged the focus item in
+`r cat_alone_n(nuis)[["flags"]]` of `r format(cat_alone_n(nuis)[["datasets"]], big.mark = ",")`
+datasets, and in `r cat_alone_n(nuis)[["alone"]]` of these infit did not flag
+it.
+
+**Category problems also show in infit.** Most of the category conditions
+make the focus item underfit. Infit flagged it in
+`r rrng(sv("infit", "SWAP_1_2"))` of datasets with swapped categories, in
+`r rrng(sv("infit", "S_inner_a0"))` with categories 1 and 2 interchangeable
+and in `r rrng(sv("infit", "S_outer_a0"))` with categories 0 and 1
+interchangeable. Unlike the misfit conditions, these give many flags from
+`RMitemCatFit()` alone. Without an infit flag were
+`r rpct(cat_alone("SWAP_1_2"), 0)` of its flags with swapped categories,
+`r rpct(cat_alone("S_outer_a0"), 0)` with categories 0 and 1
+interchangeable and `r rpct(cat_alone("S_inner_a0"), 0)` with categories 1
+and 2 interchangeable. For swapped categories and for categories 1 and 2
+interchangeable the share fell as $n$ and $k$ grew and infit caught up.
+
+Under the extreme response style, every item departs, and infit flagged some
+other item in `r rrng(sv("infit_any_other", "ERS_30"))` of datasets.
+Under response dependence the partner item departs too, and infit flagged
+some other item in
+`r rrng(sv("infit_any_other", "O_ld_d1"))`. `RMitemCatFit()` flagged some
+other item in `r rrng(sv("catfit_any_other", nuis))` of datasets across the
+four misfit conditions. Rates for every cell are in the appendix.
+
+**Reading a flag.** Two readings follow from these rates:
+
+- **A flag on an item that fits by infit points to the categories.** The
+  four misfit conditions almost never produced this pattern, and the
+  category conditions often did.
+- **A flag on an underfitting item does not by itself say what is wrong.**
+  A low slope or a second dimension can produce it, and so can a category
+  problem. Swapped categories produced both flags in
+  `r rrng(sv("both", "SWAP_1_2"))` of datasets, so setting such flags aside
+  as an item problem would miss most swaps. The number of events that
+  depart helps. Among flagged datasets, the item with slope 0.55 departed
+  (uncorrected $p$ < .05) in two or more events in
+  `r rpct(ev_share("U_slope_055", FALSE), 0)` and the item with a second
+  dimension in `r rpct(ev_share("U_multi_r75", FALSE), 0)`, mostly in
+  $X \ge 2$ and $X \ge 3$. Swapped or interchangeable categories and a
+  step with a different discrimination departed in a single event in
+  `r rrng(sapply(cat_conds, ev_share), 0)`. In the rest-score plot a low
+  slope also raises the SD in every category (@fig-discr).
+
+An overfitting item with a flag did not occur often enough here to say much
+about it.
+
+```{r fig-spec}
+#| fig-height: 7
+#| fig-cap: "Focus item flagged (adjusted p < .05) by RMitemCatFit() only, by both tests, or by conditional infit only, per condition and cell. Top: the categories do not work as scored. Bottom: the categories work as scored and the item misfits in another way. Rates for every cell are in the appendix."
+spec_fig <- sr |>
+  filter(!null) |>
+  mutate(Condition = slab(cond),
+         group = factor(ifelse(cond %in% nuis, "Other misfit", "Categories"),
+                        levels = c("Categories", "Other misfit")),
+         cell = factor(sprintf("n = %d, k = %d", n, k),
+                       levels = sprintf("n = %d, k = %d", rep(c(250, 500), 2),
+                                        rep(c(5, 10), each = 2)))) |>
+  select(Condition, group, cell, `RMitemCatFit() only` = catfit_only,
+         Both = both, `Infit only` = infit_only) |>
+  pivot_longer(c(`RMitemCatFit() only`, Both, `Infit only`),
+               names_to = "pattern", values_to = "rate") |>
+  mutate(pattern = factor(pattern, levels = c("RMitemCatFit() only", "Both",
+                                              "Infit only")),
+         Condition = factor(Condition, levels = rev(levels(Condition))))
+ggplot(spec_fig, aes(rate, Condition, colour = pattern, shape = pattern)) +
+  geom_point(size = 2) +
+  facet_grid(group ~ cell, scales = "free_y", space = "free_y") +
+  scale_colour_manual(NULL, values = c("#0072B2", "#000000", "#D55E00")) +
+  scale_shape_manual(NULL, values = c(16, 15, 2)) +
+  scale_x_continuous(limits = c(0, 1), breaks = c(0, .5, 1),
+                     labels = c("0", ".5", "1")) +
+  labs(x = "Share of datasets", y = NULL) +
+  theme_bw() +
+  theme(legend.position = "bottom", strip.text = element_text(size = 8),
+        panel.spacing.x = unit(0.8, "lines"))
+```
+
 ## Discussion
 
 The category-level statistics detect response scales that do not work as
@@ -981,6 +1175,16 @@ what the 20 category statistics find, including the departures the item
 index misses. It also says which step is affected. The category statistics
 remain useful for describing a departure once it is found, in particular the
 SD of the middle category for "don't know" use.
+
+A flag is not specific to the categories. An underfitting item with
+categories that work as scored was flagged in up to a third of datasets in
+these cells, and the category problems often made the item underfit as well.
+What separates the two is infit together with the flag. A flag on an item
+that fits by infit pointed to the categories. On an underfitting item, the
+number of events that depart separated the two in most datasets: two or
+more, mostly the middle ones, for a low slope or a second dimension, and
+one for a category problem. This is a tendency and not a rule, and a single
+dataset can show either pattern for either cause.
 
 Limitations of this run:
 
@@ -1001,6 +1205,13 @@ Limitations of this run:
   model would be needed for that.
 - **Mechanisms are stylised.** "Don't know" use is modelled as a fixed
   probability of choosing the middle category, unrelated to $\theta$.
+- **Other misfit at one level each.** The specificity run has one level of
+  each of four mechanisms, at $n \le 500$. Larger samples, smaller or larger
+  departures, and items misfitting in more than one way were not studied.
+- **Infit reference at the generating parameters.** The infit p-values in
+  the specificity run come from datasets simulated at the true parameters,
+  not from the parametric bootstrap at the estimates that `RMitemInfit()`
+  uses.
 
 ## References
 
@@ -1118,4 +1329,27 @@ dcell |>
   transmute(a, n, Datasets = reps, `Focus item flagged` = rpct(focus_flagged, 0),
             `Any other item flagged` = rpct(other_flagged, 0)) |>
   kable(align = "r", row.names = FALSE)
+```
+
+```{r appendix-spec}
+sr |>
+  mutate(Condition = slab(cond), Cell = sprintf("n = %d, k = %d", n, k)) |>
+  arrange(Condition, k, n) |>
+  transmute(Condition, Cell, `Infit > 1` = rpct(infit_under, 1),
+            `Infit < 1` = rpct(infit_over, 1), CatFit = rpct(catfit, 1),
+            Both = rpct(both, 1), `CatFit only` = rpct(catfit_only, 1)) |>
+  kable(align = "llrrrrr", row.names = FALSE,
+        caption = "Specificity run, focus item: share of datasets flagged (adjusted p < .05) by conditional infit above 1 and below 1, by RMitemCatFit(), by both, and by RMitemCatFit() only, per condition and cell.")
+```
+
+```{r appendix-spec-other}
+sr |>
+  mutate(Condition = slab(cond), Cell = sprintf("n = %d, k = %d", n, k)) |>
+  arrange(Condition, k, n) |>
+  transmute(Condition, Cell, Datasets = datasets,
+            `Other item, infit` = rpct(infit_any_other, 1),
+            `Other item, CatFit` = rpct(catfit_any_other, 1),
+            `Mean infit` = f2(mean_infit)) |>
+  kable(align = "llrrrr", row.names = FALSE,
+        caption = "Specificity run: datasets used, share of datasets with some other item flagged by conditional infit and by RMitemCatFit(), and the focus item's mean infit, per condition and cell.")
 ```

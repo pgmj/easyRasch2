@@ -8,6 +8,7 @@ RMitemCatFitPlot(
   data,
   type = c("residuals", "adjacent", "restscore", "calibration"),
   fit = NULL,
+  dif_var = NULL,
   grouping = c("quantile", "width", "score", "manual"),
   class_intervals = 5L,
   score_breaks = NULL,
@@ -48,7 +49,15 @@ rest-score and calibration plots, so \code{iterations} and \code{seed} are
 ignored, and give the ranges in the residual plot. Each item's corrected p from
 \code{\link[=RMitemCatFit]{RMitemCatFit()}} is shown under its label, in bold when below .05
 (marked with an asterisk when \pkg{ggtext} is not installed), and the
-fit's item labels are used unless \code{item_labels} is given.}
+fit's item labels are used unless \code{item_labels} is given. Not
+available with \code{dif_var}.}
+
+\item{dif_var}{Optional vector with one value per row of \code{data} (factor,
+character or numeric, treated as groups), at most four groups. Each
+group's curves are then drawn against predictions from one fit to all
+respondents, with a band showing the range expected without
+differential item functioning (DIF). Available for \code{type = "calibration"}, \code{"adjacent"} and \code{"residuals"}. Rows with a missing
+group are left out with a message. See "Groups" in Details.}
 
 \item{grouping}{How respondents are grouped by total score for
 \code{type = "residuals"}, as in \code{\link[=RMitemICCPlot]{RMitemICCPlot()}}: \code{"quantile"} (default),
@@ -70,10 +79,12 @@ for \code{type = "restscore"} and \code{type = "calibration"} when \code{fit} is
 given. Default \code{200L}. The ends of each pointwise range are extreme
 quantiles of the simulated values, so below about 1000 datasets they,
 and which points fall outside them, change with the seed (the caption
-says so).}
+says so). With \code{dif_var}, the number of permutations of the group
+labels behind the bands, default \code{1000L}.}
 
 \item{conf_level}{Numeric in (0, 1). Coverage of the pointwise bands and
-intervals. Default \code{0.95}.}
+intervals, and with \code{dif_var} of the band for each curve. Default
+\code{0.95}.}
 
 \item{item_labels}{Optional character vector of unique item labels for
 the row strips, one per column of \code{data}. Default: column names.}
@@ -84,7 +95,8 @@ Default \code{15L}.}
 \item{parallel, n_cores}{Logical / integer. Run the simulations in
 parallel via \pkg{mirai} when available. Default sequential. When
 \code{n_cores} is \code{NULL}, \code{getOption("mc.cores")} is used. If that is unset
-too, a warning is given and the simulations run sequentially.}
+too, a warning is given and the simulations run sequentially. Not used
+with \code{dif_var}, where the permutations run sequentially.}
 
 \item{seed}{Optional integer for reproducible simulations. See
 \link{easyRasch2-reproducibility}.}
@@ -109,6 +121,15 @@ without \code{fit}).
 \item \code{"calibration"}: \code{event}, \code{predicted}, \code{cep}, \code{n}, \code{lower},
 \code{upper}.
 }
+
+With \code{dif_var}, each type also has \code{group} (the group with its n),
+\code{perm_mean} (the mean over the permutations), \code{lower} and \code{upper}
+(the band),
+\code{outside} (the point is outside its band) and \code{iterations_used} (the
+number of permutations). The non-DIF reference columns are replaced:
+\code{adjacent} keeps \code{expected} (the model's share), \code{calibration} and
+\code{adjacent} have no binomial or simulated range, and \code{residuals} has no
+cells with zero expected variance.
 }
 }
 \description{
@@ -189,9 +210,43 @@ predicts, and too steep means better. Because CML reproduces each
 category's count, the curve cannot lie above or below the diagonal
 overall, only cross it.
 
-All bands and intervals are pointwise. They show where to look, not
-whether an item fits, and with many points some fall outside even when
-the model holds.
+Without \code{dif_var}, all bands and intervals are pointwise. They show where
+to look, not whether an item fits, and with many points some fall outside
+even when the model holds.
+
+\strong{Groups (\code{dif_var}).} The item parameters are estimated once, from all
+respondents used, and every group's curves are drawn against the same
+predictions. Under the Rasch model without DIF, an item's response is
+independent of the group given the total score (Kreiner & Christensen,
+2011), whatever the groups' ability distributions. Curves that separate
+between groups therefore point to DIF, while curves that depart from the
+model together point to misfit of the item for everyone.
+
+The band is a simultaneous consistency band (Dimitriadis et al., 2021)
+for each curve with coverage \code{conf_level} (default 95\%): the range the
+whole curve keeps in that share of permutations of the group labels within total scores, a permutation that
+keeps the number of respondents of each group at every score (an exact
+conditional test, Kreiner, 1987). For the residual plot, a "curve" is all
+cells of one item and group. The band is centred on the pooled data, not
+on the model, so an item that misfits for everyone moves all groups'
+bands together. Each band is cut to the values the permutations reached,
+which matters for cells the model expects to be almost empty. In the
+residual plot, the y-axis covers the bars and at least -4 to 4, and a
+band that reaches further is cut at the panel edge. Points (bars for
+residuals) outside their band are marked. The bands are not corrected across curves, so with many curves
+some cross their band by chance. In simulations without DIF, at most
+about 5\% of curves crossed their band (dev study in the package
+repository, \verb{dev/catfit_dif/}).
+
+Two conditions limit the reading. First, the independence given the
+total score holds under the Rasch model, not when items differ in
+discrimination (Kreiner & Christensen, 2011). Then, if the groups differ
+in ability, curves can separate without DIF, so check item fit first
+(\code{\link[=RMitemCatFit]{RMitemCatFit()}}, \code{\link[=RMitemInfit]{RMitemInfit()}}). Second, the total score includes the
+other items: DIF in several items in the same direction shifts the
+matching, and DIF-free items can then look different between groups.
+\code{\link[=RMdifAnchor]{RMdifAnchor()}} (item and threshold locations) and \code{\link[=RMdifGamma]{RMdifGamma()}} test
+DIF.
 }
 \examples{
 \donttest{
@@ -201,6 +256,10 @@ if (requireNamespace("eRm", quietly = TRUE)) {
   RMitemCatFitPlot(pcmdat2, type = "adjacent")
   RMitemCatFitPlot(pcmdat2, type = "calibration", iterations = 100,
                      seed = 1)
+  # By group (here a random split, so no DIF is expected)
+  set.seed(1)
+  group <- sample(c("A", "B"), nrow(pcmdat2), replace = TRUE)
+  RMitemCatFitPlot(pcmdat2, type = "adjacent", dif_var = group, seed = 1)
 }
 }
 
@@ -214,6 +273,14 @@ Academy of Sciences, 118}(8), e2016191118.
 Glas, C. A. W. (1988). The derivation of some tests for the Rasch model
 from the multinomial distribution. \emph{Psychometrika, 53}(4), 525--546.
 \doi{10.1007/BF02294405}
+
+Kreiner, S. (1987). Analysis of multidimensional contingency tables by
+exact conditional tests: Techniques and strategies. \emph{Scandinavian Journal
+of Statistics, 14}(2), 97--112.
+
+Kreiner, S., & Christensen, K. B. (2011). Item screening in graphical
+loglinear Rasch models. \emph{Psychometrika, 76}(2), 228--256.
+\doi{10.1007/s11336-011-9203-y}
 
 Säilynoja, T., Johnson, A. R., Martin, O. A., & Vehtari, A. (2025).
 Recommendations for visual predictive checks in Bayesian workflow.

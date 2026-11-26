@@ -33,6 +33,10 @@ dev/category_conditional_null/results/cells_rngbug/
 dev/category_conditional_null/results/smoke_cells/
 dev/category_conditional_null/results/residual_null_cells/
 dev/category_conditional_null/results/restscore_discr_cells/
+dev/category_conditional_null/results/spec_cells/
+dev/category_conditional_null/results/spec_smoke_cells/
+dev/category_conditional_null/results/spec_infit_ref/
+dev/category_conditional_null/results/specificity_smoke_summary*.rds
 dev/results/**/*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].rds
 dev/results/**/*_[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].rds	
 dev/**/results/**/*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].rds
@@ -48,3 +52,4 @@ dev/**/*cells*/
 dev/**/*smoke*.rds
 dev/**/render*.log
 tests/testthat/_problems/
+tests/testthat/testthat-problems.rds

@@ -90,8 +90,8 @@
 #'   [RMitemICCPlot()] do not purify, so their results can differ from the
 #'   tree's on the same data.
 #' @param p_adj Adjustment for multiple testing in the partial gamma
-#'   classification: `"fdr"` (default, Benjamini-Hochberg, as for the
-#'   asymptotic p-values of [RMdifGamma()]), `"bonferroni"` or `"none"`.
+#'   classification: `"fdr"` (default, Benjamini-Hochberg), `"bonferroni"`
+#'   or `"none"`.
 #'   Without an adjustment, the chance of flagging at least one item
 #'   without DIF grows with the number of items (Henninger et al., 2025).
 #'   Not used for MH, which uses the ETS test directly.

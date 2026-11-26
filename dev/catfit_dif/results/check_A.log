@@ -1,0 +1,14 @@
+PASS P(X >= k | r) non-decreasing in r, ties only at P = 0 or 1
+PASS   ... and responses at certain events agree with them
+PASS aggregated PAV equals .pav() on individual data
+PASS 200 permutations keep counts per score and the curve layout
+PASS permutations change the labelling
+PASS label constant within scores: every permutation equals the observed
+PASS   ... and every pointwise p is 1
+PASS same seed gives identical bands and p-values
+PASS two groups: weighted raw deviations from pooled mirror
+     score 9: N = 42, successes = 29, n1 = 30
+     mean 20.709 vs 20.714, var 1.881 vs 1.877
+PASS within-score permutation gives hypergeometric counts
+PASS p-values in range
+     36 curves, 540 points; pointwise outside at .05: 0.004;  curves any-point: 0.056; simultaneous: 0.028

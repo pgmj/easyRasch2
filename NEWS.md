@@ -5,7 +5,8 @@
 - `RMitemCatFit()` tests whether each item's categories work as the
   partial credit model predicts given the total score, also with ordered
   thresholds, with p-values corrected across items. `RMitemCatFitPlot()`
-  shows category functioning in four plots.
+  shows category functioning in four plots, and with `dif_var` by group,
+  with bands from permutations of group labels within total scores.
 
 - `RMdifAnchor()`: anchored Wald tests of DIF and DSF between two groups,
   with corrected p-values. The anchor is the forward method or the Gini
@@ -56,7 +57,7 @@
   fixed quantile intervals. `RMitemInfitPlot()` without `data` follows an
   explicit `statistic`. Tables do not change.
 
-- `RMdimCFACutoff()` uses the scaled CFI and RMSEA, refuses `"DWLS"`,
+- `RMdimCFACutoff()` uses only the scaled CFI and RMSEA, refuses `"DWLS"`,
   `"ULS"` and `"WLS"`, and needs at least 4 items. Results with `"WLSMV"`
   do not change in practice.
 
@@ -81,6 +82,20 @@
 
 - `RMitemICCPlot()`: the grouping argument is now `grouping` (`method`
   still works), and `class_intervals` must be a whole number.
+
+- `RMdifGamma()` no longer reports iarm's asymptotic p-values and interval
+  (`padj_bh`, `Significance`, `lower`, `upper`), which rejected too often
+  without DIF for dichotomous items. Without a cutoff it gives the partial
+  gamma and SE, and the caption recommends `RMdifGammaCutoff()`.
+
+- `RMitemICCPlot()` with `dif_var` shows the partial gamma estimate only.
+  The asymptotic interval and p-value are dropped, since the asymptotic test
+  rejected too often without DIF. Test DIF with `RMdifGamma()` and a
+  `RMdifGammaCutoff()` result.
+
+- `RMitemICCPlot()` with `dif_var` gives each group its own point shape and
+  an Okabe-Ito colour, as in `RMitemCatFitPlot()`, so groups stay apart in
+  greyscale.
 
 - Plots and dependencies: `RMitemCatProb()` gains `vary_linetype` and no
   longer needs `eRm`, flags in `RMdimCFAPlot()` and `RMplotTile()` no

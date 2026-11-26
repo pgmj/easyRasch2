@@ -1,0 +1,8 @@
+PASS generic code reproduces perm_bands() for calibration
+PASS adjacent shares match .catplot_adjacent() per group
+PASS one-group residuals match .catplot_residuals()
+PASS group E values sum to pooled E
+PASS adjacent: label constant within scores gives fixed points
+PASS residuals: label constant within scores gives fixed points
+     adjacent: 0.4 s, 90 curves, 15.5 varying points per curve
+     residuals: 0.1 s, 30 curves, 18.1 varying points per curve

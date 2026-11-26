@@ -369,12 +369,15 @@ if (!file.exists(asy_file)) {
     raw <- iarm::partgam_DIF(d, o$g)
     sink()
     pkg <- suppressMessages(RMdifGamma(d, dif_var = o$g, output = "dataframe"))
+    p <- as.numeric(raw$pvalue)[match(pkg$Item, as.character(raw$Item))]
     data.frame(
       item = pkg$Item,
       gamma = pkg$gamma,
       se = pkg$se,
-      p = as.numeric(raw$pvalue)[match(pkg$Item, as.character(raw$Item))],
-      padj_bh = pkg$padj_bh,
+      p = p,
+      # RMdifGamma() returned this column (BH over the items) until
+      # 2026-11-24, when the asymptotic p-values were removed from it.
+      padj_bh = stats::p.adjust(p, method = "BH"),
       stringsAsFactors = FALSE
     )
   }
